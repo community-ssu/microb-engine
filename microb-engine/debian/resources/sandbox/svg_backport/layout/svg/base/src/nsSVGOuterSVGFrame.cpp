@@ -47,6 +47,7 @@
 #include "nsDisplayList.h"
 #include "nsISVGRendererCanvas.h"
 #include "nsStubMutationObserver.h"
+#include "nsPresShellIterator.h"
 
 #if defined(DEBUG) && defined(SVG_DEBUG_PRINTING)
 #include "nsIDeviceContext.h"
@@ -95,9 +96,10 @@ nsSVGMutationObserver::AttributeChanged(nsIDocument *aDocument,
     return;
   }
 
-  PRUint32 count = aDocument->GetNumberOfShells();
-  for (PRUint32 i = 0; i < count; ++i) {
-    nsIFrame *frame = aDocument->GetShellAt(i)->GetPrimaryFrameFor(aContent);
+  nsPresShellIterator iter(aDocument);
+  nsCOMPtr<nsIPresShell> shell;
+  while ((shell = iter.GetNextShell())) {
+    nsIFrame *frame = shell->GetPrimaryFrameFor(aContent);
     if (!frame) {
       continue;
     }
@@ -692,7 +694,7 @@ void nsSVGOuterSVGFrame::InitiateReflow()
   mNeedsReflow = PR_FALSE;
   
   nsIPresShell* presShell = PresContext()->PresShell();
-  presShell->FrameNeedsReflow(this, nsIPresShell::eStyleChange);
+  presShell->FrameNeedsReflow(this, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
   // XXXbz why is this synchronously flushing reflows, exactly?  If it
   // needs to, why is it not using the presshell's reflow batching
   // instead of hacking its own?

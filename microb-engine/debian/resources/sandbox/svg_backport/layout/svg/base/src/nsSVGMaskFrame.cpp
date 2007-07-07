@@ -64,7 +64,7 @@ NS_GetSVGMaskFrame(nsSVGMaskFrame **aResult,
     NS_WARNING("No document for this content!");
     return NS_ERROR_FAILURE;
   }
-  nsIPresShell *presShell = myDoc->GetShellAt(0);
+  nsIPresShell *presShell = myDoc->GetPrimaryShell();
   if (!presShell) {
     NS_WARNING("no presshell");
     return NS_ERROR_FAILURE;
