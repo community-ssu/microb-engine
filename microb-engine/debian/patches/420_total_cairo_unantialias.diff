@@ -679,7 +679,7 @@ Index: mozilla/gfx/cairo/cairo/src/cairo-pattern.c
  {
      *out = _cairo_surface_create_similar_solid (dst,
 -						CAIRO_CONTENT_COLOR_ALPHA,
-+						CAIRO_CONTENT_COLOR,
++						CAIRO_CONTENT_COLOR_ALPHA,
  						1, 1,
  						&pattern->color);
      if ((*out)->status)
