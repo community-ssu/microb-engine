@@ -1,3 +1,12 @@
+microb-engine (1.0.3-5) unstable; urgency=low
+
+  * Fixed cairo transparency
+  * Fixed building svg_port
+  * Fixed for building with latest trunk
+  * Fixes: NB#61468 Link is wrongly displayed on www.ning.com
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun,  8 Jul 2007 00:03:59 +0300
+
 microb-engine (1.0.3-4.1.1) unstable; urgency=low
 
   * Fixes: NB#61991,NB#58189,NB#62021,NB#62144,NB#62009,NB#57491,NB#62006,NB#62065,NB#61674
