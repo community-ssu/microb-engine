@@ -344,8 +344,8 @@ unpack-stamp:
 	cp -rf  $(CURDIR)/debian/resources/branding $(builddir)/
 	cd $(builddir) && for str in `cat $(CURDIR)/tarballs/trunkupdates/series`;do echo; echo Applying trunk update: $$str...; echo; patch -p1 < $(CURDIR)/tarballs/trunkupdates/$$str; done 
 ifeq ($(svgport),y)
-	cd $(builddir) && cd layout && mv svg svg.back && cp -rf ../../../tarballs/svg_backport/layout/svg ./
-	cd $(builddir) && cd content && mv svg svg.back && cp -rf ../../../tarballs/svg_backport/content/svg ./
+	cd $(builddir) && cd layout && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/layout/svg ./
+	cd $(builddir) && cd content && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/content/svg ./
 endif
 	touch unpack-stamp
 
