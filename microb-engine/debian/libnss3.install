@@ -1,0 +1,5 @@
+usr/lib/microb-engine/libnss3.so
+usr/lib/microb-engine/libsmime3.so
+usr/lib/microb-engine/libsoftokn3.*
+usr/lib/microb-engine/libssl3.so
+usr/lib/microb-engine/libfreebl3.so

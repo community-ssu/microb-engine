@@ -1,0 +1,61 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## Bug 252033  gtk2+xft text clipping problem: only first word of line is rendered, rest of text displays on mouseover
+
+=== gfx/src/gtk/nsFontMetricsXft.cpp
+==================================================================
+Index: mozilla/gfx/src/gtk/nsFontMetricsXft.cpp
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsFontMetricsXft.cpp
++++ mozilla/gfx/src/gtk/nsFontMetricsXft.cpp
+@@ -2202,29 +2202,37 @@
+     mSpecBuffer[mSpecPos].glyph = glyph;
+     ++mSpecPos;
+ }
+ 
+ void
+ nsAutoDrawSpecBuffer::Flush()
+ {
+     if (mSpecPos) {
+-        // Some Xft libraries will crash if none of the glyphs have any
+-        // area.  So before we draw, we scan through the glyphs.  If we
+-        // find any that have area, we can draw.
+-        for (PRUint32 i = 0; i < mSpecPos; i++) {
+-            XftGlyphFontSpec *sp = &mSpecBuffer[i];
+-            XGlyphInfo info;
+-            XftGlyphExtents(GDK_DISPLAY(), sp->font, &sp->glyph, 1, &info);
+-            if (info.width && info.height) {
+-                // If we get here it means we found a drawable glyph.  We will
+-                // Draw all the remaining glyphs and then break out of the loop
+-                XftDrawGlyphFontSpec(mDraw, mColor, mSpecBuffer+i, mSpecPos-i);
+-                break;
++        // There are two Xft problems to work around here:
++        // 1.  Some Xft libraries reportedly crash if none of the
++        //     glyphs have any area.
++        // 2.  Because of an apparent X server bug (see bug 252033),
++        //     a glyph with no area may cause all following glyphs to be
++        //     dropped under some circumstances.
++        // For this reason, we manually ship out blocks of glyphs with
++        // area and skip blocks of glyphs with no area.
++        PRUint32 start = 0;
++        while (start < mSpecPos) {
++            PRUint32 i;
++            for (i = start; i < mSpecPos; i++) {
++                XftGlyphFontSpec *sp = &mSpecBuffer[i];
++                XGlyphInfo info;
++                XftGlyphExtents(GDK_DISPLAY(), sp->font, &sp->glyph, 1, &info);
++                if (!info.width || !info.height)
++                    break;
+             }
++            if (i > start)
++                XftDrawGlyphFontSpec(mDraw, mColor, mSpecBuffer+start, i-start);
++            start = i + 1;
+         }
+         mSpecPos = 0;
+     }
+ }
+ 
+ // Static functions
+ 
+ /* static */

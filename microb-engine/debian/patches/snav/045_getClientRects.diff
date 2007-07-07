@@ -1,0 +1,24 @@
+Index: content/base/src/Makefile.in
+===================================================================
+--- content/base/src/Makefile.in.orig
++++ content/base/src/Makefile.in
+@@ -158,16 +158,19 @@
+ 		$(NULL)
+ 
+ # we don't want the shared lib, but we want to force the creation of a
+ # static lib.
+ FORCE_STATIC_LIB = 1
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
++CFLAGS		+= $(MOZ_CAIRO_CFLAGS)
++CXXFLAGS	+= $(MOZ_CAIRO_CFLAGS)
++
+ INCLUDES	+= \
+ 		-I$(srcdir)/../../events/src \
+ 		-I$(srcdir)/../../xml/content/src \
+ 		-I$(srcdir)/../../xul/base/src \
+ 		-I$(srcdir)/../../xul/content/src \
+ 		-I$(srcdir)/../../html/content/src \
+ 		-I$(srcdir)/../../base/src \
+ 		-I$(srcdir)/../../xbl/src \

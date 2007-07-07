@@ -1,0 +1,45 @@
+--- mozilla/js/src/jsgc.c.orig	2007-05-25 11:42:09.000000000 +0300
++++ mozilla/js/src/jsgc.c	2007-06-26 00:06:34.000000000 +0300
+@@ -502,38 +502,40 @@ FinishGCArenaLists(JSRuntime *rt)
+     }
+ }
+ 
+ JS_FRIEND_API(uint8 *)
+ js_GetGCThingFlags(void *thing)
+ {
+     JSGCPageInfo *pi;
+     jsuword offsetInArena, thingIndex;
+ 
+     pi = THING_TO_PAGE(thing);
+-    offsetInArena = pi->offsetInArena;
++    if (pi)
++      offsetInArena = pi->offsetInArena;
+     JS_ASSERT(offsetInArena < GC_THINGS_SIZE);
+     thingIndex = ((offsetInArena & ~GC_PAGE_MASK) |
+                   ((jsuword)thing & GC_PAGE_MASK)) / sizeof(JSGCThing);
+     JS_ASSERT(thingIndex < GC_PAGE_SIZE);
+     if (thingIndex >= (offsetInArena & GC_PAGE_MASK))
+         thingIndex += GC_THINGS_SIZE;
+     return (uint8 *)pi - offsetInArena + thingIndex;
+ }
+ 
+ JSRuntime*
+ js_GetGCStringRuntime(JSString *str)
+ {
+     JSGCPageInfo *pi;
+     JSGCArenaList *list;
+ 
+     pi = THING_TO_PAGE(str);
+-    list = PAGE_TO_ARENA(pi)->list;
++    if (pi)
++      list = PAGE_TO_ARENA(pi)->list;
+ 
+     JS_ASSERT(list->thingSize == sizeof(JSGCThing));
+     JS_ASSERT(GC_FREELIST_INDEX(sizeof(JSGCThing)) == 0);
+ 
+     return (JSRuntime *)((uint8 *)list - offsetof(JSRuntime, gcArenaList));
+ }
+ 
+ JSBool
+ js_IsAboutToBeFinalized(JSContext *cx, void *thing)
+ {

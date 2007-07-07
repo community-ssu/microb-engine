@@ -1,0 +1,3 @@
+../dependentlibs.list usr/lib/microb-engine/
+usr/lib/microb-engine/TestGtkEmbed
+usr/lib/microb-engine/run-mozilla.sh

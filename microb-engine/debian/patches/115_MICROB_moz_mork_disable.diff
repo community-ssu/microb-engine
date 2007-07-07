@@ -1,0 +1,236 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: No description.
+
+Index: mozilla/toolkit/components/history/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/history/Makefile.in
++++ mozilla/toolkit/components/history/Makefile.in
+@@ -40,13 +40,15 @@
+ srcdir		= @srcdir@
+ VPATH		= @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
+ DIRS = public
+ 
+ ifndef MOZ_PLACES
++ifdef MOZ_MORK
+ DIRS += src
+ endif
++endif
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+Index: mozilla/toolkit/components/satchel/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/satchel/Makefile.in
++++ mozilla/toolkit/components/satchel/Makefile.in
+@@ -37,11 +37,17 @@
+ 
+ DEPTH   = ../../..
+ topsrcdir = @top_srcdir@
+ srcdir    = @srcdir@
+ VPATH   = @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
++ifdef MOZ_MORK
+ DIRS = public src
++endif
++
++ifdef MOZ_STORAGE
++DIRS = public src
++endif
+ 
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/xpfe/components/history/Makefile.in
+===================================================================
+--- mozilla.orig/xpfe/components/history/Makefile.in
++++ mozilla/xpfe/components/history/Makefile.in
+@@ -38,12 +38,15 @@
+ DEPTH		= ../../..
+ topsrcdir	= @top_srcdir@
+ srcdir		= @srcdir@
+ VPATH		= @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
+ MODULE		= history
++
++ifdef MOZ_MORK
+ DIRS		= public src
++endif
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -7667,28 +7667,34 @@
+ [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
+     MOZ_V1_STRING_ABI=,
+     MOZ_V1_STRING_ABI=1)
+ AC_SUBST(MOZ_V1_STRING_ABI)
+ if test "$MOZ_V1_STRING_ABI"; then
+     AC_DEFINE(MOZ_V1_STRING_ABI)
+ fi
+ 
++
++MOZ_ARG_DISABLE_BOOL(moz-mork,
++[  --disable-moz-mork   Disable moz mork db],
++    MOZ_MORK=,
++    MOZ_MORK=1)
++
+ dnl Only build Mork if it's required
+ AC_SUBST(MOZ_MORK)
+ if test "$MOZ_MORK"; then
+-  AC_DEFINE(MOZ_MORK)
+-fi
+-
++    AC_DEFINE(MOZ_MORK)
+ dnl Build the lightweight Mork reader if required
+-AC_SUBST(MOZ_MORKREADER)
+-if test "$MOZ_MORKREADER"; then
+-  AC_DEFINE(MOZ_MORKREADER)
++    AC_SUBST(MOZ_MORKREADER)
++    if test "$MOZ_MORKREADER"; then
++	AC_DEFINE(MOZ_MORKREADER)
++    fi
+ fi
+ 
++
+ dnl ========================================================
+ if test "$MOZ_DEBUG" || test "$NS_TRACE_MALLOC"; then
+     MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS=
+ fi
+ 
+ if test "$MOZ_LDAP_XPCOM"; then
+     LDAP_CFLAGS='-I${DIST}/public/ldap'
+     if test "$OS_ARCH" = "WINNT"; then
+Index: mozilla/toolkit/library/libxul-config.mk
+===================================================================
+--- mozilla.orig/toolkit/library/libxul-config.mk
++++ mozilla/toolkit/library/libxul-config.mk
+@@ -210,38 +210,44 @@
+ endif
+ endif
+ 
+ ifdef MOZ_STORAGE
+ COMPONENT_LIBS += storagecomps
+ endif
+ 
+ ifdef MOZ_PLACES
++ifdef MOZ_STORAGE
+ STATIC_LIBS += morkreader_s
+ 
+ COMPONENT_LIBS += \
+ 	places \
+ 	$(NULL)
++endif
+ else
+ ifdef MOZ_MORK
+ ifdef MOZ_XUL
+ COMPONENT_LIBS += \
+ 	mork \
+ 	tkhstory \
+ 	$(NULL)
+ endif
+ endif
+ endif
+ 
+ ifdef MOZ_XUL
+ COMPONENT_LIBS += \
+ 	tkautocomplete \
+-	satchel \
+ 	pippki \
+ 	$(NULL)
++ifdef MOZ_STORAGE
++COMPONENT_LIBS += \
++  satchel \
++  $(NULL)
++endif
+ endif
+ 
+ ifdef MOZ_MATHML
+ COMPONENT_LIBS += ucvmath
+ endif
+ 
+ ifneq (,$(filter xlib,$(MOZ_WIDGET_TOOLKIT))$(MOZ_ENABLE_XLIB)$(MOZ_ENABLE_XPRINT))
+ STATIC_LIBS += xlibrgb
+Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
+===================================================================
+--- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
++++ mozilla/toolkit/library/nsStaticXULComponents.cpp
+@@ -237,34 +237,44 @@
+ 
+ #ifdef MOZ_STORAGE
+ #define STORAGE_MODULE MODULE(mozStorageModule)
+ #else
+ #define STORAGE_MODULE
+ #endif
+ 
+ #ifdef MOZ_PLACES
++#ifdef MOZ_STORAGE
+ #define PLACES_MODULES \
+     MODULE(nsPlacesModule)
+ #else
++#define PLACES_MODULES
++#endif
++#else
+ #if (defined(MOZ_MORK) && defined(MOZ_XUL))
+ #define PLACES_MODULES \
+     MODULE(nsMorkModule)                     \
+     MODULE(nsToolkitHistory)
+ #else
+ #define PLACES_MODULES
+ #endif
+ #endif    
+ 
+ #ifdef MOZ_XUL
++#ifdef MOZ_STORAGE
+ #define XULENABLED_MODULES                   \
+     MODULE(tkAutoCompleteModule)             \
+     MODULE(satchel)                          \
+     MODULE(PKI)
+ #else
++#define XULENABLED_MODULES                   \
++    MODULE(tkAutoCompleteModule)             \
++    MODULE(PKI)
++#endif
++#else
+ #define XULENABLED_MODULES
+ #endif
+ 
+ #ifdef MOZ_SPELLCHECK
+ #define SPELLCHECK_MODULE MODULE(mozSpellCheckerModule)
+ #else
+ #define SPELLCHECK_MODULE
+ #endif
+Index: mozilla/toolkit/components/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/Makefile.in
++++ mozilla/toolkit/components/Makefile.in
+@@ -61,18 +61,20 @@
+ 	typeaheadfind \
+ 	$(NULL)
+ 
+ ifdef MOZ_FEEDS
+ DIRS += feeds
+ endif
+ 
+ ifdef MOZ_PLACES
++ifdef MOZ_STORAGE
+ DIRS += places
+ endif
++endif
+ 
+ ifdef NS_PRINTING
+ DIRS +=	printing
+ endif
+ 
+ ifdef MOZ_VIEW_SOURCE
+ DIRS +=	viewsource
+ endif

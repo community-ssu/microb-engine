@@ -1,0 +1,57 @@
+# Add Jar support for urls back
+# Fixed openign URLS in bugzilla: jar:https://.....
+--- mozilla/toolkit/library/libxul-config.mk.orig	2007-02-22 22:41:59.000000000 +0200
++++ mozilla/toolkit/library/libxul-config.mk	2007-02-23 08:37:06.621979000 +0200
+@@ -248,23 +248,26 @@ COMPONENT_LIBS += \
+ 	tkautocomplete \
+ 	pippki \
+ 	$(NULL)
+ ifdef MOZ_STORAGE
+ COMPONENT_LIBS += \
+   satchel \
+   $(NULL)
+ endif
+ endif
+ 
++COMPONENT_LIBS += \
++	jar$(VERSION_NUMBER) \
++	$(NULL)
++
+ ifndef MOZ_MICROB
+ COMPONENT_LIBS += \
+- 	jar$(VERSION_NUMBER) \
+  	commandlines \
+  	toolkitcomps \
+  	$(NULL)
+ endif
+ 
+ ifdef MOZ_MATHML
+ COMPONENT_LIBS += ucvmath
+ endif
+ 
+ ifneq (,$(filter xlib,$(MOZ_WIDGET_TOOLKIT))$(MOZ_ENABLE_XLIB)$(MOZ_ENABLE_XPRINT))
+--- mozilla/toolkit/library/nsStaticXULComponents.cpp.orig	2007-02-23 08:37:56.000000000 +0200
++++ mozilla/toolkit/library/nsStaticXULComponents.cpp	2007-02-23 08:38:07.041755000 +0200
+@@ -277,21 +277,21 @@
+ #else
+ #define XULENABLED_MODULES
+ #endif
+ 
+ #ifndef MOZ_MICROB
+ #define STD_MODULES                          \
+     MODULE(CommandLineModule)                \
+     MODULE(nsToolkitCompsModule)             \
+     MODULE(nsJarModule)
+ #else
+-#define STD_MODULES
++#define STD_MODULES MODULE(nsJarModule)
+ #endif
+ 
+ #ifdef MOZ_SPELLCHECK
+ #define SPELLCHECK_MODULE MODULE(mozSpellCheckerModule)
+ #else
+ #define SPELLCHECK_MODULE
+ #endif
+ 
+ #define XUL_MODULES                          \
+     MODULE(xpconnect)                        \

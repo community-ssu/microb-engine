@@ -1,0 +1,51 @@
+# Bug 384873  Broken building without XUL but with RDF
+--- mozilla/toolkit/library/libxul-config.mk.orig	2007-06-18 13:27:26.000000000 +0300
++++ mozilla/toolkit/library/libxul-config.mk	2007-06-18 13:56:34.000000000 +0300
+@@ -204,21 +204,21 @@ COMPONENT_LIBS += \
+ 	$(NULL)
+ ifdef MOZ_XPFE_COMPONENTS
+ COMPONENT_LIBS += \
+ 	windowds \
+ 	intlapp \
+ 	$(NULL)
+ endif
+ endif
+ 
+ ifeq (,$(filter beos os2 mac photon cocoa windows,$(MOZ_WIDGET_TOOLKIT)))
+-ifdef MOZ_RDF
++ifdef MOZ_XUL
+ ifdef MOZ_XPFE_COMPONENTS
+ COMPONENT_LIBS += fileview
+ DEFINES += -DMOZ_FILEVIEW
+ endif
+ endif
+ endif
+ 
+ ifdef MOZ_STORAGE
+ COMPONENT_LIBS += storagecomps
+ endif
+--- mozilla/toolkit/library/nsStaticXULComponents.cpp.orig	2007-06-18 13:27:26.000000000 +0300
++++ mozilla/toolkit/library/nsStaticXULComponents.cpp	2007-06-18 13:57:18.000000000 +0300
+@@ -211,21 +211,21 @@
+ #define XPINSTALL_MODULES
+ #endif
+ 
+ #ifdef MOZ_JSDEBUGGER
+ #define JSDEBUGGER_MODULES \
+     MODULE(JavaScript_Debugger)
+ #else
+ #define JSDEBUGGER_MODULES
+ #endif
+ 
+-#if defined(MOZ_FILEVIEW) && defined(MOZ_XPFE_COMPONENTS)
++#if defined(MOZ_FILEVIEW) && defined(MOZ_XPFE_COMPONENTS) && defined(MOZ_XUL)
+ #define FILEVIEW_MODULE MODULE(nsFileViewModule)
+ #else
+ #define FILEVIEW_MODULE
+ #endif
+ 
+ #ifdef MOZ_STORAGE
+ #define STORAGE_MODULE MODULE(mozStorageModule)
+ #else
+ #define STORAGE_MODULE
+ #endif

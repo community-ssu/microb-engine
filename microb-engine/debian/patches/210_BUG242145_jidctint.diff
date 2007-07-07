@@ -1,0 +1,841 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: Optimization of Inverse Discrete Cosine Transform for SSE2
+
+Index: mozilla/jpeg/jidctint.c
+===================================================================
+--- mozilla.orig/jpeg/jidctint.c
++++ mozilla/jpeg/jidctint.c
+@@ -408,89 +408,91 @@
+ *       Discrete Cosine Transform.
+ *       Algorithms, Advantages, Applications.
+ *       Academic Press, Inc, London, 1990.
+ *    JPEG Group's software.
+ *       This implementation is based on Appendix A.2 of the book (R&Y) ...
+ *
+ *-----------------------------------------------------------------------------
+ */
+-
++/*
+ typedef unsigned char   Ipp8u;
+ typedef unsigned short  Ipp16u;
+ typedef unsigned int    Ipp32u;
+ 
+ typedef signed char    Ipp8s;
+ typedef signed short   Ipp16s;
+ typedef signed int     Ipp32s;
+ 
+ #define BITS_INV_ACC  4			
+ #define SHIFT_INV_ROW  16 - BITS_INV_ACC
+ #define SHIFT_INV_COL 1 + BITS_INV_ACC
++*/
+ 
+-#define RND_INV_ROW  1024 * (6 - BITS_INV_ACC)	/* 1 << (SHIFT_INV_ROW-1)		*/
+-#define RND_INV_COL = 16 * (BITS_INV_ACC - 3)   /* 1 << (SHIFT_INV_COL-1)		*/
+-#define RND_INV_CORR = RND_INV_COL - 1          /* correction -1.0 and round	*/
+-
+-#define c_inv_corr_0 -1024 * (6 - BITS_INV_ACC) + 65536		/* -0.5 + (16.0 or 32.0)	*/
+-#define c_inv_corr_1 1877 * (6 - BITS_INV_ACC)				/* 0.9167	*/	
+-#define c_inv_corr_2 1236 * (6 - BITS_INV_ACC)				/* 0.6035	*/					
+-#define c_inv_corr_3 680  * (6 - BITS_INV_ACC)				/* 0.3322	*/
+-#define c_inv_corr_4 0    * (6 - BITS_INV_ACC)				/* 0.0		*/	
+-#define c_inv_corr_5 -569  * (6 - BITS_INV_ACC)				/* -0.278	*/
+-#define c_inv_corr_6 -512  * (6 - BITS_INV_ACC)				/* -0.25	*/	
+-#define c_inv_corr_7 -651  * (6 - BITS_INV_ACC)				/* -0.3176	*/	
++/* #define RND_INV_ROW  1024 * (6 - BITS_INV_ACC) */	/* 1 << (SHIFT_INV_ROW-1)		*/
++/* #define RND_INV_COL = 16 * (BITS_INV_ACC - 3)  */  /* 1 << (SHIFT_INV_COL-1)		*/
++/* #define RND_INV_CORR = RND_INV_COL - 1         */  /* correction -1.0 and round	*/
++
++/* #define c_inv_corr_0 -1024 * (6 - BITS_INV_ACC) + 65536	*/	/* -0.5 + (16.0 or 32.0)	*/
++/* #define c_inv_corr_1 1877 * (6 - BITS_INV_ACC)		*/		/* 0.9167	*/
++/* #define c_inv_corr_2 1236 * (6 - BITS_INV_ACC)		*/		/* 0.6035	*/
++/* #define c_inv_corr_3 680  * (6 - BITS_INV_ACC)			*/	/* 0.3322	*/
++/* #define c_inv_corr_4 0    * (6 - BITS_INV_ACC)			*/	/* 0.0		*/
++/* #define c_inv_corr_5 -569  * (6 - BITS_INV_ACC)			*/	/* -0.278	*/
++/* #define c_inv_corr_6 -512  * (6 - BITS_INV_ACC)			*/	/* -0.25	*/
++/* #define c_inv_corr_7 -651  * (6 - BITS_INV_ACC)			*/	/* -0.3176	*/
+ 
++/*
+ #define RND_INV_ROW_0 RND_INV_ROW + c_inv_corr_0
+ #define RND_INV_ROW_1 RND_INV_ROW + c_inv_corr_1
+ #define RND_INV_ROW_2 RND_INV_ROW + c_inv_corr_2
+ #define RND_INV_ROW_3 RND_INV_ROW + c_inv_corr_3
+ #define RND_INV_ROW_4 RND_INV_ROW + c_inv_corr_4
+ #define RND_INV_ROW_5 RND_INV_ROW + c_inv_corr_5
+ #define RND_INV_ROW_6 RND_INV_ROW + c_inv_corr_6
+ #define RND_INV_ROW_7 RND_INV_ROW + c_inv_corr_7
+-
++*/
+ /* Table for rows 0,4 - constants are multiplied on cos_4_16 */
+-
++/*
+ __declspec(align(16)) short tab_i_04[] = { 
+ 	16384, 21407, 16384, 8867,		
+ 	-16384, 21407, 16384, -8867,	
+ 	16384,  -8867,  16384, -21407,  
+     16384,   8867, -16384, -21407,  
+     22725,  19266,  19266,  -4520,  
+     4520,  19266,  19266, -22725,   
+     12873, -22725,   4520, -12873,  
+     12873,   4520, -22725, -12873}; 
+-
++*/
+ /* Table for rows 1,7 - constants are multiplied on cos_1_16 */
+-
++/*
+ __declspec(align(16)) short tab_i_17[] = {
+ 	22725,  29692,  22725,  12299,   
+     -22725,  29692,  22725, -12299,  
+     22725, -12299,  22725, -29692,   
+     22725,  12299, -22725, -29692,   
+     31521,  26722,  26722,  -6270,   
+     6270,  26722,  26722, -31521,    
+     17855, -31521,   6270, -17855,   
+     17855,   6270, -31521, -17855};  
+-
++*/
+ /* Table for rows 2,6 - constants are multiplied on cos_2_16 */
+-
++/*
+ __declspec(align(16)) short tab_i_26[] = {
+ 	21407,  27969,  21407,  11585,	
+     -21407,  27969,  21407, -11585,	
+     21407, -11585,  21407, -27969,	
+     21407,  11585, -21407, -27969,	
+     29692,  25172,  25172,  -5906,	
+     5906,  25172,  25172, -29692,	
+     16819, -29692,   5906, -16819,	
+     16819,   5906, -29692, -16819};	
+-
++*/
+ /* Table for rows 3,5 - constants are multiplied on cos_3_16 */
+-
++/*
+ __declspec(align(16)) short tab_i_35[] = {
+ 	19266,  25172,  19266,  10426,	
+     -19266,  25172,  19266, -10426,	
+     19266, -10426,  19266, -25172,	
+     19266,  10426, -19266, -25172,	
+     26722,  22654,  22654,  -5315,	
+     5315,  22654,  22654, -26722,	
+     15137, -26722,   5315, -15137,	
+@@ -507,29 +509,30 @@
+ __declspec(align(16)) long round_i_4[] = {RND_INV_ROW_4,RND_INV_ROW_4,
+ 	RND_INV_ROW_4,RND_INV_ROW_4};
+ __declspec(align(16)) long round_i_5[] = {RND_INV_ROW_5,RND_INV_ROW_5,
+ 	RND_INV_ROW_5,RND_INV_ROW_5};
+ __declspec(align(16)) long round_i_6[] = {RND_INV_ROW_6,RND_INV_ROW_6,
+ 	RND_INV_ROW_6,RND_INV_ROW_6};
+ __declspec(align(16)) long round_i_7[] = {RND_INV_ROW_7,RND_INV_ROW_7,
+ 	RND_INV_ROW_7,RND_INV_ROW_7};
++*/
+ 
+-__declspec(align(16)) short tg_1_16[] = {
+-	13036,  13036,  13036,  13036,	/* tg * (2<<16) + 0.5 */
+-	13036,  13036,  13036,  13036};
+-__declspec(align(16)) short tg_2_16[] = {
+-	27146,  27146,  27146,  27146,	/* tg * (2<<16) + 0.5 */
+-	27146,  27146,  27146,  27146};
+-__declspec(align(16)) short tg_3_16[] = {
+-	-21746, -21746, -21746, -21746,	/* tg * (2<<16) + 0.5 */
+-	-21746, -21746, -21746, -21746};
+-__declspec(align(16)) short cos_4_16[] = {
+-	-19195, -19195, -19195, -19195,	/* cos * (2<<16) + 0.5 */
+-	-19195, -19195, -19195, -19195};
++/* __declspec(align(16)) short tg_1_16[] = {
++   13036,  13036,  13036,  13036,	*/ /* tg * (2<<16) + 0.5 */
++/*	13036,  13036,  13036,  13036}; */
++/* __declspec(align(16)) short tg_2_16[] = {
++   27146,  27146,  27146,  27146,	*/ /* tg * (2<<16) + 0.5 */
++/*	27146,  27146,  27146,  27146}; */
++/* __declspec(align(16)) short tg_3_16[] = {
++   -21746, -21746, -21746, -21746,	*/ /* tg * (2<<16) + 0.5 */
++/*	-21746, -21746, -21746, -21746}; */
++/* __declspec(align(16)) short cos_4_16[] = {
++   -19195, -19195, -19195, -19195,	*/ /* cos * (2<<16) + 0.5 */
++/*	-19195, -19195, -19195, -19195}; */
+ 
+ /*
+ * In this implementation the outputs of the iDCT-1D are multiplied
+ *    for rows 0,4 - on cos_4_16,
+ *    for rows 1,7 - on cos_1_16,
+ *    for rows 2,6 - on cos_2_16,
+ *    for rows 3,5 - on cos_3_16
+ * and are shifted to the left for rise of accuracy
+@@ -540,17 +543,17 @@
+ *-----------------------------------------------------------------------------
+ *
+ * On the first stage the calculation is executed at once for two rows.
+ * The permutation for each output row is done on second stage
+ *    t7 t6 t5 t4 t3 t2 t1 t0 -> t4 t5 t6 t7 t3 t2 t1 t0
+ *
+ *-----------------------------------------------------------------------------
+ */
+-	
++/*
+ #define DCT_8_INV_ROW_2R(TABLE, ROUND1, ROUND2) __asm {	\
+ 	__asm pshuflw  xmm1, xmm0, 10001000b				\
+     __asm pshuflw  xmm0, xmm0, 11011101b    			\
+     __asm pshufhw  xmm1, xmm1, 10001000b    			\
+ 	__asm pshufhw  xmm0, xmm0, 11011101b				\
+ 	__asm movdqa   xmm2, XMMWORD PTR [TABLE]			\
+ 	__asm pmaddwd  xmm2, xmm1							\
+ 	__asm movdqa   xmm3, XMMWORD PTR [TABLE + 32]		\
+@@ -585,29 +588,29 @@
+ 	__asm paddd    xmm5, xmm6							\
+ 	__asm movdqa   xmm6, xmm5	            			\
+ 	__asm psubd    xmm6, xmm7               			\
+ 	__asm psrad    xmm6, SHIFT_INV_ROW      			\
+ 	__asm paddd    xmm5, xmm7							\
+ 	__asm psrad    xmm5, SHIFT_INV_ROW      			\
+ 	__asm packssdw xmm5, xmm6							\
+ 	}
+-
++*/
+ /*
+ *
+ * The second stage - inverse DCTs of columns
+ *
+ * The inputs are multiplied
+ *    for rows 0,4 - on cos_4_16,
+ *    for rows 1,7 - on cos_1_16,
+ *    for rows 2,6 - on cos_2_16,
+ *    for rows 3,5 - on cos_3_16
+ * and are shifted to the left for rise of accuracy
+ */
+-
++/*
+ #define DCT_8_INV_COL_8R(INP, OUTP) __asm {		\
+ 	__asm movdqa   xmm0, [INP + 5*16]			\
+     __asm movdqa   xmm1, XMMWORD PTR tg_3_16	\
+     __asm movdqa   xmm2, xmm0            		\
+     __asm movdqa   xmm3, [INP + 3*16]   		\
+     __asm pmulhw   xmm0, xmm1           		\
+     __asm movdqa   xmm4, [INP + 7*16]   		\
+     __asm pmulhw   xmm1, xmm3           		\
+@@ -686,30 +689,30 @@
+     __asm movdqa   [OUTP + 7*16], xmm5    		\
+     __asm psraw    xmm6, SHIFT_INV_COL			\
+     __asm movdqa   [OUTP + 3*16], xmm6    		\
+     __asm psraw    xmm2, SHIFT_INV_COL			\
+     __asm movdqa   [OUTP + 4*16], xmm2    		\
+     __asm psraw    xmm3, SHIFT_INV_COL			\
+     __asm movdqa   [OUTP + 6*16], xmm3    		\
+ 	}
+-
++*/
+ /*
+ *
+ *  Name:      dct_8x8_inv_16s
+ *  Purpose:   Inverse Discrete Cosine Transform 8x8 with
+ *             2D buffer of short int data
+ *  Context:
+ *      void dct_8x8_inv_16s ( short *src, short *dst )
+ *  Parameters:
+ *      src  - Pointer to the source buffer
+ *      dst  - Pointer to the destination buffer
+ *
+ */
+-
++/*
+ GLOBAL(void)
+ dct_8x8_inv_16s ( short *src, short *dst ) {
+ 	
+ 	__asm {
+ 
+ 		mov     ecx,  src
+ 		mov     edx,  dst
+ 
+@@ -735,33 +738,33 @@
+ 		movdqa  xmm4, [ecx+6*16]
+ 		DCT_8_INV_ROW_2R(tab_i_26, round_i_2, round_i_6);
+ 		movdqa     [edx+2*16], xmm1
+ 		movdqa     [edx+6*16], xmm5    
+ 
+ 		DCT_8_INV_COL_8R(edx+0, edx+0);
+ 	}
+ }
+-
++*/
+ 
+ /*
+ *  Name:
+ *    ownpj_QuantInv_8x8_16s
+ *
+ *  Purpose:
+ *    Dequantize 8x8 block of DCT coefficients
+ *
+ *  Context:
+ *    void ownpj_QuantInv_8x8_16s
+ *            Ipp16s*  pSrc,
+ *            Ipp16s*  pDst,
+ *      const Ipp16u*  pQTbl)*
+ *
+ */
+-
++/*
+ GLOBAL(void)
+ ownpj_QuantInv_8x8_16s(short * pSrc, short * pDst, const unsigned short * pQTbl)
+ {
+ 	__asm {
+ 
+ 		push        ebx
+ 		push        ecx
+ 		push        edx
+@@ -803,34 +806,34 @@
+ 
+ 		pop         edi
+ 		pop         esi
+ 		pop         edx
+ 		pop         ecx
+ 		pop         ebx
+ 	}
+ }
+-
++*/
+ 
+ /*
+ *  Name:
+ *    ownpj_Add128_8x8_16s8u
+ *
+ *  Purpose:
+ *    signed to unsigned conversion (level shift)
+ *    for 8x8 block of DCT coefficients
+ *
+ *  Context:
+ *    void ownpj_Add128_8x8_16s8u
+ *      const Ipp16s* pSrc,
+ *            Ipp8u*  pDst,
+ *            int     DstStep);
+ *
+ */
+-
++/*
+ __declspec(align(16)) long const_128[]= {0x00800080, 0x00800080, 0x00800080, 0x00800080};
+ 
+ GLOBAL(void)
+ ownpj_Add128_8x8_16s8u(const short * pSrc, unsigned char * pDst, int DstStep)
+ {
+ 	__asm {
+ 		push        eax
+ 		push        ebx
+@@ -882,33 +885,33 @@
+ 		pop         edi
+ 		pop         esi
+ 		pop         edx
+ 		pop         ecx
+ 		pop         ebx
+ 		pop         eax
+ 	}
+ }
+-
++*/
+ 
+ /* 
+ *  Name:
+ *    ippiDCTQuantInv8x8LS_JPEG_16s8u_C1R
+ *
+ *  Purpose:
+ *    Inverse DCT transform, de-quantization and level shift
+ *
+ *  Parameters:
+ *    pSrc               - pointer to source
+ *    pDst               - pointer to output array
+ *    DstStep            - line offset for output data
+ *    pEncoderQuantTable - pointer to Quantization table
+ *
+ */
+-
++/*
+ GLOBAL(void)
+ ippiDCTQuantInv8x8LS_JPEG_16s8u_C1R(
+   short * pSrc,
+   unsigned char *  pDst,
+   int     DstStep,
+   const unsigned short * pQuantInvTable)
+ {
+ 
+@@ -953,11 +956,482 @@
+ 		outptr[4] = wsptr[4];
+ 		outptr[5] = wsptr[5];
+ 		outptr[6] = wsptr[6];
+ 		outptr[7] = wsptr[7];
+ 
+ 		wsptr += DCTSIZE;
+ 	}
+ }
++*/
++
++/****************************************************************************/
++/* Port from above code - What I did was: (1- 6 not exactly in this order)  */
++/*									    */
++/*  1) Port the ippiDCTQuantInv8x8LS_JPEG_16s8u_C1R output code to          */
++/*     assembler. The code gen for this routine was really horrible         */
++/*     and this reduced the code path from 176 instructions to about 26     */
++/*     and greatly reduced reads and writes to memory.                      */
++/*									    */
++/*  2) Removed unnecessary push/pop code. It seems that one of the previous */
++/*     engineers doing porting was unsure as to whether or not these were   */
++/*     needed and put them in to be safe. It turns out that MSVC++ puts     */
++/*     these in if they are needed so that there was duplication of saving  */
++/*     registers to the stack along with saving stuff that didn't have to   */
++/*     be saved.							    */
++/*									    */
++/*  3) Unrolled the loops in ownpj_Add128_8x8_16s8u and			    */
++/*     ownpj_QuantInv_8x8_16s.						    */
++/*									    */
++/*  4) Converted ownpj_QuantInv_8x8_16s to use XMM registers instead of     */
++/*     using MMX registers. I suspect that MMX was used as some of the      */
++/*     structures that this routine operated on were unaligned. I found     */
++/*     where one of the structures was declared (near the bottom of         */
++/*     jddctmgr.c and changed a small bit of code to align a structure so   */
++/*     that this routine could use the more efficient SSE2 instructions.    */
++/*									    */
++/*  5) Removed passed parameters where they weren't needed.		    */
++/*									    */
++/*  6) Changed ownpj_Add128_8x8_16s8u to write out double quadwords instead */
++/*     of writing out quadwords two times.                                  */
++/*									    */
++/*  7) Merged the output code in jpeg_idct_islow_sse2 into     		    */
++/*     ownpj_Add128_8x8_16s8u to save reading and writing of the work array */
++/*     from the latter to ther former. I had to pass two additional         */
++/*     parameters though.						    */
++/*									    */
++/*  8) Merged dct_8x8_inv_16s into ownpj_QuantInv_8x8_16s  as the           */
++/*     output of the latter to the input of the former was via a work area  */
++/*     which could be disposed of if these two were merged. The nature of   */
++/*     the row processing first before the column processing made this      */
++/*     possible as did the conversion of the code from MMX to XMM.          */
++/*									    */
++/*  9) Merged ownpj_QuantInv_8x8_16s into the old ownpj_Add128_8x8_16s8u    */
++/*     code that was merged into ippiDCTQuantInv8x8LS_JPEG_16s8u_C1R to     */
++/*     eliminate call/return overhead.                                      */
++/*									    */
++/* 10) Merged ippiDCTQuantInv8x8LS_JPEG_16s8u_C1R into jpeg_idct_islow_sse2.*/
++/*     This leaves everything in one routine.                               */
++/*									    */
++/* 11) Prefix the constants that we use with sse2_ so that they are all     */
++/*     grouped together with a better chance of being in loaded cache       */
++/*     lines.                                                               */
++/*									    */
++/* 12) The output of the column code loads from six registers into the      */
++/*     work array. Don't save the registers but directly use them in the    */
++/*     next routine.							    */
++/*									    */
++/* 13) There are two loads of cos_4_16 in close proximity into different    */
++/*     registers. Load one from memory and the other from the first         */
++/*     register.							    */
++/*									    */
++/* 14) There are two sets of loads from memory of the TABLE tables. We can  */
++/*     save two memory loads by moving xmm2 to xmm6 and xmm3 to xmm7        */
++/*     immediately after they (xmm2 and xmm3) are loaded.                   */
++/*									    */
++/* 15) Rows 5 and 3 are output from the row processing and input to         */
++/*     the column processing. Rearrange to leave 3 and 5 at the end of row  */
++/*     processing.							    */
++/*                                                                          */
++/* 16) Get rid of the emms instruction that we left over from our           */
++/*     experiments using MMX registers to hold table data. The emms         */
++/*     is fairly expensive according to the IA-32 Architecture Optimization */
++/*     Reference Manual.                                                    */
++/*                                                                          */
++/* 17) Went back to fetching output addresses using a GPR instead of        */
++/*     grabbing four at a time into an XMM register and getting them out    */
++/*     via MOVD as MOVD from XMM to GPR is very expensive.                  */
++/*                                                                          */
++/* Michael G. Moy,  2004 (keep these comments around so that people can     */
++/*                        figure out how we arrived at the code as it is    */
++/*                        today and add their changes in the future.        */
++/*									    */
++/****************************************************************************/
++
++typedef unsigned char   Ipp8u;
++typedef unsigned short  Ipp16u;
++typedef unsigned int    Ipp32u;
++
++typedef signed char    Ipp8s;
++typedef signed short   Ipp16s;
++typedef signed int     Ipp32s;
++
++#define BITS_INV_ACC  4
++#define SHIFT_INV_ROW  16 - BITS_INV_ACC
++#define SHIFT_INV_COL 1 + BITS_INV_ACC
++
++#define RND_INV_ROW  1024 * (6 - BITS_INV_ACC)	/* 1 << (SHIFT_INV_ROW-1)		*/
++#define RND_INV_COL = 16 * (BITS_INV_ACC - 3)   /* 1 << (SHIFT_INV_COL-1)		*/
++#define RND_INV_CORR = RND_INV_COL - 1          /* correction -1.0 and round	*/
++
++#define c_inv_corr_0 -1024 * (6 - BITS_INV_ACC) + 65536		/* -0.5 + (16.0 or 32.0)	*/
++#define c_inv_corr_1 1877 * (6 - BITS_INV_ACC)				/* 0.9167	*/
++#define c_inv_corr_2 1236 * (6 - BITS_INV_ACC)				/* 0.6035	*/
++#define c_inv_corr_3 680  * (6 - BITS_INV_ACC)				/* 0.3322	*/
++#define c_inv_corr_4 0    * (6 - BITS_INV_ACC)				/* 0.0		*/
++#define c_inv_corr_5 -569  * (6 - BITS_INV_ACC)				/* -0.278	*/
++#define c_inv_corr_6 -512  * (6 - BITS_INV_ACC)				/* -0.25	*/
++#define c_inv_corr_7 -651  * (6 - BITS_INV_ACC)				/* -0.3176	*/
++
++#define RND_INV_ROW_0 RND_INV_ROW + c_inv_corr_0
++#define RND_INV_ROW_1 RND_INV_ROW + c_inv_corr_1
++#define RND_INV_ROW_2 RND_INV_ROW + c_inv_corr_2
++#define RND_INV_ROW_3 RND_INV_ROW + c_inv_corr_3
++#define RND_INV_ROW_4 RND_INV_ROW + c_inv_corr_4
++#define RND_INV_ROW_5 RND_INV_ROW + c_inv_corr_5
++#define RND_INV_ROW_6 RND_INV_ROW + c_inv_corr_6
++#define RND_INV_ROW_7 RND_INV_ROW + c_inv_corr_7
++
++/* Table for rows 0,4 - constants are multiplied on cos_4_16 */
++
++__declspec(align(16)) short sse2_tab_i_04[] = {
++	16384, 21407, 16384, 8867,
++	-16384, 21407, 16384, -8867,
++	16384,  -8867,  16384, -21407,
++    16384,   8867, -16384, -21407,
++    22725,  19266,  19266,  -4520,
++    4520,  19266,  19266, -22725,
++    12873, -22725,   4520, -12873,
++    12873,   4520, -22725, -12873};
++
++/* Table for rows 1,7 - constants are multiplied on cos_1_16 */
++
++__declspec(align(16)) short sse2_tab_i_17[] = {
++	22725,  29692,  22725,  12299,
++    -22725,  29692,  22725, -12299,
++    22725, -12299,  22725, -29692,
++    22725,  12299, -22725, -29692,
++    31521,  26722,  26722,  -6270,
++    6270,  26722,  26722, -31521,
++    17855, -31521,   6270, -17855,
++    17855,   6270, -31521, -17855};
++
++/* Table for rows 2,6 - constants are multiplied on cos_2_16 */
++
++__declspec(align(16)) short sse2_tab_i_26[] = {
++	21407,  27969,  21407,  11585,
++    -21407,  27969,  21407, -11585,
++    21407, -11585,  21407, -27969,
++    21407,  11585, -21407, -27969,
++    29692,  25172,  25172,  -5906,
++    5906,  25172,  25172, -29692,
++    16819, -29692,   5906, -16819,
++    16819,   5906, -29692, -16819};
++
++/* Table for rows 3,5 - constants are multiplied on cos_3_16 */
++
++__declspec(align(16)) short sse2_tab_i_35[] = {
++	19266,  25172,  19266,  10426,
++    -19266,  25172,  19266, -10426,
++    19266, -10426,  19266, -25172,
++    19266,  10426, -19266, -25172,
++    26722,  22654,  22654,  -5315,
++    5315,  22654,  22654, -26722,
++    15137, -26722,   5315, -15137,
++    15137,   5315, -26722, -15137};
++
++__declspec(align(16)) long sse2_round_i_0[] = {RND_INV_ROW_0,RND_INV_ROW_0,
++	RND_INV_ROW_0,RND_INV_ROW_0};
++__declspec(align(16)) long sse2_round_i_1[] = {RND_INV_ROW_1,RND_INV_ROW_1,
++	RND_INV_ROW_1,RND_INV_ROW_1};
++__declspec(align(16)) long sse2_round_i_2[] = {RND_INV_ROW_2,RND_INV_ROW_2,
++	RND_INV_ROW_2,RND_INV_ROW_2};
++__declspec(align(16)) long sse2_round_i_3[] = {RND_INV_ROW_3,RND_INV_ROW_3,
++	RND_INV_ROW_3,RND_INV_ROW_3};
++__declspec(align(16)) long sse2_round_i_4[] = {RND_INV_ROW_4,RND_INV_ROW_4,
++	RND_INV_ROW_4,RND_INV_ROW_4};
++__declspec(align(16)) long sse2_round_i_5[] = {RND_INV_ROW_5,RND_INV_ROW_5,
++	RND_INV_ROW_5,RND_INV_ROW_5};
++__declspec(align(16)) long sse2_round_i_6[] = {RND_INV_ROW_6,RND_INV_ROW_6,
++	RND_INV_ROW_6,RND_INV_ROW_6};
++__declspec(align(16)) long sse2_round_i_7[] = {RND_INV_ROW_7,RND_INV_ROW_7,
++	RND_INV_ROW_7,RND_INV_ROW_7};
++
++__declspec(align(16)) short sse2_tg_1_16[] = {
++	13036,  13036,  13036,  13036,	/* tg * (2<<16) + 0.5 */
++	13036,  13036,  13036,  13036};
++__declspec(align(16)) short sse2_tg_2_16[] = {
++	27146,  27146,  27146,  27146,	/* tg * (2<<16) + 0.5 */
++	27146,  27146,  27146,  27146};
++__declspec(align(16)) short sse2_tg_3_16[] = {
++	-21746, -21746, -21746, -21746,	/* tg * (2<<16) + 0.5 */
++	-21746, -21746, -21746, -21746};
++__declspec(align(16)) short sse2_cos_4_16[] = {
++	-19195, -19195, -19195, -19195,	/* cos * (2<<16) + 0.5 */
++	-19195, -19195, -19195, -19195};
++
++__declspec(align(16)) long sse2_const_128[]= {0x00800080,
++	0x00800080, 0x00800080, 0x00800080};
++
++/*
++* In this implementation the outputs of the iDCT-1D are multiplied
++*    for rows 0,4 - on cos_4_16,
++*    for rows 1,7 - on cos_1_16,
++*    for rows 2,6 - on cos_2_16,
++*    for rows 3,5 - on cos_3_16
++* and are shifted to the left for rise of accuracy
++*
++* For used constants
++*    FIX(float_const) = (short) (float_const * (1<<15) + 0.5)
++*
++*-----------------------------------------------------------------------------
++*
++* On the first stage the calculation is executed at once for two rows.
++* The permutation for each output row is done on second stage
++*    t7 t6 t5 t4 t3 t2 t1 t0 -> t4 t5 t6 t7 t3 t2 t1 t0
++*
++*-----------------------------------------------------------------------------
++*/
++
++#define IDCT_ROWS(TABLE, ROUND1, ROUND2) __asm {		\
++	__asm pshuflw  xmm1, xmm0, 10001000b			\
++	__asm pshuflw  xmm0, xmm0, 11011101b    		\
++	__asm pshufhw  xmm1, xmm1, 10001000b    		\
++	__asm pshufhw  xmm0, xmm0, 11011101b			\
++	__asm movdqa   xmm2, XMMWORD PTR [TABLE]		\
++	__asm movdqa   xmm6, xmm2				\
++	__asm pmaddwd  xmm2, xmm1				\
++	__asm movdqa   xmm3, XMMWORD PTR [TABLE + 32]		\
++	__asm movdqa   xmm7, xmm3				\
++	__asm pmaddwd  xmm3, xmm0               		\
++	__asm pmaddwd  xmm1, XMMWORD PTR [TABLE + 16]		\
++	__asm pmaddwd  xmm0, XMMWORD PTR [TABLE + 48]		\
++	__asm pshuflw  xmm5, xmm4, 10001000b			\
++	__asm pshuflw  xmm4, xmm4, 11011101b    		\
++	__asm pshufhw  xmm5, xmm5, 10001000b    		\
++	__asm pshufhw  xmm4, xmm4, 11011101b    		\
++	__asm pmaddwd  xmm6, xmm5               		\
++	__asm pmaddwd  xmm7, xmm4               		\
++	__asm pmaddwd  xmm5, XMMWORD PTR [TABLE + 16]		\
++	__asm pmaddwd  xmm4, XMMWORD PTR [TABLE + 48]		\
++	__asm pshufd   xmm1, xmm1, 01001110b    		\
++	__asm pshufd   xmm0, xmm0, 01001110b    		\
++	__asm paddd    xmm2, XMMWORD PTR [ROUND1]		\
++	__asm paddd    xmm3, xmm0				\
++	__asm paddd    xmm1, xmm2				\
++	__asm pshufd   xmm5, xmm5, 01001110b    		\
++	__asm pshufd   xmm4, xmm4, 01001110b    		\
++	__asm movdqa   xmm2, xmm1             			\
++	__asm psubd    xmm2, xmm3             			\
++	__asm psrad    xmm2, SHIFT_INV_ROW    			\
++	__asm paddd    xmm1, xmm3				\
++	__asm psrad    xmm1, SHIFT_INV_ROW      		\
++	__asm packssdw xmm1, xmm2				\
++	__asm paddd    xmm6, XMMWORD PTR [ROUND2]		\
++	__asm paddd    xmm7, xmm4				\
++	__asm paddd    xmm5, xmm6				\
++	__asm movdqa   xmm6, xmm5	            		\
++	__asm psubd    xmm6, xmm7               		\
++	__asm psrad    xmm6, SHIFT_INV_ROW      		\
++	__asm paddd    xmm5, xmm7				\
++	__asm psrad    xmm5, SHIFT_INV_ROW      		\
++	__asm packssdw xmm5, xmm6				\
++	}
++
++/*
++*
++* The second stage - inverse DCTs of columns
++*
++* The inputs are multiplied
++*    for rows 0,4 - on cos_4_16,
++*    for rows 1,7 - on cos_1_16,
++*    for rows 2,6 - on cos_2_16,
++*    for rows 3,5 - on cos_3_16
++* and are shifted to the left for rise of accuracy
++*/
++
++/* Note that we enter with xmm0 and xmm3 filled in with */
++/* rows 3 and 5.                                        */
++
++#define IDCT_COLUMNS(INP, OUTP) __asm {			\
++    __asm movdqa   xmm1, XMMWORD PTR sse2_tg_3_16	\
++    __asm movdqa   xmm2, xmm0            		\
++    __asm pmulhw   xmm0, xmm1           		\
++    __asm movdqa   xmm4, [INP + 7*16]   		\
++    __asm pmulhw   xmm1, xmm3           		\
++    __asm movdqa   xmm5, XMMWORD PTR sse2_tg_1_16   	\
++    __asm movdqa   xmm6, xmm4            		\
++    __asm pmulhw   xmm4, xmm5           		\
++    __asm paddsw   xmm0, xmm2           		\
++    __asm pmulhw   xmm5, [INP + 1*16]   		\
++    __asm paddsw   xmm1, xmm3           		\
++    __asm movdqa   xmm7, [INP + 6*16]    		\
++    __asm paddsw   xmm0, xmm3				\
++    __asm movdqa   xmm3, XMMWORD PTR sse2_tg_2_16	\
++    __asm psubsw   xmm2, xmm1				\
++    __asm pmulhw   xmm7, xmm3            		\
++    __asm movdqa   xmm1, xmm0            		\
++    __asm pmulhw   xmm3, [INP + 2*16]   		\
++    __asm psubsw   xmm5, xmm6				\
++    __asm paddsw   xmm4, [INP + 1*16]    		\
++    __asm paddsw   xmm0, xmm4            		\
++    __asm psubsw   xmm4, xmm1				\
++    __asm pshufhw  xmm0, xmm0, 00011011b		\
++    __asm paddsw   xmm7, [INP + 2*16]    		\
++    __asm movdqa   xmm6, xmm5				\
++    __asm psubsw   xmm3, [INP + 6*16]    		\
++    __asm psubsw   xmm5, xmm2            		\
++    __asm paddsw   xmm6, xmm2				\
++    __asm movdqa   [OUTP + 7*16], xmm0    		\
++    __asm movdqa   xmm1, xmm4            		\
++    __asm movdqa   xmm2, XMMWORD PTR sse2_cos_4_16  	\
++    __asm paddsw   xmm4, xmm5            		\
++    __asm movdqa   xmm0, xmm2			  	\
++    __asm pmulhw   xmm2, xmm4				\
++    __asm pshufhw  xmm6, xmm6, 00011011b		\
++    __asm movdqa   [OUTP + 3*16], xmm6    		\
++    __asm psubsw   xmm1, xmm5            		\
++    __asm movdqa   xmm6, [INP + 0*16]   		\
++    __asm pmulhw   xmm0, xmm1				\
++    __asm movdqa   xmm5, [INP + 4*16]    		\
++    __asm paddsw   xmm4, xmm2				\
++    __asm paddsw   xmm5, xmm6       			\
++    __asm psubsw   xmm6, [INP + 4*16]   		\
++    __asm paddsw   xmm0, xmm1				\
++    __asm pshufhw  xmm4, xmm4, 00011011b		\
++    __asm movdqa   xmm2, xmm5            		\
++    __asm paddsw   xmm5, xmm7            		\
++    __asm movdqa   xmm1, xmm6				\
++    __asm psubsw   xmm2, xmm7				\
++    __asm movdqa   xmm7, [OUTP + 7*16]    		\
++    __asm paddsw   xmm6, xmm3            		\
++    __asm pshufhw  xmm5, xmm5, 00011011b		\
++    __asm paddsw   xmm7, xmm5				\
++    __asm psubsw   xmm1, xmm3				\
++    __asm pshufhw  xmm6, xmm6, 00011011b		\
++    __asm movdqa   xmm3, xmm6				\
++    __asm paddsw   xmm6, xmm4            		\
++    __asm pshufhw  xmm2, xmm2, 00011011b		\
++    __asm psraw    xmm7, SHIFT_INV_COL   		\
++    __asm movdqa   [OUTP + 0*16], xmm7    		\
++    __asm movdqa   xmm7, xmm1            		\
++    __asm paddsw   xmm1, xmm0				\
++    __asm psraw    xmm6, SHIFT_INV_COL			\
++    __asm movdqa   [OUTP + 1*16], xmm6    		\
++    __asm pshufhw  xmm1, xmm1, 00011011b		\
++    __asm movdqa   xmm6, [OUTP + 3*16]			\
++    __asm psubsw   xmm7, xmm0            		\
++    __asm psraw    xmm1, SHIFT_INV_COL   		\
++    __asm psubsw   xmm5, [OUTP + 7*16]			\
++    __asm paddsw   xmm6, xmm2            		\
++    __asm psubsw   xmm2, [OUTP + 3*16]			\
++    __asm psubsw   xmm3, xmm4            		\
++    __asm psraw    xmm7, SHIFT_INV_COL  		\
++    __asm pshufhw  xmm7, xmm7, 00011011b		\
++    __asm psraw    xmm5, SHIFT_INV_COL			\
++    __asm psraw    xmm6, SHIFT_INV_COL			\
++    __asm psraw    xmm2, SHIFT_INV_COL			\
++    __asm psraw    xmm3, SHIFT_INV_COL			\
++	}
++
++GLOBAL(void)
++jpeg_idct_islow_sse2 (
++	j_decompress_ptr cinfo,
++	jpeg_component_info * compptr,
++	JCOEFPTR coef_block,
++	JSAMPARRAY output_buf,
++	JDIMENSION output_col)
++{
++	__declspec(align(16)) char workbuf[128];
++
++	Ipp16u*		quantptr;
++	quantptr = (Ipp16u*)compptr->dct_table;
++
++  __asm {
++	mov         esi, coef_block
++	mov         edx, quantptr
++
++	; Process rows.
++
++	movdqu      xmm0, QWORD PTR [esi+0]
++	pmullw      xmm0, QWORD PTR [edx+0]
++	movdqu      xmm4, QWORD PTR [esi+64]
++	pmullw      xmm4, QWORD PTR [edx+64]
++	IDCT_ROWS(sse2_tab_i_04, sse2_round_i_0, sse2_round_i_4)
++	movdqa      [workbuf+0*16], xmm1
++	movdqa      [workbuf+4*16], xmm5
++
++	movdqu      xmm0, QWORD PTR [esi+16]
++	pmullw      xmm0, QWORD PTR [edx+16]
++	movdqu      xmm4, QWORD PTR [esi+112]
++	pmullw      xmm4, QWORD PTR [edx+112]
++	IDCT_ROWS(sse2_tab_i_17, sse2_round_i_1, sse2_round_i_7)
++	movdqa      [workbuf+1*16], xmm1
++	movdqa      [workbuf+7*16], xmm5
++
++	movdqu      xmm0, QWORD PTR [esi+32]
++	pmullw      xmm0, QWORD PTR [edx+32]
++	movdqu      xmm4, QWORD PTR [esi+96]
++	pmullw      xmm4, QWORD PTR [edx+96]
++	IDCT_ROWS(sse2_tab_i_26, sse2_round_i_2, sse2_round_i_6);
++	movdqa      [workbuf+2*16], xmm1
++	movdqa      [workbuf+6*16], xmm5
++
++	movdqu      xmm0, QWORD PTR [esi+48]
++	pmullw      xmm0, QWORD PTR [edx+48]
++	movdqu      xmm4, QWORD PTR [esi+80]
++	pmullw      xmm4, QWORD PTR [edx+80]
++	IDCT_ROWS(sse2_tab_i_35, sse2_round_i_3, sse2_round_i_5);
++	movdqa      xmm3, xmm1
++	movdqa      xmm0, xmm5
++
++	; Process columns. Output is into XMM2-XMM7 and workbuf.
++
++	IDCT_COLUMNS(workbuf+0, workbuf+0)
++
++	; Read through workbuf/registers and write to output matrix.
++
++	mov	  edx, output_col
++	mov	  ecx, output_buf
++
++	; We'll do rows 4-7 first to free up XMM registers to do rows 0-3
++	; later on. We need two registers to do rows 0 and 1.
++
++	movdqa    xmm4, XMMWORD PTR sse2_const_128
++
++	; Do rows 4 and 5 in xmm2 and xmm7.
++
++	paddw	  xmm2, xmm4
++	paddw	  xmm7, xmm4
++	packuswb  xmm2, xmm7
++	mov	  eax, DWORD PTR [ecx+16]
++	movq	  qword ptr [eax+edx], xmm2
++	mov	  ebx, [ecx+20]
++	movhpd	  qword ptr [ebx+edx], xmm2
++
++	; Do rows 6 and 7 in xmm3 and xmm5.
++
++	paddw	  xmm3, xmm4
++	paddw	  xmm5, xmm4
++	packuswb  xmm3, xmm5
++	mov	  eax, DWORD PTR [ecx+24]
++	movq	  qword ptr [eax+edx], xmm3
++	mov	  ebx, [ecx+28]
++	movhpd	  qword ptr [ebx+edx], xmm3
++
++	; Do rows 0 and 1 in from workbuf. Reuse xmm2 and xmm3 for now.
++
++	movdqa	  xmm2, XMMWORD PTR workbuf
++	movdqa	  xmm3, XMMWORD PTR workbuf+16
++	paddw	  xmm2, xmm4
++	paddw	  xmm3, xmm4
++	packuswb  xmm2, xmm3
++	mov	  eax, DWORD PTR [ecx]
++	movq	  qword ptr [eax+edx], xmm2
++	mov	  ebx, DWORD PTR [ecx+4]
++	movhpd	  qword ptr [ebx+edx], xmm2
++
++	; Do rows 2 and 3 in xmm1 and xmm6.
++
++	paddw	  xmm1, xmm4
++	paddw	  xmm6, xmm4
++	packuswb  xmm1, xmm6
++	mov	  eax, DWORD PTR [ecx+8]
++	movq	  qword ptr [eax+edx], xmm1
++	mov	  ebx, DWORD PTR [ecx+12]
++	movhpd	  qword ptr [ebx+edx], xmm1
++
++	}
++}
++
+ #endif /* HAVE_SSE2_INTEL_MNEMONICS */
+ 
+ #endif /* DCT_ISLOW_SUPPORTED */

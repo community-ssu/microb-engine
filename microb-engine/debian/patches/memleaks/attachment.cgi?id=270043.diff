@@ -1,0 +1,502 @@
+# XPCNativeScriptableSharedMap::GetNewOrUsed memleak
+# Bug 201067  XPConnect leaks XPCNativeScriptableShared objects
+# Bug 180380  nsXPCComponents object and its wrapper leaked at shutdown
+Index: mozilla/js/src/xpconnect/src/nsXPConnect.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/js/src/xpconnect/src/nsXPConnect.cpp,v
+retrieving revision 1.112
+diff -u -8 -p -r1.112 nsXPConnect.cpp
+--- mozilla/js/src/xpconnect/src/nsXPConnect.cpp	4 Jun 2007 10:01:34 -0000	1.112
++++ mozilla/js/src/xpconnect/src/nsXPConnect.cpp	27 Jun 2007 19:16:32 -0000
+@@ -212,60 +212,46 @@ struct JSObjectRefcounts 
+             count = 0;
+         }
+         return count;
+     }
+ };
+ 
+ nsXPConnect::~nsXPConnect()
+ {
+-    // XXX It would be nice if we could get away with doing a GC here and also
+-    // calling Release on the natives no longer reachable via XPConnect. As
+-    // noted all over the place, this makes bad things happen since shutdown is
+-    // an unstable time for so many modules who have not planned well for it.
+-
+     NS_ASSERTION(!mCycleCollectionContext,
+                  "Didn't call FinishCycleCollection?");
+     nsCycleCollector_forgetRuntime(nsIProgrammingLanguage::JAVASCRIPT);
+     if (mObjRefcounts)
+     {
+         delete mObjRefcounts;
+         mObjRefcounts = NULL;
+     }
+ 
++    XPCPerThreadData::CleanupAllThreads();
+     mShuttingDown = JS_TRUE;
+-    { // scoped callcontext
+-        XPCCallContext ccx(NATIVE_CALLER);
+-        if(ccx.IsValid())
+-        {
+-            XPCWrappedNativeScope::SystemIsBeingShutDown(ccx);
+-            if(mRuntime)
+-                mRuntime->SystemIsBeingShutDown(&ccx);
+-                
+-        }
++    if (mRuntime) {
++        // Create our own JSContext rather than an XPCCallContext, since
++        // otherwise we will create a new safe JS context and attach a
++        // components object that won't get GCed.
++        JSContext *cx = JS_NewContext(mRuntime->GetJSRuntime(), 8192);
++        JS_BeginRequest(cx);
++
++        // XXX Call even if |mRuntime| null?
++        XPCWrappedNativeScope::SystemIsBeingShutDown(cx);
++
++        mRuntime->SystemIsBeingShutDown(cx);
++
++        JS_EndRequest(cx);
++        JS_DestroyContext(cx);
+     }
+ 
+     NS_IF_RELEASE(mContextStack);
+     NS_IF_RELEASE(mDefaultSecurityManager);
+ 
+-    // Unfortunately calling CleanupAllThreads before the stuff above
+-    // (esp. SystemIsBeingShutDown) causes too many bad things to happen
+-    // as the Release calls propagate. See the comment in this function in
+-    // revision 1.35 of this file.
+-    //
+-    // I filed a bug on xpcom regarding the bad things that happen
+-    // if people try to create components during shutdown.
+-    // http://bugzilla.mozilla.org/show_bug.cgi?id=37058
+-    //
+-    // Also, we just plain need the context stack for at least the current
+-    // thread to be in place. Unfortunately, this will leak stuff on the
+-    // stacks' safeJSContexts. But, this is a shutdown leak only.
+-
+-    XPCPerThreadData::CleanupAllThreads();
+-
+     // shutdown the logging system
+     XPC_LOG_FINISH();
+ 
+     delete mRuntime;
+ 
+     gSelf = nsnull;
+     gOnceAliveNowDead = JS_TRUE;
+ }
+Index: mozilla/js/src/xpconnect/src/xpcjsid.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/js/src/xpconnect/src/xpcjsid.cpp,v
+retrieving revision 1.69
+diff -u -8 -p -r1.69 xpcjsid.cpp
+--- mozilla/js/src/xpconnect/src/xpcjsid.cpp	17 Sep 2006 03:14:43 -0000	1.69
++++ mozilla/js/src/xpconnect/src/xpcjsid.cpp	27 Jun 2007 19:16:35 -0000
+@@ -973,19 +973,21 @@ nsJSCID::HasInstance(nsIXPConnectWrapped
+ 
+ JSObject *
+ xpc_NewIDObject(JSContext *cx, JSObject* jsobj, const nsID& aID)
+ {
+     JSObject *obj = nsnull;
+ 
+     char* idString = aID.ToString();
+     if(idString)
+-    {
++    { 
++        nsJSID* nsjsid = nsJSID::NewID(idString);
+         nsCOMPtr<nsIJSID> iid =
+-            dont_AddRef(NS_STATIC_CAST(nsIJSID*, nsJSID::NewID(idString)));
++            dont_AddRef(NS_STATIC_CAST(nsIJSID*, nsjsid));
++        //printf("idString %s, %p\n", idString, (void*)nsjsid);
+         PR_Free(idString);
+         if(iid)
+         {
+             nsXPConnect* xpc = nsXPConnect::GetXPConnect();
+             if(xpc)
+             {
+                 nsCOMPtr<nsIXPConnectJSObjectHolder> holder;
+                 nsresult rv = xpc->WrapNative(cx, jsobj,
+Index: mozilla/js/src/xpconnect/src/xpcjsruntime.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/js/src/xpconnect/src/xpcjsruntime.cpp,v
+retrieving revision 1.53
+diff -u -8 -p -r1.53 xpcjsruntime.cpp
+--- mozilla/js/src/xpconnect/src/xpcjsruntime.cpp	15 Jun 2007 06:44:20 -0000	1.53
++++ mozilla/js/src/xpconnect/src/xpcjsruntime.cpp	27 Jun 2007 19:16:36 -0000
+@@ -645,25 +645,25 @@ WrappedJSShutdownMarker(JSDHashTable *ta
+ 
+ JS_STATIC_DLL_CALLBACK(JSDHashOperator)
+ DetachedWrappedNativeProtoShutdownMarker(JSDHashTable *table, JSDHashEntryHdr *hdr,
+                                          uint32 number, void *arg)
+ {
+     XPCWrappedNativeProto* proto = 
+         (XPCWrappedNativeProto*)((JSDHashEntryStub*)hdr)->key;
+ 
+-    proto->SystemIsBeingShutDown(*((XPCCallContext*)arg));
++    proto->SystemIsBeingShutDown((JSContext*)arg);
+     return JS_DHASH_NEXT;
+ }
+ 
+-void XPCJSRuntime::SystemIsBeingShutDown(XPCCallContext* ccx)
++void XPCJSRuntime::SystemIsBeingShutDown(JSContext* cx)
+ {
+     if(mDetachedWrappedNativeProtoMap)
+         mDetachedWrappedNativeProtoMap->
+-            Enumerate(DetachedWrappedNativeProtoShutdownMarker, ccx);
++            Enumerate(DetachedWrappedNativeProtoShutdownMarker, cx);
+ }
+ 
+ XPCJSRuntime::~XPCJSRuntime()
+ {
+ #ifdef XPC_DUMP_AT_SHUTDOWN
+     {
+     // count the total JSContexts in use
+     JSContext* iter = nsnull;
+Index: mozilla/js/src/xpconnect/src/xpcprivate.h
+===================================================================
+RCS file: /cvsroot/mozilla/js/src/xpconnect/src/xpcprivate.h,v
+retrieving revision 1.215
+diff -u -8 -p -r1.215 xpcprivate.h
+--- mozilla/js/src/xpconnect/src/xpcprivate.h	2 Jun 2007 15:11:52 -0000	1.215
++++ mozilla/js/src/xpconnect/src/xpcprivate.h	27 Jun 2007 19:16:38 -0000
+@@ -667,17 +667,17 @@ public:
+     static JSBool JS_DLL_CALLBACK GCCallback(JSContext *cx, JSGCStatus status);
+ 
+     inline void AddVariantRoot(XPCTraceableVariant* variant);
+     inline void AddWrappedJSRoot(nsXPCWrappedJS* wrappedJS);
+     inline void AddObjectHolderRoot(XPCJSObjectHolder* holder);
+ 
+     void DebugDump(PRInt16 depth);
+ 
+-    void SystemIsBeingShutDown(XPCCallContext* ccx);
++    void SystemIsBeingShutDown(JSContext* cx);
+ 
+     PRThread* GetThreadRunningGC() const {return mThreadRunningGC;}
+ 
+     ~XPCJSRuntime();
+ 
+ #ifdef XPC_CHECK_WRAPPERS_AT_SHUTDOWN
+    void DEBUG_AddWrappedNative(nsIXPConnectWrappedNative* wrapper)
+         {XPCAutoLock lock(GetMapLock());
+@@ -1125,17 +1125,17 @@ public:
+ 
+     void RemoveWrappedNativeProtos();
+ 
+     static XPCWrappedNativeScope*
+     FindInJSObjectScope(XPCCallContext& ccx, JSObject* obj,
+                         JSBool OKIfNotInitialized = JS_FALSE);
+ 
+     static void
+-    SystemIsBeingShutDown(XPCCallContext& ccx);
++    SystemIsBeingShutDown(JSContext* cx);
+ 
+     static void
+     TraceJS(JSTracer* trc, XPCJSRuntime* rt);
+ 
+     static void
+     FinishedMarkPhaseOfGC(JSContext* cx, XPCJSRuntime* rt);
+ 
+     static void
+@@ -1760,17 +1760,17 @@ public:
+     XPCLock* GetLock() const
+         {return ClassIsThreadSafe() ? GetRuntime()->GetMapLock() : nsnull;}
+ 
+     void SetScriptableInfo(XPCNativeScriptableInfo* si)
+         {NS_ASSERTION(!mScriptableInfo, "leak here!"); mScriptableInfo = si;}
+ 
+     void JSProtoObjectFinalized(JSContext *cx, JSObject *obj);
+ 
+-    void SystemIsBeingShutDown(XPCCallContext& ccx);
++    void SystemIsBeingShutDown(JSContext* cx);
+ 
+     void DebugDump(PRInt16 depth);
+ 
+     void TraceJS(JSTracer* trc)
+     {
+         if(mJSProtoObject)
+         {
+             JS_CALL_OBJECT_TRACER(trc, mJSProtoObject,
+@@ -2018,17 +2018,17 @@ public:
+                            XPCWrappedNativeScope* aOldScope,
+                            XPCWrappedNativeScope* aNewScope,
+                            JSObject* aNewParent,
+                            nsISupports* aCOMObj,
+                            XPCWrappedNative** aWrapper);
+ 
+     void FlatJSObjectFinalized(JSContext *cx, JSObject *obj);
+ 
+-    void SystemIsBeingShutDown(XPCCallContext& ccx);
++    void SystemIsBeingShutDown(JSContext* cx);
+ 
+ #ifdef XPC_DETECT_LEADING_UPPERCASE_ACCESS_ERRORS
+     // This will try to find a member that is of the form "camelCased"
+     // but was accessed from JS using "CamelCased". This is here to catch
+     // mistakes caused by the confusion magnet that JS methods are by
+     // convention 'foo' while C++ members are by convention 'Foo'.
+     static void
+     HandlePossibleNameCaseError(XPCCallContext& ccx,
+Index: mozilla/js/src/xpconnect/src/xpcthreadcontext.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/js/src/xpconnect/src/xpcthreadcontext.cpp,v
+retrieving revision 1.48
+diff -u -8 -p -r1.48 xpcthreadcontext.cpp
+--- mozilla/js/src/xpconnect/src/xpcthreadcontext.cpp	5 May 2007 05:55:47 -0000	1.48
++++ mozilla/js/src/xpconnect/src/xpcthreadcontext.cpp	27 Jun 2007 19:16:38 -0000
+@@ -443,16 +443,18 @@ GetThreadStackLimit()
+     stackLimit = (currentStackAddr + kStackSize > currentStackAddr)
+                  ? currentStackAddr + kStackSize
+                  : (jsuword) -1;
+ #endif
+ 
+   return stackLimit;
+ }
+ 
++MOZ_DECL_CTOR_COUNTER(xpcPerThreadData)
++
+ XPCPerThreadData::XPCPerThreadData()
+     :   mJSContextStack(new XPCJSContextStack()),
+         mNextThread(nsnull),
+         mCallContext(nsnull),
+         mResolveName(0),
+         mResolvingWrapper(nsnull),
+         mMostRecentJSContext(nsnull),
+         mMostRecentXPCContext(nsnull),
+@@ -460,16 +462,17 @@ XPCPerThreadData::XPCPerThreadData()
+         mException(nsnull),
+         mExceptionManagerNotAvailable(JS_FALSE),
+         mAutoRoots(nsnull),
+         mStackLimit(GetThreadStackLimit())
+ #ifdef XPC_CHECK_WRAPPER_THREADSAFETY
+       , mWrappedNativeThreadsafetyReportDepth(0)
+ #endif
+ {
++    MOZ_COUNT_CTOR(xpcPerThreadData);
+     if(gLock)
+     {
+         nsAutoLock lock(gLock);
+         mNextThread = gThreads;
+         gThreads = this;
+     }
+ }
+ 
+@@ -484,16 +487,18 @@ XPCPerThreadData::Cleanup()
+     mJSContextStack = nsnull;
+ 
+     if(mCallContext)
+         mCallContext->SystemIsBeingShutDown();
+ }
+ 
+ XPCPerThreadData::~XPCPerThreadData()
+ {
++    MOZ_COUNT_DTOR(xpcPerThreadData);
++
+     Cleanup();
+ 
+     // Unlink 'this' from the list of threads.
+     if(gLock)
+     {
+         nsAutoLock lock(gLock);
+         if(gThreads == this)
+             gThreads = mNextThread;
+Index: mozilla/js/src/xpconnect/src/xpcwrappednative.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/js/src/xpconnect/src/xpcwrappednative.cpp,v
+retrieving revision 1.145
+diff -u -8 -p -r1.145 xpcwrappednative.cpp
+--- mozilla/js/src/xpconnect/src/xpcwrappednative.cpp	25 Jun 2007 14:23:26 -0000	1.145
++++ mozilla/js/src/xpconnect/src/xpcwrappednative.cpp	27 Jun 2007 19:16:40 -0000
+@@ -1012,37 +1012,50 @@ XPCWrappedNative::FlatJSObjectFinalized(
+ 
+     // Note that it's not safe to touch mNativeWrapper here since it's
+     // likely that it has already been finalized.
+ 
+     Release();
+ }
+ 
+ void
+-XPCWrappedNative::SystemIsBeingShutDown(XPCCallContext& ccx)
++XPCWrappedNative::SystemIsBeingShutDown(JSContext* cx)
+ {
++#ifdef DEBUG_xpc_hacker
++    {
++        printf("Removing root for still-live XPCWrappedNative %p wrapping:\n",
++               NS_STATIC_CAST(void*, this));
++        for(PRUint16 i = 0, i_end = mSet->GetInterfaceCount(); i < i_end; ++i)
++        {
++            nsXPIDLCString name;
++            mSet->GetInterfaceAt(i)->GetInterfaceInfo()
++                ->GetName(getter_Copies(name));
++            printf("  %s\n", name.get());
++        }
++    }
++#endif
+     DEBUG_TrackShutdownWrapper(this);
+ 
+     if(!IsValid())
+         return;
+ 
+     // The long standing strategy is to leak some objects still held at shutdown.
+     // The general problem is that propagating release out of xpconnect at
+     // shutdown time causes a world of problems.
+ 
+     // We leak mIdentity (see above).
+ 
+     // short circuit future finalization
+-    JS_SetPrivate(ccx, mFlatJSObject, nsnull);
++    JS_SetPrivate(cx, mFlatJSObject, nsnull);
+     mFlatJSObject = nsnull; // This makes 'IsValid()' return false.
+ 
+     XPCWrappedNativeProto* proto = GetProto();
+ 
+     if(HasProto())
+-        proto->SystemIsBeingShutDown(ccx);
++        proto->SystemIsBeingShutDown(cx);
+ 
+     if(mScriptableInfo &&
+        (!HasProto() ||
+         (proto && proto->GetScriptableInfo() != mScriptableInfo)))
+     {
+         delete mScriptableInfo;
+     }
+ 
+@@ -1051,17 +1064,17 @@ XPCWrappedNative::SystemIsBeingShutDown(
+     XPCWrappedNativeTearOffChunk* chunk;
+     for(chunk = &mFirstChunk; chunk; chunk = chunk->mNextChunk)
+     {
+         XPCWrappedNativeTearOff* to = chunk->mTearOffs;
+         for(int i = XPC_WRAPPED_NATIVE_TEAROFFS_PER_CHUNK-1; i >= 0; i--, to++)
+         {
+             if(to->GetJSObject())
+             {
+-                JS_SetPrivate(ccx, to->GetJSObject(), nsnull);
++                JS_SetPrivate(cx, to->GetJSObject(), nsnull);
+ #ifdef XPC_IDISPATCH_SUPPORT
+                 if(to->IsIDispatch())
+                     delete to->GetIDispatchInfo();
+ #endif
+                 to->SetJSObject(nsnull);
+             }
+             // We leak the tearoff mNative
+             // (for the same reason we leak mIdentity - see above).
+Index: mozilla/js/src/xpconnect/src/xpcwrappednativeproto.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/js/src/xpconnect/src/xpcwrappednativeproto.cpp,v
+retrieving revision 1.16
+diff -u -8 -p -r1.16 xpcwrappednativeproto.cpp
+--- mozilla/js/src/xpconnect/src/xpcwrappednativeproto.cpp	17 Jun 2006 01:03:10 -0000	1.16
++++ mozilla/js/src/xpconnect/src/xpcwrappednativeproto.cpp	27 Jun 2007 19:16:40 -0000
+@@ -139,17 +139,17 @@ XPCWrappedNativeProto::JSProtoObjectFina
+ 
+     GetRuntime()->GetDetachedWrappedNativeProtoMap()->Remove(this);
+     GetRuntime()->GetDyingWrappedNativeProtoMap()->Add(this);
+ 
+     mJSProtoObject = nsnull;
+ }
+ 
+ void
+-XPCWrappedNativeProto::SystemIsBeingShutDown(XPCCallContext& ccx)
++XPCWrappedNativeProto::SystemIsBeingShutDown(JSContext* cx)
+ {
+     // Note that the instance might receive this call multiple times
+     // as we walk to here from various places.
+ 
+ #ifdef XPC_TRACK_PROTO_STATS
+     static PRBool DEBUG_DumpedStats = PR_FALSE;
+     if(!DEBUG_DumpedStats)
+     {
+@@ -157,17 +157,17 @@ XPCWrappedNativeProto::SystemIsBeingShut
+                gDEBUG_LiveProtoCount);
+         DEBUG_DumpedStats = PR_TRUE;
+     }
+ #endif
+ 
+     if(mJSProtoObject)
+     {
+         // short circuit future finalization
+-        JS_SetPrivate(ccx, mJSProtoObject, nsnull);
++        JS_SetPrivate(cx, mJSProtoObject, nsnull);
+         mJSProtoObject = nsnull;
+     }
+ }
+ 
+ // static
+ XPCWrappedNativeProto*
+ XPCWrappedNativeProto::GetNewOrUsed(XPCCallContext& ccx,
+                                     XPCWrappedNativeScope* Scope,
+Index: mozilla/js/src/xpconnect/src/xpcwrappednativescope.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/js/src/xpconnect/src/xpcwrappednativescope.cpp,v
+retrieving revision 1.45
+diff -u -8 -p -r1.45 xpcwrappednativescope.cpp
+--- mozilla/js/src/xpconnect/src/xpcwrappednativescope.cpp	22 Jun 2007 03:11:41 -0000	1.45
++++ mozilla/js/src/xpconnect/src/xpcwrappednativescope.cpp	27 Jun 2007 19:16:41 -0000
+@@ -458,63 +458,63 @@ XPCWrappedNativeScope::KillDyingScopes()
+         delete cur;
+         cur = next;
+     }
+     gDyingScopes = nsnull;
+ }
+ 
+ struct ShutdownData
+ {
+-    ShutdownData(XPCCallContext& accx)
+-        : ccx(accx), wrapperCount(0),
++    ShutdownData(JSContext* acx)
++        : cx(acx), wrapperCount(0),
+           sharedProtoCount(0), nonSharedProtoCount(0) {}
+-    XPCCallContext& ccx;
++    JSContext* cx;
+     int wrapperCount;
+     int sharedProtoCount;
+     int nonSharedProtoCount;
+ };
+ 
+ JS_STATIC_DLL_CALLBACK(JSDHashOperator)
+ WrappedNativeShutdownEnumerator(JSDHashTable *table, JSDHashEntryHdr *hdr,
+                                 uint32 number, void *arg)
+ {
+     ShutdownData* data = (ShutdownData*) arg;
+     XPCWrappedNative* wrapper = ((Native2WrappedNativeMap::Entry*)hdr)->value;
+ 
+     if(wrapper->IsValid())
+     {
+         if(wrapper->HasProto() && !wrapper->HasSharedProto())
+             data->nonSharedProtoCount++;
+-        wrapper->SystemIsBeingShutDown(data->ccx);
++        wrapper->SystemIsBeingShutDown(data->cx);
+         data->wrapperCount++;
+     }
+     return JS_DHASH_REMOVE;
+ }
+ 
+ JS_STATIC_DLL_CALLBACK(JSDHashOperator)
+ WrappedNativeProtoShutdownEnumerator(JSDHashTable *table, JSDHashEntryHdr *hdr,
+                                      uint32 number, void *arg)
+ {
+     ShutdownData* data = (ShutdownData*) arg;
+     ((ClassInfo2WrappedNativeProtoMap::Entry*)hdr)->value->
+-        SystemIsBeingShutDown(data->ccx);
++        SystemIsBeingShutDown(data->cx);
+     data->sharedProtoCount++;
+     return JS_DHASH_REMOVE;
+ }
+ 
+ //static
+ void
+-XPCWrappedNativeScope::SystemIsBeingShutDown(XPCCallContext& ccx)
++XPCWrappedNativeScope::SystemIsBeingShutDown(JSContext* cx)
+ {
+     DEBUG_TrackScopeTraversal();
+     DEBUG_TrackScopeShutdown();
+ 
+     int liveScopeCount = 0;
+ 
+-    ShutdownData data(ccx);
++    ShutdownData data(cx);
+ 
+     XPCWrappedNativeScope* cur;
+ 
+     // First move all the scopes to the dying list.
+ 
+     cur = gScopes;
+     while(cur)
+     {

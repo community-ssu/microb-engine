@@ -1,0 +1,25 @@
+Index: mozilla/toolkit/toolkit-tiers.mk
+===================================================================
+--- mozilla.orig/toolkit/toolkit-tiers.mk
++++ mozilla/toolkit/toolkit-tiers.mk
+@@ -145,16 +145,20 @@
+ 		xpfe/appshell \
+ 		$(NULL)
+ 
+ # Java Embedding Plugin
+ ifneq (,$(filter mac cocoa,$(MOZ_WIDGET_TOOLKIT)))
+ tier_gecko_dirs += plugin/oji/JEP
+ endif
+ 
++ifdef MOZ_BRANDING_DIRECTORY
++tier_toolkit_dirs += $(MOZ_BRANDING_DIRECTORY)
++endif
++
+ ifdef MOZ_XMLEXTRAS
+ tier_gecko_dirs += extensions/xmlextras
+ endif
+ 
+ ifdef MOZ_WEBSERVICES
+ tier_gecko_dirs += extensions/webservices
+ endif
+ 

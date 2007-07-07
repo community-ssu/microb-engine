@@ -1,0 +1,291 @@
+# Support for gnomevfs write functionality
+# Required nsIOutputProtocolHandler.h patch, and some fixes in nsIWebPersist class
+Index: mozilla/extensions/gnomevfs/nsGnomeVFSProtocolHandler.cpp
+===================================================================
+--- mozilla.orig/extensions/gnomevfs/nsGnomeVFSProtocolHandler.cpp
++++ mozilla/extensions/gnomevfs/nsGnomeVFSProtocolHandler.cpp
+@@ -47,16 +47,17 @@
+ #include "nsIGenericFactory.h"
+ #include "nsIInterfaceRequestorUtils.h"
+ #include "nsIPrefService.h"
+ #include "nsIPrefBranch2.h"
+ #include "nsIObserver.h"
+ #include "nsThreadUtils.h"
+ #include "nsProxyRelease.h"
+ #include "nsIAuthPrompt.h"
++#include "nsIOutputProtocolHandler.h"
+ #include "nsIStringBundle.h"
+ #include "nsIStandardURL.h"
+ #include "nsIURL.h"
+ #include "nsMimeTypes.h"
+ #include "nsNetUtil.h"
+ #include "nsINetUtil.h"
+ #include "nsAutoPtr.h"
+ #include "nsError.h"
+@@ -335,16 +336,175 @@
+   const GnomeVFSFileInfo *ia = (const GnomeVFSFileInfo *) a;
+   const GnomeVFSFileInfo *ib = (const GnomeVFSFileInfo *) b;
+ 
+   return strcasecmp(ia->name, ib->name);
+ }
+ 
+ //-----------------------------------------------------------------------------
+ 
++class nsGnomeVFSOutputStream : public nsIOutputStream
++{
++public:
++    NS_DECL_ISUPPORTS
++    NS_DECL_NSIOUTPUTSTREAM
++
++    nsGnomeVFSOutputStream()
++      : mHandle(nsnull)
++    {}
++
++    ~nsGnomeVFSOutputStream()
++    {}
++
++    NS_IMETHODIMP Create(nsIURI *aURI);
++
++    void SetStream(nsIOutputStream *aStream)
++    {
++        mStream = aStream;
++    }
++
++    void SetHandle(GnomeVFSHandle *aHandle)
++    {
++        mHandle = aHandle;
++    }
++
++    GnomeVFSResult CreateDirWithParents (const gchar *aPath, int aMode);
++
++private:
++    nsCOMPtr<nsIOutputStream> mStream;
++    GnomeVFSHandle            *mHandle;
++};
++
++GnomeVFSResult nsGnomeVFSOutputStream::CreateDirWithParents(const gchar *aPath, int aMode)
++{
++    gchar *fn, *p;
++    if (aPath == NULL || *aPath == '\0')
++    {
++        return GNOME_VFS_ERROR_CANCELLED;
++    }
++
++    fn = g_strdup (aPath); //switch to NS_
++    if (g_path_is_absolute (fn))
++        p = (gchar *) g_path_skip_root (fn);
++    else
++        p = fn;
++
++    do
++    {
++        while (*p && !G_IS_DIR_SEPARATOR (*p))
++            p++;
++
++        if (!*p)
++            p = NULL;
++        else
++            *p = '\0';
++
++        if (gnome_vfs_make_directory (fn, aMode) == -1)
++        {
++            g_free (fn);
++            return GNOME_VFS_ERROR_CANCELLED;
++        }
++        if (p)
++        {
++            *p++ = G_DIR_SEPARATOR;
++            while (*p && G_IS_DIR_SEPARATOR (*p))
++                p++;
++        }
++    }
++    while (p);
++
++    g_free (fn);
++
++    return GNOME_VFS_OK;
++}
++
++/* void Init (); */
++NS_IMETHODIMP nsGnomeVFSOutputStream::Create(nsIURI *aURI)
++{
++    GnomeVFSHandle   *handle;
++    GnomeVFSResult    result;
++    nsCAutoString     uri;
++    aURI->GetSpec(uri);
++    result = gnome_vfs_create(&handle, uri.get(), GNOME_VFS_OPEN_WRITE, FALSE, 0777);
++    if (result != GNOME_VFS_OK)
++    {
++        char *folder_buf = g_strdup(uri.get());
++        char *last_slash = g_strrstr(folder_buf, "/");
++        gint length = (last_slash - folder_buf) / sizeof(char);
++        char *newfolder = g_strndup(folder_buf, length);
++        result = CreateDirWithParents(newfolder, 0755);
++        if (result != GNOME_VFS_OK)
++        {
++            return NS_ERROR_FAILURE;
++        }
++        result = gnome_vfs_create(&handle, uri.get(), GNOME_VFS_OPEN_WRITE, FALSE, 0777);
++        if (result != GNOME_VFS_OK)
++        {
++            return NS_ERROR_NOT_IMPLEMENTED;
++        }
++    }
++    SetHandle(handle);
++    return result;
++}
++
++/* void close (); */
++NS_IMETHODIMP nsGnomeVFSOutputStream::Close()
++{
++    GnomeVFSResult result;
++    result = gnome_vfs_close(mHandle);
++    if (result != GNOME_VFS_OK)
++    {
++        return NS_ERROR_NOT_IMPLEMENTED;
++    }
++    return result;
++}
++
++/* void flush (); */
++NS_IMETHODIMP nsGnomeVFSOutputStream::Flush()
++{
++    return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++/* unsigned long write (in string aBuf, in unsigned long aCount); */
++
++//NS_IMETHODIMP nsGnomeVFSOutputStream::write(string aBuf, unsigned long aCount)
++NS_IMETHODIMP nsGnomeVFSOutputStream::Write(const char *aBuf, PRUint32 aCount, PRUint32 *_retval)
++{
++    GnomeVFSResult result;
++    GnomeVFSFileSize temp;
++    if(!mHandle)
++        return NS_ERROR_FAILURE;
++
++    result = gnome_vfs_write(mHandle, aBuf, (GnomeVFSFileSize)aCount, &temp);
++    *_retval = (PRUint32) temp;
++    if (result != GNOME_VFS_OK)
++    {
++        return NS_ERROR_NOT_IMPLEMENTED;
++    }
++    return NS_OK;
++}
++
++/* unsigned long writeFrom (in nsIInputStream aFromStream, in unsigned long aCount); */
++NS_IMETHODIMP nsGnomeVFSOutputStream::WriteFrom(nsIInputStream *aFromStream, PRUint32 aCount, PRUint32 *_retval)
++{
++    return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++/* [noscript] unsigned long writeSegments (in nsReadSegmentFun aReader, in voidPtr aClosure, in unsigned long aCount); */
++NS_IMETHODIMP nsGnomeVFSOutputStream::WriteSegments(nsReadSegmentFun aReader, void * aClosure, PRUint32 aCount, PRUint32 *_retval)
++{
++    return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++/* boolean isNonBlocking (); */
++NS_IMETHODIMP nsGnomeVFSOutputStream::IsNonBlocking(PRBool *_retval)
++{
++    return NS_ERROR_NOT_IMPLEMENTED;
++}
++
+ class nsGnomeVFSInputStream : public nsIInputStream
+ {
+   public:
+     NS_DECL_ISUPPORTS
+     NS_DECL_NSIINPUTSTREAM
+ 
+     nsGnomeVFSInputStream(const nsCString &uriSpec)
+       : mSpec(uriSpec)
+@@ -648,16 +808,17 @@
+   else
+   {
+     rv = NS_DispatchToMainThread(ev);
+   }
+   return rv;
+ }
+ 
+ NS_IMPL_THREADSAFE_ISUPPORTS1(nsGnomeVFSInputStream, nsIInputStream)
++NS_IMPL_THREADSAFE_ISUPPORTS1(nsGnomeVFSOutputStream, nsIOutputStream)
+ 
+ NS_IMETHODIMP
+ nsGnomeVFSInputStream::Close()
+ {
+   if (mHandle)
+   {
+     gnome_vfs_close(mHandle);
+     mHandle = nsnull;
+@@ -756,32 +917,34 @@
+   *aResult = PR_FALSE;
+   return NS_OK;
+ }
+ 
+ //-----------------------------------------------------------------------------
+ 
+ class nsGnomeVFSProtocolHandler : public nsIProtocolHandler
+                                 , public nsIObserver
++                                , public nsIOutputProtocolHandler
+ {
+   public:
+     NS_DECL_ISUPPORTS
+     NS_DECL_NSIPROTOCOLHANDLER
+     NS_DECL_NSIOBSERVER
++    NS_DECL_NSIOUTPUTPROTOCOLHANDLER
+ 
+     nsresult Init();
+ 
+   private:
+     void   InitSupportedProtocolsPref(nsIPrefBranch *prefs);
+     PRBool IsSupportedProtocol(const nsCString &spec);
+ 
+     nsCString mSupportedProtocols;
+ };
+ 
+-NS_IMPL_ISUPPORTS2(nsGnomeVFSProtocolHandler, nsIProtocolHandler, nsIObserver)
++NS_IMPL_ISUPPORTS3(nsGnomeVFSProtocolHandler, nsIProtocolHandler, nsIOutputProtocolHandler, nsIObserver)
+ 
+ nsresult
+ nsGnomeVFSProtocolHandler::Init()
+ {
+ #ifdef PR_LOGGING
+   sGnomeVFSLog = PR_NewLogModule("gnomevfs");
+ #endif
+ 
+@@ -942,16 +1105,36 @@
+     rv = NS_NewInputStreamChannel(aResult, aURI, stream,
+                                   NS_LITERAL_CSTRING(UNKNOWN_CONTENT_TYPE));
+     if (NS_SUCCEEDED(rv))
+       stream->SetChannel(*aResult);
+   }
+   return rv;
+ }
+ 
++/* nsIOutputStream newOutputStreamFromURI (in nsIURI aURI); */
++NS_IMETHODIMP nsGnomeVFSProtocolHandler::NewOutputStreamFromURI(nsIURI *aURI, nsIOutputStream **_retval)
++{
++  NS_ENSURE_ARG_POINTER(aURI);
++  nsCAutoString spec;
++  nsresult rv = aURI->GetSpec(spec);
++  if (NS_FAILED(rv))
++    return rv;
++
++  nsRefPtr<nsGnomeVFSOutputStream> stream = new nsGnomeVFSOutputStream();
++  if (!stream)
++  {
++    return NS_ERROR_OUT_OF_MEMORY;
++  }
++  rv = stream->Create(aURI);
++  NS_ENSURE_SUCCESS(rv, rv);
++  NS_ADDREF(*_retval = stream);
++  return rv;
++}
++
+ NS_IMETHODIMP
+ nsGnomeVFSProtocolHandler::AllowPort(PRInt32 aPort,
+                                      const char *aScheme,
+                                      PRBool *aResult)
+ {
+   // Don't override anything.
+   *aResult = PR_FALSE; 
+   return NS_OK;

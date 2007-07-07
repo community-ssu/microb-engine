@@ -1,0 +1,29 @@
+# Fixed proper displaying of http://www.ajaxdaddy.com/35mm-photo-viewer.php page
+--- mozilla/layout/style/nsCSSParser.cpp.orig	2007-06-02 17:50:31.000000000 +0300
++++ mozilla/layout/style/nsCSSParser.cpp	2007-06-02 17:57:38.000000000 +0300
+@@ -4723,21 +4723,25 @@ PRBool CSSParserImpl::ParseSingleValuePr
+     return ParsePositiveVariant(aErrorCode, aValue, VARIANT_HLPO, nsnull);
+   case eCSSProperty_max_width:
+     return ParsePositiveVariant(aErrorCode, aValue, VARIANT_HKLPO,
+                                 nsCSSProps::kWidthKTable);
+   case eCSSProperty_min_height:
+     return ParsePositiveVariant(aErrorCode, aValue, VARIANT_HLP, nsnull);
+   case eCSSProperty_min_width:
+     return ParsePositiveVariant(aErrorCode, aValue, VARIANT_HKLP,
+                                 nsCSSProps::kWidthKTable);
+   case eCSSProperty_opacity:
++#ifdef MOZ_CAIRO_GFX
+     return ParseVariant(aErrorCode, aValue, VARIANT_HN, nsnull);
++#else
++    return PR_FALSE;
++#endif
+   case eCSSProperty_orphans:
+   case eCSSProperty_widows:
+     return ParseVariant(aErrorCode, aValue, VARIANT_HI, nsnull);
+   case eCSSProperty_outline_color:
+     return ParseVariant(aErrorCode, aValue, VARIANT_HCK, 
+                         nsCSSProps::kOutlineColorKTable);
+   case eCSSProperty_outline_style:
+     return ParseVariant(aErrorCode, aValue, VARIANT_HOK | VARIANT_AUTO, 
+                         nsCSSProps::kOutlineStyleKTable);
+   case eCSSProperty_outline_width:

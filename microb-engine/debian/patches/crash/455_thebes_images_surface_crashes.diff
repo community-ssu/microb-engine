@@ -1,0 +1,194 @@
+# A lot of crashes was founded in 
+# http://content-uk.cricinfo.com/wc2007/content/current/story/285305.html
+# Thsi patch will fix some of them and some other
+Index: mozilla/gfx/src/thebes/nsThebesImage.cpp
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsThebesImage.cpp
++++ mozilla/gfx/src/thebes/nsThebesImage.cpp
+@@ -387,50 +387,51 @@
+     }
+ 
+     gfxFloat xscale = gfxFloat(aDWidth) / aSWidth;
+     gfxFloat yscale = gfxFloat(aDHeight) / aSHeight;
+ 
+     gfxRect srcRect(aSX, aSY, aSWidth, aSHeight);
+     gfxRect destRect(aDX, aDY, aDWidth, aDHeight);
+ 
+-		if (mNeedOptimize) {
+-			DelayedOptimize(nsnull, xscale, yscale);
+-			mNeedOptimize = PR_FALSE;
+-		} else {
+-			if (mOptSurface &&
+-					(mScaleX != xscale && fabs(fabs(mScaleX) - fabs(xscale)) > 0.12) ||
+-					(mScaleY != yscale && fabs(fabs(mScaleY) - fabs(yscale)) > 0.12)
+-					) {
+-				mNeedOptimize = PR_TRUE;
+-				mOptSurface = nsnull;
+-				mScaleOptimized = PR_FALSE;
+-				DelayedOptimize(nsnull, xscale, yscale);
+-				mNeedOptimize = PR_FALSE;
+-				if (mOptSurface)
+-					mScaleOptimized = PR_TRUE;
+-			}
+-		}
++    if (mNeedOptimize) {
++        DelayedOptimize(nsnull, xscale, yscale);
++        mNeedOptimize = PR_FALSE;
++    } else {
++        if (mOptSurface &&
++                (mScaleX != xscale && fabs(fabs(mScaleX) - fabs(xscale)) > 0.12) ||
++                (mScaleY != yscale && fabs(fabs(mScaleY) - fabs(yscale)) > 0.12)
++           ) {
++            mNeedOptimize = PR_TRUE;
++            mOptSurface = nsnull;
++            mScaleOptimized = PR_FALSE;
++            DelayedOptimize(nsnull, xscale, yscale);
++            mNeedOptimize = PR_FALSE;
++            if (mOptSurface)
++                mScaleOptimized = PR_TRUE;
++        }
++    }
+ 
+     if (!GetIsImageComplete()) {
+-      srcRect.IntersectRect(srcRect, mDecoded);
++      srcRect = srcRect.Intersect(gfxRect(mDecoded.x, mDecoded.y,
++                                  mDecoded.width, mDecoded.height));
+ 
+       // This happens when mDecoded.width or height is zero. bug 368427.
+-      if (NS_UNLIKELY(srcRect.width == 0 || srcRect.height == 0))
++      if (NS_UNLIKELY(srcRect.size.width == 0 || srcRect.size.height == 0))
+           return NS_OK;
+ 
+-      aDX += (PRInt32)((srcRect.x - aSX)*xscale);
+-      aDY += (PRInt32)((srcRect.y - aSY)*yscale);
++      aDX += (PRInt32)((srcRect.pos.x - aSX)*xscale);
++      aDY += (PRInt32)((srcRect.pos.y - aSY)*yscale);
+ 
+       // use '+ 1 - *scale' to get rid of rounding errors
+-      aDWidth  = (PRInt32)((srcRect.width)*xscale + 1 - xscale);
+-      aDHeight = (PRInt32)((srcRect.height)*yscale + 1 - yscale);
++      aDWidth  = (PRInt32)((srcRect.size.width)*xscale + 1 - xscale);
++      aDHeight = (PRInt32)((srcRect.size.height)*yscale + 1 - yscale);
+ 
+-      aSX = srcRect.x;
+-      aSY = srcRect.y;
++      aSX = srcRect.pos.x;
++      aSY = srcRect.pos.y;
+     }
+ 
+     // Reject over-wide or over-tall images.
+     if (!AllowedImageSize(aDWidth, aDHeight))
+         return NS_ERROR_FAILURE;
+ 
+     nsRefPtr<gfxPattern> pat;
+ 
+@@ -465,35 +466,36 @@
+         srcRect.pos.y = 0.0;
+         srcRect.size.width = dim.width;
+         srcRect.size.height = dim.height;
+ 
+         xscale = 1.0;
+         yscale = 1.0;
+     }
+ 
+-    if (!pat) {
+-        pat = new gfxPattern(ThebesSurface());
+-    }
+-
+     gfxMatrix mat;
+     if (mScaleOptimized) {
+ 			mat.Translate(gfxPoint(srcRect.pos.x * mScaleX, srcRect.pos.y * mScaleY));
+     } else {
+ 			mat.Translate(srcRect.pos);
+ 			mat.Scale(1.0/xscale, 1.0/yscale);
+ 		}
+ 
+     mat.Translate(-destRect.pos);
+ 
+     /* Translate the start point of the image (srcRect.pos)
+      * to coincide with the destination rectangle origin
+      */
+ 
+-    pat->SetMatrix(mat);
++    gfxASurface* surface = ThebesSurface();
++    if (!surface)
++        return NS_ERROR_FAILURE;
++    if (!pat)
++      pat = new gfxPattern(surface);
++	pat->SetMatrix(mat);
+ 
+     // XXX bug 324698
+ #ifndef XP_MACOSX
+     if (xscale > 1.0 || yscale > 1.0) {
+         // See bug 324698.  This is a workaround.
+         //
+         // Set the filter to CAIRO_FILTER_FAST if we're scaling up -- otherwise,
+         // pixman's sampling will sample transparency for the outside edges and we'll
+@@ -502,17 +504,17 @@
+         //
+         // This effectively disables smooth upscaling for images.
+         pat->SetFilter(0);
+     }
+ #endif
+ 
+     ctx->NewPath();
+     ctx->SetPattern(pat);
+-    ctx->Rectangle(dr);
++    ctx->Rectangle(destRect);
+     ctx->Fill();
+ 
+     return NS_OK;
+ }
+ 
+ nsresult
+ nsThebesImage::ThebesDrawTile(gfxContext *thebesContext,
+                               nsIDeviceContext* dx,
+@@ -663,19 +665,24 @@
+ {
+     return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ /* This is only used by the GIF decoder, via gfxImageFrame::DrawTo */
+ NS_IMETHODIMP
+ nsThebesImage::DrawToImage(nsIImage* aDstImage, PRInt32 aDX, PRInt32 aDY, PRInt32 aDWidth, PRInt32 aDHeight)
+ {
++    if (aDWidth <= 0.0 || aDHeight <= 0.0)
++        return NS_OK;
+     nsThebesImage *dstThebesImage = NS_STATIC_CAST(nsThebesImage*, aDstImage);
+ 
+-    nsRefPtr<gfxContext> dst = new gfxContext(dstThebesImage->ThebesSurface());
++    gfxASurface* surface = dstThebesImage->ThebesSurface();
++    if (!surface)
++        return NS_ERROR_FAILURE;
++    nsRefPtr<gfxContext> dst = new gfxContext(surface);
+ 
+     dst->NewPath();
+     // We don't use PixelSnappedRectangleAndSetPattern because if
+     // these coords aren't already pixel aligned, we've lost
+     // before we've even begun.
+     dst->Translate(gfxPoint(aDX, aDY));
+     dst->Rectangle(gfxRect(0, 0, aDWidth, aDHeight), PR_TRUE);
+     dst->Scale(double(aDWidth)/mWidth, double(aDHeight)/mHeight);
+Index: mozilla/gfx/src/thebes/nsThebesImage.h
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsThebesImage.h
++++ mozilla/gfx/src/thebes/nsThebesImage.h
+@@ -96,16 +96,18 @@
+ 
+     virtual PRInt8 GetAlphaDepth();
+     virtual void* GetBitInfo();
+     NS_IMETHOD LockImagePixels(PRBool aMaskPixels);
+     NS_IMETHOD UnlockImagePixels(PRBool aMaskPixels);
+ 
+     NS_IMETHOD GetSurface(gfxASurface **aSurface) {
+         *aSurface = ThebesSurface();
++        if (!*aSurface)
++            return NS_ERROR_FAILURE;
+         NS_ADDREF(*aSurface);
+         return NS_OK;
+     }
+ 
+     gfxASurface* ThebesSurface() {
+         if (mOptSurface)
+             return mOptSurface;
+ 

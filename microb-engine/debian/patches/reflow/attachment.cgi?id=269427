@@ -1,0 +1,1071 @@
+Index: reftests/bugs/370525-1-notref.html
+===================================================================
+RCS file: reftests/bugs/370525-1-notref.html
+diff -N reftests/bugs/370525-1-notref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-1-notref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,18 @@
++<!DOCTYPE HTML>
++<html>
++<head>
++  <title>Bug 370525 Anti-Reference Testcase</title>
++</head>
++<body>
++  <table style="border: 2px solid blue;">
++    <tr><td style="height: 10%">
++      <table style="height: 100%; border: 1px dotted red;">
++        <tr><td>Table 1</td></tr>
++      </table>
++      <table style="height: 100%; border: 1px dotted red;">
++        <tr><td>Table 2</td></tr>
++      </table>
++    </td></tr>
++  </table>
++</body>
++</html>
+Index: reftests/bugs/370525-1-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-1-ref.html
+diff -N reftests/bugs/370525-1-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-1-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,18 @@
++<!DOCTYPE HTML>
++<html>
++<head>
++  <title>Bug 370525 Reference Testcase</title>
++</head>
++<body>
++  <table style="border: 2px solid blue;">
++    <tr><td>
++      <table style="border: 1px dotted red;">
++        <tr><td>Table 1</td></tr>
++      </table>
++      <table style="border: 1px dotted red;">
++        <tr><td>Table 2</td></tr>
++      </table>
++    </td></tr>
++  </table>
++</body>
++</html>
+Index: reftests/bugs/370525-1.html
+===================================================================
+RCS file: reftests/bugs/370525-1.html
+diff -N reftests/bugs/370525-1.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-1.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,18 @@
++<!DOCTYPE HTML>
++<html>
++<head>
++  <title>Bug 370525 Testcase</title>
++</head>
++<body>
++  <table style="border: 2px solid blue;">
++    <tr><td>
++      <table style="height: 100%; border: 1px dotted red;">
++        <tr><td>Table 1</td></tr>
++      </table>
++      <table style="height: 100%; border: 1px dotted red;">
++        <tr><td>Table 2</td></tr>
++      </table>
++    </td></tr>
++  </table>
++</body>
++</html>
+Index: reftests/bugs/370525-2-notref.html
+===================================================================
+RCS file: reftests/bugs/370525-2-notref.html
+diff -N reftests/bugs/370525-2-notref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-2-notref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,17 @@
++<html>
++<head>
++  <title>Bug 370525 Anti-Reference Testcase</title>
++</head>
++<body>
++  <table style="border: 2px solid blue;">
++    <tr><td style="height: 10%">
++      <table style="height: 100%; border: 1px dotted red;">
++        <tr><td>Table 1</td></tr>
++      </table>
++      <table style="height: 100%; border: 1px dotted red;">
++        <tr><td>Table 2</td></tr>
++      </table>
++    </td></tr>
++  </table>
++</body>
++</html>
+Index: reftests/bugs/370525-2-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-2-ref.html
+diff -N reftests/bugs/370525-2-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-2-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,17 @@
++<html>
++<head>
++  <title>Bug 370525 Reference Testcase</title>
++</head>
++<body>
++  <table style="border: 2px solid blue;">
++    <tr><td>
++      <table style="border: 1px dotted red;">
++        <tr><td>Table 1</td></tr>
++      </table>
++      <table style="border: 1px dotted red;">
++        <tr><td>Table 2</td></tr>
++      </table>
++    </td></tr>
++  </table>
++</body>
++</html>
+Index: reftests/bugs/370525-2.html
+===================================================================
+RCS file: reftests/bugs/370525-2.html
+diff -N reftests/bugs/370525-2.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-2.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,17 @@
++<html>
++<head>
++  <title>Bug 370525 Testcase</title>
++</head>
++<body>
++  <table style="border: 2px solid blue;">
++    <tr><td>
++      <table style="height: 100%; border: 1px dotted red;">
++        <tr><td>Table 1</td></tr>
++      </table>
++      <table style="height: 100%; border: 1px dotted red;">
++        <tr><td>Table 2</td></tr>
++      </table>
++    </td></tr>
++  </table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-1a-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-1a-ref.html
+diff -N reftests/bugs/370525-rowspan-1a-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-1a-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,28 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div,
++with specified height on a sibling
++<table>
++ <tr>
++   <td style="background: lightgreen" rowspan="2">
++    <div>
++     height=75% / ignored
++    </div>
++    blah
++   </td>
++   <td  style="background: lightblue" height="200px">
++    height=200px.
++   </td>
++ </tr>
++ <tr>
++   <td style="background: orange">
++   2nd row, 1st column
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-1a.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-1a.html
+diff -N reftests/bugs/370525-rowspan-1a.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-1a.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,28 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div, 
++with specified height on a sibling
++<table>
++ <tr>
++   <td style="background: lightgreen" rowspan="2">
++    <div style="height: 75%">
++     height=75% / ignored
++    </div>
++    blah
++   </td>
++   <td  style="background: lightblue" height="200px">
++    height=200px.
++   </td>
++ </tr>
++ <tr>
++   <td style="background: orange">
++   2nd row, 1st column
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-1b-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-1b-ref.html
+diff -N reftests/bugs/370525-rowspan-1b-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-1b-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,28 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div,
++with specified height on a sibling
++<table>
++ <tr>
++   <td style="background: lightgreen" rowspan="2">
++    <div>
++     height=75% / ignored
++    </div>
++    blah
++   </td>
++   <td style="background: orange">
++    1st row, 2nd column.
++   </td>
++ </tr>
++ <tr>
++   <td  style="background: lightblue" height="200px">
++    2nd row, 1st column. height=200px.
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-1b.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-1b.html
+diff -N reftests/bugs/370525-rowspan-1b.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-1b.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,28 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div,
++with specified height on a sibling
++<table>
++ <tr>
++   <td style="background: lightgreen" rowspan="2">
++    <div style="height: 75%">
++     height=75% / ignored
++    </div>
++    blah
++   </td>
++   <td style="background: orange">
++    1st row, 2nd column.
++   </td>
++ </tr>
++ <tr>
++   <td  style="background: lightblue" height="200px">
++    2nd row, 1st column. height=200px.
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-1c-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-1c-ref.html
+diff -N reftests/bugs/370525-rowspan-1c-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-1c-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,23 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div, with specified
++height on a sibling. Also, does not explicitly create 2nd row.
++<table>
++ <tr>
++   <td style="background: lightgreen" rowspan="2">
++    <div style="height: 150px">
++     height=75% / 150px
++    </div>
++    blah
++   </td>
++   <td  style="background: lightblue" height="200px">
++    height=200px.
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-1c.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-1c.html
+diff -N reftests/bugs/370525-rowspan-1c.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-1c.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,23 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div, with specified
++height on a sibling. Also, does not explicitly create 2nd row.
++<table>
++ <tr>
++   <td style="background: lightgreen" rowspan="2">
++    <div style="height: 75%">
++     height=75% / 150px
++    </div>
++    blah
++   </td>
++   <td  style="background: lightblue" height="200px">
++    height=200px.
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-2a-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-2a-ref.html
+diff -N reftests/bugs/370525-rowspan-2a-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-2a-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,28 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 and specified height on a sibling of the cell with percent-height div.
++<table>
++ <tr>
++   <td style="background: lightgreen">
++    <div>
++     height=75% / ignored
++    </div>
++    blah
++   </td>
++   <td  style="background: lightblue" height="200px"  rowspan="2">
++    height=200px.
++   </td>
++ </tr>
++ <tr>
++   <td style="background: orange">
++   2nd row, 1st column
++   </td>
++ </tr>
++</table>
++</body>
++</html>
++
+Index: reftests/bugs/370525-rowspan-2a.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-2a.html
+diff -N reftests/bugs/370525-rowspan-2a.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-2a.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,28 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 and specified height on a sibling of the cell with percent-height div.
++<table>
++ <tr>
++   <td style="background: lightgreen">
++    <div style="height: 75%">
++     height=75% / ignored
++    </div>
++    blah
++   </td>
++   <td  style="background: lightblue" height="200px"  rowspan="2">
++    height=200px.
++   </td>
++ </tr>
++ <tr>
++   <td style="background: orange">
++   2nd row, 1st column
++   </td>
++ </tr>
++</table>
++</body>
++</html>
++
+Index: reftests/bugs/370525-rowspan-2b-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-2b-ref.html
+diff -N reftests/bugs/370525-rowspan-2b-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-2b-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,24 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 and specified height on a sibling of the cell with
++percent-height div. Also, does not explicitly create 2nd row.
++<table>
++ <tr>
++   <td style="background: lightgreen">
++    <div style="height: 150px">
++     height=75% / 150px
++    </div>
++    blah
++   </td>
++   <td  style="background: lightblue" height="200px"  rowspan="2">
++    height=200px.
++   </td>
++ </tr>
++</table>
++</body>
++</html>
++
+Index: reftests/bugs/370525-rowspan-2b.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-2b.html
+diff -N reftests/bugs/370525-rowspan-2b.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-2b.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,24 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 and specified height on a sibling of the cell with
++percent-height div. Also, does not explicitly create 2nd row.
++<table>
++ <tr>
++   <td style="background: lightgreen">
++    <div style="height: 75%">
++     height=75% / 150px
++    </div>
++    blah
++   </td>
++   <td  style="background: lightblue" height="200px"  rowspan="2">
++    height=200px.
++   </td>
++ </tr>
++</table>
++</body>
++</html>
++
+Index: reftests/bugs/370525-rowspan-3-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-3-ref.html
+diff -N reftests/bugs/370525-rowspan-3-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-3-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,26 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div, 
++with specified height on table
++<table height="200px">
++ <tr>
++   <td style="background: lightgreen" rowspan="2">
++    <div style="height: 150px">
++     height=75% / 150px
++    </div>
++    blah
++   </td>
++   <td style="background: lightblue"> first row, second column </td>
++ </tr>
++ <tr>
++   <td style="background: orange">
++   2nd row, only column
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-3.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-3.html
+diff -N reftests/bugs/370525-rowspan-3.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-3.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,26 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div, 
++with specified height on table
++<table height="200px">
++ <tr>
++   <td style="background: lightgreen" rowspan="2">
++    <div style="height: 75%">
++     height=75% / 150px
++    </div>
++    blah
++   </td>
++   <td style="background: lightblue"> first row, second column </td>
++ </tr>
++ <tr>
++   <td style="background: orange">
++   2nd row, only column
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-4-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-4-ref.html
+diff -N reftests/bugs/370525-rowspan-4-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-4-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,26 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div, 
++with specified height on row
++<table>
++ <tr height="160px">
++   <td style="background: lightgreen" rowspan="2">
++    <div style="height: 150px;">
++     height=75% / 150px
++    </div>
++    blah
++   </td>
++   <td style="background: lightblue"> first row, second column </td>
++ </tr>
++ <tr height="40px">
++   <td style="background: orange">
++   2nd row, only column
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-rowspan-4.html
+===================================================================
+RCS file: reftests/bugs/370525-rowspan-4.html
+diff -N reftests/bugs/370525-rowspan-4.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-rowspan-4.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,26 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++rowspan=2 on the cell with the percent-height div, 
++with specified height on row
++<table>
++ <tr height="160px">
++   <td style="background: lightgreen" rowspan="2">
++    <div style="height: 75%">
++     height=75% / 150px
++    </div>
++    blah
++   </td>
++   <td style="background: lightblue"> first row, second column </td>
++ </tr>
++ <tr height="40px">
++   <td style="background: orange">
++   2nd row, only column
++   </td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-sib-ref.html
+===================================================================
+RCS file: reftests/bugs/370525-sib-ref.html
+diff -N reftests/bugs/370525-sib-ref.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-sib-ref.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,18 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++Specified height on sibling cell
++<table>
++  <tr>
++   <td style="background: lightgreen">
++    <div style="height: 150px">height=75% / 150px</div>
++    blah
++  </td>
++  <td style="height: 200px; background: lightblue">height=200px</td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-sib.html
+===================================================================
+RCS file: reftests/bugs/370525-sib.html
+diff -N reftests/bugs/370525-sib.html
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-sib.html	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,18 @@
++<html>
++<head>
++<link rel="stylesheet" href="370525-style.css"/>
++</head>
++
++<body>
++Specified height on sibling cell
++<table>
++  <tr>
++   <td style="background: lightgreen">
++    <div style="height: 75%">height=75% / 150px</div>
++    blah
++  </td>
++  <td style="height: 200px; background: lightblue">height=200px</td>
++ </tr>
++</table>
++</body>
++</html>
+Index: reftests/bugs/370525-style.css
+===================================================================
+RCS file: reftests/bugs/370525-style.css
+diff -N reftests/bugs/370525-style.css
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ reftests/bugs/370525-style.css	22 Jun 2007 21:28:42 -0000
+@@ -0,0 +1,13 @@
++div { 
++  background: yellow; 
++}
++table {
++  background: grey;
++  border-spacing: 0;
++  border-collapse: collapse;
++}
++
++td, th { 
++  padding: 0;
++  vertical-align: top;
++}
+Index: reftests/bugs/reftest.list
+===================================================================
+RCS file: /cvsroot/mozilla/layout/reftests/bugs/reftest.list,v
+retrieving revision 1.96
+diff -p -u -1 -2 -r1.96 reftest.list
+--- reftests/bugs/reftest.list	22 Jun 2007 00:17:30 -0000	1.96
++++ reftests/bugs/reftest.list	22 Jun 2007 21:28:42 -0000
+@@ -211,24 +211,37 @@ fails == 368020-4.html 368020-4-ref.html
+ == 368020-5.html 368020-5-ref.html
+ == 368155-1.xhtml 368155-1-ref.xhtml
+ == 368155-negative-margins-1.html 368155-negative-margins-1-ref.html
+ # we can't test this because there's antialiasing involved, and our comparison
+ # is too exact
+ # == 368247-1.html 368247-1-ref.html
+ == 368247-2.html 368247-2-ref.html
+ fails == 368504-1.html 368504-1-ref.html # bug 368504
+ == 368622-1.html 368622-1-ref.html
+ == 368622-1.html 368622-1-ref.html
+ == 369882.xul 369882-ref.xul
+ == 370422-1.html 370422-1-ref.html
++== 370525-1.html 370525-1-ref.html
++!= 370525-1.html 370525-1-notref.html
++== 370525-2.html 370525-2-ref.html
++!= 370525-2.html 370525-2-notref.html
++!= 370525-2.html 370525-2-notref.html
++== 370525-rowspan-1a.html 370525-rowspan-1a-ref.html
++== 370525-rowspan-1b.html 370525-rowspan-1b-ref.html
++== 370525-rowspan-1c.html 370525-rowspan-1c-ref.html
++== 370525-rowspan-2a.html 370525-rowspan-2a-ref.html
++== 370525-rowspan-2b.html 370525-rowspan-2b-ref.html
++== 370525-rowspan-3.html 370525-rowspan-3-ref.html
++== 370525-rowspan-4.html 370525-rowspan-4-ref.html
++== 370525-sib.html 370525-sib-ref.html
+ == 370586-1.xhtml 370586-1-ref.xhtml
+ == 370629-1.html 370629-1-ref.html
+ == 370629-2.html 370629-2-ref.html
+ == 370692-1.xhtml 370692-1-ref.xhtml
+ == 371041-1.html 371041-1-ref.html
+ == 371043-1.html 371043-1-ref.html
+ == 371925-1a.html 371925-1-ref.html
+ == 371925-1b.html 371925-1-ref.html
+ == 372553-1.html 372553-1-ref.html
+ == 373381-1.html 373381-1-ref.html
+ fails-if(MOZ_WIDGET_TOOLKIT=="cocoa") == 372037-1.html 372037-1-ref.html # bug 377118
+ == 375508-1.html 375508-1-ref.html
+Index: tables/nsTableCellFrame.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables/nsTableCellFrame.cpp,v
+retrieving revision 3.398
+diff -p -u -1 -2 -r3.398 nsTableCellFrame.cpp
+--- tables/nsTableCellFrame.cpp	18 Jun 2007 23:19:39 -0000	3.398
++++ tables/nsTableCellFrame.cpp	22 Jun 2007 21:28:42 -0000
+@@ -126,31 +126,43 @@ nsTableCellFrame::NotifyPercentHeight(co
+   // these tests are probably unnecessary.
+ 
+   // Maybe the cell reflow state; we sure if we're inside the |if|.
+   const nsHTMLReflowState *cellRS = aReflowState.mCBReflowState;
+ 
+   if (cellRS && cellRS->frame == this &&
+       (cellRS->mComputedHeight == NS_UNCONSTRAINEDSIZE ||
+        cellRS->mComputedHeight == 0)) { // XXXldb Why 0?
+     // This is a percentage height on a frame whose percentage heights
+     // are based on the height of the cell, since its containing block
+     // is the inner cell frame.
+ 
+-    for (const nsHTMLReflowState *rs = aReflowState.parentReflowState;
+-         rs != cellRS;
+-         rs = rs->parentReflowState) {
+-      rs->frame->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_HEIGHT);
++    // We'll only honor the percent height if sibling-cells/ancestors
++    // have specified/pct height. (Also, siblings only count for this if
++    // both this cell and the sibling cell span exactly 1 row.)
++    int myRowSpan =
++      nsTableFrame::GetTableFrame(this)->GetEffectiveRowSpan(*this);
++
++    if (nsTableFrame::AncestorsHaveStyleHeight(*cellRS) ||
++        (myRowSpan == 1 &&
++         (cellRS->parentReflowState->frame->GetStateBits() &
++          NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT))) {
++
++      for (const nsHTMLReflowState *rs = aReflowState.parentReflowState;
++           rs != cellRS;
++           rs = rs->parentReflowState) {
++        rs->frame->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_HEIGHT);
++      }
++      
++      nsTableFrame::RequestSpecialHeightReflow(*cellRS);
+     }
+-
+-    nsTableFrame::RequestSpecialHeightReflow(*cellRS);
+   }
+ }
+ 
+ // The cell needs to observe its block and things inside its block but nothing below that
+ PRBool 
+ nsTableCellFrame::NeedsToObserve(const nsHTMLReflowState& aReflowState)
+ {
+   const nsHTMLReflowState *rs = aReflowState.parentReflowState;
+   if (!rs)
+     return PR_FALSE;
+   if (rs->frame == this) {
+     // We always observe the child block.  It will never send any
+Index: tables/nsTableFrame.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables/nsTableFrame.cpp,v
+retrieving revision 3.693
+diff -p -u -1 -2 -r3.693 nsTableFrame.cpp
+--- tables/nsTableFrame.cpp	18 Jun 2007 23:19:39 -0000	3.693
++++ tables/nsTableFrame.cpp	22 Jun 2007 21:28:42 -0000
+@@ -1683,76 +1683,59 @@ nsTableFrame::TableShrinkWidthToFit(nsIR
+ nsTableFrame::ComputeAutoSize(nsIRenderingContext *aRenderingContext,
+                               nsSize aCBSize, nscoord aAvailableWidth,
+                               nsSize aMargin, nsSize aBorder, nsSize aPadding,
+                               PRBool aShrinkWrap)
+ {
+   // Tables always shrink-wrap.
+   nscoord cbBased = aAvailableWidth - aMargin.width - aBorder.width -
+                     aPadding.width;
+   return nsSize(TableShrinkWidthToFit(aRenderingContext, cbBased),
+                 NS_UNCONSTRAINEDSIZE);
+ }
+ 
+-// Return true if aStylePosition has a pct height
+-static PRBool 
+-IsPctStyleHeight(const nsStylePosition* aStylePosition)
+-{
+-  return (aStylePosition && 
+-          (eStyleUnit_Percent == aStylePosition->mHeight.GetUnit()));
+-}
+-
+-// Return true if aStylePosition has a coord height
+-static PRBool 
+-IsFixedStyleHeight(const nsStylePosition* aStylePosition)
+-{
+-  return (aStylePosition && 
+-          (eStyleUnit_Coord == aStylePosition->mHeight.GetUnit()));
+-}
+-
+-// Return true if any of aReflowState.frame's ancestors within the containing table
+-// have a pct or fixed height
+-static PRBool
+-AncestorsHaveStyleHeight(const nsHTMLReflowState& aReflowState)
++// Return true if aParentReflowState.frame or any of its ancestors within
++// the containing table have non-auto height. (e.g. pct or fixed height)
++PRBool
++nsTableFrame::AncestorsHaveStyleHeight(const nsHTMLReflowState& aParentReflowState)
+ {
+-  for (const nsHTMLReflowState* parentRS = aReflowState.parentReflowState;
+-       parentRS && parentRS->frame; 
+-       parentRS = parentRS->parentReflowState) {
+-    nsIAtom* frameType = parentRS->frame->GetType();
+-    if (IS_TABLE_CELL(frameType)                         ||
++  for (const nsHTMLReflowState* rs = &aParentReflowState;
++       rs && rs->frame; rs = rs->parentReflowState) {
++    nsIAtom* frameType = rs->frame->GetType();
++    if (IS_TABLE_CELL(frameType)                     ||
+         (nsGkAtoms::tableRowFrame      == frameType) ||
+         (nsGkAtoms::tableRowGroupFrame == frameType)) {
+-      if (::IsPctStyleHeight(parentRS->mStylePosition) || ::IsFixedStyleHeight(parentRS->mStylePosition)) {
++      if (rs->mStylePosition->mHeight.GetUnit() != eStyleUnit_Auto) {
+         return PR_TRUE;
+       }
+     }
+     else if (nsGkAtoms::tableFrame == frameType) {
+       // we reached the containing table, so always return
+-      if (::IsPctStyleHeight(parentRS->mStylePosition) || ::IsFixedStyleHeight(parentRS->mStylePosition)) {
++      if (rs->mStylePosition->mHeight.GetUnit() != eStyleUnit_Auto) {
+         return PR_TRUE;
+       }
+       else return PR_FALSE;
+     }
+   }
+   return PR_FALSE;
+ }
+ 
+ // See if a special height reflow needs to occur and if so, call RequestSpecialHeightReflow
+ void
+ nsTableFrame::CheckRequestSpecialHeightReflow(const nsHTMLReflowState& aReflowState)
+ {
+   if (!aReflowState.frame->GetPrevInFlow() &&  // 1st in flow
+       (NS_UNCONSTRAINEDSIZE == aReflowState.mComputedHeight ||  // no computed height
+        0                    == aReflowState.mComputedHeight) && 
+-      ::IsPctStyleHeight(aReflowState.mStylePosition) && // pct height
+-      ::AncestorsHaveStyleHeight(aReflowState)) {
++      eStyleUnit_Percent == aReflowState.mStylePosition->mHeight.GetUnit() && // pct height
++      nsTableFrame::AncestorsHaveStyleHeight(*aReflowState.parentReflowState)) {
+     nsTableFrame::RequestSpecialHeightReflow(aReflowState);
+   }
+ }
+ 
+ // Notify the frame and its ancestors (up to the containing table) that a special
+ // height reflow will occur. During a special height reflow, a table, row group,
+ // row, or cell returns the last size it was reflowed at. However, the table may 
+ // change the height of row groups, rows, cells in DistributeHeightToRows after. 
+ // And the row group can change the height of rows, cells in CalculateRowHeights.
+ void
+ nsTableFrame::RequestSpecialHeightReflow(const nsHTMLReflowState& aReflowState)
+ {
+Index: tables/nsTableFrame.h
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables/nsTableFrame.h,v
+retrieving revision 3.287
+diff -p -u -1 -2 -r3.287 nsTableFrame.h
+--- tables/nsTableFrame.h	5 Jun 2007 18:55:26 -0000	3.287
++++ tables/nsTableFrame.h	22 Jun 2007 21:28:42 -0000
+@@ -106,24 +106,28 @@ public:
+     */
+   NS_IMETHOD Init(nsIContent*      aContent,
+                   nsIFrame*        aParent,
+                   nsIFrame*        aPrevInFlow);
+ 
+ 
+   static void* GetProperty(nsIFrame*            aFrame,
+                            nsIAtom*             aPropertyName,
+                            PRBool               aCreateIfNecessary = PR_FALSE);
+ 
+   static float GetTwipsToPixels(nsPresContext* aPresContext);
+ 
++  // Return true if aParentReflowState.frame or any of its ancestors within
++  // the containing table have non-auto height. (e.g. pct or fixed height)
++  static PRBool AncestorsHaveStyleHeight(const nsHTMLReflowState& aParentReflowState);
++
+   // See if a special height reflow will occur due to having a pct height when
+   // the pct height basis may not yet be valid.
+   static void CheckRequestSpecialHeightReflow(const nsHTMLReflowState& aReflowState);
+ 
+   // Notify the frame and its ancestors (up to the containing table) that a special
+   // height reflow will occur. 
+   static void RequestSpecialHeightReflow(const nsHTMLReflowState& aReflowState);
+ 
+   virtual PRBool IsContainingBlock() const;
+ 
+   static void RePositionViews(nsIFrame* aFrame);
+ 
+Index: tables/nsTableRowFrame.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables/nsTableRowFrame.cpp,v
+retrieving revision 3.402
+diff -p -u -1 -2 -r3.402 nsTableRowFrame.cpp
+--- tables/nsTableRowFrame.cpp	6 May 2007 19:16:51 -0000	3.402
++++ tables/nsTableRowFrame.cpp	22 Jun 2007 21:28:42 -0000
+@@ -1025,24 +1025,27 @@ nsTableRowFrame::Reflow(nsPresContext*  
+   if (!tableFrame)
+     return NS_ERROR_NULL_POINTER;
+ 
+   const nsStyleVisibility* rowVis = GetStyleVisibility();
+   PRBool collapseRow = (NS_STYLE_VISIBILITY_COLLAPSE == rowVis->mVisible);
+   if (collapseRow) {
+     tableFrame->SetNeedToCollapse(PR_TRUE);
+   }
+ 
+   // see if a special height reflow needs to occur due to having a pct height
+   nsTableFrame::CheckRequestSpecialHeightReflow(aReflowState);
+ 
++  // See if we have a cell with specified/pct height
++  CheckHasCellWithStyleHeight(tableFrame);
++
+   rv = ReflowChildren(aPresContext, aDesiredSize, aReflowState, *tableFrame,
+                       aStatus);
+ 
+   // just set our width to what was available. The table will calculate the width and not use our value.
+   aDesiredSize.width = aReflowState.availableWidth;
+ 
+   NS_FRAME_SET_TRUNCATION(aStatus, aReflowState, aDesiredSize);
+   return rv;
+ }
+ 
+ /**
+  * This function is called by the row group frame's SplitRowGroup() code when
+@@ -1324,24 +1327,51 @@ void nsTableRowFrame::SetContinuousBCBor
+       return;
+     case NS_SIDE_TOP:
+       mTopContBorderWidth = aPixelValue;
+       return;
+     case NS_SIDE_LEFT:
+       mLeftContBorderWidth = aPixelValue;
+       return;
+     default:
+       NS_ERROR("invalid NS_SIDE arg");
+   }
+ }
+ 
++/**
++ * Checks whether this row has any cells that have non-auto-height.
++ * (multi-row-spanning cells are ignored) and sets the
++ * NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT bit accordingly.
++ */
++void nsTableRowFrame::CheckHasCellWithStyleHeight(nsTableFrame* aTableFrame)
++{
++  nsTableIterator iter(*this);
++
++  for (nsIFrame* kidFrame = iter.First(); kidFrame; kidFrame = iter.Next()) {
++    nsIAtom* frameType = kidFrame->GetType();
++    if (!IS_TABLE_CELL(frameType)) {
++      NS_NOTREACHED("Table row has a non-cell child.");
++    } else {
++      nsTableCellFrame* cellFrame = NS_STATIC_CAST(nsTableCellFrame*, kidFrame);
++      // Ignore multi-row-spanning cells
++      if (aTableFrame->GetEffectiveRowSpan(*cellFrame) == 1) { 
++        if (cellFrame->GetStylePosition()->mHeight.GetUnit() != eStyleUnit_Auto) {
++          AddStateBits(NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT);
++          return;
++        }
++      }
++    }
++  }
++  RemoveStateBits(NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT);
++}
++
+ /* ----- global methods ----- */
+ 
+ nsIFrame* 
+ NS_NewTableRowFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
+ {
+   return new (aPresShell) nsTableRowFrame(aContext);
+ }
+ 
+ #ifdef DEBUG
+ NS_IMETHODIMP
+ nsTableRowFrame::GetFrameName(nsAString& aResult) const
+ {
+Index: tables/nsTableRowFrame.h
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables/nsTableRowFrame.h,v
+retrieving revision 3.131
+diff -p -u -1 -2 -r3.131 nsTableRowFrame.h
+--- tables/nsTableRowFrame.h	21 Feb 2007 19:42:21 -0000	3.131
++++ tables/nsTableRowFrame.h	22 Jun 2007 21:28:42 -0000
+@@ -36,24 +36,28 @@
+  * ***** END LICENSE BLOCK ***** */
+ #ifndef nsTableRowFrame_h__
+ #define nsTableRowFrame_h__
+ 
+ #include "nscore.h"
+ #include "nsHTMLContainerFrame.h"
+ #include "nsTablePainter.h"
+ 
+ class  nsTableFrame;
+ class  nsTableCellFrame;
+ struct nsTableCellReflowState;
+ 
++// Indicates whether this row has any cells that have
++// non-auto-height and rowspan=1
++#define NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT   0x20000000
++
+ #define NS_TABLE_ROW_HAS_UNPAGINATED_HEIGHT 0x40000000
+ // This is also used on rows, from nsTableRowGroupFrame.h
+ // #define NS_REPEATED_ROW_OR_ROWGROUP      0x10000000
+ 
+ /**
+  * nsTableRowFrame is the frame that maps table rows 
+  * (HTML tag TR). This class cannot be reused
+  * outside of an nsTableRowGroupFrame.  It assumes that its parent is an nsTableRowGroupFrame,  
+  * and its children are nsTableCellFrames.
+  * 
+  * @see nsTableFrame
+  * @see nsTableRowGroupFrame
+@@ -293,24 +297,32 @@ private:
+ 
+   // max-ascent and max-descent amongst all cells that have 'vertical-align: baseline'
+   nscoord mMaxCellAscent;  // does include cells with rowspan > 1
+   nscoord mMaxCellDescent; // does *not* include cells with rowspan > 1
+ 
+   // border widths in pixels in the collapsing border model of the *inner*
+   // half of the border only
+   BCPixelSize mTopBorderWidth;
+   BCPixelSize mBottomBorderWidth;
+   BCPixelSize mRightContBorderWidth;
+   BCPixelSize mTopContBorderWidth;
+   BCPixelSize mLeftContBorderWidth;
++
++  /**
++   * Checks whether this row has any cells that have non-auto-height.
++   * (multi-row-spanning cells are ignored) and sets the
++   * NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT bit accordingly.
++   */
++  void CheckHasCellWithStyleHeight(nsTableFrame* aTableFrame);
++
+ };
+ 
+ inline PRInt32 nsTableRowFrame::GetRowIndex() const
+ {
+   return PRInt32(mBits.mRowIndex);
+ }
+ 
+ inline void nsTableRowFrame::SetRowIndex (int aRowIndex)
+ {
+   mBits.mRowIndex = aRowIndex;
+ }
+ 

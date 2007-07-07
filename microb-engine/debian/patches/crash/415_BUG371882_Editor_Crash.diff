@@ -1,0 +1,26 @@
+# Bug 371882  Editor crashed in nsHTMLEditor::GetCSSBackgroundColorState 
+# 52020 Browser crashes on page: http://www.spellchecker.net/asp/CuteEditor/scayt_Demo.asp
+--- mozilla/editor/libeditor/html/nsHTMLEditor.cpp.orig	2007-02-27 00:21:57.000000000 +0200
++++ mozilla/editor/libeditor/html/nsHTMLEditor.cpp	2007-02-27 07:54:40.989537000 +0200
+@@ -2396,20 +2396,21 @@ nsHTMLEditor::GetCSSBackgroundColorState
+ 
+   nsCOMPtr<nsIDOMNode> tmp;
+ 
+   if (aBlockLevel) {
+     // we are querying the block background (and not the text background), let's
+     // climb to the block container
+     nsCOMPtr<nsIDOMNode> blockParent = nodeToExamine;
+     if (!isBlock) {
+       blockParent = GetBlockNodeParent(nodeToExamine);
+     }
++	NS_ENSURE_TRUE(blockParent, NS_ERROR_FAILURE);
+ 
+     // Make sure to not walk off onto the Document node
+     nsCOMPtr<nsIDOMElement> element;
+     do {
+       // retrieve the computed style of background-color for blockParent
+       mHTMLCSSUtils->GetComputedProperty(blockParent,
+                                          nsEditProperty::cssBackgroundColor,
+                                          aOutColor);
+       tmp.swap(blockParent);
+       res = tmp->GetParentNode(getter_AddRefs(blockParent));

@@ -1,0 +1,28 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: Fix building with new make.
+
+Index: mozilla/security/coreconf/rules.mk
+===================================================================
+--- mozilla.orig/security/coreconf/rules.mk
++++ mozilla/security/coreconf/rules.mk
+@@ -926,17 +926,17 @@
+ 		    unlink(($$tmpname));                                      \
+ 		}                                                             \
+ 	    } elsif ("$<" ne "$(DEPENDENCIES)") {                             \
+ 		print "$(MAKE): *** No rule to make target $<.  Stop.\n";     \
+ 		exit(1);                                                      \
+ 	    }
+ 
+ .DEFAULT:
+-	@perl -e '$(PERL_DEPENDENCIES_PROGRAM)'
++	@`perl -e '$(PERL_DEPENDENCIES_PROGRAM)'`
+ endif
+ 
+ #############################################################################
+ # X dependency system
+ #############################################################################
+ 
+ ifdef MKDEPENDENCIES
+ 

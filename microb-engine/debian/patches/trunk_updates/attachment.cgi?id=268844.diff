@@ -1,0 +1,72 @@
+#Bug 336907  Fatal JS assert during shutdown: "lock != NULL" (#ifdef GC_MARK_DEBUG)
+#
+Index: mozilla/js/src/jsstr.c
+===================================================================
+--- mozilla.orig/js/src/jsstr.c
++++ mozilla/js/src/jsstr.c
+@@ -2932,17 +2932,17 @@
+             if ((c2 < 0xDC00) || (c2 > 0xDFFF))
+                 goto badSurrogate;
+             src++;
+             srclen--;
+             v = ((c - 0xD800) << 10) + (c2 - 0xDC00) + 0x10000;
+         }
+         if (v < 0x0080) {
+             /* no encoding necessary - performance hack */
+-            if (!dstlen)
++            if (dstlen == 0)
+                 goto bufferTooSmall;
+             *dst++ = (char) v;
+             utf8Len = 1;
+         } else {
+             utf8Len = js_OneUcs4ToUtf8Char(utf8buf, v);
+             if (utf8Len > dstlen)
+                 goto bufferTooSmall;
+             for (i = 0; i < utf8Len; i++)
+@@ -3046,17 +3046,17 @@
+     *dstlenp = (origDstlen - dstlen);
+     if (cx) {
+         JS_ReportErrorNumber(cx, js_GetErrorMessage, NULL,
+                              JSMSG_BUFFER_TOO_SMALL);
+     }
+     return JS_FALSE;
+ }
+ 
+-#else
++#else /* !JS_C_STRINGS_ARE_UTF8 */
+ 
+ JSBool
+ js_InflateStringToBuffer(JSContext* cx, const char *bytes, size_t length,
+                          jschar *chars, size_t* charsLength)
+ {
+     size_t i;
+ 
+     if (length > *charsLength) {
+@@ -3200,16 +3200,27 @@
+ 
+     if (cx) {
+         rt = cx->runtime;
+     } else {
+         /* JS_GetStringBytes calls us with null cx. */
+         rt = js_GetGCStringRuntime(str);
+     }
+ 
++#ifdef JS_THREADSAFE
++    if (!rt->deflatedStringCache) {
++        /*
++         * Called from last GC (see js_DestroyContext), after runtime string
++         * state has been finalized.  We have no choice but to leak here.
++         */
++        return js_DeflateString(NULL, JSSTRING_CHARS(str),
++                                      JSSTRING_LENGTH(str));
++    }
++#endif
++
+     JS_ACQUIRE_LOCK(rt->deflatedStringCacheLock);
+ 
+     cache = GetDeflatedStringCache(rt);
+     if (!cache) {
+         if (cx)
+             js_ReportOutOfMemory(cx);
+         bytes = NULL;
+     } else {

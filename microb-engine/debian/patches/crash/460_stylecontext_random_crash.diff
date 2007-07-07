@@ -1,0 +1,25 @@
+--- mozilla/layout/style/nsStyleContext.cpp.orig	2007-01-30 15:19:55.000000000 +0200
++++ mozilla/layout/style/nsStyleContext.cpp	2007-03-27 09:16:39.286476000 +0300
+@@ -166,21 +166,21 @@ nsStyleContext::FindChildWithRules(const
+     nsStyleContext *child = list;
+     do {
+       if (child->mRuleNode == aRuleNode && child->mPseudoTag == aPseudoTag) {
+         result = child;
+         break;
+       }
+       child = child->mNextSibling;
+       threshold--;
+       if (threshold == 0)
+         break;
+-    } while (child != list);
++    } while (child && child != list);
+   }
+ 
+   if (result) {
+     if (result != list) {
+       // Move result to the front of the list.
+       RemoveChild(result);
+       AddChild(result);
+     }
+ 
+     // Add reference for the caller.

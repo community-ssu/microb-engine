@@ -1,0 +1,216 @@
+# Bug 370525  Nested tables with height=100% exceed height of parent table
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables nsTableCellFrame.cpp,v
+retrieving revision 3.398
+retrieving revision 3.399
+diff -u -r3.398 -r3.399
+--- mozilla/layout/tables/nsTableCellFrame.cpp	2007/06/18 23:19:39	3.398
++++ mozilla/layout/tables/nsTableCellFrame.cpp	2007/06/25 20:34:48	3.399
+@@ -135,13 +135,23 @@
+     // are based on the height of the cell, since its containing block
+     // is the inner cell frame.
+ 
+-    for (const nsHTMLReflowState *rs = aReflowState.parentReflowState;
+-         rs != cellRS;
+-         rs = rs->parentReflowState) {
+-      rs->frame->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_HEIGHT);
++    // We'll only honor the percent height if sibling-cells/ancestors
++    // have specified/pct height. (Also, siblings only count for this if
++    // both this cell and the sibling cell span exactly 1 row.)
++
++    if (nsTableFrame::AncestorsHaveStyleHeight(*cellRS) ||
++        (nsTableFrame::GetTableFrame(this)->GetEffectiveRowSpan(*this) == 1 &&
++         (cellRS->parentReflowState->frame->GetStateBits() &
++          NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT))) {
++
++      for (const nsHTMLReflowState *rs = aReflowState.parentReflowState;
++           rs != cellRS;
++           rs = rs->parentReflowState) {
++        rs->frame->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_HEIGHT);
++      }
++      
++      nsTableFrame::RequestSpecialHeightReflow(*cellRS);
+     }
+-
+-    nsTableFrame::RequestSpecialHeightReflow(*cellRS);
+   }
+ }
+ 
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables nsTableFrame.cpp,v
+retrieving revision 3.693
+retrieving revision 3.694
+diff -u -r3.693 -r3.694
+--- mozilla/layout/tables/nsTableFrame.cpp	2007/06/18 23:19:39	3.693
++++ mozilla/layout/tables/nsTableFrame.cpp	2007/06/25 20:34:48	3.694
+@@ -1692,41 +1692,24 @@
+                 NS_UNCONSTRAINEDSIZE);
+ }
+ 
+-// Return true if aStylePosition has a pct height
+-static PRBool 
+-IsPctStyleHeight(const nsStylePosition* aStylePosition)
+-{
+-  return (aStylePosition && 
+-          (eStyleUnit_Percent == aStylePosition->mHeight.GetUnit()));
+-}
+-
+-// Return true if aStylePosition has a coord height
+-static PRBool 
+-IsFixedStyleHeight(const nsStylePosition* aStylePosition)
+-{
+-  return (aStylePosition && 
+-          (eStyleUnit_Coord == aStylePosition->mHeight.GetUnit()));
+-}
+-
+-// Return true if any of aReflowState.frame's ancestors within the containing table
+-// have a pct or fixed height
+-static PRBool
+-AncestorsHaveStyleHeight(const nsHTMLReflowState& aReflowState)
++// Return true if aParentReflowState.frame or any of its ancestors within
++// the containing table have non-auto height. (e.g. pct or fixed height)
++PRBool
++nsTableFrame::AncestorsHaveStyleHeight(const nsHTMLReflowState& aParentReflowState)
+ {
+-  for (const nsHTMLReflowState* parentRS = aReflowState.parentReflowState;
+-       parentRS && parentRS->frame; 
+-       parentRS = parentRS->parentReflowState) {
+-    nsIAtom* frameType = parentRS->frame->GetType();
+-    if (IS_TABLE_CELL(frameType)                         ||
++  for (const nsHTMLReflowState* rs = &aParentReflowState;
++       rs && rs->frame; rs = rs->parentReflowState) {
++    nsIAtom* frameType = rs->frame->GetType();
++    if (IS_TABLE_CELL(frameType)                     ||
+         (nsGkAtoms::tableRowFrame      == frameType) ||
+         (nsGkAtoms::tableRowGroupFrame == frameType)) {
+-      if (::IsPctStyleHeight(parentRS->mStylePosition) || ::IsFixedStyleHeight(parentRS->mStylePosition)) {
++      if (rs->mStylePosition->mHeight.GetUnit() != eStyleUnit_Auto) {
+         return PR_TRUE;
+       }
+     }
+     else if (nsGkAtoms::tableFrame == frameType) {
+       // we reached the containing table, so always return
+-      if (::IsPctStyleHeight(parentRS->mStylePosition) || ::IsFixedStyleHeight(parentRS->mStylePosition)) {
++      if (rs->mStylePosition->mHeight.GetUnit() != eStyleUnit_Auto) {
+         return PR_TRUE;
+       }
+       else return PR_FALSE;
+@@ -1742,8 +1725,8 @@
+   if (!aReflowState.frame->GetPrevInFlow() &&  // 1st in flow
+       (NS_UNCONSTRAINEDSIZE == aReflowState.mComputedHeight ||  // no computed height
+        0                    == aReflowState.mComputedHeight) && 
+-      ::IsPctStyleHeight(aReflowState.mStylePosition) && // pct height
+-      ::AncestorsHaveStyleHeight(aReflowState)) {
++      eStyleUnit_Percent == aReflowState.mStylePosition->mHeight.GetUnit() && // pct height
++      nsTableFrame::AncestorsHaveStyleHeight(*aReflowState.parentReflowState)) {
+     nsTableFrame::RequestSpecialHeightReflow(aReflowState);
+   }
+ }
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables nsTableFrame.h,v
+retrieving revision 3.287
+retrieving revision 3.288
+diff -u -r3.287 -r3.288
+--- mozilla/layout/tables/nsTableFrame.h	2007/06/05 18:55:26	3.287
++++ mozilla/layout/tables/nsTableFrame.h	2007/06/25 20:34:48	3.288
+@@ -115,6 +115,10 @@
+ 
+   static float GetTwipsToPixels(nsPresContext* aPresContext);
+ 
++  // Return true if aParentReflowState.frame or any of its ancestors within
++  // the containing table have non-auto height. (e.g. pct or fixed height)
++  static PRBool AncestorsHaveStyleHeight(const nsHTMLReflowState& aParentReflowState);
++
+   // See if a special height reflow will occur due to having a pct height when
+   // the pct height basis may not yet be valid.
+   static void CheckRequestSpecialHeightReflow(const nsHTMLReflowState& aReflowState);
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables nsTableRowFrame.cpp,v
+retrieving revision 3.402
+retrieving revision 3.403
+diff -u -r3.402 -r3.403
+--- mozilla/layout/tables/nsTableRowFrame.cpp	2007/05/06 19:16:51	3.402
++++ mozilla/layout/tables/nsTableRowFrame.cpp	2007/06/25 20:34:48	3.403
+@@ -1034,6 +1034,9 @@
+   // see if a special height reflow needs to occur due to having a pct height
+   nsTableFrame::CheckRequestSpecialHeightReflow(aReflowState);
+ 
++  // See if we have a cell with specified/pct height
++  InitHasCellWithStyleHeight(tableFrame);
++
+   rv = ReflowChildren(aPresContext, aDesiredSize, aReflowState, *tableFrame,
+                       aStatus);
+ 
+@@ -1333,6 +1336,32 @@
+   }
+ }
+ 
++/**
++ * Sets the NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT bit to indicate whether
++ * this row has any cells that have non-auto-height.  (Row-spanning
++ * cells are ignored.)
++ */
++void nsTableRowFrame::InitHasCellWithStyleHeight(nsTableFrame* aTableFrame)
++{
++  nsTableIterator iter(*this);
++
++  for (nsIFrame* kidFrame = iter.First(); kidFrame; kidFrame = iter.Next()) {
++    nsIAtom* frameType = kidFrame->GetType();
++    if (!IS_TABLE_CELL(frameType)) {
++      NS_NOTREACHED("Table row has a non-cell child.");
++      continue;
++    }
++    nsTableCellFrame* cellFrame = NS_STATIC_CAST(nsTableCellFrame*, kidFrame);
++    // Ignore row-spanning cells
++    if (aTableFrame->GetEffectiveRowSpan(*cellFrame) == 1 &&
++        cellFrame->GetStylePosition()->mHeight.GetUnit() != eStyleUnit_Auto) {
++      AddStateBits(NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT);
++      return;
++    }
++  }
++  RemoveStateBits(NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT);
++}
++
+ /* ----- global methods ----- */
+ 
+ nsIFrame* 
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables nsTableRowFrame.h,v
+retrieving revision 3.131
+retrieving revision 3.132
+diff -u -r3.131 -r3.132
+--- mozilla/layout/tables/nsTableRowFrame.h	2007/02/21 19:42:21	3.131
++++ mozilla/layout/tables/nsTableRowFrame.h	2007/06/25 20:34:48	3.132
+@@ -45,10 +45,15 @@
+ class  nsTableCellFrame;
+ struct nsTableCellReflowState;
+ 
+-#define NS_TABLE_ROW_HAS_UNPAGINATED_HEIGHT 0x40000000
+ // This is also used on rows, from nsTableRowGroupFrame.h
+ // #define NS_REPEATED_ROW_OR_ROWGROUP      0x10000000
+ 
++// Indicates whether this row has any cells that have
++// non-auto-height and rowspan=1
++#define NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT   0x20000000
++
++#define NS_TABLE_ROW_HAS_UNPAGINATED_HEIGHT 0x40000000
++
+ /**
+  * nsTableRowFrame is the frame that maps table rows 
+  * (HTML tag TR). This class cannot be reused
+@@ -302,6 +307,14 @@
+   BCPixelSize mRightContBorderWidth;
+   BCPixelSize mTopContBorderWidth;
+   BCPixelSize mLeftContBorderWidth;
++
++  /**
++   * Sets the NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT bit to indicate whether
++   * this row has any cells that have non-auto-height.  (Row-spanning
++   * cells are ignored.)
++   */
++  void InitHasCellWithStyleHeight(nsTableFrame* aTableFrame);
++
+ };
+ 
+ inline PRInt32 nsTableRowFrame::GetRowIndex() const
+

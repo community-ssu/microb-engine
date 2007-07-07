@@ -1,0 +1,647 @@
+#===================================================================
+##RCS file: /cvsroot/mozilla/gfx/public nsIRenderingContext.h,v
+##retrieving revision 1.76
+##retrieving revision 1.77
+diff -u -r1.76 -r1.77
+--- mozilla/gfx/public/nsIRenderingContext.h	2007/01/25 01:58:55	1.76
++++ mozilla/gfx/public/nsIRenderingContext.h	2007/03/27 06:21:55	1.77
+@@ -754,42 +754,6 @@
+    */
+   virtual void* GetNativeGraphicData(GraphicDataType aType) = 0;
+ 
+-  /**
+-   * Get a drawing surface used as a backbuffer.
+-   * Depending on the platform this will either cause a backbuffer surface to be allocated
+-   * or an existing cached backbuffer will be returned. If the backbuffer is being cached
+-   * asking for aMaxSize which is different from a previous request may cause the platform
+-   * to dump it's cached backbuffer and reallocate a backbuffer of a size which will allow aMaxSize 
+-   * buffer to be allocated.
+-   *
+-   * @param aRequestedSize size of the backbuffer area requested
+-   * @param aMaxSize maximum size that may be requested for the backbuffer
+-   * @param aForBlending parameter telling if the buffer will be used for blending
+-   * @param aBackbuffer drawing surface used as the backbuffer
+-   */
+-  NS_IMETHOD GetBackbuffer(const nsRect &aRequestedSize, const nsRect &aMaxSize, PRBool aForBlending, nsIDrawingSurface* &aBackbuffer) = 0;
+-
+-  /**
+-   * Release a drawing surface used as the backbuffer
+-   * If the platform caches the backbuffer this call will destroy it.
+-   */
+-  NS_IMETHOD ReleaseBackbuffer(void) = 0;
+-
+-  /**
+-   * Destroy the drawing surface used as the backbuffer. If the platform
+-   * does not maintain a cached backbuffer this call will do nothing.
+-   */
+-  NS_IMETHOD DestroyCachedBackbuffer(void) = 0;
+-
+-  /**
+-   * Some platforms may not want a backbuffer at all. Returning false
+-   * here allows them to achieve that
+-   *
+-   * @param aUseBackbuffer PR_TRUE if we should use a backbuffer, PR_FALSE if not
+-   */
+-  NS_IMETHOD UseBackbuffer(PRBool* aUseBackbuffer) = 0;
+-
+-
+ #ifdef MOZ_MATHML
+   /**
+    * Returns bounding metrics (in app units) of an 8-bit character string
+#===================================================================
+#RCS file: /cvsroot/mozilla/view/public nsIViewManager.h,v
+#retrieving revision 3.98
+#retrieving revision 3.99
+diff -u -r3.98 -r3.99
+--- mozilla/view/public/nsIViewManager.h	2007/02/25 22:26:47	3.98
++++ mozilla/view/public/nsIViewManager.h	2007/03/27 06:21:57	3.99
+@@ -440,17 +440,6 @@
+   // right with view update batching at all (will miss updates).  Maybe this
+   // should call FlushPendingInvalidates()?
+   NS_IMETHOD ForceUpdate() = 0;
+-  
+-  /**
+-   * Control double buffering of the display. If double buffering
+-   * is enabled the viewmanager is allowed to render to an offscreen
+-   * drawing surface before copying to the display in order to prevent
+-   * flicker. If it is disabled all rendering will appear directly on the
+-   * the display. The display is double buffered by default.
+-   * @param aDoubleBuffer PR_TRUE to enable double buffering
+-   *                      PR_FALSE to disable double buffering
+-   */
+-  NS_IMETHOD AllowDoubleBuffering(PRBool aDoubleBuffer)=0;
+ 
+   /**
+    * Indicate whether the viewmanager is currently painting
+#===================================================================
+#RCS file: /cvsroot/mozilla/layout/generic nsObjectFrame.cpp,v
+#retrieving revision 1.585
+#retrieving revision 1.586
+diff -u -r1.585 -r1.586
+--- mozilla/layout/generic/nsObjectFrame.cpp	2007/03/27 01:07:57	1.585
++++ mozilla/layout/generic/nsObjectFrame.cpp	2007/03/27 06:21:57	1.586
+@@ -541,15 +541,6 @@
+   // XXX is the above comment correct?
+   viewMan->SetViewVisibility(view, nsViewVisibility_kHide);
+ 
+-  // Turn off double buffering on the Mac. This depends on bug 49743 and partially
+-  // fixes 32327, 19931 and 51787
+-#ifdef XP_MACOSX
+-  PRBool doubleBuffer =
+-    nsContentUtils::GetBoolPref("plugin.enable_double_buffer");
+-  
+-  viewMan->AllowDoubleBuffering(doubleBuffer);
+-#endif
+-  
+   //this is ugly. it was ripped off from didreflow(). MMP
+   // Position and size view relative to its parent, not relative to our
+   // parent frame (our parent frame may not have a view).
+#===================================================================
+#RCS file: /cvsroot/mozilla/gfx/src/gtk nsRenderingContextGTK.cpp,v
+#retrieving revision 1.197
+#retrieving revision 1.198
+diff -u -r1.197 -r1.198
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2006/06/26 22:18:20	1.197
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007/03/27 06:21:55	1.198
+@@ -1471,19 +1471,3 @@
+   UpdateGC();
+   return nsRenderingContextImpl::DrawImage(aImage, aSrcRect, aDestRect);
+ }
+-
+-NS_IMETHODIMP nsRenderingContextGTK::GetBackbuffer(const nsRect &aRequestedSize,
+-                                                   const nsRect &aMaxSize,
+-                                                   PRBool aForBlending,
+-                                                   nsIDrawingSurface* &aBackbuffer)
+-{
+-  // Do not cache the backbuffer. On GTK it is more efficient to allocate
+-  // the backbuffer as needed and it doesn't cause a performance hit. @see bug 95952
+-  return AllocateBackbuffer(aRequestedSize, aMaxSize, aBackbuffer, PR_FALSE, 0);
+-}
+- 
+-NS_IMETHODIMP nsRenderingContextGTK::ReleaseBackbuffer(void) {
+-  // Do not cache the backbuffer. On GTK it is more efficient to allocate
+-  // the backbuffer as needed and it doesn't cause a performance hit. @see bug 95952
+-  return DestroyCachedBackbuffer();
+-}
+#===================================================================
+#RCS file: /cvsroot/mozilla/gfx/src/gtk nsRenderingContextGTK.h,v
+#retrieving revision 1.83
+#retrieving revision 1.84
+diff -u -r1.83 -r1.84
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.h	2006/06/26 22:18:20	1.83
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.h	2007/03/27 06:21:55	1.84
+@@ -242,10 +242,6 @@
+ 
+   NS_IMETHOD DrawImage(imgIContainer *aImage, const nsRect & aSrcRect, const nsRect & aDestRect);
+ 
+-  NS_IMETHOD GetBackbuffer(const nsRect &aRequestedSize, const nsRect &aMaxSize,
+-                           PRBool aForBlending, nsIDrawingSurface* &aBackbuffer);
+-  NS_IMETHOD ReleaseBackbuffer(void);
+-
+   //locals
+   NS_IMETHOD CommonInit();
+ 
+#===================================================================
+#RCS file: /cvsroot/mozilla/gfx/src/shared nsRenderingContextImpl.cpp,v
+#retrieving revision 3.65
+#retrieving revision 3.66
+diff -u -r3.65 -r3.66
+--- mozilla/gfx/src/shared/nsRenderingContextImpl.cpp	2007/03/20 00:58:18	3.65
++++ mozilla/gfx/src/shared/nsRenderingContextImpl.cpp	2007/03/27 06:21:56	3.66
+@@ -45,8 +45,6 @@
+ #include <stdlib.h>
+ 
+ 
+-nsIDrawingSurface* nsRenderingContextImpl::gBackbuffer = nsnull;
+-nsRect nsRenderingContextImpl::gBackbufferBounds = nsRect(0, 0, 0, 0);
+ nsSize nsRenderingContextImpl::gLargestRequestedSize = nsSize(0, 0);
+ 
+ 
+@@ -72,83 +70,6 @@
+ 
+ }
+ 
+-
+-NS_IMETHODIMP nsRenderingContextImpl::GetBackbuffer(const nsRect &aRequestedSize, const nsRect &aMaxSize, PRBool aForBlending, nsIDrawingSurface* &aBackbuffer)
+-{
+-  // Default implementation assumes the backbuffer will be cached.
+-  // If the platform implementation does not require the backbuffer to
+-  // be cached override this method and make the following call instead:
+-  // AllocateBackbuffer(aRequestedSize, aMaxSize, aBackbuffer, PR_FALSE);
+-  return AllocateBackbuffer(aRequestedSize, aMaxSize, aBackbuffer, PR_TRUE, 0);
+-}
+-
+-nsresult nsRenderingContextImpl::AllocateBackbuffer(const nsRect &aRequestedSize, const nsRect &aMaxSize, nsIDrawingSurface* &aBackbuffer, PRBool aCacheBackbuffer, PRUint32 aSurfFlags)
+-{
+-  nsRect newBounds;
+-  nsresult rv = NS_OK;
+-
+-   if (! aCacheBackbuffer) {
+-    newBounds = aRequestedSize;
+-  } else {
+-    GetDrawingSurfaceSize(aMaxSize, aRequestedSize, newBounds);
+-  }
+-
+-  if ((nsnull == gBackbuffer)
+-      || (gBackbufferBounds.width != newBounds.width)
+-      || (gBackbufferBounds.height != newBounds.height))
+-    {
+-      if (gBackbuffer) {
+-        //destroy existing DS
+-        DestroyDrawingSurface(gBackbuffer);
+-        gBackbuffer = nsnull;
+-      }
+-
+-      rv = CreateDrawingSurface(newBounds, aSurfFlags, gBackbuffer);
+-      //   printf("Allocating a new drawing surface %d %d\n", newBounds.width, newBounds.height);
+-      if (NS_SUCCEEDED(rv)) {
+-        gBackbufferBounds = newBounds;
+-        SelectOffScreenDrawingSurface(gBackbuffer);
+-      } else {
+-        gBackbufferBounds.SetRect(0,0,0,0);
+-        gBackbuffer = nsnull;
+-      }
+-    } else {
+-      SelectOffScreenDrawingSurface(gBackbuffer);
+-
+-      nsCOMPtr<nsIDeviceContext>  dx;
+-      GetDeviceContext(*getter_AddRefs(dx));
+-      nsRect bounds = aRequestedSize;
+-      bounds *= dx->AppUnitsPerDevPixel();
+-
+-      SetClipRect(bounds, nsClipCombine_kReplace);
+-    }
+-
+-  aBackbuffer = gBackbuffer;
+-  return rv;
+-}
+-
+-NS_IMETHODIMP nsRenderingContextImpl::ReleaseBackbuffer(void)
+-{
+-  // If the platform does not require the backbuffer to be cached
+-  // override this method and call DestroyCachedBackbuffer
+-  return NS_OK;
+-}
+-
+-NS_IMETHODIMP nsRenderingContextImpl::DestroyCachedBackbuffer(void)
+-{
+-  if (gBackbuffer) {
+-    DestroyDrawingSurface(gBackbuffer);
+-    gBackbuffer = nsnull;
+-  }
+-  return NS_OK;
+-}
+-
+-NS_IMETHODIMP nsRenderingContextImpl::UseBackbuffer(PRBool* aUseBackbuffer)
+-{
+-  *aUseBackbuffer = PR_TRUE;
+-  return NS_OK;
+-}
+-
+ NS_IMETHODIMP nsRenderingContextImpl::PushTranslation(PushedTranslation* aState)
+ {
+   // The transform components are saved and restored instead 
+#===================================================================
+#RCS file: /cvsroot/mozilla/gfx/src nsRenderingContextImpl.h,v
+#retrieving revision 1.22
+#retrieving revision 1.23
+diff -u -r1.22 -r1.23
+--- mozilla/gfx/src/nsRenderingContextImpl.h	2007/03/20 00:58:18	1.22
++++ mozilla/gfx/src/nsRenderingContextImpl.h	2007/03/27 06:21:55	1.23
+@@ -91,11 +91,6 @@
+    * @return NS_OK if the Pen Mode is correctly set
+    */
+   NS_IMETHOD SetPenMode(nsPenMode aPenMode) { return NS_ERROR_FAILURE;}
+-
+-  NS_IMETHOD GetBackbuffer(const nsRect &aRequestedSize, const nsRect &aMaxSize, PRBool aForBlending, nsIDrawingSurface* &aBackbuffer); 
+-  NS_IMETHOD ReleaseBackbuffer(void);
+-  NS_IMETHOD DestroyCachedBackbuffer(void);
+-  NS_IMETHOD UseBackbuffer(PRBool* aUseBackbuffer);
+   
+   NS_IMETHOD PushTranslation(PushedTranslation* aState);
+   NS_IMETHOD PopTranslation(PushedTranslation* aState);
+@@ -317,24 +312,12 @@
+    */
+   void GetDrawingSurfaceSize(const nsRect& aMaxBackbufferSize, const nsRect& aRequestedSize, nsRect& aSurfaceSize);
+ 
+-  /**
+-   * Utility method used to implement NS_IMETHOD GetBackbuffer
+-   *
+-   * @param aRequestedSize size of the backbuffer area requested
+-   * @param aMaxSize maximum size that may be requested for the backbuffer
+-   * @param aBackbuffer drawing surface used as the backbuffer
+-   * @param aCacheBackbuffer PR_TRUE then the backbuffer will be cached, if PR_FALSE it is created each time
+-   * @param aSurfFlags flags passed to CreateDrawingSurface()
+-   */
+-  nsresult AllocateBackbuffer(const nsRect &aRequestedSize, const nsRect &aMaxSize, nsIDrawingSurface* &aBackbuffer, PRBool aCacheBackbuffer, PRUint32 aSurfFlags);
+-
+ public:
+ 
+ protected:
+   nsPenMode   mPenMode;
+ private:
+   static nsIDrawingSurface*  gBackbuffer;         //singleton backbuffer 
+-  static nsRect            gBackbufferBounds;   //backbuffer bounds
+     // Largest requested offscreen size if larger than a full screen.
+   static nsSize            gLargestRequestedSize;
+ 
+#===================================================================
+#RCS file: /cvsroot/mozilla/gfx/src/thebes nsThebesRenderingContext.cpp,v
+#retrieving revision 1.42
+#retrieving revision 1.43
+diff -u -r1.42 -r1.43
+--- mozilla/gfx/src/thebes/nsThebesRenderingContext.cpp	2007/03/20 00:58:18	1.42
++++ mozilla/gfx/src/thebes/nsThebesRenderingContext.cpp	2007/03/27 06:21:56	1.43
+@@ -870,44 +870,6 @@
+ }
+ 
+ NS_IMETHODIMP
+-nsThebesRenderingContext::UseBackbuffer(PRBool* aUseBackbuffer)
+-{
+-#ifndef XP_MACOSX
+-    *aUseBackbuffer = PR_TRUE;
+-#else
+-    *aUseBackbuffer = PR_FALSE;
+-#endif
+-    return NS_OK;
+-}
+-
+-NS_IMETHODIMP
+-nsThebesRenderingContext::GetBackbuffer(const nsRect &aRequestedSize,
+-                                        const nsRect &aMaxSize,
+-                                        PRBool aForBlending,
+-                                        nsIDrawingSurface* &aBackbuffer)
+-{
+-    PR_LOG(gThebesGFXLog, PR_LOG_DEBUG,
+-           ("## %p nsTRC::GetBackBuffer req: %d %d %d %d max: %d %d %d %d blending? %d\n",
+-            this, aRequestedSize.x, aRequestedSize.y, aRequestedSize.width, aRequestedSize.height,
+-            aMaxSize.x, aMaxSize.y, aMaxSize.width, aMaxSize.height, aForBlending));
+-
+-    return AllocateBackbuffer(aRequestedSize, aMaxSize, aBackbuffer, PR_FALSE,
+-                              aForBlending ? NS_CREATEDRAWINGSURFACE_FOR_PIXEL_ACCESS : 0);
+-}
+-
+-NS_IMETHODIMP
+-nsThebesRenderingContext::ReleaseBackbuffer(void)
+-{
+-    return DestroyCachedBackbuffer();
+-}
+-
+-NS_IMETHODIMP
+-nsThebesRenderingContext::DestroyCachedBackbuffer(void)
+-{
+-    return NS_OK;
+-}
+-
+-NS_IMETHODIMP
+ nsThebesRenderingContext::PushFilter(const nsRect& twRect, PRBool aAreaIsOpaque, float aOpacity)
+ {
+     PR_LOG(gThebesGFXLog, PR_LOG_DEBUG,
+#===================================================================
+#RCS file: /cvsroot/mozilla/gfx/src/thebes nsThebesRenderingContext.h,v
+#retrieving revision 1.11
+#retrieving revision 1.12
+diff -u -r1.11 -r1.12
+--- mozilla/gfx/src/thebes/nsThebesRenderingContext.h	2007/02/07 07:46:39	1.11
++++ mozilla/gfx/src/thebes/nsThebesRenderingContext.h	2007/03/27 06:21:56	1.12
+@@ -223,13 +223,6 @@
+                                  const nsRect &aDestBounds,
+                                  PRUint32 aCopyFlags);
+     virtual void* GetNativeGraphicData(GraphicDataType aType);
+-    NS_IMETHOD GetBackbuffer(const nsRect &aRequestedSize,
+-                             const nsRect &aMaxSize,
+-                             PRBool aForBlending,
+-                             nsIDrawingSurface* &aBackbuffer);
+-    NS_IMETHOD ReleaseBackbuffer(void);
+-    NS_IMETHOD DestroyCachedBackbuffer(void);
+-    NS_IMETHOD UseBackbuffer(PRBool* aUseBackbuffer);
+ 
+     NS_IMETHOD PushTranslation(PushedTranslation* aState);
+     NS_IMETHOD PopTranslation(PushedTranslation* aState);
+#===================================================================
+#RCS file: /cvsroot/mozilla/view/src nsViewManager.cpp,v
+#retrieving revision 3.442
+#retrieving revision 3.443
+diff -u -r3.442 -r3.443
+--- mozilla/view/src/nsViewManager.cpp	2007/02/25 22:26:47	3.442
++++ mozilla/view/src/nsViewManager.cpp	2007/03/27 06:21:57	3.443
+@@ -64,9 +64,7 @@
+ #include "nsCOMArray.h"
+ #include "nsThreadUtils.h"
+ 
+-#ifdef MOZ_CAIRO_GFX
+ #include "gfxContext.h"
+-#endif
+ 
+ static NS_DEFINE_IID(kBlenderCID, NS_BLENDER_CID);
+ static NS_DEFINE_IID(kRegionCID, NS_REGION_CID);
+@@ -176,7 +174,6 @@
+   // NOTE:  we use a zeroing operator new, so all data members are
+   // assumed to be cleared here.
+   mDefaultBackgroundColor = NS_RGBA(0, 0, 0, 0);
+-  mAllowDoubleBuffering = PR_TRUE; 
+   mHasPendingUpdates = PR_FALSE;
+   mRecursiveRefreshPending = PR_FALSE;
+   mUpdateBatchFlags = 0;
+@@ -225,14 +222,6 @@
+     // Note: A global rendering context is needed because it is not possible 
+     // to create a nsIRenderingContext during the shutdown of XPCOM. The last
+     // viewmanager is typically destroyed during XPCOM shutdown.
+-
+-    if (gCleanupContext) {
+-
+-      gCleanupContext->DestroyCachedBackbuffer();
+-    } else {
+-      NS_ASSERTION(PR_FALSE, "Cleanup of drawing surfaces + offscreen buffer failed");
+-    }
+-
+     NS_IF_RELEASE(gCleanupContext);
+   }
+ 
+@@ -502,25 +491,6 @@
+   }  
+   SetPainting(PR_TRUE);
+ 
+-  // force double buffering in general
+-  aUpdateFlags |= NS_VMREFRESH_DOUBLE_BUFFER;
+-
+-  if (!DoDoubleBuffering())
+-    aUpdateFlags &= ~NS_VMREFRESH_DOUBLE_BUFFER;
+-
+-  // check if the rendering context wants double-buffering or not
+-  if (aContext) {
+-    PRBool contextWantsBackBuffer = PR_TRUE;
+-    aContext->UseBackbuffer(&contextWantsBackBuffer);
+-    if (!contextWantsBackBuffer)
+-      aUpdateFlags &= ~NS_VMREFRESH_DOUBLE_BUFFER;
+-  }
+-  
+-  if (PR_FALSE == mAllowDoubleBuffering) {
+-    // Turn off double-buffering of the display
+-    aUpdateFlags &= ~NS_VMREFRESH_DOUBLE_BUFFER;
+-  }
+-
+   nsCOMPtr<nsIRenderingContext> localcx;
+   nsIDrawingSurface*    ds = nsnull;
+ 
+@@ -555,7 +525,6 @@
+   nsRect damageRect = damageRegion.GetBounds();
+   PRInt32 p2a = mContext->AppUnitsPerDevPixel();
+ 
+-#ifdef MOZ_CAIRO_GFX
+   nsRefPtr<gfxContext> ctx =
+     (gfxContext*) localcx->GetNativeGraphicData(nsIRenderingContext::NATIVE_THEBES_CONTEXT);
+ 
+@@ -571,95 +540,6 @@
+   RenderViews(aView, *localcx, damageRegion, ds);
+ 
+   ctx->Restore();
+-#else
+-  // widgetDamageRectInPixels is the clipped damage area bounds,
+-  // in pixels-relative-to-widget-origin
+-  nsRect widgetDamageRectInPixels = damageRect;
+-  widgetDamageRectInPixels.MoveBy(-viewRect.x, -viewRect.y);
+-  widgetDamageRectInPixels.ScaleRoundOut(t2p);
+-
+-  // On the Mac, we normally turn doublebuffering off because Quartz is
+-  // doublebuffering for us. But we need to turn it on anyway if we need
+-  // to use our blender, which requires access to the "current pixel values"
+-  // when it blends onto the canvas.
+-  // XXX disable opacity for now on the Mac because of this ... it'll get
+-  // reenabled with cairo
+-  if (aUpdateFlags & NS_VMREFRESH_DOUBLE_BUFFER)
+-  {
+-    nsRect maxWidgetSize;
+-    GetMaxWidgetBounds(maxWidgetSize);
+-
+-    nsRect r(0, 0, widgetDamageRectInPixels.width, widgetDamageRectInPixels.height);
+-    if (NS_FAILED(localcx->GetBackbuffer(r, maxWidgetSize, PR_FALSE, ds))) {
+-      //Failed to get backbuffer so turn off double buffering
+-      aUpdateFlags &= ~NS_VMREFRESH_DOUBLE_BUFFER;
+-    }
+-  }
+-
+-  nsIRenderingContext::PushedTranslation trans;
+-  nsPoint delta(0,0);
+-
+-  // painting will be done in aView's coordinates
+-  PRBool usingDoubleBuffer = (aUpdateFlags & NS_VMREFRESH_DOUBLE_BUFFER) && ds;
+-  if (usingDoubleBuffer) {
+-    // Adjust translations because the backbuffer holds just the damaged area,
+-    // not the whole widget
+-
+-    localcx->PushTranslation(&trans);
+-
+-    // We want (0,0) to be translated to the widget origin. We do it this
+-    // way rather than calling Translate because it is *imperative* that
+-    // the tx,ty floats in the translation matrix get set to an integer
+-    // number of pixels. For example, if they're off by 0.000001 for some
+-    // damage rects, then a translated coordinate of NNNN.5 may get rounded
+-    // differently depending on what damage rect is used to paint the object,
+-    // and we may get inconsistent rendering depending on what area was
+-    // damaged.
+-    localcx->SetTranslation(-widgetDamageRectInPixels.x, -widgetDamageRectInPixels.y);
+-    
+-    // We're going to reset the clip region for the backbuffer. We can't
+-    // just use damageRegion because nsIRenderingContext::SetClipRegion doesn't
+-    // translate/scale the coordinates (grrrrrrrrrr)
+-    // So we have to translate the region before we use it. aRegion is in
+-    // pixels-relative-to-widget-origin, so:
+-    aRegion->Offset(-widgetDamageRectInPixels.x, -widgetDamageRectInPixels.y);
+-  }
+-  // RenderViews draws in view coordinates. We want (0,0)
+-  // to be translated to (viewRect.x,viewRect.y) in the widget. So:
+-  localcx->Translate(viewRect.x, viewRect.y);
+-
+-  // Note that nsIRenderingContext::SetClipRegion always works in pixel coordinates,
+-  // and nsIRenderingContext::SetClipRect always works in app coordinates. Stupid huh?
+-  // Also, SetClipRegion doesn't subject its argument to the current transform, but
+-  // SetClipRect does.
+-  localcx->SetClipRegion(*aRegion, nsClipCombine_kReplace);
+-  localcx->SetClipRect(damageRect, nsClipCombine_kIntersect);
+-
+-  nsRegion opaqueRegion;
+-  AddCoveringWidgetsToOpaqueRegion(opaqueRegion, mContext, aView);
+-  damageRegion.Sub(damageRegion, opaqueRegion);
+-
+-  RenderViews(aView, *localcx, damageRegion, ds);
+-
+-  // undo earlier translation
+-  localcx->Translate(-viewRect.x, -viewRect.y);
+-  if (usingDoubleBuffer) {
+-    // Flush bits back to the screen
+-
+-    // Restore aRegion to pixels-relative-to-widget-origin
+-    aRegion->Offset(widgetDamageRectInPixels.x, widgetDamageRectInPixels.y);
+-    // Restore translation to its previous state
+-    localcx->PopTranslation(&trans);
+-    // Make damageRect twips-relative-to-widget-origin
+-    damageRect.MoveBy(-viewRect.x, -viewRect.y);
+-    // Reset clip region to widget-relative
+-    localcx->SetClipRegion(*aRegion, nsClipCombine_kReplace);
+-    localcx->SetClipRect(damageRect, nsClipCombine_kIntersect);
+-    // neither source nor destination are transformed
+-    localcx->CopyOffScreenBits(ds, 0, 0, widgetDamageRectInPixels, NS_COPYBITS_USE_SOURCE_CLIP_REGION);
+-    localcx->ReleaseBackbuffer();
+-  }
+-#endif
+ 
+   SetPainting(PR_FALSE);
+ 
+@@ -778,25 +658,6 @@
+ void nsViewManager::RenderViews(nsView *aView, nsIRenderingContext& aRC,
+                                 const nsRegion& aRegion, nsIDrawingSurface* aRCSurface)
+ {
+-#ifndef MOZ_CAIRO_GFX
+-  BlendingBuffers* buffers = nsnull;
+-  nsIWidget* widget = aView->GetWidget();
+-  PRBool translucentWindow = PR_FALSE;
+-  if (widget) {
+-    widget->GetWindowTranslucency(translucentWindow);
+-    if (translucentWindow) {
+-      NS_WARNING("Transparent window enabled");
+-      NS_ASSERTION(aRCSurface, "Cannot support transparent windows with doublebuffering disabled");
+-
+-      // Create a buffer wrapping aRC (which is usually the double-buffering offscreen buffer).
+-      buffers = CreateBlendingBuffers(&aRC, PR_TRUE, aRCSurface, translucentWindow, aRegion.GetBounds());
+-      NS_ASSERTION(buffers, "Failed to create rendering buffers");
+-      if (!buffers)
+-        return;
+-    }
+-  }
+-#endif
+-
+   if (mObserver) {
+     nsView* displayRoot = GetDisplayRootFor(aView);
+     nsPoint offsetToRoot = aView->GetOffsetTo(displayRoot); 
+@@ -807,29 +668,7 @@
+     aRC.Translate(-offsetToRoot.x, -offsetToRoot.y);
+     mObserver->Paint(displayRoot, &aRC, damageRegion);
+     aRC.PopState();
+-#ifndef MOZ_CAIRO_GFX
+-    if (translucentWindow)
+-      mObserver->Paint(displayRoot, buffers->mWhiteCX, aRegion);
+-#endif
+   }
+-
+-#ifndef MOZ_CAIRO_GFX
+-  if (translucentWindow) {
+-    // Get the alpha channel into an array so we can send it to the widget
+-    nsRect r = aRegion.GetBounds();
+-    r *= (1.0f / mContext->AppUnitsPerDevPixel());
+-    nsRect bufferRect(0, 0, r.width, r.height);
+-    PRUint8* alphas = nsnull;
+-    nsresult rv = mBlender->GetAlphas(bufferRect, buffers->mBlack,
+-                                      buffers->mWhite, &alphas);
+-    
+-    if (NS_SUCCEEDED(rv)) {
+-      widget->UpdateTranslucentWindowAlpha(r, alphas);
+-    }
+-    delete[] alphas;
+-    delete buffers;
+-  }
+-#endif
+ }
+ 
+ static nsresult NewOffscreenContext(nsIDeviceContext* deviceContext, nsIDrawingSurface* surface,
+@@ -1338,12 +1177,10 @@
+               vm->UpdateView(vm->mRootView, NS_VMREFRESH_NO_SYNC);
+               didResize = PR_TRUE;
+ 
+-#ifdef MOZ_CAIRO_GFX
+               // not sure if it's valid for us to claim that we
+               // ignored this, but we're going to do so anyway, since
+               // we didn't actually paint anything
+               *aStatus = nsEventStatus_eIgnore;
+-#endif
+             }
+           }
+ 
+@@ -1444,9 +1281,6 @@
+       //be constructed with the appropriate display depth.
+       //@see bugzilla bug 6061
+       *aStatus = nsEventStatus_eConsumeDoDefault;
+-      if (gCleanupContext) {
+-        gCleanupContext->DestroyCachedBackbuffer();
+-      }
+       break;
+ 
+     case NS_SYSCOLORCHANGED:
+@@ -2542,14 +2376,6 @@
+   return NS_OK;
+ }
+ 
+-
+-NS_IMETHODIMP
+-nsViewManager::AllowDoubleBuffering(PRBool aDoubleBuffer)
+-{
+-  mAllowDoubleBuffering = aDoubleBuffer;
+-  return NS_OK;
+-}
+-
+ NS_IMETHODIMP
+ nsViewManager::IsPainting(PRBool& aIsPainting)
+ {
+#===================================================================
+#RCS file: /cvsroot/mozilla/view/src nsViewManager.h,v
+#retrieving revision 3.169
+#retrieving revision 3.170
+diff -u -r3.169 -r3.170
+--- mozilla/view/src/nsViewManager.h	2007/02/25 22:26:47	3.169
++++ mozilla/view/src/nsViewManager.h	2007/03/27 06:21:57	3.170
+@@ -234,7 +234,6 @@
+   nsIWidget* GetWidget() { return mRootView ? mRootView->GetWidget() : nsnull; }
+   NS_IMETHOD ForceUpdate();
+  
+-  NS_IMETHOD AllowDoubleBuffering(PRBool aDoubleBuffer);
+   NS_IMETHOD IsPainting(PRBool& aIsPainting);
+   NS_IMETHOD SetDefaultBackgroundColor(nscolor aColor);
+   NS_IMETHOD GetDefaultBackgroundColor(nscolor* aColor);
+@@ -486,7 +485,6 @@
+   // mRootViewManager is a strong ref unless it equals |this|.  It's
+   // never null (if we have no ancestors, it will be |this|).
+   nsViewManager     *mRootViewManager;
+-  PRPackedBool      mAllowDoubleBuffering;
+ 
+   nsRevocableEventPtr<nsViewManagerEvent> mSynthMouseMoveEvent;
+   nsRevocableEventPtr<nsViewManagerEvent> mInvalidateEvent;

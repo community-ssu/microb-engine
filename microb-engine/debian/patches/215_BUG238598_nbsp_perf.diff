@@ -1,0 +1,33 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP:Bug 238598 nbsp character is passed to nsFontMetrics GetTextDimensions
+
+Index: mozilla/gfx/src/gtk/nsFontMetricsXft.cpp
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsFontMetricsXft.cpp
++++ mozilla/gfx/src/gtk/nsFontMetricsXft.cpp
+@@ -935,16 +935,23 @@
+     XftUnlockFace(xftFont);
+ 
+     return NS_OK;
+ }
+ 
+ nsFontXft *
+ nsFontMetricsXft::FindFont(PRUint32 aChar)
+ {
++    // If we have an NBSP character, we can treat it as a normal space.
++    // This helps because some fonts don't claim to support NBSP, and we waste
++    // time looking for a font that does.  The only difference is for
++    // line-breaking, and that has already been done for us in layout.
++
++    if (aChar == 0xa0)
++        aChar = ' ';
+ 
+     // If mPattern is null, set up the base bits of it so we can
+     // match.  If we need to match later we don't have to set it up
+     // again.
+     if (!mPattern) {
+         SetupFCPattern();
+         // did we fail to set it up?
+         if (!mPattern)

@@ -1,0 +1,157 @@
+<html>
+<head>
+<title>about:config - html</title>
+<script>
+
+var data="";
+function accum(more)
+{
+data+=more+"\n";
+}
+function flushAccum()
+{
+document.write(data);
+data="";
+}
+function formatPref(ps, name)
+{
+var type=ps.getPrefType(name);
+switch (type)
+{
+case ps.PREF_STRING:
+accum("<tr><td>"+name+"<\/td><td>string<\/td><td>"+ps.getCharPref(name)+"<\/td><\/tr>");
+break;
+case ps.PREF_INT:
+accum("<tr><td>"+name+"<\/td><td>int<\/td><td>"+ps.getIntPref(name)+"<\/td><\/tr>");
+break;
+case ps.PREF_BOOL:
+accum("<tr><td>"+name+"<\/td><td>bool<\/td><td>"+ps.getBoolPref(name)+"<\/td><\/tr>");
+break;
+default:
+}
+}
+function formatPrefArray(ps, ary)
+{
+ary.sort();
+for (var i=0; i<ary.length; i++)
+formatPref(ps, ary[i]);
+}
+function callSearchPref()
+{
+document.write("Implementation losted :(");
+}
+function formatSetPref()
+{
+accum("<form method=get onsubmit='callSetPref()'>"+
+"<table><tr><th>Name<th>Value<tr><td><input id='prefname'><td><input id='prefvalue'><\/table>"+
+"<input type=submit value='Set Preference'><\/form>");
+flushAccum();
+}
+var queryMap = {};
+function fillQueryMap()
+{
+ var query = location.search.split(/[?&]/g);
+ var bit,bits;
+ for (var i = 0; i < query.length; ++i)
+ {
+  bit = query[i];
+  bits = bit.split(/=/);
+  queryMap[bits[0]] = unescape(bits[1]);
+ }
+}
+fillQueryMap();
+function accumInput(name)
+{
+ var str='<input name="'+name+'" id="'+name+'"';
+ if (name in queryMap && queryMap[name])
+  str+=' value="'+queryMap[name]+'"';
+ str+='>';
+ accum(str);
+}
+function accumTd()
+{
+accum("<td>");
+}
+function formatSearchPref()
+{
+accum("<form onsubmit='callSearchPref()'>"+
+"<table><tr><th>Name<tr><td>");
+accumInput('sprefname'); accumTd();
+accum("<\/table>"+
+"<input type=submit value='Search Preferences'><\/form>");
+}
+function formatPrefs(limit)
+{
+ fillQueryMap();
+ accum("<table><thead><tr><th>Name<\/th><th>Type<\/th><th>Value<\/th><\/thead><tbody>");
+ var ps=Components.classes["@mozilla.org\/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
+ var list_len={};
+ var list=ps.getChildList("",list_len);
+ if (queryMap.sprefname) {
+  var query = RegExp(queryMap.sprefname, "i");
+  for (var i = list.length; i-- > 0; ) {
+   if (!query.test(list[i]))
+    list.splice(i,1);
+  }
+ }
+ if (typeof limit != "undefined")
+  list.length = limit;
+ formatPrefArray(ps, list);
+ accum("<\/tbody><\/table>");
+ flushAccum();
+}
+function callSetPref()
+{
+var name=document.getElementById('prefname').value;
+var value=document.getElementById('prefvalue').value;
+setPref(name, value);
+}
+var pmap = {};
+(function (){
+var ps = Components.interfaces.nsIPrefBranch;
+pmap[ps.PREF_STRING] = "setCharPref";
+pmap[ps.PREF_INT] = "setIntPref";
+pmap[ps.PREF_BOOL] = "setBoolPref";
+})();
+var boolRe = /^\s*(?:true|false)\s*$/i;
+var intRe = /^\s*\d+\s*$/;
+var strRe = /^\s*".*"\s*$/;
+function getPrefType(value, ps)
+{
+ if (boolRe.test(value))
+  return ps.PREF_BOOL;
+ if (intRe.test(value))
+  return ps.PREF_INT;
+ if (strRe.test(value))
+  return ps.PREF_STRING;
+ document.write("wah");
+ return ps.PREF_STRING;
+}
+function setPref(name, value)
+{
+ var ps=Components.classes["@mozilla.org\/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
+ var type = ps.getPrefType(name);
+ if (type == ps.PREF_INVALID)
+  type = getPrefType(value);
+ if (!(type in pmap))
+ {
+  document.write("oops i don't know how to handle "+type);
+ } else {
+  if (type == ps.PREF_STRING) {
+   value = value.replace(/^\s*"(.*)"\s*$/,"$1");
+  }
+  ps[pmap[type]](name, value);
+ }
+}
+formatSetPref();
+formatSearchPref();
+formatPrefs();
+
+</script>
+</head>
+<body>
+<noscript>
+sorry, you really need js enabled
+</noscript>
+</body>
+</html>

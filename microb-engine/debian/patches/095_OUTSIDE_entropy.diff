@@ -1,0 +1,37 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## Bug 51429  RNG_SystemInfoForRNG possible "netstat" zombie process
+
+=== security/nss/lib/freebl/unix_rand.c
+==================================================================
+Index: mozilla/security/nss/lib/freebl/unix_rand.c
+===================================================================
+--- mozilla.orig/security/nss/lib/freebl/unix_rand.c
++++ mozilla/security/nss/lib/freebl/unix_rand.c
+@@ -1004,23 +1004,25 @@
+     if (fp != NULL) {
+ 	while ((bytes = fread(buf, 1, sizeof(buf), fp)) > 0)
+ 	    RNG_RandomUpdate(buf, bytes);
+ 	safe_pclose(fp);
+     }
+ #endif
+ 
+ #ifdef DO_NETSTAT
++#ifndef LINUX
+     fp = safe_popen(netstat_ni_cmd);
+     if (fp != NULL) {
+ 	while ((bytes = fread(buf, 1, sizeof(buf), fp)) > 0)
+ 	    RNG_RandomUpdate(buf, bytes);
+ 	safe_pclose(fp);
+     }
+ #endif
++#endif
+ 
+ }
+ #else
+ void RNG_SystemInfoForRNG(void)
+ {
+     FILE *fp;
+     char buf[BUFSIZ];
+     size_t bytes;

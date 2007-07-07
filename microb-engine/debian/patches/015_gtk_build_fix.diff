@@ -1,0 +1,1862 @@
+# Additional fixes for DPI zooming implementation
+# Fixed wrong access
+Index: mozilla/gfx/src/thebes/nsThebesDeviceContext.cpp
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsThebesDeviceContext.cpp
++++ mozilla/gfx/src/thebes/nsThebesDeviceContext.cpp
+@@ -226,18 +226,17 @@
+ 
+     NS_ASSERTION(dpi != -1, "no dpi set");
+ 
+     if (dotsArePixels) {
+         // First figure out the closest multiple of 96, which is the number of
+         // dev pixels per CSS pixel.  Then, divide that into AppUnitsPerCSSPixel()
+         // to get the number of app units per dev pixel.  The PR_MAXes are to
+         // make sure we don't end up dividing by zero.
+-        mAppUnitsPerDevPixel = PR_MAX(1, AppUnitsPerCSSPixel() /
+-                                      PR_MAX(1, (dpi + 48) / 96));
++        mAppUnitsPerDevPixel = ((float)AppUnitsPerCSSPixel() * 96.) / (float)dpi;
+ 
+     } else {
+         /* set mAppUnitsPerDevPixel so we're using exactly 72 dpi, even
+          * though that means we have a non-integer number of device "pixels"
+          * per CSS pixel
+          */
+         mAppUnitsPerDevPixel = (AppUnitsPerCSSPixel() * 96) / dpi;
+     }
+Index: mozilla/gfx/src/gtk/nsDeviceContextGTK.cpp
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsDeviceContextGTK.cpp
++++ mozilla/gfx/src/gtk/nsDeviceContextGTK.cpp
+@@ -126,18 +126,18 @@
+ 
+ 
+ nscoord nsDeviceContextGTK::mDpi = 96;
+ static nsSystemFontsGTK *gSystemFonts = nsnull;
+ 
+ nsDeviceContextGTK::nsDeviceContextGTK()
+   : DeviceContextImpl()
+ {
+-  mTwipsToPixels = 1.0;
+-  mPixelsToTwips = 1.0;
++  mAppUnitsPerDevPixel = -1;
++  mAppUnitsPerInch = -1;
+   mDepth = 0 ;
+   mNumCells = 0;
+ 
+   mDeviceWindow = nsnull;
+ }
+ 
+ nsDeviceContextGTK::~nsDeviceContextGTK()
+ {
+@@ -218,33 +218,33 @@
+     SetDPI(prefVal);
+   } else {
+     SetDPI(mDpi); // to setup p2t and t2p
+   }
+ 
+ #ifdef DEBUG
+   static PRBool once = PR_TRUE;
+   if (once) {
+-    printf("GFX: dpi=%d t2p=%g p2t=%g depth=%d\n", mDpi, mTwipsToPixels, mPixelsToTwips,mDepth);
++//    printf("GFX: dpi=%d a2p=%i scale=%g depth=%d\n", mDpi, mAppUnitsPerDevPixel, mScale, mDepth);
+     once = PR_FALSE;
+   }
+ #endif
+ 
+   DeviceContextImpl::CommonInit();
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP nsDeviceContextGTK::CreateRenderingContext(nsIRenderingContext *&aContext)
+ {
+ #ifdef NS_PRINT_PREVIEW
+   // Defer to Alt when there is one
+-  if (mAltDC && ((mUseAltDC & kUseAltDCFor_CREATERC_PAINT) || (mUseAltDC & kUseAltDCFor_CREATERC_REFLOW))) {
+-    return mAltDC->CreateRenderingContext(aContext);
+-  }
++//  if (mAltDC && ((mUseAltDC & kUseAltDCFor_CREATERC_PAINT) || (mUseAltDC & kUseAltDCFor_CREATERC_REFLOW))) {
++//    return mAltDC->CreateRenderingContext(aContext);
++//  }
+ #endif
+ 
+   nsresult             rv;
+   GtkWidget *w = (GtkWidget*)mWidget;
+ 
+   // to call init for this, we need to have a valid nsDrawingSurfaceGTK created
+   nsIRenderingContext* pContext = new nsRenderingContextGTK();
+ 
+@@ -324,17 +324,17 @@
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP nsDeviceContextGTK::GetSystemFont(nsSystemFontID aID, nsFont *aFont) const
+ {
+   nsresult status = NS_OK;
+ 
+   if (!gSystemFonts) {
+-    gSystemFonts = new nsSystemFontsGTK(mPixelsToTwips);
++    gSystemFonts = new nsSystemFontsGTK(AppUnitsPerDevPixel());
+   }
+ 
+   switch (aID) {
+     case eSystemFont_Menu:         // css2
+     case eSystemFont_PullDownMenu: // css3
+         *aFont = gSystemFonts->GetMenuFont();
+         break;
+ 
+@@ -371,32 +371,32 @@
+ {
+   return NS_FontMetricsFamilyExists(this, aFontName);
+ }
+ 
+ NS_IMETHODIMP nsDeviceContextGTK::GetDeviceSurfaceDimensions(PRInt32 &aWidth, PRInt32 &aHeight)
+ {
+ #ifdef NS_PRINT_PREVIEW
+   // Defer to Alt when there is one
+-  if (mAltDC && (mUseAltDC & kUseAltDCFor_SURFACE_DIM)) {
+-    return mAltDC->GetDeviceSurfaceDimensions(aWidth, aHeight);
+-  }
++//  if (mAltDC && (mUseAltDC & kUseAltDCFor_SURFACE_DIM)) {
++//    return mAltDC->GetDeviceSurfaceDimensions(aWidth, aHeight);
++//  }
+ #endif
+ 
+   PRInt32 width = 0, height = 0;
+ 
+   nsCOMPtr<nsIScreen> screen;
+   mScreenManager->GetPrimaryScreen(getter_AddRefs(screen));
+   if (screen) {
+     PRInt32 x, y;
+     screen->GetRect(&x, &y, &width, &height);
+   }
+ 
+-  aWidth = NSToIntRound(float(width) * mDevUnitsToAppUnits);
+-  aHeight = NSToIntRound(float(height) * mDevUnitsToAppUnits);
++  aWidth = NSIntPixelsToAppUnits(width, AppUnitsPerDevPixel());
++  aHeight = NSIntPixelsToAppUnits(height, AppUnitsPerDevPixel());
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP nsDeviceContextGTK::GetRect(nsRect &aRect)
+ {
+   // if we have an initialized widget for this device context, use it
+   // to try and get real screen coordinates.
+@@ -406,20 +406,20 @@
+ 
+     gdk_window_get_geometry(mDeviceWindow, &x, &y, &width, &height,
+                             &depth);
+     gdk_window_get_origin(mDeviceWindow, &x, &y);
+ 
+     nsCOMPtr<nsIScreen> screen;
+     mScreenManager->ScreenForRect(x, y, width, height, getter_AddRefs(screen));
+     screen->GetRect(&aRect.x, &aRect.y, &aRect.width, &aRect.height);
+-    aRect.x = NSToIntRound(mDevUnitsToAppUnits * aRect.x);
+-    aRect.y = NSToIntRound(mDevUnitsToAppUnits * aRect.y);
+-    aRect.width = NSToIntRound(mDevUnitsToAppUnits * aRect.width);
+-    aRect.height = NSToIntRound(mDevUnitsToAppUnits * aRect.height);
++    aRect.x = NSIntPixelsToAppUnits(aRect.x, AppUnitsPerDevPixel());
++    aRect.y = NSIntPixelsToAppUnits(aRect.y, AppUnitsPerDevPixel());
++    aRect.width = NSIntPixelsToAppUnits(aRect.width, AppUnitsPerDevPixel());
++    aRect.height = NSIntPixelsToAppUnits(aRect.height, AppUnitsPerDevPixel());
+   }
+   else {
+     PRInt32 width, height;
+     GetDeviceSurfaceDimensions(width, height);
+     aRect.x = 0;
+     aRect.y = 0;
+     aRect.width = width;
+     aRect.height = height;
+@@ -438,33 +438,54 @@
+ 
+     gdk_window_get_geometry(mDeviceWindow, &x, &y, &width, &height,
+                             &depth);
+     gdk_window_get_origin(mDeviceWindow, &x, &y);
+ 
+     nsCOMPtr<nsIScreen> screen;
+     mScreenManager->ScreenForRect(x, y, width, height, getter_AddRefs(screen));
+     screen->GetAvailRect(&aRect.x, &aRect.y, &aRect.width, &aRect.height);
+-    aRect.x = NSToIntRound(mDevUnitsToAppUnits * aRect.x);
+-    aRect.y = NSToIntRound(mDevUnitsToAppUnits * aRect.y);
+-    aRect.width = NSToIntRound(mDevUnitsToAppUnits * aRect.width);
+-    aRect.height = NSToIntRound(mDevUnitsToAppUnits * aRect.height);
++    aRect.x = NSIntPixelsToAppUnits(aRect.x, AppUnitsPerDevPixel());
++    aRect.y = NSIntPixelsToAppUnits(aRect.y, AppUnitsPerDevPixel());
++    aRect.width = NSIntPixelsToAppUnits(aRect.width, AppUnitsPerDevPixel());
++    aRect.height = NSIntPixelsToAppUnits(aRect.height, AppUnitsPerDevPixel());
+   }
+   else {
+     PRInt32 width, height;
+     GetDeviceSurfaceDimensions(width, height);
+     aRect.x = 0;
+     aRect.y = 0;
+     aRect.width = width;
+     aRect.height = height;
+   }
+ 
+   return NS_OK;
+ }
+ 
++/*
++ * below methods are for printing
++ */
++NS_IMETHODIMP
++nsDeviceContextGTK::InitForPrinting(nsIDeviceContextSpec *aDevice)
++{
++    NS_ENSURE_ARG_POINTER(aDevice);
++/*
++    NS_ADDREF(mDeviceContextSpec = aDevice);
++
++    mPrinter = PR_TRUE;
++
++    aDevice->GetSurfaceForPrinter(getter_AddRefs(mPrintingSurface));
++
++    Init(nsnull);
++
++    CalcPrintingSize();
++*/
++    return NS_OK;
++}
++
+ NS_IMETHODIMP nsDeviceContextGTK::GetDeviceContextFor(nsIDeviceContextSpec *aDevice,
+                                                        nsIDeviceContext *&aContext)
+ {
+   nsresult                 rv;
+ 
+ #if 0
+   PrintMethod              method;
+ 
+@@ -574,22 +595,22 @@
+     // Either if the pref is 0 (force use of OS value) or the OS
+     // value is bigger than 96, use the OS value.
+     mDpi = OSVal;
+   } else {
+     // if we couldn't get the pref or it's negative, and the OS
+     // value is under 96ppi, then use 96.
+     mDpi = 96;
+   }
+-  
+-  int pt2t = 72;
+ 
+   // make p2t a nice round number - this prevents rounding problems
+-  mPixelsToTwips = float(NSToIntRound(float(NSIntPointsToTwips(pt2t)) / float(mDpi)));
+-  mTwipsToPixels = 1.0f / mPixelsToTwips;
++  mAppUnitsPerDevPixel = ((float)AppUnitsPerCSSPixel() * 96.) / (float)mDpi;
++  mAppUnitsPerInch = NSIntPixelsToAppUnits(mDpi, mAppUnitsPerDevPixel);
++  mAppUnitsPerDevPixel = mAppUnitsPerDevPixel;
++  mPixelScale = (float)nsIDeviceContext::AppUnitsPerCSSPixel()/(float)mAppUnitsPerDevPixel;
+ 
+   // XXX need to reflow all documents
+   return NS_OK;
+ }
+ 
+ static void DoClearCachedSystemFonts()
+ {
+   //clear our cache of stored system fonts
+@@ -621,16 +642,36 @@
+     // If this pref changes, we have to clear our cache of stored system
+     // fonts.
+     DoClearCachedSystemFonts();
+   }
+ 
+   return 0;
+ }
+ 
++PRBool nsDeviceContextGTK::CheckDPIChange()
++{
++    PRInt32 oldDevPixels = mAppUnitsPerDevPixel;
++    PRInt32 oldInches = mAppUnitsPerInch;
++
++    PRInt32 prefDPI = -1;
++    nsresult rv;
++    nsCOMPtr<nsIPref> prefs(do_GetService(NS_PREF_CONTRACTID, &rv));
++    if (NS_SUCCEEDED(rv) && prefs) {
++      rv = prefs->GetIntPref("layout.css.dpi", &prefDPI);
++      if (NS_FAILED(rv)) {
++        prefDPI = -1;
++      }
++    }
++    SetDPI(prefDPI);
++
++    return oldDevPixels != mAppUnitsPerDevPixel ||
++           oldInches != mAppUnitsPerInch;
++}
++
+ #define DEFAULT_TWIP_FONT_SIZE 240
+ 
+ nsSystemFontsGTK::nsSystemFontsGTK(float aPixelsToTwips)
+   : mDefaultFont("sans-serif", NS_FONT_STYLE_NORMAL, NS_FONT_VARIANT_NORMAL,
+                  NS_FONT_WEIGHT_NORMAL, NS_FONT_DECORATION_NONE,
+                  DEFAULT_TWIP_FONT_SIZE),
+     mButtonFont("sans-serif", NS_FONT_STYLE_NORMAL, NS_FONT_VARIANT_NORMAL,
+                 NS_FONT_WEIGHT_NORMAL, NS_FONT_DECORATION_NONE,
+@@ -813,26 +854,28 @@
+   if (!aFont->name.Length()) {
+     xlfd_from_pango_font_description(aWidget, desc, aFont->name);
+   }
+ #endif /* MOZ_ENABLE_COREXFONTS */
+   aFont->weight = pango_font_description_get_weight(desc);
+ 
+   float size = float(pango_font_description_get_size(desc) / PANGO_SCALE);
+ #ifdef MOZ_ENABLE_XFT
++#ifdef REAL_DEVICE_DPI
+   if (NS_IsXftEnabled()) {
+     PRInt32 dpi = GetXftDPI();
+     if (dpi != 0) {
+       // pixels/inch * twips/pixel * inches/twip == 1, except it isn't, since
+       // our idea of dpi may be different from Xft's.
+-      size *= float(dpi) * aPixelsToTwips * (1.0f/1440.0f);
++      size *= 96 * aPixelsToTwips * (1.0f/1440.0f);
+     }
+   }
++#endif
+ #endif /* MOZ_ENABLE_XFT */
+-  aFont->size = NSFloatPointsToTwips(size);
++  aFont->size = NSFloatPixelsToAppUnits(size, 60 * 1.3);
+   
+   pango_font_description_free(desc);
+ 
+   return NS_OK;
+ }
+ #endif /* MOZ_WIDGET_GTK2 */
+ 
+ #ifdef MOZ_WIDGET_GTK2
+Index: mozilla/gfx/src/gtk/nsFontMetricsXft.cpp
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsFontMetricsXft.cpp
++++ mozilla/gfx/src/gtk/nsFontMetricsXft.cpp
+@@ -68,16 +68,20 @@
+ 
+ #include <gdk/gdkx.h>
+ #include <freetype/tttables.h>
+ #include <freetype/freetype.h>
+ 
+ #define FORCE_PR_LOG
+ #include "prlog.h"
+ 
++// XXXTODO get rid of this macro
++#define ROUND_TO_TWIPS(x) (nscoord)floor(((x) * mP2A) + 0.5)
++#define TWIPS_TO_ROUND(x) (nscoord)floor((float(x) / mP2A) + 0.5)
++
+ // Abstract class nsFontXft is the base class for nsFontXftUnicode and
+ // nsFontXftCustom, either of which is an instance of fonts.  The 
+ // |nsFontMetricsXft| class is made up of a collection of these little 
+ // fonts, really.
+ 
+ class nsAutoDrawSpecBuffer;
+ 
+ class nsFontXft {
+@@ -354,18 +358,18 @@
+                        nsIDeviceContext *aContext)
+ {
+     mFont = aFont;
+     mLangGroup = aLangGroup;
+ 
+     // Hang onto the device context
+     mDeviceContext = aContext;
+ 
+-    float app2dev = mDeviceContext->AppUnitsToDevUnits();
+-    mPixelSize = NSTwipsToFloatPixels(mFont.size, app2dev);
++    mP2A = mDeviceContext->AppUnitsPerDevPixel();
++    mPixelSize = NSAppUnitsToFloatPixels(mFont.size, mP2A);
+ 
+     // Make sure to clamp the pixel size to something reasonable so we
+     // don't make the X server blow up.
+     nscoord screenPixels = gdk_screen_height();
+     mPixelSize = PR_MIN(screenPixels * FONT_MAX_FONT_SCALE, mPixelSize);
+ 
+     // enumerate over the font names passed in
+     mFont.EnumerateFamilies(nsFontMetricsXft::EnumFontCallback, this);
+@@ -484,39 +488,34 @@
+     NS_ASSERTION(font, "FindFont returned a bad font");
+ 
+     XGlyphInfo glyphInfo;
+ 
+     // casting away const for aString but it  should be safe
+     XftTextExtents8(GDK_DISPLAY(), font, (FcChar8 *)aString,
+                     aLength, &glyphInfo);
+ 
+-    float f;
+-    f = mDeviceContext->DevUnitsToAppUnits();
+-    aWidth = NSToCoordRound(glyphInfo.xOff * f);
++    aWidth = NSIntPixelsToAppUnits(glyphInfo.xOff, mP2A);
+ 
+     return NS_OK;
+ }
+ 
+ nsresult
+ nsFontMetricsXft::GetWidth(const PRUnichar* aString, PRUint32 aLength,
+                            nscoord& aWidth, PRInt32 *aFontID,
+                            nsRenderingContextGTK *aContext)
+ {
+     NS_TIMELINE_MARK_FUNCTION("GetWidth");
+     if (!aLength) {
+         aWidth = 0;
+         return NS_OK;
+     }
+ 
+     gint rawWidth = RawGetWidth(aString, aLength);
+-
+-    float f;
+-    f = mDeviceContext->DevUnitsToAppUnits();
+-    aWidth = NSToCoordRound(rawWidth * f);
++    aWidth = NSIntPixelsToAppUnits(rawWidth, mP2A);
+ 
+     if (aFontID)
+         *aFontID = 0;
+ 
+     return NS_OK;
+ }
+ 
+ nsresult
+@@ -534,22 +533,19 @@
+ 
+     nsresult rv;
+     rv = EnumerateGlyphs(aString, aLength,
+                          &nsFontMetricsXft::TextDimensionsCallback,
+                          &aDimensions);
+ 
+     NS_ENSURE_SUCCESS(rv, rv);
+ 
+-    float P2T;
+-    P2T = mDeviceContext->DevUnitsToAppUnits();
+-
+-    aDimensions.width = NSToCoordRound(aDimensions.width * P2T);
+-    aDimensions.ascent = NSToCoordRound(aDimensions.ascent * P2T);
+-    aDimensions.descent = NSToCoordRound(aDimensions.descent * P2T);
++    aDimensions.width = NSIntPixelsToAppUnits(aDimensions.width, mP2A);
++    aDimensions.ascent = NSIntPixelsToAppUnits(aDimensions.ascent, mP2A);
++    aDimensions.descent = NSIntPixelsToAppUnits(aDimensions.descent, mP2A);
+ 
+     if (nsnull != aFontID)
+         *aFontID = 0;
+ 
+     return NS_OK;
+ }
+ 
+ nsresult
+@@ -592,21 +588,21 @@
+                              nsDrawingSurfaceGTK *aSurface)
+ {
+     NS_TIMELINE_MARK_FUNCTION("DrawString");
+ 
+     // The data we will carry through the function
+     DrawStringData data;
+     memset(&data, 0, sizeof(data));
+ 
+-    data.x = aX;
+-    data.y = aY;
++    data.x = TWIPS_TO_ROUND(aX);
++    data.y = TWIPS_TO_ROUND(aY);
+     data.spacing = aSpacing;
+     data.context = aContext;
+-    data.p2t = mDeviceContext->DevUnitsToAppUnits();
++    data.p2t = mP2A;
+ 
+     PrepareToDraw(aContext, aSurface, &data.draw, data.color);
+ 
+     nsAutoDrawSpecBuffer drawBuffer(data.draw, &data.color);
+     data.drawBuffer = &drawBuffer;
+ 
+     return EnumerateGlyphs(aString, aLength,
+                            &nsFontMetricsXft::DrawStringCallback, &data);
+@@ -621,21 +617,21 @@
+                              nsDrawingSurfaceGTK *aSurface)
+ {
+     NS_TIMELINE_MARK_FUNCTION("DrawString");
+ 
+     // The data we will carry through the function
+     DrawStringData data;
+     memset(&data, 0, sizeof(data));
+ 
+-    data.x = aX;
+-    data.y = aY;
++    data.x = TWIPS_TO_ROUND(aX);
++    data.y = TWIPS_TO_ROUND(aY);
+     data.spacing = aSpacing;
+     data.context = aContext;
+-    data.p2t = mDeviceContext->DevUnitsToAppUnits();
++    data.p2t = mP2A;
+ 
+     // set up our colors and clip regions
+     PrepareToDraw(aContext, aSurface, &data.draw, data.color);
+ 
+     nsAutoDrawSpecBuffer drawBuffer(data.draw, &data.color);
+     data.drawBuffer = &drawBuffer;
+ 
+     return EnumerateGlyphs(aString, aLength,
+@@ -661,26 +657,23 @@
+     // 'operator +' definition of nsBoundingMetrics.)
+     data.firstTime = PR_TRUE; 
+ 
+     nsresult rv;
+     rv = EnumerateGlyphs(aString, aLength,
+                          &nsFontMetricsXft::BoundingMetricsCallback, &data);
+     NS_ENSURE_SUCCESS(rv, rv);
+ 
+-    float P2T;
+-    P2T = mDeviceContext->DevUnitsToAppUnits();
+-
+     aBoundingMetrics.leftBearing =
+-        NSToCoordRound(aBoundingMetrics.leftBearing * P2T);
++        NSIntPixelsToAppUnits(aBoundingMetrics.leftBearing, mP2A);
+     aBoundingMetrics.rightBearing =
+-        NSToCoordRound(aBoundingMetrics.rightBearing * P2T);
+-    aBoundingMetrics.width = NSToCoordRound(aBoundingMetrics.width * P2T);
+-    aBoundingMetrics.ascent = NSToCoordRound(aBoundingMetrics.ascent * P2T);
+-    aBoundingMetrics.descent = NSToCoordRound(aBoundingMetrics.descent * P2T);
++        NSIntPixelsToAppUnits(aBoundingMetrics.rightBearing, mP2A);
++    aBoundingMetrics.width = NSIntPixelsToAppUnits(aBoundingMetrics.width, mP2A);
++    aBoundingMetrics.ascent = NSIntPixelsToAppUnits(aBoundingMetrics.ascent, mP2A);
++    aBoundingMetrics.descent = NSIntPixelsToAppUnits(aBoundingMetrics.descent, mP2A);
+ 
+     return NS_OK;
+ }
+ 
+ nsresult
+ nsFontMetricsXft::GetBoundingMetrics(const PRUnichar *aString,
+                                      PRUint32 aLength,
+                                      nsBoundingMetrics &aBoundingMetrics,
+@@ -699,26 +692,23 @@
+     // 'operator +' definition of nsBoundingMetrics.)
+     data.firstTime = PR_TRUE; 
+ 
+     nsresult rv;
+     rv = EnumerateGlyphs(aString, aLength,
+                          &nsFontMetricsXft::BoundingMetricsCallback, &data);
+     NS_ENSURE_SUCCESS(rv, rv);
+ 
+-    float P2T;
+-    P2T = mDeviceContext->DevUnitsToAppUnits();
+-
+     aBoundingMetrics.leftBearing =
+-        NSToCoordRound(aBoundingMetrics.leftBearing * P2T);
++        NSIntPixelsToAppUnits(aBoundingMetrics.leftBearing, mP2A);
+     aBoundingMetrics.rightBearing =
+-        NSToCoordRound(aBoundingMetrics.rightBearing * P2T);
+-    aBoundingMetrics.width = NSToCoordRound(aBoundingMetrics.width * P2T);
+-    aBoundingMetrics.ascent = NSToCoordRound(aBoundingMetrics.ascent * P2T);
+-    aBoundingMetrics.descent = NSToCoordRound(aBoundingMetrics.descent * P2T);
++        NSIntPixelsToAppUnits(aBoundingMetrics.rightBearing, mP2A);
++    aBoundingMetrics.width = NSIntPixelsToAppUnits(aBoundingMetrics.width, mP2A);
++    aBoundingMetrics.ascent = NSIntPixelsToAppUnits(aBoundingMetrics.ascent, mP2A);
++    aBoundingMetrics.descent = NSIntPixelsToAppUnits(aBoundingMetrics.descent, mP2A);
+ 
+     if (nsnull != aFontID)
+         *aFontID = 0;
+ 
+     return NS_OK;
+ }
+ 
+ #endif /* MOZ_MATHML */
+@@ -802,19 +792,18 @@
+ #define MOZ_FT_TRUNC(x) ((x) >> 6)
+ #define CONVERT_DESIGN_UNITS_TO_PIXELS(v, s) \
+         MOZ_FT_TRUNC(MOZ_FT_ROUND(FT_MulFix((v) , (s))))
+ 
+ nsresult
+ nsFontMetricsXft::CacheFontMetrics(void)
+ {
+     // Get our scale factor
+-    float f;
+     float val;
+-    f = mDeviceContext->DevUnitsToAppUnits();
++    PRInt32 f = mDeviceContext->AppUnitsPerDevPixel();
+     
+     // Get our font face
+     XftFont *xftFont = mWesternFont->mXftFont;
+     NS_ASSERTION(xftFont, "FindFont returned a bad font");
+ 
+     FT_Face face = XftLockFace(xftFont);
+     if (!face)
+         return NS_ERROR_NOT_AVAILABLE;
+@@ -1558,24 +1547,23 @@
+ 
+             // convert this into device coordinates
+             data->context->GetTranMatrix()->TransformCoord(&x, &y);
+ 
+             DrawUnknownGlyph(ch, x, y + mMiniFontYOffset, &data->color,
+                              data->draw);
+ 
+             if (data->spacing) {
+-                data->xOffset += *data->spacing;
++                data->xOffset += TWIPS_TO_ROUND(*data->spacing);
+                 data->spacing += IS_NON_BMP(ch) ? 2 : 1;
+             }
+             else {
+                 data->xOffset +=
+                     NSToCoordRound((mMiniFontWidth*(IS_NON_BMP(ch) ? 3 : 2) +
+-                                mMiniFontPadding*(IS_NON_BMP(ch) ? 6:5)) *
+-                            data->p2t);
++                                mMiniFontPadding*(IS_NON_BMP(ch) ? 6:5)));
+             }
+         }
+ 
+         // We're done.
+         return NS_OK;
+     }
+ 
+     // actually process the specbuffer converting the input string
+@@ -2007,41 +1995,43 @@
+ 
+ // used by DrawStringCallback
+ nsresult
+ nsFontXft::DrawStringSpec(FcChar32 *aString, PRUint32 aLen, void *aData)
+ {
+     NS_PRECONDITION(mXftFont, "FindFont should not return bad fonts");
+     DrawStringData *data = (DrawStringData *)aData;
+ 
++    PRInt32 mP2A = data->p2t;
+     FcChar32 *pstr = aString;
+     const FcChar32 *end = aString + aLen;
+ 
++
+     while(pstr < end) {
+-        nscoord x = data->x + data->xOffset;               
+-        nscoord y = data->y;                        
++        nscoord x = data->x + data->xOffset;
++        nscoord y = data->y;
+         /* Convert to device coordinate. */   
+         data->context->GetTranMatrix()->TransformCoord(&x, &y);
+                                                                  
+         /* position in X is the location offset in the string 
+            plus whatever offset is required for the spacing   
+            argument                                           
+         */                                                  
+ 
+         FT_UInt glyph = CharToGlyphIndex(*pstr);
+         data->drawBuffer->Draw(x, y, mXftFont, glyph);
+ 
+         if (data->spacing) {
+-            data->xOffset += *data->spacing;
+-            data->spacing += IS_NON_BMP(*pstr) ? 2 : 1; 
++            data->xOffset += TWIPS_TO_ROUND(*data->spacing);
++            data->spacing += IS_NON_BMP(*pstr) ? 2 : 1;
+         }
+         else {
+             XGlyphInfo info;                        
+             XftGlyphExtents(GDK_DISPLAY(), mXftFont, &glyph, 1, &info);
+-            data->xOffset += NSToCoordRound(info.xOff * data->p2t);
++            data->xOffset += NSToCoordRound(info.xOff);
+         }
+ 
+         ++pstr;
+     }                                                          
+     return NS_OK;
+ }
+ 
+ // class nsFontXftUnicode impl
+Index: mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsRenderingContextGTK.cpp
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
+@@ -49,43 +49,55 @@
+ #include <gdk/gdkx.h>
+ #include "prmem.h"
+ #include "prenv.h"
+ 
+ #include "nsIFontMetricsGTK.h"
+ #include "nsDeviceContextGTK.h"
+ #include "nsFontMetricsUtils.h"
+ 
++#include "imgIContainer.h"
++#include "gfxIImageFrame.h"
++#include "nsIImage.h"
++
++#include "nsIServiceManager.h"
++#include "nsIInterfaceRequestorUtils.h"
++
+ #ifdef MOZ_WIDGET_GTK2
+ #include <gdk/gdkwindow.h>
+ #endif
+ 
+ NS_IMPL_ISUPPORTS1(nsRenderingContextGTK, nsIRenderingContext)
+ 
+ #define NSRECT_TO_GDKRECT(ns,gdk) \
+   PR_BEGIN_MACRO \
+   gdk.x = ns.x; \
+   gdk.y = ns.y; \
+   gdk.width = ns.width; \
+   gdk.height = ns.height; \
+   PR_END_MACRO
+ 
++#define FROM_TWIPS_INT(_x)  (NSToIntRound((float)((_x)/(mContext->AppUnitsPerDevPixel()))))
++#define FROM_TWIPS_INT2(_x)  (NSToIntRound((float)((_x)/(mContext->AppUnitsPerDevPixel()))+0.5))
++#define FROM_TWIPS(_x)  ((float)((_x)/(mContext->AppUnitsPerDevPixel())))
++#define NS_RECT_FROM_TWIPS_RECT(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT2((_r).width), FROM_TWIPS_INT2((_r).height)))
++
+ static nsGCCache *gcCache = nsnull;
+ static nsFixedSizeAllocator *gStatePool = nsnull;
+ 
+ nsRenderingContextGTK::nsRenderingContextGTK()
+ {
+   mFontMetrics = nsnull;
+   mContext = nsnull;
+   mSurface = nsnull;
+   mOffscreenSurface = nsnull;
+   mCurrentColor = NS_RGB(255, 255, 255);  // set it to white
+   mCurrentLineStyle = nsLineStyle_kSolid;
+   mTranMatrix = nsnull;
+-  mP2T = 1.0f;
++  //mP2T = 1.0f;
+   mClipRegion = nsnull;
+   mDrawStringBuf = nsnull;
+   mGC = nsnull;
+ 
+   mFunction = GDK_COPY;
+ 
+   PushState();
+ }
+@@ -193,19 +205,19 @@
+   NS_ADDREF(mSurface);
+   mOffscreenSurface = mSurface;
+ 
+   return (CommonInit());
+ }
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::CommonInit()
+ {
+-  mP2T = mContext->DevUnitsToAppUnits();
+-  float app2dev;
+-  app2dev = mContext->AppUnitsToDevUnits();
++  //printf("nsRenderingContextGTK::CommonInit: mU2D:%i\n", mU2D);
++  float app2dev = 1.0;
++//  mTranMatrix->AddScale(app2dev, app2dev); //ROMAXA?
+   mTranMatrix->AddScale(app2dev, app2dev);
+ 
+   return NS_OK;
+ }
+ 
+ void*
+ nsRenderingContextGTK::GetNativeGraphicData(GraphicDataType aType)
+ {
+@@ -516,17 +528,17 @@
+       mClipRegion->SetTo(0, 0, w, h);
+     }
+   }
+ }
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::SetClipRect(const nsRect& aRect,
+                                                  nsClipCombine aCombine)
+ {
+-  nsRect trect = aRect;
++  nsRect trect(NS_RECT_FROM_TWIPS_RECT(aRect));
+   mTranMatrix->TransformCoord(&trect.x, &trect.y,
+                               &trect.width, &trect.height);
+   SetClipRectInPixels(trect, aCombine);
+   return NS_OK;
+ }
+ 
+ void nsRenderingContextGTK::SetClipRectInPixels(const nsRect& aRect,
+                                                 nsClipCombine aCombine)
+@@ -780,17 +792,17 @@
+   NS_IF_ADDREF(mFontMetrics);
+   aFontMetrics = mFontMetrics;
+   return NS_OK;
+ }
+ 
+ // add the passed in translation to the current translation
+ NS_IMETHODIMP nsRenderingContextGTK::Translate(nscoord aX, nscoord aY)
+ {
+-  mTranMatrix->AddTranslation((float)aX,(float)aY);
++  mTranMatrix->AddTranslation((float)FROM_TWIPS(aX),(float)FROM_TWIPS(aY));
+   return NS_OK;
+ }
+ 
+ // add the passed in scale to the current scale
+ NS_IMETHODIMP nsRenderingContextGTK::Scale(float aSx, float aSy)
+ {
+   mTranMatrix->AddScale(aSx, aSy);
+   return NS_OK;
+@@ -841,38 +853,48 @@
+ 
+   NS_IF_RELEASE(surf);
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::DrawLine(nscoord aX0, nscoord aY0, nscoord aX1, nscoord aY1)
+ {
+-  nscoord diffX,diffY;
+-
+   g_return_val_if_fail(mTranMatrix != NULL, NS_ERROR_FAILURE);
+   g_return_val_if_fail(mSurface != NULL, NS_ERROR_FAILURE);
+ 
+-  mTranMatrix->TransformCoord(&aX0,&aY0);
+-  mTranMatrix->TransformCoord(&aX1,&aY1);
++  nscoord x,y,x1,y1;
++  nscoord diffX,diffY;
++
++  x = FROM_TWIPS_INT(aX0);
++  y = FROM_TWIPS_INT(aY0);
++  x1 = FROM_TWIPS_INT(aX1);
++  y1 = FROM_TWIPS_INT(aY1);
+ 
+-  diffX = aX1-aX0;
+-  diffY = aY1-aY0;
++  mTranMatrix->TransformCoord(&x,&y);
++  mTranMatrix->TransformCoord(&x1,&y1);
++
++  diffX = x1-x;
++  diffY = y1-y;
+ 
+   if (0!=diffX) {
+     diffX = (diffX>0?1:-1);
+   }
+   if (0!=diffY) {
+     diffY = (diffY>0?1:-1);
+   }
+ 
+   UpdateGC();
+ 
+   ::XDrawLine(mDisplay, GDK_DRAWABLE_XID(mSurface->GetDrawable()),
+-              GDK_GC_XGC(mGC), aX0, aY0, aX1 - diffX, aY1 - diffY);
++              GDK_GC_XGC(mGC),
++              x,
++              y,
++              x1 - diffX,
++              y1 - diffY);
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::DrawPolyline(const nsPoint aPoints[], PRInt32 aNumPoints)
+ {
+   NS_ENSURE_TRUE(mTranMatrix != nsnull, NS_ERROR_FAILURE);
+   NS_ENSURE_TRUE(mSurface    != nsnull, NS_ERROR_FAILURE);
+@@ -881,18 +903,18 @@
+   XPoint * xpoints;
+   XPoint * thispoint;
+ 
+   xpoints = (XPoint *) malloc(sizeof(XPoint) * aNumPoints);
+   NS_ENSURE_TRUE(xpoints != nsnull, NS_ERROR_OUT_OF_MEMORY);
+ 
+   for (i = 0; i < aNumPoints; i++){
+     thispoint = (xpoints+i);
+-    thispoint->x = aPoints[i].x;
+-    thispoint->y = aPoints[i].y;
++    thispoint->x = FROM_TWIPS_INT(aPoints[i].x);
++    thispoint->y = FROM_TWIPS_INT(aPoints[i].y);
+     mTranMatrix->TransformCoord((PRInt32*)&thispoint->x,(PRInt32*)&thispoint->y);
+   }
+ 
+   UpdateGC();
+ 
+   ::XDrawLines(mDisplay,
+                GDK_DRAWABLE_XID(mSurface->GetDrawable()),
+                GDK_GC_XGC(mGC),
+@@ -911,20 +933,20 @@
+ NS_IMETHODIMP nsRenderingContextGTK::DrawRect(nscoord aX, nscoord aY, nscoord aWidth, nscoord aHeight)
+ {
+   if (nsnull == mTranMatrix || nsnull == mSurface) {
+     return NS_ERROR_FAILURE;
+   }
+ 
+   nscoord x,y,w,h;
+ 
+-  x = aX;
+-  y = aY;
+-  w = aWidth;
+-  h = aHeight;
++  x = FROM_TWIPS_INT(aX);
++  y = FROM_TWIPS_INT(aY);
++  w = FROM_TWIPS_INT(aWidth);
++  h = FROM_TWIPS_INT(aHeight);
+ 
+   g_return_val_if_fail ((mSurface->GetDrawable() != NULL) ||
+                         (mGC != NULL), NS_ERROR_FAILURE);
+ 
+   mTranMatrix->TransformCoord(&x,&y,&w,&h);
+ 
+   // After the transform, if the numbers are huge, chop them, because
+   // they're going to be converted from 32 bit to 16 bit.
+@@ -958,20 +980,20 @@
+ NS_IMETHODIMP nsRenderingContextGTK::FillRect(nscoord aX, nscoord aY, nscoord aWidth, nscoord aHeight)
+ {
+   if (nsnull == mTranMatrix || nsnull == mSurface) {
+     return NS_ERROR_FAILURE;
+   }
+ 
+   nscoord x,y,w,h;
+ 
+-  x = aX;
+-  y = aY;
+-  w = aWidth;
+-  h = aHeight;
++  x = FROM_TWIPS_INT(aX);
++  y = FROM_TWIPS_INT(aY);
++  w = FROM_TWIPS_INT(aWidth);
++  h = FROM_TWIPS_INT(aHeight);
+ 
+   mTranMatrix->TransformCoord(&x,&y,&w,&h);
+ 
+   // After the transform, if the numbers are huge, chop them, because
+   // they're going to be converted from 32 bit to 16 bit.
+   // It's all way off the screen anyway.
+   ConditionRect(x,y,w,h);
+ 
+@@ -1000,40 +1022,37 @@
+   }
+ 
+   // Back up the current color, and use GXxor against white to get a
+   // visible result.
+   nscolor backupColor = mCurrentColor;
+   mCurrentColor = NS_RGB(255, 255, 255);
+   nscoord x,y,w,h;
+ 
+-  x = aX;
+-  y = aY;
+-  w = aWidth;
+-  h = aHeight;
++  x = FROM_TWIPS_INT(aX);
++  y = FROM_TWIPS_INT(aY);
++  w = FROM_TWIPS_INT(aWidth);
++  h = FROM_TWIPS_INT(aHeight);
+ 
+   mTranMatrix->TransformCoord(&x,&y,&w,&h);
+ 
+   // After the transform, if the numbers are huge, chop them, because
+   // they're going to be converted from 32 bit to 16 bit.
+   // It's all way off the screen anyway.
+   ConditionRect(x,y,w,h);
+ 
+   mFunction = GDK_XOR;
+ 
+   UpdateGC();
+ 
+   // Fill the rect
+   ::XFillRectangle(mDisplay,
+                    GDK_DRAWABLE_XID(mSurface->GetDrawable()),
+                    GDK_GC_XGC(mGC),
+-                   x,
+-                   y,
+-                   w,
+-                   h);
++                   x,y,w,h);
+ 
+   // Back to normal copy drawing mode
+   mFunction = GDK_COPY;
+ 
+   // Restore current color
+   mCurrentColor = backupColor;
+ 
+   return NS_OK;
+@@ -1049,18 +1068,18 @@
+   XPoint * xpoints;
+   XPoint * thispoint;
+ 
+   xpoints = (XPoint *) malloc(sizeof(XPoint) * aNumPoints);
+   NS_ENSURE_TRUE(xpoints != nsnull, NS_ERROR_OUT_OF_MEMORY);
+ 
+   for (i = 0; i < aNumPoints; i++){
+     thispoint = (xpoints+i);
+-    thispoint->x = aPoints[i].x;
+-    thispoint->y = aPoints[i].y;
++    thispoint->x = FROM_TWIPS_INT(aPoints[i].x);
++    thispoint->y = FROM_TWIPS_INT(aPoints[i].y);
+     mTranMatrix->TransformCoord((PRInt32*)&thispoint->x,(PRInt32*)&thispoint->y);
+   }
+ 
+   UpdateGC();
+ 
+   ::XDrawLines(mDisplay,
+                GDK_DRAWABLE_XID(mSurface->GetDrawable()),
+                GDK_GC_XGC(mGC),
+@@ -1078,17 +1097,17 @@
+ 
+   PRInt32 i ;
+   XPoint * xpoints;
+ 
+   xpoints = (XPoint *) malloc(sizeof(XPoint) * aNumPoints);
+   NS_ENSURE_TRUE(xpoints != nsnull, NS_ERROR_OUT_OF_MEMORY);
+ 
+   for (i = 0; i < aNumPoints; ++i) {
+-    nsPoint p = aPoints[i];
++    nsPoint p(FROM_TWIPS_INT(aPoints[i].x), FROM_TWIPS_INT(aPoints[i].y));
+     mTranMatrix->TransformCoord(&p.x, &p.y);
+     xpoints[i].x = p.x;
+     xpoints[i].y = p.y;
+   }
+ 
+   UpdateGC();
+ 
+   ::XFillPolygon(mDisplay,
+@@ -1108,20 +1127,20 @@
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::DrawEllipse(nscoord aX, nscoord aY, nscoord aWidth, nscoord aHeight)
+ {
+   g_return_val_if_fail(mTranMatrix != NULL, NS_ERROR_FAILURE);
+   g_return_val_if_fail(mSurface != NULL, NS_ERROR_FAILURE);
+ 
+   nscoord x,y,w,h;
+ 
+-  x = aX;
+-  y = aY;
+-  w = aWidth;
+-  h = aHeight;
++  x = FROM_TWIPS_INT(aX);
++  y = FROM_TWIPS_INT(aY);
++  w = FROM_TWIPS_INT(aWidth);
++  h = FROM_TWIPS_INT(aHeight);
+ 
+   mTranMatrix->TransformCoord(&x,&y,&w,&h);
+ 
+   UpdateGC();
+ 
+   ::XDrawArc(mDisplay,
+              GDK_DRAWABLE_XID(mSurface->GetDrawable()),
+              GDK_GC_XGC(mGC),
+@@ -1137,20 +1156,20 @@
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::FillEllipse(nscoord aX, nscoord aY, nscoord aWidth, nscoord aHeight)
+ {
+   g_return_val_if_fail(mTranMatrix != NULL, NS_ERROR_FAILURE);
+   g_return_val_if_fail(mSurface != NULL, NS_ERROR_FAILURE);
+ 
+   nscoord x,y,w,h;
+ 
+-  x = aX;
+-  y = aY;
+-  w = aWidth;
+-  h = aHeight;
++  x = FROM_TWIPS_INT(aX);
++  y = FROM_TWIPS_INT(aY);
++  w = FROM_TWIPS_INT(aWidth);
++  h = FROM_TWIPS_INT(aHeight);
+ 
+   mTranMatrix->TransformCoord(&x,&y,&w,&h);
+ 
+   UpdateGC();
+ 
+   if (w < 16 || h < 16) {
+     /* Fix for bug 91816 ("bullets are not displayed correctly on certain text zooms")
+      * De-uglify bullets on some X servers:
+@@ -1179,20 +1198,20 @@
+                                              nscoord aWidth, nscoord aHeight,
+                                              float aStartAngle, float aEndAngle)
+ {
+   g_return_val_if_fail(mTranMatrix != NULL, NS_ERROR_FAILURE);
+   g_return_val_if_fail(mSurface != NULL, NS_ERROR_FAILURE);
+ 
+   nscoord x,y,w,h;
+ 
+-  x = aX;
+-  y = aY;
+-  w = aWidth;
+-  h = aHeight;
++  x = FROM_TWIPS_INT(aX);
++  y = FROM_TWIPS_INT(aY);
++  w = FROM_TWIPS_INT(aWidth);
++  h = FROM_TWIPS_INT(aHeight);
+ 
+   mTranMatrix->TransformCoord(&x,&y,&w,&h);
+ 
+   UpdateGC();
+ 
+   ::XDrawArc(mDisplay,
+              GDK_DRAWABLE_XID(mSurface->GetDrawable()),
+              GDK_GC_XGC(mGC),
+@@ -1213,20 +1232,20 @@
+                                              nscoord aWidth, nscoord aHeight,
+                                              float aStartAngle, float aEndAngle)
+ {
+   g_return_val_if_fail(mTranMatrix != NULL, NS_ERROR_FAILURE);
+   g_return_val_if_fail(mSurface != NULL, NS_ERROR_FAILURE);
+ 
+   nscoord x,y,w,h;
+ 
+-  x = aX;
+-  y = aY;
+-  w = aWidth;
+-  h = aHeight;
++  x = FROM_TWIPS_INT(aX);
++  y = FROM_TWIPS_INT(aY);
++  w = FROM_TWIPS_INT(aWidth);
++  h = FROM_TWIPS_INT(aHeight);
+ 
+   mTranMatrix->TransformCoord(&x,&y,&w,&h);
+ 
+   UpdateGC();
+ 
+   ::XFillArc(mDisplay,
+              GDK_DRAWABLE_XID(mSurface->GetDrawable()),
+              GDK_GC_XGC(mGC),
+@@ -1497,20 +1516,111 @@
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::GetRangeWidth(const char *aText, PRUint32 aLength,
+                                                    PRUint32 aStart, PRUint32 aEnd,
+                                                    PRUint32 &aWidth)
+ {
+   return mFontMetrics->GetRangeWidth(aText, aLength, aStart, aEnd, aWidth);
+ }
+ 
+-NS_IMETHODIMP nsRenderingContextGTK::DrawImage(imgIContainer *aImage, const nsRect & aSrcRect, const nsRect & aDestRect)
++NS_IMETHODIMP nsRenderingContextGTK::DrawImage(imgIContainer *aImage, const nsRect & twSrcRect, const nsRect & twDestRect)
+ {
+   UpdateGC();
+-  return nsRenderingContextImpl::DrawImage(aImage, aSrcRect, aDestRect);
++#define NS_RECT_FROM_TWIPS_RECT2(_r)   (nsRect(FROM_TWIPS_INT2((_r).x), FROM_TWIPS_INT2((_r).y), FROM_TWIPS_INT2((_r).width), FROM_TWIPS_INT2((_r).height)))
++#define NS_RECT_FROM_TWIPS_RECT3(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT((_r).width), FROM_TWIPS_INT((_r).height)))
++  nsRect aDestRect = NS_RECT_FROM_TWIPS_RECT(twDestRect);
++  nsRect aSrcRect = NS_RECT_FROM_TWIPS_RECT2(twSrcRect);
++  //1,2,3... Some problems with images... stipes....;
++  nsRect dr = aDestRect;
++  mTranMatrix->TransformCoord(&dr.x, &dr.y, &dr.width, &dr.height);
++
++  // We should NOT be transforming the source rect (which is based on the image
++  // origin) using the rendering context's translation!
++  // However, given that we are, remember that the transformation of a
++  // height depends on the position, since what we are really doing is
++  // transforming the edges.  So transform *with* a translation, based
++  // on the origin of the *destination* rect, and then fix up the
++  // origin.
++  nsRect sr(aDestRect.TopLeft(), aSrcRect.Size());
++  mTranMatrix->TransformCoord(&sr.x, &sr.y, &sr.width, &sr.height);
++
++  if (sr.IsEmpty() || dr.IsEmpty())
++    return NS_OK;
++
++  sr.MoveTo(aSrcRect.TopLeft());
++  mTranMatrix->TransformNoXLateCoord(&sr.x, &sr.y);
++
++  nsCOMPtr<gfxIImageFrame> iframe;
++  aImage->GetCurrentFrame(getter_AddRefs(iframe));
++  if (!iframe) return NS_ERROR_FAILURE;
++
++  nsCOMPtr<nsIImage> img(do_GetInterface(iframe));
++  if (!img) return NS_ERROR_FAILURE;
++
++  nsIDrawingSurface *surface = nsnull;
++  GetDrawingSurface(&surface);
++  if (!surface) return NS_ERROR_FAILURE;
++
++  // For Bug 87819
++  // iframe may want image to start at different position, so adjust
++  nsRect iframeRect;
++  iframe->GetRect(iframeRect);
++
++  if (iframeRect.x > 0) {
++    // Adjust for the iframe offset before we do scaling.
++    sr.x -= iframeRect.x;
++
++    nscoord scaled_x = sr.x;
++    if (dr.width != sr.width) {
++      PRFloat64 scale_ratio = PRFloat64(dr.width) / PRFloat64(sr.width);
++      scaled_x = NSToCoordRound(scaled_x * scale_ratio);
++    }
++    if (sr.x < 0) {
++      dr.x -= scaled_x;
++      sr.width += sr.x;
++      dr.width += scaled_x;
++      if (sr.width <= 0 || dr.width <= 0)
++        return NS_OK;
++      sr.x = 0;
++    } else if (sr.x > iframeRect.width) {
++      return NS_OK;
++    }
++  }
++
++  if (iframeRect.y > 0) {
++    // Adjust for the iframe offset before we do scaling.
++    sr.y -= iframeRect.y;
++
++    nscoord scaled_y = sr.y;
++    if (dr.height != sr.height) {
++      PRFloat64 scale_ratio = PRFloat64(dr.height) / PRFloat64(sr.height);
++      scaled_y = NSToCoordRound(scaled_y * scale_ratio);
++    }
++    if (sr.y < 0) {
++      dr.y -= scaled_y;
++      sr.height += sr.y;
++      dr.height += scaled_y;
++      if (sr.height <= 0 || dr.height <= 0)
++        return NS_OK;
++      sr.y = 0;
++    } else if (sr.y > iframeRect.height) {
++      return NS_OK;
++    }
++  }
++
++  // Multiple paint rects may have been coalesced into a bounding box, so
++  // ensure that this rect is actually within the clip region before we draw.
++  nsCOMPtr<nsIRegion> clipRegion;
++  GetClipRegion(getter_AddRefs(clipRegion));
++  if (clipRegion && !clipRegion->ContainsRect(dr.x, dr.y, dr.width, dr.height))
++    return NS_OK;
++
++  return img->Draw(*this, surface, sr.x, sr.y, sr.width, sr.height,
++                   dr.x, dr.y, dr.width, dr.height);
++
+ }
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::GetBackbuffer(const nsRect &aRequestedSize,
+                                                    const nsRect &aMaxSize,
+                                                    PRBool aForBlending,
+                                                    nsIDrawingSurface* &aBackbuffer)
+ {
+   // Do not cache the backbuffer. On GTK it is more efficient to allocate
+@@ -1518,8 +1628,58 @@
+   return AllocateBackbuffer(aRequestedSize, aMaxSize, aBackbuffer, PR_FALSE, 0);
+ }
+  
+ NS_IMETHODIMP nsRenderingContextGTK::ReleaseBackbuffer(void) {
+   // Do not cache the backbuffer. On GTK it is more efficient to allocate
+   // the backbuffer as needed and it doesn't cause a performance hit. @see bug 95952
+   return DestroyCachedBackbuffer();
+ }
++
++NS_IMETHODIMP
++nsRenderingContextGTK::DrawTile(imgIContainer *aImage,
++                                nscoord aXImageStart, nscoord aYImageStart,
++                                const nsRect *aTargetRect)
++{
++  nsRect dr(NS_RECT_FROM_TWIPS_RECT(*aTargetRect));
++  aXImageStart = FROM_TWIPS_INT(aXImageStart);
++  aYImageStart = FROM_TWIPS_INT(aYImageStart);
++  mTranMatrix->TransformCoord(&dr.x, &dr.y, &dr.width, &dr.height);
++  mTranMatrix->TransformCoord(&aXImageStart, &aYImageStart);
++
++  // may have become empty due to transform shinking small number to 0
++  if (dr.IsEmpty())
++    return NS_OK;
++
++  nscoord width, height;
++  aImage->GetWidth(&width);
++  aImage->GetHeight(&height);
++
++  if (width == 0 || height == 0)
++    return NS_OK;
++
++  nscoord xOffset = (dr.x - aXImageStart) % width;
++  nscoord yOffset = (dr.y - aYImageStart) % height;
++
++  nsCOMPtr<gfxIImageFrame> iframe;
++  aImage->GetCurrentFrame(getter_AddRefs(iframe));
++  if (!iframe) return NS_ERROR_FAILURE;
++
++  nsCOMPtr<nsIImage> img(do_GetInterface(iframe));
++  if (!img) return NS_ERROR_FAILURE;
++
++  nsIDrawingSurface *surface = nsnull;
++  GetDrawingSurface(&surface);
++  if (!surface) return NS_ERROR_FAILURE;
++
++  /* bug 113561 - frame can be smaller than container */
++  nsRect iframeRect;
++  iframe->GetRect(iframeRect);
++  PRInt32 padx = width - iframeRect.width;
++  PRInt32 pady = height - iframeRect.height;
++
++  return img->DrawTile(*this, surface,
++                       xOffset - iframeRect.x, yOffset - iframeRect.y,
++                       padx, pady,
++                       dr);
++
++}
++
+Index: mozilla/view/src/nsViewManager.cpp
+===================================================================
+--- mozilla.orig/view/src/nsViewManager.cpp
++++ mozilla/view/src/nsViewManager.cpp
+@@ -574,19 +574,21 @@
+   damageRegion.Sub(damageRegion, opaqueRegion);
+ 
+   RenderViews(aView, *localcx, damageRegion, ds);
+ 
+   ctx->Restore();
+ #else
+   // widgetDamageRectInPixels is the clipped damage area bounds,
+   // in pixels-relative-to-widget-origin
++#define FROM_TWIPS_INT(_x) NSToIntRound((float)((_x)/((float)p2a)))
++#define NS_RECT_FROM_TWIPS_RECT(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT((_r).width), FROM_TWIPS_INT((_r).height)))
+   nsRect widgetDamageRectInPixels = damageRect;
+   widgetDamageRectInPixels.MoveBy(-viewRect.x, -viewRect.y);
+-  widgetDamageRectInPixels.ScaleRoundOut(t2p);
++  widgetDamageRectInPixels = NS_RECT_FROM_TWIPS_RECT(widgetDamageRectInPixels);
+ 
+   // On the Mac, we normally turn doublebuffering off because Quartz is
+   // doublebuffering for us. But we need to turn it on anyway if we need
+   // to use our blender, which requires access to the "current pixel values"
+   // when it blends onto the canvas.
+   // XXX disable opacity for now on the Mac because of this ... it'll get
+   // reenabled with cairo
+   if (aUpdateFlags & NS_VMREFRESH_DOUBLE_BUFFER)
+Index: mozilla/gfx/src/gtk/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/src/gtk/Makefile.in
++++ mozilla/gfx/src/gtk/Makefile.in
+@@ -56,16 +56,17 @@
+ 		  widget \
+ 		  view \
+ 		  util \
+ 		  pref \
+ 		  uconv \
+ 		  unicharutil \
+ 		  locale \
+ 		  necko \
++		  imglib2 \
+ 		  $(NULL)
+ 
+ # Sun's Complex Text Layout support
+ ifdef SUNCTL
+ REQUIRES	+= ctl
+ endif
+ 
+ ifdef MOZ_ENABLE_XPRINT
+Index: mozilla/gfx/src/gtk/nsRenderingContextGTK.h
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsRenderingContextGTK.h
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.h
+@@ -219,16 +219,18 @@
+ 
+ #endif /* MOZ_MATHML */
+ 
+   virtual PRInt32 GetMaxStringLength();
+ 
+   NS_IMETHOD CopyOffScreenBits(nsIDrawingSurface* aSrcSurf, PRInt32 aSrcX, PRInt32 aSrcY,
+                                const nsRect &aDestBounds, PRUint32 aCopyFlags);
+ 
++  NS_IMETHOD DrawTile(imgIContainer *aImage, nscoord aXOffset, nscoord aYOffset,
++                      const nsRect *aTargetRect);
+   NS_IMETHOD SetRightToLeftText(PRBool aIsRTL);
+   NS_IMETHOD GetRightToLeftText(PRBool* aIsRTL);
+   NS_IMETHOD GetClusterInfo(const PRUnichar *aText, PRUint32 aLength,
+                             PRUint8 *aClusterStarts);
+   virtual PRInt32 GetPosition(const PRUnichar *aText, PRUint32 aLength,
+                               nsPoint aPt);
+   NS_IMETHOD GetRangeWidth(const PRUnichar *aText,
+                            PRUint32 aLength,
+@@ -269,17 +271,16 @@
+   }
+ 
+ private:
+   nsDrawingSurfaceGTK   *mOffscreenSurface;
+   nsDrawingSurfaceGTK   *mSurface;
+   nsIDeviceContext      *mContext;
+   nsIFontMetricsGTK     *mFontMetrics;
+   nsCOMPtr<nsIRegion>    mClipRegion;
+-  float                  mP2T;
+   GdkWChar*              mDrawStringBuf;
+   PRUint32               mDrawStringSize;
+ 
+  // graphic state stack (GraphicsState)
+   nsAutoVoidArray        mStateCache;
+ 
+   GdkGC                 *mGC;
+   GdkFunction            mFunction;
+Index: mozilla/gfx/src/gtk/nsDeviceContextGTK.h
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsDeviceContextGTK.h
++++ mozilla/gfx/src/gtk/nsDeviceContextGTK.h
+@@ -51,17 +51,17 @@
+ {
+ public:
+   nsDeviceContextGTK();
+   virtual ~nsDeviceContextGTK();
+ 
+   static void Shutdown(); // to be called from module destructor
+ 
+   NS_IMETHOD  Init(nsNativeWidget aNativeWidget);
+-
++  NS_IMETHOD  InitForPrinting(nsIDeviceContextSpec* aDevSpec);
+   NS_IMETHOD  CreateRenderingContext(nsIRenderingContext *&aContext);
+   NS_IMETHOD  CreateRenderingContext(nsIView *aView, nsIRenderingContext *&aContext) {return (DeviceContextImpl::CreateRenderingContext(aView,aContext));}
+   NS_IMETHOD  CreateRenderingContext(nsIWidget *aWidget, nsIRenderingContext *&aContext) {return (DeviceContextImpl::CreateRenderingContext(aWidget,aContext));}
+   NS_IMETHOD  CreateRenderingContext(nsIDrawingSurface* aSurface, nsIRenderingContext *&aContext) {return (DeviceContextImpl::CreateRenderingContext(aSurface, aContext));}
+   NS_IMETHOD  CreateRenderingContextInstance(nsIRenderingContext *&aContext);
+ 
+   NS_IMETHOD  SupportsNativeWidgets(PRBool &aSupportsWidgets);
+ 
+@@ -84,18 +84,20 @@
+   NS_IMETHOD EndPage(void);
+ 
+   NS_IMETHOD GetDepth(PRUint32& aDepth);
+ 
+   NS_IMETHOD ClearCachedSystemFonts();
+ 
+   static int prefChanged(const char *aPref, void *aClosure);
+ 
++  virtual PRBool CheckDPIChange();
++
+ protected:
+-  nsresult   SetDPI(PRInt32 aPrefDPI);
++  nsresult   SetDPI(PRInt32 aPrefDPI = 96);
+   
+ private:
+   PRUint32      mDepth;
+   PRBool        mWriteable;
+   PRUint32      mNumCells;
+   static nscoord mDpi;
+ 
+   float         mWidthFloat;
+Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+@@ -567,40 +567,50 @@
+   GtkWidgetState state;
+   GtkThemeWidgetType gtkWidgetType;
+   gint flags;
+   if (!GetGtkWidgetAndState(aWidgetType, aFrame, gtkWidgetType, &state,
+                             &flags))
+     return NS_OK;
+     
+ #ifndef MOZ_CAIRO_GFX
++  nsCOMPtr<nsIDeviceContext> dctx = nsnull;
++  aContext->GetDeviceContext(*getter_AddRefs(dctx));
++  PRInt32 p2a = dctx->AppUnitsPerDevPixel();
++#define FROM_TWIPS_INT(_x)  (NSToIntRound((float)((_x)/((float)p2a))))
++#define NS_RECT_FROM_TWIPS_RECT(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT((_r).width), FROM_TWIPS_INT((_r).height)))
++
+   GdkWindow* window = NS_STATIC_CAST(GdkWindow*,
+     aContext->GetNativeGraphicData(nsIRenderingContext::NATIVE_GDK_DRAWABLE));
+ 
+   nsTransform2D* transformMatrix;
+   aContext->GetCurrentTransform(transformMatrix);
+ 
+-  nsRect tr(aRect);
++  nsRect tr(NS_RECT_FROM_TWIPS_RECT(aRect));
+   transformMatrix->TransformCoord(&tr.x, &tr.y, &tr.width, &tr.height);
+   GdkRectangle gdk_rect = {tr.x, tr.y, tr.width, tr.height};
+ 
+-  nsRect cr(aClipRect);
++
++  nsRect cr(NS_RECT_FROM_TWIPS_RECT(aClipRect));
+   transformMatrix->TransformCoord(&cr.x, &cr.y, &cr.width, &cr.height);
+   GdkRectangle gdk_clip = {cr.x, cr.y, cr.width, cr.height};
+ 
+   NS_ASSERTION(!IsWidgetTypeDisabled(mDisabledWidgetTypes, aWidgetType),
+                "Trying to render an unsafe widget!");
+ 
+   PRBool safeState = IsWidgetStateSafe(mSafeWidgetStates, aWidgetType, &state);
+   XErrorHandler oldHandler = nsnull;
+   if (!safeState) {
+     gLastXError = 0;
+     oldHandler = XSetErrorHandler(NativeThemeErrorHandler);
+   }
+ 
++  if (!(tr.width && tr.height && cr.width &&cr.height))
++    return NS_OK;
++
+   moz_gtk_widget_paint(gtkWidgetType, window, &gdk_rect, &gdk_clip, &state,
+                        flags);
+ 
+   if (!safeState) {
+     gdk_flush();
+     XSetErrorHandler(oldHandler);
+ 
+     if (gLastXError) {
+Index: mozilla/gfx/src/ps/nsDeviceContextPS.cpp
+===================================================================
+--- mozilla.orig/gfx/src/ps/nsDeviceContextPS.cpp
++++ mozilla/gfx/src/ps/nsDeviceContextPS.cpp
+@@ -198,28 +198,28 @@
+     return NS_ERROR_GFX_PRINTER_PRINT_WHILE_PREVIEW;
+   }
+ #endif /* WE_DO_NOT_SUPPORT_MULTIPLE_PRINT_DEVICECONTEXTS */
+ 
+   NS_ENSURE_ARG_POINTER(aParentContext);
+ 
+   mDepth = 24; /* Our PostScript module code expects images and other stuff in 24bit RGB-format (8bits per gun)*/
+ 
+-  mTwipsToPixels = (float)72.0/(float)NSIntPointsToTwips(72);
+-  mPixelsToTwips = 1.0f / mTwipsToPixels;
++  mAppUnitsPerDevPixel = ((float)AppUnitsPerCSSPixel() * 96.) / (float)72;
++  mAppUnitsPerInch = NSIntPixelsToAppUnits(72, mAppUnitsPerDevPixel);
+ 
+-  newscale = TwipsToDevUnits();
+-  origscale = aParentContext->TwipsToDevUnits();
+-  mCPixelScale = newscale / origscale;
++  newscale = AppUnitsPerDevPixel();
++  origscale = aParentContext->AppUnitsPerDevPixel();
++//  mCPixelScale = newscale / origscale;
+ 
+-  t2d = aParentContext->TwipsToDevUnits();
+-  a2d = aParentContext->AppUnitsToDevUnits();
++  t2d = aParentContext->AppUnitsPerDevPixel();
++  a2d = aParentContext->AppUnitsPerDevPixel();
+ 
+-  mAppUnitsToDevUnits = (a2d / t2d) * mTwipsToPixels;
+-  mDevUnitsToAppUnits = 1.0f / mAppUnitsToDevUnits;
++  float mAppUnitsToDevUnits = (a2d / t2d) * mAppUnitsPerDevPixel;
++  float mDevUnitsToAppUnits = 1.0f / mAppUnitsToDevUnits;
+ 
+   mParentDeviceContext = aParentContext;
+ 
+   mPSFontGeneratorList = new nsHashtable();
+   NS_ENSURE_TRUE(mPSFontGeneratorList, NS_ERROR_OUT_OF_MEMORY);
+  
+   nsresult rv;
+   nsCOMPtr<nsIPref> pref(do_GetService(NS_PREF_CONTRACTID, &rv));
+@@ -559,8 +559,19 @@
+ 
+   mFontCache = new nsFontCachePS();
+   if (!mFontCache) {
+     return NS_ERROR_OUT_OF_MEMORY;
+   }
+   
+   return mFontCache->Init(this);
+ }
++
++PRBool nsDeviceContextPS::CheckDPIChange()
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP nsDeviceContextPS::InitForPrinting(nsIDeviceContextSpec* spec)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
+Index: mozilla/gfx/src/ps/nsDeviceContextPS.h
+===================================================================
+--- mozilla.orig/gfx/src/ps/nsDeviceContextPS.h
++++ mozilla/gfx/src/ps/nsDeviceContextPS.h
+@@ -95,16 +95,19 @@
+   NS_IMETHOD  CreateFontCache();
+   
+   NS_IMETHOD  SetSpec(nsIDeviceContextSpec *aSpec);
+ 
+   nsPostScriptObj*    GetPrintContext() { return mPSObj; }
+   nsHashtable*        GetPSFontGeneratorList() { return mPSFontGeneratorList; }
+   PRBool               mFTPEnable;
+ 
++  PRBool      CheckDPIChange();
++  NS_IMETHOD  InitForPrinting(nsIDeviceContextSpec *aSpec);
++
+ protected:
+   virtual     ~nsDeviceContextPS();
+   
+   nsIDrawingSurface*       mSurface;
+   PRUint32               mDepth;
+   nsCOMPtr<nsIDeviceContextSpec>  mSpec;
+   nsCOMPtr<nsIDeviceContext>      mParentDeviceContext;
+   nsIPrintJobPS         *mPrintJob;
+Index: mozilla/gfx/src/ps/nsFontMetricsPS.cpp
+===================================================================
+--- mozilla.orig/gfx/src/ps/nsFontMetricsPS.cpp
++++ mozilla/gfx/src/ps/nsFontMetricsPS.cpp
+@@ -173,17 +173,17 @@
+  *  See documentation in nsFontMetricsPS.h
+  *	@update 2/26/99 dwc
+  */
+ void
+ nsFontMetricsPS::RealizeFont()
+ {
+   if (mDeviceContext) {
+     float dev2app;
+-    dev2app = mDeviceContext->DevUnitsToAppUnits();
++    dev2app = mDeviceContext->AppUnitsPerDevPixel();
+     fontps *font = (fontps*)mFontsPS->ElementAt(0);
+ #if defined(MOZ_ENABLE_FREETYPE2) || defined(MOZ_ENABLE_XFT)
+     NS_ASSERTION(font && font->entry, "no font available");
+     if (font && !font->fontps && font->entry)
+       font->fontps = CreateFontPS(font->entry, mFont, this);
+ #endif
+     NS_ASSERTION(font && font->fontps, "no font available");
+     if (font && font->fontps)
+@@ -652,39 +652,39 @@
+   float fontSize;
+   float offset;
+ 
+   nscoord onePixel = NSToCoordRound(1 * dev2app);
+ 
+   // convert the font size which is in twips to points
+   fontSize = mFont->size / TWIPS_PER_POINT_FLOAT;
+ 
+-  offset = NSFloatPointsToTwips(fontSize * mAFMInfo->mPSFontInfo->mXHeight) / 1000.0f;
++  offset = NSFloatPixelsToAppUnits(fontSize * mAFMInfo->mPSFontInfo->mXHeight, nsIDeviceContext::AppUnitsPerCSSPixel()) / 1000.0f;
+   nscoord xHeight = NSToCoordRound(offset);
+   aFontMetrics->SetXHeight(xHeight);
+   aFontMetrics->SetSuperscriptOffset(xHeight);
+   aFontMetrics->SetSubscriptOffset(xHeight);
+   aFontMetrics->SetStrikeout((nscoord)(xHeight / 2), onePixel);
+ 
+-  offset = NSFloatPointsToTwips(fontSize * mAFMInfo->mPSFontInfo->mUnderlinePosition) / 1000.0f;
++  offset = NSFloatPixelsToAppUnits(fontSize * mAFMInfo->mPSFontInfo->mUnderlinePosition, nsIDeviceContext::AppUnitsPerCSSPixel()) / 1000.0f;
+   aFontMetrics->SetUnderline(NSToCoordRound(offset), onePixel);
+ 
+   nscoord size = NSToCoordRound(fontSize * dev2app);
+   aFontMetrics->SetHeight(size);
+   aFontMetrics->SetEmHeight(size);
+   aFontMetrics->SetMaxAdvance(size);
+   aFontMetrics->SetMaxHeight(size);
+ 
+-  offset = NSFloatPointsToTwips(fontSize * mAFMInfo->mPSFontInfo->mAscender) / 1000.0f;
++  offset = NSFloatPixelsToAppUnits(fontSize * mAFMInfo->mPSFontInfo->mAscender, nsIDeviceContext::AppUnitsPerCSSPixel()) / 1000.0f;
+   nscoord ascent = NSToCoordRound(offset);
+   aFontMetrics->SetAscent(ascent);
+   aFontMetrics->SetEmAscent(ascent);
+   aFontMetrics->SetMaxAscent(ascent);
+ 
+-  offset = NSFloatPointsToTwips(fontSize * mAFMInfo->mPSFontInfo->mDescender) / 1000.0f;
++  offset = NSFloatPixelsToAppUnits(fontSize * mAFMInfo->mPSFontInfo->mDescender, nsIDeviceContext::AppUnitsPerCSSPixel()) / 1000.0f;
+   nscoord descent = -(NSToCoordRound(offset));
+   aFontMetrics->SetDescent(descent);
+   aFontMetrics->SetEmDescent(descent);
+   aFontMetrics->SetMaxDescent(descent);
+ 
+   aFontMetrics->SetLeading(0);
+ 
+   nscoord spaceWidth = GetWidth(" ", 1);
+@@ -1043,17 +1043,17 @@
+ {
+   NS_ENSURE_TRUE(aEntry && aPSFontGen, NS_ERROR_FAILURE);
+   mEntry = aEntry;
+   mPSFontGenerator = aPSFontGen;
+ 
+   float app2dev;
+   nsIDeviceContext* dc = mFontMetrics->GetDeviceContext();
+   NS_ENSURE_TRUE(dc, NS_ERROR_NULL_POINTER);
+-  app2dev = dc->AppUnitsToDevUnits();
++  app2dev = dc->AppUnitsPerDevPixel();
+   
+   mPixelSize = NSToIntRound(app2dev * mFont->size);
+ 
+   FT_Error fterror; 
+   fterror = FT_Init_FreeType(&mFreeTypeLibrary);
+   if (fterror) {
+     NS_ERROR("failed to initialize FreeType library");
+     mFreeTypeLibrary = nsnull;
+@@ -1119,17 +1119,17 @@
+       origin_x += (face->glyph->advance.x) * x_scale;
+   }
+ 
+   NS_ENSURE_TRUE(mFontMetrics, 0);
+ 
+   nsDeviceContextPS* dc = mFontMetrics->GetDeviceContext();
+   NS_ENSURE_TRUE(dc, 0);
+ 
+-  origin_x *= dc->DevUnitsToAppUnits();
++  origin_x *= dc->AppUnitsPerDevPixel();
+ 
+   return NSToCoordRound((nscoord)origin_x);
+ }
+ 
+ nscoord
+ nsFontPSXft::DrawString(nsRenderingContextPS* aContext,
+                         nscoord aX, nscoord aY,
+                         const char* aString, PRUint32 aLength)
+@@ -1885,17 +1885,17 @@
+   NS_ENSURE_TRUE(mFont && mFontMetrics, NS_ERROR_FAILURE);
+   NS_ENSURE_TRUE(aEntry && aPSFontGen, NS_ERROR_FAILURE);
+   mEntry = aEntry;
+   mPSFontGenerator = aPSFontGen;
+ 
+   float app2dev;
+   nsIDeviceContext* dc = mFontMetrics->GetDeviceContext();
+   NS_ENSURE_TRUE(dc, NS_ERROR_NULL_POINTER);
+-  app2dev = dc->AppUnitsToDevUnits();
++  app2dev = dc->AppUnitsPerDevPixel();
+   
+   mPixelSize = NSToIntRound(app2dev * mFont->size);
+ 
+   mImageDesc.font.face_id    = (void*)mEntry;
+   mImageDesc.font.pix_width  = mPixelSize;
+   mImageDesc.font.pix_height = mPixelSize;
+   mImageDesc.image_type = 0;
+ 
+@@ -1950,17 +1950,17 @@
+   }
+ 
+   NS_ENSURE_TRUE(mFontMetrics, 0);
+ 
+   nsDeviceContextPS* dc = mFontMetrics->GetDeviceContext();
+   NS_ENSURE_TRUE(dc, 0);
+ 
+   float dev2app;
+-  dev2app = dc->DevUnitsToAppUnits();
++  dev2app = dc->AppUnitsPerDevPixel();
+   origin_x *= dev2app;
+   origin_x /= FT_REG_TO_16_16(1);
+ 
+   return NSToCoordRound((nscoord)origin_x);
+ }
+ 
+ FT_Face
+ nsFontPSFreeType::getFTFace()
+Index: mozilla/gfx/src/ps/nsPostScriptObj.cpp
+===================================================================
+--- mozilla.orig/gfx/src/ps/nsPostScriptObj.cpp
++++ mozilla/gfx/src/ps/nsPostScriptObj.cpp
+@@ -393,18 +393,20 @@
+  *  Write the document prolog.
+  *  @param aHandle File handle which receives the prolog
+  */
+ void 
+ nsPostScriptObj::write_prolog(FILE *aHandle, PRBool aFTPEnable)
+ {
+   FILE *f = aHandle;
+ 
+-  float fWidth = NSTwipsToFloatPoints(mPrintContext->prSetup->width);
+-  float fHeight = NSTwipsToFloatPoints(mPrintContext->prSetup->height);
++  float fWidth =
++        NSAppUnitsToFloatPixels(mPrintContext->prSetup->width, nsIDeviceContext::AppUnitsPerCSSPixel());
++  float fHeight =
++        NSAppUnitsToFloatPixels(mPrintContext->prSetup->height, nsIDeviceContext::AppUnitsPerCSSPixel());
+ 
+   // PostScript comments marked with %% are document structuring conventions
+   // (DSC) comments. See Adobe specification 5001 at
+   // <http://partners.adobe.com/public/developer/ps/index_specs.html>.
+ 
+   fprintf(f, "%%!PS-Adobe-3.0\n");
+   fprintf(f, "%%%%BoundingBox: 0 0 %s %s\n",
+     fpCString(NSToCoordRound(fWidth)).get(),
+@@ -1817,18 +1819,18 @@
+     "%%%%BeginFeature: *PageSize %s\n"
+     "/setpagedevice where\n"			// Test for the feature
+     "{ pop 1 dict\n"
+     "  dup /PageSize [ %s %s ] put\n"		// Paper dimensions
+     "  setpagedevice\n"				// Install settings
+     "} if\n"
+     "%%%%EndFeature\n",
+     mPrintSetup->paper_name,
+-    fpCString(NSTwipsToFloatPoints(mPrintContext->prSetup->width)).get(),
+-    fpCString(NSTwipsToFloatPoints(mPrintContext->prSetup->height)).get());
++    fpCString(NSAppUnitsToFloatPixels(mPrintContext->prSetup->width, nsIDeviceContext::AppUnitsPerCSSPixel())).get(),
++    fpCString(NSAppUnitsToFloatPixels(mPrintContext->prSetup->height, nsIDeviceContext::AppUnitsPerCSSPixel())).get());
+   fputs("%%EndSetup\n", aDestHandle);
+ 
+   char buf[BUFSIZ];
+   size_t readAmt;
+   rewind(mScriptFP);
+   while ((readAmt = fread(buf, 1, sizeof buf, mScriptFP))) {
+     size_t writeAmt = fwrite(buf, 1, readAmt, aDestHandle);
+     if (readAmt != writeAmt)
+Index: mozilla/gfx/src/ps/nsRenderingContextPS.cpp
+===================================================================
+--- mozilla.orig/gfx/src/ps/nsRenderingContextPS.cpp
++++ mozilla/gfx/src/ps/nsRenderingContextPS.cpp
+@@ -182,17 +182,17 @@
+  *	@update 12/21/98 dwc
+  */
+ NS_IMETHODIMP
+ nsRenderingContextPS::Init(nsIDeviceContext* aContext)
+ {
+   NS_ENSURE_TRUE(nsnull != aContext, NS_ERROR_NULL_POINTER);
+ 
+   mContext = aContext;
+-  mP2T = mContext->DevUnitsToAppUnits();
++  mP2T = mContext->AppUnitsPerDevPixel();
+ 
+   mPSObj = NS_REINTERPRET_CAST(nsDeviceContextPS *, mContext.get())->GetPrintContext();
+ 
+   NS_ENSURE_TRUE(nsnull != mPSObj, NS_ERROR_NULL_POINTER);
+ 
+   // Layout's coordinate system places the origin at top left with Y
+   // increasing down; PS places the origin at bottom left with Y increasing
+   // upward. Both systems use twips for units, so no resizing is needed.
+@@ -589,18 +589,18 @@
+  */
+ NS_IMETHODIMP 
+ nsRenderingContextPS :: DrawLine(nscoord aX0, nscoord aY0, nscoord aX1, nscoord aY1)
+ {
+   if (nsLineStyle_kNone == mCurrLineStyle)
+     return NS_OK;
+ 
+   // Layout expects lines to be one scaled pixel wide.
+-  float scale;
+-  NS_REINTERPRET_CAST(DeviceContextImpl *, mContext.get())->GetCanonicalPixelScale(scale);
++  float scale = 1.0f;
++  //NS_REINTERPRET_CAST(DeviceContextImpl *, mContext.get())->GetCanonicalPixelScale(scale);
+   int width = NSToCoordRound(TWIPS_PER_POINT_FLOAT * scale);
+ 
+   // If this line is vertical (horizontal), the geometric line defined
+   // by our start and end points is actually the left edge (top edge)
+   // of the line that should appear on the page.
+   if (aX0 == aX1) {
+     // Vertical. For better control we draw this as a filled
+     // rectangle instead of a stroked line.
+Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/nsCanvasRenderingContext2D.cpp
++++ mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
+@@ -985,17 +985,17 @@
+     float x0 = 0.0, y0 = 0.0;
+     float sx = 1.0, sy = 1.0;
+ 
+     if (tx->GetType() & MG_2DTRANSLATION) {
+         tx->Transform(&x0, &y0);
+     }
+ 
+     if (tx->GetType() & MG_2DSCALE) {
+-        sx = sy = dctx->DevUnitsToTwips();
++        sx = sy = dctx->GetPixelScale();
+         tx->TransformNoXLate(&sx, &sy);
+     }
+ 
+     cairo_translate (dest_cr, NSToIntRound(x0), NSToIntRound(y0));
+     if (sx != 1.0 || sy != 1.0)
+         cairo_scale (dest_cr, sx, sy);
+ 
+     cairo_rectangle (dest_cr, 0, 0, mWidth, mHeight);
+@@ -2701,16 +2701,21 @@
+ 
+     // get rid of the pattern surface ref, just in case
+     cairo_set_source_rgba (mCairo, 1, 1, 1, 1);
+     DirtyAllStyles();
+ 
+     Redraw();
+ #else
+ 
++    nsRect r(nsPresContext::CSSPixelsToAppUnits(aX),
++             nsPresContext::CSSPixelsToAppUnits(aY),
++             nsPresContext::CSSPixelsToAppUnits(aW),
++             nsPresContext::CSSPixelsToAppUnits(aH));
++
+     nsCOMPtr<nsIRenderingContext> blackCtx;
+ #ifdef MOZILLA_1_8_BRANCH
+     rv = vm->RenderOffscreen(view, r, PR_FALSE, PR_TRUE,
+                              NS_ComposeColors(NS_RGB(0, 0, 0), bgColor),
+                              getter_AddRefs(blackCtx));
+ #else
+     rv = presShell->RenderOffscreen(r, PR_FALSE, PR_TRUE,
+                                     NS_ComposeColors(NS_RGB(0, 0, 0), bgColor),
+Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsImageGTK.cpp
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp
+@@ -675,34 +675,39 @@
+     UpdateCachedImage();
+ 
+   if ((mAlphaDepth==1) && mIsSpacer)
+     return NS_OK;
+ 
+   if (mDecodedX2 < mDecodedX1 || mDecodedY2 < mDecodedY1)
+     return NS_OK;
+ 
++  PRBool hack = ((aDWidth != aSWidth || aDHeight != aSHeight) && mWidth != aSWidth && aSHeight != mHeight);
++  PRInt32 ssW = aSWidth-aSX, ssH = aSHeight - aSY;
++  if (aSX > 0) aSX -= !hack;
++  if (aSY > 0) aSY -= !hack;
++
+ #ifdef TRACE_IMAGE_ALLOCATION
+   fprintf(stderr, "nsImageGTK::Draw(%p) s=(%4d %4d %4d %4d) d=(%4d %4d %4d %4d)\n",
+          this,
+          aSX, aSY, aSWidth, aSHeight,
+          aDX, aDY, aDWidth, aDHeight);
+ #endif
+ 
+   if (aSWidth <= 0 || aDWidth <= 0 || aSHeight <= 0 || aDHeight <= 0) {
+     return NS_OK;
+   }
+ 
+   // store some values we'll need for scaling...
+ 
+   PRInt32 srcWidth, srcHeight, dstWidth, dstHeight;
+   PRInt32 dstOrigX, dstOrigY;
+ 
+-  srcWidth = aSWidth;
+-  srcHeight = aSHeight;
++  srcWidth = mWidth<ssW?mWidth - 1:aSWidth;
++  srcHeight = mHeight<ssH?mHeight - 1:aSHeight;
+   dstWidth = aDWidth;
+   dstHeight = aDHeight;
+   dstOrigX = aDX;
+   dstOrigY = aDY;
+ 
+   // clip to decode region
+   PRInt32 j = aSX + aSWidth;
+   PRInt32 z;

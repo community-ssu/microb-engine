@@ -1,0 +1,143 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: Renaming mozilla directories names and folders for MicroB project
+
+Index: build/unix/Makefile.in
+===================================================================
+--- build/unix/Makefile.in.orig
++++ build/unix/Makefile.in
+@@ -62,17 +62,17 @@
+ endif
+ 
+ ifdef MOZ_ENABLE_GTK
+ SUPERWIN_LIBS=-lgtksuperwin
+ endif
+ 
+ _DEFS = $(subst \,\\\\\,$(ACDEFINES))
+ 
+-pkg_config_files=$(MOZ_APP_NAME)-nspr.pc $(MOZ_APP_NAME)-xpcom.pc \
++pkg_config_files=$(MOZ_APP_NAME).pc $(MOZ_APP_NAME)-nspr.pc $(MOZ_APP_NAME)-xpcom.pc \
+ 	$(MOZ_APP_NAME)-js.pc \
+ 	$(MOZ_APP_NAME)-nss.pc $(MOZ_APP_NAME)-plugin.pc
+ 
+ GARBAGE	= $(pkg_config_files) $(MOZ_APP_NAME)-config
+ 
+ $(MOZ_APP_NAME)-config:: mozilla-config.in Makefile.in Makefile $(DEPTH)/config/autoconf.mk
+ 	cat $< | sed \
+ 	-e "s|%prefix%|$(prefix)|" \
+@@ -96,16 +96,32 @@
+ 	-e "s|%MOZILLA_VERSION%|$(MOZ_APP_VERSION)|" \
+ 	-e "s|%SUPERWIN_LIBS%|$(SUPERWIN_LIBS)|" \
+ 	-e "s|%DEFS%|$(_DEFS)|" \
+ 	-e "s|%FULL_NSPR_LIBS%|$(FULL_NSPR_LIBS)|" \
+ 	-e "s|%FULL_NSPR_CFLAGS%|$(FULL_NSPR_CFLAGS)|" \
+ 	-e "s|%NSPR_NAME%|$(NSPR_NAME)|" \
+ 	-e "s|%NSPR_VERSION%|$(NSPR_VERSION)|" > $@
+ 
++$(MOZ_APP_NAME).pc : mozilla.pc.in Makefile.in Makefile
++	cat $< | sed \
++	-e "s|%prefix%|$(prefix)|" \
++	-e "s|%exec_prefix%|$(exec_prefix)|" \
++	-e "s|%includedir%|$(includedir)|" \
++       -e "s|%libdir%|$(mozappdir)|" \
++       -e "s|%idldir%|$(idldir)|" \
++       -e "s|%MOZ_APP_NAME%|$(MOZ_APP_NAME)|" \
++       -e "s|%MOZILLA_VERSION%|$(MOZ_APP_VERSION)|" \
++       -e "s|%SUPERWIN_LIBS%|$(SUPERWIN_LIBS)|" \
++       -e "s|%DEFS%|$(_DEFS)|" \
++       -e "s|%FULL_NSPR_LIBS%|$(FULL_NSPR_LIBS)|" \
++       -e "s|%FULL_NSPR_CFLAGS%|$(FULL_NSPR_CFLAGS)|" \
++       -e "s|%NSPR_NAME%|$(NSPR_NAME)|" \
++       -e "s|%NSPR_VERSION%|$(NSPR_VERSION)|" > $@
++
+ libs:: $(MOZ_APP_NAME)-config
+ 	chmod 755 $<
+ 	$(INSTALL) -m 755 $< $(DIST)/bin
+ 
+ libs:: $(srcdir)/run-mozilla.sh $(pkg_config_files)
+ 	$(INSTALL) $< $(DIST)/bin
+ 
+ ifeq ($(OS_ARCH),OpenVMS)
+Index: config/autoconf.mk.in
+===================================================================
+--- config/autoconf.mk.in.orig
++++ config/autoconf.mk.in
+@@ -53,24 +53,24 @@
+ MOZ_APP_DISPLAYNAME = @MOZ_APP_DISPLAYNAME@
+ MOZ_APP_VERSION = @MOZ_APP_VERSION@
+ 
+ MOZ_PKG_SPECIAL = @MOZ_PKG_SPECIAL@
+ 
+ prefix		= @prefix@
+ exec_prefix	= @exec_prefix@
+ bindir		= @bindir@
+-includedir	= @includedir@/$(MOZ_APP_NAME)-$(MOZ_APP_VERSION)
++includedir	= @includedir@/$(MOZ_APP_NAME)
+ libdir		= @libdir@
+ datadir		= @datadir@
+ mandir		= @mandir@
+-idldir		= @datadir@/idl/$(MOZ_APP_NAME)-$(MOZ_APP_VERSION)
++idldir		= @datadir@/idl/$(MOZ_APP_NAME)
+ 
+-mozappdir	= $(libdir)/$(MOZ_APP_NAME)-$(MOZ_APP_VERSION)
+-mredir		= $(libdir)/mre/mre-$(MOZ_APP_VERSION)
++mozappdir	= $(libdir)/$(MOZ_APP_NAME)
++mredir		= $(libdir)/mre/mre
+ mrelibdir	= $(mredir)/lib
+ 
+ DIST		= $(DEPTH)/dist
+ LIBXUL_SDK      = @LIBXUL_SDK@
+ 
+ ifdef LIBXUL_SDK
+ LIBXUL_DIST = $(LIBXUL_SDK)
+ else
+Index: build/unix/mozilla.pc.in
+===================================================================
+--- /dev/null
++++ build/unix/mozilla.pc.in
+@@ -0,0 +1,13 @@
++prefix=%prefix%
++exec_prefix=%exec_prefix%
++libdir=%libdir%
++includedir=%includedir%
++idldir=%idldir%
++staticlibs=${libdir}/static/libxul.a ${libdir}/static/libxpcom.a ${libdir}/static/libmozjs.a ${libdir}/static/lib/libcrmf.a -lnss3 -lplds4 -lplc4 -lnspr4 -lpthread -ldl -lXt
++
++Name: XPCOM
++Description: The Mozilla Cross Platform Component Library
++Version: %MOZILLA_VERSION%
++Requires: %NSPR_NAME% >= %NSPR_VERSION%
++Libs: -L${libdir} -lplds4 -lplc4 -lnspr4 -lpthread -ldl -lxpcom -lxul -lnss3 %SUPERWIN_LIBS%
++Cflags: -I${includedir} -I${includedir}/xpcom -I${includedir}/string -I${includedir}/dom -I${includedir}/chrome -I${includedir}/locale -I${includedir}/webbrowserpersist -I${includedir}/find -I${includedir}/docshell -I${includedir}/webshell -I${includedir}/widget -I${includedir}/content -I${includedir}/browser -I${includedir}/necko -I${includedir}/pref -I${includedir}/history -I${includedir}/gfx -I${includedir}/webbrowserpersist -I${includedir}/layout -I${includedir}/webbrwsr -I${includedir}/shistory -I${includedir}/txtsvc -I${includedir}/windowwatcher -I${includedir}/appcomps -I${includedir}/nspr -I${includedir}/xpcom_obsolete -I${includedir}/zoomer -I${includedir}/minimo -I${includedir}/chardet -I${includedir}/exthandler -I${includedir}/uriloader  -I${includedir}/mimetype -I${includedir}/pipnss -I${includedir}/embed_base -I${includedir}/profdirserviceprovider  -I${includedir}/nkcache -I${includedir}/embedcomponents -I${includedir}/intl -I${includedir}/gtkembedmoz -I${includedir}/mork -I${includedir}/imglib2 -I${includedir}/unicharutil -I${includedir}/xulapp -I${includedir}/editor -I${includedir}/composer -I${includedir}/cookie -I${includedir}/pipboot -I${includedir}/view -I${includedir}/extensions -I${includedir}/toolkitcomps -I${includedir}/rdf
+Index: xulrunner/confvars.sh
+===================================================================
+--- xulrunner/confvars.sh.orig
++++ xulrunner/confvars.sh
+@@ -31,20 +31,24 @@
+ # use your version of this file under the terms of the MPL, indicate your
+ # decision by deleting the provisions above and replace them with the notice
+ # and other provisions required by the GPL or the LGPL. If you do not delete
+ # the provisions above, a recipient may use your version of this file under
+ # the terms of any one of the MPL, the GPL or the LGPL.
+ #
+ # ***** END LICENSE BLOCK *****
+ 
+-MOZ_APP_NAME=xulrunner
+-MOZ_APP_DISPLAYNAME=XULRunner
++MOZ_APP_NAME=microb-engine
++MOZ_APP_DISPLAYNAME=MicroB
+ MOZ_UPDATER=1
+ MOZ_XULRUNNER=1
+ MOZ_ENABLE_LIBXUL=1
++if test $MOZ_APP_VERSION; then
++  MOZ_APP_VERSION=$MOZ_APP_VERSION
++else
+ MOZ_APP_VERSION=$MOZILLA_VERSION
++fi
+ MOZ_JAVAXPCOM=1
+ if test "$MOZ_STORAGE"; then
+   MOZ_PLACES=1
+ fi
+ MOZ_EXTENSIONS_DEFAULT=" xml-rpc gnomevfs"
+ MOZ_NO_XPCOM_OBSOLETE=1

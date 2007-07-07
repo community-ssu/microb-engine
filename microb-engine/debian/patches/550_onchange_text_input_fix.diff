@@ -1,0 +1,27 @@
+# Patch for bug #36689 (TextArea onChange failure)
+# Current way to insert characters into a text/input area resets the previous value to current one
+# everytime a new char is inserted. So, when the widget loses focus the previous value will be always 
+# the same of the current one and onchange event will never be dispatched.
+# 
+# This patch only comments the function which resets the previous value on a character insertion.
+--- mozilla/layout/forms/nsTextControlFrame.cpp.orig	2007-04-30 14:14:38.000000000 -0400
++++ mozilla/layout/forms/nsTextControlFrame.cpp	2007-04-30 13:21:59.000000000 -0400
+@@ -2673,17 +2673,17 @@ nsTextControlFrame::SetValue(const nsASt
+       if (outerTransaction)
+         mNotifyOnInput = PR_TRUE;
+ 
+       // This method isn't used for user-generated changes, except for calls
+       // from nsFileControlFrame which sets mFireChangeEventState==true and
+       // restores it afterwards (ie. we want onchange events for those changes).
+       if (!mFireChangeEventState) {
+         // Reset mFocusedValue so the onchange event doesn't fire incorrectly.
+-        InitFocusedValue();
++        // InitFocusedValue();
+       }
+     }
+ 
+     NS_ENSURE_STATE(weakFrame.IsAlive());
+     nsIScrollableView* scrollableView = GetScrollableView();
+     if (scrollableView)
+     {
+       // Scroll the upper left corner of the text control's

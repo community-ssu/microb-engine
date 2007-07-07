@@ -1,0 +1,291 @@
+Index: mozilla/gfx/cairo/cairo/src/cairo-image-surface.c
+===================================================================
+--- mozilla/gfx/cairo/cairo/src/cairo-image-surface.c.orig
++++ mozilla/gfx/cairo/cairo/src/cairo-image-surface.c
+@@ -821,16 +821,21 @@ _cairo_image_surface_composite (cairo_op
+ 				unsigned int		height)
+ {
+     cairo_surface_attributes_t	src_attr, mask_attr;
+     cairo_image_surface_t	*dst = abstract_dst;
+     cairo_image_surface_t	*src;
+     cairo_image_surface_t	*mask;
+     cairo_int_status_t		status;
+ 
++#ifdef DEBUG_COMPOSITE
++    fprintf (stderr, "cairo +++ composite: %d %p %p %p [%d %d] [%d %d] [%d %d] %dx%d\n",
++             op, pattern, mask_pattern, abstract_dst, src_x, src_y, mask_x, mask_y, dst_x, dst_y, width, height);
++#endif
++
+     status = _cairo_pattern_acquire_surfaces (src_pattern, mask_pattern,
+ 					      &dst->base,
+ 					      src_x, src_y,
+ 					      mask_x, mask_y,
+ 					      width, height,
+ 					      (cairo_surface_t **) &src,
+ 					      (cairo_surface_t **) &mask,
+ 					      &src_attr, &mask_attr);
+Index: mozilla/gfx/cairo/cairo/src/cairo-xlib-surface.c
+===================================================================
+--- mozilla/gfx/cairo/cairo/src/cairo-xlib-surface.c.orig
++++ mozilla/gfx/cairo/cairo/src/cairo-xlib-surface.c
+@@ -40,16 +40,18 @@
+ #include "cairo-xlib.h"
+ #include "cairo-xlib-xrender.h"
+ #include "cairo-xlib-test.h"
+ #include "cairo-xlib-private.h"
+ #include "cairo-clip-private.h"
+ #include <X11/extensions/Xrender.h>
+ #include <X11/extensions/renderproto.h>
+ 
++#define DEBUG_RCOMPOSITE 1
++
+ /* Xlib doesn't define a typedef, so define one ourselves */
+ typedef int (*cairo_xlib_error_func_t) (Display     *display,
+ 					XErrorEvent *event);
+ 
+ typedef struct _cairo_xlib_surface cairo_xlib_surface_t;
+ 
+ static void
+ _cairo_xlib_surface_ensure_gc (cairo_xlib_surface_t *surface);
+@@ -773,16 +775,19 @@ _draw_image_surface (cairo_xlib_surface_
+     ximage.red_mask = red;
+     ximage.green_mask = green;
+     ximage.blue_mask = blue;
+     ximage.xoffset = 0;
+ 
+     XInitImage (&ximage);
+ 
+     _cairo_xlib_surface_ensure_gc (surface);
++#ifdef DEBUG_RCOMPOSITE
++    printf("_draw_image_surface: img: src[%i,%i], dst[%i,%i], size[%i,%i]\n\n", src_x, src_y, dst_x, dst_y, width, height);
++#endif
+     XPutImage(surface->dpy, surface->drawable, surface->gc,
+ 	      &ximage, src_x, src_y, dst_x, dst_y,
+ 	      width, height);
+ 
+     return CAIRO_STATUS_SUCCESS;
+ 
+ }
+ 
+@@ -1270,16 +1275,60 @@ _render_operator (cairo_operator_t op)
+ 	return PictOpAdd;
+     case CAIRO_OPERATOR_SATURATE:
+ 	return PictOpSaturate;
+     default:
+ 	return PictOpOver;
+     }
+ }
+ 
++#ifdef DEBUG_RCOMPOSITE
++static const char *
++_render_operator_print (cairo_operator_t op);
++static const char *
++_render_operator_print (cairo_operator_t op)
++{
++    switch (op) {
++    case CAIRO_OPERATOR_CLEAR:
++	  return("PictOpClear, CAIRO_OPERATOR_CLEAR:\n");
++
++    case CAIRO_OPERATOR_SOURCE:
++	  return("PictOpSrc, CAIRO_OPERATOR_SOURCE:\n");
++    case CAIRO_OPERATOR_OVER:
++	  return("PictOpOver, CAIRO_OPERATOR_OVER:\n");
++    case CAIRO_OPERATOR_IN:
++	  return("PictOpIn, CAIRO_OPERATOR_IN:\n");
++    case CAIRO_OPERATOR_OUT:
++	  return("PictOpOut, CAIRO_OPERATOR_OUT:\n");
++    case CAIRO_OPERATOR_ATOP:
++	  return("PictOpAtop, CAIRO_OPERATOR_ATOP:\n");
++
++    case CAIRO_OPERATOR_DEST:
++	  return("PictOpDst, CAIRO_OPERATOR_DEST:\n");
++    case CAIRO_OPERATOR_DEST_OVER:
++	  return("PictOpOverReverse, CAIRO_OPERATOR_DEST_OVER:\n");
++    case CAIRO_OPERATOR_DEST_IN:
++	  return("PictOpInReverse, CAIRO_OPERATOR_DEST_IN:\n");
++    case CAIRO_OPERATOR_DEST_OUT:
++	  return("PictOpOutReverse, CAIRO_OPERATOR_DEST_OUT:\n");
++    case CAIRO_OPERATOR_DEST_ATOP:
++	  return("PictOpAtopReverse, CAIRO_OPERATOR_DEST_ATOP:\n");
++
++    case CAIRO_OPERATOR_XOR:
++	  return("PictOpXor, CAIRO_OPERATOR_XOR:\n");
++    case CAIRO_OPERATOR_ADD:
++	  return("PictOpAdd, CAIRO_OPERATOR_ADD:\n");
++    case CAIRO_OPERATOR_SATURATE:
++	  return("PictOpSaturate, CAIRO_OPERATOR_SATURATE:\n");
++    default:
++	  return("PictOpOver:\n");
++    }
++}
++#endif
++
+ static cairo_int_status_t
+ _cairo_xlib_surface_composite (cairo_operator_t		op,
+ 			       cairo_pattern_t		*src_pattern,
+ 			       cairo_pattern_t		*mask_pattern,
+ 			       void			*abstract_dst,
+ 			       int			src_x,
+ 			       int			src_y,
+ 			       int			mask_x,
+@@ -1300,16 +1349,21 @@ _cairo_xlib_surface_composite (cairo_ope
+     if (!CAIRO_SURFACE_RENDER_HAS_COMPOSITE (dst))
+ 	return CAIRO_INT_STATUS_UNSUPPORTED;
+ 
+     operation = _categorize_composite_operation (dst, op, src_pattern,
+ 						 mask_pattern != NULL);
+     if (operation == DO_UNSUPPORTED)
+ 	return CAIRO_INT_STATUS_UNSUPPORTED;
+ 
++#ifdef DEBUG_RXCOMPOSITE
++    fprintf (stderr, "\ncairo +++ composite: %d %p %p %p src[%d %d] msk[%d %d] dst[%d %d] %dx%d\n\n",
++             operation, src_pattern, mask_pattern, abstract_dst, src_x, src_y, mask_x, mask_y, dst_x, dst_y, width, height);
++#endif
++
+     status = _cairo_pattern_acquire_surfaces (src_pattern, mask_pattern,
+ 					      &dst->base,
+ 					      src_x, src_y,
+ 					      mask_x, mask_y,
+ 					      width, height,
+ 					      (cairo_surface_t **) &src,
+ 					      (cairo_surface_t **) &mask,
+ 					      &src_attr, &mask_attr);
+@@ -1331,44 +1385,68 @@ _cairo_xlib_surface_composite (cairo_ope
+     {
+     case DO_RENDER:
+ 	_cairo_xlib_surface_ensure_dst_picture (dst);
+ 	if (mask) {
+ 	    status = _cairo_xlib_surface_set_attributes (mask, &mask_attr);
+ 	    if (status)
+ 		goto BAIL;
+ 
++#ifdef DEBUG_RCOMPOSITE
++    if (getenv("SCD"))
++    printf("\ncxsc:XRenderComposite1: %s\tspic:%p[%i,%i,%i], dpic:%p[%i,%i,%i], s[%i,%i], d[%i,%i], [%ix%i]\n\n",
++            _render_operator_print(op), src->src_picture, src->width, src->height, src->depth,
++			dst->dst_picture, dst->width, dst->height, dst->depth,
++			src_x + src_attr.x_offset, src_y + src_attr.y_offset,
++            dst_x, dst_y, width, height);
++#endif
+ 	    XRenderComposite (dst->dpy,
+ 			      _render_operator (op),
+ 			      src->src_picture,
+ 			      mask->src_picture,
+ 			      dst->dst_picture,
+ 			      src_x + src_attr.x_offset,
+ 			      src_y + src_attr.y_offset,
+ 			      mask_x + mask_attr.x_offset,
+ 			      mask_y + mask_attr.y_offset,
+ 			      dst_x, dst_y,
+ 			      width, height);
+ 	} else {
++#ifdef DEBUG_RCOMPOSITE
++    if (getenv("SCD"))
++    printf("\ncxsc:XRenderComposite2: %s\tspic:%p[%i,%i,%i], dpic:%p[%i,%i,%i], s[%i,%i], d[%i,%i], [%ix%i]\n\n",
++            _render_operator_print(op), src->src_picture, src->width, src->height, src->depth,
++			dst->dst_picture, dst->width, dst->height, dst->depth,
++			src_x + src_attr.x_offset, src_y + src_attr.y_offset,
++            dst_x, dst_y, width, height);
++#endif
+ 	    XRenderComposite (dst->dpy,
+ 			      _render_operator (op),
+ 			      src->src_picture,
+ 			      0,
+ 			      dst->dst_picture,
+ 			      src_x + src_attr.x_offset,
+ 			      src_y + src_attr.y_offset,
+ 			      0, 0,
+ 			      dst_x, dst_y,
+ 			      width, height);
+ 	}
+ 
+ 	break;
+ 
+     case DO_XCOPYAREA:
+ 	_cairo_xlib_surface_ensure_gc (dst);
++#ifdef DEBUG_RCOMPOSITE
++    if (getenv("FCD"))
++    printf("cxsc:XCopyArea: sp[%i,%i,%i], dp[%i,%i,%i], s[%i,%i], d[%i,%i], [%ix%i]\n",
++            src->width, src->height, src->depth,
++            dst->width, dst->height, dst->depth,
++            src_x + src_attr.x_offset, src_y + src_attr.y_offset,
++            dst_x, dst_y, width, height);
++#endif
+ 	XCopyArea (dst->dpy,
+ 		   src->drawable,
+ 		   dst->drawable,
+ 		   dst->gc,
+ 		   src_x + src_attr.x_offset,
+ 		   src_y + src_attr.y_offset,
+ 		   width, height,
+ 		   dst_x, dst_y);
+@@ -1377,17 +1455,24 @@ _cairo_xlib_surface_composite (cairo_ope
+     case DO_XTILE:
+ 	/* This case is only used for bug fallbacks, though it is theoretically
+ 	 * applicable to the case where we don't have the RENDER extension as
+ 	 * well.
+ 	 *
+ 	 * We've checked that we have a repeating unscaled source in
+ 	 * _recategorize_composite_operation.
+ 	 */
+-
++#ifdef DEBUG_RCOMPOSITE
++    if (getenv("FCD"))
++    printf("cxsc:XTile: sp[%i,%i,%i], dp[%i,%i,%i], s[%i,%i], d[%i,%i], [%ix%i]\n",
++            src->width, src->height, src->depth,
++            dst->width, dst->height, dst->depth,
++            src_x + src_attr.x_offset, src_y + src_attr.y_offset,
++            dst_x, dst_y, width, height);
++#endif
+ 	_cairo_xlib_surface_ensure_gc (dst);
+ 	_cairo_matrix_is_integer_translation (&src_attr.matrix, &itx, &ity);
+ 
+ 	XSetTSOrigin (dst->dpy, dst->gc,
+ 		      - (itx + src_attr.x_offset), - (ity + src_attr.y_offset));
+ 	XSetTile (dst->dpy, dst->gc, src->drawable);
+ 	XSetFillStyle (dst->dpy, dst->gc, FillTiled);
+ 
+@@ -1622,16 +1707,21 @@ _cairo_xlib_surface_composite_trapezoids
+ 	Picture mask_picture = _create_trapezoid_mask (dst, traps, num_traps,
+ 						       dst_x, dst_y, width, height,
+ 						       pict_format);
+ 	if (!mask_picture) {
+ 	    status = CAIRO_STATUS_NO_MEMORY;
+ 	    goto BAIL;
+ 	}
+ 
++#ifdef DEBUG_RCOMPOSITE
++    printf("cxsct:XRenderComposite3: spic:%p, dpic:%p, s[%i,%i], d[%i,%i], [%ix%i]\n",
++	        src->src_picture, dst->dst_picture, src_x + attributes.x_offset, src_y + attributes.y_offset,
++			dst_x, dst_y, width, height);
++#endif
+ 	XRenderComposite (dst->dpy,
+ 			  _render_operator (op),
+ 			  src->src_picture,
+ 			  mask_picture,
+ 			  dst->dst_picture,
+ 			  src_x + attributes.x_offset,
+ 			  src_y + attributes.y_offset,
+ 			  0, 0,
+@@ -1644,16 +1734,21 @@ _cairo_xlib_surface_composite_trapezoids
+ 								 &attributes, src->width, src->height,
+ 								 width, height,
+ 								 src_x, src_y,
+ 								 0, 0,
+ 								 dst_x, dst_y, width, height);
+ 
+     } else {
+ 	/* XXX: The XTrapezoid cast is evil and needs to go away somehow. */
++#ifdef DEBUG_RCOMPOSITE
++    printf("cxsct:XRenderComposite4: spic:%p, dpic:%p, s[%i,%i], d[%i,%i], [%ix%i]\n",
++	        src->src_picture, dst->dst_picture, src_x + attributes.x_offset, src_y + attributes.y_offset,
++			dst_x, dst_y, width, height);
++#endif
+ 	XRenderCompositeTrapezoids (dst->dpy,
+ 				    _render_operator (op),
+ 				    src->src_picture, dst->dst_picture,
+ 				    pict_format,
+ 				    render_src_x + attributes.x_offset,
+ 				    render_src_y + attributes.y_offset,
+ 				    (XTrapezoid *) traps, num_traps);
+     }

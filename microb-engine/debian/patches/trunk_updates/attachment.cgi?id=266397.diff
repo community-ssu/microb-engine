@@ -1,0 +1,79 @@
+#Bug 382244  Unused argument in nsCSSFrameConstructor::StyleChangeReflow
+Index: layout/base/nsCSSFrameConstructor.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/layout/base/nsCSSFrameConstructor.cpp,v
+retrieving revision 1.1352
+diff -u -p -9 -r1.1352 nsCSSFrameConstructor.cpp
+--- layout/base/nsCSSFrameConstructor.cpp	22 May 2007 20:34:00 -0000	1.1352
++++ layout/base/nsCSSFrameConstructor.cpp	28 May 2007 16:21:30 -0000
+@@ -9780,20 +9780,19 @@ InvalidateCanvasIfNeeded(nsIFrame* aFram
+   }
+ 
+   if (ancestor != aFrame) {
+     ApplyRenderingChangeToTree(presContext, ancestor,
+                                nsChangeHint_RepaintFrame);
+   }
+ }
+ 
+ nsresult
+-nsCSSFrameConstructor::StyleChangeReflow(nsIFrame* aFrame,
+-                                         nsIAtom* aAttribute)
++nsCSSFrameConstructor::StyleChangeReflow(nsIFrame* aFrame)
+ {
+   // If the frame hasn't even received an initial reflow, then don't
+   // send it a style-change reflow!
+   if (aFrame->GetStateBits() & NS_FRAME_FIRST_REFLOW)
+     return NS_OK;
+ 
+ #ifdef DEBUG
+   if (gNoisyContentUpdates) {
+     printf("nsCSSFrameConstructor::StyleChangeReflow: aFrame=");
+@@ -9918,19 +9917,19 @@ nsCSSFrameConstructor::ProcessRestyledFr
+       if (NS_PROPTABLE_PROP_NOT_THERE == res)
+         continue;
+     }
+ 
+     if (hint & nsChangeHint_ReconstructFrame) {
+       RecreateFramesForContent(content);
+     } else {
+       NS_ASSERTION(frame, "This shouldn't happen");
+       if (hint & nsChangeHint_ReflowFrame) {
+-        StyleChangeReflow(frame, nsnull);
++        StyleChangeReflow(frame);
+       }
+       if (hint & (nsChangeHint_RepaintFrame | nsChangeHint_SyncFrameView)) {
+         ApplyRenderingChangeToTree(mPresShell->GetPresContext(), frame, hint);
+       }
+       if (hint & nsChangeHint_UpdateCursor) {
+         nsIViewManager* viewMgr = mPresShell->GetViewManager();
+         if (viewMgr)
+           viewMgr->SynthesizeMouseMove(PR_FALSE);
+       }
+Index: layout/base/nsCSSFrameConstructor.h
+===================================================================
+RCS file: /cvsroot/mozilla/layout/base/nsCSSFrameConstructor.h,v
+retrieving revision 1.227
+diff -u -p -9 -r1.227 nsCSSFrameConstructor.h
+--- layout/base/nsCSSFrameConstructor.h	16 May 2007 03:18:50 -0000	1.227
++++ layout/base/nsCSSFrameConstructor.h	28 May 2007 16:21:42 -0000
+@@ -821,19 +821,19 @@ private:
+                                  nsIContent*      aParent2,
+                                  nsIFrame*&       aParentFrame,
+                                  nsIContent*      aChild,
+                                  PRInt32          aIndexInContainer,
+                                  nsIFrame*&       aPrevSibling,
+                                  nsIFrame*        aNextSibling);
+ 
+   nsresult ReframeContainingBlock(nsIFrame* aFrame);
+ 
+-  nsresult StyleChangeReflow(nsIFrame* aFrame, nsIAtom* aAttribute);
++  nsresult StyleChangeReflow(nsIFrame* aFrame);
+ 
+   /** Helper function that searches the immediate child frames 
+     * (and their children if the frames are "special")
+     * for a frame that maps the specified content object
+     *
+     * @param aParentFrame   the primary frame for aParentContent
+     * @param aContent       the content node for which we seek a frame
+     * @param aParentContent the parent for aContent 
+     * @param aHint          an optional hint used to make the search for aFrame faster

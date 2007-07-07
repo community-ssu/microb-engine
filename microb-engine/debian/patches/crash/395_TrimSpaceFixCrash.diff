@@ -1,0 +1,146 @@
+Index: mozilla/layout/forms/nsGfxButtonControlFrame.cpp
+===================================================================
+--- mozilla.orig/layout/forms/nsGfxButtonControlFrame.cpp
++++ mozilla/layout/forms/nsGfxButtonControlFrame.cpp
+@@ -239,16 +239,18 @@ nsresult
+ nsGfxButtonControlFrame::GetLabel(nsXPIDLString& aLabel)
+ {
+   // Get the text from the "value" property on our content if there is
+   // one; otherwise set it to a default value (localized).
+   nsresult rv;
+   nsCOMPtr<nsIDOMHTMLInputElement> elt = do_QueryInterface(mContent);
+   if (mContent->HasAttr(kNameSpaceID_None, nsGkAtoms::value) && elt) {
+     rv = elt->GetValue(aLabel);
++    if (NS_FAILED(rv) || aLabel.IsEmpty())
++      rv = GetDefaultLabel(aLabel);
+   } else {
+     // Generate localized label.
+     // We can't make any assumption as to what the default would be
+     // because the value is localized for non-english platforms, thus
+     // it might not be the string "Reset", "Submit Query", or "Browse..."
+     rv = GetDefaultLabel(aLabel);
+   }
+ 
+Index: mozilla/xpcom/string/src/nsTStringObsolete.cpp
+===================================================================
+--- mozilla.orig/xpcom/string/src/nsTStringObsolete.cpp
++++ mozilla/xpcom/string/src/nsTStringObsolete.cpp
+@@ -437,16 +437,18 @@ nsTString_CharT::Trim( const char* aSet,
+ 
+   /**
+    * nsTString::CompressWhitespace
+    */
+ 
+ void
+ nsTString_CharT::CompressWhitespace( PRBool aTrimLeading, PRBool aTrimTrailing )
+   {
++    if (!mLength || !mData)
++      return;
+     const char* set = kWhitespace;
+ 
+     ReplaceChar(set, ' ');
+     Trim(set, aTrimLeading, aTrimTrailing);
+ 
+       // this one does some questionable fu... just copying the old code!
+     mLength = nsBufferRoutines<char_type>::compress_chars(mData, mLength, set);
+   }
+Index: mozilla/content/html/document/src/nsHTMLContentSink.cpp
+===================================================================
+--- mozilla.orig/content/html/document/src/nsHTMLContentSink.cpp
++++ mozilla/content/html/document/src/nsHTMLContentSink.cpp
+@@ -2452,16 +2452,18 @@ HTMLContentSink::UpdateDocumentTitle()
+ 
+   if (!mDocument->GetDocumentTitle().IsVoid()) {
+     MOZ_TIMER_DEBUGLOG(("Stop: nsHTMLContentSink::UpdateDocumentTitle()\n"));
+     MOZ_TIMER_STOP(mWatch);
+     return NS_OK;
+   }
+ 
+   // Use mTitleString.
++  if (mTitleString.IsEmpty())
++    return NS_OK;
+   mTitleString.CompressWhitespace(PR_TRUE, PR_TRUE);
+ 
+   nsCOMPtr<nsIDOMNSDocument> domDoc(do_QueryInterface(mDocument));
+   domDoc->SetTitle(mTitleString);
+ 
+   mTitleString.Truncate();
+ 
+   MOZ_TIMER_DEBUGLOG(("Stop: nsHTMLContentSink::UpdateDocumentTitle()\n"));
+Index: mozilla/docshell/base/nsDocShell.cpp
+===================================================================
+--- mozilla.orig/docshell/base/nsDocShell.cpp
++++ mozilla/docshell/base/nsDocShell.cpp
+@@ -3816,32 +3816,34 @@ nsDocShell::GetTitle(PRUnichar ** aTitle
+     *aTitle = ToNewUnicode(mTitle);
+     return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsDocShell::SetTitle(const PRUnichar * aTitle)
+ {
+     // Store local title
++	if (!aTitle)
++        mTitle.Truncate();
+     mTitle = aTitle;
+ 
+     nsCOMPtr<nsIDocShellTreeItem> parent;
+     GetSameTypeParent(getter_AddRefs(parent));
+ 
+     // When title is set on the top object it should then be passed to the 
+     // tree owner.
+     if (!parent) {
+         nsCOMPtr<nsIBaseWindow>
+             treeOwnerAsWin(do_QueryInterface(mTreeOwner));
+         if (treeOwnerAsWin)
+             treeOwnerAsWin->SetTitle(aTitle);
+     }
+ 
+     if (mGlobalHistory && mCurrentURI && mLoadType != LOAD_ERROR_PAGE) {
+-        mGlobalHistory->SetPageTitle(mCurrentURI, nsDependentString(aTitle));
++        mGlobalHistory->SetPageTitle(mCurrentURI, mTitle);
+     }
+ 
+ 
+     // Update SessionHistory with the document's title. If the
+     // page was loaded from history or the page bypassed history,
+     // there is no need to update the title. There is no need to
+     // go to mSessionHistory to update the title. Setting it in mOSHE 
+     // would suffice. 
+Index: mozilla/js/src/jsobj.c
+===================================================================
+--- mozilla.orig/js/src/jsobj.c
++++ mozilla/js/src/jsobj.c
+@@ -2804,23 +2804,25 @@ js_FreeSlot(JSContext *cx, JSObject *obj
+ /* JSVAL_INT_MAX as a string */
+ #define JSVAL_INT_MAX_STRING "1073741823"
+ 
+ #define CHECK_FOR_STRING_INDEX(id)                                            \
+     JS_BEGIN_MACRO                                                            \
+         if (JSID_IS_ATOM(id)) {                                               \
+             JSAtom *atom_ = JSID_TO_ATOM(id);                                 \
+             JSString *str_ = ATOM_TO_STRING(atom_);                           \
+-            const jschar *cp_ = str_->chars;                                  \
+-            JSBool negative_ = (*cp_ == '-');                                 \
+-            if (negative_) cp_++;                                             \
+-            if (JS7_ISDEC(*cp_)) {                                            \
+-                size_t n_ = str_->length - negative_;                         \
+-                if (n_ <= sizeof(JSVAL_INT_MAX_STRING) - 1)                   \
+-                    id = CheckForStringIndex(id, cp_, cp_ + n_, negative_);   \
++            if (str_) {                                                       \
++               const jschar *cp_ = str_->chars;                               \
++    	        JSBool negative_ = (*cp_ == '-');                              \
++               if (negative_) cp_++;                                          \
++               if (JS7_ISDEC(*cp_)) {                                         \
++                   size_t n_ = str_->length - negative_;                      \
++                   if (n_ <= sizeof(JSVAL_INT_MAX_STRING) - 1)                \
++                       id = CheckForStringIndex(id, cp_, cp_ + n_, negative_);\
++               }                                                              \
+             }                                                                 \
+         }                                                                     \
+     JS_END_MACRO
+ 
+ static jsid
+ CheckForStringIndex(jsid id, const jschar *cp, const jschar *end,
+                     JSBool negative)
+ {

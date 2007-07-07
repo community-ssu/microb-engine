@@ -1,0 +1,77 @@
+#Handle the vertical resizing in the first pass reflow correctly when we've previously done a special height reflow.  b=381507
+# Bug 381507  Nested percentage-height tables grow endlessly on any window resize
+diff --git a/layout/generic/nsHTMLReflowState.cpp b/layout/generic/nsHTMLReflowState.cpp
+--- a/layout/generic/nsHTMLReflowState.cpp
++++ b/layout/generic/nsHTMLReflowState.cpp
+@@ -374,7 +374,6 @@ nsHTMLReflowState::InitResizeFlags(nsPre
+   } else if (mComputedHeight == NS_AUTOHEIGHT) {
+     if (eCompatibility_NavQuirks == aPresContext->CompatibilityMode() &&
+         mCBReflowState) {
+-      // XXX This condition doesn't quite match CalcQuirkContainingBlockHeight.
+       mFlags.mVResize = mCBReflowState->mFlags.mVResize;
+     } else {
+       mFlags.mVResize = mFlags.mHResize || NS_SUBTREE_DIRTY(frame); 
+@@ -384,6 +383,31 @@ nsHTMLReflowState::InitResizeFlags(nsPre
+     mFlags.mVResize = frame->GetSize().height !=
+                         mComputedHeight + mComputedBorderPadding.TopBottom();
+   }
++
++  PRBool dependsOnCBHeight =
++    mStylePosition->mHeight.GetUnit() == eStyleUnit_Percent ||
++    mStylePosition->mMinHeight.GetUnit() == eStyleUnit_Percent ||
++    mStylePosition->mMaxHeight.GetUnit() == eStyleUnit_Percent ||
++    mStylePosition->mOffset.GetTopUnit() == eStyleUnit_Percent ||
++    mStylePosition->mOffset.GetBottomUnit() == eStyleUnit_Percent ||
++    frame->IsBoxFrame();
++
++  // If we're the child of a table cell that performs special height
++  // reflows and we could be the child that requires them, or we're the
++  // anonymous block inside the table cell, always set the vertical
++  // resize in case this is the first pass before the special height
++  // reflow.
++  if (!mFlags.mVResize && mCBReflowState &&
++      IS_TABLE_CELL(mCBReflowState->frame->GetType()) &&
++       // child of cell with percent
++      (dependsOnCBHeight ||
++       // outer table for such a child
++       frame->GetType() == nsGkAtoms::tableOuterFrame ||
++       // cell's anonymous block
++       mCBReflowState == parentReflowState))
++    mFlags.mVResize = PR_TRUE;
++
++  // Set NS_FRAME_CONTAINS_RELATIVE_HEIGHT if it's needed.
+ 
+   // It would be nice to check that |mComputedHeight != NS_AUTOHEIGHT|
+   // &&ed with the percentage height check.  However, this doesn't get
+@@ -392,13 +416,7 @@ nsHTMLReflowState::InitResizeFlags(nsPre
+   // of table cells) can cause not just a single percentage height to
+   // become fixed, but an entire descendant chain of percentage heights
+   // to become fixed.
+-  if ((mStylePosition->mHeight.GetUnit() == eStyleUnit_Percent ||
+-       mStylePosition->mMinHeight.GetUnit() == eStyleUnit_Percent ||
+-       mStylePosition->mMaxHeight.GetUnit() == eStyleUnit_Percent ||
+-       mStylePosition->mOffset.GetTopUnit() == eStyleUnit_Percent ||
+-       mStylePosition->mOffset.GetBottomUnit() == eStyleUnit_Percent ||
+-       frame->IsBoxFrame()) &&
+-      mCBReflowState) {
++  if (dependsOnCBHeight && mCBReflowState) {
+     const nsHTMLReflowState *rs = this;
+     PRBool hitCBReflowState = PR_FALSE;
+     do {
+diff --git a/layout/tables/nsTableFrame.cpp b/layout/tables/nsTableFrame.cpp
+--- a/layout/tables/nsTableFrame.cpp
++++ b/layout/tables/nsTableFrame.cpp
+@@ -1872,7 +1872,12 @@ NS_METHOD nsTableFrame::Reflow(nsPresCon
+   PRBool haveDesiredHeight = PR_FALSE;
+   PRBool reflowedChildren  = PR_FALSE;
+ 
+-  if (aReflowState.mComputedHeight != NS_UNCONSTRAINEDSIZE) {
++  if (aReflowState.mComputedHeight != NS_UNCONSTRAINEDSIZE ||
++      // Also check mVResize, to handle the first Reflow preceding a
++      // special height Reflow, when we've already had a special height
++      // Reflow (where mComputedHeight would not be
++      // NS_UNCONSTRAINEDSIZE, but without a style change in between).
++      aReflowState.mFlags.mVResize) {
+     // XXX Eventually, we should modify DistributeHeightToRows to use
+     // nsTableRowFrame::GetHeight instead of nsIFrame::GetSize().height.
+     // That way, it will make its calculations based on internal table

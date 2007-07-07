@@ -1,0 +1,30 @@
+#Bug 366205 – "ASSERTION: Shouldn't hit this case -- we should a be a combobox if we have no size set and no multiple set!
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp
++++ mozilla/layout/base/nsPresShell.cpp
+@@ -6207,19 +6207,24 @@
+     WillDoReflow();
+ 
+     // If reflow is interruptible, then make a note of our deadline.
+     const PRIntervalTime deadline = aInterruptible
+         ? PR_IntervalNow() + PR_MicrosecondsToInterval(gMaxRCProcessingTime)
+         : (PRIntervalTime)0;
+ 
+     // force flushing of any pending notifications
++    // XXXbz what we _really_ want to do here is to flush the parser on our
++    // document only.  But there's no way to do that.
+     mDocument->BeginUpdate(UPDATE_ALL);
+     mDocument->EndUpdate(UPDATE_ALL);
+ 
++    // Now make sure our frames match the current content model.
++    FlushPendingNotifications(Flush_Frames);
++
+     // That might have executed (via XBL binding constructors).  So we may no
+     // longer have reflow commands.  In fact, we may have had Destroy() called.
+ 
+     // Scope for the reflow entry point, in addition to the |if| condition.
+     if (!mIsDestroying && mDirtyRoots.Count() != 0) {
+       AUTO_LAYOUT_PHASE_ENTRY_POINT(GetPresContext(), Reflow);
+       mIsReflowing = PR_TRUE;
+ 

@@ -1,0 +1,1038 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: Extension Fit To View mozilla layout
+
+Index: mozilla/extensions/ftv/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/Makefile.in
+@@ -0,0 +1,37 @@
++
++DEPTH=../..
++topsrcdir=@top_srcdir@
++srcdir=@srcdir@
++VPATH=@srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++MODULE	= ftv
++XPI_NAME = ftv
++
++ifdef MOZ_XUL_APP
++INSTALL_EXTENSION_ID = ftv@extensions.mozilla.org
++DIST_FILES = install.rdf
++NO_JAR_AUTO_REG        = 1
++USE_EXTENSION_MANIFEST = 1
++XPI_PKGNAME            = ftv-$(MOZ_APP_VERSION)
++
++# We should really pull FIREFOX_VERSION and THUNDERBIRD_VERSION from
++# browser/config/version.txt mail/config/version.txt but we can't be assured
++# that we've even pulled those files. So we hardcode them.
++
++XULAPP_DEFINES = \
++	-DFIREFOX_VERSION=$(FIREFOX_VERSION) \
++	-DTHUNDERBIRD_VERSION=$(THUNDERBIRD_VERSION) \
++	-DEXTENSION_VERSION=$(MOZILLA_VERSION) \
++	$(NULL)
++
++ifdef TARGET_XPCOM_ABI
++XULAPP_DEFINES += -DEM_ABI=$(OS_TARGET)_$(TARGET_XPCOM_ABI)
++endif
++endif
++
++DIRS    = src
++DIRS   += public
++
++include $(topsrcdir)/config/rules.mk
+Index: mozilla/extensions/ftv/install.rdf
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/install.rdf
+@@ -0,0 +1,40 @@
++<?xml version="1.0"?>
++
++#filter substitution
++
++<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
++     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
++  <Description about="urn:mozilla:install-manifest">
++    <em:id>fit-to-view@extensions.mozilla.org</em:id>
++    <em:version>@EXTENSION_VERSION@</em:version>
++
++#ifdef EM_ABI
++    <em:targetPlatform>@EM_ABI@</em:targetPlatform>
++#endif
++
++    <em:targetApplication>
++      <!-- Firefox -->
++      <Description>
++        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
++        <em:minVersion>@FIREFOX_VERSION@</em:minVersion>
++        <em:maxVersion>@FIREFOX_VERSION@</em:maxVersion>
++      </Description>
++    </em:targetApplication>
++
++    <em:targetApplication>
++      <!-- Thunderbird -->
++      <Description>
++        <em:id>{3550f703-e582-4d05-9a08-453d09bdfdc6}</em:id>
++        <em:minVersion>@THUNDERBIRD_VERSION@</em:minVersion>
++        <em:maxVersion>@THUNDERBIRD_VERSION@</em:maxVersion>
++      </Description>
++    </em:targetApplication>
++
++    <!-- front-end metadata -->
++    <em:name>Spatial Navigation</em:name>
++    <em:description>Navigate between links using the arrow keys in addition to the tab key.</em:description>
++    <em:creator>mozilla.org</em:creator>
++    <em:contributor>Doug Turner &lt;dougt@meer.net&gt;</em:contributor>
++    <em:homepageURL>http://www.mozilla.org/access/keyboard/snav/</em:homepageURL>
++  </Description>
++</RDF>
+Index: mozilla/extensions/ftv/public/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/public/Makefile.in
+@@ -0,0 +1,50 @@
++# vim:set ts=8 sw=8 sts=8 noet:
++# ***** BEGIN LICENSE BLOCK *****
++# Version: MPL 1.1/GPL 2.0/LGPL 2.1
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License. You may obtain a copy of the License at
++# http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Original Code is the Mozilla Browser code.
++#
++# The Initial Developer of the Original Code is Google Inc.
++# Portions created by the Initial Developer are Copyright (C) 2005
++# the Initial Developer. All Rights Reserved.
++#
++# Contributor(s):
++#  Darin Fisher <darin@meer.net>
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 2 or later (the "GPL"), or
++# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++# in which case the provisions of the GPL or the LGPL are applicable instead
++# of those above. If you wish to allow use of your version of this file only
++# under the terms of either the GPL or the LGPL, and not to allow others to
++# use your version of this file under the terms of the MPL, indicate your
++# decision by deleting the provisions above and replace them with the notice
++# and other provisions required by the GPL or the LGPL. If you do not delete
++# the provisions above, a recipient may use your version of this file under
++# the terms of any one of the MPL, the GPL or the LGPL.
++#
++# ***** END LICENSE BLOCK *****
++
++DEPTH		= ../../..
++topsrcdir	= @top_srcdir@
++srcdir		= @srcdir@
++VPATH		= @srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++MODULE		= ftv
++XPI_NAME	= ftv
++
++XPIDLSRCS	= nsIFitToView.idl
++
++include $(topsrcdir)/config/rules.mk
+Index: mozilla/extensions/ftv/public/nsIFitToView.idl
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/public/nsIFitToView.idl
+@@ -0,0 +1,47 @@
++/* vim:set ts=2 sw=2 sts=2 et cin: */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is mozilla.org code.
++ *
++ * The Initial Developer of the Original Code is Google Inc.
++ * Portions created by the Initial Developer are Copyright (C) 2005
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *  Darin Fisher <darin@meer.net>
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either the GNU General Public License Version 2 or later (the "GPL"), or
++ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include "nsISupports.idl"
++
++[scriptable, uuid(3ff46818-9912-42e5-9da9-fd97dd77ef11)]
++interface nsIFitToView : nsISupports
++{
++  /**
++   * This interface adds two numbers together and returns the result.
++   */
++  long extra(in long a, in long b);
++};
+Index: mozilla/extensions/ftv/src/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/src/Makefile.in
+@@ -0,0 +1,111 @@
++# vim:set ts=8 sw=8 sts=8 noet:
++# ***** BEGIN LICENSE BLOCK *****
++# Version: MPL 1.1/GPL 2.0/LGPL 2.1
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License. You may obtain a copy of the License at
++# http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Original Code is the Mozilla Browser code.
++#
++# The Initial Developer of the Original Code is Google Inc.
++# Portions created by the Initial Developer are Copyright (C) 2005
++# the Initial Developer. All Rights Reserved.
++#
++# Contributor(s):
++#  Darin Fisher <darin@meer.net>
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 2 or later (the "GPL"), or
++# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++# in which case the provisions of the GPL or the LGPL are applicable instead
++# of those above. If you wish to allow use of your version of this file only
++# under the terms of either the GPL or the LGPL, and not to allow others to
++# use your version of this file under the terms of the MPL, indicate your
++# decision by deleting the provisions above and replace them with the notice
++# and other provisions required by the GPL or the LGPL. If you do not delete
++# the provisions above, a recipient may use your version of this file under
++# the terms of any one of the MPL, the GPL or the LGPL.
++#
++# ***** END LICENSE BLOCK *****
++
++DEPTH		= ../../..
++topsrcdir	= @top_srcdir@
++srcdir		= @srcdir@
++VPATH		= @srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++MODULE		= ftv
++XPI_NAME	= ftv
++LIBRARY_NAME    = ftv
++ifneq ($(OS_ARCH),WINNT)
++SHORT_LIBNAME = ftv
++endif
++IS_COMPONENT	= 1
++
++ifdef IS_COMPONENT
++DEFINES += -DDYN_FTV
++FORCE_SHARED_LIB = 1
++else
++LIBXUL_LIBRARY  = 1
++FORCE_STATIC_LIB = 1
++endif
++
++REQUIRES = \
++    dom \
++    layout \
++    content \
++    widget \
++    necko \
++    windowwatcher \
++    xpcom \
++    string \
++    pref \
++    gfx \
++    locale \
++    docshell \
++    uriloader \
++    imglib2 \
++    $(NULL)
++
++CPPSRCS		= nsFitToView.cpp
++
++EXTRA_DSO_LDOPTS = \
++	$(XPCOM_GLUE_LDOPTS) \
++	$(NSPR_LIBS) \
++	$(NULL)
++
++EXTRA_DSO_LDOPTS += $(MOZ_COMPONENT_LIBS)
++
++EXPORT_RESOURCE = \
++	$(NULL)
++
++
++ifdef MOZ_XUL_APP
++ifdef TARGET_XPCOM_ABI
++FINAL_TARGET=$(DIST)/xpi-stage/$(XPI_NAME)/platform/$(OS_TARGET)_$(TARGET_XPCOM_ABI)
++endif
++endif
++
++#EXTRA_COMPONENTS = $(srcdir)/SimpleTest.js
++
++include $(topsrcdir)/config/rules.mk
++
++FTV_CSS_SRC = $(srcdir)/ftv.css
++PREPROCESS_FTV_CSS = $(PERL) $(MOZILLA_DIR)/config/preprocessor.pl --marker=% $(DEFINES) $(ACDEFINES) $(FTV_CSS_SRC)
++
++$(DIST)/bin/res/ftv.css $(DESTDIR)$(mozappdir)/res/ftv.css: $(FTV_CSS_SRC) Makefile
++	if test ! -d $(@D); then rm -rf $(@D); $(NSINSTALL) -D $(@D); else true; fi
++	rm -f $@
++	$(PREPROCESS_FTV_CSS) > $@
++
++libs:: $(DIST)/bin/res/ftv.css
++
++install:: $(DESTDIR)$(mozappdir)/res/ftv.css
+Index: mozilla/extensions/ftv/src/nsFitToView.cpp
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/src/nsFitToView.cpp
+@@ -0,0 +1,556 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* vim:set ts=2 sw=2 sts=2 tw=80 et cindent: */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is Mozilla's Element Optimizeing extension.
++ *
++ * The Initial Developer of the Original Code is the Mozilla Foundation.
++ * Portions created by the Initial Developer are Copyright (C) 2006
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Oleg Romashi <romaxa@gmail.com> (original author)
++ *   Anton Rogaynis <rogainis@gmail.com>
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either the GNU General Public License Version 2 or later (the "GPL"), or
++ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include "nsIGenericFactory.h"
++#include "nsIObserver.h"
++#include "nsIPrefService.h"
++#include "nsIPrefBranch2.h"
++#include "nsICategoryManager.h"
++#include "nsNetUtil.h"
++#include "nsIStyleSheetService.h"
++#include "prprf.h"
++#include "nsIDOMDocument.h"
++#include "nsIDOMNodeList.h"
++#include "nsIDOMWindow.h"
++#include "nsIWindowWatcher.h"
++#include "nsIDOMWindowCollection.h"
++#include "nsIDOMDocumentView.h"
++#include "nsIDOMHTMLIFrameElement.h"
++#include "nsIFormControl.h"
++#include "nsIContent.h"
++#include "nsIDocument.h"
++#include "nsIPresShell.h"
++#include "nsIFrame.h"
++#include "nsIWebProgressListener.h"
++#include "nsWeakReference.h"
++#include "nsIWebProgress.h"
++#include "nsCURILoader.h"
++#include "nsIDocShell.h"
++#include "imgIRequest.h"
++#include "imgIContainer.h"
++#include "nsIDOMHTMLImageElement.h"
++#include "nsIDOMAbstractView.h"
++#include "nsIDOMCSSStyleDeclaration.h"
++#include "nsIDOMViewCSS.h"
++#include "nsIDOMCSSPrimitiveValue.h"
++#include "nsIDOMElementCSSInlineStyle.h"
++#include "nsIDOMNSHTMLElement.h"
++#include "nsIDOMNSHTMLElement.h"
++#include "nsIPref.h"
++#ifdef DYN_FTV
++#include "nsStringAPI.h"
++#else
++#include "nsString.h"
++#endif
++
++#define EM_MULT 16.
++#define NS_FRAME_HAS_RELATIVE_SIZE 0x01000000
++#define NS_FRAME_HAS_OPTIMIZEDVIEW 0x02000000
++
++// TODO auto reload nsFitToView in C.
++class nsFitToView : public nsIObserver,
++  public nsIWebProgressListener,
++  public nsSupportsWeakReference
++{
++public:
++  nsFitToView();
++  virtual ~nsFitToView();
++  nsresult Init(void);
++  nsresult SetOptimize(nsISupports *aObject = nsnull, const void * data = nsnull);
++  nsresult DoOptimize(nsISupports *aObject = nsnull, const void * data = nsnull);
++
++  NS_DECL_ISUPPORTS
++    NS_DECL_NSIOBSERVER
++    NS_DECL_NSIWEBPROGRESSLISTENER
++
++private:
++    nsresult OptimizeElement(float aCurOptimize, nsIDOMNode * node, nsIPresShell* aPresShell, nsIDOMViewCSS *defaultCSSView, nsRect &wrect);
++    nsresult OptimizeDocument(float aCurrOptimizeVal, nsIDOMDocument *aDocument);
++    nsresult OptimizeWindow(nsIDOMWindow *aWindow);
++    nsresult OptimizeElementsByTag(float aCurrOptimizeVal, nsIDOMDocument *aDocument, nsIPresShell* ps, nsString aTag, nsIDOMViewCSS *defaultCSSView = nsnull);
++    PRBool mAttached;
++    PRBool mOptimizeFull;
++    PRUint32 mNewOptimize;
++    PRUint32 mCurOptimize;
++    PRBool mRelativeOptimize;
++    PRUint32 mLoadedImagesCnt;
++    PRBool mDoOnloadOptimizing;
++    PRBool mDoOptimize;
++    PRBool mSetOptimizing;
++};
++
++#define DEFAULT_REGRESSION 40
++static PRInt32 regression = DEFAULT_REGRESSION;
++static PRBool gIsStarted = PR_FALSE;
++
++/* void onStateChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in unsigned long aStateFlags, in nsresult aStatus); */
++NS_IMETHODIMP nsFitToView::OnStateChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, PRUint32 aStateFlags, nsresult aStatus)
++{
++  nsresult rv;
++  return NS_ERROR_NOT_IMPLEMENTED;
++  //  printf("nsFitToView::OnStateChange: mDoOnloadOptimizing: %i\n", mDoOnloadOptimizing);
++  if (!mDoOnloadOptimizing)
++    return NS_ERROR_NOT_IMPLEMENTED;
++
++  if (((aStateFlags & nsIWebProgressListener::STATE_IS_DOCUMENT
++        || aStateFlags & nsIWebProgressListener::STATE_IS_NETWORK)
++       && aStateFlags & nsIWebProgressListener::STATE_STOP)
++       )
++  {
++    nsCOMPtr<nsIDOMWindow> domWin;
++    rv = aWebProgress->GetDOMWindow(getter_AddRefs(domWin));
++    NS_ENSURE_SUCCESS(rv, NS_OK);
++	OptimizeWindow(domWin);
++  }
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP nsFitToView::OnProgressChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest,
++                                            PRInt32 aCurSelfProgress, PRInt32 aMaxSelfProgress, PRInt32 aCurTotalProgress, PRInt32 aMaxTotalProgress)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP nsFitToView::OnLocationChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, nsIURI *aLocation)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP nsFitToView::OnStatusChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, nsresult aStatus, const PRUnichar *aMessage)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP nsFitToView::OnSecurityChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, PRUint32 aState)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++
++nsFitToView::nsFitToView()
++{
++  //  printf("nsFitToView::nsFitToView????????????????????????????????????: %p\n", this);
++  mAttached = PR_FALSE;
++  mNewOptimize = 100;
++  mCurOptimize = 100;
++  mLoadedImagesCnt = 0;
++  mRelativeOptimize = PR_TRUE;
++  mOptimizeFull = PR_TRUE;
++  mDoOnloadOptimizing = PR_FALSE;
++  mDoOptimize = PR_FALSE;
++  mSetOptimizing = PR_FALSE;
++}
++
++nsFitToView::~nsFitToView()
++{
++  // Remove the progress listener
++  nsCOMPtr<nsIWebProgress> progress =
++    do_GetService(NS_DOCUMENTLOADER_SERVICE_CONTRACTID);
++  if (progress)
++    progress->RemoveProgressListener(this);
++}
++
++static nsresult
++GetDocumentPresShell(nsIDOMDocument *doc, nsIPresShell* *aPresShell)
++{
++  nsCOMPtr<nsIDocument> iDoc = do_QueryInterface(doc);
++  NS_ENSURE_TRUE(iDoc, NS_ERROR_FAILURE);
++  iDoc->FlushPendingNotifications(Flush_Layout);
++  *aPresShell = iDoc->GetPrimaryShell();
++  NS_ENSURE_TRUE(*aPresShell, NS_ERROR_FAILURE);
++  NS_ADDREF(*aPresShell);
++  return NS_OK;
++}
++
++static nsresult
++GetNodePresShell(nsIDOMNode *node, nsIPresShell* *aPresShell)
++{
++  NS_ENSURE_TRUE(node, NS_ERROR_FAILURE);
++  nsCOMPtr<nsIDOMDocument> doc;
++  node->GetOwnerDocument(getter_AddRefs(doc));
++  return GetDocumentPresShell(doc, aPresShell);
++}
++
++
++
++nsresult
++nsFitToView::OptimizeElement(float aCurOptimize, nsIDOMNode * node, nsIPresShell* aPresShell, nsIDOMViewCSS *defaultCSSView, nsRect &wrect)
++{
++  //printf("nsFitToView::OptimizeElement\n");
++  nsresult rv;
++  nsRect srect;
++
++  nsCOMPtr<nsIDOMHTMLElement> element = do_QueryInterface(node, &rv);
++  if(NS_FAILED(rv))
++    return NS_OK;
++
++  if (!aPresShell)
++    return NS_ERROR_FAILURE;
++
++  nsIFrame* frame = nsnull;
++  if (aPresShell)
++  {
++    nsCOMPtr<nsIContent> iContent = do_QueryInterface(element, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    frame = aPresShell->GetPrimaryFrameFor(iContent);
++    NS_ENSURE_TRUE(frame, rv);
++    srect = frame->GetRect();
++    nsPresContext *context = aPresShell->GetPresContext();
++    if (!context)
++      return NS_ERROR_FAILURE;
++    srect.width = context->AppUnitsToDevPixels(srect.width);
++    srect.height = context->AppUnitsToDevPixels(srect.height);
++  }
++
++  if (!srect.width || !srect.height)
++    return NS_ERROR_FAILURE;
++
++  nsRect rect(0,0,0,0);
++  rect = frame->GetScreenRectExternal();
++  PRBool full = PR_FALSE, half = PR_FALSE;
++  if (rect.x >= wrect.x + wrect.width)
++  {
++    full = PR_TRUE;
++  }
++  else if (rect.x+rect.width > wrect.x + wrect.width)
++  {
++    half = PR_TRUE;
++  }
++  if (!half && !full)
++    return NS_OK;
++
++  nsString nname;
++  node->GetNodeName(nname);
++
++  NS_NAMED_LITERAL_STRING(class_attr, "class");
++  nsString classValue;
++  element->GetAttribute(class_attr, classValue);
++
++  if (nname.LowerCaseEqualsLiteral("body")
++  )
++  {
++    classValue.AppendLiteral(" ftv");
++  }
++  else
++  {
++    classValue.AppendLiteral(" ftv");
++    classValue.AppendLiteral(" ftvAll");
++
++    if (nname.LowerCaseEqualsLiteral("td"))
++    {
++      if (half) {
++        classValue.AppendLiteral(" ftvHalf");
++      }
++      if (full)
++      {
++        classValue.AppendLiteral(" ftvFull");
++      }
++    }
++  }
++  element->SetAttribute(class_attr, classValue);
++  return rv;
++}
++
++
++nsresult
++nsFitToView::OptimizeElementsByTag(float aCurrOptimizeVal, nsIDOMDocument *aDocument, nsIPresShell* ps, nsString aTag, nsIDOMViewCSS *defaultCSSView)
++{
++  nsresult rv;
++  nsCOMPtr<nsIDOMNodeList> nodelist;
++  if (aDocument)
++    rv = aDocument->GetElementsByTagName( aTag, getter_AddRefs( nodelist ) );
++
++  nsCOMPtr<nsIDOMElement> del;
++  rv = aDocument->GetDocumentElement(getter_AddRefs(del));
++  NS_ENSURE_SUCCESS(rv, rv);
++  nsRect wrect(0,0,0,0);
++  {
++    nsCOMPtr<nsIContent> content = do_QueryInterface(del, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    nsCOMPtr<nsIDocument> doc = content->GetDocument();
++    if (doc)
++    {
++      nsIPresShell* presShell = doc->GetPrimaryShell();
++      if (presShell)
++      {
++        nsIFrame* frame = presShell->GetPrimaryFrameFor(content);
++        if (frame)
++          wrect = frame->GetScreenRectExternal();
++        //                printf("Doc Rect: x: %i, y: %i, w: %i, rx: %i, h: %i\n", wrect.x, wrect.y, wrect.width, wrect.width+wrect.x, wrect.height);
++      }
++    }
++  }
++
++  if( !nodelist )
++    return NS_ERROR_FAILURE;
++  PRUint32 length, zoomed;
++  rv = nodelist->GetLength(&length);
++  NS_ENSURE_SUCCESS(rv, rv);
++  zoomed = length;
++  nsCOMPtr<nsIDOMNode> node;
++  for (PRUint32 i = 0; i < length; i++)
++  {
++    rv |= nodelist->Item(i, getter_AddRefs(node));
++    if (!NS_FAILED(rv) && node)
++    {
++      rv |= OptimizeElement(aCurrOptimizeVal, node, ps, defaultCSSView, wrect);
++    }
++    if (NS_FAILED(rv))
++      zoomed--;
++    rv = NS_OK;
++  }
++  return rv;
++}
++
++nsresult
++nsFitToView::OptimizeDocument(float aCurrOptimizeVal, nsIDOMDocument *aDocument)
++{
++  nsresult rv;
++  nsCOMPtr<nsIPresShell> ps;
++
++  nsCOMPtr<nsIDOMDocumentView> docView(do_QueryInterface(aDocument));
++  NS_ENSURE_TRUE(docView, NS_ERROR_FAILURE);
++  nsCOMPtr<nsIDOMAbstractView> defaultView;
++  docView->GetDefaultView(getter_AddRefs(defaultView));
++  nsCOMPtr<nsIDOMViewCSS> defaultCSSView(do_QueryInterface(defaultView));
++  NS_ENSURE_TRUE(defaultCSSView, NS_ERROR_FAILURE);
++
++  GetDocumentPresShell(aDocument, getter_AddRefs(ps));
++  if(ps)
++    ps->LockReflow();
++
++  if (mDoOptimize)
++  {
++    OptimizeElementsByTag(aCurrOptimizeVal, aDocument, ps, NS_LITERAL_STRING( "*" ), defaultCSSView);
++  }
++
++  nsCOMPtr<nsIDOMNodeList> nodelist;
++  PRUint32 length;
++  if (aDocument)
++    rv = aDocument->GetElementsByTagName( NS_LITERAL_STRING( "iframe" ), getter_AddRefs( nodelist ) );
++  if( !nodelist )
++    return NS_ERROR_FAILURE;
++
++  rv = nodelist->GetLength(&length);
++  NS_ENSURE_SUCCESS(rv, rv);
++  nsCOMPtr<nsIDOMNode> node;
++  for (PRUint32 i = 0; i < length; i++)
++  {
++    rv |= nodelist->Item(i, getter_AddRefs(node));
++    NS_ENSURE_SUCCESS(rv, rv);
++    nsCOMPtr<nsIDOMHTMLIFrameElement> element = do_QueryInterface(node, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    nsCOMPtr<nsIDOMDocument> doc;
++    rv |= element->GetContentDocument(getter_AddRefs(doc));
++    rv |= OptimizeDocument(aCurrOptimizeVal, doc);
++  }
++
++  if(ps)
++  {
++    ps->UnLockReflow();
++    ps->StyleChangeReflow();
++  }
++
++  return rv;
++}
++
++nsresult
++nsFitToView::OptimizeWindow(nsIDOMWindow *aWindow)
++{
++  nsresult rv;
++
++  if (!aWindow)
++    return NS_ERROR_FAILURE;
++  nsCOMPtr<nsIDOMDocument> doc;
++  rv = aWindow->GetDocument(getter_AddRefs(doc));
++  NS_ENSURE_SUCCESS(rv, rv);
++  aWindow->ScrollTo(0,0);
++
++  OptimizeDocument(EM_MULT, doc);
++
++  nsCOMPtr <nsIDOMWindowCollection> frames;
++  rv = aWindow->GetFrames(getter_AddRefs (frames));
++  NS_ENSURE_SUCCESS(rv, rv);
++  PRUint32 frameCount = 0;
++  rv = frames->GetLength (&frameCount);
++  nsCOMPtr <nsIDOMWindow> curWindow;
++  for (unsigned int i= 0; i < frameCount; i++)
++  {
++    rv = frames->Item(i, getter_AddRefs (curWindow));
++    if (!curWindow || curWindow == aWindow)
++      continue;
++    OptimizeWindow(curWindow);
++  }
++  return rv;
++}
++
++nsresult
++nsFitToView::SetOptimize(nsISupports *aObject, const void * data)
++{
++  nsCOMPtr<nsIStyleSheetService> styleSheetService = do_GetService("@mozilla.org/content/style-sheet-service;1");
++  if (styleSheetService) {
++    nsCOMPtr<nsIURI> uri;
++    NS_NewURI(getter_AddRefs(uri), NS_LITERAL_CSTRING("resource://gre/res/ftv.css"));
++    if (uri) {
++      if (mSetOptimizing) {
++          styleSheetService->LoadAndRegisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
++      } else {
++          styleSheetService->UnregisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
++      }
++    }
++  }
++  return NS_OK;
++}
++
++nsresult
++nsFitToView::DoOptimize(nsISupports *aObject, const void * data)
++{
++  nsresult rv;
++
++  mLoadedImagesCnt = 0;
++
++  if (!mAttached)
++  {
++    nsCOMPtr<nsIWebProgress> progress =
++      do_GetService(NS_DOCUMENTLOADER_SERVICE_CONTRACTID);
++    if (progress)
++      progress->AddProgressListener(
++          this, nsIWebProgress::NOTIFY_STATE_ALL);
++    mAttached = PR_TRUE;
++  }
++
++  nsCOMPtr<nsIDOMWindow> parent = nsnull;
++  if (aObject)
++  {
++    parent = do_QueryInterface(aObject, &rv);
++    if (NS_FAILED(rv) || !parent)
++    {
++      nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aObject, &rv);
++      if (NS_SUCCEEDED(rv) && node)
++      {
++        nsCOMPtr <nsIDOMDocument> nodeDoc;
++        rv = node->GetOwnerDocument(getter_AddRefs(nodeDoc));
++        NS_ENSURE_SUCCESS(rv, rv);
++        nsCOMPtr <nsIDOMDocumentView> docView = do_QueryInterface(nodeDoc, &rv);
++        NS_ENSURE_SUCCESS(rv, rv);
++        nsCOMPtr <nsIDOMAbstractView> absView;
++        NS_ENSURE_SUCCESS(rv, rv);
++        rv = docView->GetDefaultView(getter_AddRefs(absView));
++        NS_ENSURE_SUCCESS(rv, rv);
++        parent = do_QueryInterface(absView, &rv);
++        NS_ENSURE_SUCCESS(rv, rv);
++      }
++    }
++  }
++  if (!parent)
++  {
++    nsCOMPtr<nsIWindowWatcher> wwatcher = do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    rv = wwatcher->GetActiveWindow(getter_AddRefs(parent));
++    NS_ENSURE_SUCCESS(rv, rv);
++  }
++  OptimizeWindow(parent);
++  return rv;
++}
++
++NS_IMPL_ISUPPORTS3(nsFitToView, nsIObserver, nsIWebProgressListener, nsISupportsWeakReference)
++
++NS_IMETHODIMP
++nsFitToView::Observe(nsISupports *aSubject, const char *aTopic, const PRUnichar *aData)
++{
++  nsresult rv;
++//  printf("nsFitToView::Observe: aSubject:%p, aTopic:%s, aData:%s\n", aSubject, aTopic, aData);
++  mDoOptimize = PR_FALSE;
++  if (strcmp(aTopic, "set_optimized_view") == 0)
++  {
++    mDoOnloadOptimizing = PR_TRUE;
++    mSetOptimizing = PR_TRUE;
++    nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
++    if(pref)
++    {
++      rv = pref->SetBoolPref("layout.full.true.zoom.mode", PR_FALSE);
++    }
++    return SetOptimize(aSubject);
++  }
++  if (strcmp(aTopic, "unset_optimized_view") == 0)
++  {
++    mSetOptimizing = PR_FALSE;
++    nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
++    if(pref)
++    {
++      rv = pref->SetBoolPref("layout.full.true.zoom.mode", PR_TRUE);
++    }
++    return SetOptimize(aSubject);
++  }
++  if (strcmp(aTopic, "optimized_view") == 0)
++  {
++    mDoOptimize = PR_TRUE;
++    return DoOptimize(aSubject);
++  }
++
++
++  return NS_OK;
++}
++
++
++//------------------------------------------------------------------------------
++//  XPCOM REGISTRATION BELOW
++//------------------------------------------------------------------------------
++
++#define FitToView_CID \
++{  0x3ff46818, 0x9912, 0x42e5, \
++{0x9d, 0xa9, 0xfd, 0x97, 0xdd, 0x77, 0xef, 0x11} }
++
++
++#define FitToView_ContractID "@mozilla.org/extensions/ftv;1"
++
++NS_GENERIC_FACTORY_CONSTRUCTOR(nsFitToView)
++
++  static const nsModuleComponentInfo components[] =
++{
++  { "nsFitToViewService",
++    FitToView_CID,
++    FitToView_ContractID,
++    nsFitToViewConstructor
++  }
++};
++
++
++NS_IMPL_NSGETMODULE(nsFitToViewModule, components)
++
+Index: mozilla/layout/base/nsIPresShell.h
+===================================================================
+--- mozilla.orig/layout/base/nsIPresShell.h
++++ mozilla/layout/base/nsIPresShell.h
+@@ -729,16 +729,19 @@
+ 
+   void AddWeakFrame(nsWeakFrame* aWeakFrame);
+   void RemoveWeakFrame(nsWeakFrame* aWeakFrame);
+ 
+ #ifdef NS_DEBUG
+   nsIFrame* GetDrawEventTargetFrame() { return mDrawEventTargetFrame; }
+ #endif
+ 
++  virtual void LockReflow() = 0;
++  virtual void UnLockReflow() = 0;
++
+ protected:
+   // IMPORTANT: The ownership implicit in the following member variables
+   // has been explicitly checked.  If you add any members to this class,
+   // please make the ownership explicit (pinkerton, scc).
+ 
+   // these are the same Document and PresContext owned by the DocViewer.
+   // we must share ownership.
+   nsIDocument*              mDocument;      // [STRONG]
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp
++++ mozilla/layout/base/nsPresShell.cpp
+@@ -998,16 +998,19 @@
+   virtual void ListStyleSheets(FILE *out, PRInt32 aIndent = 0);
+   virtual void VerifyStyleTree();
+ #endif
+ 
+ #ifdef PR_LOGGING
+   static PRLogModuleInfo* gLog;
+ #endif
+ 
++  virtual void LockReflow();
++  virtual void UnLockReflow();
++
+ protected:
+   virtual ~PresShell();
+ 
+   void HandlePostedReflowCallbacks();
+ 
+   void UnsuppressAndInvalidate();
+ 
+   void     WillCauseReflow() { ++mChangeNestCount; }
+@@ -1113,16 +1116,17 @@
+ #ifdef DEBUG
+   PRUint32                  mUpdateCount;
+ #endif
+   // reflow roots that need to be reflowed, as both a queue and a hashtable
+   nsVoidArray mDirtyRoots;
+ 
+   PRPackedBool mDocumentLoading;
+   PRPackedBool mIsReflowing;
++  PRPackedBool mLockReflow;
+ 
+   PRPackedBool mIgnoreFrameDestruction;
+   PRPackedBool mHaveShutDown;
+ 
+   // This is used to protect ourselves from triggering reflow while in the
+   // middle of frame construction and the like... it really shouldn't be
+   // needed, one hopes, but it is for now.
+   PRUint32  mChangeNestCount;
+@@ -5780,16 +5784,28 @@
+   nsIPresShell *shell = aDocument->GetPrimaryShell();
+   if (shell)
+     shell->Freeze();
+ 
+   return PR_TRUE;
+ }
+ 
+ void
++PresShell::LockReflow()
++{
++  mLockReflow = PR_TRUE;
++}
++
++void
++PresShell::UnLockReflow()
++{
++  mLockReflow = PR_FALSE;
++}
++
++void
+ PresShell::Freeze()
+ {
+   nsCOMPtr<nsIDOMDocument> domDoc = do_QueryInterface(mDocument);
+   if (domDoc) {
+     EnumeratePlugins(domDoc, NS_LITERAL_STRING("object"), StopPluginInstance);
+     EnumeratePlugins(domDoc, NS_LITERAL_STRING("applet"), StopPluginInstance);
+     EnumeratePlugins(domDoc, NS_LITERAL_STRING("embed"), StopPluginInstance);
+   }
+@@ -6065,16 +6081,19 @@
+ #endif
+ 
+ nsresult
+ PresShell::ProcessReflowCommands(PRBool aInterruptible)
+ {
+   MOZ_TIMER_DEBUGLOG(("Start: Reflow: PresShell::ProcessReflowCommands(), this=%p\n", this));
+   MOZ_TIMER_START(mReflowWatch);  
+ 
++  if(mLockReflow)
++    return NS_OK;
++
+   if (0 != mDirtyRoots.Count()) {
+ 
+ #ifdef DEBUG
+     if (VERIFY_REFLOW_DUMP_COMMANDS & gVerifyReflowFlags) {
+       printf("ProcessReflowCommands: begin incremental reflow\n");
+     }
+ #endif
+ 
+Index: mozilla/extensions/ftv/src/ftv.css
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/src/ftv.css
+@@ -0,0 +1,42 @@
++* {
++  max-width: 100% ! important;
++}
++
++*.ftvAll {
++  width:auto !important;
++  height:auto !important;
++  left:auto !important;
++  float:none !important;
++  padding:0px !important;
++  margin:0px !important;
++  white-space:normal !important;
++  clear:left !important;
++}
++
++td.ftvHalf {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++}
++
++td.ftvFull {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++}
++
++tr.ftv, tbody.ftv, table.ftv {
++  display:block !important;
++  height:auto !important;
++}
++
++img.ftv {
++  vertical-align:bottom !important;
++}
++
++div.ftv {
++  min-width:1px !important;
++}
++

@@ -1,0 +1,25 @@
+Index: nsDocShellEditorData.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/docshell/base/nsDocShellEditorData.cpp,v
+retrieving revision 1.9
+diff -p -u -8 -r1.9 nsDocShellEditorData.cpp
+--- mozilla/docshell/base/nsDocShellEditorData.cpp	1 Sep 2006 19:51:05 -0000	1.9
++++ mozilla/docshell/base/nsDocShellEditorData.cpp	26 Jun 2007 20:03:18 -0000
+@@ -183,16 +183,17 @@ nsDocShellEditorData::SetEditor(nsIEdito
+   // necessary to ensure that assigment into the nsCOMPtr does
+   // not temporarily reduce the refCount of the editor to zero
+   if (mEditor.get() != inEditor)
+   {
+     if (mEditor)
+     {
+       mEditor->PreDestroy();
+       mEditor = nsnull;
++      mMakeEditable = PR_FALSE;
+     }
+       
+     mEditor = inEditor;    // owning addref
+   }   
+   
+   return NS_OK;
+ }
+ 

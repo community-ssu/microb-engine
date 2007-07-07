@@ -1,0 +1,385 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: Additional strips for toolkit libxul library
+
+Index: mozilla/extensions/spatialnavigation/src/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/Makefile.in
++++ mozilla/extensions/spatialnavigation/src/Makefile.in
+@@ -43,16 +43,20 @@
+ include $(DEPTH)/config/autoconf.mk
+ 
+ MODULE       = snav
+ LIBRARY_NAME = snav
+ IS_COMPONENT = 1
+ 
+ MOZILLA_INTERNAL_API = 1
+ 
++#ifdef MOZ_MICROB
++#MINIMO=1
++#FORCE_STATIC_LIB=1
++#endif
+ 
+ ifdef MINIMO
+ MODULE_NAME  = snav
+ EXPORT_LIBRARY = 1
+ else
+ ifdef MOZ_XUL_APP
+ XPI_NAME               = snav
+ endif
+Index: mozilla/toolkit/components/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/Makefile.in
++++ mozilla/toolkit/components/Makefile.in
+@@ -86,16 +86,22 @@
+ 
+ ifdef MOZ_THUNDERBIRD
+ DIRS += autocomplete/public
+ else
+ DIRS +=	\
+ 	cookie \
+ 	$(NULL)
+ 
++ifdef MOZ_MICROB
++DIRS += \
++	history/public \
++	$(NULL)
++endif
++
+ ifndef MOZ_SUITE
+ # XXX Suite doesn't want these just yet
+ ifdef MOZ_XUL
+ DIRS += \
+ 	autocomplete \
+ 	history \
+ 	passwordmgr \
+ 	satchel \
+Index: mozilla/toolkit/library/libxul-config.mk
+===================================================================
+--- mozilla.orig/toolkit/library/libxul-config.mk
++++ mozilla/toolkit/library/libxul-config.mk
+@@ -97,30 +97,27 @@
+ 
+ # component libraries
+ COMPONENT_LIBS += \
+ 	xpconnect \
+ 	necko \
+ 	uconv \
+ 	i18n \
+ 	chardet \
+-	jar$(VERSION_NUMBER) \
+ 	pref \
+ 	caps \
+ 	htmlpars \
+ 	imglib2 \
+ 	gklayout \
+ 	docshell \
+ 	embedcomponents \
+ 	webbrwsr \
+ 	nsappshell \
+ 	txmgr \
+ 	chrome \
+-	commandlines \
+-	toolkitcomps \
+ 	pipboot \
+ 	pipnss \
+ 	$(NULL)
+ 
+ ifdef MOZ_PLUGINS
+ DEFINES += -DMOZ_PLUGINS
+ COMPONENT_LIBS += \
+ 	gkplugin \
+@@ -128,16 +125,22 @@
+ endif
+ 
+ ifdef MOZ_XPFE_COMPONENTS
+ DEFINES += -DMOZ_XPFE_COMPONENTS
+ COMPONENT_LIBS += \
+ 	mozfind \
+ 	appcomps \
+ 	$(NULL)
++else
++ifdef MOZ_MICROB
++COMPONENT_LIBS += \
++	appcomps \
++	$(NULL)
++endif
+ endif
+ 
+ ifdef MOZ_PERF_METRICS
+ EXTRA_DSO_LIBS  += mozutil_s
+ endif
+ 
+ ifdef MOZ_XPINSTALL
+ DEFINES += -DMOZ_XPINSTALL
+@@ -246,16 +249,24 @@
+ 	$(NULL)
+ ifdef MOZ_STORAGE
+ COMPONENT_LIBS += \
+   satchel \
+   $(NULL)
+ endif
+ endif
+ 
++ifndef MOZ_MICROB
++COMPONENT_LIBS += \
++ 	jar$(VERSION_NUMBER) \
++ 	commandlines \
++ 	toolkitcomps \
++ 	$(NULL)
++endif
++
+ ifdef MOZ_MATHML
+ COMPONENT_LIBS += ucvmath
+ endif
+ 
+ ifdef MOZ_ENABLE_GTK2
+ COMPONENT_LIBS += widget_gtk2
+ ifdef MOZ_PREF_EXTENSIONS
+ COMPONENT_LIBS += system-pref
+Index: mozilla/xpfe/components/Makefile.in
+===================================================================
+--- mozilla.orig/xpfe/components/Makefile.in
++++ mozilla/xpfe/components/Makefile.in
+@@ -71,19 +71,22 @@
+ 
+ ifdef MOZ_RDF
+ DIRS += \
+         intl \
+         windowds \
+         $(NULL)
+ endif
+ 
++DIRS += \
++        directory
++        $(NULL)
++
+ ifdef MOZ_HAVE_BROWSER
+ DIRS += \
+-        directory \
+         resetPref \
+         killAll \
+         $(NULL)
+ 
+ ifndef MOZ_PHOENIX
+ ifndef MOZ_XULRUNNER
+ DIRS += \
+         related \
+Index: mozilla/xpfe/components/build/Makefile.in
+===================================================================
+--- mozilla.orig/xpfe/components/build/Makefile.in
++++ mozilla/xpfe/components/build/Makefile.in
+@@ -85,19 +85,21 @@
+ endif
+ 
+ # General includes
+ SHARED_LIBRARY_LIBS += ../directory/$(LIB_PREFIX)directory_s.$(LIB_SUFFIX)
+ LOCAL_INCLUDES += -I$(srcdir)/../directory
+ 
+ # Non-Mac Browser requirements
+ ifneq ($(MOZ_BUILD_APP),macbrowser)
++ifndef MOZ_MICROB
+ SHARED_LIBRARY_LIBS += ../../browser/src/$(LIB_PREFIX)mozbrwsr_s.$(LIB_SUFFIX)
+ LOCAL_INCLUDES += -I$(srcdir)/../../browser/src
+ endif
++endif
+ 
+ # Suite specific includes
+ ifdef MOZ_SUITE
+ REQUIRES += history downloadmanager
+ 
+ SHARED_LIBRARY_LIBS += \
+ 	../download-manager/src/$(LIB_PREFIX)downloadmanager_s.$(LIB_SUFFIX) \
+ 	../history/src/$(LIB_PREFIX)history_s.$(LIB_SUFFIX) \
+Index: mozilla/xpfe/components/build/nsModule.cpp
+===================================================================
+--- mozilla.orig/xpfe/components/build/nsModule.cpp
++++ mozilla/xpfe/components/build/nsModule.cpp
+@@ -54,17 +54,17 @@
+ 
+ #if defined(XP_WIN)
+ #include "nsWindowsHooks.h"
+ #include "nsUrlWidget.h"
+ #endif // Windows
+ 
+ #endif // MOZ_SUITE
+ 
+-#if !defined(MOZ_MACBROWSER)
++#if !defined(MOZ_MACBROWSER) && !defined(MOZ_MICROB)
+ #include "nsBrowserStatusFilter.h"
+ #include "nsBrowserInstance.h"
+ #endif
+ #include "nsCURILoader.h"
+ #include "nsXPFEComponentsCID.h"
+ 
+ // {9491C382-E3C4-11D2-BDBE-0050040A9B44}
+ #define NS_GLOBALHISTORY_CID \
+@@ -74,17 +74,17 @@
+     "@mozilla.org/rdf/datasource;1?name=history"
+ 
+ #ifdef MOZ_RDF
+ // Factory constructors
+ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsHTTPIndex, Init)
+ #endif
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsDirectoryViewerFactory)
+ 
+-#if !defined(MOZ_MACBROWSER)
++#if !defined(MOZ_MACBROWSER) && !defined(MOZ_MICROB)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsBrowserStatusFilter)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsBrowserInstance)
+ #endif
+ 
+ #ifdef MOZ_SUITE
+ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(RelatedLinksHandlerImpl, Init)
+ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsGlobalHistory, Init)
+ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsDownloadManager, Init)
+@@ -92,17 +92,17 @@
+ 
+ #if defined(XP_WIN)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsWindowsHooks)
+ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsUrlWidget, Init)
+ #endif // Windows
+ 
+ #endif // MOZ_SUITE
+ 
+-#if (!defined(MOZ_XUL_APP)) && !defined(MOZ_MACBROWSER)
++#if (!defined(MOZ_XUL_APP)) && !defined(MOZ_MACBROWSER) && !defined(MOZ_MICROB)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsBrowserContentHandler)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsChromeStartupHandler)
+ #endif
+ 
+ 
+ static NS_METHOD
+ RegisterProc(nsIComponentManager *aCompMgr,
+              nsIFile *aPath,
+@@ -165,30 +165,30 @@
+     { NS_IURLWIDGET_CLASSNAME, NS_IURLWIDGET_CID,
+       NS_IURLWIDGET_CONTRACTID, nsUrlWidgetConstructor },
+     { NS_IWINDOWSHOOKS_CLASSNAME, NS_IWINDOWSHOOKS_CID,
+       NS_IWINDOWSHOOKS_CONTRACTID, nsWindowsHooksConstructor },
+ #endif // XP_WIN
+ 
+ #endif // MOZ_SUITE
+ 
+-#if !defined(MOZ_MACBROWSER)
++#if !defined(MOZ_MACBROWSER) && !defined(MOZ_MICROB)
+     { NS_BROWSERSTATUSFILTER_CLASSNAME,
+       NS_BROWSERSTATUSFILTER_CID,
+       NS_BROWSERSTATUSFILTER_CONTRACTID,
+       nsBrowserStatusFilterConstructor
+     },
+     { "nsBrowserInstance",
+       NS_BROWSERINSTANCE_CID,
+       NS_BROWSERINSTANCE_CONTRACTID,
+       nsBrowserInstanceConstructor
+     },
+ #endif
+ 
+-#if (!defined(MOZ_XUL_APP)) && !defined(MOZ_MACBROWSER)
++#if (!defined(MOZ_XUL_APP)) && !defined(MOZ_MACBROWSER) && !defined(MOZ_MICROB)
+   { "Browser Content Handler",
+     NS_BROWSERCONTENTHANDLER_CID,
+     NS_CONTENT_HANDLER_CONTRACTID_PREFIX"text/html",
+     nsBrowserContentHandlerConstructor
+   },
+   { "Browser Content Handler",
+     NS_BROWSERCONTENTHANDLER_CID,
+     NS_CONTENT_HANDLER_CONTRACTID_PREFIX"application/vnd.mozilla.xul+xml",
+Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
+===================================================================
+--- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
++++ mozilla/toolkit/library/nsStaticXULComponents.cpp
+@@ -190,19 +190,24 @@
+     MODULE(nsWindowDataSourceModule)
+ #else
+ #define RDFAPP_MODULES
+ #endif
+ #define APPLICATION_MODULES \
+     MODULE(application) \
+     MODULE(nsFindComponent)
+ #else
++#ifdef MOZ_MICROB
++#define APPLICATION_MODULES \
++    MODULE(application)
++#else
+ #define APPLICATION_MODULES
+ #define RDFAPP_MODULES
+ #endif
++#endif
+ 
+ #ifdef MOZ_XPINSTALL
+ #define XPINSTALL_MODULES \
+     MODULE(nsSoftwareUpdate)
+ #else
+ #define XPINSTALL_MODULES
+ #endif
+ 
+@@ -252,16 +257,25 @@
+ #define XULENABLED_MODULES                   \
+     MODULE(tkAutoCompleteModule)             \
+     MODULE(PKI)
+ #endif
+ #else
+ #define XULENABLED_MODULES
+ #endif
+ 
++#ifndef MOZ_MICROB
++#define STD_MODULES                          \
++    MODULE(CommandLineModule)                \
++    MODULE(nsToolkitCompsModule)             \
++    MODULE(nsJarModule)
++#else
++#define STD_MODULES
++#endif
++
+ #ifdef MOZ_SPELLCHECK
+ #define SPELLCHECK_MODULE MODULE(mozSpellCheckerModule)
+ #else
+ #define SPELLCHECK_MODULE
+ #endif
+ 
+ #define XUL_MODULES                          \
+     MODULE(xpconnect)                        \
+@@ -269,17 +283,16 @@
+     MODULE(nsUConvModule)                    \
+     MODULE(nsI18nModule)                     \
+     MODULE(nsChardetModule)                  \
+     UNIVERSALCHARDET_MODULE                  \
+     MODULE(necko)                            \
+     PERMISSIONS_MODULES                      \
+     AUTH_MODULE                              \
+     IPC_MODULE                               \
+-    MODULE(nsJarModule)                      \
+     MODULE(nsPrefModule)                     \
+     MODULE(nsSecurityManagerModule)          \
+     RDF_MODULE                               \
+     RDFAPP_MODULES                           \
+     MODULE(nsParserModule)                   \
+     GFX_MODULES                              \
+     WIDGET_MODULES                           \
+     MODULE(nsImageLib2Module)                \
+@@ -294,22 +307,21 @@
+     OJI_MODULES                              \
+     ACCESS_MODULES                           \
+     MODULE(appshell)                         \
+     MODULE(nsTransactionManagerModule)       \
+     COMPOSER_MODULE                          \
+     MODULE(nsChromeModule)                   \
+     APPLICATION_MODULES                      \
+     MODULE(Apprunner)                        \
+-    MODULE(CommandLineModule)                \
+     FILEVIEW_MODULE                          \
+     STORAGE_MODULE                           \
+     PLACES_MODULES                           \
+     XULENABLED_MODULES                       \
+-    MODULE(nsToolkitCompsModule)             \
++    STD_MODULES                              \
+     XREMOTE_MODULES                          \
+     XPINSTALL_MODULES                        \
+     JSDEBUGGER_MODULES                       \
+     MODULE(BOOT)                             \
+     MODULE(NSS)                              \
+     SYSTEMPREF_MODULES                       \
+     SPELLCHECK_MODULE                        \
+     /* end of list */

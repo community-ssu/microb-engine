@@ -1,0 +1,97 @@
+Index: mozilla/content/events/src/nsEventListenerManager.cpp
+===================================================================
+--- mozilla.orig/content/events/src/nsEventListenerManager.cpp
++++ mozilla/content/events/src/nsEventListenerManager.cpp
+@@ -1198,16 +1198,18 @@
+             nsEventDispatcher::CreateEvent(aPresContext, aEvent,
+                                            EmptyString(), aDOMEvent);
+           }
+           if (*aDOMEvent) {
+             if (useTypeInterface) {
+               DispatchToInterface(*aDOMEvent, ls->mListener,
+                                   dispData->method, *typeData->iid);
+             } else if (useGenericInterface) {
++              if (ls->mFlags & NS_PRIV_EVENT_FLAG_SCRIPT)
++                aEvent->flags |= NS_PRIV_EVENT_FLAG_SCRIPT;
+               HandleEventSubType(ls, ls->mListener, *aDOMEvent,
+                                  aCurrentTarget, aFlags);
+             }
+           }
+         }
+       }
+     }
+   }
+Index: mozilla/content/events/src/nsDOMEvent.cpp
+===================================================================
+--- mozilla.orig/content/events/src/nsDOMEvent.cpp
++++ mozilla/content/events/src/nsDOMEvent.cpp
+@@ -289,16 +289,23 @@
+     *aEventPhase = nsIDOMEvent::BUBBLING_PHASE;
+   } else {
+     *aEventPhase = 0;
+   }
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
++nsDOMEvent::GetPrivateFlags(PRUint32* aEventFlags)
++{
++  *aEventFlags = mEvent->flags;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
+ nsDOMEvent::GetBubbles(PRBool* aBubbles)
+ {
+   *aBubbles = !(mEvent->flags & NS_EVENT_FLAG_CANT_BUBBLE);
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsDOMEvent::GetCancelable(PRBool* aCancelable)
+Index: mozilla/dom/public/idl/events/nsIDOMEvent.idl
+===================================================================
+--- mozilla.orig/dom/public/idl/events/nsIDOMEvent.idl
++++ mozilla/dom/public/idl/events/nsIDOMEvent.idl
+@@ -166,9 +166,16 @@
+    *                       conflicts with other new events.
+    * @param   canBubbleArg Specifies whether or not the event can bubble.
+    * @param   cancelableArg Specifies whether or not the event's default 
+    *                        action can be prevented.
+    */
+   void                      initEvent(in DOMString eventTypeArg,
+                                       in boolean canBubbleArg,
+                                       in boolean cancelableArg);
++
++  /**
++   * Used to indicate which phase of event flow is currently being
++   * evaluated.
++   */
++  readonly attribute PRUint32     privateFlags;
++
+ };
+Index: mozilla/security/manager/ssl/src/nsSmartCardEvent.cpp
+===================================================================
+--- mozilla.orig/security/manager/ssl/src/nsSmartCardEvent.cpp
++++ mozilla/security/manager/ssl/src/nsSmartCardEvent.cpp
+@@ -231,14 +231,20 @@
+ }
+ 
+ NS_IMETHODIMP nsSmartCardEvent::PreventDefault()
+ {
+   NS_ASSERTION(mInner, "SmartCardEvent called without Init");
+   return mInner->PreventDefault();
+ }
+ 
++NS_IMETHODIMP nsSmartCardEvent::GetPrivateFlags(PRUint32* aEventFlags)
++{
++  NS_ASSERTION(mInner, "SmartCardEvent called without Init");
++  return mInner->GetPrivateFlags(aEventFlags);
++}
++
+ NS_IMETHODIMP nsSmartCardEvent::InitEvent(const nsAString & eventTypeArg, PRBool canBubbleArg, PRBool cancelableArg)
+ {
+   NS_ASSERTION(mInner, "SmartCardEvent called without Init");
+   return mInner->InitEvent(eventTypeArg, canBubbleArg, cancelableArg);
+ }
+ 

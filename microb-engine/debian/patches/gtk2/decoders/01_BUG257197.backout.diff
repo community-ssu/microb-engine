@@ -1,0 +1,735 @@
+diff -ruN -p -u10 modules.orig/libimg/png/MOZCHANGES modules/libimg/png/MOZCHANGES
+--- modules.orig/libimg/png/MOZCHANGES	2007-04-22 23:24:36.000000000 +0300
++++ modules/libimg/png/MOZCHANGES	2007-04-19 23:40:53.000000000 +0300
+@@ -1,8 +1,10 @@
+ 
+ Changes made to pristine png source by mozilla.org developers.
+ 
++2007/03/20  -- Added support for APNG
++
+ 2006/06/27  -- Synced with libpng-1.2.12 tree
+ 
+ 2004/10/07  -- Synced with libpng-1.2.7 tree
+ 
+ 2004/10/07  -- add mozpngconf.h (bug 208607)
+diff -ruN -p -u10 modules.orig/libimg/png/png.h modules/libimg/png/png.h
+--- modules.orig/libimg/png/png.h	2007-04-22 23:24:35.000000000 +0300
++++ modules/libimg/png/png.h	2007-04-19 23:40:53.000000000 +0300
+@@ -911,22 +911,22 @@ defined(PNG_READ_BACKGROUND_SUPPORTED)
+    png_fixed_point int_y_white;
+    png_fixed_point int_x_red;
+    png_fixed_point int_y_red;
+    png_fixed_point int_x_green;
+    png_fixed_point int_y_green;
+    png_fixed_point int_x_blue;
+    png_fixed_point int_y_blue;
+ #endif
+ 
+ #if defined(PNG_APNG_SUPPORTED)
+-   png_uint_32 num_frames;
+-   png_uint_32 num_iterations;
++   png_uint_32 num_frames; /* including default image */
++   png_uint_32 num_plays;
+    png_uint_32 next_frame_width;
+    png_uint_32 next_frame_height;
+    png_uint_32 next_frame_x_offset;
+    png_uint_32 next_frame_y_offset;
+    png_uint_16 next_frame_delay_num;
+    png_uint_16 next_frame_delay_den;
+    png_byte next_frame_dispose_op;
+    png_byte next_frame_blend_op;
+ #endif
+ 
+@@ -1417,21 +1417,21 @@ struct png_struct_def
+ #if defined(PNG_READ_APNG_SUPPORTED)
+    png_uint_32 num_frames_read;      /* incremented after all image data of */
+                                      /* a frame is read */
+ #ifdef PNG_PROGRESSIVE_READ_SUPPORTED
+    png_progressive_frame_ptr frame_info_fn; /* frame info read callback */
+    png_progressive_frame_ptr frame_end_fn;  /* frame data read callback */
+ #endif
+ #endif
+ 
+ #if defined(PNG_WRITE_APNG_SUPPORTED)
+-   png_uint_32 num_frames_to_write;  /* copy of info_ptr->num_frames */
++   png_uint_32 num_frames_to_write;
+    png_uint_32 num_frames_written;
+ #endif
+ 
+ };
+ 
+ /* For png_struct.apng_flags: */
+ #define PNG_FIRST_FRAME_HIDDEN       0x0001
+ 
+ /* dispose_op flags from inside fcTL */
+ #define PNG_DISPOSE_OP_NONE        0x00
+@@ -1759,21 +1759,21 @@ extern PNG_EXPORT(void,png_write_rows) P
+ /* write the image data */
+ extern PNG_EXPORT(void,png_write_image) PNGARG((png_structp png_ptr,
+    png_bytepp image));
+ 
+ #if defined(PNG_WRITE_APNG_SUPPORTED)
+ extern PNG_EXPORT (void,png_write_frame_head) PNGARG((png_structp png_ptr,
+    png_infop png_info, png_bytepp row_pointers,
+    png_uint_32 width, png_uint_32 height,
+    png_uint_32 x_offset, png_uint_32 y_offset, 
+    png_uint_16 delay_num, png_uint_16 delay_den, png_byte dispose_op,
+-   png_byte blend_op, png_byte first_frame_hidden));
++   png_byte blend_op));
+ 
+ extern PNG_EXPORT (void,png_write_frame_tail) PNGARG((png_structp png_ptr,
+    png_infop png_info));
+ #endif
+    
+ /* writes the end of the PNG file. */
+ extern PNG_EXPORT(void,png_write_end) PNGARG((png_structp png_ptr,
+    png_infop info_ptr));
+ 
+ #ifndef PNG_NO_SEQUENTIAL_READ_SUPPORTED
+@@ -2448,26 +2448,26 @@ extern PNG_EXPORT(void,png_set_sCAL) PNG
+ #else
+ #ifdef PNG_FIXED_POINT_SUPPORTED
+ extern PNG_EXPORT(void,png_set_sCAL_s) PNGARG((png_structp png_ptr,
+    png_infop info_ptr, int unit, png_charp swidth, png_charp sheight));
+ #endif
+ #endif
+ #endif /* PNG_sCAL_SUPPORTED || PNG_WRITE_sCAL_SUPPORTED */
+ 
+ #if defined(PNG_APNG_SUPPORTED)
+ extern PNG_EXPORT(png_uint_32,png_get_acTL) PNGARG((png_structp png_ptr,
+-   png_infop info_ptr, png_uint_32 *num_frames, png_uint_32 *num_iterations));
++   png_infop info_ptr, png_uint_32 *num_frames, png_uint_32 *num_plays));
+ extern PNG_EXPORT(png_uint_32,png_set_acTL) PNGARG((png_structp png_ptr, 
+-   png_infop info_ptr, png_uint_32 num_frames, png_uint_32 num_iterations));
++   png_infop info_ptr, png_uint_32 num_frames, png_uint_32 num_plays));
+ extern PNG_EXPORT(png_uint_32,png_get_num_frames) PNGARG((png_structp png_ptr,
+    png_infop info_ptr));
+-extern PNG_EXPORT(png_uint_32,png_get_num_iterations) 
++extern PNG_EXPORT(png_uint_32,png_get_num_plays) 
+    PNGARG((png_structp png_ptr, png_infop info_ptr));
+ 
+ extern PNG_EXPORT(png_uint_32,png_get_next_frame_fcTL) 
+    PNGARG((png_structp png_ptr, png_infop info_ptr, png_uint_32 *width, 
+    png_uint_32 *height, png_uint_32 *x_offset, png_uint_32 *y_offset, 
+    png_uint_16 *delay_num, png_uint_16 *delay_den, png_byte *dispose_op,
+    png_byte *blend_op));
+ extern PNG_EXPORT(png_uint_32,png_set_next_frame_fcTL) 
+    PNGARG((png_structp png_ptr, png_infop info_ptr, png_uint_32 width, 
+    png_uint_32 height, png_uint_32 x_offset, png_uint_32 y_offset, 
+@@ -2488,22 +2488,24 @@ extern PNG_EXPORT(png_uint_32,png_get_ne
+ extern PNG_EXPORT(png_uint_32,png_get_next_frame_y_offset)
+    PNGARG((png_structp png_ptr, png_infop info_ptr));
+ extern PNG_EXPORT(png_uint_16,png_get_next_frame_delay_num)
+    PNGARG((png_structp png_ptr, png_infop info_ptr));
+ extern PNG_EXPORT(png_uint_16,png_get_next_frame_delay_den)
+    PNGARG((png_structp png_ptr, png_infop info_ptr));
+ extern PNG_EXPORT(png_byte,png_get_next_frame_dispose_op)
+    PNGARG((png_structp png_ptr, png_infop info_ptr));
+ extern PNG_EXPORT(png_byte,png_get_next_frame_blend_op)
+    PNGARG((png_structp png_ptr, png_infop info_ptr));
+-extern PNG_EXPORT(png_byte,png_first_frame_is_hidden)
++extern PNG_EXPORT(png_byte,png_get_first_frame_is_hidden)
+    PNGARG((png_structp png_ptr, png_infop info_ptr));
++extern PNG_EXPORT(png_uint_32,png_set_first_frame_is_hidden)
++   PNGARG((png_structp png_ptr, png_infop info_ptr, png_byte is_hidden));
+ #endif /* PNG_APNG_SUPPORTED */
+ 
+ #if defined(PNG_READ_APNG_SUPPORTED)
+ extern PNG_EXPORT(void,png_read_frame_head) PNGARG((png_structp png_ptr,
+    png_infop info_ptr));
+ #endif
+ 
+ #if defined(PNG_UNKNOWN_CHUNKS_SUPPORTED)
+ /* provide a list of chunks and how they are to be handled, if the built-in
+    handling or default unknown chunk handling is not desired.  Any chunks not
+@@ -3252,21 +3254,21 @@ PNG_EXTERN void png_write_sCAL PNGARG((p
+ #else
+ #ifdef PNG_FIXED_POINT_SUPPORTED
+ PNG_EXTERN void png_write_sCAL_s PNGARG((png_structp png_ptr,
+    int unit, png_charp width, png_charp height));
+ #endif
+ #endif
+ #endif
+ 
+ #if defined(PNG_WRITE_APNG_SUPPORTED)
+ PNG_EXTERN void png_write_acTL PNGARG((png_structp png_ptr,
+-   png_uint_32 num_frames, png_uint_32 num_iterations));
++   png_uint_32 num_frames, png_uint_32 num_plays));
+ 
+ PNG_EXTERN void png_write_fcTL PNGARG((png_structp png_ptr, 
+    png_uint_32 width, png_uint_32 height, 
+    png_uint_32 x_offset, png_uint_32 y_offset, 
+    png_uint_16 delay_num, png_uint_16 delay_den,
+    png_byte dispose_op, png_byte blend_op));
+ #endif
+ 
+ /* Called when finished processing a row of data */
+ PNG_EXTERN void png_write_finish_row PNGARG((png_structp png_ptr));
+@@ -3546,20 +3548,21 @@ PNG_EXTERN void png_handle_tRNS PNGARG((
+ #if defined(PNG_READ_zTXt_SUPPORTED)
+ PNG_EXTERN void png_handle_zTXt PNGARG((png_structp png_ptr, png_infop info_ptr,
+    png_uint_32 length));
+ #endif
+ 
+ #if defined(PNG_READ_APNG_SUPPORTED)
+ PNG_EXTERN void png_handle_acTL PNGARG((png_structp png_ptr, png_infop info_ptr,
+    png_uint_32 length));
+ PNG_EXTERN void png_handle_fcTL PNGARG((png_structp png_ptr, png_infop info_ptr,
+    png_uint_32 length));
++PNG_EXTERN void png_have_info PNGARG((png_structp png_ptr, png_infop info_ptr));
+ PNG_EXTERN void png_handle_fdAT PNGARG((png_structp png_ptr, png_infop info_ptr,
+    png_uint_32 length));
+ PNG_EXTERN void png_ensure_sequence_number PNGARG((png_structp png_ptr, 
+    png_uint_32 length));
+ #endif
+ 
+ PNG_EXTERN void png_handle_unknown PNGARG((png_structp png_ptr,
+    png_infop info_ptr, png_uint_32 length));
+ 
+ PNG_EXTERN void png_check_chunk_name PNGARG((png_structp png_ptr,
+diff -ruN -p -u10 modules.orig/libimg/png/pngget.c modules/libimg/png/pngget.c
+--- modules.orig/libimg/png/pngget.c	2007-04-22 23:24:34.000000000 +0300
++++ modules/libimg/png/pngget.c	2007-04-19 23:40:53.000000000 +0300
+@@ -790,53 +790,53 @@ png_get_tRNS(png_structp png_ptr, png_in
+          retval |= PNG_INFO_tRNS;
+       }
+    }
+    return (retval);
+ }
+ #endif
+ 
+ #if defined(PNG_APNG_SUPPORTED)
+ png_uint_32 PNGAPI
+ png_get_acTL(png_structp png_ptr, png_infop info_ptr,
+-             png_uint_32 *num_frames, png_uint_32 *num_iterations)
++             png_uint_32 *num_frames, png_uint_32 *num_plays)
+ {
+     png_debug1(1, "in %s retrieval function\n", "acTL");
+     
+     if (png_ptr != NULL && info_ptr != NULL &&
+         (info_ptr->valid & PNG_INFO_acTL) &&
+-        num_frames != NULL && num_iterations != NULL)
++        num_frames != NULL && num_plays != NULL)
+     {
+         *num_frames = info_ptr->num_frames;
+-        *num_iterations = info_ptr->num_iterations;
++        *num_plays = info_ptr->num_plays;
+         return (1);
+     }
+     
+     return (0);
+ }
+ 
+ png_uint_32 PNGAPI
+ png_get_num_frames(png_structp png_ptr, png_infop info_ptr)
+ {
+     png_debug(1, "in png_get_num_frames()\n");
+     
+     if (png_ptr != NULL && info_ptr != NULL)
+         return (info_ptr->num_frames);
+     return (0);
+ }
+ 
+ png_uint_32 PNGAPI
+-png_get_num_iterations(png_structp png_ptr, png_infop info_ptr)
++png_get_num_plays(png_structp png_ptr, png_infop info_ptr)
+ {
+-    png_debug(1, "in png_get_num_iterations()\n");
++    png_debug(1, "in png_get_num_plays()\n");
+     
+     if (png_ptr != NULL && info_ptr != NULL)
+-        return (info_ptr->num_iterations);
++        return (info_ptr->num_plays);
+     return (0);
+ }
+ 
+ png_uint_32 PNGAPI
+ png_get_next_frame_fcTL(png_structp png_ptr, png_infop info_ptr,
+              png_uint_32 *width, png_uint_32 *height,
+              png_uint_32 *x_offset, png_uint_32 *y_offset,
+              png_uint_16 *delay_num, png_uint_16 *delay_den,
+              png_byte *dispose_op, png_byte *blend_op)
+ {
+@@ -937,28 +937,26 @@ png_byte PNGAPI
+ png_get_next_frame_blend_op(png_structp png_ptr, png_infop info_ptr)
+ {
+     png_debug(1, "in png_get_next_frame_blend_op()\n");
+     
+     if (png_ptr != NULL && info_ptr != NULL)
+         return (info_ptr->next_frame_blend_op);
+     return (0);
+ }
+ 
+ png_byte PNGAPI
+-png_first_frame_is_hidden(png_structp png_ptr, png_infop info_ptr)
++png_get_first_frame_is_hidden(png_structp png_ptr, png_infop info_ptr)
+ {
+     png_debug(1, "in png_first_frame_is_hidden()\n");
+     
+-    if (png_ptr != NULL && info_ptr != NULL && 
+-        info_ptr->valid & PNG_INFO_acTL &&
+-        !(info_ptr->valid & PNG_INFO_fcTL))
+-        return 1;
++    if (png_ptr != NULL)
++        return png_ptr->apng_flags & PNG_FIRST_FRAME_HIDDEN;
+     
+     return 0;
+ }
+ #endif /* PNG_APNG_SUPPORTED */
+ 
+ #if defined(PNG_UNKNOWN_CHUNKS_SUPPORTED)
+ png_uint_32 PNGAPI
+ png_get_unknown_chunks(png_structp png_ptr, png_infop info_ptr,
+              png_unknown_chunkpp unknowns)
+ {
+diff -ruN -p -u10 modules.orig/libimg/png/pngpread.c modules/libimg/png/pngpread.c
+--- modules.orig/libimg/png/pngpread.c	2007-04-22 23:24:33.000000000 +0300
++++ modules/libimg/png/pngpread.c	2007-04-19 23:40:53.000000000 +0300
+@@ -390,20 +390,23 @@ png_push_read_chunk(png_structp png_ptr,
+       if (png_ptr->mode & PNG_HAVE_IDAT)
+       {
+          if (!(png_ptr->mode & PNG_HAVE_CHUNK_AFTER_IDAT))
+            if (png_ptr->push_length == 0)
+               return;
+ 
+          if (png_ptr->mode & PNG_AFTER_IDAT)
+             png_error(png_ptr, "Too many IDAT's found");
+       }
+ 
++#if defined(PNG_READ_APNG_SUPPORTED)
++      png_have_info(png_ptr, info_ptr);
++#endif
+       png_ptr->idat_size = png_ptr->push_length;
+       png_ptr->mode |= PNG_HAVE_IDAT;
+       png_ptr->process_mode = PNG_READ_IDAT_MODE;
+       png_push_have_info(png_ptr, info_ptr);
+       png_ptr->zstream.avail_out = (uInt)png_ptr->irowbytes;
+       png_ptr->zstream.next_out = png_ptr->row_buf;
+       return;
+    }
+ #if defined(PNG_READ_gAMA_SUPPORTED)
+    else if (!png_memcmp(png_ptr->chunk_name, png_gAMA, 4))
+diff -ruN -p -u10 modules.orig/libimg/png/pngread.c modules/libimg/png/pngread.c
+--- modules.orig/libimg/png/pngread.c	2007-04-22 23:24:32.000000000 +0300
++++ modules/libimg/png/pngread.c	2007-04-19 23:40:53.000000000 +0300
+@@ -452,20 +452,23 @@ png_read_info(png_structp png_ptr, png_i
+       else if (!png_memcmp(png_ptr->chunk_name, png_PLTE, 4))
+          png_handle_PLTE(png_ptr, info_ptr, length);
+       else if (!png_memcmp(png_ptr->chunk_name, png_IDAT, 4))
+       {
+          if (!(png_ptr->mode & PNG_HAVE_IHDR))
+             png_error(png_ptr, "Missing IHDR before IDAT");
+          else if (png_ptr->color_type == PNG_COLOR_TYPE_PALETTE &&
+                   !(png_ptr->mode & PNG_HAVE_PLTE))
+             png_error(png_ptr, "Missing PLTE before IDAT");
+ 
++#if defined(PNG_READ_APNG_SUPPORTED)
++         png_have_info(png_ptr, info_ptr);
++#endif
+          png_ptr->idat_size = length;
+          png_ptr->mode |= PNG_HAVE_IDAT;
+          break;
+       }
+ #if defined(PNG_READ_bKGD_SUPPORTED)
+       else if (!png_memcmp(png_ptr->chunk_name, png_bKGD, 4))
+          png_handle_bKGD(png_ptr, info_ptr, length);
+ #endif
+ #if defined(PNG_READ_cHRM_SUPPORTED)
+       else if (!png_memcmp(png_ptr->chunk_name, png_cHRM, 4))
+diff -ruN -p -u10 modules.orig/libimg/png/pngrutil.c modules/libimg/png/pngrutil.c
+--- modules.orig/libimg/png/pngrutil.c	2007-04-22 23:24:31.000000000 +0300
++++ modules/libimg/png/pngrutil.c	2007-04-19 23:40:53.000000000 +0300
+@@ -2137,21 +2137,21 @@ png_handle_iTXt(png_structp png_ptr, png
+      png_error(png_ptr, "Insufficient memory to store iTXt chunk.");
+ }
+ #endif
+ 
+ #if defined(PNG_READ_APNG_SUPPORTED)
+ void /* PRIVATE */
+ png_handle_acTL(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
+ {
+     png_byte data[8];
+     png_uint_32 num_frames;
+-    png_uint_32 num_iterations;
++    png_uint_32 num_plays;
+     png_uint_32 didSet;
+     
+     png_debug(1, "in png_handle_acTL\n");
+ 
+     if (!(png_ptr->mode & PNG_HAVE_IHDR))
+     {
+         png_error(png_ptr, "Missing IHDR before acTL");
+     }
+     else if (png_ptr->mode & PNG_HAVE_IDAT)
+     {
+@@ -2169,32 +2169,26 @@ png_handle_acTL(png_structp png_ptr, png
+     {
+         png_warning(png_ptr, "acTL with invalid length skipped");
+         png_crc_finish(png_ptr, length);
+         return;
+     }
+     
+     png_crc_read(png_ptr, data, 8);
+     png_crc_finish(png_ptr, 0);
+     
+     num_frames = png_get_uint_31(png_ptr, data);
+-    num_iterations = png_get_uint_31(png_ptr, data + 4);
++    num_plays = png_get_uint_31(png_ptr, data + 4);
+     
+     /* the set function will do error checking on num_frames */
+-    didSet = png_set_acTL(png_ptr, info_ptr, num_frames, num_iterations);
++    didSet = png_set_acTL(png_ptr, info_ptr, num_frames, num_plays);
+     if(didSet)
+-    {
+         png_ptr->mode |= PNG_HAVE_acTL;
+-        
+-        /* if there is an fcTL this flag will be unset in png_handle_fcTL() */
+-        if (num_frames > 1)
+-            png_ptr->apng_flags |= PNG_FIRST_FRAME_HIDDEN;
+-    }
+ }
+ 
+ void /* PRIVATE */
+ png_handle_fcTL(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
+ {
+     png_byte data[22];
+     png_uint_32 width;
+     png_uint_32 height;
+     png_uint_32 x_offset;
+     png_uint_32 y_offset;
+@@ -2253,22 +2247,30 @@ png_handle_fcTL(png_structp png_ptr, png
+                            "the size in IHDR");
+     
+     /* the set function will do more error checking */
+     png_set_next_frame_fcTL(png_ptr, info_ptr, width, height, 
+                             x_offset, y_offset, delay_num, delay_den,
+                             dispose_op, blend_op);
+     
+     png_read_reinit(png_ptr, info_ptr);
+     
+     png_ptr->mode |= PNG_HAVE_fcTL;
+-    
+-    png_ptr->apng_flags &= ~PNG_FIRST_FRAME_HIDDEN;
++}
++
++void /* PRIVATE */
++png_have_info(png_structp png_ptr, png_infop info_ptr)
++{
++    if((info_ptr->valid & PNG_INFO_acTL) && !(info_ptr->valid & PNG_INFO_fcTL))
++    {
++        png_ptr->apng_flags |= PNG_FIRST_FRAME_HIDDEN;
++        info_ptr->num_frames++;
++    }
+ }
+ 
+ void /* PRIVATE */
+ png_handle_fdAT(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
+ {
+     png_ensure_sequence_number(png_ptr, length);
+     
+     /* This function is only called from png_read_end(), png_read_info(), 
+     * and png_push_read_chunk() which means that:
+     * - the user doesn't want to read this frame
+diff -ruN -p -u10 modules.orig/libimg/png/pngset.c modules/libimg/png/pngset.c
+--- modules.orig/libimg/png/pngset.c	2007-04-22 23:24:30.000000000 +0300
++++ modules/libimg/png/pngset.c	2007-04-19 23:40:53.000000000 +0300
+@@ -994,53 +994,53 @@ png_set_sPLT(png_structp png_ptr,
+     info_ptr->valid |= PNG_INFO_sPLT;
+ #ifdef PNG_FREE_ME_SUPPORTED
+     info_ptr->free_me |= PNG_FREE_SPLT;
+ #endif
+ }
+ #endif /* PNG_sPLT_SUPPORTED */
+ 
+ #if defined(PNG_APNG_SUPPORTED)
+ png_uint_32 PNGAPI
+ png_set_acTL(png_structp png_ptr, png_infop info_ptr, 
+-    png_uint_32 num_frames, png_uint_32 num_iterations)
++    png_uint_32 num_frames, png_uint_32 num_plays)
+ {
+     png_debug1(1, "in %s storage function\n", "acTL");
+ 
+     if (png_ptr == NULL || info_ptr == NULL)
+     {
+         png_warning(png_ptr, 
+                     "Call to png_set_acTL() with NULL png_ptr "
+                     "or info_ptr ignored");
+         return (0);
+     }
+-    if(num_frames == 0)
++    if (num_frames == 0)
+     {
+         png_warning(png_ptr, 
+                     "Ignoring attempt to set acTL with num_frames zero");
+         return (0);
+     }
+-    if(num_frames > PNG_UINT_31_MAX)
++    if (num_frames > PNG_UINT_31_MAX)
+     {
+         png_warning(png_ptr, 
+                     "Ignoring attempt to set acTL with num_frames > 2^31-1");
+         return (0);
+     }
+-    if(num_iterations > PNG_UINT_31_MAX)
++    if (num_plays > PNG_UINT_31_MAX)
+     {
+         png_warning(png_ptr, 
+-                    "Ignoring attempt to set acTL with num_iterations "
++                    "Ignoring attempt to set acTL with num_plays "
+                     "> 2^31-1");
+         return (0);
+     }
+     
+     info_ptr->num_frames = num_frames;
+-    info_ptr->num_iterations = num_iterations;
++    info_ptr->num_plays = num_plays;
+     
+     info_ptr->valid |= PNG_INFO_acTL;
+     
+     return (1);
+ }
+ 
+ /* delay_num and delay_den can hold any values including zero */
+ png_uint_32 PNGAPI
+ png_set_next_frame_fcTL(png_structp png_ptr, png_infop info_ptr, 
+     png_uint_32 width, png_uint_32 height,
+@@ -1107,20 +1107,37 @@ png_ensure_fcTL_is_valid(png_structp png
+     if (blend_op == PNG_BLEND_OP_OVER) {
+         if (png_ptr->color_type == PNG_COLOR_TYPE_GRAY)
+             png_error(png_ptr, "PNG_BLEND_OP_OVER is not valid for "
+                                "color type 'greyscale without alpha'");
+         else if ((png_ptr->color_type & PNG_COLOR_MASK_COLOR) &&
+ 		 !(png_ptr->color_type & PNG_COLOR_MASK_ALPHA))
+             png_error(png_ptr, "PNG_BLEND_OP_OVER is not valid for "
+                                "color type 'truecolor without alpha'");
+     }
+ }
++
++png_uint_32 PNGAPI
++png_set_first_frame_is_hidden(png_structp png_ptr, png_infop info_ptr,
++                              png_byte is_hidden)
++{
++    png_debug(1, "in png_first_frame_is_hidden()\n");
++    
++    if (png_ptr == NULL)
++        return 0;
++    
++    if(is_hidden)
++        png_ptr->apng_flags |= PNG_FIRST_FRAME_HIDDEN;
++    else
++        png_ptr->apng_flags &= ~PNG_FIRST_FRAME_HIDDEN;
++    
++    return 1;
++}
+ #endif /* PNG_APNG_SUPPORTED */
+ 
+ #if defined(PNG_UNKNOWN_CHUNKS_SUPPORTED)
+ void PNGAPI
+ png_set_unknown_chunks(png_structp png_ptr,
+    png_infop info_ptr, png_unknown_chunkp unknowns, int num_unknowns)
+ {
+     png_unknown_chunkp np;
+     int i;
+ 
+diff -ruN -p -u10 modules.orig/libimg/png/pngwrite.c modules/libimg/png/pngwrite.c
+--- modules.orig/libimg/png/pngwrite.c	2007-04-22 23:24:29.000000000 +0300
++++ modules/libimg/png/pngwrite.c	2007-04-19 23:40:53.000000000 +0300
+@@ -256,21 +256,21 @@ png_write_info(png_structp png_ptr, png_
+ #else
+          png_warning(png_ptr, "Unable to write uncompressed text");
+ #endif
+          /* Mark this chunk as written */
+          info_ptr->text[i].compression = PNG_TEXT_COMPRESSION_NONE_WR;
+       }
+    }
+ #endif
+ #if defined(PNG_WRITE_APNG_SUPPORTED)
+    if (info_ptr->valid & PNG_INFO_acTL)
+-      png_write_acTL(png_ptr, info_ptr->num_frames, info_ptr->num_iterations);
++      png_write_acTL(png_ptr, info_ptr->num_frames, info_ptr->num_plays);
+ #endif
+ #if defined(PNG_WRITE_UNKNOWN_CHUNKS_SUPPORTED)
+    if (info_ptr->unknown_chunks_num)
+    {
+        png_unknown_chunk *up;
+ 
+        png_debug(5, "writing extra chunks\n");
+ 
+        for (up = info_ptr->unknown_chunks;
+             up < info_ptr->unknown_chunks + info_ptr->unknown_chunks_num;
+@@ -1523,34 +1523,35 @@ png_write_png(png_structp png_ptr, png_i
+       /* quiet compiler warnings */ return;
+ }
+ #endif
+ 
+ #if defined(PNG_WRITE_APNG_SUPPORTED)
+ void PNGAPI
+ png_write_frame_head(png_structp png_ptr, png_infop info_ptr,
+     png_bytepp row_pointers, png_uint_32 width, png_uint_32 height, 
+     png_uint_32 x_offset, png_uint_32 y_offset, 
+     png_uint_16 delay_num, png_uint_16 delay_den, png_byte dispose_op,
+-    png_byte blend_op, png_byte first_frame_hidden)
++    png_byte blend_op)
+ {
+     png_debug(1, "in png_write_frame_head\n");
+     
+     /* there is a chance this has been set after png_write_info was called,
+     * so it would be set but not written. is there a way to be sure? */
+     if (!(info_ptr->valid & PNG_INFO_acTL))
+         png_error(png_ptr, "png_write_frame_head(): acTL not set");
+     
+     png_write_reset(png_ptr);
+     
+     png_write_reinit(png_ptr, info_ptr, width, height);
+     
+-    if ( !(png_ptr->num_frames_written == 0 && first_frame_hidden) )
++    if ( !(png_ptr->num_frames_written == 0 && 
++           (png_ptr->apng_flags & PNG_FIRST_FRAME_HIDDEN) ) )
+         png_write_fcTL(png_ptr, width, height, x_offset, y_offset, 
+                        delay_num, delay_den, dispose_op, blend_op);
+ }
+ 
+ void PNGAPI
+ png_write_frame_tail(png_structp png_ptr, png_infop png_info)
+ {
+     png_debug(1, "in png_write_frame_tail\n");
+     
+     png_ptr->num_frames_written++;
+diff -ruN -p -u10 modules.orig/libimg/png/pngwutil.c modules/libimg/png/pngwutil.c
+--- modules.orig/libimg/png/pngwutil.c	2007-04-22 23:24:28.000000000 +0300
++++ modules/libimg/png/pngwutil.c	2007-04-19 23:40:53.000000000 +0300
+@@ -1745,50 +1745,45 @@ png_write_tIME(png_structp png_ptr, png_
+    buf[5] = mod_time->minute;
+    buf[6] = mod_time->second;
+ 
+    png_write_chunk(png_ptr, (png_bytep)png_tIME, buf, (png_size_t)7);
+ }
+ #endif
+ 
+ #if defined(PNG_WRITE_APNG_SUPPORTED)
+ void /* PRIVATE */
+ png_write_acTL(png_structp png_ptr,
+-   png_uint_32 num_frames, png_uint_32 num_iterations)
++   png_uint_32 num_frames, png_uint_32 num_plays)
+ {
+ #ifdef PNG_USE_LOCAL_ARRAYS
+     PNG_acTL;
+ #endif
+     png_byte data[16];
+     
+     png_debug(1, "in png_write_acTL\n");
+     
+-    if (num_frames == 0)
+-        png_error(png_ptr, "png_write_acTL: invalid number of frames (0)");
+-    if (num_frames > PNG_UINT_31_MAX)
+-        png_error(png_ptr, "png_write_acTL: invalid number of frames "
+-                           "(> 2^31-1)");
+-    if (num_iterations > PNG_UINT_31_MAX)
+-        png_error(png_ptr, "png_write_acTL: invalid number of iterations "
+-                           "(> 2^31-1)");
+-    
+     png_ptr->num_frames_to_write = num_frames;
+     
++    if (png_ptr->apng_flags & PNG_FIRST_FRAME_HIDDEN)
++        num_frames--;
++    
+     png_save_uint_32(data, num_frames);
+-    png_save_uint_32(data + 4, num_iterations);
++    png_save_uint_32(data + 4, num_plays);
+     
+     png_write_chunk(png_ptr, (png_bytep)png_acTL, data, (png_size_t)8);
+ }
+ 
+ void /* PRIVATE */
+ png_write_fcTL(png_structp png_ptr, png_uint_32 width, png_uint_32 height, 
+     png_uint_32 x_offset, png_uint_32 y_offset,
+-    png_uint_16 delay_num, png_uint_16 delay_den, png_byte dispose_op, png_byte blend_op)
++    png_uint_16 delay_num, png_uint_16 delay_den, png_byte dispose_op, 
++    png_byte blend_op)
+ {
+ #ifdef PNG_USE_LOCAL_ARRAYS
+     PNG_fcTL;
+ #endif
+     png_byte data[26];
+     
+     png_debug(1, "in png_write_fcTL\n");
+     
+     if (png_ptr->num_frames_written == 0 && (x_offset != 0 || y_offset != 0))
+         png_error(png_ptr, "x and/or y offset for the first frame aren't 0\n");
+diff -ruN -p -u10 modules.orig/libpr0n/decoders/png/nsPNGDecoder.cpp modules/libpr0n/decoders/png/nsPNGDecoder.cpp
+--- modules.orig/libpr0n/decoders/png/nsPNGDecoder.cpp	2007-04-22 23:24:37.000000000 +0300
++++ modules/libpr0n/decoders/png/nsPNGDecoder.cpp	2007-04-19 23:40:54.000000000 +0300
+@@ -374,21 +374,21 @@ info_callback(png_structp png_ptr, png_i
+     if (alpha_bits == 8) {
+       decoder->mImage->GetPreferredAlphaChannelFormat(&(decoder->format));
+     } else if (alpha_bits == 1) {
+       decoder->format = gfxIFormats::RGB_A1;
+     }
+   }
+ 
+   if (png_get_valid(png_ptr, info_ptr, PNG_INFO_acTL))
+     png_set_progressive_frame_fn(png_ptr, frame_info_callback, NULL);
+   
+-  if (png_first_frame_is_hidden(png_ptr, info_ptr)) {
++  if (png_get_first_frame_is_hidden(png_ptr, info_ptr)) {
+     decoder->apngFlags |= FRAME_HIDDEN;
+     
+     // create a frame just to get bpr, to allocate interlacebuf
+     decoder->mFrame = do_CreateInstance("@mozilla.org/gfx/image/frame;2");
+     if (!decoder->mFrame)
+       longjmp(png_ptr->jmpbuf, 5); // NS_ERROR_OUT_OF_MEMORY
+     nsresult rv = decoder->mFrame->Init(0, 0, width, height, decoder->format, 24);
+     if (NS_FAILED(rv))
+       longjmp(png_ptr->jmpbuf, 5); // NS_ERROR_OUT_OF_MEMORY
+   } else {
+@@ -402,21 +402,21 @@ info_callback(png_structp png_ptr, png_i
+     if (channels > 3)
+       decoder->ibpr = channels*width;
+     else
+       decoder->ibpr = bpr;
+     decoder->interlacebuf = (PRUint8 *)nsMemory::Alloc(decoder->ibpr*height);
+     if (!decoder->interlacebuf) {
+       longjmp(decoder->mPNG->jmpbuf, 5); // NS_ERROR_OUT_OF_MEMORY
+     }
+   }
+   
+-  if (png_first_frame_is_hidden(png_ptr, info_ptr))
++  if (png_get_first_frame_is_hidden(png_ptr, info_ptr))
+     decoder->mFrame = nsnull;
+   
+   return;
+ }
+ 
+ void
+ row_callback(png_structp png_ptr, png_bytep new_row,
+              png_uint_32 row_num, int pass)
+ {
+   /* libpng comments:
+@@ -550,25 +550,22 @@ end_callback(png_structp png_ptr, png_in
+    * had in the header, although some data may have been added
+    * to the comments and time fields.
+    *
+    * Most people won't do much here, perhaps setting a flag that
+    * marks the image as finished.
+    */
+ 
+   nsPNGDecoder *decoder = NS_STATIC_CAST(nsPNGDecoder*, png_get_progressive_ptr(png_ptr));
+   
+   if (png_get_valid(png_ptr, info_ptr, PNG_INFO_acTL)) {
+-    PRInt32 num_iterations = png_get_num_iterations(png_ptr, info_ptr);
+-    if (num_iterations <= 0) /* forever */
+-      num_iterations = -1;
+-    
+-    decoder->mImage->SetLoopCount(num_iterations);
++    PRInt32 num_plays = png_get_num_plays(png_ptr, info_ptr);
++    decoder->mImage->SetLoopCount(num_plays - 1);
+   }
+   
+   if (!(decoder->apngFlags & FRAME_HIDDEN)) {
+     PRInt32 timeout;
+     decoder->mFrame->GetTimeout(&timeout);
+     decoder->mImage->EndFrameDecode(decoder->mPNG->num_frames_read, timeout);
+   }
+   
+   decoder->mImage->DecodingComplete();
+   

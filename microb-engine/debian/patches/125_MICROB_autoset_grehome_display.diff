@@ -1,0 +1,39 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: No description.
+
+Index: mozilla/build/unix/run-mozilla.sh
+===================================================================
+--- mozilla.orig/build/unix/run-mozilla.sh
++++ mozilla/build/unix/run-mozilla.sh
+@@ -37,16 +37,29 @@
+ # ***** END LICENSE BLOCK *****
+ cmdname=`basename "$0"`
+ MOZ_DIST_BIN=`dirname "$0"`
+ MOZ_DEFAULT_NAME="./${cmdname}-bin"
+ MOZ_APPRUNNER_NAME="./mozilla-bin"
+ MOZ_VIEWER_NAME="./viewer"
+ MOZ_PROGRAM=""
+ 
++if test $GRE_HOME; then
++    echo defined GRE_HOME=$GRE_HOME
++else
++    export GRE_HOME="/usr/lib/microb-engine"
++fi
++
++if test $DISPLAY; then
++    echo defined DISPLAY=$DISPLAY
++else
++    export DISPLAY=":0"
++fi
++
++
+ exitcode=0
+ #
+ ##
+ ## Functions
+ ##
+ ##########################################################################
+ moz_usage()
+ {

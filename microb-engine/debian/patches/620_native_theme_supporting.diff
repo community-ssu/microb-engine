@@ -1,0 +1,230 @@
+Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+@@ -1050,17 +1050,17 @@
+   case NS_THEME_SCROLLBAR_TRACK_VERTICAL:
+   case NS_THEME_SCROLLBAR_THUMB_HORIZONTAL:
+   case NS_THEME_SCROLLBAR_THUMB_VERTICAL:
+     // case NS_THEME_SCROLLBAR_GRIPPER_HORIZONTAL:  (n/a for gtk)
+     // case NS_THEME_SCROLLBAR_GRIPPER_VERTICAL:  (n/a for gtk)
+   case NS_THEME_TEXTFIELD:
+   case NS_THEME_TEXTFIELD_MULTILINE:
+     // case NS_THEME_TEXTFIELD_CARET:
+-    // case NS_THEME_DROPDOWN_BUTTON:
++  case NS_THEME_DROPDOWN_BUTTON:
+   case NS_THEME_DROPDOWN_TEXTFIELD:
+   case NS_THEME_SCALE_HORIZONTAL:
+   case NS_THEME_SCALE_THUMB_HORIZONTAL:
+   case NS_THEME_SCALE_VERTICAL:
+   case NS_THEME_SCALE_THUMB_VERTICAL:
+     // case NS_THEME_SCALE_THUMB_START:
+     // case NS_THEME_SCALE_THUMB_END:
+     // case NS_THEME_SCALE_TICK:
+Index: mozilla/widget/src/gtk2/gtk2drawing.c
+===================================================================
+--- mozilla.orig/widget/src/gtk2/gtk2drawing.c
++++ mozilla/widget/src/gtk2/gtk2drawing.c
+@@ -455,18 +455,18 @@
+         } else {
+             x -= focus_width + focus_pad;
+             y -= focus_width + focus_pad;
+             width += 2 * (focus_width + focus_pad);
+             height += 2 * (focus_width + focus_pad);
+         }
+ 
+         TSOffsetStyleGCs(style, x, y);
+-        gtk_paint_focus(style, drawable, button_state, cliprect,
+-                        widget, "button", x, y, width, height);
++        //gtk_paint_focus(style, drawable, button_state, cliprect,
++        //                widget, "button", x, y, width, height);
+     }
+ 
+     return MOZ_GTK_SUCCESS;
+ }
+ 
+ gint
+ moz_gtk_init()
+ {
+@@ -777,16 +777,17 @@
+                               GdkDrawable* drawable, GdkRectangle* rect,
+                               GdkRectangle* cliprect, GtkWidgetState* state)
+ {
+     GtkStateType state_type = (state->inHover || state->active) ?
+         GTK_STATE_PRELIGHT : GTK_STATE_NORMAL;
+     GtkStyle* style;
+     GtkScrollbar *scrollbar;
+     GtkAdjustment *adj;
++    GtkShadowType shadow_type = GTK_SHADOW_OUT;
+ 
+     ensure_scrollbar_widget();
+ 
+     if (widget == MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL)
+         scrollbar = GTK_SCROLLBAR(gHorizScrollbarWidget);
+     else
+         scrollbar = GTK_SCROLLBAR(gVertScrollbarWidget);
+ 
+@@ -818,17 +819,22 @@
+     adj->value = state->curpos;
+     adj->upper = state->maxpos;
+     gtk_adjustment_changed(adj);
+ 
+     style = GTK_WIDGET(scrollbar)->style;
+ 
+     TSOffsetStyleGCs(style, rect->x, rect->y);
+ 
+-    gtk_paint_slider(style, drawable, state_type, GTK_SHADOW_OUT, cliprect,
++    if (state->active) {
++      state_type = GTK_STATE_ACTIVE;
++      shadow_type = GTK_SHADOW_IN;
++    }
++
++    gtk_paint_slider(style, drawable, state_type, shadow_type, cliprect,
+                      GTK_WIDGET(scrollbar), "slider", rect->x, rect->y,
+                      rect->width,  rect->height,
+                      (widget == MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL) ?
+                      GTK_ORIENTATION_HORIZONTAL : GTK_ORIENTATION_VERTICAL);
+ 
+     return MOZ_GTK_SUCCESS;
+ }
+ 
+@@ -1013,19 +1019,19 @@
+         height -= 2 * focus_width;
+ 
+         TSOffsetStyleGCs(style, x, y);
+         gtk_paint_shadow(style, drawable, GTK_STATE_NORMAL, GTK_SHADOW_IN,
+                          cliprect, gEntryWidget, "entry",
+                          x, y, width, height);
+ 
+         TSOffsetStyleGCs(style, rect->x, rect->y);
+-        gtk_paint_focus(style, drawable,  GTK_STATE_NORMAL, cliprect,
+-                        gEntryWidget, "entry",
+-                        rect->x, rect->y, rect->width, rect->height);
++        //gtk_paint_focus(style, drawable,  GTK_STATE_NORMAL, cliprect,
++        //                gEntryWidget, "entry",
++        //                rect->x, rect->y, rect->width, rect->height);
+     }
+ 
+     return MOZ_GTK_SUCCESS;
+ }
+ 
+ static gint
+ moz_gtk_option_menu_paint(GdkDrawable* drawable, GdkRectangle* rect,
+                           GdkRectangle* cliprect, GtkWidgetState* state)
+Index: mozilla/layout/style/forms.css
+===================================================================
+--- mozilla.orig/layout/style/forms.css
++++ mozilla/layout/style/forms.css
+@@ -504,17 +504,17 @@
+   border-color: ButtonText;
+ }
+ */
+ 
+ input:focus,
+ button:focus,
+ select:focus,
+ textarea:focus {
+-   -moz-appearance:none;
++/*   -moz-appearance:none;*/
+    -moz-outline-radius: .3em;
+    -moz-outline: .3em solid highlighttext;
+    -moz-outline: .2em solid -moz-mac-focusring;
+    -moz-outline-offset: .05em;
+ }
+ 
+ button[disabled]:active, button[disabled],
+ input[type="reset"][disabled]:active,
+Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp
++++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+@@ -51,17 +51,17 @@
+ nscolor   nsLookAndFeel::sMenuText = 0;
+ nscolor   nsLookAndFeel::sMenuHover = 0;
+ nscolor   nsLookAndFeel::sMenuHoverText = 0;
+ nscolor   nsLookAndFeel::sMenuBackground = 0;
+ nscolor   nsLookAndFeel::sButtonBackground = 0;
+ nscolor   nsLookAndFeel::sTextDisabled = 0;
+ nscolor   nsLookAndFeel::sButtonText = 0;
+ nscolor   nsLookAndFeel::sButtonOuterLightBorder = 0;
+-nscolor   nsLookAndFeel::sButtonInnerDarkBorder = 0;
++nscolor   nsLookAndFeel::sButtonInnerDarkBorder = NS_RGB(0xb3,0xb3,0xb3); // forms.css
+ PRUnichar nsLookAndFeel::sInvisibleCharacter = PRUnichar('*');
+ 
+ //-------------------------------------------------------------------------
+ //
+ // Query interface implementation
+ //
+ //-------------------------------------------------------------------------
+ nsLookAndFeel::nsLookAndFeel() : nsXPLookAndFeel()
+Index: mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
+===================================================================
+--- mozilla.orig/widget/src/xpwidgets/nsNativeTheme.cpp
++++ mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
+@@ -47,19 +47,19 @@
+ #include "nsINameSpaceManager.h"
+ #include "nsIDOMHTMLInputElement.h"
+ #include "nsILookAndFeel.h"
+ #include "nsThemeConstants.h"
+ #include "nsIComponentManager.h"
+ 
+ nsMargin nsNativeTheme::sButtonBorderSize(2, 2, 2, 2);
+ nsMargin nsNativeTheme::sButtonDisabledBorderSize(1, 1, 1, 1);
+-PRUint8  nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
+-PRUint8  nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_OUTSET;
+-nsILookAndFeel::nsColorID nsNativeTheme::sButtonBorderColorID = nsILookAndFeel::eColor_buttonface;
++PRUint8  nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_SOLID; // instead of INSET, forms.css
++PRUint8  nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_SOLID; // instead of OUTSET, forms.css
++nsILookAndFeel::nsColorID nsNativeTheme::sButtonBorderColorID = nsILookAndFeel::eColor_threedshadow;// instead of buttonface, forms.css
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonDisabledBorderColorID = nsILookAndFeel::eColor_buttonshadow;
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonBGColorID = nsILookAndFeel::eColor_buttonface;
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonDisabledBGColorID = nsILookAndFeel::eColor_buttonface;
+ nsMargin nsNativeTheme::sTextfieldBorderSize(2, 2, 2, 2);
+ PRUint8  nsNativeTheme::sTextfieldBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
+ nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBorderColorID = nsILookAndFeel::eColor_threedface;
+ PRBool   nsNativeTheme::sTextfieldBGTransparent = PR_FALSE;
+ nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBGColorID = nsILookAndFeel::eColor__moz_field;
+@@ -269,37 +269,38 @@
+       const nsStyleBackground* ourBG = aFrame->GetStyleBackground();
+ 
+       if (defaultBGTransparent) {
+         if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_COLOR_TRANSPARENT))
+           return PR_TRUE;
+       } else if (ourBG->mBackgroundColor != defaultBGColor ||
+                  ourBG->mBackgroundFlags & NS_STYLE_BG_COLOR_TRANSPARENT)
+         return PR_TRUE;
+-
+-      if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_IMAGE_NONE))
+-        return PR_TRUE;
++
++      //if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_IMAGE_NONE))
++        //return PR_TRUE;
+ 
+       // Check whether border style or color differs from default
+       const nsStyleBorder* ourBorder = aFrame->GetStyleBorder();
+ 
+       for (PRInt32 i = 0; i < 4; ++i) {
+         if (ourBorder->GetBorderStyle(i) != defaultBorderStyle)
+           return PR_TRUE;
+ 
+         PRBool borderFG, borderClear;
+         nscolor borderColor;
+         ourBorder->GetBorderColor(i, borderColor, borderFG, borderClear);
+         if (borderColor != defaultBorderColor || borderClear)
+           return PR_TRUE;
+       }
+ 
+       // Check whether border size differs from default
+-      if (ourBorder->GetBorder() != defaultBorderSize)
+-        return PR_TRUE;
++      // commented because off wrong converting.
++      //if (ourBorder->GetBorder() != defaultBorderSize)
++        //return PR_TRUE;
+     }
+   }
+ 
+   return PR_FALSE;
+ }
+ 
+ // treeheadercell:
+ nsNativeTheme::TreeSortDirection

@@ -1,0 +1,1503 @@
+#Track full source and dest regions (unclipped) when drawing images or use floats, to avoid rounding problems with advanced image resizing algorithms.  b=371434
+#https://bugzilla.mozilla.org/show_bug.cgi?id=371434
+Index: mozilla/browser/components/shell/src/Makefile.in
+===================================================================
+--- mozilla.orig/browser/components/shell/src/Makefile.in
++++ mozilla/browser/components/shell/src/Makefile.in
+@@ -54,17 +54,16 @@
+ 		  webbrowserpersist \
+ 		  dom \
+ 		  intl \
+ 		  necko \
+ 		  content \
+ 		  imglib2 \
+ 		  browsercomps \
+ 		  gfx \
+-		  thebes \
+                   widget \
+ 		  pref \
+ 		  layout \
+ 		  $(NULL)
+ 
+ ifeq ($(OS_ARCH),WINNT)
+ CPPSRCS = nsWindowsShellService.cpp
+ else
+Index: mozilla/content/base/src/Makefile.in
+===================================================================
+--- mozilla.orig/content/base/src/Makefile.in
++++ mozilla/content/base/src/Makefile.in
+@@ -45,17 +45,16 @@
+ MODULE		= content
+ LIBRARY_NAME	= gkconbase_s
+ LIBXUL_LIBRARY	= 1
+ 
+ REQUIRES	= xpcom \
+ 		  string \
+ 		  dom \
+ 		  gfx \
+-		  thebes \
+ 		  layout \
+ 		  widget \
+ 		  view \
+ 		  locale \
+ 		  htmlparser \
+ 		  js \
+ 		  webshell \
+ 		  necko \
+Index: mozilla/editor/libeditor/html/Makefile.in
+===================================================================
+--- mozilla.orig/editor/libeditor/html/Makefile.in
++++ mozilla/editor/libeditor/html/Makefile.in
+@@ -55,17 +55,16 @@
+ 		  unicharutil \
+ 		  content \
+ 		  txmgr \
+ 		  txtsvc \
+ 		  htmlparser \
+ 		  necko \
+ 		  pref \
+ 		  gfx \
+-		  thebes \
+ 		  widget \
+ 		  view \
+ 		  webshell \
+ 		  $(NULL)
+ 
+ # Building the full blown HTML Editor  so add its source files and objects:
+ 
+ CPPSRCS  = \
+Index: mozilla/gfx/public/nsIImage.h
+===================================================================
+--- mozilla.orig/gfx/public/nsIImage.h
++++ mozilla/gfx/public/nsIImage.h
+@@ -36,19 +36,18 @@
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #ifndef nsIImage_h___
+ #define nsIImage_h___
+ 
+ #include "nsISupports.h"
+ #include "nsIRenderingContext.h"
+ #include "nsRect.h"
+-#ifdef MOZ_CAIRO_GFX
+-#include "gfxRect.h"
+ 
++#ifdef MOZ_CAIRO_GFX
+ class gfxASurface;
+ #endif
+ 
+ class nsIDeviceContext;
+ 
+ struct nsColorMap
+ {
+   //I lifted this from the image lib. The difference is that
+@@ -75,20 +74,19 @@
+ #ifndef MOZ_CAIRO_GFX
+ // The following platforms store image data rows bottom-up.
+ #if defined(XP_WIN) || defined(XP_OS2) || defined(XP_MACOSX)
+ #define MOZ_PLATFORM_IMAGES_BOTTOM_TO_TOP
+ #endif
+ #endif
+ 
+ // IID for the nsIImage interface
+-// ab6af421-9552-4d18-a3f4-a2bf9d2e44f7
+-#define NS_IIMAGE_IID \
+-{ 0xab6af421, 0x9552, 0x4d18, \
+-  { 0xa3, 0xf4, 0xa2, 0xbf, 0x9d, 0x2e, 0x44, 0xf7 } }
++#define NS_IIMAGE_IID          \
++  { 0xce91c93f, 0x532d, 0x470d, \
++      { 0xbf, 0xa3, 0xc9, 0x6e, 0x56, 0x01, 0x52, 0xa4 } }
+ 
+ // Interface to Images
+ class nsIImage : public nsISupports
+ {
+ 
+ public:
+   NS_DECLARE_STATIC_IID_ACCESSOR(NS_IIMAGE_IID)
+ 
+@@ -191,23 +189,45 @@
+   /**
+    * Get the colormap for the nsIImage
+    * @update - dwc 2/1/99
+    * @return if non null, the colormap for the pixelmap,otherwise the image is not color mapped
+    */
+   virtual nsColorMap * GetColorMap() = 0;
+ 
+   /**
++   * BitBlit the nsIImage to a device, the source can be scaled to the dest
++   * @update - dwc 2/1/99
++   * @param aSurface  the surface to blit to
++   * @param aX The destination horizontal location
++   * @param aY The destination vertical location
++   * @param aWidth The destination width of the pixelmap
++   * @param aHeight The destination height of the pixelmap
++   * @return if TRUE, no errors
++   */
++  NS_IMETHOD Draw(nsIRenderingContext &aContext, nsIDrawingSurface* aSurface, PRInt32 aX, PRInt32 aY, PRInt32 aWidth, PRInt32 aHeight) = 0;
++
++  /**
+    * BitBlit the nsIImage to a device, the source and dest can be scaled
+-   * @param aSourceRect  source rectangle, in image pixels
+-   * @param aDestRect  destination rectangle, in device pixels
++   * @update - dwc 2/1/99
++   * @param aSurface  the surface to blit to
++   * @param aSX The source width of the pixelmap
++   * @param aSY The source vertical location
++   * @param aSWidth The source width of the pixelmap
++   * @param aSHeight The source height of the pixelmap
++   * @param aDX The destination horizontal location
++   * @param aDY The destination vertical location
++   * @param aDWidth The destination width of the pixelmap
++   * @param aDHeight The destination height of the pixelmap
++   * @return if TRUE, no errors
+    */
+-  NS_IMETHOD Draw(nsIRenderingContext &aContext,
+-                  const gfxRect &aSourceRect,
+-                  const gfxRect &aDestRect) = 0;
++  NS_IMETHOD Draw(nsIRenderingContext &aContext, nsIDrawingSurface* aSurface,
++                  PRInt32 aSX, PRInt32 aSY, PRInt32 aSWidth, PRInt32 aSHeight,
++                  PRInt32 aDX, PRInt32 aDY, PRInt32 aDWidth, PRInt32 aDHeight) = 0;
++
+ 
+   NS_IMETHOD DrawTile(nsIRenderingContext &aContext,
+                       nsIDrawingSurface* aSurface,
+                       PRInt32 aSXOffset, PRInt32 aSYOffset,
+                       PRInt32 aPadX, PRInt32 aPadY,
+                       const nsRect &aTileRect) = 0;
+ 
+   /**
+Index: mozilla/gfx/src/nsRenderingContextImpl.h
+===================================================================
+--- mozilla.orig/gfx/src/nsRenderingContextImpl.h
++++ mozilla/gfx/src/nsRenderingContextImpl.h
+@@ -111,19 +111,17 @@
+ 
+   /**
+    * Let the device context know whether we want text reordered with
+    * right-to-left base direction
+    */
+   NS_IMETHOD SetRightToLeftText(PRBool aIsRTL);
+   NS_IMETHOD GetRightToLeftText(PRBool* aIsRTL);
+ 
+-#ifndef MOZ_CAIRO_GFX
+   NS_IMETHOD DrawImage(imgIContainer *aImage, const nsRect & aSrcRect, const nsRect & aDestRect);
+-#endif
+   NS_IMETHOD DrawTile(imgIContainer *aImage, nscoord aXOffset, nscoord aYOffset, const nsRect * aTargetRect);
+ 
+   NS_IMETHOD GetClusterInfo(const PRUnichar *aText,
+                             PRUint32 aLength,
+                             PRUint8 *aClusterStarts);
+   virtual PRInt32 GetPosition(const PRUnichar *aText,
+                               PRUint32 aLength,
+                               nsPoint aPt);
+Index: mozilla/gfx/src/shared/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/src/shared/Makefile.in
++++ mozilla/gfx/src/shared/Makefile.in
+@@ -53,17 +53,16 @@
+ 		  string \
+ 		  imglib2 \
+ 		  widget \
+ 		  content \
+ 		  layout \
+ 		  necko \
+ 		  dom \
+ 		  locale \
+-		  thebes \
+ 		  $(NULL)
+ 
+ CPPSRCS = \
+ 	nsRenderingContextImpl.cpp \
+ 	gfxImageFrame.cpp \
+ 	$(NULL)
+ 
+ LOCAL_INCLUDES = -I$(srcdir)/.. \
+Index: mozilla/gfx/src/shared/nsRenderingContextImpl.cpp
+===================================================================
+--- mozilla.orig/gfx/src/shared/nsRenderingContextImpl.cpp
++++ mozilla/gfx/src/shared/nsRenderingContextImpl.cpp
+@@ -301,17 +301,16 @@
+   return NS_OK;
+ }
+ 
+ #include "imgIContainer.h"
+ #include "gfxIImageFrame.h"
+ #include "nsIInterfaceRequestor.h"
+ #include "nsIInterfaceRequestorUtils.h"
+ 
+-#ifndef MOZ_CAIRO_GFX
+ NS_IMETHODIMP nsRenderingContextImpl::DrawImage(imgIContainer *aImage, const nsRect & aSrcRect, const nsRect & aDestRect)
+ {
+   nsRect dr = aDestRect;
+   mTranMatrix->TransformCoord(&dr.x, &dr.y, &dr.width, &dr.height);
+ 
+   // We should NOT be transforming the source rect (which is based on the image
+   // origin) using the rendering context's translation!
+   // However, given that we are, remember that the transformation of a
+@@ -391,17 +390,16 @@
+   nsCOMPtr<nsIRegion> clipRegion;
+   GetClipRegion(getter_AddRefs(clipRegion));
+   if (clipRegion && !clipRegion->ContainsRect(dr.x, dr.y, dr.width, dr.height))
+     return NS_OK;
+ 
+   return img->Draw(*this, surface, sr.x, sr.y, sr.width, sr.height,
+                    dr.x, dr.y, dr.width, dr.height);
+ }
+-#endif
+ 
+ /* [noscript] void drawTile (in imgIContainer aImage, in nscoord aXImageStart, in nscoord aYImageStart, [const] in nsRect aTargetRect); */
+ NS_IMETHODIMP
+ nsRenderingContextImpl::DrawTile(imgIContainer *aImage,
+                                  nscoord aXImageStart, nscoord aYImageStart,
+                                  const nsRect * aTargetRect)
+ {
+   nsRect dr(*aTargetRect);
+Index: mozilla/gfx/src/thebes/nsThebesImage.cpp
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsThebesImage.cpp
++++ mozilla/gfx/src/thebes/nsThebesImage.cpp
+@@ -322,83 +322,94 @@
+         // Don't need the pixel data anymore
+         mImageSurface = nsnull;
+     }
+     return NS_OK;
+ }
+ 
+ /* NB: These are pixels, not twips. */
+ NS_IMETHODIMP
+-nsThebesImage::Draw(nsIRenderingContext &aContext,
+-                    const gfxRect &aSourceRect,
+-                    const gfxRect &aDestRect)
++nsThebesImage::Draw(nsIRenderingContext &aContext, nsIDrawingSurface *aSurface,
++                    PRInt32 aX, PRInt32 aY, PRInt32 aWidth, PRInt32 aHeight)
+ {
+-    if (NS_UNLIKELY(aDestRect.IsEmpty())) {
++    return Draw(aContext, aSurface, 0, 0, mWidth, mHeight, aX, aY, aWidth, aHeight);
++}
++
++/* NB: These are pixels, not twips. */
++/* BUT nsRenderingContextImpl's DrawImage calls this with twips. */
++NS_IMETHODIMP
++nsThebesImage::Draw(nsIRenderingContext &aContext, nsIDrawingSurface *aSurface,
++                   PRInt32 aSX, PRInt32 aSY, PRInt32 aSWidth, PRInt32 aSHeight,
++                   PRInt32 aDX, PRInt32 aDY, PRInt32 aDWidth, PRInt32 aDHeight)
++{
++    if (NS_UNLIKELY(aDWidth == 0 || aDHeight == 0)) {
+         NS_ERROR("nsThebesImage::Draw zero dest size - please fix caller.");
+         return NS_OK;
+     }
+ 
+     nsThebesRenderingContext *thebesRC = NS_STATIC_CAST(nsThebesRenderingContext*, &aContext);
+     gfxContext *ctx = thebesRC->Thebes();
+ 
+ #if 0
+     fprintf (stderr, "nsThebesImage::Draw src [%f %f %f %f] dest [%f %f %f %f] trans: [%f %f] dec: [%f %f]\n",
+-             aSourceRect.pos.x, aSourceRect.pos.y, aSourceRect.size.width, aSourceRect.size.height,
++             aSX, aSY, aSWidth, aSHeight, aDX, aDY, aDWidth, aDHeight,
+              aDestRect.pos.x, aDestRect.pos.y, aDestRect.size.width, aDestRect.size.height,
+              ctx->CurrentMatrix().GetTranslation().x, ctx->CurrentMatrix().GetTranslation().y,
+              mDecoded.x, mDecoded.y, mDecoded.width, mDecoded.height);
+ #endif
+ 
+     if (mSinglePixel) {
+         // if a == 0, it's a noop
+         if (mSinglePixelColor.a == 0.0)
+             return NS_OK;
+ 
+         // otherwise
+         ctx->SetColor(mSinglePixelColor);
+         ctx->NewPath();
+-        ctx->Rectangle(aDestRect, PR_TRUE);
++        ctx->Rectangle(gfxRect(aDX, aDY, aDWidth, aDHeight), PR_TRUE);
+         ctx->Fill();
+         return NS_OK;
+     }
+ 
+-    gfxFloat xscale = aDestRect.size.width / aSourceRect.size.width;
+-    gfxFloat yscale = aDestRect.size.height / aSourceRect.size.height;
++    gfxFloat xscale = gfxFloat(aDWidth) / aSWidth;
++    gfxFloat yscale = gfxFloat(aDHeight) / aSHeight;
+ 
+-    gfxRect srcRect(aSourceRect);
+-    gfxRect destRect(aDestRect);
++    gfxRect srcRect(aSX, aSY, aSWidth, aSHeight);
++    gfxRect destRect(aDX, aDY, aDWidth, aDHeight);
+ 
+     if (!GetIsImageComplete()) {
+-      srcRect = srcRect.Intersect(gfxRect(mDecoded.x, mDecoded.y,
+-                                          mDecoded.width, mDecoded.height));
++      srcRect.IntersectRect(srcRect, mDecoded);
+ 
+       // This happens when mDecoded.width or height is zero. bug 368427.
+-      if (NS_UNLIKELY(srcRect.size.width == 0 || srcRect.size.height == 0))
++      if (NS_UNLIKELY(srcRect.width == 0 || srcRect.height == 0))
+           return NS_OK;
+ 
+-      destRect.pos.x += (srcRect.pos.x - aSourceRect.pos.x)*xscale;
+-      destRect.pos.y += (srcRect.pos.y - aSourceRect.pos.y)*yscale;
++      aDX += (PRInt32)((srcRect.x - aSX)*xscale);
++      aDY += (PRInt32)((srcRect.y - aSY)*yscale);
+ 
+       // use '+ 1 - *scale' to get rid of rounding errors
+-      destRect.size.width  = (srcRect.size.width)*xscale + 1 - xscale;
+-      destRect.size.height = (srcRect.size.height)*yscale + 1 - yscale;
++      aDWidth  = (PRInt32)((srcRect.width)*xscale + 1 - xscale);
++      aDHeight = (PRInt32)((srcRect.height)*yscale + 1 - yscale);
++
++      aSX = srcRect.x;
++      aSY = srcRect.y;
+     }
+ 
+     // Reject over-wide or over-tall images.
+-    if (!AllowedImageSize(destRect.size.width, destRect.size.height))
++    if (!AllowedImageSize(aDWidth, aDHeight))
+         return NS_ERROR_FAILURE;
+ 
+     nsRefPtr<gfxPattern> pat;
+ 
+     /* See bug 364968 to understand the necessity of this goop; we basically
+      * have to pre-downscale any image that would fall outside of a scaled 16-bit
+      * coordinate space.
+      */
+-    if (aDestRect.pos.x * (1.0 / xscale) >= 32768.0 ||
+-        aDestRect.pos.y * (1.0 / yscale) >= 32768.0)
++    if (aDX * (1.0 / xscale) >= 32768.0 ||
++        aDY * (1.0 / yscale) >= 32768.0)
+     {
+         gfxIntSize dim(NS_lroundf(destRect.size.width),
+                        NS_lroundf(destRect.size.height));
+         nsRefPtr<gfxASurface> temp =
+             gfxPlatform::GetPlatform()->CreateOffscreenSurface (dim,  mFormat);
+         nsRefPtr<gfxContext> tempctx = new gfxContext(temp);
+ 
+         nsRefPtr<gfxPattern> srcpat = new gfxPattern(ThebesSurface());
+@@ -426,21 +437,21 @@
+ 
+     if (!pat) {
+         pat = new gfxPattern(ThebesSurface());
+     }
+ 
+     gfxMatrix mat;
+     mat.Translate(srcRect.pos);
+     mat.Scale(1.0/xscale, 1.0/yscale);
++    mat.Translate(-destRect.pos);
+ 
+     /* Translate the start point of the image (srcRect.pos)
+      * to coincide with the destination rectangle origin
+      */
+-    mat.Translate(-destRect.pos);
+ 
+     pat->SetMatrix(mat);
+ 
+     // XXX bug 324698
+ #ifndef XP_MACOSX
+     if (xscale > 1.0 || yscale > 1.0) {
+         // See bug 324698.  This is a workaround.
+         //
+@@ -451,17 +462,17 @@
+         //
+         // This effectively disables smooth upscaling for images.
+         pat->SetFilter(0);
+     }
+ #endif
+ 
+     ctx->NewPath();
+     ctx->SetPattern(pat);
+-    ctx->Rectangle(destRect);
++    ctx->Rectangle(dr);
+     ctx->Fill();
+ 
+     return NS_OK;
+ }
+ 
+ nsresult
+ nsThebesImage::ThebesDrawTile(gfxContext *thebesContext,
+                               nsIDeviceContext* dx,
+Index: mozilla/gfx/src/thebes/nsThebesImage.h
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsThebesImage.h
++++ mozilla/gfx/src/thebes/nsThebesImage.h
+@@ -68,18 +68,22 @@
+     virtual PRUint8 *GetAlphaBits();
+     virtual PRInt32 GetAlphaLineStride();
+     virtual PRBool GetIsImageComplete();
+     virtual void ImageUpdated(nsIDeviceContext *aContext, PRUint8 aFlags, nsRect *aUpdateRect);
+     virtual nsresult Optimize(nsIDeviceContext* aContext);
+     virtual nsColorMap *GetColorMap();
+ 
+     NS_IMETHOD Draw(nsIRenderingContext &aContext,
+-                    const gfxRect &aSourceRect,
+-                    const gfxRect &aDestRect);
++                    nsIDrawingSurface *aSurface,
++                    PRInt32 aX, PRInt32 aY, PRInt32 aWidth, PRInt32 aHeight);
++    NS_IMETHOD Draw(nsIRenderingContext &aContext,
++                    nsIDrawingSurface *aSurface,
++                    PRInt32 aSX, PRInt32 aSY, PRInt32 aSWidth, PRInt32 aSHeight,
++                    PRInt32 aDX, PRInt32 aDY, PRInt32 aDWidth, PRInt32 aDHeight);
+     NS_IMETHOD DrawTile(nsIRenderingContext &aContext,
+                         nsIDrawingSurface *aSurface,
+                         PRInt32 aSXOffset, PRInt32 aSYOffset,
+                         PRInt32 aPadX, PRInt32 aPadY,
+                         const nsRect &aTileRect);
+     NS_IMETHOD DrawToImage(nsIImage* aDstImage,
+                            PRInt32 aDX, PRInt32 aDY, PRInt32 aDWidth, PRInt32 aDHeight);
+ 
+Index: mozilla/gfx/src/thebes/nsThebesRenderingContext.cpp
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsThebesRenderingContext.cpp
++++ mozilla/gfx/src/thebes/nsThebesRenderingContext.cpp
+@@ -970,18 +970,101 @@
+                                          mThebes->CurrentMatrix().GetTranslation().y));
+ #if 0
+     fprintf (stderr, "DrawImage: src [%f %f %f %f]\n           dst [%f %f %f %f]\n           x0: %f y0: %f\n",
+              FROM_TWIPS(twSrcRect.x), FROM_TWIPS(twSrcRect.y), FROM_TWIPS(twSrcRect.width), FROM_TWIPS(twSrcRect.height),
+              FROM_TWIPS(twDestRect.x), FROM_TWIPS(twDestRect.y), FROM_TWIPS(twDestRect.width), FROM_TWIPS(twDestRect.height),
+              mThebes->CurrentMatrix().GetTranslation().x, mThebes->CurrentMatrix().GetTranslation().y);
+ #endif
+ 
+-    NS_NOTREACHED("DrawImage should no longer be called with thebes");
+-    return NS_ERROR_NOT_IMPLEMENTED;
++    nsCOMPtr<gfxIImageFrame> imgFrame;
++    aImage->GetCurrentFrame(getter_AddRefs(imgFrame));
++    if (!imgFrame) return NS_ERROR_FAILURE;
++
++    nsCOMPtr<nsIImage> img(do_GetInterface(imgFrame));
++    if (!img) return NS_ERROR_FAILURE;
++
++    // For Bug 87819
++    // imgFrame may want image to start at different position, so adjust
++    nsIntRect pxImgFrameRect;
++    imgFrame->GetRect(pxImgFrameRect);
++
++    // twSrcRect is always in appunits (twips),
++    // and has nothing to do with the current transform (it's a region
++    // of the image)
++    double p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
++    nsIntRect pxSr;
++    pxSr.x = NSAppUnitsToIntPixels(twSrcRect.x, p2a);
++    pxSr.y = NSAppUnitsToIntPixels(twSrcRect.y, p2a);
++    pxSr.width = NSAppUnitsToIntPixels(twSrcRect.XMost(), p2a) - pxSr.x;
++    pxSr.height = NSAppUnitsToIntPixels(twSrcRect.YMost(), p2a) - pxSr.y;
++
++    // the dest rect is affected by the current transform; that'll be
++    // handled by Image::Draw(), when we actually set up the rectangle.
++    nsIntRect pxDr;
++    pxDr.x = FROM_TWIPS_INT(twDestRect.x);
++    pxDr.y = FROM_TWIPS_INT(twDestRect.y);
++    pxDr.width = FROM_TWIPS_INT(twDestRect.XMost()) - pxDr.x;
++    pxDr.height = FROM_TWIPS_INT(twDestRect.YMost()) - pxDr.y;
++
++    // If we were asked to draw a 0-width or 0-height image,
++    // as either the src or dst, just bail; we can't do anything
++    // useful with this.
++    if (pxSr.width == 0 || pxSr.height == 0 ||
++        pxDr.width == 0 || pxDr.height == 0)
++    {
++        return NS_OK;
++    }
++
++    if (pxImgFrameRect.x > 0) {
++        pxSr.x -= pxImgFrameRect.x;
++
++        nscoord scaled_x = pxSr.x;
++        if (pxDr.width != pxSr.width) {
++            PRFloat64 scale_ratio = PRFloat64(pxDr.width) / PRFloat64(pxSr.width);
++            scaled_x = NSToCoordRound(scaled_x * scale_ratio);
++        }
++
++        if (pxSr.x < 0) {
++            pxDr.x -= scaled_x;
++            pxSr.width += pxSr.x;
++            pxDr.width += scaled_x;
++            if (pxSr.width <= 0 || pxDr.width <= 0)
++                return NS_OK;
++            pxSr.x = 0;
++        } else if (pxSr.x > pxImgFrameRect.width) {
++            return NS_OK;
++        }
++    }
++
++    if (pxImgFrameRect.y > 0) {
++        pxSr.y -= pxImgFrameRect.y;
++
++        nscoord scaled_y = pxSr.y;
++        if (pxDr.height != pxSr.height) {
++            PRFloat64 scale_ratio = PRFloat64(pxDr.height) / PRFloat64(pxSr.height);
++            scaled_y = NSToCoordRound(scaled_y * scale_ratio);
++        }
++
++        if (pxSr.y < 0) {
++            pxDr.y -= scaled_y;
++            pxSr.height += pxSr.y;
++            pxDr.height += scaled_y;
++            if (pxSr.height <= 0 || pxDr.height <= 0)
++                return NS_OK;
++            pxSr.y = 0;
++        } else if (pxSr.y > pxImgFrameRect.height) {
++            return NS_OK;
++        }
++    }
++
++    return img->Draw(*this, mDrawingSurface,
++                     pxSr.x, pxSr.y,
++                     pxSr.width, pxSr.height,
++                     pxDr.x, pxDr.y, pxDr.width, pxDr.height);
+ }
+ 
+ NS_IMETHODIMP
+ nsThebesRenderingContext::DrawTile(imgIContainer *aImage,
+                                    nscoord twXOffset, nscoord twYOffset,
+                                    const nsRect *twTargetRect)
+ {
+     PR_LOG(gThebesGFXLog, PR_LOG_DEBUG, ("## %p nsTRC::DrawTile %p %f %f [%f,%f,%f,%f]\n",
+Index: mozilla/layout/base/nsCSSRendering.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsCSSRendering.cpp
++++ mozilla/layout/base/nsCSSRendering.cpp
+@@ -3188,17 +3188,17 @@
+                  "Bogus x coord for draw rect");
+     NS_ASSERTION(drawRect.y < absTileRect.y + tileHeight,
+                  "Bogus y coord for draw rect");
+     // Figure out whether we can get away with not tiling at all.
+     nsRect sourceRect = drawRect - absTileRect.TopLeft();
+     if (sourceRect.XMost() <= tileWidth && sourceRect.YMost() <= tileHeight) {
+       // The entire drawRect is contained inside a single tile; just
+       // draw the corresponding part of the image once.
+-      nsLayoutUtils::DrawImage(&aRenderingContext, image, absTileRect, drawRect);
++      aRenderingContext.DrawImage(image, sourceRect, drawRect);
+     } else {
+       aRenderingContext.DrawTile(image, absTileRect.x, absTileRect.y, &drawRect);
+     }
+   }
+ 
+ #if (!defined(XP_UNIX) && !defined(XP_BEOS)) || defined(XP_MACOSX)
+   // Restore clipping
+   aRenderingContext.PopState();
+Index: mozilla/layout/base/nsLayoutUtils.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsLayoutUtils.cpp
++++ mozilla/layout/base/nsLayoutUtils.cpp
+@@ -55,24 +55,19 @@
+ #include "nsIPrivateDOMEvent.h"
+ #include "nsIDOMEvent.h"
+ #include "nsGUIEvent.h"
+ #include "nsDisplayList.h"
+ #include "nsRegion.h"
+ #include "nsFrameManager.h"
+ #include "nsBlockFrame.h"
+ #include "nsBidiPresUtils.h"
+-#include "gfxIImageFrame.h"
+-#include "imgIContainer.h"
+ #ifdef MOZ_CAIRO_GFX
+-#include "gfxRect.h"
+-#endif
+ #include "gfxContext.h"
+-#include "nsIImage.h"
+-#include "nsIInterfaceRequestorUtils.h"
++#endif
+ #include "nsCSSRendering.h"
+ 
+ #ifdef MOZ_SVG_FOREIGNOBJECT
+ #include "nsSVGForeignObjectFrame.h"
+ #include "nsSVGUtils.h"
+ #include "nsSVGOuterSVGFrame.h"
+ #endif
+ 
+@@ -1998,168 +1993,16 @@
+           layer->GetParent()->GetType() == nsGkAtoms::scrollFrame))
+       break;
+   }
+   if (layer)
+     return layer;
+   return aFrame->PresContext()->PresShell()->FrameManager()->GetRootFrame();
+ }
+ 
+-/* static */ nsresult
+-nsLayoutUtils::DrawImage(nsIRenderingContext* aRenderingContext,
+-                         imgIContainer* aImage,
+-                         const nsRect& aDestRect,
+-                         const nsRect& aDirtyRect,
+-                         const nsRect* aSourceRect)
+-{
+-#ifdef MOZ_CAIRO_GFX
+-  nsRect dirtyRect;
+-  dirtyRect.IntersectRect(aDirtyRect, aDestRect);
+-  if (dirtyRect.IsEmpty())
+-    return NS_OK;
+-
+-  nsCOMPtr<gfxIImageFrame> imgFrame;
+-  aImage->GetCurrentFrame(getter_AddRefs(imgFrame));
+-  if (!imgFrame) return NS_ERROR_FAILURE;
+-
+-  nsCOMPtr<nsIImage> img(do_GetInterface(imgFrame));
+-  if (!img) return NS_ERROR_FAILURE;
+-
+-  // twSrcRect is always in appunits (twips),
+-  // and has nothing to do with the current transform (it's a region
+-  // of the image)
+-  gfxRect pxSrc;
+-  if (aSourceRect) {
+-    PRInt32 p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
+-    pxSrc.pos.x = NSAppUnitsToFloatPixels(aSourceRect->x, p2a);
+-    pxSrc.pos.y = NSAppUnitsToFloatPixels(aSourceRect->y, p2a);
+-    pxSrc.size.width = NSAppUnitsToFloatPixels(aSourceRect->width, p2a);
+-    pxSrc.size.height = NSAppUnitsToFloatPixels(aSourceRect->height, p2a);
+-  } else {
+-    pxSrc.pos.x = pxSrc.pos.y = 0.0;
+-    PRInt32 w = 0, h = 0;
+-    aImage->GetWidth(&w);
+-    aImage->GetHeight(&h);
+-    pxSrc.size.width = gfxFloat(w);
+-    pxSrc.size.height = gfxFloat(h);
+-  }
+-
+-  nsCOMPtr<nsIDeviceContext> dc;
+-  aRenderingContext->GetDeviceContext(*getter_AddRefs(dc));
+-  PRInt32 d2a = dc->AppUnitsPerDevPixel();
+-
+-  nsRefPtr<gfxContext> ctx = NS_STATIC_CAST(gfxContext*,
+-    aRenderingContext->GetNativeGraphicData(
+-      nsIRenderingContext::NATIVE_THEBES_CONTEXT));
+-
+-  // the dest rect is affected by the current transform; that'll be
+-  // handled by Image::Draw(), when we actually set up the rectangle.
+-  
+-  // Snap the edges of where layout wants the image to the nearest
+-  // pixel, but then convert back to gfxFloats for the rest of the math.
+-  gfxRect pxDest;
+-  {
+-    pxDest.pos.x = NSAppUnitsToFloatPixels(aDestRect.x, d2a);
+-    pxDest.pos.y = NSAppUnitsToFloatPixels(aDestRect.y, d2a);
+-    pxDest.size.width = NSAppUnitsToFloatPixels(aDestRect.width, d2a);
+-    pxDest.size.height = NSAppUnitsToFloatPixels(aDestRect.height, d2a);
+-    if (ctx->UserToDevicePixelSnapped(pxDest))
+-      pxDest = ctx->DeviceToUser(pxDest);
+-  }
+-
+-  // And likewise for the dirty rect.  (Is should be OK to round to
+-  // nearest rather than outwards, since any dirty rects coming from the
+-  // OS should be on pixel boundaries; the rest is other things it's
+-  // been intersected with, and we should be rounding those consistently.)
+-  gfxRect pxDirty;
+-  {
+-    pxDirty.pos.x = NSAppUnitsToFloatPixels(dirtyRect.x, d2a);
+-    pxDirty.pos.y = NSAppUnitsToFloatPixels(dirtyRect.y, d2a);
+-    pxDirty.size.width = NSAppUnitsToFloatPixels(dirtyRect.width, d2a);
+-    pxDirty.size.height = NSAppUnitsToFloatPixels(dirtyRect.height, d2a);
+-    if (ctx->UserToDevicePixelSnapped(pxDirty))
+-      pxDirty = ctx->DeviceToUser(pxDirty);
+-  }
+-
+-  // Reduce the src rect to what's needed for the dirty rect.
+-  if (pxDirty.size.width != pxDest.size.width) {
+-    const gfxFloat ratio = pxSrc.size.width / pxDest.size.width;
+-    pxSrc.pos.x += (pxDirty.pos.x - pxDest.pos.x) * ratio;
+-    pxSrc.size.width = pxDirty.size.width * ratio;
+-  }
+-  if (pxDirty.size.height != pxDest.size.height) {
+-    const gfxFloat ratio = pxSrc.size.height / pxDest.size.height;
+-    pxSrc.pos.y += (pxDirty.pos.y - pxDest.pos.y) * ratio;
+-    pxSrc.size.height = pxDirty.size.height * ratio;
+-  }
+-
+-  // If we were asked to draw a 0-width or 0-height image,
+-  // as either the src or dst, just bail; we can't do anything
+-  // useful with this.
+-  if (pxSrc.IsEmpty() || pxDirty.IsEmpty())
+-  {
+-    return NS_OK;
+-  }
+-
+-  // For Bug 87819
+-  // imgFrame may want image to start at different position, so adjust
+-  nsIntRect pxImgFrameRect;
+-  imgFrame->GetRect(pxImgFrameRect);
+-
+-  if (pxImgFrameRect.x > 0) {
+-    pxSrc.pos.x -= gfxFloat(pxImgFrameRect.x);
+-
+-    gfxFloat scaled_x = pxSrc.pos.x;
+-    if (pxDirty.size.width != pxSrc.size.width) {
+-      scaled_x = scaled_x * (pxDirty.size.width / pxSrc.size.width);
+-    }
+-
+-    if (pxSrc.pos.x < 0.0) {
+-      pxDirty.pos.x -= scaled_x;
+-      pxSrc.size.width += pxSrc.pos.x;
+-      pxDirty.size.width += scaled_x;
+-      if (pxSrc.size.width <= 0.0 || pxDirty.size.width <= 0.0)
+-        return NS_OK;
+-      pxSrc.pos.x = 0.0;
+-    }
+-  }
+-  if (pxSrc.pos.x > gfxFloat(pxImgFrameRect.width)) {
+-    return NS_OK;
+-  }
+-
+-  if (pxImgFrameRect.y > 0) {
+-    pxSrc.pos.y -= gfxFloat(pxImgFrameRect.y);
+-
+-    gfxFloat scaled_y = pxSrc.pos.y;
+-    if (pxDirty.size.height != pxSrc.size.height) {
+-      scaled_y = scaled_y * (pxDirty.size.height / pxSrc.size.height);
+-    }
+-
+-    if (pxSrc.pos.y < 0.0) {
+-      pxDirty.pos.y -= scaled_y;
+-      pxSrc.size.height += pxSrc.pos.y;
+-      pxDirty.size.height += scaled_y;
+-      if (pxSrc.size.height <= 0.0 || pxDirty.size.height <= 0.0)
+-        return NS_OK;
+-      pxSrc.pos.y = 0.0;
+-    }
+-  }
+-  if (pxSrc.pos.y > gfxFloat(pxImgFrameRect.height)) {
+-    return NS_OK;
+-  }
+-
+-  return img->Draw(*aRenderingContext, pxSrc, pxDirty);
+-#else
+-  /*
+-   * If somebody wants non-cairo GFX to work again, they could write
+-   * appropriate code to call nsIRenderingContext::DrawImage here
+-   */
+-#endif
+-}
+-
+ void
+ nsLayoutUtils::SetFontFromStyle(nsIRenderingContext* aRC, nsStyleContext* aSC) 
+ {
+   const nsStyleFont* font = aSC->GetStyleFont();
+   const nsStyleVisibility* visibility = aSC->GetStyleVisibility();
+ 
+   aRC->SetFont(font->mFont, visibility->mLangGroup);
+ }
+Index: mozilla/layout/base/nsLayoutUtils.h
+===================================================================
+--- mozilla.orig/layout/base/nsLayoutUtils.h
++++ mozilla/layout/base/nsLayoutUtils.h
+@@ -15,18 +15,16 @@
+  * The Original Code is Mozilla.org code.
+  *
+  * The Initial Developer of the Original Code is
+  * Boris Zbarsky <bzbarsky@mit.edu>.
+  * Portions created by the Initial Developer are Copyright (C) 2002
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
+- *   Boris Zbarsky <bzbarsky@mit.edu> (original author)
+- *   L. David Baron <dbaron@dbaron.org>, Mozilla Corporation
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either of the GNU General Public License Version 2 or later (the "GPL"),
+  * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+@@ -635,38 +633,16 @@
+    * definition. This is the nearest frame that is either positioned or scrolled
+    * (the child of a scroll frame). In Gecko terms, it's approximately
+    * equivalent to having a view, at least for simple HTML. However, views are
+    * going away, so this is a cleaner definition.
+    */
+   static nsIFrame* GetClosestLayer(nsIFrame* aFrame);
+ 
+   /**
+-   * Draw a single image.
+-   *   @param aImage            The image.
+-   *   @param aRenderingContext Where to draw the image, set up with an
+-   *                            appropriate scale and transform for drawing in
+-   *                            app units (aDestRect).
+-   *   @param aDestRect         Where to draw the image (app units).
+-   *   @param aDirtyRect        Draw only within this region (rounded to the
+-   *                            nearest pixel); the intersection of
+-   *                            invalidation and clipping.
+-   *   @param aSourceRect       If null, draw the entire image so it fits in
+-   *                            aDestRect.  If non-null, the subregion of the
+-   *                            image that should be drawn (in app units, such
+-   *                            that converting it to CSS pixels yields image
+-   *                            pixels).
+-   */
+-  static nsresult DrawImage(nsIRenderingContext* aRenderingContext,
+-                            imgIContainer* aImage,
+-                            const nsRect& aDestRect,
+-                            const nsRect& aDirtyRect,
+-                            const nsRect* aSourceRect = nsnull);
+-
+-  /**
+    * Set the font on aRC based on the style in aSC
+    */
+   static void SetFontFromStyle(nsIRenderingContext* aRC, nsStyleContext* aSC);
+ 
+   /**
+    * Convert an eStyleUnit_Chars nsStyleCoord to an nscoord.
+    *
+    * @param aStyle the style coord
+Index: mozilla/layout/forms/Makefile.in
+===================================================================
+--- mozilla.orig/layout/forms/Makefile.in
++++ mozilla/layout/forms/Makefile.in
+@@ -46,17 +46,16 @@
+ LIBRARY_NAME	= gkforms_s
+ LIBXUL_LIBRARY	= 1
+ 
+ REQUIRES	= xpcom \
+ 		  string \
+ 		  locale \
+ 		  content \
+ 		  gfx \
+-		  thebes \
+ 		  widget \
+ 		  view \
+ 		  dom \
+ 		  necko \
+ 		  webshell \
+ 		  editor \
+ 		  txtsvc \
+ 		  intl \
+Index: mozilla/layout/generic/nsBulletFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsBulletFrame.cpp
++++ mozilla/layout/generic/nsBulletFrame.cpp
+@@ -190,52 +190,51 @@
+      const nsRect& aDirtyRect);
+   NS_DISPLAY_DECL_NAME("Bullet")
+ };
+ 
+ void nsDisplayBullet::Paint(nsDisplayListBuilder* aBuilder,
+      nsIRenderingContext* aCtx, const nsRect& aDirtyRect)
+ {
+   NS_STATIC_CAST(nsBulletFrame*, mFrame)->
+-    PaintBullet(*aCtx, aBuilder->ToReferenceFrame(mFrame), aDirtyRect);
++    PaintBullet(*aCtx, aBuilder->ToReferenceFrame(mFrame));
+ }
+ 
+ NS_IMETHODIMP
+ nsBulletFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                 const nsRect&           aDirtyRect,
+                                 const nsDisplayListSet& aLists)
+ {
+   if (!IsVisibleForPainting(aBuilder))
+     return NS_OK;
+ 
+   DO_GLOBAL_REFLOW_COUNT_DSP("nsBulletFrame");
+   
+   return aLists.Content()->AppendNewToTop(new (aBuilder) nsDisplayBullet(this));
+ }
+ 
+ void
+-nsBulletFrame::PaintBullet(nsIRenderingContext& aRenderingContext, nsPoint aPt,
+-                           const nsRect& aDirtyRect)
++nsBulletFrame::PaintBullet(nsIRenderingContext& aRenderingContext, nsPoint aPt)
+ {
+   const nsStyleList* myList = GetStyleList();
+   PRUint8 listStyleType = myList->mListStyleType;
+ 
+   if (myList->mListStyleImage && mImageRequest) {
+     PRUint32 status;
+     mImageRequest->GetImageStatus(&status);
+     if (status & imgIRequest::STATUS_LOAD_COMPLETE &&
+         !(status & imgIRequest::STATUS_ERROR)) {
+       nsCOMPtr<imgIContainer> imageCon;
+       mImageRequest->GetImage(getter_AddRefs(imageCon));
+       if (imageCon) {
+-        nsRect dest(mPadding.left, mPadding.top,
+-                    mRect.width - (mPadding.left + mPadding.right),
+-                    mRect.height - (mPadding.top + mPadding.bottom));
+-        nsLayoutUtils::DrawImage(&aRenderingContext, imageCon,
+-                                 dest + aPt, aDirtyRect);
++        nsRect innerArea(0, 0,
++                         mRect.width - (mPadding.left + mPadding.right),
++                         mRect.height - (mPadding.top + mPadding.bottom));
++        nsRect dest(mPadding.left, mPadding.top, innerArea.width, innerArea.height);
++        aRenderingContext.DrawImage(imageCon, innerArea, dest + aPt);
+         return;
+       }
+     }
+   }
+ 
+   const nsStyleFont* myFont = GetStyleFont();
+   const nsStyleColor* myColor = GetStyleColor();
+ 
+Index: mozilla/layout/generic/nsBulletFrame.h
+===================================================================
+--- mozilla.orig/layout/generic/nsBulletFrame.h
++++ mozilla/layout/generic/nsBulletFrame.h
+@@ -94,18 +94,17 @@
+   static PRBool AppendCounterText(PRInt32 aListStyleType,
+                                   PRInt32 aOrdinal,
+                                   nsString& aResult);
+ 
+   /* get list item text, with '.' */
+   PRBool GetListItemText(const nsStyleList& aStyleList,
+                          nsString& aResult);
+                          
+-  void PaintBullet(nsIRenderingContext& aRenderingContext, nsPoint aPt,
+-                   const nsRect& aDirtyRect);
++  void PaintBullet(nsIRenderingContext& aRenderingContext, nsPoint aPt);
+ 
+ protected:
+   void GetDesiredSize(nsPresContext* aPresContext,
+                       nsIRenderingContext *aRenderingContext,
+                       nsHTMLReflowMetrics& aMetrics);
+ 
+   void GetLoadGroup(nsPresContext *aPresContext, nsILoadGroup **aLoadGroup);
+ 
+Index: mozilla/layout/generic/nsImageFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsImageFrame.cpp
++++ mozilla/layout/generic/nsImageFrame.cpp
+@@ -15,17 +15,16 @@
+  * The Original Code is mozilla.org code.
+  *
+  * The Initial Developer of the Original Code is
+  * Netscape Communications Corporation.
+  * Portions created by the Initial Developer are Copyright (C) 1998
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
+- *   L. David Baron <dbaron@dbaron.org>, Mozilla Corporation
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either of the GNU General Public License Version 2 or later (the "GPL"),
+  * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+@@ -335,19 +334,18 @@
+ {
+   // In any case, we need to translate this over appropriately.  Set
+   // translation _before_ setting scaling so that it does not get
+   // scaled!
+ 
+   // XXXbz does this introduce rounding errors because of the cast to
+   // float?  Should we just manually add that stuff in every time
+   // instead?
+-  nsRect innerArea = GetInnerArea();
+-  mTransform.SetToTranslate(float(innerArea.x),
+-                            float(innerArea.y - GetContinuationOffset()));
++  mTransform.SetToTranslate(float(mBorderPadding.left),
++                            float(mBorderPadding.top - GetContinuationOffset()));
+   
+   // Set the scale factors
+   if (mIntrinsicSize.width != 0 && mIntrinsicSize.height != 0 &&
+       mIntrinsicSize != mComputedSize) {
+     mTransform.AddScale(float(mComputedSize.width)  / float(mIntrinsicSize.width),
+                         float(mComputedSize.height) / float(mIntrinsicSize.height));
+   }
+ }
+@@ -722,28 +720,46 @@
+                             aRenderingContext, this,
+                             mIntrinsicSize,
+                             aCBSize, aMargin, aBorder, aPadding);
+ }
+ 
+ nsRect 
+ nsImageFrame::GetInnerArea() const
+ {
+-  return GetContentRect() - GetPosition();
++  nsRect r;
++  r.x = mBorderPadding.left;
++  r.y = GetPrevInFlow() ? 0 : mBorderPadding.top;
++  r.width = mRect.width - mBorderPadding.left - mBorderPadding.right;
++  r.height = mRect.height -
++    (GetPrevInFlow() ? 0 : mBorderPadding.top) -
++    (GetNextInFlow() ? 0 : mBorderPadding.bottom);
++  return r;
+ }
+ 
+ // get the offset into the content area of the image where aImg starts if it is a continuation.
+ nscoord 
+-nsImageFrame::GetContinuationOffset() const
++nsImageFrame::GetContinuationOffset(nscoord* aWidth) const
+ {
+   nscoord offset = 0;
+-  for (nsIFrame *f = GetPrevInFlow(); f; f = f->GetPrevInFlow()) {
+-    offset += f->GetContentRect().height;
++  if (aWidth) {
++    *aWidth = 0;
++  }
++
++  if (GetPrevInFlow()) {
++    for (nsIFrame* prevInFlow = GetPrevInFlow() ; prevInFlow; prevInFlow = prevInFlow->GetPrevInFlow()) {
++      nsRect rect = prevInFlow->GetRect();
++      if (aWidth) {
++        *aWidth = rect.width;
++      }
++      offset += rect.height;
++    }
++    offset -= mBorderPadding.top;
++    offset = PR_MAX(0, offset);
+   }
+-  NS_ASSERTION(offset >= 0, "bogus GetContentRect");
+   return offset;
+ }
+ 
+ /* virtual */ nscoord
+ nsImageFrame::GetMinWidth(nsIRenderingContext *aRenderingContext)
+ {
+   // XXX The caller doesn't account for constraints of the height,
+   // min-height, and max-height properties.
+@@ -793,31 +809,34 @@
+   }
+ 
+   // XXXldb These two bits are almost exact opposites (except in the
+   // middle of the initial reflow); remove IMAGE_GOTINITIALREFLOW.
+   if (GetStateBits() & NS_FRAME_FIRST_REFLOW) {
+     mState |= IMAGE_GOTINITIALREFLOW;
+   }
+ 
++  // Set our borderpadding so that if GetDesiredSize has to recalc the
++  // transform it can.
++  mBorderPadding   = aReflowState.mComputedBorderPadding;
++
+   mComputedSize = 
+     nsSize(aReflowState.ComputedWidth(), aReflowState.mComputedHeight);
+   RecalculateTransform();
+ 
+   aMetrics.width = mComputedSize.width;
+   aMetrics.height = mComputedSize.height;
+ 
+   // add borders and padding
+-  aMetrics.width  += aReflowState.mComputedBorderPadding.LeftRight();
+-  aMetrics.height += aReflowState.mComputedBorderPadding.TopBottom();
++  aMetrics.width  += mBorderPadding.left + mBorderPadding.right;
++  aMetrics.height += mBorderPadding.top + mBorderPadding.bottom;
+   
+   if (GetPrevInFlow()) {
+-    aMetrics.width = GetPrevInFlow()->GetSize().width;
+-    nscoord y = GetContinuationOffset();
+-    aMetrics.height -= y + aReflowState.mComputedBorderPadding.top;
++    nscoord y = GetContinuationOffset(&aMetrics.width);
++    aMetrics.height -= y + mBorderPadding.top;
+     aMetrics.height = PR_MAX(0, aMetrics.height);
+   }
+ 
+ 
+   // we have to split images if we are:
+   //  in Paginated mode, we need to have a constrained height, and have a height larger than our available height
+   PRUint32 loadStatus = imgIRequest::STATUS_NONE;
+   nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
+@@ -1006,17 +1025,16 @@
+       // mComputedBorder
+       SetBorderStyle(side, NS_STYLE_BORDER_STYLE_INSET);
+     }
+   }
+ };
+ 
+ void
+ nsImageFrame::DisplayAltFeedback(nsIRenderingContext& aRenderingContext,
+-                                 const nsRect&        aDirtyRect,
+                                  imgIRequest*         aRequest,
+                                  nsPoint              aPt)
+ {
+   // Calculate the inner area
+   nsRect  inner = GetInnerArea() + aPt;
+ 
+   // Display a recessed one pixel border
+   nscoord borderEdgeWidth = nsPresContext::CSSPixelsToAppUnits(ALT_BORDER_WIDTH);
+@@ -1063,20 +1081,21 @@
+     if (gIconLoad && gIconLoad->mIconsLoaded) {
+       // pick the correct image
+       nsCOMPtr<imgIContainer> imgCon;
+       if (aRequest) {
+         aRequest->GetImage(getter_AddRefs(imgCon));
+       }
+       if (imgCon) {
+         // draw it
++        nsRect source(0,0,size,size);
+         nsRect dest((vis->mDirection == NS_STYLE_DIRECTION_RTL) ?
+                     inner.XMost() - size : inner.x,
+                     inner.y, size, size);
+-        nsLayoutUtils::DrawImage(&aRenderingContext, imgCon, dest, aDirtyRect);
++        aRenderingContext.DrawImage(imgCon, source, dest);
+         iconUsed = PR_TRUE;
+       }
+     }
+ 
+     // if we could not draw the image, then just draw some graffiti
+     if (!iconUsed) {
+       nscolor oldColor;
+       nscoord iconXPos = (vis->mDirection ==   NS_STYLE_DIRECTION_RTL) ?
+@@ -1112,17 +1131,16 @@
+   aRenderingContext.PopState();
+ }
+ 
+ static void PaintAltFeedback(nsIFrame* aFrame, nsIRenderingContext* aCtx,
+      const nsRect& aDirtyRect, nsPoint aPt)
+ {
+   nsImageFrame* f = NS_STATIC_CAST(nsImageFrame*, aFrame);
+   f->DisplayAltFeedback(*aCtx,
+-                        aDirtyRect,
+                         IMAGE_OK(f->GetContent()->IntrinsicState(), PR_TRUE)
+                            ? nsImageFrame::gIconLoad->mLoadingImage
+                            : nsImageFrame::gIconLoad->mBrokenImage,
+                         aPt);
+ }
+ 
+ #ifdef NS_DEBUG
+ static void PaintDebugImageMap(nsIFrame* aFrame, nsIRenderingContext* aCtx,
+@@ -1169,29 +1187,74 @@
+ }
+ 
+ void
+ nsImageFrame::PaintImage(nsIRenderingContext& aRenderingContext, nsPoint aPt,
+                          const nsRect& aDirtyRect, imgIContainer* aImage)
+ {
+   // Render the image into our content area (the area inside
+   // the borders and padding)
+-  NS_ASSERTION(GetInnerArea().width == mComputedSize.width, "bad width");
+   nsRect inner = GetInnerArea() + aPt;
+-  nsRect clip;
+-  clip.IntersectRect(inner, aDirtyRect);
++  nsRect paintArea(inner);
++
++  nscoord offsetY = 0;
++
++  // if the image is split account for y-offset
++  if (GetPrevInFlow()) {
++    offsetY = GetContinuationOffset();
++  }
++
++  if (mIntrinsicSize == mComputedSize) {
++    // Find the actual rect to be painted to in the rendering context
++    paintArea.IntersectRect(paintArea, aDirtyRect);
+ 
+-  nsRect dest(inner.TopLeft(), mComputedSize);
+-  dest.y -= GetContinuationOffset();
++    // Rect in the image to paint
++    nsRect r(paintArea.x - inner.x,
++             paintArea.y - inner.y + offsetY,
++             paintArea.width,
++             paintArea.height);
+ 
+-  nsLayoutUtils::DrawImage(&aRenderingContext, aImage, dest, clip);
++    aRenderingContext.DrawImage(aImage, r, paintArea);
++  } else {
++    // The computed size is the total size of all the continuations,
++    // including ourselves.  Note that we're basically inverting
++    // mTransform here (would it too much to ask for
++    // nsTransform2D::Invert?), since we need to convert from
++    // rendering context coords to image coords...
++    nsTransform2D trans;
++    trans.SetToScale((float(mIntrinsicSize.width) / float(mComputedSize.width)),
++                     (float(mIntrinsicSize.height) / float(mComputedSize.height)));
++
++    // XXXbz it looks like we should take
++    // IntersectRect(paintArea, aDirtyRect) here too, but things
++    // get very weird if I do that ....
++    //   paintArea.IntersectRect(paintArea, aDirtyRect);
++
++    // dirty rect in image our coord size...
++    nsRect r(paintArea.x - inner.x,
++             paintArea.y - inner.y + offsetY,
++             paintArea.width,
++             paintArea.height);
++
++    // Transform that to image coords
++    trans.TransformCoord(&r.x, &r.y, &r.width, &r.height);
++
++#ifdef DEBUG_decode
++    printf("IF draw src (%d,%d,%d,%d) -> dst (%d,%d,%d,%d)\n",
++           r.x, r.y, r.width, r.height, paintArea.x, paintArea.y,
++           paintArea.width, paintArea.height);
++#endif
++
++    aRenderingContext.DrawImage(aImage, r, paintArea);
++  }
+ 
+   nsPresContext* presContext = PresContext();
+   nsImageMap* map = GetImageMap(presContext);
+   if (nsnull != map) {
++    nsRect inner = GetInnerArea() + aPt;
+     aRenderingContext.PushState();
+     aRenderingContext.SetColor(NS_RGB(0, 0, 0));
+     aRenderingContext.SetLineStyle(nsLineStyle_kDotted);
+     aRenderingContext.Translate(inner.x, inner.y);
+     map->Draw(presContext, aRenderingContext);
+     aRenderingContext.PopState();
+   }
+ }
+@@ -1626,29 +1689,16 @@
+       fprintf(out, " [src=%s]", uristr.get());
+     }
+   }
+   fputs("\n", out);
+   return NS_OK;
+ }
+ #endif
+ 
+-PRIntn
+-nsImageFrame::GetSkipSides() const
+-{
+-  PRIntn skip = 0;
+-  if (nsnull != GetPrevInFlow()) {
+-    skip |= 1 << NS_SIDE_TOP;
+-  }
+-  if (nsnull != GetNextInFlow()) {
+-    skip |= 1 << NS_SIDE_BOTTOM;
+-  }
+-  return skip;
+-}
+-
+ NS_IMETHODIMP 
+ nsImageFrame::GetIntrinsicImageSize(nsSize& aSize)
+ {
+   aSize = mIntrinsicSize;
+   return NS_OK;
+ }
+ 
+ nsresult
+Index: mozilla/layout/generic/nsImageFrame.h
+===================================================================
+--- mozilla.orig/layout/generic/nsImageFrame.h
++++ mozilla/layout/generic/nsImageFrame.h
+@@ -15,17 +15,16 @@
+  * The Original Code is mozilla.org code.
+  *
+  * The Initial Developer of the Original Code is
+  * Netscape Communications Corporation.
+  * Portions created by the Initial Developer are Copyright (C) 1998
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
+- *   L. David Baron <dbaron@dbaron.org>, Mozilla Corporation
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either of the GNU General Public License Version 2 or later (the "GPL"),
+  * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+@@ -136,18 +135,16 @@
+     return ImageFrameSuper::IsFrameOfType(aFlags & ~(nsIFrame::eReplaced));
+   }
+ 
+ #ifdef DEBUG
+   NS_IMETHOD GetFrameName(nsAString& aResult) const;
+   NS_IMETHOD List(FILE* out, PRInt32 aIndent) const;
+ #endif
+ 
+-  virtual PRIntn GetSkipSides() const;
+-
+   NS_IMETHOD GetImageMap(nsPresContext *aPresContext, nsIImageMap **aImageMap);
+ 
+   NS_IMETHOD GetIntrinsicImageSize(nsSize& aSize);
+ 
+   static void ReleaseGlobals() {
+     if (gIconLoad) {
+       gIconLoad->Shutdown();
+       NS_RELEASE(gIconLoad);
+@@ -159,17 +156,16 @@
+    * Function to test whether aContent, which has aStyleContext as its style,
+    * should get an image frame.  Note that this method is only used by the
+    * frame constructor; it's only here because it uses gIconLoad for now.
+    */
+   static PRBool ShouldCreateImageFrameFor(nsIContent* aContent,
+                                           nsStyleContext* aStyleContext);
+   
+   void DisplayAltFeedback(nsIRenderingContext& aRenderingContext,
+-                          const nsRect&        aDirtyRect,
+                           imgIRequest*         aRequest,
+                           nsPoint              aPt);
+ 
+   nsRect GetInnerArea() const;
+ 
+   nsImageMap* GetImageMap(nsPresContext* aPresContext);
+ 
+ protected:
+@@ -237,17 +233,17 @@
+ 
+ private:
+   // random helpers
+   inline void SpecToURI(const nsAString& aSpec, nsIIOService *aIOService,
+                         nsIURI **aURI);
+ 
+   inline void GetLoadGroup(nsPresContext *aPresContext,
+                            nsILoadGroup **aLoadGroup);
+-  nscoord GetContinuationOffset() const;
++  nscoord GetContinuationOffset(nscoord* aWidth = 0) const;
+   void GetDocumentCharacterSet(nsACString& aCharset) const;
+ 
+   /**
+    * Recalculate mIntrinsicSize from the image.
+    *
+    * @return whether aImage's size did _not_
+    *         match our previous intrinsic size
+    */
+@@ -275,16 +271,18 @@
+   nsImageMap*         mImageMap;
+ 
+   nsCOMPtr<imgIDecoderObserver> mListener;
+ 
+   nsSize mComputedSize;
+   nsSize mIntrinsicSize;
+   nsTransform2D mTransform;
+   
++  nsMargin            mBorderPadding;
++
+   static nsIIOService* sIOService;
+ 
+   /* loading / broken image icon support */
+ 
+   // XXXbz this should be handled by the prescontext, I think; that
+   // way we would have a single iconload per mozilla session instead
+   // of one per document...
+ 
+Index: mozilla/layout/xul/base/src/Makefile.in
+===================================================================
+--- mozilla.orig/layout/xul/base/src/Makefile.in
++++ mozilla/layout/xul/base/src/Makefile.in
+@@ -48,17 +48,16 @@
+ 
+ REQUIRES	= xpcom \
+ 		  string \
+ 		  dom \
+ 		  locale \
+ 		  content \
+ 		  xul \
+ 		  gfx \
+-		  thebes \
+ 		  widget \
+ 		  view \
+ 		  docshell \
+ 		  necko \
+ 		  webshell \
+ 		  pref \
+ 		  intl \
+ 		  imglib2 \
+Index: mozilla/layout/xul/base/src/nsImageBoxFrame.cpp
+===================================================================
+--- mozilla.orig/layout/xul/base/src/nsImageBoxFrame.cpp
++++ mozilla/layout/xul/base/src/nsImageBoxFrame.cpp
+@@ -363,27 +363,48 @@
+   GetClientRect(rect);
+ 
+   rect += aPt;
+ 
+   if (!mImageRequest)
+     return;
+ 
+   // don't draw if the image is not dirty
+-  nsRect dirty;
+-  if (!dirty.IntersectRect(aDirtyRect, rect))
++  if (!aDirtyRect.Intersects(rect))
+     return;
+ 
+   nsCOMPtr<imgIContainer> imgCon;
+   mImageRequest->GetImage(getter_AddRefs(imgCon));
+ 
+   if (imgCon) {
+     PRBool hasSubRect = !mUseSrcAttr && (mSubRect.width > 0 || mSubRect.height > 0);
+-    nsLayoutUtils::DrawImage(&aRenderingContext, imgCon,
+-                             rect, dirty, hasSubRect ? &mSubRect : nsnull);
++    PRBool sizeMatch = hasSubRect ?
++                       mSubRect.width == rect.width && mSubRect.height == rect.height :
++                       mImageSize.width == rect.width && mImageSize.height == rect.height;
++
++    if (sizeMatch) {
++      nsRect dest(rect);
++
++      if (hasSubRect)
++        rect = mSubRect;
++      else {
++        rect.x = 0;
++        rect.y = 0;
++      }
++
++      // XXXdwh do dirty rect intersection like the HTML image frame does,
++      // so that we don't always repaint the entire image!
++      aRenderingContext.DrawImage(imgCon, rect, dest);
++    }
++    else {
++      nsRect src(0, 0, mImageSize.width, mImageSize.height);
++      if (hasSubRect)
++        src = mSubRect;
++      aRenderingContext.DrawImage(imgCon, src, rect);
++    }
+   }
+ }
+ 
+ 
+ //
+ // DidSetStyleContext
+ //
+ // When the style context changes, make sure that all of our image is up to date.
+Index: mozilla/layout/xul/base/src/tree/src/nsTreeBodyFrame.cpp
+===================================================================
+--- mozilla.orig/layout/xul/base/src/tree/src/nsTreeBodyFrame.cpp
++++ mozilla/layout/xul/base/src/tree/src/nsTreeBodyFrame.cpp
+@@ -3231,18 +3231,17 @@
+         nsRect r(twistyRect.x, twistyRect.y, imageSize.width, imageSize.height);
+ 
+         // Center the image. XXX Obey vertical-align style prop?
+         if (imageSize.height < twistyRect.height) {
+           r.y += (twistyRect.height - imageSize.height)/2;
+         }
+           
+         // Paint the image.
+-        nsLayoutUtils::DrawImage(&aRenderingContext, image,
+-                                 r, aDirtyRect, &imageSize);
++        aRenderingContext.DrawImage(image, imageSize, r);
+       }
+     }        
+   }
+ }
+ 
+ void
+ nsTreeBodyFrame::PaintImage(PRInt32              aRowIndex,
+                             nsTreeColumn*        aColumn,
+@@ -3353,21 +3352,25 @@
+     // Here's an explanation. Let's say that the image is 100 pixels tall and
+     // that the CSS has specified that the destination height should be 50
+     // pixels tall. Let's say that the cell height is only 20 pixels. So, in
+     // those 20 visible pixels, we want to see the top 20/50ths of the image.
+     // So, the sourceRect.height should be 100 * 20 / 50, which is 40 pixels.
+     // Essentially, we are scaling the image as dictated by the CSS destination
+     // height and width, and we are then clipping the scaled image by the cell
+     // width and height.
+-    nsRect clip;
+-    clip.IntersectRect(aDirtyRect, destRect);
+-    nsLayoutUtils::DrawImage(&aRenderingContext, image,
+-                             nsRect(destRect.TopLeft(), imageDestSize),
+-                             clip, &sourceRect);
++    if (destRect.width != imageDestSize.width) {
++      sourceRect.width = sourceRect.width * destRect.width / imageDestSize.width;
++    }
++    if (destRect.height != imageDestSize.height) {
++      sourceRect.height = sourceRect.height * destRect.height / imageDestSize.height;
++    }
++
++    // Finally we can paint the image.
++    aRenderingContext.DrawImage(image, sourceRect, destRect);
+   }
+ 
+   // Update the aRemainingWidth and aCurrX values.
+   imageRect.Inflate(imageMargin);
+   aRemainingWidth -= imageRect.width;
+   aCurrX += imageRect.width;
+ }
+ 
+@@ -3516,18 +3519,17 @@
+       r.y += (checkboxRect.height - imageSize.height)/2;
+     }
+ 
+     if (imageSize.width < checkboxRect.width) {
+       r.x += (checkboxRect.width - imageSize.width)/2;
+     }
+ 
+     // Paint the image.
+-    nsLayoutUtils::DrawImage(&aRenderingContext, image,
+-                             r, aDirtyRect, &imageSize);
++    aRenderingContext.DrawImage(image, imageSize, r);
+   }
+ }
+ 
+ void
+ nsTreeBodyFrame::PaintProgressMeter(PRInt32              aRowIndex,
+                                     nsTreeColumn*        aColumn,
+                                     const nsRect&        aProgressMeterRect,
+                                     nsPresContext*      aPresContext,

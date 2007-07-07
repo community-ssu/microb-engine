@@ -1,0 +1,41 @@
+#Bug 364510 – [FIX][reflow branch] Right hand side of empty select is slightly cut off
+Index: layout/forms/nsComboboxControlFrame.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/layout/forms/nsComboboxControlFrame.cpp,v
+retrieving revision 1.384
+diff -u -p -d -8 -r1.384 nsComboboxControlFrame.cpp
+--- mozilla/layout/forms/nsComboboxControlFrame.cpp	11 Jan 2007 17:59:41 -0000	1.384
++++ mozilla/layout/forms/nsComboboxControlFrame.cpp	19 Jan 2007 03:42:32 -0000
+@@ -611,16 +611,32 @@ nsComboboxControlFrame::GetPrefWidth(nsI
+   DISPLAY_PREF_WIDTH(this, result);
+ 
+   if (NS_LIKELY(mDropdownFrame != nsnull)) {
+     result = mDropdownFrame->GetPrefWidth(aRenderingContext);
+   } else {
+     result = 0;
+   }
+ 
++  // It's also possible that the pref width of our dropdown is less than that
++  // of our display fram plus a scrollbar.  This can happen, eg, if the
++  // dropdown is empty.
++  if (NS_LIKELY(mListControlFrame && mDisplayFrame)) {
++    nsIScrollableFrame* scrollable;
++    CallQueryInterface(mListControlFrame, &scrollable);
++    NS_ASSERTION(scrollable, "List must be a scrollable frame");
++    nsBoxLayoutState bls(PresContext(), aRenderingContext);
++    nscoord displayResult =
++      scrollable->GetDesiredScrollbarSizes(&bls).LeftRight() +
++      nsLayoutUtils::IntrinsicForContainer(aRenderingContext, mDisplayFrame,
++                                           nsLayoutUtils::PREF_WIDTH);
++
++    result = PR_MAX(result, displayResult);
++  }
++
+   return result;
+ }
+ 
+ NS_IMETHODIMP 
+ nsComboboxControlFrame::Reflow(nsPresContext*          aPresContext, 
+                                nsHTMLReflowMetrics&     aDesiredSize,
+                                const nsHTMLReflowState& aReflowState, 
+                                nsReflowStatus&          aStatus)

@@ -1,0 +1,27 @@
+# Fixed building with system cairo library
+# 
+Index: mozilla/gfx/thebes/src/cairo-xlib-utils.c
+===================================================================
+--- mozilla.orig/gfx/thebes/src/cairo-xlib-utils.c
++++ mozilla/gfx/thebes/src/cairo-xlib-utils.c
+@@ -43,16 +43,20 @@
+ #if   HAVE_STDINT_H
+ #include <stdint.h>
+ #elif HAVE_INTTYPES_H
+ #include <inttypes.h>
+ #elif HAVE_SYS_INT_TYPES_H
+ #include <sys/int_types.h>
+ #endif
+ 
++#ifndef MOZ_TREE_CAIRO
++#include <stdint.h>
++#endif
++
+ #if 0
+ #include <stdio.h>
+ #define CAIRO_XLIB_DRAWING_NOTE(m) fprintf(stderr, m)
+ #else
+ #define CAIRO_XLIB_DRAWING_NOTE(m) do {} while (0)
+ #endif
+ 
+ static cairo_user_data_key_t pixmap_free_key;

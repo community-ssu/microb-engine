@@ -1,0 +1,75 @@
+Index: mozilla/content/base/src/nsContentSink.h
+===================================================================
+--- mozilla.orig/content/base/src/nsContentSink.h
++++ mozilla/content/base/src/nsContentSink.h
+@@ -275,16 +275,18 @@ protected:
+   // true if offline-resource links should be saved to the offline cache
+   PRUint8 mSaveOfflineResources : 1;
+ 
+   // -- Can interrupt parsing members --
+   PRUint32 mDelayTimerStart;
+ 
+   // Interrupt parsing during token procesing after # of microseconds
+   PRInt32 mMaxTokenProcessingTime;
++  PRInt32 mMaxTokenProcessingPerfTime;
++  PRInt32 mCountInterruptsBeforePerfMode;
+ 
+   // Switch between intervals when time is exceeded
+   PRInt32 mDynamicIntervalSwitchThreshold;
+ 
+   PRInt32 mBeginLoadTime;
+ 
+   // Last mouse event or keyboard event time sampled by the content
+   // sink
+Index: mozilla/content/base/src/nsContentSink.cpp
+===================================================================
+--- mozilla.orig/content/base/src/nsContentSink.cpp
++++ mozilla/content/base/src/nsContentSink.cpp
+@@ -243,16 +243,24 @@ nsContentSink::Init(nsIDocument* aDoc,
+   // The current ratio of 3 to 1 was determined to be the lowest
+   // mMaxTokenProcessingTime which does not impact page load
+   // performance.  See bugzilla bug 76722 for details.
+ 
+   mMaxTokenProcessingTime =
+     nsContentUtils::GetIntPref("content.max.tokenizing.time",
+                                mNotificationInterval * 3);
+ 
++  mMaxTokenProcessingPerfTime =
++    nsContentUtils::GetIntPref("content.max.perf.tokenizing.time",
++                               mMaxTokenProcessingTime * 15);
++
++  mCountInterruptsBeforePerfMode =
++    nsContentUtils::GetIntPref("content.perf.interrupts.count",
++                               3);
++
+   // 3/4 second (750000us) default for switching
+   mDynamicIntervalSwitchThreshold =
+     nsContentUtils::GetIntPref("content.switch.threshold", 750000);
+ 
+   mCanInterruptParser =
+     nsContentUtils::GetBoolPref("content.interrupt.parsing", PR_TRUE);
+ 
+   return NS_OK;
+@@ -1379,16 +1387,22 @@ nsContentSink::DidProcessATokenImpl()
+       mDynamicLowerValue = PR_FALSE;
+       // Reset the hint that to favoring performance for PLEvent dispatch.
+       FavorPerformanceHint(PR_TRUE, 0);
+     }
+   }
+ 
+   if ((currentTime - mDelayTimerStart) >
+       NS_STATIC_CAST(PRUint32, GetMaxTokenProcessingTime())) {
++    if (mCountInterruptsBeforePerfMode > 0) {
++      if (mCountInterruptsBeforePerfMode == 0)
++        mMaxTokenProcessingTime = mMaxTokenProcessingPerfTime;
++      else
++        mCountInterruptsBeforePerfMode--;
++    }
+     return NS_ERROR_HTMLPARSER_INTERRUPTED;
+   }
+ 
+   return NS_OK;
+ }
+ 
+ //----------------------------------------------------------------------
+ 

@@ -1,0 +1,117 @@
+Index: mozilla/gfx/src/thebes/nsThebesImage.cpp
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsThebesImage.cpp	2007-03-13 13:34:31.667150000 +0200
++++ mozilla/gfx/src/thebes/nsThebesImage.cpp	2007-03-13 13:34:43.327878750 +0200
+@@ -45,6 +45,7 @@
+ #include "gfxPlatform.h"
+ 
+ #include "prenv.h"
++#define ROMAXA_debug 1
+ 
+ static PRBool gDisableOptimize = PR_FALSE;
+ 
+@@ -336,9 +337,10 @@
+     nsThebesRenderingContext *thebesRC = NS_STATIC_CAST(nsThebesRenderingContext*, &aContext);
+     gfxContext *ctx = thebesRC->Thebes();
+ 
+-#if 0
+-    fprintf (stderr, "nsThebesImage::Draw src [%d %d %d %d] dest [%d %d %d %d] tx [%f %f] dec [%d %d %d %d]\n",
+-             aSourceRect.pos.x, aSourceRect.pos.y, aSWidth, aSHeight, aDX, aDY, aDWidth, aDHeight,
++#ifdef ROMAXA_debug
++    fprintf (stderr, "nsThebesImage::Draw src [%g %g %g %g] dest [%g %g %g %g] tx [%g %g] dec [%i %i %i %i]\n",
++             aSourceRect.pos.x, aSourceRect.pos.y, aSourceRect.size.width, aSourceRect.size.height,
++			 aDestRect.pos.x, aDestRect.pos.y, aDestRect.size.width, aDestRect.size.height,
+              ctx->CurrentMatrix().GetTranslation().x, ctx->CurrentMatrix().GetTranslation().y,
+              mDecoded.x, mDecoded.y, mDecoded.width, mDecoded.height);
+ #endif
+@@ -432,6 +434,14 @@
+     ctx->Rectangle(destRect, doSnap);
+     ctx->Fill();
+ 
++#ifdef ROMAXA_debug
++	fprintf (stderr, "\tSCALE(%f, %f)\n", xscale, yscale);
++	fprintf (stderr, "\tAfter mat.tx [%g %g], SrcRect:(%g,%g,%g,%g), DestRect:(%g,%g,%g,%g)\n\n",
++                      mat.GetTranslation().x, mat.GetTranslation().y,
++					  srcRect.pos.x, srcRect.pos.y, srcRect.size.width, srcRect.size.height,
++	                  destRect.pos.x, destRect.pos.y, destRect.size.width, destRect.size.height);
++#endif
++
+     if (doSnap)
+         ctx->SetMatrix(savedCTM);
+ 
+Index: mozilla/gfx/thebes/src/gfxImageSurface.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxImageSurface.cpp	2007-03-13 07:07:29.455852500 +0200
++++ mozilla/gfx/thebes/src/gfxImageSurface.cpp	2007-03-13 13:34:43.327878750 +0200
+@@ -38,6 +38,9 @@
+ #include "gfxImageSurface.h"
+ 
+ #include "cairo.h"
++#include <stdio.h>
++
++#define ROMAXA_debug 1
+ 
+ gfxImageSurface::gfxImageSurface(const gfxIntSize& size, gfxImageFormat format) :
+     mSize(size), mFormat(format)
+@@ -45,7 +48,9 @@
+     long stride = ComputeStride();
+     mData = new unsigned char[mSize.height * stride];
+     mOwnsData = PR_TRUE;
+-
++#ifdef ROMAXA_debug
++    printf("gfxImageSurface::gfxImageSurface: (%i,%i), %p\n\n", mSize.width, mSize.height, mData);
++#endif
+     cairo_surface_t *surface =
+         cairo_image_surface_create_for_data((unsigned char*)mData,
+                                             (cairo_format_t)format,
+@@ -62,6 +67,9 @@
+     mSize.width = cairo_image_surface_get_width(csurf);
+     mSize.height = cairo_image_surface_get_height(csurf);
+     mData = cairo_image_surface_get_data(csurf);
++#ifdef ROMAXA_debug
++    printf("gfxImageSurface::gfxImageSurface: (%i,%i), %p\n\n", mSize.width, mSize.height, mData);
++#endif
+     mFormat = (gfxImageFormat) cairo_image_surface_get_format(csurf);
+     mOwnsData = PR_FALSE;
+     mStride = cairo_image_surface_get_stride(csurf);
+@@ -71,6 +79,9 @@
+ 
+ gfxImageSurface::~gfxImageSurface()
+ {
++#ifdef ROMAXA_debug
++    printf("gfxImageSurface::~gfxImageSurface: mData: %p, %i\n\n", mData, mOwnsData);
++#endif
+     if (mOwnsData)
+         delete[] mData;
+ }
+Index: mozilla/layout/base/nsLayoutUtils.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsLayoutUtils.cpp	2007-03-13 07:07:29.479854000 +0200
++++ mozilla/layout/base/nsLayoutUtils.cpp	2007-03-13 13:34:43.327878750 +0200
+@@ -1876,6 +1876,26 @@
+   nsCOMPtr<nsIImage> img(do_GetInterface(imgFrame));
+   if (!img) return NS_ERROR_FAILURE;
+ 
++#if 1
++   printf("nsLayoutUtils::DrawImage: aRenderingContext: %p, aImage: %p\n", aRenderingContext, aImage);
++   printf("\tDsR(%i,%i,%i,%i), DrR(%i,%i,%i,%i)\n",
++          aDestRect.x, aDestRect.y, aDestRect.width, aDestRect.height,
++		  aDirtyRect.x, aDirtyRect.y, aDirtyRect.width, aDirtyRect.height);
++   if (aSourceRect)
++     printf("\tScR(%i,%i,%i,%i)\n", aSourceRect->x, aSourceRect->y, aSourceRect->width, aSourceRect->height);
++
++   PRInt32 wd = 0, hd = 0;
++   PRUint32 dl = 0;
++   aImage->GetWidth(&wd);
++   aImage->GetHeight(&hd);
++   printf("\taImage. wh:(%i,%i)\n", wd, hd);
++   imgFrame->GetImageDataLength(&dl);
++   imgFrame->GetWidth(&wd);
++   imgFrame->GetHeight(&hd);
++   printf("\tgfxImageFrame. wh:(%i,%i), dl:%i\n", wd, hd, dl);
++   printf("\tnsIImage. wh:(%i,%i)\n\n", img->GetWidth(), img->GetHeight());
++#endif
++
+   // twSrcRect is always in appunits (twips),
+   // and has nothing to do with the current transform (it's a region
+   // of the image)

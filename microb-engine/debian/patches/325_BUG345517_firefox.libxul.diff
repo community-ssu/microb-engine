@@ -1,0 +1,174 @@
+# Building firefox with libxul
+#
+#
+Index: mozilla/xpfe/components/search/src/Makefile.in
+===================================================================
+--- mozilla.orig/xpfe/components/search/src/Makefile.in
++++ mozilla/xpfe/components/search/src/Makefile.in
+@@ -44,16 +44,17 @@
+ 
+ MODULE		= appcomps
+ LIBRARY_NAME	= searchservice
+ SHORT_LIBNAME   = srchsvc
+ IS_COMPONENT	= 1
+ EXPORT_LIBRARY	= 1
+ MODULE_NAME	= SearchServiceModule
+ MOZILLA_INTERNAL_API = 1
++LIBXUL_LIBRARY  = 1
+ 
+ REQUIRES	= xpcom \
+ 		  string \
+ 		  rdf \
+ 		  necko \
+ 		  pref \
+ 		  uconv \
+ 		  intl \
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -4048,16 +4048,17 @@
+ dnl =
+ dnl = Application
+ dnl =
+ dnl ========================================================
+ 
+ MOZ_ARG_HEADER(Application)
+ 
+ BUILD_STATIC_LIBS=
++MOZ_META_COMPONENT=
+ ENABLE_TESTS=1
+ MOZ_ACTIVEX_SCRIPTING_SUPPORT=
+ MOZ_BRANDING_DIRECTORY=
+ MOZ_CALENDAR=
+ MOZ_DBGRINFO_MODULES=
+ MOZ_ENABLE_CANVAS=1
+ MOZ_EXTENSIONS_ALL=" wallet xml-rpc help venkman inspector irc typeaheadfind gnomevfs sroaming datetime finger cview layout-debug tasks sql xforms schema-validation reporter"
+ MOZ_FEEDS=1
+@@ -6871,34 +6872,40 @@
+     BUILD_STATIC_LIBS=1,
+     BUILD_STATIC_LIBS=)
+ 
+ MOZ_ARG_ENABLE_BOOL(libxul,
+ [  --enable-libxul         Enable building of libxul],
+     MOZ_ENABLE_LIBXUL=1,
+     MOZ_ENABLE_LIBXUL=)
+ 
+-if test -n "$MOZ_ENABLE_LIBXUL" -a -n "$BUILD_STATIC_LIBS"; then
+-	AC_MSG_ERROR([--enable-libxul is not compatible with --enable-static])
+-fi
++dnl if test -n "$MOZ_ENABLE_LIBXUL" -a -n "$BUILD_STATIC_LIBS"; then
++dnl 	AC_MSG_ERROR([--enable-libxul is not compatible with --enable-static])
++dnl fi
+ 
+ if test -n "$MOZ_ENABLE_LIBXUL" -a -z "$MOZ_XUL_APP"; then
+ 	AC_MSG_ERROR([--enable-libxul is only compatible with toolkit XUL applications.])
+ fi
+ 
+ if test -n "$MOZ_ENABLE_LIBXUL"; then
+     XPCOM_LIBS="$LIBXUL_LIBS"
+     AC_DEFINE(MOZ_ENABLE_LIBXUL)
+ else
+     if test -n "$BUILD_STATIC_LIBS"; then
+         AC_DEFINE(MOZ_STATIC_BUILD)
+     fi
+     XPCOM_LIBS="$DYNAMIC_XPCOM_LIBS"
+ fi
+ 
++if test "$MOZ_BUILD_APP" = "browser" -a -n "$BUILD_STATIC_LIBS"; then
++    MOZ_META_COMPONENT=1
++fi
++
++AC_SUBST(MOZ_META_COMPONENT)
++
+ dnl ========================================================
+ dnl = Force JS to be a static lib
+ dnl ========================================================
+ MOZ_ARG_ENABLE_BOOL(js-static-build,
+ [  --enable-js-static-build  Force js to be a static lib],
+     JS_STATIC_BUILD=1,
+     JS_STATIC_BUILD= )
+ 
+Index: mozilla/browser/app/Makefile.in
+===================================================================
+--- mozilla.orig/browser/app/Makefile.in
++++ mozilla/browser/app/Makefile.in
+@@ -284,36 +284,32 @@
+ 
+ GARBAGE += $(MOZ_APP_NAME)
+ GARBAGE += $(addprefix $(DIST)/bin/defaults/pref/, firefox.js)
+ 
+ endif
+ 
+ ifneq (,$(filter gtk2,$(MOZ_WIDGET_TOOLKIT)))
+ 
+-ICON_FILES	= \
+-		$(DIST)/branding/mozicon128.png \
+-		$(DIST)/branding/mozicon50.xpm \
+-		$(DIST)/branding/mozicon16.xpm \
+-		$(DIST)/branding/document.png \
+-		$(NULL)
++#ICON_FILES	= \
++#		$(NULL)
+ 
+-libs:: $(ICON_FILES)
+-	$(INSTALL) $^ $(DIST)/bin/icons
++#libs:: $(ICON_FILES)
++#	$(INSTALL) $^ $(DIST)/bin/icons
+ 
+ install::
+-	$(SYSINSTALL) $(IFLAGS1) $(ICON_FILES) $(DESTDIR)$(mozappdir)/icons
++	$(SYSINSTALL) $(IFLAGS1) $(DESTDIR)$(mozappdir)/icons
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+-libs::
+-	$(INSTALL) $(DIST)/branding/default.xpm $(DIST)/bin/chrome/icons/default
++#libs::
++#	$(INSTALL) $(DIST)/branding/default.xpm $(DIST)/bin/chrome/icons/default
+ 
+-install::
+-	$(SYSINSTALL) $(IFLAGS1) $(DIST)/branding/default.xpm $(DESTDIR)$(mozappdir)/chrome/icons/default
++#install::
++#	$(SYSINSTALL) $(IFLAGS1) $(DIST)/branding/default.xpm $(DESTDIR)$(mozappdir)/chrome/icons/default
+ endif
+ 
+ export::
+ ifndef MOZ_BRANDING_DIRECTORY
+ 	$(NSINSTALL) -D $(DIST)/branding
+ ifeq ($(OS_ARCH),WINNT)
+ 	cp $(srcdir)/firefox.ico   $(DIST)/branding/firefox.ico
+ 	cp $(srcdir)/firefox.ico   $(DIST)/branding/app.ico
+@@ -323,24 +319,24 @@
+ 	cp $(srcdir)/macbuild/firefox.icns  $(DIST)/branding/firefox.icns
+ 	cp $(srcdir)/macbuild/document.icns  $(DIST)/branding/document.icns
+ 	cp $(srcdir)/macbuild/dsstore $(DIST)/branding/dsstore
+ 	cp $(srcdir)/macbuild/background.png $(DIST)/branding/background.png
+ 	cp $(srcdir)/macbuild/disk.icns $(DIST)/branding/disk.icns
+ 	cp $(srcdir)/macbuild/license.r $(DIST)/branding/license.r
+ endif
+ ifneq (,$(filter gtk2,$(MOZ_WIDGET_TOOLKIT)))
+-	cp $(srcdir)/mozicon128.png $(DIST)/branding/mozicon128.png
+-	cp $(srcdir)/mozicon16.xpm $(DIST)/branding/mozicon16.xpm
+-	cp $(srcdir)/mozicon50.xpm $(DIST)/branding/mozicon50.xpm
+-	cp $(srcdir)/document.png $(DIST)/branding/document.png
+-endif
+-ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+-	cp $(srcdir)/default.xpm   $(DIST)/branding/default.xpm	
+-endif
++#	cp $(srcdir)/mozicon128.png $(DIST)/branding/mozicon128.png
++#	cp $(srcdir)/mozicon16.xpm $(DIST)/branding/mozicon16.xpm
++#	cp $(srcdir)/mozicon50.xpm $(DIST)/branding/mozicon50.xpm
++#	cp $(srcdir)/document.png $(DIST)/branding/document.png
++endif
++#ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
++#	cp $(srcdir)/default.xpm   $(DIST)/branding/default.xpm
++#endif
+ ifeq ($(OS_ARCH),OS2)
+ 	cp $(srcdir)/firefox-os2.ico   $(DIST)/branding/firefox.ico
+ 	cp $(srcdir)/firefox-os2.ico   $(DIST)/branding/app.ico
+ 	cp $(srcdir)/document-os2.ico  $(DIST)/branding/document.ico
+ endif
+ endif
+ 
+ libs::

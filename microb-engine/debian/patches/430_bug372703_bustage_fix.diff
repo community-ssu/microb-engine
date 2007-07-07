@@ -1,0 +1,27 @@
+#Bug 372703  No visual content in chat windows when using GTalk in Gmail. (edit)
+# Bustage after https://bugzilla.mozilla.org/show_bug.cgi?id=371536 
+--- mozilla/layout/generic/nsContainerFrame.cpp.orig	2007-03-23 20:49:53.000000000 +0200
++++ mozilla/layout/generic/nsContainerFrame.cpp	2007-03-23 21:14:51.689918750 +0200
+@@ -629,20 +629,22 @@ nsContainerFrame::SyncFrameViewPropertie
+ 
+ PRBool
+ nsContainerFrame::FrameNeedsView(nsIFrame* aFrame)
+ {
+   // XXX Check needed because frame construction can't properly figure out when
+   // a frame is the child of a scrollframe
+   if (aFrame->GetStyleContext()->GetPseudoType() ==
+       nsCSSAnonBoxes::scrolledContent) {
+     return PR_TRUE;
+   }
++  if (aFrame->GetStyleContext()->GetStyleDisplay()->IsPositioned())
++    return PR_TRUE;
+   return aFrame->NeedsView();
+ }
+ 
+ static nscoord GetCoord(const nsStyleCoord& aCoord, nscoord aIfNotCoord)
+ {
+   return aCoord.GetUnit() == eStyleUnit_Coord
+            ? aCoord.GetCoordValue()
+            : aIfNotCoord;
+ }
+ 

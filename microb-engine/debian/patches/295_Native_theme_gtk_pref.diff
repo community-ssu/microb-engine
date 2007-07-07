@@ -1,0 +1,93 @@
+## Patches for microb-engine
+## Oleg Romashin romaxa@gmail.com
+##
+## DP: Adding special preference for enabling NativeThemeGtk
+## Bug 372079  Mozilla Should have some preference for enabling GtkNative widgets rendering in layout
+
+Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+@@ -36,16 +36,18 @@
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsNativeThemeGTK.h"
+ #include "nsThemeConstants.h"
+ #include "gtkdrawing.h"
+ 
++#include "nsIPrefService.h"
++#include "nsIPrefBranch.h"
+ #include "nsIObserverService.h"
+ #include "nsIServiceManager.h"
+ #include "nsIFrame.h"
+ #include "nsIPresShell.h"
+ #include "nsIDocument.h"
+ #include "nsIContent.h"
+ #include "nsIEventStateManager.h"
+ #include "nsIViewManager.h"
+@@ -78,30 +80,39 @@
+   return (aWidgetType == NS_THEME_CHECKBOX || aWidgetType == NS_THEME_CHECKBOX_SMALL);
+ }
+ 
+ static inline bool IsRadioWidgetType(PRUint8 aWidgetType)
+ {
+   return (aWidgetType == NS_THEME_RADIO || aWidgetType == NS_THEME_RADIO_SMALL);
+ }
+ 
++static PRBool gNativeThemeEnabled = PR_FALSE;
+ nsNativeThemeGTK::nsNativeThemeGTK()
+ {
+   if (moz_gtk_init() != MOZ_GTK_SUCCESS) {
+     memset(mDisabledWidgetTypes, 0xff, sizeof(mDisabledWidgetTypes));
+     return;
+   }
+ 
+   // We have to call moz_gtk_shutdown before the event loop stops running.
+   nsCOMPtr<nsIObserverService> obsServ =
+     do_GetService("@mozilla.org/observer-service;1");
+   obsServ->AddObserver(this, "xpcom-shutdown", PR_FALSE);
+ 
+   memset(mDisabledWidgetTypes, 0, sizeof(mDisabledWidgetTypes));
+   memset(mSafeWidgetStates, 0, sizeof(mSafeWidgetStates));
++
++  nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
++  if (!prefs) return;
++  PRBool val = PR_TRUE;
++  nsresult rv;
++  rv = prefs->GetBoolPref("mozilla.widget.allow_native_theme", &val);
++  if (NS_SUCCEEDED(rv))
++    gNativeThemeEnabled = val;
+ }
+ 
+ nsNativeThemeGTK::~nsNativeThemeGTK() {
+ }
+ 
+ NS_IMETHODIMP
+ nsNativeThemeGTK::Observe(nsISupports *aSubject, const char *aTopic,
+                           const PRUnichar *aData)
+@@ -975,16 +986,23 @@
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP_(PRBool)
+ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
+                                       nsIFrame* aFrame,
+                                       PRUint8 aWidgetType)
+ {
++	if (!gNativeThemeEnabled) {
++		if (aFrame) {
++			if (aFrame->GetContent()->IsNodeOfType(nsINode::eHTML))
++				return PR_FALSE;
++		}
++	}
++
+   if (IsWidgetTypeDisabled(mDisabledWidgetTypes, aWidgetType))
+     return PR_FALSE;
+ 
+   switch (aWidgetType) {
+   case NS_THEME_BUTTON:
+   case NS_THEME_BUTTON_FOCUS:
+   case NS_THEME_RADIO:
+   case NS_THEME_RADIO_SMALL:

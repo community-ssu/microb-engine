@@ -1,0 +1,25 @@
+# Drag service disabled in MicroB and this bustage crash fix for bug 
+# 50652 Suspend device when you drag marked letters from URL and ..
+#
+Index: mozilla/widget/src/gtk2/nsWindow.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp
++++ mozilla/widget/src/gtk2/nsWindow.cpp
+@@ -2447,16 +2447,17 @@ nsWindow::OnDragMotionEvent(GtkWidget *a
+     sIsDraggingOutOf = PR_FALSE;
+ 
+     // Reset out drag motion timer
+     ResetDragMotionTimer(aWidget, aDragContext, aX, aY, aTime);
+ 
+     // get our drag context
+     nsCOMPtr<nsIDragService> dragService = do_GetService(kCDragServiceCID);
+     nsCOMPtr<nsIDragSessionGTK> dragSessionGTK = do_QueryInterface(dragService);
++    NS_ENSURE_TRUE(dragSessionGTK, FALSE);
+ 
+     // first, figure out which internal widget this drag motion actually
+     // happened on
+     nscoord retx = 0;
+     nscoord rety = 0;
+ 
+     GdkWindow *innerWindow = get_inner_gdk_window(aWidget->window, aX, aY,
+                                                   &retx, &rety);

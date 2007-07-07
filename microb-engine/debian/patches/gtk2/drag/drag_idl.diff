@@ -1,0 +1,97 @@
+--- mozilla/widget/public/nsIDragService.idl.orig	2007-04-19 18:54:56.000000000 +0300
++++ mozilla/widget/public/nsIDragService.idl	2007-04-19 18:54:43.000000000 +0300
+@@ -121,22 +121,17 @@ interface nsIDragService : nsISupports
+     */
+   void startDragSession ( ) ;
+ 
+   /**
+     * Tells the Drag Service to end a drag session. This is called when
+     * an external drag occurs
+     *
+     * If aDoneDrag is true, the drag has finished, otherwise the drag has
+     * just left the window.
+     */
+-  void endDragSession ( in PRBool aDoneDrag ) ;
+-
+-  /**
+-   * Fire a drag event at the source of the drag
+-   */
+-  void fireDragEventAtSource ( in unsigned long aMsg );
++  void endDragSession () ;
+ };
+ 
+ 
+ %{ C++
+ 
+ %}
+--- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-04-19 19:15:46.000000000 +0300
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2007-04-19 20:27:14.405251750 +0300
+@@ -2476,22 +2476,20 @@ nsWindow::OnDragMotionEvent(GtkWidget *a
+ 
+     // set the last window to the innerMostWidget
+     mLastDragMotionWindow = innerMostWidget;
+ 
+     // update the drag context
+     dragSessionGTK->TargetSetLastContext(aWidget, aDragContext, aTime);
+ 
+     // notify the drag service that we are starting a drag motion.
+     dragSessionGTK->TargetStartDragMotion();
+ 
+-    dragService->FireDragEventAtSource(NS_DRAGDROP_DRAG);
+-
+     nsMouseEvent event(PR_TRUE, NS_DRAGDROP_OVER, innerMostWidget,
+                        nsMouseEvent::eReal);
+ 
+     InitDragEvent(event);
+ 
+     // now that we have initialized the event update our drag status
+     UpdateDragStatus(event, aDragContext, dragService);
+ 
+     event.refPoint.x = retx;
+     event.refPoint.y = rety;
+@@ -2636,21 +2634,21 @@ nsWindow::OnDragDropEvent(GtkWidget *aWi
+     // event and and that case is handled in that handler.
+     dragSessionGTK->TargetSetLastContext(0, 0, 0);
+ 
+     // send our drag exit event
+     innerMostWidget->OnDragLeave();
+     // and clear the mLastDragMotion window
+     mLastDragMotionWindow = 0;
+ 
+     // Make sure to end the drag session. If this drag started in a
+     // different app, we won't get a drag_end signal to end it from.
+-    dragService->EndDragSession(PR_TRUE);
++    dragService->EndDragSession();
+ 
+     return TRUE;
+ }
+ 
+ void
+ nsWindow::OnDragDataReceivedEvent(GtkWidget *aWidget,
+                                   GdkDragContext *aDragContext,
+                                   gint aX,
+                                   gint aY,
+                                   GtkSelectionData  *aSelectionData,
+@@ -2688,21 +2686,21 @@ nsWindow::OnDragLeave(void)
+ 
+         if (currentDragSession) {
+             nsCOMPtr<nsIDOMNode> sourceNode;
+             currentDragSession->GetSourceNode(getter_AddRefs(sourceNode));
+ 
+             if (!sourceNode) {
+                 // We're leaving a window while doing a drag that was
+                 // initiated in a different app. End the drag session,
+                 // since we're done with it for now (until the user
+                 // drags back into mozilla).
+-                dragService->EndDragSession(PR_FALSE);
++                dragService->EndDragSession();
+             }
+         }
+     }
+ 
+     Release();
+ }
+ 
+ void
+ nsWindow::OnDragEnter(nscoord aX, nscoord aY)
+ {

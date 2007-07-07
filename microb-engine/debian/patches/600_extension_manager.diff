@@ -1,0 +1,420 @@
+diff -ruN -p -u10 mozilla.orig/toolkit/library/libxul-config.mk mozilla/toolkit/library/libxul-config.mk
+--- mozilla.orig/toolkit/library/libxul-config.mk	2007-06-01 18:46:14.000000000 +0300
++++ mozilla/toolkit/library/libxul-config.mk	2007-06-01 19:43:36.000000000 +0300
+@@ -250,24 +250,27 @@ COMPONENT_LIBS += \
+ ifdef MOZ_STORAGE
+ COMPONENT_LIBS += \
+   satchel \
+   $(NULL)
+ endif
+ endif
+ 
+ COMPONENT_LIBS += \
+ 	jar$(VERSION_NUMBER) \
+ 	$(NULL)
++	
++COMPONENT_LIBS += \
++ 	commandlines \
++ 	$(NULL)
+ 
+ ifndef MOZ_MICROB
+ COMPONENT_LIBS += \
+- 	commandlines \
+  	toolkitcomps \
+  	$(NULL)
+ endif
+ 
+ ifdef MOZ_MATHML
+ COMPONENT_LIBS += ucvmath
+ endif
+ 
+ ifneq (,$(MOZ_ENABLE_XPRINT))
+ STATIC_LIBS += xlibrgb
+diff -ruN -p -u10 mozilla.orig/toolkit/library/nsStaticXULComponents.cpp mozilla/toolkit/library/nsStaticXULComponents.cpp
+--- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp	2007-06-01 18:46:14.000000000 +0300
++++ mozilla/toolkit/library/nsStaticXULComponents.cpp	2007-06-01 19:43:12.000000000 +0300
+@@ -267,21 +267,20 @@
+ #define XULENABLED_MODULES                   \
+     MODULE(tkAutoCompleteModule)             \
+     MODULE(PKI)
+ #endif
+ #else
+ #define XULENABLED_MODULES
+ #endif
+ 
+ #ifndef MOZ_MICROB
+ #define STD_MODULES                          \
+-    MODULE(CommandLineModule)                \
+     MODULE(nsToolkitCompsModule)             \
+     MODULE(nsJarModule)
+ #else
+ #define STD_MODULES MODULE(nsJarModule)
+ #endif
+ 
+ #ifdef MOZ_SPELLCHECK
+ #define SPELLCHECK_MODULE MODULE(mozSpellCheckerModule)
+ #else
+ #define SPELLCHECK_MODULE
+@@ -315,20 +314,21 @@
+     MODULE(embedcomponents)                  \
+     MODULE(Browser_Embedding_Module)         \
+     OJI_MODULES                              \
+     ACCESS_MODULES                           \
+     MODULE(appshell)                         \
+     MODULE(nsTransactionManagerModule)       \
+     COMPOSER_MODULE                          \
+     MODULE(nsChromeModule)                   \
+     APPLICATION_MODULES                      \
+     MODULE(Apprunner)                        \
++    MODULE(CommandLineModule)                \
+     FILEVIEW_MODULE                          \
+     STORAGE_MODULE                           \
+     PLACES_MODULES                           \
+     XULENABLED_MODULES                       \
+     STD_MODULES                              \
+     XREMOTE_MODULES                          \
+     XPINSTALL_MODULES                        \
+     JSDEBUGGER_MODULES                       \
+     MODULE(BOOT)                             \
+     MODULE(NSS)                              \
+diff -ruN -p -u10 mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
+--- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	2007-06-01 18:46:15.000000000 +0300
++++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	2007-06-01 19:57:41.000000000 +0300
+@@ -349,20 +349,22 @@ function getDirNoCreate(key, pathArray) 
+  *          specified by |key|
+  * @param   shouldCreate
+  *          true if the directory hierarchy specified in |pathArray|
+  *          should be created if it does not exist,
+  *          false otherwise.
+  * @return  nsIFile object for the location specified. 
+  */
+ function getDirInternal(key, pathArray, shouldCreate) {
+   var fileLocator = Components.classes["@mozilla.org/file/directory_service;1"]
+                               .getService(Components.interfaces.nsIProperties);
++  if (key == "ProfDS")
++    key = "ProfD";
+   var dir = fileLocator.get(key, nsILocalFile);
+   for (var i = 0; i < pathArray.length; ++i) {
+     dir.append(pathArray[i]);
+     if (shouldCreate && !dir.exists())
+       dir.create(nsILocalFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
+   }
+   dir.followLinks = false;
+   return dir;
+ }
+ 
+@@ -621,21 +623,22 @@ function newURI(spec) {
+ function getURIFromFile(file) {
+   var ioServ = Components.classes["@mozilla.org/network/io-service;1"]
+                          .getService(Components.interfaces.nsIIOService);
+   return ioServ.newFileURI(file);
+ }
+ 
+ /**
+  * @returns Whether or not we are currently running in safe mode.
+  */
+ function inSafeMode() {
+-  return gApp.inSafeMode;
++  return false;
++  //return gApp.inSafeMode;
+ }
+ 
+ /**
+  * Extract the string value from a RDF Literal or Resource
+  * @param   literalOrResource
+  *          RDF String Literal or Resource
+  * @returns String value of the literal or resource, or undefined if the object
+  *          supplied is not a RDF string literal or resource.
+  */
+ function stringData(literalOrResource) {
+@@ -2635,32 +2638,37 @@ BlocklistItemData.prototype = {
+     return { minVersion: minVersion, maxVersion: maxVersion };
+   }
+ };
+ 
+ /**
+  * Installs, manages and tracks compatibility for Extensions and Themes
+  * @constructor
+  */
+ function ExtensionManager() {
+   gApp = Components.classes["@mozilla.org/xre/app-info;1"]
+-                   .getService(Components.interfaces.nsIXULAppInfo)
++                   .getService(Components.interfaces.nsIXULAppInfo);
++/*
+                    .QueryInterface(Components.interfaces.nsIXULRuntime);
+   gOSTarget = gApp.OS;
+   try {
+     gXPCOMABI = gApp.XPCOMABI;
+   } catch (ex) {
+     // Provide a default for gXPCOMABI. It won't be compared to an
+     // item's metadata (i.e. install.rdf can't specify e.g. WINNT_unknownABI
+     // as targetPlatform), but it will be displayed in error messages and
+     // transmitted to update URLs.
+     gXPCOMABI = UNKNOWN_XPCOM_ABI;
+-  }
++  }*/
++
++  gXPCOMABI = UNKNOWN_XPCOM_ABI;
++  gOSTarget = "_UNKNOWN";
++
+   gPref = Components.classes["@mozilla.org/preferences-service;1"]
+                     .getService(Components.interfaces.nsIPrefBranch2);
+ 
+   gOS = Components.classes["@mozilla.org/observer-service;1"]
+                   .getService(Components.interfaces.nsIObserverService);
+   gOS.addObserver(this, "xpcom-shutdown", false);
+ 
+   gConsole = Components.classes["@mozilla.org/consoleservice;1"]
+                        .getService(Components.interfaces.nsIConsoleService);  
+   
+@@ -4209,24 +4217,25 @@ ExtensionManager.prototype = {
+           if (abi != null) {
+             requireABICompatibility = true;
+             // If we don't know our ABI, we can't be compatible
+             if (abi == gXPCOMABI && abi != UNKNOWN_XPCOM_ABI) {
+               foundMatchingOSAndABI = true;
+               break;
+             }
+           }
+         }
+       }
+-      if (!foundMatchingOS || (requireABICompatibility && !foundMatchingOSAndABI)) {
++/*      if (!foundMatchingOS || (requireABICompatibility && !foundMatchingOSAndABI)) {
+         installData.error = INSTALLERROR_INCOMPATIBLE_PLATFORM;
+         return installData;
+       }
++*/
+     }
+ 
+     // Validate the Item ID
+     if (!gIDTest.test(installData.id)) {
+       installData.error = INSTALLERROR_INVALID_GUID;
+       return installData;
+     }
+      
+     // Check the target application range specified by the extension metadata.
+     if (gCheckCompatibility &&
+diff -ruN -p -u10 mozilla.orig/toolkit/xre/nsAppRunner.cpp mozilla/toolkit/xre/nsAppRunner.cpp
+--- mozilla.orig/toolkit/xre/nsAppRunner.cpp	2007-06-01 18:46:15.000000000 +0300
++++ mozilla/toolkit/xre/nsAppRunner.cpp	2007-06-01 19:45:34.000000000 +0300
+@@ -794,35 +794,37 @@ ScopedXPCOMStartup::~ScopedXPCOMStartup(
+     mServiceManager = nsnull;
+   }
+ }
+ 
+ // {95d89e3e-a169-41a3-8e56-719978e15b12}
+ #define APPINFO_CID \
+   { 0x95d89e3e, 0xa169, 0x41a3, { 0x8e, 0x56, 0x71, 0x99, 0x78, 0xe1, 0x5b, 0x12 } }
+ 
+ static nsModuleComponentInfo kComponents[] =
+ {
++#ifndef MOZ_MICROB
+   {
+     "nsXULAppInfo",
+     APPINFO_CID,
+     XULAPPINFO_SERVICE_CONTRACTID,
+     AppInfoConstructor
+   }
+ #ifdef MOZ_AIRBAG
+ ,
+   {
+     "nsXULAppInfo",
+     APPINFO_CID,
+     NS_CRASHREPORTER_CONTRACTID,
+     AppInfoConstructor
+   }
+ #endif
++#endif
+ };
+ 
+ NS_IMPL_NSGETMODULE(Apprunner, kComponents)
+ 
+ #if !defined(_BUILD_STATIC_BIN) && !defined(MOZ_ENABLE_LIBXUL)
+ static nsStaticModuleInfo const kXREStaticModules[] =
+ {
+   {
+     "Apprunner",
+     Apprunner_NSGetModule
+diff -ruN -p -u10 mozilla.orig/xulrunner/build.mk mozilla/xulrunner/build.mk
+--- mozilla.orig/xulrunner/build.mk	2007-06-01 18:46:09.000000000 +0300
++++ mozilla/xulrunner/build.mk	2007-06-01 18:56:46.000000000 +0300
+@@ -66,18 +66,20 @@ endif
+ ifeq ($(OS_ARCH),OS2)
+ ifdef ENABLE_TESTS
+ tier_app_dirs += embedding/tests
+ endif
+ endif
+ 
+ ifdef MOZ_JAVAXPCOM
+ tier_app_dirs += extensions/java
+ endif
+ 
++tier_app_dirs += embedding/components/xulappinfo
++
+ tier_app_dirs += xulrunner
+ 
+ installer:
+ 	@echo "XULRunner doesn't have an installer yet."
+ 	@exit 1
+ 
+ package:
+ 	@$(MAKE) -C xulrunner/installer
+diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/Makefile.in mozilla/embedding/components/xulappinfo/Makefile.in
+--- mozilla/embedding/components/xulappinfo.orig/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/embedding/components/xulappinfo/Makefile.in	2006-04-10 14:38:10.000000000 +0300
+@@ -0,0 +1,63 @@
++#
++# ***** BEGIN LICENSE BLOCK *****
++# Version: MPL 1.1/GPL 2.0/LGPL 2.1
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License. You may obtain a copy of the License at
++# http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Original Code is mozilla.org code.
++#
++# The Initial Developer of the Original Code is
++# the mozilla.org SeaMonkey project.
++# Portions created by the Initial Developer are Copyright (C) 2005
++# the Initial Developer. All Rights Reserved.
++#
++# Contributor(s):
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 2 or later (the "GPL"), or
++# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++# in which case the provisions of the GPL or the LGPL are applicable instead
++# of those above. If you wish to allow use of your version of this file only
++# under the terms of either the GPL or the LGPL, and not to allow others to
++# use your version of this file under the terms of the MPL, indicate your
++# decision by deleting the provisions above and replace them with the notice
++# and other provisions required by the GPL or the LGPL. If you do not delete
++# the provisions above, a recipient may use your version of this file under
++# the terms of any one of the MPL, the GPL or the LGPL.
++#
++# ***** END LICENSE BLOCK *****
++
++
++DEPTH		= ../../..
++topsrcdir	= @top_srcdir@
++srcdir		= @srcdir@
++VPATH		= @srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++DEFINES += -DMOZ_APP_DISPLAYNAME=$(MOZ_APP_DISPLAYNAME) \
++	-DMOZ_APP_VERSION=$(MOZ_APP_VERSION) \
++	-DTOOLKIT_EM_VERSION=$(shell $(PERL) $(topsrcdir)/config/milestone.pl --topsrcdir=$(topsrcdir))
++
++MODULE		= xulappinfo
++XPIDL_MODULE	= xulappinfo
++
++XPIDLSRCS	= nsIXULAppInfo.idl
++
++EXTRA_PP_COMPONENTS = xulappinfo.js
++
++GARBAGE += nsIXULAppInfo.idl
++
++include $(topsrcdir)/config/rules.mk
++
++nsIXULAppInfo.idl: $(topsrcdir)/toolkit/xre/nsIXULAppInfo.idl
++	$(NSINSTALL) $(topsrcdir)/toolkit/xre/nsIXULAppInfo.idl .
++
+diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/xulappinfo.js mozilla/embedding/components/xulappinfo/xulappinfo.js
+--- mozilla/embedding/components/xulappinfo.orig/xulappinfo.js	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/embedding/components/xulappinfo/xulappinfo.js	2006-04-19 13:35:05.000000000 +0300
+@@ -0,0 +1,88 @@
++const XULAPPINFO_CONTRACTID = "@mozilla.org/xre/app-info;1";
++const XULAPPINFO_CID = Components.ID("{f8b59582-5808-4e6e-a467-339e9c82756f}");
++
++const nsIXULAppInfo = Components.interfaces.nsIXULAppInfo;
++const nsIComponentRegistrar = Components.interfaces.nsIComponentRegistrar;
++const nsIFactory = Components.interfaces.nsIFactory;
++const nsISupports = Components.interfaces.nsISupports;
++
++function XULAppInfoService()
++{
++}
++
++XULAppInfoService.prototype.vendor = "mozilla.org";
++XULAppInfoService.prototype.ID = "{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}";
++#expand XULAppInfoService.prototype.name = "__MOZ_APP_DISPLAYNAME__";
++#expand XULAppInfoService.prototype.version = "__MOZ_APP_VERSION__";
++#expand XULAppInfoService.prototype.appBuildID = "__BUILD_ID__";
++#expand XULAppInfoService.prototype.platformVersion = "__TOOLKIT_EM_VERSION__";
++#expand XULAppInfoService.prototype.platformBuildID = "__BUILD_ID__";
++
++XULAppInfoService.prototype.QueryInterface =
++function appinfo_QueryInterface(iid)
++{
++    if (!iid.equals(nsIXULAppInfo) &&
++        !iid.equals(nsISupports))
++    {
++        throw Components.results.NS_ERROR_NO_INTERFACE;
++    }
++
++    return this;
++}
++
++var XULAppInfoFactory = new Object();
++
++XULAppInfoFactory.createInstance =
++function(outer, iid)
++{
++    if (outer != null)
++        throw Components.results.NS_ERROR_NO_AGGREGATION;
++
++    if (!iid.equals(nsIXULAppInfo) && !iid.equals(nsISupports))
++        throw Components.results.NS_ERROR_INVALID_ARG;
++
++    return new XULAppInfoService();
++}
++
++
++var XULAppInfoModule = new Object();
++
++XULAppInfoModule.registerSelf =
++function mod_registerSelf(compMgr, fileSpec, location, type)
++{
++    compMgr = compMgr.QueryInterface(nsIComponentRegistrar);
++
++    compMgr.registerFactoryLocation(XULAPPINFO_CID,
++                                    "XUL AppInfo service",
++                                    XULAPPINFO_CONTRACTID,
++                                    fileSpec, location, type);
++}
++
++XULAppInfoModule.unregisterSelf =
++function mod_unregisterSelf(compMgr, fileSpec, location)
++{
++}
++
++XULAppInfoModule.getClassObject =
++function mod_getClassObject(compMgr, cid, iid)
++{
++    if (cid.equals(XULAPPINFO_CID))
++        return XULAppInfoFactory;
++
++    if (!iid.equals(nsIFactory))
++        throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
++
++    throw Components.results.NS_ERROR_NO_INTERFACE;
++}
++
++XULAppInfoModule.canUnload =
++function mod_canUnload(compMgr)
++{
++    return true;
++}
++
++/* entrypoint */
++function NSGetModule(compMgr, fileSpec)
++{
++    return XULAppInfoModule;
++}

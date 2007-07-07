@@ -1,0 +1,44 @@
+# Additional checking for buggy nsTextFrameThebes class
+#
+Index: mozilla/gfx/thebes/src/gfxPangoFonts.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxPangoFonts.cpp
++++ mozilla/gfx/thebes/src/gfxPangoFonts.cpp
+@@ -805,16 +805,18 @@ static PRInt32 AppendDirectionalIndicato
+     return 3; // both overrides map to 3 bytes in UTF8
+ }
+ 
+ gfxTextRun *
+ gfxPangoFontGroup::MakeTextRun(const PRUint8 *aString, PRUint32 aLength,
+                                const Parameters *aParams, PRUint32 aFlags)
+ {
+     NS_ASSERTION(aFlags & TEXT_IS_8BIT, "8bit should have been set");
++    if (!aLength || !aString)
++        return nsnull;
+     gfxTextRun *run = new gfxTextRun(aParams, aString, aLength, this, aFlags);
+     if (!run)
+         return nsnull;
+ 
+     PRBool isRTL = run->IsRightToLeft();
+     if ((aFlags & TEXT_IS_ASCII) && !isRTL) {
+         // We don't need to send an override character here, the characters must be all
+         // LTR
+@@ -834,16 +836,18 @@ gfxPangoFontGroup::MakeTextRun(const PRU
+     }
+     return run;
+ }
+ 
+ gfxTextRun *
+ gfxPangoFontGroup::MakeTextRun(const PRUnichar *aString, PRUint32 aLength,
+                                const Parameters *aParams, PRUint32 aFlags)
+ {
++    if (!aLength || !aString)
++        return nsnull;
+     gfxTextRun *run = new gfxTextRun(aParams, aString, aLength, this, aFlags);
+     if (!run)
+         return nsnull;
+ 
+     run->RecordSurrogates(aString);
+ 
+     nsCAutoString utf8;
+     PRInt32 headerLen = AppendDirectionalIndicatorUTF8(run->IsRightToLeft(), utf8);

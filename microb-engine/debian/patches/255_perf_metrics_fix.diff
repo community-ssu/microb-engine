@@ -1,0 +1,23 @@
+Index: mozilla/modules/libutil/src/stopwatch.cpp
+===================================================================
+--- mozilla.orig/modules/libutil/src/stopwatch.cpp
++++ mozilla/modules/libutil/src/stopwatch.cpp
+@@ -99,17 +99,17 @@
+   if (state) {
+     if (*state == kRunning && fState == kStopped)
+       Start(PR_FALSE);
+     else if (*state == kStopped && fState == kRunning)
+       Stop();
+     delete state;
+   }
+   else {
+-    NS_WARNING("Stopwatch::RestoreState(): The saved state stack is empty.\n");
++//    NS_WARNING("Stopwatch::RestoreState(): The saved state stack is empty.\n");
+   }
+ }
+ 
+ void Stopwatch::Continue() {
+ 
+   if (fState != kUndefined) {
+ 
+     if (fState == kStopped) {

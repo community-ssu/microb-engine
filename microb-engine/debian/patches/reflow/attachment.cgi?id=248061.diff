@@ -1,0 +1,52 @@
+#Bug 363248  [reflow branch] Table caption regression  PATCH
+Index: mozilla/layout/tables/nsTableOuterFrame.cpp
+===================================================================
+--- mozilla.orig/layout/tables/nsTableOuterFrame.cpp
++++ mozilla/layout/tables/nsTableOuterFrame.cpp
+@@ -893,17 +893,17 @@
+         break;
+     }
+   } break;
+   default: { // top
+     if (NS_AUTOMARGIN == aCaptionMargin.left) {
+       aCaptionMargin.left = CalcAutoMargin(aCaptionMargin.left, aCaptionMargin.right,
+                                            aContainBlockSize.width, aCaptionSize.width);
+     }
+-    aOrigin.x = aCaptionMargin.left;
++    aOrigin.x = aInnerMargin.left + aCaptionMargin.left;
+     if (NS_AUTOMARGIN == aCaptionMargin.bottom) {
+       aCaptionMargin.bottom = 0;
+     }
+     if (NS_AUTOMARGIN == aCaptionMargin.top) {
+       nsCollapsingMargin marg;
+       marg.Include(aCaptionMargin.bottom);
+       marg.Include(aInnerMargin.top);
+       nscoord collapseMargin = marg.get();
+@@ -1229,16 +1229,27 @@
+   // XXX Need to recompute inner table's auto margins for the case of side
+   // captions.  (Caption's are broken too, but that should be fixed earlier.)
+ 
+   if (mCaptionFrame) {
+     nsPoint captionOrigin;
+     GetCaptionOrigin(captionSide, containSize, innerSize, 
+                      innerMargin, captionSize, captionMargin, captionOrigin);
+     if (reflowCaption) {
++      if (captionSide != NS_SIDE_LEFT && captionSide != NS_SIDE_RIGHT) {
++        // reflow the caption again into the now known table width
++        nsReflowStatus capStatus;
++        rv = OuterReflowChild(aPresContext, mCaptionFrame, aOuterRS,
++                              captionRSSpace, captionMet,
++                              innerSize.width, captionSize,
++                              captionMargin, capStatus);
++        GetCaptionOrigin(captionSide, containSize, innerSize,
++                         innerMargin, captionSize, captionMargin,
++                         captionOrigin);
++      }
+       nsHTMLReflowState *captionRS =
+         NS_STATIC_CAST(nsHTMLReflowState*, (void*)captionRSSpace);
+       FinishReflowChild(mCaptionFrame, aPresContext, captionRS, captionMet,
+                         captionOrigin.x, captionOrigin.y, 0);
+       captionRS->~nsHTMLReflowState();
+     } else {
+       mCaptionFrame->SetPosition(captionOrigin);
+       nsTableFrame::RePositionViews(mCaptionFrame);

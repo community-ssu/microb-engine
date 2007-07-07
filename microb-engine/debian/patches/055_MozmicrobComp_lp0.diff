@@ -1,0 +1,116 @@
+Index: xpcom/glue/standalone/nsGlueLinkingDlopen.cpp
+===================================================================
+--- xpcom/glue/standalone/nsGlueLinkingDlopen.cpp.orig
++++ xpcom/glue/standalone/nsGlueLinkingDlopen.cpp
+@@ -52,16 +52,17 @@
+ #endif
+ 
+ struct DependentLib
+ {
+     void         *libHandle;
+     DependentLib *next;
+ };
+ 
++static void* sFirst = 0;
+ static DependentLib *sTop;
+ static void* sXULLibHandle;
+ 
+ static void
+ AppendDependentLib(void *libHandle)
+ {
+     DependentLib *d = new DependentLib;
+     if (!d)
+@@ -75,16 +76,19 @@
+ 
+ static void
+ ReadDependentCB(const char *aDependentLib)
+ {
+     void *libHandle = dlopen(aDependentLib, RTLD_GLOBAL | RTLD_LAZY);
+     if (!libHandle)
+         return;
+ 
++    if (sFirst == 0)
++      sFirst = libHandle;
++
+     AppendDependentLib(libHandle);
+ }
+ 
+ GetFrozenFunctionsFunc
+ XPCOMGlueLoad(const char *xpcomFile)
+ {
+     char xpcomDir[MAXPATHLEN];
+     if (realpath(xpcomFile, xpcomDir)) {
+@@ -147,16 +151,16 @@
+     // if it is null (same as RTLD_DEFAULT)
+ 
+     nsresult rv = NS_OK;
+     while (symbols->functionName) {
+         char buffer[512];
+         snprintf(buffer, sizeof(buffer),
+                  LEADING_UNDERSCORE "%s", symbols->functionName);
+ 
+-        *symbols->function = (NSFuncPtr) dlsym(sXULLibHandle, buffer);
++        *symbols->function = (NSFuncPtr) dlsym(sFirst, buffer);
+         if (!*symbols->function)
+             rv = NS_ERROR_LOSS_OF_SIGNIFICANT_DATA;
+ 
+         ++symbols;
+     }
+     return rv;
+ }
+Index: xpcom/stub/Makefile.in
+===================================================================
+--- xpcom/stub/Makefile.in.orig
++++ xpcom/stub/Makefile.in
+@@ -76,16 +76,20 @@
+ # Force use of PIC
+ FORCE_USE_PIC	= 1 
+ 
+ FORCE_SHARED_LIB = 1
+ 
+ EXTRA_DSO_LDOPTS = $(LIBS_DIR) $(MOZ_FIX_LINK_PATHS)
+ 
+ DEPENDENT_LIBS_LIST += \
++	$(LIB_PREFIX)gtkembedmoz$(DLL_SUFFIX) \
++	$(NULL)
++
++DEPENDENT_LIBS_LIST += \
+ 	$(LIB_PREFIX)nspr4$(DLL_SUFFIX) \
+ 	$(LIB_PREFIX)plc4$(DLL_SUFFIX) \
+ 	$(LIB_PREFIX)plds4$(DLL_SUFFIX) \
+ 	$(NULL)
+ 
+ ifdef MOZ_ENABLE_LIBXUL
+ 
+ DEPENDENT_LIBS_LIST += \
+Index: toolkit/library/Makefile.in
+===================================================================
+--- toolkit/library/Makefile.in.orig
++++ toolkit/library/Makefile.in
+@@ -72,21 +72,21 @@
+ CPPSRCS += dlldeps-xul.cpp
+ endif
+ 
+ ifeq ($(OS_ARCH),OS2)
+ CPPSRCS += dlldeps-xul.cpp
+ endif
+ 
+ # dependent libraries
+-ifneq (,$(MOZ_ENABLE_GTK2))
+-SHARED_LIBRARY_LIBS += \
+-  $(DEPTH)/embedding/browser/gtk/src/$(LIB_PREFIX)gtkembedmoz.$(LIB_SUFFIX)
+-DEFINES += -DMOZ_ENABLE_GTK2
+-endif
++#ifneq (,$(MOZ_ENABLE_GTK2))
++#SHARED_LIBRARY_LIBS += \
++#  $(DEPTH)/embedding/browser/gtk/src/$(LIB_PREFIX)gtkembedmoz.$(LIB_SUFFIX)
++#DEFINES += -DMOZ_ENABLE_GTK2
++#endif
+ 
+ SHARED_LIBRARY_LIBS += \
+ 	$(DEPTH)/toolkit/xre/$(LIB_PREFIX)xulapp_s.$(LIB_SUFFIX) \
+ 	$(NULL)
+ 
+ SHARED_LIBRARY_LIBS += \
+ 	$(foreach component,$(COMPONENT_LIBS),$(DEPTH)/staticlib/components/$(LIB_PREFIX)$(component).$(LIB_SUFFIX)) \
+ 	$(foreach lib,$(STATIC_LIBS),$(DEPTH)/staticlib/$(LIB_PREFIX)$(lib).$(LIB_SUFFIX)) \

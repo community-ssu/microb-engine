@@ -1,0 +1,36 @@
+#Bug 360636  [reflow branch] ASSERTION: no common ancestor at all???: 'parent', file nsLayoutUtils.cpp, line 345
+Index: mozilla/layout/base/nsDisplayList.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsDisplayList.cpp
++++ mozilla/layout/base/nsDisplayList.cpp
+@@ -391,20 +391,26 @@
+       aList->AppendToTop(list2.RemoveBottom());
+     }
+   }
+ }
+ 
+ static PRBool IsContentLEQ(nsDisplayItem* aItem1, nsDisplayItem* aItem2,
+                            void* aClosure) {
+   // These GetUnderlyingFrame calls return non-null because we're only used
+-  // in sorting
+-  return nsLayoutUtils::CompareTreePosition(
+-      aItem1->GetUnderlyingFrame()->GetContent(),
+-      aItem2->GetUnderlyingFrame()->GetContent(),
++  // in sorting.
++  // Null content can occur, for the viewport (or page frame). Consider
++  // that to be before all regular content.
++  nsIContent* c1 = aItem1->GetUnderlyingFrame()->GetContent();
++  if (!c1)
++      return PR_TRUE;
++  nsIContent* c2 = aItem2->GetUnderlyingFrame()->GetContent();
++  if (!c2)
++      return PR_FALSE;
++  return nsLayoutUtils::CompareTreePosition(c1, c2,
+       NS_STATIC_CAST(nsIContent*, aClosure)) <= 0;
+ }
+ 
+ static PRBool IsZOrderLEQ(nsDisplayItem* aItem1, nsDisplayItem* aItem2,
+                           void* aClosure) {
+   // These GetUnderlyingFrame calls return non-null because we're only used
+   // in sorting
+   PRInt32 diff = nsLayoutUtils::GetZIndex(aItem1->GetUnderlyingFrame()) -

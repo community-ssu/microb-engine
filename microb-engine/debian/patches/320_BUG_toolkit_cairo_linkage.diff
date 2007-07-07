@@ -1,0 +1,28 @@
+# NOBUGFIXME
+#
+#
+Index: mozilla/toolkit/library/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/library/Makefile.in
++++ mozilla/toolkit/library/Makefile.in
+@@ -199,16 +199,20 @@
+ ifdef MOZ_ENABLE_XFT
+ EXTRA_DSO_LDOPTS += $(FT2_LIBS)
+ endif
+ 
+ ifdef MOZ_ENABLE_STARTUP_NOTIFICATION
+ EXTRA_DSO_LDOPTS += $(MOZ_STARTUP_NOTIFICATION_LIBS)
+ endif
+ 
++ifdef MOZ_ENABLE_CAIRO_GFX
++EXTRA_DSO_LDOPTS += $(MOZ_CAIRO_LIBS)
++endif
++
+ ifeq ($(OS_ARCH),BeOS)
+ EXTRA_DSO_LDOPTS += -lbe -ltracker
+ endif
+ 
+ ifeq ($(OS_ARCH),WINNT)
+ EXTRA_DSO_LDOPTS += $(call EXPAND_LIBNAME,shell32 ole32 uuid version winspool comdlg32 imm32 winmm wsock32)
+ ifneq (,$(MOZ_DEBUG)$(NS_TRACE_MALLOC))
+ EXTRA_DSO_LDOPTS += $(call EXPAND_LIBNAME,imagehlp)

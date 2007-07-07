@@ -1,0 +1,218 @@
+# Special hack for mouse up Real removing when stylus Upped.
+#
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+@@ -37,16 +37,17 @@
+ #include "nsSpatialNavigationPrivate.h"
+ 
+ PRInt32 gRectFudge = 20;
+ PRInt32 gDirectionalBias = 1;
+ 
+ NS_INTERFACE_MAP_BEGIN(nsSpatialNavigation)
+   NS_INTERFACE_MAP_ENTRY(nsISpatialNavigation)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMKeyListener)
++  NS_INTERFACE_MAP_ENTRY(nsIDOMMouseListener)
+   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIDOMEventListener, nsIDOMKeyListener)
+ NS_INTERFACE_MAP_END
+ 
+ NS_IMPL_ADDREF(nsSpatialNavigation)
+ NS_IMPL_RELEASE(nsSpatialNavigation)
+ 
+ 
+ nsSpatialNavigation::nsSpatialNavigation(nsSpatialNavigationService* aService)
+@@ -333,31 +334,109 @@
+     aEvent->StopPropagation();  // We're using this key, no one else should
+     aEvent->PreventDefault();
+     return Down();
+   }
+   
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP nsSpatialNavigation::MouseDown(nsIDOMEvent* aDOMEvent)
++{
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsSpatialNavigation::MouseUp(nsIDOMEvent* aEvent)
++{
++  nsCOMPtr<nsIPrefBranch> prefBranch = do_GetService(NS_PREFSERVICE_CONTRACTID);
++  PRBool enabled = PR_FALSE;
++  nsresult rv = prefBranch->GetBoolPref("snav.mouseup.move", &enabled);
++  if (NS_FAILED(rv) || !enabled) //  this doesn't work.  wtf? if (!mService->mEnabled)
++    return NS_OK;
++
++  nsCOMPtr<nsIDOMNSEvent> nsevent(do_QueryInterface(aEvent));
++  NS_ENSURE_TRUE(nsevent, NS_OK);
++  nsCOMPtr<nsIDOMEventTarget> target;
++  nsevent->GetOriginalTarget(getter_AddRefs(target));
++  nsCOMPtr<nsIDOMNode> eventNode = do_QueryInterface(target);
++  NS_ENSURE_TRUE(eventNode, NS_OK);
++  nsCOMPtr<nsIDOMDocument> domDoc;
++  eventNode->GetOwnerDocument(getter_AddRefs(domDoc));
++  nsCOMPtr<nsIDocument> doc = do_QueryInterface(domDoc);
++  NS_ENSURE_TRUE(doc, NS_OK);
++  nsIPresShell *presShell = doc->GetPrimaryShell();
++  NS_ENSURE_TRUE(presShell, NS_OK);
++  nsCOMPtr<nsIContent> c = do_QueryInterface(target);
++  nsIViewManager* viewManager = presShell->GetViewManager();
++  NS_ENSURE_TRUE(viewManager, NS_OK);
++  nsIView* rootView = nsnull;
++  viewManager->GetRootView(rootView);
++  NS_ENSURE_TRUE(rootView, NS_OK);
++  nsMouseEvent event(PR_TRUE, NS_MOUSE_MOVE, rootView->GetWidget(), nsMouseEvent::eReal);
++  event.refPoint.x = -1;
++  event.refPoint.y = -1;
++  /*
++  nsIFrame* focusedFrame = nsnull;
++  getFrameForContent(c, &focusedFrame);
++  NS_ENSURE_TRUE(focusedFrame, NS_OK);
++  nsRect rect = makeRectRelativeToGlobalView(focusedFrame);
++  nsPoint pt(rect.x, rect.y);
++  pt.x += (PRInt32)rect.width / 2;
++  pt.y += (PRInt32)rect.height / 2;
++  event.refPoint.x = pt.x / 60;
++  event.refPoint.y = pt.y / 60;
++  */
++  event.time = PR_IntervalNow();
++  nsEventStatus status;
++  viewManager->DispatchEvent(&event, &status);
++  return NS_OK;
++}
++
++NS_IMETHODIMP nsSpatialNavigation::MouseClick(nsIDOMEvent* aDOMEvent)
++{
++	return NS_OK;
++}
++
++NS_IMETHODIMP nsSpatialNavigation::MouseDblClick(nsIDOMEvent* aDOMEvent)
++{
++	return NS_OK;
++}
++
++NS_IMETHODIMP nsSpatialNavigation::MouseOver(nsIDOMEvent* aDOMEvent)
++{
++	return NS_OK;
++}
++
++NS_IMETHODIMP nsSpatialNavigation::MouseOut(nsIDOMEvent* aDOMEvent)
++{
++	return NS_OK;
++}
++
+ NS_IMETHODIMP 
+ nsSpatialNavigation::Init(nsIDOMWindow *aWindow)
+ {
+   mTopWindow = aWindow;
+ 
+   nsCOMPtr<nsIDOM3EventTarget> target;
+   nsCOMPtr<nsIDOMEventGroup> systemGroup;
+   nsresult rv = getEventTargetFromWindow(aWindow, getter_AddRefs(target), getter_AddRefs(systemGroup));
+   if (NS_FAILED(rv))
+     return rv;  
+   
+   target->AddGroupedEventListener(NS_LITERAL_STRING("keypress"),
+                                   NS_STATIC_CAST(nsIDOMKeyListener*, this),
+                                   PR_FALSE, 
+                                   systemGroup);
++
++  target->AddGroupedEventListener(NS_LITERAL_STRING("mouseup"),
++                                  NS_STATIC_CAST(nsIDOMMouseListener*, this),
++                                  PR_FALSE,
++                                  systemGroup);
++
+   
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP 
+ nsSpatialNavigation::Shutdown()
+ {
+   nsCOMPtr<nsIDOM3EventTarget> target;
+@@ -365,16 +444,22 @@
+   nsresult rv = getEventTargetFromWindow(mTopWindow, getter_AddRefs(target), getter_AddRefs(systemGroup));
+   if (NS_FAILED(rv))
+     return rv;
+   
+   target->RemoveGroupedEventListener(NS_LITERAL_STRING("keypress"),
+                                      NS_STATIC_CAST(nsIDOMKeyListener*, this),
+                                      PR_FALSE, 
+                                      systemGroup);
++
++  target->RemoveGroupedEventListener(NS_LITERAL_STRING("mouseup"),
++                                     NS_STATIC_CAST(nsIDOMMouseListener*, this),
++                                     PR_FALSE,
++                                     systemGroup);
++
+   mTopWindow = nsnull;
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP 
+ nsSpatialNavigation::Up()
+ {
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+@@ -72,16 +72,17 @@
+ #include "nsIDOMHTMLIFrameElement.h"
+ #include "nsIDOMHTMLInputElement.h"
+ #include "nsIDOMHTMLTextAreaElement.h"
+ #include "nsIDOMHTMLMapElement.h"
+ #include "nsIDOMHTMLOptionElement.h"
+ #include "nsIDOMHTMLSelectElement.h"
+ #include "nsIDOMKeyEvent.h"
+ #include "nsIDOMKeyListener.h"
++#include "nsIDOMMouseListener.h"
+ #include "nsIDOMNSEvent.h"
+ #include "nsIDOMNSHTMLElement.h"
+ #include "nsIDOMNSUIEvent.h"
+ #include "nsIDOMNSHTMLInputElement.h"
+ #include "nsIDOMNSHTMLTextAreaElement.h"
+ #include "nsIDOMNode.h"
+ #include "nsIDOMWindow.h"
+ #include "nsIDOMWindowInternal.h"
+@@ -121,30 +122,37 @@
+ #include "nsIWindowWatcher.h"
+ #include "nsLayoutCID.h"
+ #include "nsPIDOMWindow.h"
+ #include "nsStyleContext.h"
+ 
+ class nsSpatialNavigationService;
+ class nsSpatialNavigation;
+ 
+-class nsSpatialNavigation : public nsISpatialNavigation, public nsIDOMKeyListener
++class nsSpatialNavigation : public nsISpatialNavigation, public nsIDOMKeyListener, public nsIDOMMouseListener
+ {
+ public:
+   
+   NS_DECL_ISUPPORTS
+   NS_DECL_NSISPATIALNAVIGATION
+   
+   NS_DECL_NSIDOMEVENTLISTENER
+   
+   // ----- nsIDOMKeyListener ----------------------------
+   NS_IMETHOD KeyDown(nsIDOMEvent* aKeyEvent);
+   NS_IMETHOD KeyUp(nsIDOMEvent* aKeyEvent);
+   NS_IMETHOD KeyPress(nsIDOMEvent* aKeyEvent);
+   
++  NS_IMETHOD MouseDown (nsIDOMEvent * aDOMEvent);
++  NS_IMETHOD MouseUp (nsIDOMEvent * aDOMEvent);
++  NS_IMETHOD MouseClick (nsIDOMEvent * aDOMEvent);
++  NS_IMETHOD MouseDblClick (nsIDOMEvent * aDOMEvent);
++  NS_IMETHOD MouseOver (nsIDOMEvent * aDOMEvent);
++  NS_IMETHOD MouseOut (nsIDOMEvent * aDOMEvent);
++
+   nsSpatialNavigation(nsSpatialNavigationService* aService);
+   
+ private:
+   ~nsSpatialNavigation();
+   
+   nsPresContext* getPresContext(nsIContent* aContent);
+   
+   PRInt64 spatialDistance(int direction, nsRect& a, nsRect& b);

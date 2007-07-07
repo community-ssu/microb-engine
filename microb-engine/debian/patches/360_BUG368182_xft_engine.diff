@@ -1,0 +1,838 @@
+# Experimental implementation of separate XFT engine, just for fun
+#
+Index: mozilla/gfx/thebes/public/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/thebes/public/Makefile.in
++++ mozilla/gfx/thebes/public/Makefile.in
+@@ -43,17 +43,23 @@ EXPORTS +=	gfxPDFSurface.h
+ 
+ ifdef MOZ_ENABLE_GLITZ
+ REQUIRES += glitzwgl
+ endif
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+ EXPORTS +=      gfxXlibSurface.h gfxPlatformGtk.h gfxXlibNativeRenderer.h
++ifdef MOZ_ENABLE_PANGO
+ EXPORTS +=	gfxPangoFonts.h
++else
++ifdef MOZ_ENABLE_XFT
++EXPORTS +=	gfxXftFonts.h
++endif
++endif
+ EXPORTS +=	gfxPDFSurface.h gfxPSSurface.h
+ 
+ ifdef MOZ_ENABLE_GLITZ
+ REQUIRES += glitzglx
+ endif
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),os2)
+Index: mozilla/gfx/thebes/public/gfxXftFonts.h
+===================================================================
+--- /dev/null
++++ mozilla/gfx/thebes/public/gfxXftFonts.h
+@@ -0,0 +1,148 @@
++/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*-
++ * vim:set ts=2 sw=4 sts=2 tw=80 et cindent:
++ * ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is thebes gfx code.
++ *
++ * The Initial Developer of the Original Code is Mozilla Corporation.
++ * Portions created by the Initial Developer are Copyright (C) 2006
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Oleg Romashin <romaxa@gmail.com>
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either the GNU General Public License Version 2 or later (the "GPL"), or
++ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#ifndef GFX_XFTFONTS_H
++#define GFX_XFTFONTS_H
++
++#include "gfxTypes.h"
++#include "gfxFont.h"
++
++#include <gtk/gtk.h>
++#include <X11/Xft/Xft.h>
++
++//#define USE_XFT_FOR_ASCII
++
++#include "nsDataHashtable.h"
++
++class gfxXftFontGroup;
++
++class gfxXftFont : public gfxFont {
++public:
++    gfxXftFont (const nsAString& aName,
++                const gfxFontStyle *aFontStyle);
++    virtual ~gfxXftFont ();
++    virtual const gfxFont::Metrics& GetMetrics();
++
++	XftFont * GetXftFont () { lRealizeXftFont (); return mXftFont; }
++
++protected:
++    Metrics mMetrics;
++	XftFont * mXftFont;
++    FcPattern *mPattern;
++    FcPattern *mFontName;
++    FcCharSet *mCharset;
++    PRBool mHasMetrics;
++    gfxFloat mAdjustedSize;
++
++//Local Methods
++	void lRealizeXftFont(PRBool force = PR_FALSE);
++};
++
++class THEBES_API gfxXftFontGroup : public gfxFontGroup {
++public:
++    gfxXftFontGroup (const nsAString& families,
++                     const gfxFontStyle *aStyle);
++    virtual ~gfxXftFontGroup ();
++    virtual gfxTextRun* MakeTextRun(const PRUnichar*, PRUint32, gfxTextRunFactory::Parameters*);
++    virtual gfxTextRun* MakeTextRun(const PRUint8*, PRUint32, gfxTextRunFactory::Parameters*);
++    virtual gfxFontGroup* Copy(const gfxFontStyle*);
++protected:
++//Local Methods
++    static PRBool lFontCallback (const nsAString& fontName,
++                                const nsACString& genericName,
++                                void *closure);
++private:
++    nsDataHashtable<nsStringHashKey, nsRefPtr<gfxXftFont> > mFontCache;
++};
++
++class THEBES_API gfxXftTextRun : public gfxTextRun {
++public:
++    gfxXftTextRun(gfxXftFontGroup *aGroup,
++                  const PRUint8* aString, PRUint32 aLength,
++                  gfxTextRunFactory::Parameters* aParams);
++    gfxXftTextRun(gfxXftFontGroup *aGroup,
++                  const PRUnichar* aString, PRUint32 aLength,
++                  gfxTextRunFactory::Parameters* aParams);
++    virtual ~gfxXftTextRun();
++
++    virtual void GetCharFlags(PRUint32 aStart, PRUint32 aLength,
++                              PRUint8* aFlags);
++    virtual PRUint8 GetCharFlags(PRUint32 aOffset);
++    virtual PRUint32 GetLength();
++    virtual PRBool SetPotentialLineBreaks(PRUint32 aStart, PRUint32 aLength,
++                                          PRPackedBool* aBreakBefore);
++    virtual void Draw(gfxContext *aContext, gfxPoint aPt,
++                      PRUint32 aStart, PRUint32 aLength,
++                      const gfxRect* aDirtyRect,
++                      PropertyProvider* aBreakProvider,
++                      gfxFloat* aAdvanceWidth);
++    virtual void DrawToPath(gfxContext *aContext, gfxPoint aPt,
++                            PRUint32 aStart, PRUint32 aLength,
++                            PropertyProvider* aBreakProvider,
++                            gfxFloat* aAdvanceWidth);
++    virtual void DrawSpecialString(gfxContext* aContext, gfxPoint aPt,
++                                   SpecialString aString);
++    virtual Metrics MeasureText(PRUint32 aStart, PRUint32 aLength,
++                                PRBool aTightBoundingBox,
++                                PropertyProvider* aBreakProvider);
++    virtual void SetLineBreaks(PRUint32 aStart, PRUint32 aLength,
++                               PRBool aLineBreakBefore, PRBool aLineBreakAfter,
++                               TextProvider* aProvider,
++                               gfxFloat* aAdvanceWidthDelta);
++    virtual Metrics MeasureTextSpecialString(SpecialString aString,
++                                             PRBool aTightBoundingBox);
++    virtual gfxFloat GetAdvanceWidth(PRUint32 aStart, PRUint32 aLength,
++                                     PropertyProvider* aBreakProvider);
++    virtual gfxFloat GetAdvanceWidthSpecialString(SpecialString aString);
++    virtual gfxFont::Metrics GetDecorationMetrics();
++    virtual PRUint32 BreakAndMeasureText(PRUint32 aStart, PRUint32 aMaxLength,
++                                         PRBool aLineBreakBefore, gfxFloat aWidth,
++                                         PropertyProvider* aBreakProvider,
++                                         PRBool aSuppressInitialBreak,
++                                         Metrics* aMetrics, PRBool aTightBoundingBox,
++                                         PRBool* aUsedHyphenation,
++                                         PRUint32* aLastBreak);
++    virtual void FlushSpacingCache(PRUint32 aStart);
++private:
++    nsString  mWString;
++    nsCString mCString;
++	PRBool    mIsWide;
++	PRUint32  mCharacterCount;
++};
++
++#endif /* GFX_XFTFONTS_H */
+Index: mozilla/gfx/thebes/src/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/thebes/src/Makefile.in
++++ mozilla/gfx/thebes/src/Makefile.in
+@@ -78,17 +78,23 @@ CPPSRCS	+=	gfxOS2Fonts.cpp \
+ 		nsUnicodeRange.cpp \
+ 		$(NULL)
+ EXTRA_DSO_LDOPTS += $(MOZ_CAIRO_LIBS)
+ REQUIRES += uconv
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+ CPPSRCS +=      gfxXlibSurface.cpp gfxPlatformGtk.cpp gfxXlibNativeRenderer.cpp
++ifdef MOZ_ENABLE_PANGO
+ CPPSRCS +=	gfxPangoFonts.cpp 
++else
++ifdef MOZ_ENABLE_XFT
++CPPSRCS +=	gfxXftFonts.cpp
++endif
++endif
+ CPPSRCS +=	gfxPDFSurface.cpp gfxPSSurface.cpp
+ CPPSRCS +=	gfxFontconfigUtils.cpp
+ CPPSRCS +=	nsUnicodeRange.cpp
+ CSRCS = cairo-xlib-utils.c
+ EXTRA_DSO_LDOPTS += $(MOZ_PANGO_LIBS) $(ZLIB_LIBS) $(MOZ_XFT_LIBS) $(XLDFLAGS) $(XLIBS)
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),beos)
+Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
++++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
+@@ -286,18 +286,21 @@ GetXftDPI()
+ 
+   return -1;
+ }
+ 
+ static PRInt32
+ GetDPIFromPangoFont()
+ {
+ #ifndef THEBES_USE_PANGO_CAIRO
+-    PangoContext* ctx = pango_xft_get_context(GDK_DISPLAY(), 0);
++    PangoContext* ctx = nsnull;
++#ifdef MOZ_ENABLE_PANGO
++    ctx = pango_xft_get_context(GDK_DISPLAY(), 0);
+     gdk_pango_context_set_colormap(ctx, gdk_rgb_get_cmap());
++#endif
+ #else
+     PangoContext* ctx =
+         pango_cairo_font_map_create_context(
+           PANGO_CAIRO_FONT_MAP(pango_cairo_font_map_get_default()));
+ #endif
+ 
+     if (!ctx) {
+         return 0;
+@@ -322,17 +325,19 @@ GetDPIFromPangoFont()
+     }
+ 
+     item = (PangoItem*)items->data;
+ 
+     if (!item) {
+         goto cleanup;
+     }
+ 
++#ifdef MOZ_ENABLE_PANGO
+     fcfont = PANGO_FC_FONT(item->analysis.font);
++#endif
+ 
+     if (!fcfont) {
+         goto cleanup;
+     }
+ 
+     FcPatternGetDouble(fcfont->font_pattern, FC_DPI, 0, &dblDPI);
+ 
+  cleanup:   
+Index: mozilla/gfx/thebes/src/gfxXftFonts.cpp
+===================================================================
+--- /dev/null
++++ mozilla/gfx/thebes/src/gfxXftFonts.cpp
+@@ -0,0 +1,536 @@
++/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*-
++ * vim:set ts=2 sw=4 sts=2 tw=80 et cindent:
++ * ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is Mozilla Corporation code.
++ *
++ * The Initial Developer of the Original Code is Mozilla Corporation.
++ * Portions created by the Initial Developer are Copyright (C) 2006
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Oleg Romashin <romaxa@gmail.com>
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either the GNU General Public License Version 2 or later (the "GPL"), or
++ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include "prtypes.h"
++#include "prlink.h"
++#include "gfxTypes.h"
++#include "nsString.h"
++#include "gfxContext.h"
++#include "gfxXftFonts.h"
++#include "nsPromiseFlatString.h"
++#include "gfxPlatformGtk.h"
++#include <math.h>
++#include <freetype/tttables.h>
++#include <freetype/freetype.h>
++
++// rounding and truncation functions for a Freetype floating point number
++// (FT26Dot6) stored in a 32bit integer with high 26 bits for the integer
++// part and low 6 bits for the fractional part.
++#define MOZ_FT_ROUND(x) (((x) + 32) & ~63) // 63 = 2^6 - 1
++#define MOZ_FT_TRUNC(x) ((x) >> 6)
++#define CONVERT_DESIGN_UNITS_TO_PIXELS(v, s) \
++    MOZ_FT_TRUNC(MOZ_FT_ROUND(FT_MulFix((v) , (s))))
++#define NSToCoordRound(x) (floor((x) + 0.5))
++
++/* We might still need this for fast-pathing, but we'll see */
++
++static void InitXftLib()
++{
++    static PRBool initialized = PR_FALSE;
++    if (initialized)
++        return;
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    initialized = PR_TRUE;
++	g_type_init();
++}
++
++gfxXftFont::gfxXftFont(const nsAString &aName,
++                       const gfxFontStyle *aFontStyle)
++: gfxFont(aName, aFontStyle),
++    mXftFont(nsnull), mHasMetrics(PR_FALSE),
++    mAdjustedSize(0)
++{
++    printf("gfxXftFonts.cpp:%s:%i, aName:'%s', style: %p\n", __FUNCTION__, __LINE__, NS_ConvertUTF16toUTF8(aName).get(), aFontStyle);
++	if (aFontStyle) {
++	    printf("FontStyle:\n");
++	    printf("\tstyle:%i ", aFontStyle->style);
++	    printf("\tsystemFont:%i ",aFontStyle->systemFont);
++		printf("\tvariant:%i ", aFontStyle->variant);
++		printf("\tfamilyNameQuirks:%i\n", aFontStyle->familyNameQuirks);
++		printf("\tweight:%i ",aFontStyle->weight);
++		printf("\tdecorations:%i ",aFontStyle->decorations);
++		printf("\tsize:%i ",aFontStyle->size);
++		printf("\tlangGroup:%s ",aFontStyle->langGroup.get());
++		printf("\tsizeAdjust:%g\n\n",aFontStyle->sizeAdjust);
++    }
++
++	InitXftLib();
++    // save our pattern - we own it now
++    mPattern = nsnull;
++    mFontName = nsnull;
++    mXftFont = nsnull;
++    mCharset = nsnull;
++    FcCharSet *charset = nsnull;
++
++/*    mPattern = aPattern;
++    mFontName = aFontName;*/
++    // don't destroy it out from under us
++	return;
++    FcPatternReference(mPattern);
++    FcPatternReference(mFontName);
++
++    // set up our charset
++    // this references an internal charset, we need to copy it
++    FcPatternGetCharSet(mFontName, FC_CHARSET, 0, &charset);
++    if (charset)
++        mCharset = FcCharSetCopy(charset);
++}
++
++gfxXftFont::~gfxXftFont()
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    if (mXftFont)
++        XftFontClose(GDK_DISPLAY(), mXftFont);
++    if (mCharset)
++        FcCharSetDestroy(mCharset);
++    if (mPattern)
++        FcPatternDestroy(mPattern);
++    if (mFontName)
++        FcPatternDestroy(mFontName);
++}
++
++/*
++void
++gfxXftFont::GetSize(const char *aCharString, PRUint32 aLength, gfxSize& inkSize, gfxSize& logSize)
++{
++//    RealizeXftFont();
++
++}
++*/
++
++const gfxFont::Metrics&
++gfxXftFont::GetMetrics()
++{
++    if (mHasMetrics)
++        return mMetrics;
++    printf("gfxXftFonts.cpp:%s:%i, this:%p\n", __FUNCTION__, __LINE__, this);
++    lRealizeXftFont();
++
++    XftFont *xftFont = mXftFont;
++
++    FT_Face face = XftLockFace(xftFont);
++
++    float val;
++    int size;
++    //    if (FcPatternGetInteger(fcfont->font_pattern, FC_PIXEL_SIZE, 0, &size) != FcResultMatch)
++    size = 12;
++    mMetrics.emHeight = PR_MAX(1, size);
++
++    mMetrics.maxAscent = xftFont->ascent;
++    mMetrics.maxDescent = xftFont->descent;
++
++    double lineHeight = mMetrics.maxAscent + mMetrics.maxDescent;
++
++    if (lineHeight > mMetrics.emHeight)
++        mMetrics.internalLeading = lineHeight - mMetrics.emHeight;
++    else
++        mMetrics.internalLeading = 0;
++    mMetrics.externalLeading = 0;
++
++    mMetrics.maxHeight = lineHeight;
++    mMetrics.emAscent = mMetrics.maxAscent * mMetrics.emHeight / lineHeight;
++    mMetrics.emDescent = mMetrics.emHeight - mMetrics.emAscent;
++    mMetrics.maxAdvance = xftFont->max_advance_width;
++
++    //    gfxSize isz, lsz;
++    //    GetSize(" ", 1, isz, lsz);
++    mMetrics.spaceWidth = 12;
++
++    // XXX do some FcCharSetHasChar work here to make sure
++    // we have an "x"
++    //    GetSize("x", 1, isz, lsz);
++    mMetrics.xHeight = 12;
++    mMetrics.aveCharWidth = 12;
++
++    val = CONVERT_DESIGN_UNITS_TO_PIXELS(face->underline_position,
++                                         face->size->metrics.y_scale);
++    if (!val)
++        val = - PR_MAX(1, floor(0.1 * xftFont->height + 0.5));
++
++    mMetrics.underlineOffset = val;
++
++    val = CONVERT_DESIGN_UNITS_TO_PIXELS(face->underline_thickness,
++                                         face->size->metrics.y_scale);
++    if (!val)
++        val = floor(0.05 * xftFont->height + 0.5);
++
++    mMetrics.underlineSize = PR_MAX(1, val);
++
++    TT_OS2 *os2 = (TT_OS2 *) FT_Get_Sfnt_Table(face, ft_sfnt_os2);
++
++    if (os2 && os2->ySuperscriptYOffset) {
++        val = CONVERT_DESIGN_UNITS_TO_PIXELS(os2->ySuperscriptYOffset,
++                                             face->size->metrics.y_scale);
++        mMetrics.superscriptOffset = PR_MAX(1, val);
++    } else {
++        mMetrics.superscriptOffset = mMetrics.xHeight;
++    }
++    // mSubscriptOffset
++    if (os2 && os2->ySubscriptYOffset) {
++        val = CONVERT_DESIGN_UNITS_TO_PIXELS(os2->ySubscriptYOffset,
++                                             face->size->metrics.y_scale);
++        // some fonts have the incorrect sign.
++        val = (val < 0) ? -val : val;
++        mMetrics.subscriptOffset = PR_MAX(1, val);
++    } else {
++        mMetrics.subscriptOffset = mMetrics.xHeight;
++    }
++
++    mMetrics.strikeoutOffset = mMetrics.xHeight / 2.0;
++    mMetrics.strikeoutSize = mMetrics.underlineSize;
++
++    XftUnlockFace(xftFont);
++
++//#if 0
++    fprintf (stderr, "Font: %s\n", NS_ConvertUTF16toUTF8(mName).get());
++    fprintf (stderr, "    emHeight: %f emAscent: %f emDescent: %f\n", mMetrics.emHeight, mMetrics.emAscent, mMetrics.emDescent);
++    fprintf (stderr, "    maxAscent: %f maxDescent: %f\n", mMetrics.maxAscent, mMetrics.maxDescent);
++    fprintf (stderr, "    internalLeading: %f externalLeading: %f\n", mMetrics.externalLeading, mMetrics.internalLeading);
++    fprintf (stderr, "    spaceWidth: %f aveCharWidth: %f xHeight: %f\n", mMetrics.spaceWidth, mMetrics.aveCharWidth, mMetrics.xHeight);
++    fprintf (stderr, "    uOff: %f uSize: %f stOff: %f stSize: %f suOff: %f suSize: %f\n", mMetrics.underlineOffset, mMetrics.underlineSize, mMetrics.strikeoutOffset, mMetrics.strikeoutSize, mMetrics.superscriptOffset, mMetrics.subscriptOffset);
++//#endif
++
++    mHasMetrics = PR_TRUE;
++    return mMetrics;
++}
++
++/*
++gint
++nsFontMetricsXft::RawGetWidth(const PRUnichar* aString, PRUint32 aLength)
++{
++    printf("nsFontMetricsXft.cpp, Line:%d, Func:%s\n",  __LINE__, __FUNCTION__);
++    nscoord width = 0;
++    nsresult rv;
++
++    rv = EnumerateGlyphs(aString, aLength,
++                         &nsFontMetricsXft::GetWidthCallback, &width);
++
++    if (NS_FAILED(rv))
++        width = 0;
++
++    return width;
++}
++
++*/
++
++void
++gfxXftFont::lRealizeXftFont(PRBool force)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    // already realized?
++    if (!force && mXftFont)
++        return;
++    if (GDK_DISPLAY() == 0) {
++        mXftFont = nsnull;
++        return;
++    }
++    if (!mXftFont) {
++	    gfxFloat size = mAdjustedSize ? mAdjustedSize : mStyle->size;
++	    printf("mName:'%s', size: %i\n ", NS_ConvertUTF16toUTF8(mName).get(), size);
++
++        mXftFont = XftFontOpenName(GDK_DISPLAY(), 0, NS_ConvertUTF16toUTF8(mName).get());
++        printf("RealizedFont: %p\n", mXftFont);
++		mHasMetrics = PR_FALSE;
++	    if (mAdjustedSize != 0)
++	        return;
++
++  		mAdjustedSize = mStyle->size;
++	    if (mStyle->sizeAdjust == 0)
++  	      return;
++
++/*		gfxSize isz, lsz;
++		GetSize("x", 1, isz, lsz);
++		gfxFloat aspect = isz.height / mStyle->size;
++		mAdjustedSize =
++		   PR_MAX(NSToCoordRound(mStyle->size*(mStyle->sizeAdjust/aspect)), 1.0f);
++		printf("mAdjustedSize: %i\n", mAdjustedSize);*/
++    }
++}
++
++/**
++ ** gfxXftFontGroup
++ **/
++
++static int
++lFFRECountHyphens (const nsAString &aFFREName)
++{
++    int h = 0;
++    PRInt32 hyphen = 0;
++    while ((hyphen = aFFREName.FindChar('-', hyphen)) >= 0) {
++        ++h;
++        ++hyphen;
++    }
++    return h;
++}
++
++PRBool
++gfxXftFontGroup::lFontCallback (const nsAString& fontName,
++                                const nsACString& genericName,
++                                void *closure)
++{
++    nsStringArray *sa = NS_STATIC_CAST(nsStringArray*, closure);
++
++    if (lFFRECountHyphens(fontName) < 3 && sa->IndexOf(fontName) < 0) {
++        sa->AppendString(fontName);
++    }
++
++    return PR_TRUE;
++}
++
++gfxXftFontGroup::gfxXftFontGroup(const nsAString& families,
++                                 const gfxFontStyle *aStyle)
++: gfxFontGroup(families, aStyle)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    g_type_init();
++    nsStringArray familyArray;
++    mFontCache.Init(15);
++    ForEachFont (lFontCallback, &familyArray);
++    FindGenericFontFromStyle (lFontCallback, &familyArray);
++    // XXX If there are no actual fonts, we should use dummy family.
++    // Pango will resolve from this.
++    printf("%s(%s)\n", NS_ConvertUTF16toUTF8(families).get(), aStyle->langGroup.get());
++    if (familyArray.Count() == 0) {
++        familyArray.AppendString(NS_LITERAL_STRING("sans-serif"));
++    }
++
++    for (int i = 0; i < familyArray.Count(); i++)
++        mFonts.AppendElement(new gfxXftFont(*familyArray[i], &mStyle));
++}
++
++gfxXftFontGroup::~gfxXftFontGroup()
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++gfxTextRun*
++gfxXftFontGroup::MakeTextRun(const PRUnichar* aString, PRUint32 aLength,
++                             Parameters* aParams)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    if (!aLength)
++        return nsnull;
++	gfxTextRun * run = new gfxXftTextRun(this, aString, aLength, aParams);
++	printf("gfxTextRun: %p\n", run);
++	return run;
++}
++
++gfxTextRun*
++gfxXftFontGroup::MakeTextRun(const PRUint8* aString, PRUint32 aLength,
++                             Parameters* aParams)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    if (!aLength)
++        return nsnull;
++    gfxTextRun * run = new gfxXftTextRun(this, aString, aLength, aParams);
++	printf("gfxTextRun: %p\n", run);
++	return run;
++}
++
++gfxFontGroup*
++gfxXftFontGroup::Copy(const gfxFontStyle*)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++gfxXftTextRun::gfxXftTextRun(gfxXftFontGroup *aGroup,
++                             const PRUint8* aString, PRUint32 aLength,
++                             gfxTextRunFactory::Parameters* aParams)
++: gfxTextRun(aParams, PR_TRUE), mIsWide(PR_FALSE), mCharacterCount(aLength)
++{
++    gchar* utf8Chars = (gchar*)NS_REINTERPRET_CAST(const gchar*, aString);
++    utf8Chars[aLength]=0;
++    mCString = utf8Chars;
++    printf("gfxXftTextRun::gfxXftTextRun: S:%s, L:%i, this:%p\n", utf8Chars, aLength, this);
++}
++
++gfxXftTextRun::gfxXftTextRun(gfxXftFontGroup *aGroup,
++                             const PRUnichar* aString, PRUint32 aLength,
++                             gfxTextRunFactory::Parameters* aParams)
++: gfxTextRun(aParams, PR_TRUE), mIsWide(PR_TRUE), mWString(aString), mCharacterCount(aLength)
++{
++    printf("gfxXftTextRun::gfxXftTextRun: S:%s, L:%i, this:%p\n", NS_ConvertUTF16toUTF8(mWString).get(), aLength, this);
++}
++
++gfxXftTextRun::~gfxXftTextRun()
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++void
++gfxXftTextRun::GetCharFlags(PRUint32 aStart, PRUint32 aLength,
++                            PRUint8* aFlags)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++PRUint8
++gfxXftTextRun::GetCharFlags(PRUint32 aOffset)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++PRUint32
++gfxXftTextRun::GetLength()
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++PRBool
++gfxXftTextRun::SetPotentialLineBreaks(PRUint32 aStart, PRUint32 aLength,
++                                      PRPackedBool* aBreakBefore)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++void
++gfxXftTextRun::Draw(gfxContext *aContext, gfxPoint aPt,
++                    PRUint32 aStart, PRUint32 aLength,
++                    const gfxRect* aDirtyRect,
++                    PropertyProvider* aBreakProvider,
++                    gfxFloat* aAdvanceWidth)
++{
++    printf("gfxXftFonts.cpp:%s:%i, this:%p\n",  __FUNCTION__, __LINE__, this);
++	if (aStart + aLength <= mCharacterCount) printf("Substring out of range\n");
++	gfxFloat appUnitsToPixels = 1/mAppUnitsPerDevUnit;
++    gfxPoint pt(NSToCoordRound(aPt.x*appUnitsToPixels),
++                NSToCoordRound(aPt.y*appUnitsToPixels));
++	gfxFloat direction = 1.0;
++	gfxFloat startX = pt.x;
++    if (aAdvanceWidth) {
++        *aAdvanceWidth = (pt.x - startX)*direction*mAppUnitsPerDevUnit;
++		printf("\taAdvanceWidth: %i\n", *aAdvanceWidth);
++    }
++	printf("\taPt.x:%i, aPt.y:%i, pt.x:%i, pt.y:%i\n", aPt.x, aPt.y, pt.x, pt.y);
++	if (aDirtyRect)
++	    printf("\taDirtyRect.pos.x:%i, aDirtyRect.pos.y:%i, aDirtyRect->size.width:%i, aDirtyRect->size.height:%i\n", aDirtyRect->pos.x, aDirtyRect->pos.y, aDirtyRect->size.width, aDirtyRect->size.height);
++	printf("\taStart:%i, aLength:%i\n", aStart, aLength);
++	GdkPixmap * mPixmap = ::gdk_pixmap_new(nsnull, 200, 200, 16);
++//	gdk_drawable_set_colormap(GDK_DRAWABLE(mPixmap), gdk_rgb_get_colormap());
++
++    XftDraw * mXftDraw = XftDrawCreate(GDK_DISPLAY(), GDK_WINDOW_XWINDOW(mPixmap),
++                                       GDK_VISUAL_XVISUAL(::gdk_rgb_get_visual()),
++                                       GDK_COLORMAP_XCOLORMAP(::gdk_rgb_get_cmap()));
++//	XftDrawString8(mXftDraw,
++    // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA zaebalo
++}
++
++void
++gfxXftTextRun::DrawToPath(gfxContext *aContext, gfxPoint aPt,
++                          PRUint32 aStart, PRUint32 aLength,
++                          PropertyProvider* aBreakProvider,
++                          gfxFloat* aAdvanceWidth)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++void
++gfxXftTextRun::DrawSpecialString(gfxContext* aContext, gfxPoint aPt,
++                                 SpecialString aString)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++gfxTextRun::Metrics
++gfxXftTextRun::MeasureText(PRUint32 aStart, PRUint32 aLength,
++                           PRBool aTightBoundingBox,
++                           PropertyProvider* aBreakProvider)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    gfxTextRun::Metrics metrics;
++    return metrics;
++}
++
++void
++gfxXftTextRun::SetLineBreaks(PRUint32 aStart, PRUint32 aLength,
++                             PRBool aLineBreakBefore, PRBool aLineBreakAfter,
++                             TextProvider* aProvider,
++                             gfxFloat* aAdvanceWidthDelta)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++gfxTextRun::Metrics
++gfxXftTextRun::MeasureTextSpecialString(SpecialString aString,
++                                        PRBool aTightBoundingBox)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    gfxTextRun::Metrics metrics;
++    return metrics;
++}
++
++gfxFloat
++gfxXftTextRun::GetAdvanceWidth(PRUint32 aStart, PRUint32 aLength,
++                               PropertyProvider* aBreakProvider)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    return 5;
++}
++
++gfxFloat
++gfxXftTextRun::GetAdvanceWidthSpecialString(SpecialString aString)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    return 5;
++}
++
++gfxFont::Metrics
++gfxXftTextRun::GetDecorationMetrics()
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++    gfxFont::Metrics metrics;
++    return metrics;
++}
++
++PRUint32
++gfxXftTextRun::BreakAndMeasureText(PRUint32 aStart, PRUint32 aMaxLength,
++                                   PRBool aLineBreakBefore, gfxFloat aWidth,
++                                   PropertyProvider* aBreakProvider,
++                                   PRBool aSuppressInitialBreak,
++                                   Metrics* aMetrics, PRBool aTightBoundingBox,
++                                   PRBool* aUsedHyphenation,
++                                   PRUint32* aLastBreak)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
++
++void
++gfxXftTextRun::FlushSpacingCache(PRUint32 aStart)
++{
++    printf("gfxXftFonts.cpp:%s:%i\n", __FUNCTION__, __LINE__);
++}
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -5067,25 +5067,25 @@ then
+     AC_DEFINE(MOZ_ENABLE_PANGO)
+     PKG_CHECK_MODULES(MOZ_PANGO, pangoxft >= 1.6.0)
+ 
+     AC_SUBST(MOZ_ENABLE_PANGO)
+     AC_SUBST(MOZ_PANGO_CFLAGS)
+     AC_SUBST(MOZ_PANGO_LIBS)
+ fi
+ 
+-if test "$MOZ_ENABLE_GTK2" && test "$MOZ_ENABLE_CAIRO_GFX"
+-then
+-    # For gtk2, we require --enable-pango; gtk2 already implies --enable-xft
+-    if test -z "$MOZ_ENABLE_PANGO"
+-    then
+-        AC_MSG_WARN([Pango is required for cairo gfx builds, assuming --enable-pango])
+-        MOZ_ENABLE_PANGO=1
+-    fi
+-fi
++dnl if test "$MOZ_ENABLE_GTK2" && test "$MOZ_ENABLE_CAIRO_GFX"
++dnl then
++dnl     # For gtk2, we require --enable-pango; gtk2 already implies --enable-xft
++dnl     if test -z "$MOZ_ENABLE_PANGO"
++dnl     then
++dnl         AC_MSG_WARN([Pango is required for cairo gfx builds, assuming --enable-pango])
++dnl         MOZ_ENABLE_PANGO=1
++dnl     fi
++dnl fi
+ 
+ if test "$MOZ_ENABLE_PANGO" && test "$MOZ_ENABLE_CAIRO_GFX"
+ then
+     AC_DEFINE(MOZ_ENABLE_PANGO)
+     dnl PKG_CHECK_MODULES(MOZ_PANGO, pango >= 1.10.0 pangocairo >= 1.10.0)
+     if test "$MOZ_X11"; then
+         PKG_CHECK_MODULES(MOZ_PANGO, pango >= 1.6.0 pangoft2 >= 1.6.0 pangoxft >= 1.6.0)
+     else

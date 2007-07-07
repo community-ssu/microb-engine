@@ -1,0 +1,365 @@
+--- mozilla/layout/build/Makefile.in.orig	2007-05-06 08:18:40.000000000 +0300
++++ mozilla/layout/build/Makefile.in	2007-05-06 12:30:45.792838000 +0300
+@@ -196,20 +196,21 @@ ifdef MOZ_XTF
+ SHARED_LIBRARY_LIBS += \
+ 		$(DEPTH)/content/xtf/src/$(LIB_PREFIX)gkcontentxtf_s.$(LIB_SUFFIX) \
+ 		$(NULL)
+ endif
+ 
+ ifdef MOZ_SVG
+ SHARED_LIBRARY_LIBS += \
+                 ../svg/base/src/$(LIB_PREFIX)gksvgbase_s.$(LIB_SUFFIX) \
+ 		$(DEPTH)/content/svg/document/src/$(LIB_PREFIX)gkconsvgdoc_s.$(LIB_SUFFIX) \
+ 		$(DEPTH)/content/svg/content/src/$(LIB_PREFIX)gkcontentsvg_s.$(LIB_SUFFIX) \
++		../svg/renderer/src/cairo/$(LIB_PREFIX)gksvgrenderercairo_s.$(LIB_SUFFIX) \
+                 $(NULL)
+ endif
+ 
+ ifdef MOZ_PLAINTEXT_EDITOR_ONLY
+ DEFINES += -DMOZILLA_PLAINTEXT_EDITOR_ONLY
+ else
+ SHARED_LIBRARY_LIBS += \
+ 	$(DEPTH)/editor/libeditor/html/$(LIB_PREFIX)htmleditor_s.$(LIB_SUFFIX) \
+ 	$(DEPTH)/editor/txtsvc/src/$(LIB_PREFIX)txtsvc_s.$(LIB_SUFFIX) \
+ 	$(NULL)
+--- mozilla/layout/build/nsLayoutModule.cpp.orig	2007-05-06 12:31:35.000000000 +0300
++++ mozilla/layout/build/nsLayoutModule.cpp	2007-05-06 12:34:16.345996750 +0300
+@@ -261,20 +261,24 @@ NS_NewXULTreeBuilder(nsISupports* aOuter
+ #endif
+ 
+ PR_STATIC_CALLBACK(nsresult) Initialize(nsIModule* aSelf);
+ static void Shutdown();
+ 
+ #ifdef MOZ_XTF
+ #include "nsIXTFService.h"
+ #include "nsIXMLContentBuilder.h"
+ #endif
+ 
++#ifdef MOZ_SVG
++#include "nsISVGRenderer.h"
++#endif
++
+ #ifdef MOZ_XSLT
+ // Transformiix
+ /* 5d5d92cd-6bf8-11d9-bf4a-000a95dc234c */
+ #define TRANSFORMIIX_NODESET_CID \
+ { 0x5d5d92cd, 0x6bf8, 0x11d9, { 0xbf, 0x4a, 0x0, 0x0a, 0x95, 0xdc, 0x23, 0x4c } }
+ 
+ #define TRANSFORMIIX_NODESET_CONTRACTID \
+ "@mozilla.org/transformiix-nodeset;1"
+ 
+ #endif
+@@ -425,20 +429,24 @@ nsresult NS_NewContentSubtreeIterator(ns
+ nsresult NS_NewGenSubtreeIterator(nsIContentIterator** aInstancePtrResult);
+ nsresult NS_NewContentDocumentLoaderFactory(nsIDocumentLoaderFactory** aResult);
+ nsresult NS_NewHTMLCopyTextEncoder(nsIDocumentEncoder** aResult);
+ nsresult NS_NewTextEncoder(nsIDocumentEncoder** aResult);
+ nsresult NS_NewXBLService(nsIXBLService** aResult);
+ nsresult NS_NewContentPolicy(nsIContentPolicy** aResult);
+ nsresult NS_NewDOMEventGroup(nsIDOMEventGroup** aResult);
+ 
+ NS_IMETHODIMP NS_NewXULControllers(nsISupports* aOuter, REFNSIID aIID, void** aResult);
+ 
++#ifdef MOZ_SVG
++nsresult NS_NewSVGRendererCairo(nsISVGRenderer** aResult);
++#endif
++
+ #define MAKE_CTOR(ctor_, iface_, func_)                   \
+ static NS_IMETHODIMP                                      \
+ ctor_(nsISupports* aOuter, REFNSIID aIID, void** aResult) \
+ {                                                         \
+   *aResult = nsnull;                                      \
+   if (aOuter)                                             \
+     return NS_ERROR_NO_AGGREGATION;                       \
+   iface_* inst;                                           \
+   nsresult rv = func_(&inst);                             \
+   if (NS_SUCCEEDED(rv)) {                                 \
+@@ -470,20 +478,23 @@ MAKE_CTOR(CreateNewContainerBoxObject,  
+ NS_GENERIC_FACTORY_CONSTRUCTOR(inDOMView)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(inDeepTreeWalker)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(inFlasher)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(inCSSValueSearch)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(inDOMUtils)
+ #endif
+ 
+ #ifndef MOZ_CAIRO_GFX
+ MAKE_CTOR(CreateSelectionImageService,  nsISelectionImageService,NS_NewSelectionImageService)
+ #endif
++#ifdef MOZ_SVG
++MAKE_CTOR(CreateNewSVGRendererCairo,      nsISVGRenderer,              NS_NewSVGRendererCairo)
++#endif
+ MAKE_CTOR(CreateCaret,                  nsICaret,               NS_NewCaret)
+ 
+ MAKE_CTOR(CreateNameSpaceManager,         nsINameSpaceManager,         NS_GetNameSpaceManager)
+ MAKE_CTOR(CreateEventListenerManager,     nsIEventListenerManager,     NS_NewEventListenerManager)
+ MAKE_CTOR(CreateDOMEventGroup,            nsIDOMEventGroup,            NS_NewDOMEventGroup)
+ MAKE_CTOR(CreateDocumentViewer,           nsIDocumentViewer,           NS_NewDocumentViewer)
+ MAKE_CTOR(CreateCSSStyleSheet,            nsICSSStyleSheet,            NS_NewCSSStyleSheet)
+ MAKE_CTOR(CreateHTMLDocument,             nsIDocument,                 NS_NewHTMLDocument)
+ MAKE_CTOR(CreateHTMLCSSStyleSheet,        nsIHTMLCSSStyleSheet,        NS_NewHTMLCSSStyleSheet)
+ MAKE_CTOR(CreateDOMImplementation,        nsIDOMDOMImplementation,     NS_NewDOMImplementation)
+@@ -793,20 +804,26 @@ CreateWindowControllerWithSingletonComma
+   if (NS_FAILED(rv)) return rv;
+ 
+   return controller->QueryInterface(aIID, aResult);
+ }
+ 
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsDOMScriptObjectFactory)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsBaseDOMException)
+ 
+ // The list of components we register
+ static const nsModuleComponentInfo gComponents[] = {
++#ifdef MOZ_SVG
++  { "SVG Cairo Renderer",
++    NS_SVG_RENDERER_CAIRO_CID,
++    NS_SVG_RENDERER_CAIRO_CONTRACTID,
++    CreateNewSVGRendererCairo },
++#endif // MOZ_SVG                                                               
+ #ifdef DEBUG
+   { "Frame utility",
+     NS_FRAME_UTIL_CID,
+     nsnull,
+     CreateNewFrameUtil },
+   { "Layout debugger",
+     NS_LAYOUT_DEBUGGER_CID,
+     nsnull,
+     CreateNewLayoutDebugger },
+ #endif
+--- mozilla/configure.in.orig	2007-05-06 08:18:45.000000000 +0300
++++ mozilla/configure.in	2007-05-06 08:51:05.821141250 +0300
+@@ -5861,25 +5861,25 @@ fi
+ AC_SUBST(MOZ_ENABLE_CANVAS)
+ 
+ dnl ========================================================
+ dnl SVG
+ dnl ========================================================
+ MOZ_ARG_DISABLE_BOOL(svg,
+ [  --disable-svg            Disable SVG support],
+     MOZ_SVG=,
+     MOZ_SVG=1 )
+ if test -n "$MOZ_SVG"; then
+-  if test -z "$MOZ_ENABLE_CAIRO_GFX"; then
+-    AC_MSG_ERROR([SVG requires cairo gfx])
+-  else
++dnl   if test -z "$MOZ_ENABLE_CAIRO_GFX"; then
++dnl     AC_MSG_ERROR([SVG requires cairo gfx])
++dnl   else
+     AC_DEFINE(MOZ_SVG)
+-  fi
++dnl   fi
+ fi
+ 
+ MOZ_SVG_FOREIGNOBJECT=$MOZ_ENABLE_CAIRO_GFX
+ dnl ========================================================
+ dnl SVG <foreignObject>
+ dnl ========================================================
+ MOZ_ARG_DISABLE_BOOL(svg-foreignobject,
+    [  --disable-svg-foreignobject
+                         Disable SVG <foreignObject> support],
+    MOZ_SVG_FOREIGNOBJECT=,
+--- mozilla/allmakefiles.sh.orig	2007-05-06 08:18:18.000000000 +0300
++++ mozilla/allmakefiles.sh	2007-05-06 12:39:27.153421000 +0300
+@@ -1320,20 +1320,24 @@ if [ "$MOZ_SVG" ]; then
+ 	content/svg/content/Makefile
+ 	content/svg/content/src/Makefile
+ "
+     MAKEFILES_dom="$MAKEFILES_dom
+ 	dom/public/idl/svg/Makefile
+ "
+     MAKEFILES_layout="$MAKEFILES_layout
+ 	layout/svg/Makefile
+ 	layout/svg/base/Makefile
+ 	layout/svg/base/src/Makefile
++    layout/svg/renderer/Makefile
++    layout/svg/renderer/public/Makefile
++    layout/svg/renderer/src/Makefile
++    layout/svg/renderer/src/cairo/Makefile
+ "
+ fi
+ 
+ # xtf
+ if [ "$MOZ_XTF" ]; then
+     MAKEFILES_content="$MAKEFILES_content
+ 	content/xtf/Makefile
+ 	content/xtf/public/Makefile
+ 	content/xtf/src/Makefile
+ "
+--- mozilla/layout/build/Makefile.in.orig	2007-06-18 11:51:26.000000000 +0300
++++ mozilla/layout/build/Makefile.in	2007-06-18 12:33:15.000000000 +0300
+@@ -197,22 +197,27 @@ ifdef MOZ_XTF
+ SHARED_LIBRARY_LIBS += \
+ 		$(DEPTH)/content/xtf/src/$(LIB_PREFIX)gkcontentxtf_s.$(LIB_SUFFIX) \
+ 		$(NULL)
+ endif
+ 
+ ifdef MOZ_SVG
+ SHARED_LIBRARY_LIBS += \
+                 ../svg/base/src/$(LIB_PREFIX)gksvgbase_s.$(LIB_SUFFIX) \
+ 		$(DEPTH)/content/svg/document/src/$(LIB_PREFIX)gkconsvgdoc_s.$(LIB_SUFFIX) \
+ 		$(DEPTH)/content/svg/content/src/$(LIB_PREFIX)gkcontentsvg_s.$(LIB_SUFFIX) \
+-		../svg/renderer/src/cairo/$(LIB_PREFIX)gksvgrenderercairo_s.$(LIB_SUFFIX) \
+                 $(NULL)
++
++ifndef MOZ_ENABLE_CAIRO_GFX
++SHARED_LIBRARY_LIBS += \
++		../svg/renderer/src/cairo/$(LIB_PREFIX)gksvgrenderercairo_s.$(LIB_SUFFIX) \
++		$(NULL)
++endif
+ endif
+ 
+ ifdef MOZ_PLAINTEXT_EDITOR_ONLY
+ DEFINES += -DMOZILLA_PLAINTEXT_EDITOR_ONLY
+ else
+ SHARED_LIBRARY_LIBS += \
+ 	$(DEPTH)/editor/libeditor/html/$(LIB_PREFIX)htmleditor_s.$(LIB_SUFFIX) \
+ 	$(DEPTH)/editor/txtsvc/src/$(LIB_PREFIX)txtsvc_s.$(LIB_SUFFIX) \
+ 	$(NULL)
+ endif
+--- mozilla/layout/build/nsLayoutModule.cpp.orig	2007-06-18 11:51:26.000000000 +0300
++++ mozilla/layout/build/nsLayoutModule.cpp	2007-06-18 12:32:28.000000000 +0300
+@@ -262,22 +262,24 @@ NS_NewXULTreeBuilder(nsISupports* aOuter
+ 
+ PR_STATIC_CALLBACK(nsresult) Initialize(nsIModule* aSelf);
+ static void Shutdown();
+ 
+ #ifdef MOZ_XTF
+ #include "nsIXTFService.h"
+ #include "nsIXMLContentBuilder.h"
+ #endif
+ 
+ #ifdef MOZ_SVG
++#ifndef MOZ_CAIRO_GFX
+ #include "nsISVGRenderer.h"
+ #endif
++#endif
+ 
+ #ifdef MOZ_XSLT
+ // Transformiix
+ /* 5d5d92cd-6bf8-11d9-bf4a-000a95dc234c */
+ #define TRANSFORMIIX_NODESET_CID \
+ { 0x5d5d92cd, 0x6bf8, 0x11d9, { 0xbf, 0x4a, 0x0, 0x0a, 0x95, 0xdc, 0x23, 0x4c } }
+ 
+ #define TRANSFORMIIX_NODESET_CONTRACTID \
+ "@mozilla.org/transformiix-nodeset;1"
+ 
+@@ -430,22 +432,24 @@ nsresult NS_NewGenSubtreeIterator(nsICon
+ nsresult NS_NewContentDocumentLoaderFactory(nsIDocumentLoaderFactory** aResult);
+ nsresult NS_NewHTMLCopyTextEncoder(nsIDocumentEncoder** aResult);
+ nsresult NS_NewTextEncoder(nsIDocumentEncoder** aResult);
+ nsresult NS_NewXBLService(nsIXBLService** aResult);
+ nsresult NS_NewContentPolicy(nsIContentPolicy** aResult);
+ nsresult NS_NewDOMEventGroup(nsIDOMEventGroup** aResult);
+ 
+ NS_IMETHODIMP NS_NewXULControllers(nsISupports* aOuter, REFNSIID aIID, void** aResult);
+ 
+ #ifdef MOZ_SVG
++#ifndef MOZ_CAIRO_GFX
+ nsresult NS_NewSVGRendererCairo(nsISVGRenderer** aResult);
+ #endif
++#endif
+ 
+ #define MAKE_CTOR(ctor_, iface_, func_)                   \
+ static NS_IMETHODIMP                                      \
+ ctor_(nsISupports* aOuter, REFNSIID aIID, void** aResult) \
+ {                                                         \
+   *aResult = nsnull;                                      \
+   if (aOuter)                                             \
+     return NS_ERROR_NO_AGGREGATION;                       \
+   iface_* inst;                                           \
+   nsresult rv = func_(&inst);                             \
+@@ -479,36 +483,40 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(inDOMView
+ NS_GENERIC_FACTORY_CONSTRUCTOR(inDeepTreeWalker)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(inFlasher)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(inCSSValueSearch)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(inDOMUtils)
+ #endif
+ 
+ #ifndef MOZ_CAIRO_GFX
+ MAKE_CTOR(CreateSelectionImageService,  nsISelectionImageService,NS_NewSelectionImageService)
+ #endif
+ #ifdef MOZ_SVG
++#ifndef MOZ_CAIRO_GFX
+ MAKE_CTOR(CreateNewSVGRendererCairo,      nsISVGRenderer,              NS_NewSVGRendererCairo)
+ #endif
++#endif
+ MAKE_CTOR(CreateCaret,                  nsICaret,               NS_NewCaret)
+ 
+ MAKE_CTOR(CreateNameSpaceManager,         nsINameSpaceManager,         NS_GetNameSpaceManager)
+ MAKE_CTOR(CreateEventListenerManager,     nsIEventListenerManager,     NS_NewEventListenerManager)
+ MAKE_CTOR(CreateDOMEventGroup,            nsIDOMEventGroup,            NS_NewDOMEventGroup)
+ MAKE_CTOR(CreateDocumentViewer,           nsIDocumentViewer,           NS_NewDocumentViewer)
+ MAKE_CTOR(CreateCSSStyleSheet,            nsICSSStyleSheet,            NS_NewCSSStyleSheet)
+ MAKE_CTOR(CreateHTMLDocument,             nsIDocument,                 NS_NewHTMLDocument)
+ MAKE_CTOR(CreateHTMLCSSStyleSheet,        nsIHTMLCSSStyleSheet,        NS_NewHTMLCSSStyleSheet)
+ MAKE_CTOR(CreateDOMImplementation,        nsIDOMDOMImplementation,     NS_NewDOMImplementation)
+ MAKE_CTOR(CreateXMLDocument,              nsIDocument,                 NS_NewXMLDocument)
+ #ifdef MOZ_SVG
++#ifndef MOZ_CAIRO_GFX
+ MAKE_CTOR(CreateSVGDocument,              nsIDocument,                 NS_NewSVGDocument)
+ #endif
++#endif
+ MAKE_CTOR(CreateImageDocument,            nsIDocument,                 NS_NewImageDocument)
+ MAKE_CTOR(CreateCSSParser,                nsICSSParser,                NS_NewCSSParser)
+ MAKE_CTOR(CreateCSSLoader,                nsICSSLoader,                NS_NewCSSLoader)
+ MAKE_CTOR(CreateDOMSelection,             nsISelection,                NS_NewDomSelection)
+ MAKE_CTOR(CreateSelection,                nsFrameSelection,                 NS_NewSelection)
+ MAKE_CTOR(CreateRange,                    nsIDOMRange,                 NS_NewRange)
+ MAKE_CTOR(CreateRangeUtils,               nsIRangeUtils,               NS_NewRangeUtils)
+ MAKE_CTOR(CreateContentIterator,          nsIContentIterator,          NS_NewContentIterator)
+ MAKE_CTOR(CreatePreContentIterator,       nsIContentIterator,          NS_NewPreContentIterator)
+ MAKE_CTOR(CreateSubtreeIterator,          nsIContentIterator,          NS_NewContentSubtreeIterator)
+@@ -805,24 +813,26 @@ CreateWindowControllerWithSingletonComma
+ 
+   return controller->QueryInterface(aIID, aResult);
+ }
+ 
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsDOMScriptObjectFactory)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsBaseDOMException)
+ 
+ // The list of components we register
+ static const nsModuleComponentInfo gComponents[] = {
+ #ifdef MOZ_SVG
++#ifndef MOZ_CAIRO_GFX
+   { "SVG Cairo Renderer",
+     NS_SVG_RENDERER_CAIRO_CID,
+     NS_SVG_RENDERER_CAIRO_CONTRACTID,
+     CreateNewSVGRendererCairo },
++#endif
+ #endif // MOZ_SVG                                                               
+ #ifdef DEBUG
+   { "Frame utility",
+     NS_FRAME_UTIL_CID,
+     nsnull,
+     CreateNewFrameUtil },
+   { "Layout debugger",
+     NS_LAYOUT_DEBUGGER_CID,
+     nsnull,
+     CreateNewLayoutDebugger },
+@@ -961,25 +971,27 @@ static const nsModuleComponentInfo gComp
+     nsnull,
+     CreateDOMImplementation },
+ 
+ 
+   { "XML document",
+     NS_XMLDOCUMENT_CID,
+     "@mozilla.org/xml/xml-document;1",
+     CreateXMLDocument },
+ 
+ #ifdef MOZ_SVG
++#ifndef MOZ_CAIRO_GFX
+   { "SVG document",
+     NS_SVGDOCUMENT_CID,
+     "@mozilla.org/svg/svg-document;1",
+     CreateSVGDocument },
+ #endif
++#endif
+ 
+   { "Image document",
+     NS_IMAGEDOCUMENT_CID,
+     nsnull,
+     CreateImageDocument },
+ 
+   { "CSS parser",
+     NS_CSSPARSER_CID,
+     "@mozilla.org/content/css-parser;1",
+     CreateCSSParser },

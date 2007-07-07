@@ -1,0 +1,103 @@
+# http://celtickane.com/projects/jsspeed.php 
+diff -Naur mozilla.old/js/src/jsstr.c mozilla.reduced/js/src/jsstr.c
+--- mozilla.old/js/src/jsstr.c	2007-04-27 13:02:08.000000000 +0000
++++ mozilla.reduced/js/src/jsstr.c	2007-05-18 13:27:57.000000000 +0000
+@@ -52,6 +52,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include "jstypes.h"
++#include "jsbit.h"
+ #include "jsutil.h" /* Added by JSIFY */
+ #include "jshash.h" /* Added by JSIFY */
+ #include "jsprf.h"
+@@ -72,6 +73,17 @@
+ 
+ #define JSSTRDEP_RECURSION_LIMIT        100
+ 
++/* This function is used to compute string allocation size            */
++/* Implemented from Dennis Forbes's blog idea with slight improvement */
++static inline
++size_t js_allocSize(size_t desired_size)
++{
++    JSIntn size;
++
++    JS_CEILING_LOG2(size, desired_size);
++    return JS_BIT(size + 1); /* sizeof(jschar) = 2 */
++} /* js_allocSize */
++
+ size_t
+ js_MinimizeDependentStrings(JSString *str, int level, JSString **basep)
+ {
+@@ -150,7 +162,7 @@
+         if (ln == 0)
+             return right;
+         ls = JSSTRING_CHARS(left);
+-        s = (jschar *) JS_malloc(cx, (ln + rn + 1) * sizeof(jschar));
++        s = (jschar *) JS_malloc(cx, js_allocSize(ln + rn + 1));
+         if (!s)
+             return NULL;
+         js_strncpy(s, ls, ln);
+@@ -161,7 +173,7 @@
+         if (ln == 0)
+             return right;
+         ls = left->chars;
+-        s = (jschar *) JS_realloc(cx, ls, (ln + rn + 1) * sizeof(jschar));
++        s = (jschar *) JS_realloc(cx, ls, js_allocSize(ln + rn + 1));
+         if (!s)
+             return NULL;
+ 
+@@ -182,7 +194,7 @@
+         if (!ldep) {
+             JS_free(cx, s);
+         } else {
+-            s = JS_realloc(cx, ls, (ln + 1) * sizeof(jschar));
++            s = JS_realloc(cx, ls, js_allocSize(ln + 1));
+             if (s)
+                 left->chars = s;
+         }
+@@ -1564,8 +1576,7 @@
+     growth = leftlen + replen;
+     chars = (jschar *)
+         (rdata->chars
+-         ? JS_realloc(cx, rdata->chars, (rdata->length + growth + 1)
+-                                        * sizeof(jschar))
++         ? JS_realloc(cx, rdata->chars, js_allocSize(rdata->length + growth + 1))
+          : JS_malloc(cx, (growth + 1) * sizeof(jschar)));
+     if (!chars) {
+         JS_free(cx, rdata->chars);
+@@ -1653,7 +1664,7 @@
+     rightlen = cx->regExpStatics.rightContext.length;
+     length = rdata.length + rightlen;
+     chars = (jschar *)
+-        JS_realloc(cx, rdata.chars, (length + 1) * sizeof(jschar));
++        JS_realloc(cx, rdata.chars, js_allocSize(length + 1));
+     if (!chars) {
+         JS_free(cx, rdata.chars);
+         ok = JS_FALSE;
+@@ -4544,7 +4555,7 @@
+     if (!str->chars ||
+         JS_HOWMANY(total, URI_CHUNK) > JS_HOWMANY(str->length + 1, URI_CHUNK)) {
+         total = JS_ROUNDUP(total, URI_CHUNK);
+-        newchars = JS_realloc(cx, str->chars, total * sizeof(jschar));
++        newchars = JS_realloc(cx, str->chars, js_allocSize(total));
+         if (!newchars)
+             return JS_FALSE;
+         str->chars = newchars;
+@@ -4631,7 +4642,7 @@
+      * don't worry about that case here.  Worst case, R hangs onto URI_CHUNK-1
+      * more jschars than it needs.
+      */
+-    chars = (jschar *) JS_realloc(cx, R->chars, (R->length+1) * sizeof(jschar));
++    chars = (jschar *) JS_realloc(cx, R->chars, js_allocSize(R->length+1));
+     if (chars)
+         R->chars = chars;
+     *rval = STRING_TO_JSVAL(R);
+@@ -4724,7 +4735,7 @@
+      * don't worry about that case here.  Worst case, R hangs onto URI_CHUNK-1
+      * more jschars than it needs.
+      */
+-    chars = (jschar *) JS_realloc(cx, R->chars, (R->length+1) * sizeof(jschar));
++    chars = (jschar *) JS_realloc(cx, R->chars, js_allocSize(R->length+1));
+     if (chars)
+         R->chars = chars;
+     *rval = STRING_TO_JSVAL(R);

@@ -1,0 +1,46 @@
+Index: dom/src/base/Makefile.in
+===================================================================
+--- dom/src/base/Makefile.in.orig
++++ dom/src/base/Makefile.in
+@@ -122,14 +122,15 @@ LOCAL_INCLUDES = \
+ 		-I$(srcdir)/../storage \
+ 		-I$(topsrcdir)/content/xbl/src \
+ 		-I$(topsrcdir)/content/xul/document/src \
+ 		-I$(topsrcdir)/content/events/src \
+ 		-I$(topsrcdir)/content/base/src \
+ 		$(NULL)
+ 
+ DEFINES += -D_IMPL_NS_LAYOUT
++DEFINES += -DMOZ_ENABLE_JS_DUMP
+ 
+ ifdef MOZ_JSDEBUGGER
+ DEFINES += -DMOZ_JSDEBUGGER
+ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+Index: dom/src/base/nsGlobalWindow.cpp
+===================================================================
+--- dom/src/base/nsGlobalWindow.cpp.orig
++++ dom/src/base/nsGlobalWindow.cpp
+@@ -3419,17 +3419,21 @@ nsGlobalWindow::Dump(const nsAString& aS
+   while (c < cEnd) {
+     if (*c == '\r')
+       *c = '\n';
+     c++;
+   }
+ #endif
+ 
+   if (cstr) {
++#if defined(XP_UNIX)
++    printf("%s\n", cstr);
++#else
+     printf("%s", cstr);
++#endif
+     nsMemory::Free(cstr);
+   }
+ 
+   return NS_OK;
+ }
+ 
+ void
+ nsGlobalWindow::EnsureReflowFlushAndPaint()

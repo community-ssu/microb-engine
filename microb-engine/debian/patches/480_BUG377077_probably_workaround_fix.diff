@@ -1,0 +1,23 @@
+Index: mozilla/layout/generic/nsBlockFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsBlockFrame.cpp
++++ mozilla/layout/generic/nsBlockFrame.cpp
+@@ -6334,17 +6334,17 @@
+   NS_PRECONDITION(aBlock, "Must have a frame");
+ #ifdef DEBUG
+   nsBlockFrame* blockFrame;
+   aBlock->QueryInterface(kBlockFrameCID, (void**)&blockFrame);
+   NS_ASSERTION(blockFrame, "aBlock must be a block");
+ #endif
+ 
+   nsIFrame* parent = aBlock->GetParent();
+-  return (aBlock->GetStateBits() & NS_BLOCK_SPACE_MGR) ||
++  return (parent && aBlock->GetStateBits() & NS_BLOCK_SPACE_MGR) ||
+     (parent && !parent->IsFloatContainingBlock());
+ }
+ 
+ // XXX keep the text-run data in the first-in-flow of the block
+ 
+ #ifdef IBMBIDI
+ nsresult
+ nsBlockFrame::ResolveBidi()

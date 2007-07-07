@@ -1,0 +1,26 @@
+Index: mozilla/dom/src/base/nsGlobalWindow.cpp
+===================================================================
+--- mozilla.orig/dom/src/base/nsGlobalWindow.cpp
++++ mozilla/dom/src/base/nsGlobalWindow.cpp
+@@ -3550,18 +3550,19 @@
+                                        "ScriptDlgGenericHeading",
+                                        tempString);
+     aOutTitle = tempString;
+   }
+ 
+   // Just in case
+   if (aOutTitle.IsEmpty()) {
+     NS_WARNING("could not get ScriptDlgGenericHeading string from string bundle");
+-    aOutTitle.AssignLiteral("[Script]");
+-  }
++    aOutTitle.AssignLiteral("[JavaScript]");
++  } else
++    aOutTitle.Insert(NS_LITERAL_STRING("[JavaScript]"), 0);
+ }
+ 
+ NS_IMETHODIMP
+ nsGlobalWindow::Alert(const nsAString& aString)
+ {
+   FORWARD_TO_OUTER(Alert, (aString), NS_ERROR_NOT_INITIALIZED);
+ 
+   nsCOMPtr<nsIPrompt> prompter(do_GetInterface(mDocShell));

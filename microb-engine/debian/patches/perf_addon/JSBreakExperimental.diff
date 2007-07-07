@@ -1,0 +1,100 @@
+# Make UI Responsive while JS Script is working 
+--- mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp.orig	2007-06-25 12:57:57.000000000 +0300
++++ mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp	2007-06-25 15:34:01.000000000 +0300
+@@ -199,20 +199,26 @@ nsBaseAppShell::SuspendNative(void)
+ }
+ 
+ NS_IMETHODIMP
+ nsBaseAppShell::ResumeNative(void)
+ {
+   --mSuspendNativeCount;
+   NS_ASSERTION(mSuspendNativeCount >= 0, "Unbalanced call to nsBaseAppShell::ResumeNative!");
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsBaseAppShell::WakeupNative(PRBool mayWait)
++{
++  return OnProcessNextEvent(nsnull, PR_FALSE, 0);
++}
++
+ //-------------------------------------------------------------------------
+ // nsIThreadObserver methods:
+ 
+ // Called from any thread
+ NS_IMETHODIMP
+ nsBaseAppShell::OnDispatchedEvent(nsIThreadInternal *thr)
+ {
+   PRInt32 lastVal = PR_AtomicSet(&mNativeEventPending, 1);
+   if (lastVal == 1)
+     return NS_OK;
+--- mozilla/widget/public/nsIAppShell.idl.orig	2007-03-23 01:04:51.000000000 +0200
++++ mozilla/widget/public/nsIAppShell.idl	2007-06-25 15:14:36.000000000 +0300
+@@ -89,11 +89,16 @@ interface nsIAppShell : nsISupports
+    * event loop).
+    */
+   void suspendNative();
+ 
+   /**
+    * Resumes the use of additional platform-specific methods to run Gecko
+    * events on the main application thread.  Calls to suspendNative() and
+    * resumeNative() may be nested.  On some platforms this will be a no-op.
+    */
+   void resumeNative();
++
++  /**
++   * Will call DoNextNativeEvent for proceeding native event loop
++   */
++  void wakeupNative(in boolean mayWait);
+ };
+--- mozilla/dom/src/base/nsJSEnvironment.cpp.orig	2007-06-15 09:44:18.000000000 +0300
++++ mozilla/dom/src/base/nsJSEnvironment.cpp	2007-06-25 15:53:02.000000000 +0300
+@@ -119,20 +119,24 @@
+ #define FORCE_PR_LOG 1
+ #endif
+ #include "prlog.h"
+ #include "prthread.h"
+ 
+ #ifdef OJI
+ #include "nsIJVMManager.h"
+ #include "nsILiveConnectManager.h"
+ #endif
+ 
++#include "nsWidgetsCID.h"
++#include "nsIAppShell.h"
++static NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
++
+ const size_t gStackSize = 8192;
+ 
+ #ifdef PR_LOGGING
+ static PRLogModuleInfo* gJSDiagnostics;
+ #endif
+ 
+ // Thank you Microsoft!
+ #ifndef WINCE
+ #ifdef CompareString
+ #undef CompareString
+@@ -705,20 +709,23 @@ nsJSContext::DOMBranchCallback(JSContext
+     // script has run
+     ctx->mBranchCallbackTime = PR_Now();
+ 
+     ctx->mIsTrackingChromeCodeTime =
+       ::JS_IsSystemObject(cx, ::JS_GetGlobalObject(cx));
+ 
+     return JS_TRUE;
+   }
+ 
+   if (callbackCount & MAYBE_GC_BRANCH_COUNT_MASK) {
++    nsCOMPtr<nsIAppShell> appShell = do_GetService(kAppShellCID);
++    if (appShell)
++      appShell->WakeupNative(PR_FALSE);
+     return JS_TRUE;
+   }
+ 
+   // XXX Save the branch callback time so we can restore it after the GC,
+   // because GCing can cause JS to run on our context, causing our
+   // ScriptEvaluated to be called, and clearing our branch callback time and
+   // count. See bug 302333.
+   PRTime callbackTime = ctx->mBranchCallbackTime;
+ 
+   // Run the GC if we get this far.

@@ -1,0 +1,40 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP:359606  Disable mozreg_s from XULRUNNER embedding-profile=minimal
+
+Index: mozilla/toolkit/library/libxul-config.mk
+===================================================================
+--- mozilla.orig/toolkit/library/libxul-config.mk
++++ mozilla/toolkit/library/libxul-config.mk
+@@ -77,22 +77,29 @@
+ endif
+ 
+ LOCAL_INCLUDES += -I$(topsrcdir)/widget/src/os2
+ endif
+ 
+ # dependent libraries
+ STATIC_LIBS += \
+ 	xpcom_core \
+-	mozreg_s \
+ 	ucvutil_s \
+ 	gkgfx \
+ 	gfxshared_s \
+ 	$(NULL)
+ 
++#ifndef MOZ_EMBEDDING_LEVEL_DEFAULT
++ifdef MOZ_XPINSTALL
++STATIC_LIBS += \
++	mozreg_s \
++	$(NULL)
++endif
++#endif
++
+ # component libraries
+ COMPONENT_LIBS += \
+ 	xpconnect \
+ 	necko \
+ 	uconv \
+ 	i18n \
+ 	chardet \
+ 	pref \

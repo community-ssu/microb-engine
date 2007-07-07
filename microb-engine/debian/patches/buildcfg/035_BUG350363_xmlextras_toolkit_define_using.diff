@@ -1,0 +1,93 @@
+Index: mozilla/toolkit/library/libxul-config.mk
+===================================================================
+--- mozilla.orig/toolkit/library/libxul-config.mk
++++ mozilla/toolkit/library/libxul-config.mk
+@@ -96,17 +96,16 @@ COMPONENT_LIBS += \
+ 	i18n \
+ 	chardet \
+ 	jar$(VERSION_NUMBER) \
+ 	pref \
+ 	caps \
+ 	htmlpars \
+ 	imglib2 \
+ 	gklayout \
+-	xmlextras \
+ 	docshell \
+ 	embedcomponents \
+ 	webbrwsr \
+ 	nsappshell \
+ 	txmgr \
+ 	chrome \
+ 	commandlines \
+ 	toolkitcomps \
+@@ -156,16 +155,23 @@ endif
+ 
+ ifdef MOZ_WEBSERVICES
+ DEFINES += -DMOZ_WEBSERVICES
+ COMPONENT_LIBS += \
+ 	websrvcs \
+ 	$(NULL)
+ endif
+ 
++ifdef MOZ_XMLEXTRAS
++DEFINES += -DMOZ_XMLEXTRAS
++COMPONENT_LIBS += \
++	xmlextras \
++	$(NULL)
++endif
++
+ ifdef MOZ_AUTH_EXTENSION
+ COMPONENT_LIBS += auth
+ DEFINES += -DMOZ_AUTH_EXTENSION
+ endif
+ 
+ ifdef MOZ_PERMISSIONS
+ COMPONENT_LIBS += cookie permissions
+ DEFINES += -DMOZ_PERMISSIONS
+Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
+===================================================================
+--- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
++++ mozilla/toolkit/library/nsStaticXULComponents.cpp
+@@ -187,16 +187,23 @@
+ 
+ #ifdef MOZ_WEBSERVICES
+ #define WEBSERVICES_MODULES \
+     MODULE(nsWebServicesModule)
+ #else
+ #define WEBSERVICES_MODULES
+ #endif
+ 
++#ifdef MOZ_XMLEXTRAS
++#define XMLEXTRAS_MODULES \
++    MODULE(nsXMLExtrasModule)
++#else
++#define XMLEXTRAS_MODULES
++#endif
++
+ #ifdef MOZ_XPFE_COMPONENTS
+ #ifdef MOZ_RDF
+ #define RDFAPP_MODULES \
+     MODULE(nsXPIntlModule) \
+     MODULE(nsWindowDataSourceModule)
+ #else
+ #define RDFAPP_MODULES
+ #endif
+@@ -280,17 +287,17 @@
+     RDFAPP_MODULES                           \
+     MODULE(nsParserModule)                   \
+     GFX_MODULES                              \
+     WIDGET_MODULES                           \
+     MODULE(nsImageLib2Module)                \
+     ICON_MODULE                              \
+     PLUGINS_MODULES                          \
+     MODULE(nsLayoutModule)                   \
+-    MODULE(nsXMLExtrasModule)                \
++    XMLEXTRAS_MODULES                        \
+     WEBSERVICES_MODULES                      \
+     MODULE(docshell_provider)                \
+     MODULE(embedcomponents)                  \
+     MODULE(Browser_Embedding_Module)         \
+     OJI_MODULES                              \
+     ACCESS_MODULES                           \
+     MODULE(appshell)                         \
+     MODULE(nsTransactionManagerModule)       \

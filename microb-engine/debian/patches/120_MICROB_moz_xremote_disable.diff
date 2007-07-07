@@ -1,0 +1,49 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: No description.
+
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -4519,16 +4519,21 @@
+     AC_DEFINE(TARGET_API_MAC_CARBON)
+     TK_LIBS='-framework Carbon'
+     TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
+     CFLAGS="$CFLAGS $TK_CFLAGS"
+     CXXFLAGS="$CXXFLAGS $TK_CFLAGS"
+     ;;
+ esac
+ 
++MOZ_ARG_DISABLE_BOOL(xremote,
++[  --disable-xremote        Disable Xremote support ],
++    MOZ_ENABLE_XREMOTE=,
++    MOZ_ENABLE_XREMOTE=1 )
++AC_SUBST(MOZ_ENABLE_XREMOTE)
+ if test "$MOZ_ENABLE_XREMOTE"; then
+     AC_DEFINE(MOZ_ENABLE_XREMOTE)
+ fi
+ 
+ if test "$COMPILE_ENVIRONMENT"; then
+ if test "$MOZ_ENABLE_GTK2"
+ then
+     PKG_CHECK_MODULES(MOZ_GTK2, gtk+-2.0 >= 1.3.7 gdk-x11-2.0 glib-2.0 gobject-2.0)
+@@ -4576,17 +4581,16 @@
+ AC_SUBST(TK_CFLAGS)
+ AC_SUBST(TK_LIBS)
+ 
+ AC_SUBST(MOZ_ENABLE_GTK2)
+ AC_SUBST(MOZ_ENABLE_PHOTON)
+ AC_SUBST(MOZ_ENABLE_COCOA)
+ AC_SUBST(MOZ_ENABLE_CAIRO_GFX)
+ AC_SUBST(MOZ_ENABLE_GLITZ)
+-AC_SUBST(MOZ_ENABLE_XREMOTE)
+ AC_SUBST(MOZ_GTK2_CFLAGS)
+ AC_SUBST(MOZ_GTK2_LIBS)
+ 
+ AC_SUBST(MOC)
+ 
+ if test "$MOZ_ENABLE_CAIRO_GFX"
+ then
+     AC_DEFINE(MOZ_THEBES)

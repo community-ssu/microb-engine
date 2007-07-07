@@ -1,0 +1,39 @@
+--- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-04-26 02:01:13.000000000 +0300
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2007-04-26 12:27:58.561761500 +0300
+@@ -3037,34 +3037,36 @@ nsWindow::NativeCreate(nsIWidget        
+                          G_CALLBACK(focus_out_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "key_press_event",
+                          G_CALLBACK(key_press_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "key_release_event",
+                          G_CALLBACK(key_release_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "scroll_event",
+                          G_CALLBACK(scroll_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "visibility_notify_event",
+                          G_CALLBACK(visibility_notify_event_cb), NULL);
+ 
++#ifndef MOZ_MICROB
+         gtk_drag_dest_set((GtkWidget *)mContainer,
+                           (GtkDestDefaults)0,
+                           NULL,
+                           0,
+                           (GdkDragAction)0);
+ 
+         g_signal_connect(G_OBJECT(mContainer), "drag_motion",
+                          G_CALLBACK(drag_motion_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "drag_leave",
+                          G_CALLBACK(drag_leave_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "drag_drop",
+                          G_CALLBACK(drag_drop_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "drag_data_received",
+                          G_CALLBACK(drag_data_received_event_cb), NULL);
++#endif
+ 
+ #ifdef USE_XIM
+         // We create input contexts for all containers, except for
+         // toplevel popup windows
+         if (mWindowType != eWindowType_popup)
+             IMECreateContext();
+ #endif
+     }
+ 
+     LOG(("nsWindow [%p]\n", (void *)this));

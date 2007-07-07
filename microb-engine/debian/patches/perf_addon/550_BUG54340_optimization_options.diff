@@ -1,0 +1,60 @@
+diff -Naur mozilla.old/embedding/browser/gtk/src/Makefile.in mozilla/embedding/browser/gtk/src/Makefile.in
+--- mozilla.old/embedding/browser/gtk/src/Makefile.in	2007-04-24 09:39:54.000000000 +0000
++++ mozilla/embedding/browser/gtk/src/Makefile.in	2007-04-24 10:20:35.000000000 +0000
+@@ -219,6 +219,11 @@
+ endif
+ DEFINES         += -D_IMPL_GTKMOZEMBED
+ 
++ifdef GNU_CC
++CFLAGS   += -fno-unit-at-a-time
++CXXFLAGS += -fno-unit-at-a-time
++endif
++
+ 
+ MARSHAL_FILE = gtkmozembedmarshal
+ MARSHAL_PREFIX = gtkmozembed
+diff -Naur mozilla.old/extensions/ftv/src/Makefile.in mozilla/extensions/ftv/src/Makefile.in
+--- mozilla.old/extensions/ftv/src/Makefile.in	2007-04-17 12:58:27.000000000 +0000
++++ mozilla/extensions/ftv/src/Makefile.in	2007-04-17 13:42:06.000000000 +0000
+@@ -98,6 +98,11 @@
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
++ifdef GNU_CC
++CFLAGS   += -fno-unit-at-a-time
++CXXFLAGS += -fno-unit-at-a-time
++endif
++
+ FTV_CSS_SRC = $(srcdir)/ftv.css
+ PREPROCESS_FTV_CSS = $(PERL) $(MOZILLA_DIR)/config/preprocessor.pl --marker=% $(DEFINES) $(ACDEFINES) $(FTV_CSS_SRC)
+ 
+diff -Naur mozilla.old/extensions/imagezoom/src/Makefile.in mozilla/extensions/imagezoom/src/Makefile.in
+--- mozilla.old/extensions/imagezoom/src/Makefile.in	2007-04-17 13:43:59.000000000 +0000
++++ mozilla/extensions/imagezoom/src/Makefile.in	2007-04-17 14:14:03.000000000 +0000
+@@ -98,6 +98,11 @@
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
++ifdef GNU_CC
++CFLAGS   += -fno-unit-at-a-time
++CXXFLAGS += -fno-unit-at-a-time
++endif
++
+ #libs:: $(EXPORT_RESOURCE)
+ #	$(INSTALL) $^ $(DIST)/bin/res
+ 
+diff -Naur mozilla.old/extensions/spatialnavigation/src/Makefile.in mozilla/extensions/spatialnavigation/src/Makefile.in
+--- mozilla.old/extensions/spatialnavigation/src/Makefile.in	2007-04-17 12:58:26.000000000 +0000
++++ mozilla/extensions/spatialnavigation/src/Makefile.in	2007-04-17 13:42:31.000000000 +0000
+@@ -126,6 +126,11 @@
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
++ifdef GNU_CC
++CFLAGS   += -fno-unit-at-a-time
++CXXFLAGS += -fno-unit-at-a-time
++endif
++
+ # Copy the nsRect and nsFont source files here and make sure
+ # they can be clobbered.
+ export::

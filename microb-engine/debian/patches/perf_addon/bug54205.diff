@@ -1,0 +1,43 @@
+diff -Naur mozilla.orig/toolkit/library/libxul-export.map mozilla/toolkit/library/libxul-export.map
+--- mozilla.orig/toolkit/library/libxul-export.map	1970-01-01 00:00:00.000000000 +0000
++++ mozilla/toolkit/library/libxul-export.map	2007-04-15 15:30:34.000000000 +0000
+@@ -0,0 +1,25 @@
++{
++  global: 
++	_GLOBAL_OFFSET_TABLE_;
++	__exidx_end;
++	_bss_end__;
++	__bss_start__;
++	__dso_handle;
++	__libc_csu_fini;
++	__exidx_start;
++	_init;
++	__bss_end__;
++	_start;
++	__libc_csu_init;
++	__end__;
++	_fini;
++	_edata;
++	_end;
++	_IO_stdin_used;
++	__data_start;
++	NS_*;
++	CRMF_*;
++	XRE_*;
++       _ZTV14nsGetInterface;
++  local: *;
++};
+diff -Naur mozilla.orig/toolkit/library/libxul-rules.mk mozilla/toolkit/library/libxul-rules.mk
+--- mozilla.orig/toolkit/library/libxul-rules.mk	2007-04-15 13:08:22.000000000 +0000
++++ mozilla/toolkit/library/libxul-rules.mk	2007-04-15 15:35:06.000000000 +0000
+@@ -94,6 +94,10 @@
+ EXTRA_DSO_LDOPTS += $(MOZ_CAIRO_LIBS)
+ endif
+ 
++# Hack for Maemo: exporting only limited set of symbols for Linux
++EXTRA_DSO_LDOPTS += -Wl,--version-script=$(srcdir)/libxul-export.map
++
++
+ export:: dlldeps.cpp
+ 
+ dlldeps.cpp: $(topsrcdir)/xpcom/build/dlldeps.cpp

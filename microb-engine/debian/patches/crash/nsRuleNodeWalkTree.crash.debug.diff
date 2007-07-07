@@ -1,0 +1,328 @@
+# Removing inline and some debug info for famous WalkRuleTree crash
+# https://projects.maemo.org/bugzilla/buglist.cgi?query_format=advanced&short_desc_type=allwordssubstr&short_desc=&product=browser&product=MicroB&product=opera&long_desc_type=substring&long_desc=WalkRuleTree&bug_file_loc_type=allwordssubstr&bug_file_loc=&keywords_type=allwords&keywords=&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&bug_status=RESOLVED&bug_status=PRE_VERIFIED&bug_status=RELEASED&bug_status=VERIFIED&bug_status=CLOSED&emailassigned_to1=1&emailtype1=substring&email1=&emailassigned_to2=1&emailreporter2=1&emailqa_contact2=1&emailcc2=1&emailtype2=substring&email2=&bugidtype=include&bug_id=&chfieldfrom=&chfieldto=Now&chfieldvalue=&field0-0-0=noop&type0-0-0=noop&value0-0-0=&order=bugs.bug_id&query_based_on=
+# 
+--- mozilla/layout/style/nsRuleNode.h.orig	2007-06-28 15:27:20.000000000 +0300
++++ mozilla/layout/style/nsRuleNode.h	2007-06-28 15:27:29.000000000 +0300
+@@ -619,22 +619,20 @@ protected:
+                                         const nsCSSValue& aLTRSource,
+                                         const nsCSSValue& aRTLSource,
+                                         const nsCSSValue& aLTRLogicalValue,
+                                         const nsCSSValue& aRTLLogicalValue,
+                                         const nsStyleSides& aParentRect,
+                                         nsStyleSides& aRect,
+                                         PRUint8 aSide,
+                                         PRInt32 aMask,
+                                         PRBool& aInherited);
+   
+-  inline RuleDetail CheckSpecifiedProperties(const nsStyleStructID aSID, const nsRuleDataStruct& aRuleDataStruct);
+-
+   NS_HIDDEN_(const nsStyleStruct*) GetParentData(const nsStyleStructID aSID);
+   #define STYLE_STRUCT(name_, checkdata_cb_, ctor_args_)  \
+     NS_HIDDEN_(const nsStyle##name_*) GetParent##name_();
+   #include "nsStyleStructList.h"
+   #undef STYLE_STRUCT  
+ 
+   NS_HIDDEN_(const nsStyleStruct*) GetDisplayData(nsStyleContext* aContext);
+   NS_HIDDEN_(const nsStyleStruct*) GetVisibilityData(nsStyleContext* aContext);
+   NS_HIDDEN_(const nsStyleStruct*) GetFontData(nsStyleContext* aContext);
+   NS_HIDDEN_(const nsStyleStruct*) GetColorData(nsStyleContext* aContext);
+--- mozilla/layout/style/nsRuleNode.cpp.orig	2007-06-27 15:00:56.000000000 +0300
++++ mozilla/layout/style/nsRuleNode.cpp	2007-06-28 15:26:48.000000000 +0300
+@@ -971,138 +971,20 @@ CounterDataAtOffset(const nsRuleDataStru
+                      NS_REINTERPRET_CAST(const char*, &aRuleDataStruct) + aOffset);
+ }
+ 
+ inline const nsCSSQuotes*
+ QuotesAtOffset(const nsRuleDataStruct& aRuleDataStruct, size_t aOffset)
+ {
+   return * NS_REINTERPRET_CAST(const nsCSSQuotes*const*,
+                      NS_REINTERPRET_CAST(const char*, &aRuleDataStruct) + aOffset);
+ }
+ 
+-inline nsRuleNode::RuleDetail
+-nsRuleNode::CheckSpecifiedProperties(const nsStyleStructID aSID,
+-                                     const nsRuleDataStruct& aRuleDataStruct)
+-{
+-  const StructCheckData *structData = gCheckProperties + aSID;
+-
+-  // Build a count of the:
+-  PRUint32 total = 0,      // total number of props in the struct
+-           specified = 0,  // number that were specified for this node
+-           inherited = 0;  // number that were 'inherit' (and not
+-                           //   eCSSUnit_Inherit) for this node
+-
+-  for (const PropertyCheckData *prop = structData->props,
+-                           *prop_end = prop + structData->nprops;
+-       prop != prop_end;
+-       ++prop)
+-    switch (prop->type) {
+-
+-      case eCSSType_Value:
+-        ++total;
+-        ExamineCSSValue(ValueAtOffset(aRuleDataStruct, prop->offset),
+-                        specified, inherited);
+-        break;
+-
+-      case eCSSType_Rect:
+-        total += 4;
+-        ExamineCSSRect(RectAtOffset(aRuleDataStruct, prop->offset),
+-                       specified, inherited);
+-        break;
+-
+-      case eCSSType_ValuePair:
+-        total += 2;
+-        ExamineCSSValuePair(ValuePairAtOffset(aRuleDataStruct, prop->offset),
+-                            specified, inherited);
+-        break;
+-        
+-      case eCSSType_ValueList:
+-        {
+-          ++total;
+-          const nsCSSValueList* valueList =
+-              ValueListAtOffset(aRuleDataStruct, prop->offset);
+-          if (valueList) {
+-            ++specified;
+-            if (eCSSUnit_Inherit == valueList->mValue.GetUnit()) {
+-              ++inherited;
+-            }
+-          }
+-        }
+-        break;
+-
+-      case eCSSType_CounterData:
+-        {
+-          ++total;
+-          const nsCSSCounterData* counterData =
+-              CounterDataAtOffset(aRuleDataStruct, prop->offset);
+-          if (counterData) {
+-            ++specified;
+-            if (eCSSUnit_Inherit == counterData->mCounter.GetUnit()) {
+-              ++inherited;
+-            }
+-          }
+-        }
+-        break;
+-
+-      case eCSSType_Quotes:
+-        {
+-          ++total;
+-          const nsCSSQuotes* quotes =
+-              QuotesAtOffset(aRuleDataStruct, prop->offset);
+-          if (quotes) {
+-            ++specified;
+-            if (eCSSUnit_Inherit == quotes->mOpen.GetUnit()) {
+-              ++inherited;
+-            }
+-          }
+-        }
+-        break;
+-
+-      default:
+-        NS_NOTREACHED("unknown type");
+-        break;
+-
+-    }
+-
+-#if 0
+-  printf("CheckSpecifiedProperties: SID=%d total=%d spec=%d inh=%d.\n",
+-         aSID, total, specified, inherited);
+-#endif
+-
+-  /*
+-   * Return the most specific information we can: prefer None or Full
+-   * over Partial, and Reset or Inherited over Mixed, since we can
+-   * optimize based on the edge cases and not the in-between cases.
+-   */
+-  nsRuleNode::RuleDetail result;
+-  if (inherited == total)
+-    result = eRuleFullInherited;
+-  else if (specified == total) {
+-    if (inherited == 0)
+-      result = eRuleFullReset;
+-    else
+-      result = eRuleFullMixed;
+-  } else if (specified == 0)
+-    result = eRuleNone;
+-  else if (specified == inherited)
+-    result = eRulePartialInherited;
+-  else if (inherited == 0)
+-    result = eRulePartialReset;
+-  else
+-    result = eRulePartialMixed;
+-
+-  if (structData->callback) {
+-    result = (*structData->callback)(aRuleDataStruct, result);
+-  }
+-
+-  return result;
+-}
+-
+ const nsStyleStruct*
+ nsRuleNode::GetDisplayData(nsStyleContext* aContext)
+ {
+   nsRuleDataDisplay displayData; // Declare a struct with null CSS values.
+   nsRuleData ruleData(eStyleStruct_Display, mPresContext, aContext);
+   ruleData.mDisplayData = &displayData;
+ 
+   return WalkRuleTree(eStyleStruct_Display, aContext, &ruleData, &displayData);
+ }
+ 
+@@ -1354,22 +1236,25 @@ nsRuleNode::WalkRuleTree(const nsStyleSt
+                                     // that has the same properties
+                                     // specified for struct |aSID| as
+                                     // |this| does.
+   nsRuleNode* rootNode = this; // After the loop below, this will be the
+                                // highest node that we've walked without
+                                // finding cached data on the rule tree.
+                                // If we don't find any cached data, it
+                                // will be the root.  (XXX misnamed)
+   RuleDetail detail = eRuleNone;
+   PRUint32 bit = nsCachedStyleData::GetBitForSID(aSID);
++  
++  PRInt32 dbg_count = 0;       // Debug values remove/FIXME
+ 
+   while (ruleNode) {
++    dbg_count++;               // Debug values remove/FIXME
+     // See if this rule node has cached the fact that the remaining
+     // nodes along this path specify no data whatsoever.
+     if (ruleNode->mNoneBits & bit)
+       break;
+ 
+     // If the dependent bit is set on a rule node for this struct, that
+     // means its rule won't have any information to add, so skip it.
+     // XXXldb I don't understand why we need to check |detail| here, but
+     // we do.
+     if (detail == eRuleNone)
+@@ -1394,21 +1279,131 @@ nsRuleNode::WalkRuleTree(const nsStyleSt
+     nsIStyleRule *rule = ruleNode->mRule;
+     if (rule) {
+       aRuleData->mLevel = ruleNode->GetLevel();
+       aRuleData->mIsImportantRule = ruleNode->IsImportantRule();
+       rule->MapRuleInfoInto(aRuleData);
+     }
+ 
+     // Now we check to see how many properties have been specified by
+     // the rules we've examined so far.
+     RuleDetail oldDetail = detail;
+-    detail = CheckSpecifiedProperties(aSID, *aSpecificData);
++    const StructCheckData *structData = gCheckProperties + aSID;
++    // Build a count of the:
++    PRUint32 total = 0,      // total number of props in the struct
++             specified = 0,  // number that were specified for this node
++             inherited = 0;  // number that were 'inherit' (and not
++                             //   eCSSUnit_Inherit) for this node
++
++    PRInt32 dbg_count2 = 0;  // Debug values remove/FIXME
++    for (const PropertyCheckData *prop = structData->props,
++                             *prop_end = prop + structData->nprops;
++         prop != prop_end;
++         ++prop) {
++      dbg_count2++;          // Debug values remove/FIXME
++      switch (prop->type) {
++  
++        case eCSSType_Value:
++          ++total;
++          ExamineCSSValue(ValueAtOffset(*aSpecificData, prop->offset),
++                          specified, inherited);
++          break;
++  
++        case eCSSType_Rect:
++          total += 4;
++          ExamineCSSRect(RectAtOffset(*aSpecificData, prop->offset),
++                         specified, inherited);
++          break;
++  
++        case eCSSType_ValuePair:
++          total += 2;
++          ExamineCSSValuePair(ValuePairAtOffset(*aSpecificData, prop->offset),
++                              specified, inherited);
++          break;
++          
++        case eCSSType_ValueList:
++          {
++            ++total;
++            const nsCSSValueList* valueList =
++                ValueListAtOffset(*aSpecificData, prop->offset);
++            if (valueList) {
++              ++specified;
++              if (eCSSUnit_Inherit == valueList->mValue.GetUnit()) {
++                ++inherited;
++              }
++            }
++          }
++          break;
++  
++        case eCSSType_CounterData:
++          {
++            ++total;
++            const nsCSSCounterData* counterData =
++                CounterDataAtOffset(*aSpecificData, prop->offset);
++            if (counterData) {
++              ++specified;
++              if (eCSSUnit_Inherit == counterData->mCounter.GetUnit()) {
++                ++inherited;
++              }
++            }
++          }
++          break;
++  
++        case eCSSType_Quotes:
++          {
++            ++total;
++            const nsCSSQuotes* quotes =
++                QuotesAtOffset(*aSpecificData, prop->offset);
++            if (quotes) {
++              ++specified;
++              if (eCSSUnit_Inherit == quotes->mOpen.GetUnit()) {
++                ++inherited;
++              }
++            }
++          }
++          break;
++  
++        default:
++          NS_NOTREACHED("unknown type");
++          break;
++  
++      }
++    }
++  
++#if 0
++    printf("CheckSpecifiedProperties: SID=%d total=%d spec=%d inh=%d.\n",
++           aSID, total, specified, inherited);
++#endif
++
++    /*
++     * Return the most specific information we can: prefer None or Full
++     * over Partial, and Reset or Inherited over Mixed, since we can
++     * optimize based on the edge cases and not the in-between cases.
++     */
++    if (inherited == total)
++      detail = eRuleFullInherited;
++    else if (specified == total) {
++      if (inherited == 0)
++        detail = eRuleFullReset;
++      else
++        detail = eRuleFullMixed;
++    } else if (specified == 0)
++      detail = eRuleNone;
++    else if (specified == inherited)
++      detail = eRulePartialInherited;
++    else if (inherited == 0)
++      detail = eRulePartialReset;
++    else
++      detail = eRulePartialMixed;
++  
++    if (structData->callback) {
++      detail = (*structData->callback)(*aSpecificData, detail);
++    }
+   
+     if (oldDetail == eRuleNone && detail != eRuleNone)
+       highestNode = ruleNode;
+ 
+     if (detail == eRuleFullReset ||
+         detail == eRuleFullMixed ||
+         detail == eRuleFullInherited)
+       break; // We don't need to examine any more rules.  All properties
+              // have been fully specified.
+ 

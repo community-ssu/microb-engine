@@ -1,0 +1,24 @@
+#MicroB 50059 [WIN VS LIN FONTS] Displayed text is not bold. //Should be fixed properly
+Index: mozilla/layout/style/nsRuleNode.cpp
+===================================================================
+--- mozilla.orig/layout/style/nsRuleNode.cpp
++++ mozilla/layout/style/nsRuleNode.cpp
+@@ -2036,17 +2036,17 @@
+     switch (value) {
+       case NS_STYLE_FONT_WEIGHT_NORMAL:
+       case NS_STYLE_FONT_WEIGHT_BOLD:
+         aFont->mFont.weight = value;
+         break;
+       case NS_STYLE_FONT_WEIGHT_BOLDER:
+       case NS_STYLE_FONT_WEIGHT_LIGHTER:
+         aInherited = PR_TRUE;
+-        aFont->mFont.weight = nsStyleUtil::ConstrainFontWeight(aParentFont->mFont.weight + value);
++        aFont->mFont.weight = nsStyleUtil::ConstrainFontWeight(aParentFont->mFont.weight + value + 300);
+         break;
+     }
+   }
+   else if (eCSSUnit_Normal == aFontData.mWeight.GetUnit()) {
+     aFont->mFont.weight = NS_STYLE_FONT_WEIGHT_NORMAL;
+   }
+   else if (eCSSUnit_Inherit == aFontData.mWeight.GetUnit()) {
+     aInherited = PR_TRUE;

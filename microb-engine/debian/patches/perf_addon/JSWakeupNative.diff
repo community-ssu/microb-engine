@@ -1,0 +1,506 @@
+--- mozilla/widget/public/nsIAppShell.idl.orig	2007-03-23 01:04:51.000000000 +0200
++++ mozilla/widget/public/nsIAppShell.idl	2007-06-26 10:03:18.000000000 +0300
+@@ -89,11 +89,16 @@ interface nsIAppShell : nsISupports
+    * event loop).
+    */
+   void suspendNative();
+ 
+   /**
+    * Resumes the use of additional platform-specific methods to run Gecko
+    * events on the main application thread.  Calls to suspendNative() and
+    * resumeNative() may be nested.  On some platforms this will be a no-op.
+    */
+   void resumeNative();
++
++  /**
++   * Will call DoNextNativeEvent for proceeding native event loop
++   */
++  void wakeupNative();
+ };
+--- mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp.orig	2007-06-28 12:44:13.000000000 +0300
++++ mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp	2007-06-27 14:42:41.000000000 +0300
+@@ -199,20 +199,26 @@ nsBaseAppShell::SuspendNative(void)
+ }
+ 
+ NS_IMETHODIMP
+ nsBaseAppShell::ResumeNative(void)
+ {
+   --mSuspendNativeCount;
+   NS_ASSERTION(mSuspendNativeCount >= 0, "Unbalanced call to nsBaseAppShell::ResumeNative!");
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsBaseAppShell::WakeupNative()
++{
++  OnProcessNextEvent(nsnull, PR_FALSE, 0);
++}
++
+ //-------------------------------------------------------------------------
+ // nsIThreadObserver methods:
+ 
+ // Called from any thread
+ NS_IMETHODIMP
+ nsBaseAppShell::OnDispatchedEvent(nsIThreadInternal *thr)
+ {
+   PRInt32 lastVal = PR_AtomicSet(&mNativeEventPending, 1);
+   if (lastVal == 1)
+     return NS_OK;
+--- mozilla/dom/src/base/nsJSEnvironment.cpp.orig	2007-06-15 09:44:18.000000000 +0300
++++ mozilla/dom/src/base/nsJSEnvironment.cpp	2007-06-27 16:44:46.000000000 +0300
+@@ -119,20 +119,25 @@
+ #define FORCE_PR_LOG 1
+ #endif
+ #include "prlog.h"
+ #include "prthread.h"
+ 
+ #ifdef OJI
+ #include "nsIJVMManager.h"
+ #include "nsILiveConnectManager.h"
+ #endif
+ 
++#include "nsWidgetsCID.h"
++#include "nsIAppShell.h"
++#include "nsIViewManager.h"
++static NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
++
+ const size_t gStackSize = 8192;
+ 
+ #ifdef PR_LOGGING
+ static PRLogModuleInfo* gJSDiagnostics;
+ #endif
+ 
+ // Thank you Microsoft!
+ #ifndef WINCE
+ #ifdef CompareString
+ #undef CompareString
+@@ -664,42 +669,176 @@ PrintWinCodebase(nsGlobalWindow *win)
+     printf("No URI, maybe the system principal.\n");
+     return;
+   }
+ 
+   nsCAutoString spec;
+   uri->GetSpec(spec);
+   printf("%s\n", spec.get());
+ }
+ #endif
+ 
++
++void
++nsJSContext::InitializePerfTimer()
++{
++  if( mLastNotificationTime == LL_ZERO ){
++    mLastNotificationTime = PR_Now();
++  }
++}
++
++void
++nsJSContext::IsTimeToWakeupNative()
++{
++  PRTime now = PR_Now();
++  PRInt64 interval, diff;
++
++  LL_I2L(interval, GetNotificationInterval());
++  LL_SUB(diff, now, mLastNotificationTime);
++
++  if (LL_CMP(diff, >, interval)) {
++    if ( !mAppShell ) {
++       mAppShell = do_GetService(kAppShellCID);
++    }
++    if ( mAppShell ) {
++      mLastNotificationTime = PR_Now();
++      mAppShell->WakeupNative();
++    }
++  }
++}
++
++#define NS_MAX_TOKENS_DEFLECTED_IN_LOW_FREQ_MODE 30
++
++nsresult
++nsJSContext::TunePerformance()
++{
++  // There is both a high frequency interrupt mode and a low
++  // frequency interupt mode controlled by the flag
++  // mDynamicLowerValue The high frequency mode
++  // interupts the parser frequently to provide UI responsiveness at
++  // the expense of page load time. The low frequency mode
++  // interrupts the parser and samples the system clock infrequently
++  // to provide fast page load time. When the user moves the mouse,
++  // clicks or types the mode switches to the high frequency
++  // interrupt mode. If the user stops moving the mouse or typing
++  // for a duration of time (mDynamicIntervalSwitchThreshold) it
++  // switches to low frequency interrupt mode.
++
++  // Get the current user event time
++  nsCOMPtr<nsPIDOMWindow> 
++                win(do_QueryInterface(GetGlobalObject()));
++  nsIDocShell *docShell = win->GetDocShell();
++  nsIPresShell *shell = nsnull;
++  docShell->GetPresShell(&shell);
++  if (!shell) { 
++    return NS_OK; 
++  }
++  nsIViewManager* vm = shell->GetViewManager();
++
++  NS_ENSURE_TRUE(vm, NS_ERROR_FAILURE);
++  PRUint32 eventTime( 0 );
++  nsCOMPtr<nsIWidget> widget;
++  nsresult rv = vm->GetWidget(getter_AddRefs(widget));
++  if (!widget || NS_FAILED(widget->GetLastInputEventTime(eventTime))) {
++      // If we can't get the last input time from the widget
++      // then we will get it from the viewmanager.
++      rv = vm->GetLastUserEventTime(eventTime);
++  }
++
++  NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
++
++  if (!mDynamicLowerValue && mLastSampledUserEventTime == eventTime) {
++    // The magic value of NS_MAX_TOKENS_DEFLECTED_IN_LOW_FREQ_MODE
++    // was selected by empirical testing. It provides reasonable
++    // user response and prevents us from sampling the clock too
++    // frequently.
++    if (mDeflectedCount < NS_MAX_TOKENS_DEFLECTED_IN_LOW_FREQ_MODE) {
++      mDeflectedCount++;
++      // return early to prevent sampling the clock. Note: This
++      // prevents us from switching to higher frequency (better UI
++      // responsive) mode, so limit ourselves to doing for no more
++      // than NS_MAX_TOKENS_DEFLECTED_IN_LOW_FREQ_MODE tokens.
++
++      return NS_OK;
++    }
++
++    // reset count and drop through to the code which samples the
++    // clock and does the dynamic switch between the high
++    // frequency and low frequency interruption of the parser.
++    mDeflectedCount = 0;
++  }
++  mLastSampledUserEventTime = eventTime;
++
++  PRUint32 currentTime = PR_IntervalToMicroseconds(PR_IntervalNow());
++
++  if ((currentTime - eventTime) <
++        NS_STATIC_CAST(PRUint32, mDynamicIntervalSwitchThreshold)) {
++      if (!mDynamicLowerValue) {
++        // lower the dynamic values to favor application
++        // responsiveness over page load time.
++        mDynamicLowerValue = PR_TRUE;
++        // Set the performance hint to prevent event starvation when
++        // dispatching PLEvents. This improves application responsiveness
++        // during page loads.
++        FavorPerformanceHint(PR_FALSE, 0);
++      }
++
++    }
++  else if (mDynamicLowerValue) {
++    // raise the content notification and MaxTokenProcessing time
++    // to favor overall page load speed over.
++    mDynamicLowerValue = PR_FALSE;
++    // Reset the hint that to favoring performance for PLEvent dispatch.
++    FavorPerformanceHint(PR_TRUE, 0);
++  }
++
++  return NS_OK;
++}
++
++//----------------------------------------------------------------------
++
++void
++nsJSContext::FavorPerformanceHint(PRBool perfOverStarvation, PRUint32 starvationDelay)
++{
++  if ( !mAppShell ) {
++     mAppShell = do_GetService(kAppShellCID);
++  }
++  if ( mAppShell ) {
++    mAppShell->FavorPerformanceHint(perfOverStarvation, starvationDelay);
++  }
++}
++
+ // The number of branch callbacks between calls to JS_MaybeGC
+ #define MAYBE_GC_BRANCH_COUNT_MASK 0x00000fff // 4095
+ 
+ // The number of branch callbacks before we even check if our start
+ // timestamp is initialized. This is a fairly low number as we want to
+ // initialize the timestamp early enough to not waste much time before
+ // we get there, but we don't want to bother doing this too early as
+ // it's not generally necessary.
+ #define INITIALIZE_TIME_BRANCH_COUNT_MASK 0x000000ff // 255
+ 
++
+ // This function is called after each JS branch execution
+ JSBool JS_DLL_CALLBACK
+ nsJSContext::DOMBranchCallback(JSContext *cx, JSScript *script)
+ {
+   // Get the native context
+   nsJSContext *ctx = NS_STATIC_CAST(nsJSContext *, ::JS_GetContextPrivate(cx));
+ 
+   if (!ctx) {
+     // Can happen; see bug 355811
+     return JS_TRUE;
+   }
+ 
++  ctx->IsTimeToWakeupNative();
++  ctx->TunePerformance();
++
+   PRUint32 callbackCount = ++ctx->mBranchCallbackCount;
+ 
+   if (callbackCount & INITIALIZE_TIME_BRANCH_COUNT_MASK) {
+     return JS_TRUE;
+   }
+ 
+   if (callbackCount == INITIALIZE_TIME_BRANCH_COUNT_MASK + 1 &&
+       LL_IS_ZERO(ctx->mBranchCallbackTime)) {
+     // Initialize mBranchCallbackTime to start timing how long the
+     // script has run
+@@ -969,20 +1108,28 @@ nsJSContext::nsJSContext(JSRuntime *aRun
+     ::JS_SetLocaleCallbacks(mContext, &localeCallbacks);
+   }
+   mIsInitialized = PR_FALSE;
+   mNumEvaluations = 0;
+   mTerminations = nsnull;
+   mScriptsEnabled = PR_TRUE;
+   mBranchCallbackCount = 0;
+   mBranchCallbackTime = LL_ZERO;
+   mProcessingScriptTag = PR_FALSE;
+   mIsTrackingChromeCodeTime = PR_FALSE;
++  mAppShell = nsnull;
++
++  mNotificationInterval =
++    nsContentUtils::GetIntPref("content.notify.interval", 100000);
++
++  // 3/4 second (750000us) default for switching
++  mDynamicIntervalSwitchThreshold =
++    nsContentUtils::GetIntPref("content.switch.threshold", 500000);
+ 
+   InvalidateContextAndWrapperCache();
+ }
+ 
+ nsJSContext::~nsJSContext()
+ {
+   NS_PRECONDITION(!mTerminations, "Shouldn't have termination funcs by now");
+                   
+   // Cope with JS_NewContext failure in ctor (XXXbe move NewContext to Init?)
+   if (!mContext)
+@@ -1163,20 +1310,22 @@ nsJSContext::EvaluateStringWithValue(con
+                       hasxml
+                       ? jsoptions | JSOPTION_XML
+                       : jsoptions & ~JSOPTION_XML);
+     }
+     // Change the version - this is cheap when the versions match, so no need
+     // to optimize here...
+     JSVersion newVer = (JSVersion)(aVersion & JSVERSION_MASK);
+     JSVersion oldVer = ::JS_SetVersion(mContext, newVer);
+     JSAutoRequest ar(mContext);
+ 
++    InitializePerfTimer();
++
+     ok = ::JS_EvaluateUCScriptForPrincipals(mContext,
+                                             (JSObject *)aScopeObject,
+                                             jsprin,
+                                             (jschar*)PromiseFlatString(aScript).get(),
+                                             aScript.Length(),
+                                             aURL,
+                                             aLineNo,
+                                             &val);
+ 
+     ::JS_SetVersion(mContext, oldVer);
+@@ -1364,20 +1513,22 @@ nsJSContext::EvaluateString(const nsAStr
+       ::JS_SetOptions(mContext,
+                       hasxml
+                       ? jsoptions | JSOPTION_XML
+                       : jsoptions & ~JSOPTION_XML);
+     }
+     // Change the version - this is cheap when the versions match, so no need
+     // to optimize here...
+     JSVersion newVer = (JSVersion)(aVersion & JSVERSION_MASK);
+     JSVersion oldVer = ::JS_SetVersion(mContext, newVer);
+ 
++    InitializePerfTimer();
++
+     ok = ::JS_EvaluateUCScriptForPrincipals(mContext,
+                                               (JSObject *)aScopeObject,
+                                               jsprin,
+                                               (jschar*)PromiseFlatString(aScript).get(),
+                                               aScript.Length(),
+                                               aURL,
+                                               aLineNo,
+                                               &val);
+ 
+     ::JS_SetVersion(mContext, oldVer);
+@@ -1548,20 +1699,23 @@ nsJSContext::ExecuteScript(void *aScript
+ 
+   // The result of evaluation, used only if there were no errors.  This need
+   // not be a GC root currently, provided we run the GC only from the branch
+   // callback or from ScriptEvaluated.  TODO: use JS_Begin/EndRequest to keep
+   // the GC from racing with JS execution on any thread.
+   jsval val;
+   JSBool ok;
+ 
+   nsJSContext::TerminationFuncHolder holder(this);
+   JSAutoRequest ar(mContext);
++
++  InitializePerfTimer();
++
+   ok = ::JS_ExecuteScript(mContext,
+                           (JSObject *)aScopeObject,
+                           (JSScript*) ::JS_GetPrivate(mContext,
+                           (JSObject*)aScriptObject),
+                           &val);
+ 
+   if (ok) {
+     // If all went well, convert val to a string (XXXbe unless undefined?).
+     rv = JSValueToAString(mContext, val, aRetValue, aIsUndefined);
+   } else {
+@@ -1814,20 +1968,23 @@ nsJSContext::CallEventHandler(nsISupport
+                                  NS_REINTERPRET_CAST(void **, &argv), &mark);
+     if (NS_FAILED(rv)) {
+       stack->Pop(nsnull);
+       return rv;
+     }
+   
+     AutoFreeJSStack stackGuard(mContext, mark); // ensure always freed.
+ 
+     jsval funval = OBJECT_TO_JSVAL(aHandler);
+     JSAutoRequest ar(mContext);
++
++    InitializePerfTimer();
++
+     PRBool ok = ::JS_CallFunctionValue(mContext, target,
+                                        funval, argc, argv, &rval);
+ 
+     if (!ok) {
+       // Tell XPConnect about any pending exceptions. This is needed
+       // to avoid dropping JS exceptions in case we got here through
+       // nested calls through XPConnect.
+ 
+       nsContentUtils::NotifyXPCIfExceptionPending(mContext);
+ 
+@@ -3106,20 +3263,27 @@ nsJSContext::ScriptEvaluated(PRBool aTer
+   ::JS_MaybeGC(mContext);
+ #else
+   if (mNumEvaluations > 20) {
+     mNumEvaluations = 0;
+     ::JS_MaybeGC(mContext);
+   }
+ #endif
+ 
+   mBranchCallbackCount = 0;
+   mBranchCallbackTime = LL_ZERO;
++
++  if (mDynamicLowerValue) {
++    // Reset the performance hint which was set to FALSE
++    // when mDynamicLowerValue was set.
++    mDynamicLowerValue = PR_FALSE;
++    FavorPerformanceHint(PR_TRUE, 0);
++  }
+ }
+ 
+ nsresult
+ nsJSContext::SetTerminationFunction(nsScriptTerminationFunc aFunc,
+                                     nsISupports* aRef)
+ {
+   NS_PRECONDITION(mContext->fp, "should be executing script");
+ 
+   nsJSContext::TerminationFuncClosure* newClosure =
+     new nsJSContext::TerminationFuncClosure(aFunc, aRef, mTerminations);
+@@ -3180,20 +3344,21 @@ nsJSContext::ScriptExecuted()
+ 
+ NS_IMETHODIMP
+ nsJSContext::PreserveWrapper(nsIXPConnectWrappedNative *aWrapper)
+ {
+   return nsDOMClassInfo::PreserveNodeWrapper(aWrapper);
+ }
+ 
+ NS_IMETHODIMP
+ nsJSContext::Notify(nsITimer *timer)
+ {
++
+   NS_ASSERTION(mContext, "No context in nsJSContext::Notify()!");
+ 
+   NS_RELEASE(sGCTimer);
+ 
+   if (sPendingLoadCount == 0 || sLoadInProgressGCTimer) {
+     sLoadInProgressGCTimer = PR_FALSE;
+ 
+     // Reset sPendingLoadCount in case the timer that fired was a
+     // timer we scheduled due to a normal GC timer firing while
+     // documents were loading. If this happens we're waiting for a
+--- mozilla/dom/src/base/nsJSEnvironment.h.orig	2007-03-08 13:17:15.000000000 +0200
++++ mozilla/dom/src/base/nsJSEnvironment.h	2007-06-27 16:39:03.000000000 +0300
+@@ -41,20 +41,21 @@
+ #include "nsIScriptRuntime.h"
+ #include "nsCOMPtr.h"
+ #include "jsapi.h"
+ #include "nsIObserver.h"
+ #include "nsIXPCScriptNotify.h"
+ #include "nsITimer.h"
+ #include "prtime.h"
+ #include "nsCycleCollectionParticipant.h"
+ 
+ class nsIXPConnectJSObjectHolder;
++class nsIAppShell;
+ 
+ class nsJSContext : public nsIScriptContext,
+                     public nsIXPCScriptNotify,
+                     public nsITimerCallback
+ {
+ public:
+   nsJSContext(JSRuntime *aRuntime);
+   virtual ~nsJSContext();
+ 
+   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+@@ -253,20 +254,55 @@ private:
+   PRPackedBool mIsInitialized;
+   PRPackedBool mScriptsEnabled;
+   PRPackedBool mGCOnDestruction;
+   PRPackedBool mProcessingScriptTag;
+   PRPackedBool mIsTrackingChromeCodeTime;
+ 
+   PRUint32 mBranchCallbackCount;
+   PRTime mBranchCallbackTime;
+   PRUint32 mDefaultJSOptions;
+ 
++  inline PRInt32 GetNotificationInterval()
++  {
++    if (mDynamicLowerValue) {
++      return 1000;
++    }
++    return mNotificationInterval;
++  }
++  nsresult TunePerformance();
++  void IsTimeToWakeupNative();
++  void InitializePerfTimer();
++  void FavorPerformanceHint(PRBool perfOverStarvation, PRUint32 starvationDelay);
++
++  nsCOMPtr<nsIAppShell> mAppShell;
++
++  PRUint8 mDynamicLowerValue : 1;
++
++  PRTime mLastNotificationTime;
++
++  // Last mouse event or keyboard event time sampled 
++  PRUint32 mLastSampledUserEventTime;
++
++  // The number of tokens that have been processed while in the low
++  // frequency parser interrupt mode without falling through to the
++  // logic which decides whether to switch to the high frequency
++  // parser interrupt mode.
++  PRUint8 mDeflectedCount;
++
++  // Switch between intervals when time is exceeded
++  PRInt32 mDynamicIntervalSwitchThreshold;
++
++  // Notification interval in microseconds
++  PRInt32 mNotificationInterval;
++
++
++
+   // mGlobalWrapperRef is used only to hold a strong reference to the
+   // global object wrapper while the nsJSContext is alive. This cuts
+   // down on the number of rooting and unrooting calls XPConnect has
+   // to make when the global object is touched in JS.
+ 
+   nsCOMPtr<nsISupports> mGlobalWrapperRef;
+ 
+   static int PR_CALLBACK JSOptionChangedCallback(const char *pref, void *data);
+ 
+   static JSBool JS_DLL_CALLBACK DOMBranchCallback(JSContext *cx,

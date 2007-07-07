@@ -1,0 +1,228 @@
+Index: mozilla/layout/style/ua.css
+===================================================================
+--- mozilla.orig/layout/style/ua.css
++++ mozilla/layout/style/ua.css
+@@ -113,17 +113,22 @@
+ /* Links */
+ 
+ *|*:-moz-any-link {
+   cursor: pointer;
+ }
+ 
+ *|*:-moz-any-link:focus {
+   /* Don't specify the outline-color, we should always use initial value. */
+-  outline: 1px dotted;
++  /*  outline: 1px dotted; */
++   -moz-appearance:none;
++   -moz-outline-radius: .3em;
++   -moz-outline: .3em solid highlighttext;
++   -moz-outline: .2em solid -moz-mac-focusring;
++   -moz-outline-offset: .05em;
+ }
+ 
+ /* Miscellaneous */
+ 
+ *|*::-moz-anonymous-block, *|*::-moz-cell-content {
+   display: block !important;
+   position: static !important;
+ }
+Index: mozilla/layout/style/forms.css
+===================================================================
+--- mozilla.orig/layout/style/forms.css
++++ mozilla/layout/style/forms.css
+@@ -481,32 +481,45 @@
+ button:active:hover,
+ input[type="reset"]:active:hover,
+ input[type="button"]:active:hover,
+ input[type="submit"]:active:hover {
+   padding: 0px 5px 0px 7px;
+   border-style: inset;
+ }
+ 
++/*
+ button::-moz-focus-inner,
+ input[type="reset"]::-moz-focus-inner,
+ input[type="button"]::-moz-focus-inner,
+ input[type="submit"]::-moz-focus-inner,
+ input[type="file"] > input[type="button"]::-moz-focus-inner {
+   padding: 0px 2px 0px 2px;
+-  border: 1px dotted transparent;
++  border: 0px dotted transparent;
+ }
+ 
+ button:focus::-moz-focus-inner,
+ input[type="reset"]:focus::-moz-focus-inner,
+ input[type="button"]:focus::-moz-focus-inner,
+ input[type="submit"]:focus::-moz-focus-inner,
+ input[type="file"] > input[type="button"]:focus::-moz-focus-inner {
+   border-color: ButtonText;
+ }
++*/
++
++input:focus,
++button:focus,
++select:focus,
++textarea:focus {
++   -moz-appearance:none;
++   -moz-outline-radius: .3em;
++   -moz-outline: .3em solid highlighttext;
++   -moz-outline: .2em solid -moz-mac-focusring;
++   -moz-outline-offset: .05em;
++}
+ 
+ button[disabled]:active, button[disabled],
+ input[type="reset"][disabled]:active,
+ input[type="reset"][disabled],
+ input[type="button"][disabled]:active,
+ input[type="button"][disabled],
+ select[disabled] > input[type="button"],
+ select[disabled] > input[type="button"]:active,
+@@ -579,8 +592,123 @@
+ 
+ input[type="reset"],
+ input[type="button"],
+ input[type="submit"] { 
+   font: medium serif; font-family: inherit
+ }
+ 
+ %endif
++/* Text inputs */
++
++input[type=text],
++input[type=password],
++input:not([type]),
++textarea {
++  border: 1px solid ThreeDShadow;
++  margin: 2px;
++  padding: 3px 3px;
++}
++
++/* Buttons */
++
++input[type="button"],
++input[type="submit"],
++input[type="reset"],
++button,
++select {
++  color: ButtonText !important;
++  background-color: Window !important;
++  background: Window url("form-widgets/button.png") repeat-x bottom right !important;
++  border: 2px solid ThreeDShadow !important;
++  -moz-border-top-colors: ThreeDShadow ThreeDHighlight;
++  -moz-border-right-colors: ThreeDShadow Window;
++  -moz-border-bottom-colors: ThreeDShadow Window;
++  -moz-border-left-colors: ThreeDShadow ThreeDHighlight;
++  margin: 2px !important;
++  padding: 0px 1px !important;
++  -moz-border-radius: 1px !important;
++}
++
++input[type="button"]:hover,
++input[type="submit"]:hover,
++input[type="reset"]:hover,
++button:hover {
++  background-color: ThreeDHighlight !important;
++}
++
++/* Radio buttons */
++
++input[type="radio"] {
++  width: 13px !important;
++  background-image: url("form-widgets/radio.png") !important;
++  -moz-border-radius: 0 !important;
++  border: none !important;
++  background-color: inherit !important;
++}
++
++input[type="radio"]:focus:not([class]):not([id]):not([style]) {
++  border:none !important;
++}
++
++input[type="radio"]:focus {
++  border:none !important;
++}
++
++input[type="radio"]:active:focus {
++  border:none !important;
++}
++
++input[type="radio"]:checked {
++  background-image: url("form-widgets/radio-checked.png") !important;
++}
++
++input[type="radio"][disabled],
++input[type="radio"][disabled]:hover {
++  border: none !important;
++}
++
++*::-moz-radio {
++  border: none !important;
++  background-color: transparent !important;
++}
++
++/* Checkboxes */
++
++input[type="checkbox"] {
++  width: 12px !important;
++  height: 12px !important;
++  border-width: 0 !important;
++  background-image: url("form-widgets/checkbox.png") !important;
++  background-color: -moz-Field !important;
++}
++
++input[type="checkbox"]:checked {
++  background-image: url("form-widgets/checkbox-checked.png") !important;
++}
++
++/* Dropdowns  */
++
++select,
++select:not([size]),
++select[size="0"],
++select[size="1"] {
++  color: ButtonText !important;
++  background-color: Window !important;
++  background: Window url("form-widgets/button.png") repeat-x bottom right !important;
++  border: 2px solid ThreeDShadow !important;
++  -moz-border-top-colors: ThreeDShadow ThreeDHighlight;
++  -moz-border-right-colors: ThreeDShadow Window;
++  -moz-border-bottom-colors: ThreeDShadow Window;
++  -moz-border-left-colors: ThreeDShadow ThreeDHighlight;
++  margin: 2px !important;
++  padding: 0px 1px !important;
++  -moz-border-radius: 1px !important;
++}
++
++select > input[type="button"]{
++  width: 6px !important;
++  border: none !important;
++  background: transparent url("form-widgets/droparrow.png") no-repeat center center !important;
++}
++
++select > input[type="button"]:focus {
++}
+Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp
++++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+@@ -295,16 +295,20 @@
+         aColor = GDK_COLOR_TO_NS_RGB(mStyle->text[GTK_STATE_ACTIVE]);
+         break;
+     case eColor__moz_menuhover:
+         aColor = sMenuHover;
+         break;
+     case eColor__moz_menuhovertext:
+         aColor = sMenuHoverText;
+         break;
++    case eColor__moz_mac_focusring:
++        //default focusring color value
++        aColor = GDK_COLOR_TO_NS_RGB(mStyle->dark[GTK_STATE_SELECTED]);
++        break;
+     default:
+         /* default color is BLACK */
+         aColor = 0;
+         res    = NS_ERROR_FAILURE;
+         break;
+     }
+ 
+     return res;
