@@ -58,3 +58,31 @@ diff -Naur mozilla.old/extensions/spatialnavigation/src/Makefile.in mozilla/exte
  # Copy the nsRect and nsFont source files here and make sure
  # they can be clobbered.
  export::
+--- mozilla/extensions/spellcheck/src/Makefile.in.orig	2007-07-09 12:53:59.000000000 +0300
++++ mozilla/extensions/spellcheck/src/Makefile.in	2007-07-10 02:22:29.000000000 +0300
+@@ -97,20 +97,25 @@ EXTRA_DSO_LDOPTS += \
+ 		$(MOZ_COMPONENT_LIBS) \
+ 		$(NULL)
+ 
+ # Some stuff still exists and it undefined, like NS_NewAdoptingStringEnumerator
+ EXTRA_DSO_LDOPTS += \
+ 		../../../xpcom/build/$(LIB_PREFIX)xpcom_core.$(LIB_SUFFIX) \
+ 		$(NULL)
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
++ifdef GNU_CC
++CFLAGS   += -fno-unit-at-a-time
++CXXFLAGS += -fno-unit-at-a-time
++endif
++
+ LOCAL_INCLUDES += \
+ 	-I$(topsrcdir)/xpcom/io \
+ 	$(NULL)
+ 
+ ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+ LDFLAGS	+= \
+ 	-framework Cocoa \
+ 	-framework Foundation \
+ 	$(NULL)
+ endif
