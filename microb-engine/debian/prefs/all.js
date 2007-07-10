@@ -1167,23 +1167,23 @@ pref("font.default.tr", "serif");
 pref("font.size.variable.tr", 16);
 pref("font.size.fixed.tr", 12);
 
-pref("font.default.x-baltic", "serif");
+pref("font.default.x-baltic", "SwissA");
 pref("font.size.variable.x-baltic", 16);
 pref("font.size.fixed.x-baltic", 12);
 
-pref("font.default.x-central-euro", "serif");
+pref("font.default.x-central-euro", "SwissA");
 pref("font.size.variable.x-central-euro", 16);
 pref("font.size.fixed.x-central-euro", 12);
 
-pref("font.default.x-cyrillic", "serif");
+pref("font.default.x-cyrillic", "SwissA");
 pref("font.size.variable.x-cyrillic", 16);
 pref("font.size.fixed.x-cyrillic", 12);
 
-pref("font.default.x-unicode", "serif");
+pref("font.default.x-unicode", "SwissA");
 pref("font.size.variable.x-unicode", 16);
 pref("font.size.fixed.x-unicode", 12);
 
-pref("font.default.x-western", "serif");
+pref("font.default.x-western", "SwissA");
 pref("font.size.variable.x-western", 16);
 pref("font.size.fixed.x-western", 12);
 
