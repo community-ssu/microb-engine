@@ -217,7 +217,7 @@ gtkmozembed/gtkmozembed.diff
 575_js_handler_events_info.diff
 crash/625_BUG56960_layout_indexof_crash.diff 
 580_focus_for_visible_area.diff
-585_disable_broken_gtk2_opacity.diff
+#585_disable_broken_gtk2_opacity.diff
 590_added_vertical_resize_flag.diff
 
 #Extension Manager
