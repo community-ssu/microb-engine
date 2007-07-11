@@ -1,8 +1,8 @@
---- mozilla/extensions/spellcheck/src/Makefile.in.orig	2006-07-31 21:11:38.000000000 +0300
-+++ mozilla/extensions/spellcheck/src/Makefile.in	2007-03-24 12:02:45.127300500 +0200
-@@ -41,21 +41,27 @@ srcdir		= @srcdir@
- VPATH		= @srcdir@
- 
+Index: mozilla/extensions/spellcheck/src/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/Makefile.in
++++ mozilla/extensions/spellcheck/src/Makefile.in
+@@ -43,17 +43,23 @@
  include $(DEPTH)/config/autoconf.mk
  
  MODULE		= spellchecker
@@ -26,11 +26,7 @@
  		  layout \
  		  dom \
  		  necko \
- 		  widget \
- 		  pref \
-@@ -76,24 +82,31 @@ CPPSRCS		= \
- 		$(NULL)
- 
+@@ -78,20 +84,27 @@
  ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
  SHARED_LIBRARY_LIBS += ../osxspell/src/$(LIB_PREFIX)osxspell_s.$(LIB_SUFFIX)
  LOCAL_INCLUDES += -I$(srcdir)/../osxspell/src
@@ -56,17 +52,15 @@
  
  include $(topsrcdir)/config/rules.mk
  
- LOCAL_INCLUDES += \
- 	-I$(topsrcdir)/xpcom/io \
- 	$(NULL)
- 
- ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
- LDFLAGS	+= \
---- mozilla/extensions/spellcheck/src/mozSpellChecker.h.orig	2006-06-15 21:53:49.000000000 +0300
-+++ mozilla/extensions/spellcheck/src/mozSpellChecker.h	2007-03-24 09:50:11.514230750 +0200
-@@ -33,21 +33,21 @@
-  * the provisions above, a recipient may use your version of this file under
-  * the terms of any one of the MPL, the GPL or the LGPL.
+ ifdef GNU_CC
+ CFLAGS   += -fno-unit-at-a-time
+ CXXFLAGS += -fno-unit-at-a-time
+ endif
+Index: mozilla/extensions/spellcheck/src/mozSpellChecker.h
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozSpellChecker.h
++++ mozilla/extensions/spellcheck/src/mozSpellChecker.h
+@@ -35,17 +35,17 @@
   *
   * ***** END LICENSE BLOCK ***** */
  
@@ -85,13 +79,11 @@
  
  class mozSpellChecker : public nsISpellChecker
  {
- public:
-   NS_DECL_ISUPPORTS
---- mozilla/extensions/spellcheck/src/mozPersonalDictionary.h.orig	2004-02-03 13:54:03.000000000 +0200
-+++ mozilla/extensions/spellcheck/src/mozPersonalDictionary.h	2007-03-24 09:51:04.569546500 +0200
-@@ -32,21 +32,21 @@
-  * and other provisions required by the GPL or the LGPL. If you do not delete
-  * the provisions above, a recipient may use your version of this file under
+Index: mozilla/extensions/spellcheck/src/mozPersonalDictionary.h
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozPersonalDictionary.h
++++ mozilla/extensions/spellcheck/src/mozPersonalDictionary.h
+@@ -34,17 +34,17 @@
   * the terms of any one of the MPL, the GPL or the LGPL.
   *
   * ***** END LICENSE BLOCK ***** */
@@ -110,13 +102,11 @@
  #include "nsTHashtable.h"
  #include "nsCRT.h"
  
- #define MOZ_PERSONALDICTIONARY_CONTRACTID "@mozilla.org/spellchecker/personaldictionary;1"
- #define MOZ_PERSONALDICTIONARY_CID         \
---- mozilla/extensions/spellcheck/src/mozSpellChecker.cpp.orig	2006-07-27 21:11:08.000000000 +0300
-+++ mozilla/extensions/spellcheck/src/mozSpellChecker.cpp	2007-03-24 11:43:19.830474000 +0200
-@@ -33,20 +33,22 @@
-  * the provisions above, a recipient may use your version of this file under
-  * the terms of any one of the MPL, the GPL or the LGPL.
+Index: mozilla/extensions/spellcheck/src/mozSpellChecker.cpp
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozSpellChecker.cpp
++++ mozilla/extensions/spellcheck/src/mozSpellChecker.cpp
+@@ -35,16 +35,18 @@
   *
   * ***** END LICENSE BLOCK ***** */
  
@@ -135,11 +125,7 @@
  mozSpellChecker::mozSpellChecker()
  {
  }
- 
- mozSpellChecker::~mozSpellChecker()
-@@ -316,39 +318,39 @@ mozSpellChecker::GetDictionaryList(nsStr
-     aDictionaryList->AppendString(temp);
-   }
+@@ -318,17 +320,17 @@
    NS_FREE_XPCOM_ALLOCATED_POINTER_ARRAY(count, words);
  
    return NS_OK;
@@ -158,7 +144,7 @@
  NS_IMETHODIMP 
  mozSpellChecker::SetCurrentDictionary(const nsAString &aDictionary)
  {
-   if(!mSpellCheckingEngine)
+@@ -336,17 +338,17 @@
      return NS_ERROR_NULL_POINTER;
   
    nsresult res;
@@ -177,13 +163,11 @@
    return res;
  }
  
- nsresult
- mozSpellChecker::SetupDoc(PRUint32 *outBlockOffset)
---- mozilla/extensions/spellcheck/src/mozPersonalDictionary.cpp.orig	2006-07-21 19:28:51.000000000 +0300
-+++ mozilla/extensions/spellcheck/src/mozPersonalDictionary.cpp	2007-03-24 10:27:14.873182000 +0200
-@@ -30,34 +30,37 @@
-  * use your version of this file under the terms of the MPL, indicate your
-  * decision by deleting the provisions above and replace them with the notice
+Index: mozilla/extensions/spellcheck/src/mozPersonalDictionary.cpp
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozPersonalDictionary.cpp
++++ mozilla/extensions/spellcheck/src/mozPersonalDictionary.cpp
+@@ -32,30 +32,33 @@
   * and other provisions required by the GPL or the LGPL. If you do not delete
   * the provisions above, a recipient may use your version of this file under
   * the terms of any one of the MPL, the GPL or the LGPL.
@@ -217,13 +201,11 @@
  /**
   * This is the most braindead implementation of a personal dictionary possible.
   * There is not much complexity needed, though.  It could be made much faster,
-  *  and probably should, but I don't see much need for more in terms of interface.
-  *
---- mozilla/extensions/spellcheck/src/mozEnglishWordUtils.h.orig	2004-02-19 22:45:57.000000000 +0200
-+++ mozilla/extensions/spellcheck/src/mozEnglishWordUtils.h	2007-03-24 09:57:11.256463000 +0200
-@@ -35,21 +35,21 @@
-  *
-  * ***** END LICENSE BLOCK ***** */
+Index: mozilla/extensions/spellcheck/src/mozEnglishWordUtils.h
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozEnglishWordUtils.h
++++ mozilla/extensions/spellcheck/src/mozEnglishWordUtils.h
+@@ -37,17 +37,17 @@
  
  #ifndef mozEnglishWordUtils_h__
  #define mozEnglishWordUtils_h__
@@ -242,13 +224,11 @@
  {
  public:
    NS_DECL_ISUPPORTS
-   NS_DECL_MOZISPELLI18NUTIL
- 
---- mozilla/extensions/spellcheck/src/mozSpellI18NManager.cpp.orig	2004-06-26 17:32:09.000000000 +0300
-+++ mozilla/extensions/spellcheck/src/mozSpellI18NManager.cpp	2007-03-24 09:59:09.351843500 +0200
-@@ -31,21 +31,21 @@
-  * decision by deleting the provisions above and replace them with the notice
-  * and other provisions required by the GPL or the LGPL. If you do not delete
+Index: mozilla/extensions/spellcheck/src/mozSpellI18NManager.cpp
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozSpellI18NManager.cpp
++++ mozilla/extensions/spellcheck/src/mozSpellI18NManager.cpp
+@@ -33,17 +33,17 @@
   * the provisions above, a recipient may use your version of this file under
   * the terms of any one of the MPL, the GPL or the LGPL.
   *
@@ -267,13 +247,11 @@
    /* member initializers and constructor code */
  }
  
- mozSpellI18NManager::~mozSpellI18NManager()
- {
---- mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp.orig	2006-08-18 20:45:02.000000000 +0300
-+++ mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp	2007-03-24 10:06:58.577168250 +0200
-@@ -82,23 +82,25 @@
- #include "nsIDOMText.h"
- #include "nsIPlaintextEditor.h"
+Index: mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozInlineSpellChecker.cpp
++++ mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp
+@@ -85,19 +85,21 @@
  #include "nsIPrefBranch.h"
  #include "nsIPrefService.h"
  #include "nsIRunnable.h"
@@ -296,11 +274,7 @@
  #define INLINESPELL_CHECK_TIMEOUT 50
  
  // The number of words to check before we look at the time to see if
- // INLINESPELL_CHECK_TIMEOUT ms have elapsed. This prevents us from spending
- // too much time checking the clock. Note that misspelled words count for
-@@ -1075,29 +1077,29 @@ mozInlineSpellChecker::SkipSpellCheckFor
-   {
-     nsCOMPtr<nsIDOMNode> parent;
+@@ -1082,25 +1084,25 @@
      aNode->GetParentNode(getter_AddRefs(parent));
  
      while (parent)
@@ -329,13 +303,11 @@
        }
  
        nsCOMPtr<nsIDOMNode> nextParent;
-       parent->GetParentNode(getter_AddRefs(nextParent));
-       parent = nextParent;
---- mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.h.orig	2006-08-04 04:02:42.000000000 +0300
-+++ mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.h	2007-03-24 10:02:17.487601250 +0200
-@@ -33,21 +33,21 @@
-  * the provisions above, a recipient may use your version of this file under
-  * the terms of any one of the MPL, the GPL or the LGPL.
+Index: mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.h
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozInlineSpellWordUtil.h
++++ mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.h
+@@ -35,17 +35,17 @@
   *
   * ***** END LICENSE BLOCK ***** */
  
@@ -354,11 +326,7 @@
  class nsIDOMNode;
  
  /**
-  *    This class extracts text from the DOM and builds it into a single string.
-  *    The string includes whitespace breaks whereever non-inline elements begin
-@@ -106,21 +106,21 @@ public:
- 
-   // Moves to the the next word in the range, and retrieves it's text and range.
+@@ -108,17 +108,17 @@
    // An empty word and a NULL range are returned when we are done checking.
    // aSkipChecking will be set if the word is "special" and shouldn't be
    // checked (e.g., an email address).
@@ -377,13 +345,11 @@
  private:
  
    // cached stuff for the editor, set by Init
-   nsCOMPtr<nsIDOMDocumentRange> mDOMDocumentRange;
-   nsCOMPtr<nsIDocument>         mDocument;
---- mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp.orig	2006-11-02 01:02:13.000000000 +0200
-+++ mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp	2007-03-24 10:09:33.790868500 +0200
-@@ -301,21 +301,21 @@ mozInlineSpellWordUtil::GetRangeForWord(
-   if (offset < 0)
-     return MakeRange(pt, pt, aRange);
+Index: mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp
++++ mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp
+@@ -303,17 +303,17 @@
    PRInt32 wordIndex = FindRealWordContaining(offset, HINT_BEGIN, PR_FALSE);
    if (wordIndex < 0)
      return MakeRange(pt, pt, aRange);
@@ -402,11 +368,7 @@
      // remove ignorable characters from the word
      if (IsIgnorableCharacter(ch))
        continue;
- 
-     // the spellchecker doesn't handle curly apostrophes in all languages
-@@ -536,21 +536,21 @@ static void
- CheckLeavingBreakElement(nsIDOMNode* aNode, void* aClosure)
- {
+@@ -538,17 +538,17 @@
    CheckLeavingBreakElementClosure* cl =
      NS_STATIC_CAST(CheckLeavingBreakElementClosure*, aClosure);
    if (!cl->mLeftBreakElement && IsBreakElement(cl->mDocView, aNode)) {
@@ -425,11 +387,7 @@
  
  void
  mozInlineSpellWordUtil::BuildSoftText()
- {
-   // First we have to work backwards from mSoftStart to find a text node
-@@ -966,27 +966,27 @@ WordSplitState::FindSpecialWord()
-     return mDOMWordText.Length() - mDOMWordOffset;
-   }
+@@ -968,23 +968,23 @@
  
    // Check the text before the first colon against some known protocols. It
    // is impossible to check against all protocols, especially since you can
@@ -460,13 +418,11 @@
    return -1;
  }
  
- // WordSplitState::ShouldSkipWord
- 
---- mozilla/extensions/spellcheck/src/mozEnglishWordUtils.cpp.orig	2006-06-04 02:35:54.000000000 +0300
-+++ mozilla/extensions/spellcheck/src/mozEnglishWordUtils.cpp	2007-03-24 09:58:37.353843750 +0200
-@@ -30,25 +30,29 @@
-  * use your version of this file under the terms of the MPL, indicate your
-  * decision by deleting the provisions above and replace them with the notice
+Index: mozilla/extensions/spellcheck/src/mozEnglishWordUtils.cpp
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/mozEnglishWordUtils.cpp
++++ mozilla/extensions/spellcheck/src/mozEnglishWordUtils.cpp
+@@ -32,21 +32,25 @@
   * and other provisions required by the GPL or the LGPL. If you do not delete
   * the provisions above, a recipient may use your version of this file under
   * the terms of any one of the MPL, the GPL or the LGPL.
@@ -492,13 +448,11 @@
    mLanguage.AssignLiteral("en");
  
    nsresult rv;
-   mURLDetector = do_CreateInstance(MOZ_TXTTOHTMLCONV_CONTRACTID, &rv);
- }
---- mozilla/extensions/spellcheck/myspell/src/mozMySpell.h.orig	2006-06-29 09:03:12.000000000 +0300
-+++ mozilla/extensions/spellcheck/myspell/src/mozMySpell.h	2007-03-24 11:41:40.008235500 +0200
-@@ -52,21 +52,21 @@
-  * http://www.cs.ucla.edu/ficus-members/geoff/ispell.html
-  * (the home page for ispell)
+Index: mozilla/extensions/spellcheck/myspell/src/mozMySpell.h
+===================================================================
+--- mozilla.orig/extensions/spellcheck/myspell/src/mozMySpell.h
++++ mozilla/extensions/spellcheck/myspell/src/mozMySpell.h
+@@ -54,17 +54,17 @@
   *
   * ***** END LICENSE BLOCK ***** */
  #ifndef mozMySpell_h__
@@ -517,13 +471,11 @@
  #include "nsWeakReference.h"
  
  #define MOZ_MYSPELL_CONTRACTID "@mozilla.org/spellchecker/myspell;1"
- #define MOZ_MYSPELL_CID         \
- { /* D1EE1205-3F96-4a0f-ABFE-09E8C54C9E9A} */  \
---- mozilla/extensions/spellcheck/myspell/src/Makefile.in.orig	2006-07-31 21:11:37.000000000 +0300
-+++ mozilla/extensions/spellcheck/myspell/src/Makefile.in	2007-03-24 11:59:17.466322500 +0200
-@@ -37,21 +37,21 @@
- DEPTH		= ../../../..
- topsrcdir	= @top_srcdir@
+Index: mozilla/extensions/spellcheck/myspell/src/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/spellcheck/myspell/src/Makefile.in
++++ mozilla/extensions/spellcheck/myspell/src/Makefile.in
+@@ -39,17 +39,17 @@
  srcdir		= @srcdir@
  VPATH		= @srcdir@
  
@@ -542,11 +494,7 @@
  		  spellchecker \
  		  xulapp \
  		  $(NULL)
- 
- CPPSRCS =         affentry.cpp \
-@@ -60,11 +60,19 @@ CPPSRCS =         affentry.cpp \
- 		  suggestmgr.cpp \
- 		  csutil.cpp \
+@@ -62,9 +62,17 @@
  		  myspell.cpp \
  		  mozMySpell.cpp \
                    $(NULL)
@@ -564,11 +512,11 @@
 +		  $(NULL)
 +
  include $(topsrcdir)/config/rules.mk
---- mozilla/extensions/spellcheck/myspell/src/mozMySpell.cpp.orig	2006-06-29 19:22:55.000000000 +0300
-+++ mozilla/extensions/spellcheck/myspell/src/mozMySpell.cpp	2007-03-24 11:41:55.309191750 +0200
-@@ -51,42 +51,48 @@
-  * under a BSD style license. For more information on ispell
-  * and affix compression in general, please see:
+Index: mozilla/extensions/spellcheck/myspell/src/mozMySpell.cpp
+===================================================================
+--- mozilla.orig/extensions/spellcheck/myspell/src/mozMySpell.cpp
++++ mozilla/extensions/spellcheck/myspell/src/mozMySpell.cpp
+@@ -53,18 +53,20 @@
   * http://www.cs.ucla.edu/ficus-members/geoff/ispell.html
   * (the home page for ispell)
   *
@@ -589,10 +537,7 @@
  #include "mozISpellI18NManager.h"
  #include "nsICharsetConverterManager.h"
  #include "nsUnicharUtilCIID.h"
- #include "nsUnicharUtils.h"
- #include "nsCRT.h"
- #include <stdlib.h>
- 
+@@ -75,16 +77,20 @@
  NS_IMPL_ISUPPORTS3(mozMySpell,
                     mozISpellCheckingEngine,
                     nsIObserver,
@@ -613,11 +558,7 @@
    nsCOMPtr<nsIObserverService> obs =
      do_GetService("@mozilla.org/observer-service;1");
    if (obs) {
-     obs->AddObserver(this, "profile-do-change", PR_TRUE);
-   }
-@@ -403,49 +409,49 @@ nsresult mozMySpell::ConvertCharset(cons
-   return rv;
- }
+@@ -405,21 +411,21 @@
  
  /* boolean Check (in wstring word); */
  NS_IMETHODIMP mozMySpell::Check(const PRUnichar *aWord, PRBool *aResult)
@@ -641,8 +582,7 @@
    return rv;
  }
  
- /* void Suggest (in wstring word, [array, size_is (count)] out wstring suggestions, out PRUint32 count); */
- NS_IMETHODIMP mozMySpell::Suggest(const PRUnichar *aWord, PRUnichar ***aSuggestions, PRUint32 *aSuggestionCount)
+@@ -428,22 +434,22 @@
  {
    NS_ENSURE_ARG_POINTER(aSuggestions);
    NS_ENSURE_ARG_POINTER(aSuggestionCount);
@@ -667,13 +607,11 @@
        for (index = 0; index < *aSuggestionCount && NS_SUCCEEDED(rv); ++index) {
          // Convert the suggestion to utf16     
          PRInt32 inLength = nsCRT::strlen(wlst[index]);
-         PRInt32 outLength;
-         rv = mDecoder->GetMaxLength(wlst[index], inLength, &outLength);
---- mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.cpp.orig	2006-12-11 11:45:27.000000000 +0200
-+++ mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.cpp	2007-03-24 10:24:15.873995250 +0200
-@@ -30,21 +30,23 @@
-  * use your version of this file under the terms of the MPL, indicate your
-  * decision by deleting the provisions above and replace them with the notice
+Index: mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.cpp
+===================================================================
+--- mozilla.orig/extensions/spellcheck/myspell/src/mozMySpellDirProvider.cpp
++++ mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.cpp
+@@ -32,17 +32,19 @@
   * and other provisions required by the GPL or the LGPL. If you do not delete
   * the provisions above, a recipient may use your version of this file under
   * the terms of any one of the MPL, the GPL or the LGPL.
@@ -694,13 +632,11 @@
  		   nsIDirectoryServiceProvider,
  		   nsIDirectoryServiceProvider2)
  
- NS_IMETHODIMP
- mozMySpellDirProvider::GetFile(const char *aKey, PRBool *aPersist,
---- mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.h.orig	2006-12-11 11:45:27.000000000 +0200
-+++ mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.h	2007-03-24 10:23:21.306585000 +0200
-@@ -34,20 +34,21 @@
-  * the terms of any one of the MPL, the GPL or the LGPL.
-  *
+Index: mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.h
+===================================================================
+--- mozilla.orig/extensions/spellcheck/myspell/src/mozMySpellDirProvider.h
++++ mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.h
+@@ -36,16 +36,17 @@
   * ***** END LICENSE BLOCK ***** */
  
  #ifndef mozMySpellDirProvider_h__
@@ -718,13 +654,11 @@
    NS_DECL_ISUPPORTS
    NS_DECL_NSIDIRECTORYSERVICEPROVIDER
    NS_DECL_NSIDIRECTORYSERVICEPROVIDER2
- 
-   static NS_METHOD Register(nsIComponentManager* aCompMgr,
---- mozilla/configure.in.orig	2007-03-26 13:52:09.000000000 +0300
-+++ mozilla/configure.in	2007-03-26 21:05:07.631419000 +0300
-@@ -5790,25 +5790,20 @@ fi
- if test `echo "$MOZ_EXTENSIONS" | grep -c universalchardet` -ne 0; then
-     AC_MSG_WARN([universalchardet is no longer an extension, use --disable-universalchardet to disable.])
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -5448,21 +5448,16 @@
      MOZ_EXTENSIONS=`echo $MOZ_EXTENSIONS | sed -e 's|universalchardet||g'`
  fi
  
@@ -746,5 +680,3 @@
  dnl Remove dupes
  MOZ_EXTENSIONS=`${PERL} ${srcdir}/build/unix/uniq.pl ${MOZ_EXTENSIONS}`
  
- dnl ========================================================
- dnl Image decoders

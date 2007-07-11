@@ -1,7 +1,13 @@
-diff -Naur mozilla.old/embedding/browser/gtk/src/Makefile.in mozilla/embedding/browser/gtk/src/Makefile.in
---- mozilla.old/embedding/browser/gtk/src/Makefile.in	2007-04-24 09:39:54.000000000 +0000
-+++ mozilla/embedding/browser/gtk/src/Makefile.in	2007-04-24 10:20:35.000000000 +0000
-@@ -219,6 +219,11 @@
+Index: mozilla/embedding/browser/gtk/src/Makefile.in
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/Makefile.in
++++ mozilla/embedding/browser/gtk/src/Makefile.in
+@@ -213,16 +213,21 @@
+ CXXFLAGS        += $(MOZ_GTK2_CFLAGS)
+ CFLAGS          += $(MOZ_GTK2_CFLAGS)
+ ifdef MOZ_GNOMEVFS_CFLAGS
+ CXXFLAGS        += $(MOZ_GNOMEVFS_CFLAGS)
+ CFLAGS          += $(MOZ_GNOMEVFS_CFLAGS)
  endif
  DEFINES         += -D_IMPL_GTKMOZEMBED
  
@@ -13,10 +19,21 @@ diff -Naur mozilla.old/embedding/browser/gtk/src/Makefile.in mozilla/embedding/b
  
  MARSHAL_FILE = gtkmozembedmarshal
  MARSHAL_PREFIX = gtkmozembed
-diff -Naur mozilla.old/extensions/ftv/src/Makefile.in mozilla/extensions/ftv/src/Makefile.in
---- mozilla.old/extensions/ftv/src/Makefile.in	2007-04-17 12:58:27.000000000 +0000
-+++ mozilla/extensions/ftv/src/Makefile.in	2007-04-17 13:42:06.000000000 +0000
-@@ -98,6 +98,11 @@
+ 
+ $(MARSHAL_FILE).h: $(MARSHAL_FILE).list
+ 	glib-genmarshal --prefix=$(MARSHAL_PREFIX) $(srcdir)/$(MARSHAL_FILE).list --skip-source --header > $(MARSHAL_FILE).h
+ 
+ $(MARSHAL_FILE).c: $(MARSHAL_FILE).list $(MARSHAL_FILE).h
+Index: mozilla/extensions/ftv/src/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/ftv/src/Makefile.in
++++ mozilla/extensions/ftv/src/Makefile.in
+@@ -93,16 +93,21 @@
+ FINAL_TARGET=$(DIST)/xpi-stage/$(XPI_NAME)/platform/$(OS_TARGET)_$(TARGET_XPCOM_ABI)
+ endif
+ endif
+ 
+ #EXTRA_COMPONENTS = $(srcdir)/SimpleTest.js
  
  include $(topsrcdir)/config/rules.mk
  
@@ -28,10 +45,21 @@ diff -Naur mozilla.old/extensions/ftv/src/Makefile.in mozilla/extensions/ftv/src
  FTV_CSS_SRC = $(srcdir)/ftv.css
  PREPROCESS_FTV_CSS = $(PERL) $(MOZILLA_DIR)/config/preprocessor.pl --marker=% $(DEFINES) $(ACDEFINES) $(FTV_CSS_SRC)
  
-diff -Naur mozilla.old/extensions/imagezoom/src/Makefile.in mozilla/extensions/imagezoom/src/Makefile.in
---- mozilla.old/extensions/imagezoom/src/Makefile.in	2007-04-17 13:43:59.000000000 +0000
-+++ mozilla/extensions/imagezoom/src/Makefile.in	2007-04-17 14:14:03.000000000 +0000
-@@ -98,6 +98,11 @@
+ $(DIST)/bin/res/ftv.css $(DESTDIR)$(mozappdir)/res/ftv.css: $(FTV_CSS_SRC) Makefile
+ 	if test ! -d $(@D); then rm -rf $(@D); $(NSINSTALL) -D $(@D); else true; fi
+ 	rm -f $@
+ 	$(PREPROCESS_FTV_CSS) > $@
+ 
+Index: mozilla/extensions/imagezoom/src/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/imagezoom/src/Makefile.in
++++ mozilla/extensions/imagezoom/src/Makefile.in
+@@ -93,14 +93,19 @@
+ FINAL_TARGET=$(DIST)/xpi-stage/$(XPI_NAME)/platform/$(OS_TARGET)_$(TARGET_XPCOM_ABI)
+ endif
+ endif
+ 
+ #EXTRA_COMPONENTS = $(srcdir)/SimpleTest.js
  
  include $(topsrcdir)/config/rules.mk
  
@@ -43,10 +71,19 @@ diff -Naur mozilla.old/extensions/imagezoom/src/Makefile.in mozilla/extensions/i
  #libs:: $(EXPORT_RESOURCE)
  #	$(INSTALL) $^ $(DIST)/bin/res
  
-diff -Naur mozilla.old/extensions/spatialnavigation/src/Makefile.in mozilla/extensions/spatialnavigation/src/Makefile.in
---- mozilla.old/extensions/spatialnavigation/src/Makefile.in	2007-04-17 12:58:26.000000000 +0000
-+++ mozilla/extensions/spatialnavigation/src/Makefile.in	2007-04-17 13:42:31.000000000 +0000
-@@ -126,6 +126,11 @@
+ #install:: $(EXPORT_RESOURCE)
+ #	$(SYSINSTALL) $(IFLAGS1) $^ $(DESTDIR)$(mozappdir)/res
+ 
+Index: mozilla/extensions/spatialnavigation/src/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/Makefile.in
++++ mozilla/extensions/spatialnavigation/src/Makefile.in
+@@ -121,15 +121,20 @@
+ ifdef MOZ_XUL_APP
+ ifdef TARGET_XPCOM_ABI
+ FINAL_TARGET=$(DIST)/xpi-stage/$(XPI_NAME)/platform/$(OS_TARGET)_$(TARGET_XPCOM_ABI)
+ endif
+ endif
  
  include $(topsrcdir)/config/rules.mk
  
@@ -58,15 +95,19 @@ diff -Naur mozilla.old/extensions/spatialnavigation/src/Makefile.in mozilla/exte
  # Copy the nsRect and nsFont source files here and make sure
  # they can be clobbered.
  export::
---- mozilla/extensions/spellcheck/src/Makefile.in.orig	2007-07-09 12:53:59.000000000 +0300
-+++ mozilla/extensions/spellcheck/src/Makefile.in	2007-07-10 02:22:29.000000000 +0300
-@@ -97,20 +97,25 @@ EXTRA_DSO_LDOPTS += \
- 		$(MOZ_COMPONENT_LIBS) \
- 		$(NULL)
+ 	$(NSINSTALL) $(topsrcdir)/gfx/src/nsRect.cpp .
+ 	$(NSINSTALL) $(topsrcdir)/gfx/src/nsFont.cpp .
  
- # Some stuff still exists and it undefined, like NS_NewAdoptingStringEnumerator
- EXTRA_DSO_LDOPTS += \
- 		../../../xpcom/build/$(LIB_PREFIX)xpcom_core.$(LIB_SUFFIX) \
+ GARBAGE += nsRect.cpp nsFont.cpp
+Index: mozilla/extensions/spellcheck/src/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/spellcheck/src/Makefile.in
++++ mozilla/extensions/spellcheck/src/Makefile.in
+@@ -86,16 +86,21 @@
+ EXTRA_DSO_LDOPTS = \
+ 		$(LIBS_DIR) \
+ 		$(MOZ_COMPONENT_LIBS) \
+ 		$(MOZ_UNICHARUTIL_LIBS) \
  		$(NULL)
  
  include $(topsrcdir)/config/rules.mk
@@ -84,5 +125,3 @@ diff -Naur mozilla.old/extensions/spatialnavigation/src/Makefile.in mozilla/exte
  LDFLAGS	+= \
  	-framework Cocoa \
  	-framework Foundation \
- 	$(NULL)
- endif
