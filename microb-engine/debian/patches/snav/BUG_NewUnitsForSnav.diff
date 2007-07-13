@@ -1,0 +1,131 @@
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp.orig	2007-07-13 16:20:45.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2007-07-13 20:34:31.000000000 +0300
+@@ -535,33 +535,37 @@ void DoTraversal(int aDirection,
+     if (frameRect.width == 0 || frameRect.height == 0)
+       continue;
+     
+     // deflate the rect to avoid overlapping with other
+     // rects.
+     frameRect.Deflate(gRectFudge, gRectFudge);
+ 
+     if (!isRectInDirection(aDirection, aFocusedRect, frameRect))
+       continue;
+     
++    nsCOMPtr<nsIContent> content = frame->GetContent();
++    if (!content)
++      continue;
++    
+     d = spatialDistance(aDirection, aFocusedRect, frameRect);
+     
+     if ((*aDSoFar) >= d) 
+     {
+ #ifdef DEBUG_dougt
+       if (d == 0)
+       {
+         printf("there is overlapping content;\n");
+       }
+ #endif
+       (*aDSoFar) = d;
+       NS_IF_RELEASE(*aCurrentContent);
+-      NS_ADDREF(*aCurrentContent = frame->GetContent());
++      NS_ADDREF(*aCurrentContent = content);
+     }
+   }
+   while(1);
+ }
+ 
+ inline void centerRect(int aDirection, nsRect& aRect)
+ {
+   if (aDirection == eNavLeft)
+     aRect.x = 1000000;
+   else if (aDirection == eNavRight)
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp.orig	2007-07-13 15:12:41.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2007-07-13 20:35:44.000000000 +0300
+@@ -30,20 +30,22 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsSpatialNavigationPrivate.h"
+ #include "nsComponentManagerUtils.h"
+ #include "nsRect.h"
++#include "nsIDOMNSElement.h"
++#include "nsIDOMTextRectangle.h"
+ 
+ #ifdef DEBUG_outputframes
+ #include "nsIFrameDebug.h"
+ #endif
+ 
+ static PRBool is_space(char c)
+ {
+   return (c == ' '  || c == '\f' || c == '\n' ||
+           c == '\r' || c == '\t' || c == '\v');
+ }
+@@ -417,52 +419,33 @@ isTargetable(PRBool focusDocuments, nsIF
+   nsAutoString textareaType;
+   nsCOMPtr<nsIDOMHTMLTextAreaElement> textareaElement = do_QueryInterface(currentContent);
+   if (textareaElement && NS_SUCCEEDED(textareaElement->GetDisabled(&disabled)) && NS_SUCCEEDED(textareaElement->GetType(textareaType)))
+     return !disabled && (! textareaType.LowerCaseEqualsLiteral("hidden"));
+ 
+   return PR_FALSE;
+ }
+ 
+ nsRect makeRectRelativeToGlobalView(nsIFrame *aFrame)
+ {
+-  nsRect result;
+-  result.SetRect(0,0,0,0);
+-
+-  nsPoint offset;
+-
+-  if (!aFrame)
+-    return result;
+-
+-  result = aFrame->GetRect();
+-
+-  nsIView* view;
+-  aFrame->GetOffsetFromView(offset, &view);
++  nsRect result(0,0,0,0);
++  NS_ENSURE_TRUE(aFrame, result);
+   
+-  nsIView* rootView = nsnull;
+-  if (view) {
+-    nsIViewManager* viewManager = view->GetViewManager();
+-    NS_ASSERTION(viewManager, "View must have a viewmanager");
+-    viewManager->GetRootView(rootView);
+-  }
+-  while (view) {
+-    offset  += view->GetPosition();
+-    if (view == rootView) {
+-      break;
+-    }
+-    view = view->GetParent();
+-  }
+-  
+-  result.MoveTo(offset);
+-  result.x /=60;
+-  result.y /=60;
+-  result.width /=60;
+-  result.height /=60;
++  nsCOMPtr<nsIDOMNSElement> nsElem = do_QueryInterface(aFrame->GetContent());
++  NS_ENSURE_TRUE(nsElem, result);
++  nsCOMPtr<nsIDOMTextRectangle> domrect;
++  nsElem->GetBoundingClientRect(getter_AddRefs(domrect));
++  float pleft,pright,ptop,pbottom;
++  domrect->GetLeft(&pleft);
++  domrect->GetRight(&pright);
++  domrect->GetTop(&ptop);
++  domrect->GetBottom(&pbottom);
++  result = nsRect(pleft, ptop, pright - pleft, pbottom - ptop);
+   return result;
+ }
+ 
+ 
+ void poly2Rect(int sides, nscoord* coord, nsRect* rect)
+ {
+   nscoord x1, x2, y1, y2, xtmp, ytmp;
+   x1 = x2 = coord[0];
+   y1 = y2 = coord[1];
+   for (PRInt32 i = 2; i < sides; i += 2) 
