@@ -151,7 +151,7 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
  #include "nsFrameTraversal.h"
  #include "nsIArray.h"
  #include "nsIBaseWindow.h"
-@@ -276,9 +281,8 @@
+@@ -268,9 +273,8 @@
        scriptContext->SetScriptsEnabled(PR_TRUE, PR_TRUE);
      }
        
@@ -165,22 +165,22 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
 ===================================================================
 --- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
 +++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
-@@ -30,16 +30,18 @@
-  * decision by deleting the provisions above and replace them with the notice
-  * and other provisions required by the GPL or the LGPL. If you do not delete
-  * the provisions above, a recipient may use your version of this file under
-  * the terms of any one of the MPL, the GPL or the LGPL.
-  *
-  * ***** END LICENSE BLOCK ***** */
+@@ -36,16 +36,18 @@
  
  #include "nsSpatialNavigationPrivate.h"
-+#include "nsComponentManagerUtils.h"
-+#include "nsRect.h"
+ #include "nsIDOMNSElement.h"
+ #include "nsIDOMTextRectangle.h"
  
  #ifdef DEBUG_outputframes
  #include "nsIFrameDebug.h"
  #endif
++#include "nsComponentManagerUtils.h"
++#include "nsRect.h"
  
  static PRBool is_space(char c)
  {
    return (c == ' '  || c == '\f' || c == '\n' ||
+           c == '\r' || c == '\t' || c == '\v');
+ }
+ 
+ nscoord* lo_parse_coord_list(char *str, PRInt32* value_cnt)

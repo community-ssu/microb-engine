@@ -1,8 +1,8 @@
---- mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp.orig	2007-07-13 16:20:45.000000000 +0300
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2007-07-13 20:34:31.000000000 +0300
-@@ -535,33 +535,37 @@ void DoTraversal(int aDirection,
-     if (frameRect.width == 0 || frameRect.height == 0)
-       continue;
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+@@ -537,29 +537,33 @@
      
      // deflate the rect to avoid overlapping with other
      // rects.
@@ -14,7 +14,7 @@
 +    nsCOMPtr<nsIContent> content = frame->GetContent();
 +    if (!content)
 +      continue;
-+    
++
      d = spatialDistance(aDirection, aFocusedRect, frameRect);
      
      if ((*aDSoFar) >= d) 
@@ -37,11 +37,11 @@
  inline void centerRect(int aDirection, nsRect& aRect)
  {
    if (aDirection == eNavLeft)
-     aRect.x = 1000000;
-   else if (aDirection == eNavRight)
---- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp.orig	2007-07-13 15:12:41.000000000 +0300
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2007-07-13 20:35:44.000000000 +0300
-@@ -30,20 +30,22 @@
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
+@@ -30,16 +30,18 @@
   * decision by deleting the provisions above and replace them with the notice
   * and other provisions required by the GPL or the LGPL. If you do not delete
   * the provisions above, a recipient may use your version of this file under
@@ -50,8 +50,6 @@
   * ***** END LICENSE BLOCK ***** */
  
  #include "nsSpatialNavigationPrivate.h"
- #include "nsComponentManagerUtils.h"
- #include "nsRect.h"
 +#include "nsIDOMNSElement.h"
 +#include "nsIDOMTextRectangle.h"
  
@@ -62,11 +60,7 @@
  static PRBool is_space(char c)
  {
    return (c == ' '  || c == '\f' || c == '\n' ||
-           c == '\r' || c == '\t' || c == '\v');
- }
-@@ -417,52 +419,33 @@ isTargetable(PRBool focusDocuments, nsIF
-   nsAutoString textareaType;
-   nsCOMPtr<nsIDOMHTMLTextAreaElement> textareaElement = do_QueryInterface(currentContent);
+@@ -417,44 +419,29 @@
    if (textareaElement && NS_SUCCEEDED(textareaElement->GetDisabled(&disabled)) && NS_SUCCEEDED(textareaElement->GetType(textareaType)))
      return !disabled && (! textareaType.LowerCaseEqualsLiteral("hidden"));
  
@@ -87,9 +81,7 @@
 -
 -  nsIView* view;
 -  aFrame->GetOffsetFromView(offset, &view);
-+  nsRect result(0,0,0,0);
-+  NS_ENSURE_TRUE(aFrame, result);
-   
+-  
 -  nsIView* rootView = nsnull;
 -  if (view) {
 -    nsIViewManager* viewManager = view->GetViewManager();
@@ -103,12 +95,10 @@
 -    }
 -    view = view->GetParent();
 -  }
--  
++  nsRect result(0,0,0,0);
++  NS_ENSURE_TRUE(aFrame, result);
+   
 -  result.MoveTo(offset);
--  result.x /=60;
--  result.y /=60;
--  result.width /=60;
--  result.height /=60;
 +  nsCOMPtr<nsIDOMNSElement> nsElem = do_QueryInterface(aFrame->GetContent());
 +  NS_ENSURE_TRUE(nsElem, result);
 +  nsCOMPtr<nsIDOMTextRectangle> domrect;
@@ -127,5 +117,3 @@
  {
    nscoord x1, x2, y1, y2, xtmp, ytmp;
    x1 = x2 = coord[0];
-   y1 = y2 = coord[1];
-   for (PRInt32 i = 2; i < sides; i += 2) 
