@@ -143,8 +143,8 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
    nsIDOMWindow* getContentWindow();
    
    void setFocusedContent(nsIContent* aContent);
--  PRBool getFocusedContent(int direction, nsIContent** aContent);
-+  void getFocusedContent(int direction, nsIContent** aContent);
+-  void getFocusedContent(int direction, nsIContent** aContent);
++  PRBool getFocusedContent(int direction, nsIContent** aContent);
    
    nsresult handleMove(int direction);
    nsresult getContentInDirection(int direction, nsPresContext* presContext, nsRect& focusedRect, nsIFrame* focusedFrame, PRBool aFocusDocuments, PRBool isAREA, nsIContent** aContent);
