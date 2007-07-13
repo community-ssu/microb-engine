@@ -14,7 +14,7 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
 -  
 -  while (1) 
 +
-+	do
++  do
    {
      aFrameTraversal->Next();
      

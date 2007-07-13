@@ -1,0 +1,120 @@
+# support for not gtk themed forms
+Index: mozilla/layout/style/forms.css
+===================================================================
+--- mozilla.orig/layout/style/forms.css
++++ mozilla/layout/style/forms.css
+@@ -578,9 +578,114 @@
+ }
+ 
+ input[type="reset"],
+ input[type="button"],
+ input[type="submit"] { 
+   font: medium serif; font-family: inherit
+ }
+ 
++
++/* Text inputs */
++
++input[type=password],
++input[type=text],
++input:not([type]),
++textarea {
++  border: 1px solid ThreeDShadow;
++  margin: 2px;
++  padding: 3px 3px;
++}
++
++/* Buttons */
++
++input[type="button"],
++input[type="reset"],
++input[type="submit"],
++button,
++select {
++  background-color: Window !important;
++  background: Window url("form-widgets/button.png") repeat-x bottom right !important;
++  border: 2px solid ThreeDShadow !important;
++  color: ButtonText !important;
++  margin: 2px !important;
++  padding: 0 1px !important;
++  -moz-border-bottom-colors: ThreeDShadow Window;
++  -moz-border-left-colors: ThreeDShadow ThreeDHighlight;
++  -moz-border-radius: 1px !important;
++  -moz-border-right-colors: ThreeDShadow Window;
++  -moz-border-top-colors: ThreeDShadow ThreeDHighlight;
++}
++
++input[type="button"]:hover,
++input[type="reset"]:hover,
++input[type="submit"]:hover,
++button:hover {
++  background-color: ThreeDHighlight !important;
++}
++
++/* Radio buttons */
++
++input[type="radio"] {
++  background-color: inherit !important;
++  background-image: url("form-widgets/radio.png") !important;
++  border: none !important;
++  width: 13px !important;
++  -moz-border-radius: 0 !important;
++}
++
++input[type="radio"]:active:focus,
++input[type="radio"]:focus,
++input[type="radio"]:focus:not([class]):not([id]):not([style]),
++input[type="radio"][disabled],
++input[type="radio"][disabled]:hover {
++  border: none !important;
++}
++
++input[type="radio"]:checked {
++  background-image: url("form-widgets/radio-checked.png") !important;
++}
++
++*::-moz-radio {
++  background-color: transparent !important;
++  border: none !important;
++}
++
++/* Checkboxes */
++
++input[type="checkbox"] {
++  background-color: -moz-Field !important;
++  background-image: url("form-widgets/checkbox.png") !important;
++  border-width: 0 !important;
++  height: 12px !important;
++  width: 12px !important;
++}
++
++input[type="checkbox"]:checked {
++  background-image: url("form-widgets/checkbox-checked.png") !important;
++}
++
++/* Dropdowns  */
++
++select,
++select:not([size]),
++select[size="0"],
++select[size="1"] {
++  background-color: Window !important;
++  background: Window url("form-widgets/button.png") repeat-x bottom right !important;
++  border: 2px solid ThreeDShadow !important;
++  color: ButtonText !important;
++  margin: 2px !important;
++  padding: 0 1px !important;
++  -moz-border-bottom-colors: ThreeDShadow Window;
++  -moz-border-left-colors: ThreeDShadow ThreeDHighlight;
++  -moz-border-radius: 1px !important;
++  -moz-border-right-colors: ThreeDShadow Window;
++  -moz-border-top-colors: ThreeDShadow ThreeDHighlight;
++}
++
++select > input[type="button"]{
++  background: transparent url("form-widgets/droparrow.png") no-repeat center center !important;
++  border: none !important;
++  width: 6px !important;
++}
++
+ %endif

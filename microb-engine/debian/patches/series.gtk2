@@ -52,7 +52,7 @@ snav/045_getClientRects.diff -p0
 snav/395_SNAV_BUGS.diff
 snav/445_snav_crash.diff
 snav/962_snav_improvements.diff
-snav/990_spatial_stylus_navigation.diff
+#snav/990_spatial_stylus_navigation.diff
 snav/555_BUG_52019.diff
 snav/BUG_55568_invalid_read.vl.diff
 snav/BUG_FirstElSkip.diff
@@ -244,6 +244,7 @@ trunk_updates/attachment.cgi?id=268108.diff
 trunk_updates/attachment.cgi?id=270653.diff
 #
 
+621_native_theme_supporting_old.diff
 620_native_theme_supporting.diff
 620_BUG_333869.fix.diff
 630_bigger_ua_string_length_61630.diff
