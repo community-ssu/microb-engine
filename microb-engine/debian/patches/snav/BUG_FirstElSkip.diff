@@ -130,3 +130,28 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
    if (!c)
      return;
  
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h.orig	2007-07-13 16:13:50.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2007-07-13 17:10:24.000000000 +0300
+@@ -150,21 +150,21 @@ public:
+ private:
+   ~nsSpatialNavigation();
+   
+   nsPresContext* getPresContext(nsIContent* aContent);
+   
+   PRInt64 spatialDistance(int direction, nsRect& a, nsRect& b);
+   
+   nsIDOMWindow* getContentWindow();
+   
+   void setFocusedContent(nsIContent* aContent);
+-  PRBool getFocusedContent(int direction, nsIContent** aContent);
++  void getFocusedContent(int direction, nsIContent** aContent);
+   
+   nsresult handleMove(int direction);
+   nsresult getContentInDirection(int direction, nsPresContext* presContext, nsRect& focusedRect, nsIFrame* focusedFrame, PRBool aFocusDocuments, PRBool isAREA, nsIContent** aContent);
+ 
+   nsCOMPtr<nsIDOMWindow> mTopWindow;
+ 
+   nsSpatialNavigationService* mService;
+ 
+   PRBool mNavigationFramesState;
+ };
