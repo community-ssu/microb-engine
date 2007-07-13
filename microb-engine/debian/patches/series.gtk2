@@ -55,6 +55,7 @@ snav/962_snav_improvements.diff
 snav/990_spatial_stylus_navigation.diff
 snav/555_BUG_52019.diff
 snav/BUG_55568_invalid_read.vl.diff
+snav/BUG_FirstElSkip.diff
 # SNAV
 
 055_MozmicrobComp_lp0.diff -p0

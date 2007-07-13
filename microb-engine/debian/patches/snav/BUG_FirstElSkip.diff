@@ -1,0 +1,43 @@
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+@@ -517,18 +517,18 @@
+   if (aFocusedRect.height == 0) {
+     aFocusedRect.height = 1;
+   }
+ 
+   nsIFrame* frame;
+   nsRect frameRect;
+   
+   PRInt64 d;
+-  
+-  while (1) 
++
++	do
+   {
+     aFrameTraversal->Next();
+     
+     nsISupports* currentItem;
+     aFrameTraversal->CurrentItem(&currentItem);
+     frame = NS_STATIC_CAST(nsIFrame*, currentItem);
+ 
+     if (!frame)
+@@ -637,16 +637,17 @@
+         printf("there is overlapping content;\n");
+       }
+ #endif
+       (*aDSoFar) = d;
+       NS_IF_RELEASE(*aCurrentContent);
+       NS_ADDREF(*aCurrentContent = frame->GetContent());
+     }
+   }
++  while(1);
+ }
+ 
+ inline void centerRect(int aDirection, nsRect& aRect)
+ {
+   if (aDirection == eNavLeft)
+     aRect.x = 1000000;
+   else if (aDirection == eNavRight)
+     aRect.x = 0;

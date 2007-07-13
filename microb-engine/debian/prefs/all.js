@@ -95,8 +95,8 @@ pref("browser.send_pings.require_same_host", false);  // only send pings to the 
 pref("browser.display.use_focus_colors",    false);
 pref("browser.display.focus_background_color", "#117722");
 pref("browser.display.focus_text_color",     "#ffffff");
-pref("browser.display.focus_ring_width",     1);
-pref("browser.display.focus_ring_on_anything", false);
+pref("browser.display.focus_ring_width",     2);
+pref("browser.display.focus_ring_on_anything", true);
 
 pref("browser.helperApps.alwaysAsk.force",  false);
 pref("browser.helperApps.neverAsk.saveToDisk", "");

@@ -111,29 +111,6 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
  static gint
  moz_gtk_option_menu_paint(GdkDrawable* drawable, GdkRectangle* rect,
                            GdkRectangle* cliprect, GtkWidgetState* state)
-Index: mozilla/layout/style/forms.css
-===================================================================
---- mozilla.orig/layout/style/forms.css
-+++ mozilla/layout/style/forms.css
-@@ -504,17 +504,17 @@
-   border-color: ButtonText;
- }
- */
- 
- input:focus,
- button:focus,
- select:focus,
- textarea:focus {
--   -moz-appearance:none;
-+/*   -moz-appearance:none;*/
-    -moz-outline-radius: .3em;
-    -moz-outline: .3em solid highlighttext;
-    -moz-outline: .2em solid -moz-mac-focusring;
-    -moz-outline-offset: .05em;
- }
- 
- button[disabled]:active, button[disabled],
- input[type="reset"][disabled]:active,
 Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp
@@ -184,8 +161,7 @@ Index: mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
  nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBorderColorID = nsILookAndFeel::eColor_threedface;
  PRBool   nsNativeTheme::sTextfieldBGTransparent = PR_FALSE;
  nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBGColorID = nsILookAndFeel::eColor__moz_field;
-@@ -269,37 +269,38 @@
-       const nsStyleBackground* ourBG = aFrame->GetStyleBackground();
+@@ -270,36 +270,37 @@
  
        if (defaultBGTransparent) {
          if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_COLOR_TRANSPARENT))
@@ -193,10 +169,9 @@ Index: mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
        } else if (ourBG->mBackgroundColor != defaultBGColor ||
                   ourBG->mBackgroundFlags & NS_STYLE_BG_COLOR_TRANSPARENT)
          return PR_TRUE;
--
+ 
 -      if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_IMAGE_NONE))
 -        return PR_TRUE;
-+
 +      //if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_IMAGE_NONE))
 +        //return PR_TRUE;
  
