@@ -2,7 +2,7 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
 ===================================================================
 --- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
 +++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
-@@ -517,18 +517,18 @@
+@@ -432,18 +432,18 @@
    if (aFocusedRect.height == 0) {
      aFocusedRect.height = 1;
    }
@@ -23,7 +23,7 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
      frame = NS_STATIC_CAST(nsIFrame*, currentItem);
  
      if (!frame)
-@@ -637,16 +637,17 @@
+@@ -552,16 +552,17 @@
          printf("there is overlapping content;\n");
        }
  #endif
@@ -41,3 +41,92 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
      aRect.x = 1000000;
    else if (aDirection == eNavRight)
      aRect.x = 0;
+@@ -628,23 +629,24 @@
+   return NS_OK;
+ }
+ 
+ 
+ nsresult
+ nsSpatialNavigation::handleMove(int direction)
+ {
+   nsCOMPtr<nsIContent> focusedContent;
+-  getFocusedContent(direction, getter_AddRefs(focusedContent));
++  PRBool doScroll = getFocusedContent(direction, getter_AddRefs(focusedContent));
+ 
+   // there are some websites which have no focusable elements,
+   // only text, for example. In these cases, scrolling have to be
+   // performed by snav.
+   if (!focusedContent) {
+-     ScrollWindow(direction, getContentWindow());
++     if (doScroll)
++       ScrollWindow(direction, getContentWindow());
+      return NS_OK;
+   }
+   nsPresContext* presContext = getPresContext(focusedContent);
+   if(!presContext)
+     return NS_ERROR_NULL_POINTER;
+ 
+   nsIFrame* focusedFrame;
+   getFrameForContent(focusedContent, &focusedFrame);
+@@ -771,52 +773,56 @@
+   ScrollWindow(direction, getContentWindow());
+ 
+   ///////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+   return NS_OK;
+ 
+ }
+ 
+-void
++PRBool
+ nsSpatialNavigation::getFocusedContent(int direction, nsIContent** aContent)
+ {
+   *aContent = nsnull;
+   
+   nsCOMPtr<nsIDOMWindow> contentWindow = getContentWindow();
+   if (!contentWindow)
+-    return;
++    return PR_TRUE;
+   
+   nsCOMPtr<nsPIDOMWindow> privateWindow = do_QueryInterface(contentWindow);
+   nsIFocusController *focusController = privateWindow->GetRootFocusController();
+   
+   if (!focusController)
+-    return;
++    return PR_TRUE;
+   
+   nsCOMPtr<nsIDOMElement> element;
+   focusController->GetFocusedElement(getter_AddRefs(element));
+   
+   if (element)
+   {
+     nsCOMPtr<nsIContent> content = do_QueryInterface(element);
+     NS_IF_ADDREF(*aContent = content);
+-    return;
++    return PR_TRUE;
+   }
+ 
+   contentWindow = getContentWindow();
+   DisableJSScope foopy (contentWindow);
+ 
+   //xxxx should/can we prevent it from going into chrome???
+ //  if (direction == eNavLeft || direction == eNavUp)
+-    focusController->MoveFocus(PR_TRUE, nsnull);
++   focusController->MoveFocus(PR_TRUE, nsnull);
++   nsresult rv = focusController->GetFocusedElement(getter_AddRefs(element));
++   if (element)
++     return PR_FALSE;
+ //  else
+ //    focusController->MoveFocus(PR_FALSE, nsnull);
+   
+   // so there is no focused content -- lets make some up, hightlight it and return.  
+ //  focusController->GetFocusedElement(getter_AddRefs(element));
++  return PR_TRUE;
+ }
+ 
+ void 
+ nsSpatialNavigation::setFocusedContent(nsIContent* c)
+ {
+   if (!c)
+     return;
+ 
