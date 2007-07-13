@@ -64,7 +64,7 @@ Index: mozilla/content/html/content/src/nsHTMLInputElement.cpp
 +  PRInt32 frame_height = presContext->AppUnitsToDevPixels(frameRect.height);
 +  nsIView* view = nsnull;
 +  frame->GetOffsetFromView(offset, &view);
-+  NS_ENSURE_TRUE(view, NS_ERROR_FAILURE);
++  NS_ENSURE_TRUE(view, NS_OK);
 +  nsIView* rootView = nsnull;
 +  nsIViewManager* viewManager = view->GetViewManager();
 +  NS_ASSERTION(viewManager, "View must have a viewmanager");
