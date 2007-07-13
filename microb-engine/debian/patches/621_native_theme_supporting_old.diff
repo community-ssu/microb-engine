@@ -3,16 +3,15 @@ Index: mozilla/layout/style/forms.css
 ===================================================================
 --- mozilla.orig/layout/style/forms.css
 +++ mozilla/layout/style/forms.css
-@@ -578,9 +578,114 @@
+@@ -559,16 +559,121 @@
+ @media print {
+   input, textarea, select, button {
+     -moz-user-input: none !important;
+   }
+ 
+   input[type="file"] { height: 2em; }
  }
  
- input[type="reset"],
- input[type="button"],
- input[type="submit"] { 
-   font: medium serif; font-family: inherit
- }
- 
-+
 +/* Text inputs */
 +
 +input[type=password],
@@ -117,4 +116,12 @@ Index: mozilla/layout/style/forms.css
 +  width: 6px !important;
 +}
 +
- %endif
++
+ %if OSARCH==OS2
+ input {
+   font: medium serif; font-family: inherit
+ }
+ 
+ select {
+   font: medium serif; font-family: inherit
+ }
