@@ -1,6 +1,6 @@
-diff -ruN -p -U10 src.orig/nsSpatialNavigation.cpp src/nsSpatialNavigation.cpp
---- src.orig/nsSpatialNavigation.cpp	2007-07-14 17:01:17.000000000 +0300
-+++ src/nsSpatialNavigation.cpp	2007-07-15 12:29:43.000000000 +0300
+diff -ruN -p -U10 mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2007-07-14 17:01:17.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2007-07-15 12:29:43.000000000 +0300
 @@ -30,20 +30,22 @@
   * decision by deleting the provisions above and replace them with the notice
   * and other provisions required by the GPL or the LGPL. If you do not delete
@@ -56,9 +56,9 @@ diff -ruN -p -U10 src.orig/nsSpatialNavigation.cpp src/nsSpatialNavigation.cpp
    if (aDirection == eNavLeft)
      aRect.x = 1000000;
    else if (aDirection == eNavRight)
-diff -ruN -p -U10 src.orig/nsSpatialNavigationUtils.cpp src/nsSpatialNavigationUtils.cpp
---- src.orig/nsSpatialNavigationUtils.cpp	2007-07-14 16:17:30.000000000 +0300
-+++ src/nsSpatialNavigationUtils.cpp	2007-07-15 12:28:44.000000000 +0300
+diff -ruN -p -U10 mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2007-07-14 16:17:30.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2007-07-15 12:28:44.000000000 +0300
 @@ -527,31 +527,31 @@ void getRectOfAreaElement(nsIFrame* f, n
  
  PRBool isRectInDirection(int direction, nsRect& focusedRect, nsRect& frameRect)
