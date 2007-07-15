@@ -57,6 +57,8 @@ snav/555_BUG_52019.diff
 snav/BUG_55568_invalid_read.vl.diff
 snav/BUG_FirstElSkip.diff
 snav/BUG_NewUnitsForSnav.diff
+snav/BUG_TogetherFocusAndScroll.diff
+snav/BUG_FixBrokenDirection.diff
 # SNAV
 
 055_MozmicrobComp_lp0.diff -p0
