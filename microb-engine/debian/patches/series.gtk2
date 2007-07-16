@@ -59,6 +59,7 @@ snav/BUG_FirstElSkip.diff
 snav/BUG_Visiblity.diff
 snav/BUG_NewUnitsForSnav.diff
 snav/BUG_FixBrokenDirection.diff
+snav/BUG_zero_size_links.diff
 # SNAV
 
 055_MozmicrobComp_lp0.diff -p0
