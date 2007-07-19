@@ -2,43 +2,51 @@
 <head>
 <title>about:config - html</title>
 <script>
-
+netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
 var data="";
 function accum(more)
 {
-data+=more+"\n";
+ data+=more+"\n";
 }
 function flushAccum()
 {
-document.write(data);
-data="";
+ document.write(data);
+ data="";
 }
-function formatPref(ps, name)
+function formatPref(ps, name, type)
 {
-var type=ps.getPrefType(name);
-switch (type)
-{
-case ps.PREF_STRING:
-accum("<tr><td>"+name+"<\/td><td>string<\/td><td>"+ps.getCharPref(name)+"<\/td><\/tr>");
-break;
-case ps.PREF_INT:
-accum("<tr><td>"+name+"<\/td><td>int<\/td><td>"+ps.getIntPref(name)+"<\/td><\/tr>");
-break;
-case ps.PREF_BOOL:
-accum("<tr><td>"+name+"<\/td><td>bool<\/td><td>"+ps.getBoolPref(name)+"<\/td><\/tr>");
-break;
-default:
-}
+ if (arguments.length == 2) {
+  try {
+   type = ps.getPrefType(name);
+  } catch (e) {
+   for each (type in [ps.PREF_STRING, ps.PREF_INT, ps.PREF_BOOL]) {
+    try {
+     formatPref(ps, name, type);
+    } catch (e) {
+    }
+   }
+   return;
+  }
+ }
+ switch (type)
+ {
+ case ps.PREF_STRING:
+  accum("<tr><td>"+name+"<\/td><td>string<\/td><td>"+ps.getCharPref(name)+"<\/td><\/tr>");
+  break;
+ case ps.PREF_INT:
+  accum("<tr><td>"+name+"<\/td><td>int<\/td><td>"+ps.getIntPref(name)+"<\/td><\/tr>");
+  break;
+ case ps.PREF_BOOL:
+  accum("<tr><td>"+name+"<\/td><td>bool<\/td><td>"+ps.getBoolPref(name)+"<\/td><\/tr>");
+  break;
+ default:
+ }
 }
 function formatPrefArray(ps, ary)
 {
 ary.sort();
 for (var i=0; i<ary.length; i++)
 formatPref(ps, ary[i]);
-}
-function callSearchPref()
-{
-document.write("Implementation losted :(");
 }
 function formatSetPref()
 {
@@ -74,7 +82,7 @@ accum("<td>");
 }
 function formatSearchPref()
 {
-accum("<form onsubmit='callSearchPref()'>"+
+accum("<form>"+
 "<table><tr><th>Name<tr><td>");
 accumInput('sprefname'); accumTd();
 accum("<\/table>"+
@@ -108,10 +116,10 @@ setPref(name, value);
 }
 var pmap = {};
 (function (){
-var ps = Components.interfaces.nsIPrefBranch;
-pmap[ps.PREF_STRING] = "setCharPref";
-pmap[ps.PREF_INT] = "setIntPref";
-pmap[ps.PREF_BOOL] = "setBoolPref";
+ var ps = Components.interfaces.nsIPrefBranch;
+ pmap[ps.PREF_STRING] = "setCharPref";
+ pmap[ps.PREF_INT] = "setIntPref";
+ pmap[ps.PREF_BOOL] = "setBoolPref";
 })();
 var boolRe = /^\s*(?:true|false)\s*$/i;
 var intRe = /^\s*\d+\s*$/;
@@ -144,6 +152,7 @@ function setPref(name, value)
  }
 }
 formatSetPref();
+formatSearchPref();
 formatPrefs();
 
 </script>
