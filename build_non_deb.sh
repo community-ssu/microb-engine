@@ -33,13 +33,11 @@ rm -rf $TMP
 cp -rf microb-engine $TMP
 pushd .; cd $TMP; for str in `find ./ -name .svn`; do rm -rf $str; done; popd
 
-for str in "*.png" "*.gif" "*.tar.gz"; do
-  for str1 in `find $TMP/ -name "$str"`;do
-    echo $str1
-    if [ -s $str1 ]; then
-      uuencode $str1 $str1 > $str1.uu && rm $str1
-    fi
-  done
+for str in `find $TMP/ -name "*.uu"`;do
+  if [ -s $str ]; then
+    uudecode -o $(echo $str | sed 's/\.uu//g') $str
+    rm -f $str
+  fi
 done
 
 tar -zxvf microb-engine_*.orig.tar.gz -C $TMP
