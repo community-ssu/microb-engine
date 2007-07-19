@@ -1,4 +1,12 @@
 #!/bin/sh
+#
+# Building without debian
+# Simple script wich will help to extract sources,
+#  apply patches, and prepare simple config for building sources, without dpkg-buildpackage
+#
+# If somebody want to improve, fix.... welcome
+#
+
 
 if test -x /usr/bin/uuencode; then
   echo "uuencode installed, ok"
