@@ -58,7 +58,8 @@ flushAccum();
 var queryMap = {};
 function fillQueryMap()
 {
- var query = location.search.split(/[?&]/g);
+ var location_href = location.href;
+ var query = location_href.replace(/^[^\?]*/,"").split(/[?&]/g);
  var bit,bits;
  for (var i = 0; i < query.length; ++i)
  {
