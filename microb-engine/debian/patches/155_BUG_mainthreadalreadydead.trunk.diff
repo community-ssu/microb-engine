@@ -1,0 +1,250 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: No description.
+
+Index: mozilla/widget/src/gtk2/nsAppShell.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsAppShell.cpp
++++ mozilla/widget/src/gtk2/nsAppShell.cpp
+@@ -61,28 +61,43 @@
+                                    gpointer data)
+ {
+     nsAppShell *self = static_cast<nsAppShell *>(data);
+ 
+     unsigned char c;
+     read(self->mPipeFDs[0], &c, 1);
+     NS_ASSERTION(c == (unsigned char) NOTIFY_TOKEN, "wrong token");
+ 
++/* XXX mRunWasCalled should be protected not private! */
++#ifdef NSBASEAPPSHELL_PROTECTED_RUNWASCALLED
++    if (self->mExiting)
++        return FALSE;
++#else
++    if (!self->mTag)
++        return FALSE;
++#endif
++
+     self->NativeEventCallback();
+     return TRUE;
+ }
+ 
+ nsAppShell::~nsAppShell()
+ {
+-    if (mTag)
++    if (mTag) {
+         g_source_remove(mTag);
+-    if (mPipeFDs[0])
++        mTag = 0;
++    }
++    if (mPipeFDs[0]) {
+         close(mPipeFDs[0]);
+-    if (mPipeFDs[1])
++        mPipeFDs[0] = 0;
++    }
++    if (mPipeFDs[1]) {
+         close(mPipeFDs[1]);
++        mPipeFDs[1] = 0;
++    }
+ }
+ 
+ nsresult
+ nsAppShell::Init()
+ {
+ #ifdef PR_LOGGING
+     if (!gWidgetLog)
+         gWidgetLog = PR_NewLogModule("Widget");
+Index: mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
+===================================================================
+--- mozilla.orig/widget/src/xpwidgets/nsBaseAppShell.cpp
++++ mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
+@@ -44,24 +44,31 @@
+ // events (if not in performance mode), which can result in suppressing the
+ // next thread event for at most this many ticks:
+ #define THREAD_EVENT_STARVATION_LIMIT PR_MillisecondsToInterval(20)
+ 
+ NS_IMPL_THREADSAFE_ISUPPORTS3(nsBaseAppShell, nsIAppShell, nsIThreadObserver,
+                               nsIObserver)
+ 
+ nsBaseAppShell::nsBaseAppShell()
+-  : mSuspendNativeCount(0)
+-  , mFavorPerf(0)
++  :
++#ifdef NSBASEAPPSHELL_PROTECTED_RUNWASCALLED
++    mExiting(PR_FALSE)
++  ,
++#endif
++    mFavorPerf(0)
++  , mSuspendNativeCount(0)
+   , mNativeEventPending(PR_FALSE)
+   , mStarvationDelay(0)
+   , mSwitchTime(0)
+   , mLastNativeEventTime(0)
+   , mRunWasCalled(PR_FALSE)
++#ifndef NSBASEAPPSHELL_PROTECTED_RUNWASCALLED
+   , mExiting(PR_FALSE)
++#endif
+   , mProcessingNextNativeEvent(PR_FALSE)
+ {
+ }
+ 
+ nsresult
+ nsBaseAppShell::Init()
+ {
+   // Configure ourselves as an observer for the current thread:
+@@ -104,17 +111,23 @@
+ #endif
+     return;
+   }
+ 
+   // nsBaseAppShell::Run is not being used to pump events, so this may be
+   // our only opportunity to process pending gecko events.
+ 
+   nsIThread *thread = NS_GetCurrentThread();
+-  NS_ProcessPendingEvents(thread, THREAD_EVENT_STARVATION_LIMIT);
++  nsresult rv = NS_ProcessPendingEvents(thread, THREAD_EVENT_STARVATION_LIMIT);
++  if (NS_FAILED(rv)) {
++#ifdef DEBUG
++    fprintf(stderr, "ProcessPendingEvents stopped...\n");
++#endif
++    return;
++  }
+ 
+   // Continue processing pending events later (we don't want to starve the
+   // embedders event loop).
+   if (NS_HasPendingEvents(thread))
+     OnDispatchedEvent(nsnull);
+ }
+ 
+ PRBool
+@@ -232,16 +245,22 @@
+     }
+   }
+ 
+   // When mayWait is true, we need to make sure that there is an event in the
+   // thread's event queue before we return.  Otherwise, the thread will block
+   // on its event queue waiting for an event.
+   PRBool needEvent = mayWait;
+ 
++  if (mExiting) {
++#ifdef DEBUG
++    fprintf(stderr, "we're exiting, hope you enjoyed your run.\n");
++#endif
++    return NS_ERROR_NOT_AVAILABLE;
++  }
+   while (!NS_HasPendingEvents(thr)) {
+     // If we have been asked to exit from Run, then we should not wait for
+     // events to process.  
+     if (mExiting && mayWait)
+       mayWait = PR_FALSE;
+ 
+     mLastNativeEventTime = PR_IntervalNow();
+     if (!DoProcessNextNativeEvent(mayWait) || !mayWait)
+Index: mozilla/widget/src/xpwidgets/nsBaseAppShell.h
+===================================================================
+--- mozilla.orig/widget/src/xpwidgets/nsBaseAppShell.h
++++ mozilla/widget/src/xpwidgets/nsBaseAppShell.h
+@@ -40,16 +40,17 @@
+ 
+ #include "nsIAppShell.h"
+ #include "nsIThreadInternal.h"
+ #include "nsIObserver.h"
+ #include "nsIRunnable.h"
+ #include "nsCOMPtr.h"
+ #include "prinrval.h"
+ 
++#define NSBASEAPPSHELL_PROTECTED_RUNWASCALLED
+ /**
+  * A singleton that manages the UI thread's event queue.  Subclass this class
+  * to enable platform-specific event queue support.
+  */
+ class nsBaseAppShell : public nsIAppShell, public nsIThreadObserver,
+                        public nsIObserver
+ {
+ public:
+@@ -91,23 +92,29 @@
+    *   ProcessNextNativeEvent that is waiting.
+    * @return
+    *   This method returns "true" if a native event was processed.
+    */
+   virtual PRBool ProcessNextNativeEvent(PRBool mayWait) = 0;
+ 
+   PRInt32 mSuspendNativeCount;
+ 
++#ifdef NSBASEAPPSHELL_PROTECTED_RUNWASCALLED
++  PRPackedBool mExiting;
++#endif
++
+ private:
+   PRBool DoProcessNextNativeEvent(PRBool mayWait);
+ 
+   nsCOMPtr<nsIRunnable> mDummyEvent;
+   PRInt32 mFavorPerf;
+   PRInt32 mNativeEventPending;
+   PRIntervalTime mStarvationDelay;
+   PRIntervalTime mSwitchTime;
+   PRIntervalTime mLastNativeEventTime;
+   PRPackedBool mRunWasCalled;
++#ifndef NSBASEAPPSHELL_PROTECTED_RUNWASCALLED
+   PRPackedBool mExiting;
++#endif
+   PRPackedBool mProcessingNextNativeEvent;
+ };
+ 
+ #endif // nsBaseAppShell_h__
+Index: mozilla/xpcom/threads/nsThread.cpp
+===================================================================
+--- mozilla.orig/xpcom/threads/nsThread.cpp
++++ mozilla/xpcom/threads/nsThread.cpp
+@@ -436,18 +436,20 @@
+     return NS_ERROR_OUT_OF_MEMORY;
+   PutEvent(event);
+ 
+   // We could still end up with other events being added after the shutdown
+   // task, but that's okay because we process pending events in ThreadFunc
+   // after setting mShutdownContext just before exiting.
+   
+   // Process events on the current thread until we receive a shutdown ACK.
+-  while (!context.shutdownAck)
+-    NS_ProcessNextEvent(context.joiningThread);
++  while (!context.shutdownAck) {
++    if (!NS_ProcessNextEvent(context.joiningThread))
++      break;
++  }
+ 
+   // Now, it should be safe to join without fear of dead-locking.
+ 
+   PR_JoinThread(mThread);
+   mThread = nsnull;
+   return NS_OK;
+ }
+ 
+@@ -468,18 +470,26 @@
+   NS_ENSURE_STATE(PR_GetCurrentThread() == mThread);
+ 
+   PRBool notifyGlobalObserver = (sGlobalObserver != nsnull);
+   if (notifyGlobalObserver) 
+     sGlobalObserver->OnProcessNextEvent(this, mayWait && !ShuttingDown(),
+                                         mRunningEvent);
+ 
+   nsCOMPtr<nsIThreadObserver> obs = mObserver;
+-  if (obs)
+-    obs->OnProcessNextEvent(this, mayWait && !ShuttingDown(), mRunningEvent);
++  if (obs) {
++    nsresult rv =
++      obs->OnProcessNextEvent(this, mayWait && !ShuttingDown(), mRunningEvent);
++    /* We don't want people to call haspendingevents if we're dead so tell them
++     * to stop poking us if we are dead. */
++    if (NS_FAILED(rv)) {
++      *result = PR_FALSE;
++      return rv;
++    }
++  }
+ 
+   // If we are shutting down, then do not wait for new events.
+   nsCOMPtr<nsIRunnable> event; 
+   mEvents->GetEvent(mayWait && !ShuttingDown(), getter_AddRefs(event));
+ 
+   *result = (event.get() != nsnull);
+ 
+   nsresult rv = NS_OK;

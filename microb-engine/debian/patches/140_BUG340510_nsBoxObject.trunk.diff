@@ -1,0 +1,1069 @@
+## Patches for microb-engine
+## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+##
+## DP: Fix for working with calendar.gmail.com with disable xul.
+
+Index: mozilla/layout/base/Makefile.in
+===================================================================
+--- mozilla.orig/layout/base/Makefile.in
++++ mozilla/layout/base/Makefile.in
+@@ -141,16 +141,28 @@
+ 		nsPresContext.cpp \
+ 		nsPresShell.cpp \
+ 		nsPresState.cpp \
+ 		nsQuoteList.cpp \
+ 		nsStyleChangeList.cpp \
+ 		nsStyleSheetService.cpp \
+ 		$(NULL)
+ 
++ifndef MOZ_XUL
++XPIDLSRCS  += \
++		nsIBoxObject.idl \
++		$(NULL)
++EXPORTS    += \
++		nsPIBoxObject.h \
++		$(NULL)
++CPPSRCS    += \
++		nsBoxObject.cpp \
++		$(NULL)
++endif
++
+ ifdef IBMBIDI
+ CPPSRCS		+= \
+ 		nsBidiPresUtils.cpp \
+ 		nsBidi.cpp \
+ 		$(NULL)
+ endif                
+ 
+ FORCE_STATIC_LIB = 1
+Index: mozilla/layout/xul/base/public/Makefile.in
+===================================================================
+--- mozilla.orig/layout/xul/base/public/Makefile.in
++++ mozilla/layout/xul/base/public/Makefile.in
+@@ -48,22 +48,28 @@
+ 
+ EXPORTS		= \
+ 		nsPIBoxObject.h \
+ 		nsIMenuFrame.h \
+ 		nsIScrollbarMediator.h \
+ 		nsXULPopupManager.h \
+ 		$(NULL)
+ 
+-XPIDLSRCS=      nsIBoxObject.idl                  \
++XPIDLSRCS = \
+                 nsIScrollBoxObject.idl              \
+                 nsIScrollBoxObject.idl \
+                 nsIPopupBoxObject.idl \
+                 nsIMenuBoxObject.idl \
+                 nsIBrowserBoxObject.idl \
+                 nsIIFrameBoxObject.idl \
+                 nsIEditorBoxObject.idl \
+                 nsIContainerBoxObject.idl \
+                 nsIListBoxObject.idl \
+                 $(NULL)
+ 
++ifdef MOZ_XUL
++XPIDLSRCS += \
++                nsIBoxObject.idl \
++                $(NULL)
++endif
++
+ include $(topsrcdir)/config/rules.mk
+ 
+Index: mozilla/layout/base/nsBoxObject.cpp
+===================================================================
+--- /dev/null
++++ mozilla/layout/base/nsBoxObject.cpp
+@@ -0,0 +1,565 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is Mozilla Communicator client code.
++ *
++ * The Initial Developer of the Original Code is
++ * Netscape Communications Corporation.
++ * Portions created by the Initial Developer are Copyright (C) 1998
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Original Author: David W. Hyatt (hyatt@netscape.com)
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either of the GNU General Public License Version 2 or later (the "GPL"),
++ * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include "nsBoxObject.h"
++#include "nsCOMPtr.h"
++#include "nsIDocument.h"
++#include "nsIPresShell.h"
++#include "nsPresContext.h"
++#include "nsIDocument.h"
++#include "nsIContent.h"
++#include "nsIFrame.h"
++#include "nsIDocShell.h"
++#include "nsReadableUtils.h"
++#include "nsILookAndFeel.h"
++#include "nsWidgetsCID.h"
++#include "nsIServiceManager.h"
++#include "nsIDOMClassInfo.h"
++#include "nsIView.h"
++#include "nsIWidget.h"
++#ifdef MOZ_XUL
++#include "nsIDOMXULElement.h"
++#else
++#include "nsIDOMElement.h"
++#endif
++#include "nsIFrame.h"
++#include "nsLayoutUtils.h"
++#include "nsISupportsPrimitives.h"
++#include "prtypes.h"
++#include "nsSupportsPrimitives.h"
++
++// Static IIDs/CIDs. Try to minimize these.
++static NS_DEFINE_CID(kLookAndFeelCID, NS_LOOKANDFEEL_CID);
++
++// Implementation /////////////////////////////////////////////////////////////////
++
++// Static member variable initialization
++
++// Implement our nsISupports methods
++
++// QueryInterface implementation for nsBoxObject
++NS_INTERFACE_MAP_BEGIN(nsBoxObject)
++  NS_INTERFACE_MAP_ENTRY(nsIBoxObject)
++  NS_INTERFACE_MAP_ENTRY(nsPIBoxObject)
++  NS_INTERFACE_MAP_ENTRY(nsISupports)
++  NS_INTERFACE_MAP_ENTRY_DOM_CLASSINFO(BoxObject)
++NS_INTERFACE_MAP_END
++
++
++NS_IMPL_ADDREF(nsBoxObject)
++NS_IMPL_RELEASE(nsBoxObject)
++
++
++// Constructors/Destructors
++nsBoxObject::nsBoxObject(void)
++  :mContent(nsnull)
++{
++}
++
++nsBoxObject::~nsBoxObject(void)
++{
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetElement(nsIDOMElement** aResult)
++{
++  if (mContent) {
++    return CallQueryInterface(mContent, aResult);
++  }
++
++  *aResult = nsnull;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetLayoutManager(nsISupports** aResult)
++{
++//  *aResult = mLayoutManager;
++//  NS_IF_ADDREF(*aResult);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::SetLayoutManager(nsISupports* aLayoutManager)
++{
++//  mLayoutManager = aLayoutManager;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetPaintManager(nsISupports** aResult)
++{
++//  *aResult = mPaintManager;
++//  NS_IF_ADDREF(*aResult);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::SetPaintManager(nsISupports* aPaintManager)
++{
++//  mPaintManager = aPaintManager;
++  return NS_OK;
++}
++
++// nsPIBoxObject //////////////////////////////////////////////////////////////////////////
++
++nsresult
++nsBoxObject::Init(nsIContent* aContent)
++{
++  mContent = aContent;
++  return NS_OK;
++}
++
++void
++nsBoxObject::Clear()
++{
++  mPropertyTable = nsnull;
++  mContent = nsnull;
++}
++
++void
++nsBoxObject::ClearCachedValues()
++{
++}
++
++nsIFrame*
++nsBoxObject::GetFrame(PRBool aFlushLayout)
++{
++  nsIPresShell* shell = GetPresShell(aFlushLayout);
++  if (!shell)
++    return nsnull;
++
++  if (!aFlushLayout) {
++    // If we didn't flush layout when getting the presshell, we should at least
++    // flush to make sure our frame model is up to date.
++    // XXXbz should flush on document, no?  Except people call this from
++    // frame code, maybe?
++    shell->FlushPendingNotifications(Flush_Frames);
++  }
++
++  return shell->GetPrimaryFrameFor(mContent);
++}
++
++nsIPresShell*
++nsBoxObject::GetPresShell(PRBool aFlushLayout)
++{
++  if (!mContent) {
++    return nsnull;
++  }
++
++  nsIDocument* doc = mContent->GetCurrentDoc();
++  if (!doc) {
++    return nsnull;
++  }
++
++  if (aFlushLayout) {
++    doc->FlushPendingNotifications(Flush_Layout);
++  }
++
++  return doc->GetPrimaryShell();
++}
++
++nsresult
++nsBoxObject::GetOffsetRect(nsRect& aRect)
++{
++  aRect.x = aRect.y = 0;
++  aRect.Empty();
++
++  if (!mContent)
++    return NS_ERROR_NOT_INITIALIZED;
++
++  // Get the Frame for our content
++  nsIFrame* frame = GetFrame(PR_TRUE);
++  if (frame) {
++    // Get its origin
++    nsPoint origin = frame->GetPositionIgnoringScrolling();
++
++    // Get the union of all rectangles in this and continuation frames
++    nsRect rcFrame = nsLayoutUtils::GetAllInFlowBoundingRect(frame);
++
++    // Find the frame parent whose content is the document element.
++    nsIContent *docElement = mContent->GetCurrentDoc()->GetRootContent();
++    nsIFrame* parent = frame->GetParent();
++    for (;;) {
++      // If we've hit the document element, break here
++      if (parent->GetContent() == docElement) {
++        break;
++      }
++
++      nsIFrame* next = parent->GetParent();
++      if (!next) {
++        NS_WARNING("We should have hit the document element...");
++        origin += parent->GetPosition();
++        break;
++      }
++
++      // Add the parent's origin to our own to get to the
++      // right coordinate system
++      origin += next->GetPositionOfChildIgnoringScrolling(parent);
++      parent = next;
++    }
++
++    // For the origin, add in the border for the frame
++    const nsStyleBorder* border = frame->GetStyleBorder();
++    origin.x += border->GetBorderWidth(NS_SIDE_LEFT);
++    origin.y += border->GetBorderWidth(NS_SIDE_TOP);
++
++    // And subtract out the border for the parent
++    const nsStyleBorder* parentBorder = parent->GetStyleBorder();
++    origin.x -= parentBorder->GetBorderWidth(NS_SIDE_LEFT);
++    origin.y -= parentBorder->GetBorderWidth(NS_SIDE_TOP);
++
++    aRect.x = nsPresContext::AppUnitsToIntCSSPixels(origin.x);
++    aRect.y = nsPresContext::AppUnitsToIntCSSPixels(origin.y);
++    aRect.width = nsPresContext::AppUnitsToIntCSSPixels(rcFrame.width);
++    aRect.height = nsPresContext::AppUnitsToIntCSSPixels(rcFrame.height);
++  }
++
++  return NS_OK;
++}
++
++nsresult
++nsBoxObject::GetScreenPosition(nsIntPoint& aPoint)
++{
++  aPoint.x = aPoint.y = 0;
++
++  if (!mContent)
++    return NS_ERROR_NOT_INITIALIZED;
++
++  nsIFrame* frame = GetFrame(PR_TRUE);
++  if (frame) {
++    nsIntRect rect = frame->GetScreenRect();
++    aPoint.x = rect.x;
++    aPoint.y = rect.y;
++  }
++
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetX(PRInt32* aResult)
++{
++  nsRect rect;
++  GetOffsetRect(rect);
++  *aResult = rect.x;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetY(PRInt32* aResult)
++{
++  nsRect rect;
++  GetOffsetRect(rect);
++  *aResult = rect.y;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetWidth(PRInt32* aResult)
++{
++  nsRect rect;
++  GetOffsetRect(rect);
++  *aResult = rect.width;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetHeight(PRInt32* aResult)
++{
++  nsRect rect;
++  GetOffsetRect(rect);
++  *aResult = rect.height;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetScreenX(PRInt32 *_retval)
++{
++  nsIntPoint position;
++  nsresult rv = GetScreenPosition(position);
++  if (NS_FAILED(rv)) return rv;
++
++  *_retval = position.x;
++
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetScreenY(PRInt32 *_retval)
++{
++  nsIntPoint position;
++  nsresult rv = GetScreenPosition(position);
++  if (NS_FAILED(rv)) return rv;
++
++  *_retval = position.y;
++
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetLookAndFeelMetric(const PRUnichar* aPropertyName,
++                                  PRUnichar** aResult)
++{
++  *aResult = nsnull;
++  nsCOMPtr<nsILookAndFeel> lookAndFeel(do_GetService(kLookAndFeelCID));
++  if (!lookAndFeel)
++    return NS_ERROR_FAILURE;
++
++  nsAutoString property(aPropertyName);
++  if (property.LowerCaseEqualsLiteral("scrollbararrows")) {
++    PRInt32 metricResult;
++    lookAndFeel->GetMetric(nsILookAndFeel::eMetric_ScrollArrowStyle, metricResult);
++    nsAutoString result;
++    if (metricResult & nsILookAndFeel::eMetric_ScrollArrowStartBackward) {
++      result.AppendLiteral("start-backward ");
++    }
++    if (metricResult & nsILookAndFeel::eMetric_ScrollArrowStartForward) {
++      result.AppendLiteral("start-forward ");
++    }
++    if (metricResult & nsILookAndFeel::eMetric_ScrollArrowEndBackward) {
++      result.AppendLiteral("end-backward ");
++    }
++    if (metricResult & nsILookAndFeel::eMetric_ScrollArrowEndForward) {
++      result.AppendLiteral("end-forward");
++    }
++    *aResult = ToNewUnicode(result);
++  }
++  else if (property.LowerCaseEqualsLiteral("thumbstyle")) {
++    PRInt32 metricResult;
++    lookAndFeel->GetMetric(nsILookAndFeel::eMetric_ScrollSliderStyle, metricResult);
++    if ( metricResult == nsILookAndFeel::eMetric_ScrollThumbStyleNormal )
++      *aResult = ToNewUnicode(NS_LITERAL_STRING("fixed"));
++    else
++      *aResult = ToNewUnicode(NS_LITERAL_STRING("proportional"));
++  }
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetPropertyAsSupports(const PRUnichar* aPropertyName, nsISupports** aResult)
++{
++  NS_ENSURE_ARG(aPropertyName && *aPropertyName);
++  if (!mPropertyTable) {
++    *aResult = nsnull;
++    return NS_OK;
++  }
++  nsDependentString propertyName(aPropertyName);
++  mPropertyTable->Get(propertyName, aResult); // Addref here.
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::SetPropertyAsSupports(const PRUnichar* aPropertyName, nsISupports* aValue)
++{
++#ifdef DEBUG
++  if (aValue) {
++    nsIFrame* frame;
++    CallQueryInterface(aValue, &frame);
++    NS_ASSERTION(!frame,
++                 "Calling SetPropertyAsSupports on a frame.  Prepare to crash "
++                 "and be exploited any time some random website decides to "
++                 "exploit you");
++  }
++#endif
++  NS_ENSURE_ARG(aPropertyName && *aPropertyName);
++
++  if (!mPropertyTable) {
++    mPropertyTable = new nsInterfaceHashtable<nsStringHashKey,nsISupports>;
++    if (!mPropertyTable) return NS_ERROR_OUT_OF_MEMORY;
++    if (NS_FAILED(mPropertyTable->Init(8))) {
++       mPropertyTable = nsnull;
++       return NS_ERROR_FAILURE;
++    }
++  }
++
++  nsDependentString propertyName(aPropertyName);
++  if (!mPropertyTable->Put(propertyName, aValue))
++    return NS_ERROR_OUT_OF_MEMORY;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetProperty(const PRUnichar* aPropertyName, PRUnichar** aResult)
++{
++  nsCOMPtr<nsISupports> data;
++  nsresult rv = GetPropertyAsSupports(aPropertyName,getter_AddRefs(data));
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  if (!data) {
++    *aResult = nsnull;
++    return NS_OK;
++  }
++
++  nsCOMPtr<nsISupportsString> supportsStr = do_QueryInterface(data);
++  if (!supportsStr)
++    return NS_ERROR_FAILURE;
++  nsAutoString result;
++  supportsStr->GetData(result);
++
++  *aResult = result.IsVoid() ? nsnull : ToNewUnicode(result);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::SetProperty(const PRUnichar* aPropertyName, const PRUnichar* aPropertyValue)
++{
++  NS_ENSURE_ARG(aPropertyName && *aPropertyName);
++
++  nsDependentString propertyName(aPropertyName);
++  nsDependentString propertyValue;
++  if (aPropertyValue) {
++    propertyValue.Rebind(aPropertyValue);
++  } else {
++    propertyValue.SetIsVoid(PR_TRUE);
++  }
++
++  nsCOMPtr<nsISupportsString> supportsStr(do_CreateInstance(NS_SUPPORTS_STRING_CONTRACTID));
++  NS_ENSURE_TRUE(supportsStr, NS_ERROR_OUT_OF_MEMORY);
++  supportsStr->SetData(propertyValue);
++
++  return SetPropertyAsSupports(aPropertyName,supportsStr);
++}
++
++NS_IMETHODIMP
++nsBoxObject::RemoveProperty(const PRUnichar* aPropertyName)
++{
++  NS_ENSURE_ARG(aPropertyName && *aPropertyName);
++
++  if (!mPropertyTable) return NS_OK;
++
++  nsDependentString propertyName(aPropertyName);
++  mPropertyTable->Remove(propertyName);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetParentBox(nsIDOMElement * *aParentBox)
++{
++  *aParentBox = nsnull;
++  nsIFrame* frame = GetFrame(PR_FALSE);
++  if (!frame) return NS_OK;
++  nsIFrame* parent = frame->GetParent();
++  if (!parent) return NS_OK;
++
++  nsCOMPtr<nsIDOMElement> el = do_QueryInterface(parent->GetContent());
++  *aParentBox = el;
++  NS_IF_ADDREF(*aParentBox);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetFirstChild(nsIDOMElement * *aFirstVisibleChild)
++{
++  *aFirstVisibleChild = nsnull;
++  nsIFrame* frame = GetFrame(PR_FALSE);
++  if (!frame) return NS_OK;
++  nsIFrame* firstFrame = frame->GetFirstChild(nsnull);
++  if (!firstFrame) return NS_OK;
++  // get the content for the box and query to a dom element
++  nsCOMPtr<nsIDOMElement> el = do_QueryInterface(firstFrame->GetContent());
++  el.swap(*aFirstVisibleChild);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetLastChild(nsIDOMElement * *aLastVisibleChild)
++{
++  *aLastVisibleChild = nsnull;
++  nsIFrame* frame = GetFrame(PR_FALSE);
++  if (!frame) return NS_OK;
++  return GetPreviousSibling(frame, nsnull, aLastVisibleChild);
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetNextSibling(nsIDOMElement **aNextOrdinalSibling)
++{
++  *aNextOrdinalSibling = nsnull;
++  nsIFrame* frame = GetFrame(PR_FALSE);
++  if (!frame) return NS_OK;
++  nsIFrame* nextFrame = frame->GetNextSibling();
++  if (!nextFrame) return NS_OK;
++  // get the content for the box and query to a dom element
++  nsCOMPtr<nsIDOMElement> el = do_QueryInterface(nextFrame->GetContent());
++  el.swap(*aNextOrdinalSibling);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBoxObject::GetPreviousSibling(nsIDOMElement **aPreviousOrdinalSibling)
++{
++  *aPreviousOrdinalSibling = nsnull;
++  nsIFrame* frame = GetFrame(PR_FALSE);
++  if (!frame) return NS_OK;
++  nsIFrame* parentFrame = frame->GetParent();
++  if (!parentFrame) return NS_OK;
++  return GetPreviousSibling(parentFrame, frame, aPreviousOrdinalSibling);
++}
++
++nsresult
++nsBoxObject::GetPreviousSibling(nsIFrame* aParentFrame, nsIFrame* aFrame,
++                                nsIDOMElement** aResult)
++{
++  *aResult = nsnull;
++  nsIFrame* nextFrame = aParentFrame->GetFirstChild(nsnull);
++  nsIFrame* prevFrame = nsnull;
++  while (nextFrame) {
++    if (nextFrame == aFrame)
++      break;
++    prevFrame = nextFrame;
++    nextFrame = nextFrame->GetNextSibling();
++  }
++
++  if (!prevFrame) return NS_OK;
++  // get the content for the box and query to a dom element
++  nsCOMPtr<nsIDOMElement> el = do_QueryInterface(prevFrame->GetContent());
++  el.swap(*aResult);
++  return NS_OK;
++}
++
++// Creation Routine ///////////////////////////////////////////////////////////////////////
++
++nsresult
++NS_NewBoxObject(nsIBoxObject** aResult)
++{
++  *aResult = new nsBoxObject;
++  if (!*aResult)
++    return NS_ERROR_OUT_OF_MEMORY;
++  NS_ADDREF(*aResult);
++  return NS_OK;
++}
++
+Index: mozilla/layout/xul/base/src/nsBoxObject.cpp
+===================================================================
+--- mozilla.orig/layout/xul/base/src/nsBoxObject.cpp
++++ mozilla/layout/xul/base/src/nsBoxObject.cpp
+@@ -47,17 +47,19 @@
+ #include "nsIDocShell.h"
+ #include "nsReadableUtils.h"
+ #include "nsILookAndFeel.h"
+ #include "nsWidgetsCID.h"
+ #include "nsIServiceManager.h"
+ #include "nsIDOMClassInfo.h"
+ #include "nsIView.h"
+ #include "nsIWidget.h"
++#ifdef MOZ_XUL
+ #include "nsIDOMXULElement.h"
++#endif
+ #include "nsIFrame.h"
+ #include "nsLayoutUtils.h"
+ #include "nsISupportsPrimitives.h"
+ #include "prtypes.h"
+ #include "nsSupportsPrimitives.h"
+ 
+ // Static IIDs/CIDs. Try to minimize these.
+ static NS_DEFINE_CID(kLookAndFeelCID, NS_LOOKANDFEEL_CID);
+Index: mozilla/layout/base/nsBoxObject.h
+===================================================================
+--- /dev/null
++++ mozilla/layout/base/nsBoxObject.h
+@@ -0,0 +1,84 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is Mozilla Communicator client code.
++ *
++ * The Initial Developer of the Original Code is
++ * Netscape Communications Corporation.
++ * Portions created by the Initial Developer are Copyright (C) 1998
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Original Author: David W. Hyatt (hyatt@netscape.com)
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either of the GNU General Public License Version 2 or later (the "GPL"),
++ * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++#ifndef nsBoxObject_h_
++#define nsBoxObject_h_
++
++#include "nsCOMPtr.h"
++#include "nsIBoxObject.h"
++#include "nsPIBoxObject.h"
++#include "nsPoint.h"
++#include "nsAutoPtr.h"
++#include "nsHashKeys.h"
++#include "nsInterfaceHashtable.h"
++
++class nsIFrame;
++class nsIDocShell;
++struct nsRect;
++
++class nsBoxObject : public nsPIBoxObject
++{
++  NS_DECL_ISUPPORTS
++  NS_DECL_NSIBOXOBJECT
++
++public:
++  nsBoxObject();
++  virtual ~nsBoxObject();
++
++  // nsPIBoxObject
++  virtual nsresult Init(nsIContent* aContent);
++  virtual void Clear();
++  virtual void ClearCachedValues();
++
++  nsIFrame* GetFrame(PRBool aFlushLayout);
++  nsIPresShell* GetPresShell(PRBool aFlushLayout);
++  nsresult GetOffsetRect(nsRect& aRect);
++  nsresult GetScreenPosition(nsIntPoint& aPoint);
++
++  // Given a parent frame and a child frame, find the frame whose
++  // next sibling is the given child frame and return its element
++  static nsresult GetPreviousSibling(nsIFrame* aParentFrame, nsIFrame* aFrame,
++                                     nsIDOMElement** aResult);
++
++protected:
++
++  nsAutoPtr<nsInterfaceHashtable<nsStringHashKey,nsISupports> > mPropertyTable; //[OWNER]
++
++  nsIContent* mContent; // [WEAK]
++};
++
++#endif
+Index: mozilla/dom/src/base/nsDOMClassInfo.cpp
+===================================================================
+--- mozilla.orig/dom/src/base/nsDOMClassInfo.cpp
++++ mozilla/dom/src/base/nsDOMClassInfo.cpp
+@@ -809,19 +809,22 @@
+                            nsIXPCScriptable::WANT_ENUMERATE)
+   NS_DEFINE_CLASSINFO_DATA(XULElement, nsElementSH,
+                            ELEMENT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(XULCommandDispatcher, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+ #endif
+   NS_DEFINE_CLASSINFO_DATA(XULControllers, nsNonDOMObjectSH,
+                            DEFAULT_SCRIPTABLE_FLAGS)
+-#ifdef MOZ_XUL
++/* timeless 6/7/6
++*/
+   NS_DEFINE_CLASSINFO_DATA(BoxObject, nsDOMGenericSH,
+                            DEFAULT_SCRIPTABLE_FLAGS)
++
++#ifdef MOZ_XUL
+   NS_DEFINE_CLASSINFO_DATA(TreeSelection, nsDOMGenericSH,
+                            DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(TreeContentView, nsDOMGenericSH,
+                            DEFAULT_SCRIPTABLE_FLAGS)
+ #endif
+ 
+   // Crypto classes
+   NS_DEFINE_CLASSINFO_DATA(Crypto, nsDOMGenericSH,
+@@ -2447,21 +2450,23 @@
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMXULCommandDispatcher)
+   DOM_CLASSINFO_MAP_END
+ #endif
+ 
+   DOM_CLASSINFO_MAP_BEGIN_NO_CLASS_IF(XULControllers, nsIControllers)
+     DOM_CLASSINFO_MAP_ENTRY(nsIControllers)
+   DOM_CLASSINFO_MAP_END
+ 
+-#ifdef MOZ_XUL
++/* timeless 6/7/6
++*/
+   DOM_CLASSINFO_MAP_BEGIN(BoxObject, nsIBoxObject)
+     DOM_CLASSINFO_MAP_ENTRY(nsIBoxObject)
+   DOM_CLASSINFO_MAP_END
+ 
++#ifdef MOZ_XUL
+   DOM_CLASSINFO_MAP_BEGIN(TreeSelection, nsITreeSelection)
+     DOM_CLASSINFO_MAP_ENTRY(nsITreeSelection)
+   DOM_CLASSINFO_MAP_END
+ 
+   DOM_CLASSINFO_MAP_BEGIN(TreeContentView, nsITreeContentView)
+     DOM_CLASSINFO_MAP_ENTRY(nsITreeContentView)
+     DOM_CLASSINFO_MAP_ENTRY(nsITreeView)
+   DOM_CLASSINFO_MAP_END
+Index: mozilla/dom/public/nsDOMClassInfoID.h
+===================================================================
+--- mozilla.orig/dom/public/nsDOMClassInfoID.h
++++ mozilla/dom/public/nsDOMClassInfoID.h
+@@ -173,18 +173,21 @@
+ 
+   // XUL classes
+ #ifdef MOZ_XUL
+   eDOMClassInfo_XULDocument_id,
+   eDOMClassInfo_XULElement_id,
+   eDOMClassInfo_XULCommandDispatcher_id,
+ #endif
+   eDOMClassInfo_XULControllers_id,
+-#ifdef MOZ_XUL
++/* timeless 6/7/6
++*/
+   eDOMClassInfo_BoxObject_id,
++
++#ifdef MOZ_XUL
+   eDOMClassInfo_TreeSelection_id,
+   eDOMClassInfo_TreeContentView_id,
+ #endif
+ 
+   // Crypto classes
+   eDOMClassInfo_Crypto_id,
+   eDOMClassInfo_CRMFObject_id,
+   eDOMClassInfo_Pkcs11_id,
+Index: mozilla/layout/base/nsIBoxObject.idl
+===================================================================
+--- /dev/null
++++ mozilla/layout/base/nsIBoxObject.idl
+@@ -0,0 +1,86 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is mozilla.org code.
++ *
++ * The Initial Developer of the Original Code is
++ * Netscape Communications Corporation.
++ * Portions created by the Initial Developer are Copyright (C) 1998
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Original Author: David W. Hyatt (hyatt@netscape.com)
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either of the GNU General Public License Version 2 or later (the "GPL"),
++ * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include "nsISupports.idl"
++/* timeless 6/7/6
++#include "nsIBoxLayoutManager.idl"
++#include "nsIBoxPaintManager.idl"
++*/
++
++interface nsIDOMElement;
++
++[scriptable, uuid(CAABF76F-9D35-401f-BEAC-3955817C645C)]
++interface nsIBoxObject : nsISupports
++{
++  readonly attribute nsIDOMElement element;
++
++/* timeless 6/7/6
++  attribute nsIBoxLayoutManager layoutManager;
++  attribute nsIBoxPaintManager paintManager;
++*/
++  attribute nsISupports layoutManager;
++  attribute nsISupports paintManager;
++
++  readonly attribute long x;
++  readonly attribute long y;
++  readonly attribute long screenX;
++  readonly attribute long screenY;
++  readonly attribute long width;
++  readonly attribute long height;
++
++  nsISupports getPropertyAsSupports(in wstring propertyName);
++  void setPropertyAsSupports(in wstring propertyName, in nsISupports value);
++  wstring getProperty(in wstring propertyName);
++  void setProperty(in wstring propertyName, in wstring propertyValue);
++  void removeProperty(in wstring propertyName);
++
++  // for stepping through content in the expanded dom with box-ordinal-group order
++  readonly attribute nsIDOMElement parentBox;
++  readonly attribute nsIDOMElement firstChild;
++  readonly attribute nsIDOMElement lastChild;
++  readonly attribute nsIDOMElement nextSibling;
++  readonly attribute nsIDOMElement previousSibling;
++
++  wstring getLookAndFeelMetric(in wstring propertyName);
++};
++
++%{C++
++nsresult
++NS_NewBoxObject(nsIBoxObject** aResult);
++
++%}
+Index: mozilla/layout/build/nsLayoutModule.cpp
+===================================================================
+--- mozilla.orig/layout/build/nsLayoutModule.cpp
++++ mozilla/layout/build/nsLayoutModule.cpp
+@@ -377,18 +377,19 @@
+   nsLayoutStatics::Release();
+ }
+ 
+ #ifdef NS_DEBUG
+ nsresult NS_NewFrameUtil(nsIFrameUtil** aResult);
+ nsresult NS_NewLayoutDebugger(nsILayoutDebugger** aResult);
+ #endif
+ 
+-#ifdef MOZ_XUL
+ nsresult NS_NewBoxObject(nsIBoxObject** aResult);
++
++#ifdef MOZ_XUL
+ nsresult NS_NewListBoxObject(nsIBoxObject** aResult);
+ nsresult NS_NewScrollBoxObject(nsIBoxObject** aResult);
+ nsresult NS_NewMenuBoxObject(nsIBoxObject** aResult);
+ nsresult NS_NewPopupBoxObject(nsIBoxObject** aResult);
+ nsresult NS_NewContainerBoxObject(nsIBoxObject** aResult);
+ nsresult NS_NewTreeBoxObject(nsIBoxObject** aResult);
+ #endif
+ 
+@@ -439,18 +440,19 @@
+ 
+ #ifdef DEBUG
+ MAKE_CTOR(CreateNewFrameUtil,             nsIFrameUtil,                NS_NewFrameUtil)
+ MAKE_CTOR(CreateNewLayoutDebugger,        nsILayoutDebugger,           NS_NewLayoutDebugger)
+ #endif
+ 
+ MAKE_CTOR(CreateNewFrameTraversal,      nsIFrameTraversal,      NS_CreateFrameTraversal)
+ MAKE_CTOR(CreateNewPresShell,           nsIPresShell,           NS_NewPresShell)
+-#ifdef MOZ_XUL
+ MAKE_CTOR(CreateNewBoxObject,           nsIBoxObject,           NS_NewBoxObject)
++
++#ifdef MOZ_XUL
+ MAKE_CTOR(CreateNewListBoxObject,       nsIBoxObject,           NS_NewListBoxObject)
+ MAKE_CTOR(CreateNewMenuBoxObject,       nsIBoxObject,           NS_NewMenuBoxObject)
+ MAKE_CTOR(CreateNewPopupBoxObject,      nsIBoxObject,           NS_NewPopupBoxObject)
+ MAKE_CTOR(CreateNewScrollBoxObject,     nsIBoxObject,           NS_NewScrollBoxObject)
+ MAKE_CTOR(CreateNewTreeBoxObject,       nsIBoxObject,           NS_NewTreeBoxObject)
+ MAKE_CTOR(CreateNewContainerBoxObject,  nsIBoxObject,           NS_NewContainerBoxObject)
+ #endif // MOZ_XUL
+ 
+@@ -819,22 +821,22 @@
+   // XXX ick
+   { "Presentation shell",
+     NS_PRESSHELL_CID,
+     nsnull,
+     CreateNewPresShell },
+ 
+   // XXX end ick
+ 
+-#ifdef MOZ_XUL
+-  { "XUL Box Object",
++  { "Box Object",
+     NS_BOXOBJECT_CID,
+     "@mozilla.org/layout/xul-boxobject;1",
+     CreateNewBoxObject },
+ 
++#ifdef MOZ_XUL
+   { "XUL Listbox Box Object",
+     NS_LISTBOXOBJECT_CID,
+     "@mozilla.org/layout/xul-boxobject-listbox;1",
+     CreateNewListBoxObject },
+ 
+   { "XUL Menu Box Object",
+     NS_MENUBOXOBJECT_CID,
+     "@mozilla.org/layout/xul-boxobject-menu;1",
+Index: mozilla/layout/base/nsPIBoxObject.h
+===================================================================
+--- /dev/null
++++ mozilla/layout/base/nsPIBoxObject.h
+@@ -0,0 +1,67 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is Mozilla Communicator client code.
++ *
++ * The Initial Developer of the Original Code is
++ * Netscape Communications Corporation.
++ * Portions created by the Initial Developer are Copyright (C) 1998
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either of the GNU General Public License Version 2 or later (the "GPL"),
++ * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#ifndef nsPIBoxObject_h___
++#define nsPIBoxObject_h___
++
++// {91f2b229-b139-460e-a508-db9d52e9ed87}
++#define NS_PIBOXOBJECT_IID \
++{ 0x91f2b229, 0xb139, 0x460e, \
++ { 0xa5, 0x08, 0xdb, 0x9d, 0x52, 0xe9, 0xed, 0x87 } }
++
++class nsIPresShell;
++class nsIContent;
++class nsIDocument;
++
++class nsPIBoxObject : public nsIBoxObject
++{
++public:
++  NS_DECLARE_STATIC_IID_ACCESSOR(NS_PIBOXOBJECT_IID)
++
++  virtual nsresult Init(nsIContent* aContent) = 0;
++
++  // Drop the weak ref to the content node as needed
++  virtual void Clear() = 0;
++  // The values cached by the implementation of this interface should be
++  // cleared when this method is called.
++  virtual void ClearCachedValues() = 0;
++};
++
++NS_DEFINE_STATIC_IID_ACCESSOR(nsPIBoxObject, NS_PIBOXOBJECT_IID)
++
++#endif
++
