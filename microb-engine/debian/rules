@@ -23,7 +23,7 @@ MOZCONFIG_LEV:=b3
 syscairo:=n
 svgport:=n
 canvas:=y
-thebes:=n
+config:=gtk2
 
 btree = build-tree
 tarballs = tarballs
@@ -146,21 +146,12 @@ MOZCONFIG_LEV:=
 MOZCONFIG_NAME:=$(EXT_MOZCONFIG)
 endif
 
-ifneq (,$(findstring thebes,$(DEB_BUILD_OPTIONS)))
-thebes:=y
-else
-thebes:=$(thebes)
+ifneq (,$(findstring config,$(DEB_BUILD_OPTIONS)))
+	config:= $(shell echo $(DEB_BUILD_OPTIONS) | sed -e 's/.*config=\([0-9a-zA-Z]\+\).*/\1/')
 endif
 
-ifneq (,$(findstring vanilla,$(DEB_BUILD_OPTIONS)))
-MOZCONFIG_LEV:=vanilla
-series_file:=series.vanilla
-endif
-
-ifeq ($(thebes),y)
-MOZCONFIG_LEV:=thebes
-series_file:=series.thebes
-endif
+MOZCONFIG_LEV:=$(config)
+series_file:=series.$(config)
 
 ifneq (,$(findstring microbembed,$(DEB_BUILD_OPTIONS)))
 microbembed:=y
@@ -343,7 +334,7 @@ unpack-stamp:
       fi ;\
 	done
 	if [ -d $(CURDIR)/tarballs ]; then echo 'Tarballs is here ;)';else tar -xvvzf ../microb-engine*.tar.gz -C ./; mv $$(find -name "tarballs" -type d) ./; rmdir microb-engine_*; fi
-	#Unpacking source tree $version GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS)
+	#Unpacking source tree $version GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(config)
 	tar -zxvf $(CURDIR)/tarballs/$(srcdir).tar.gz -C $(btree) > /dev/null
 	cp -rf  $(CURDIR)/debian/resources/branding $(builddir)/
 	cd $(builddir) && for str in `cat $(CURDIR)/tarballs/trunkupdates/series`;do echo; echo Applying trunk update: $$str...; echo; patch -p1 < $(CURDIR)/tarballs/trunkupdates/$$str; done 
