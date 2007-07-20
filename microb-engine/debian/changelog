@@ -1,3 +1,30 @@
+microb-engine (1.0.3-7) unstable; urgency=low
+
+  * fixing set preference, core bug was setPref needed a prefservice param 
+  * indenting code
+  * removing useless functions
+  * Added patches copy for building with latesttrunk mozilla sources.
+  * Somehow we have to remove most of them:
+     1) Add something from trunk updates to disable difference on reject places
+     2) Use small patch context
+     3) Remove patch at all (some of them probably useless
+  * For building Mozilla trunk based on thebes GFX use DEB_BUILD_OPTIONS=config=thebestrunk dpkg-buildpackages -us -uc ....)
+  * Improved support for building in different configurations
+  * Added thebestrunk, and clean xulrunner configuration
+  * about: protocol doesn't have a search property for locations. 
+    adding code to synthesize it so that the code which always worked in other
+    places will work here. Fixes :NB#53597
+  * Fixed unpacking uuencoded file
+  * Added helper script for preparing mozilla build tree in NON debian
+    environment
+  * Adding support for non microb consumers.
+  * Indenting functions
+  * Removing onsubmit handler which was what broke the form magic
+  * Adding back the search button printer
+  * Fixed bug with complicated links, dimensions 0  (<a><div>...)
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 20 Jul 2007 21:05:10 +0300
+
 microb-engine (1.0.3-6) unstable; urgency=low
 
   * Fixed spellchecker building
