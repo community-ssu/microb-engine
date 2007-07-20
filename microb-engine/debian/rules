@@ -152,10 +152,14 @@ else
 thebes:=$(thebes)
 endif
 
+ifneq (,$(findstring vanilla,$(DEB_BUILD_OPTIONS)))
+MOZCONFIG_LEV:=vanilla
+series_file:=series.vanilla
+endif
+
 ifeq ($(thebes),y)
 MOZCONFIG_LEV:=thebes
 series_file:=series.thebes
-
 endif
 
 ifneq (,$(findstring microbembed,$(DEB_BUILD_OPTIONS)))

@@ -1,0 +1,30 @@
+mk_add_options MOZ_CO_PROJECT=suite,browser,xulrunner
+ac_add_options --enable-application=xulrunner
+#ac_add_options --with-branding=other-licenses/branding/firefox
+#ac_add_options --enable-application=browser
+
+#Simple Build
+ac_add_options --disable-javaxpcom
+ac_add_options --disable-js-static-build
+ac_add_options --disable-tests
+
+#Toolkit Options for Linux
+ac_add_options --enable-default-toolkit=cairo-gtk2
+ac_add_options --enable-xft
+ac_add_options --disable-freetype2
+ac_add_options --enable-pango
+
+ac_add_options --enable-necko-protocols="about data http file res ftp"
+ac_add_options --enable-chrome-format=both
+ac_add_options --enable-extensions="xml-rpc gnomevfs"
+ac_add_options --disable-xinerama
+ac_add_options --enable-image-decoders="png gif jpeg bmp"
+
+# Compiler options
+ac_add_options --disable-pedantic
+
+ac_add_options --disable-gnomeui # I think we have no Gnome Ui library
+ac_add_options --disable-dbus # I think we have no Gnome Ui library
+ac_add_options --with-branding=branding/microb
+
+ac_add_options --disable-airbag
