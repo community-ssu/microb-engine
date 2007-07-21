@@ -222,7 +222,7 @@ gtkmozembed/gtkmozembed.diff
 575_js_handler_events_info.diff
 crash/625_BUG56960_layout_indexof_crash.diff 
 580_focus_for_visible_area.diff
-#585_disable_broken_gtk2_opacity.diff
+585_disable_broken_gtk2_opacity.diff
 590_added_vertical_resize_flag.diff
 
 #Extension Manager
@@ -253,4 +253,5 @@ trunk_updates/attachment.cgi?id=270653.diff
 620_BUG_333869.fix.diff
 630_bigger_ua_string_length_61630.diff
 
+perf_addon/JSBreakExperimental.diff
 #perf_addon/JSWakeupNative.diff
