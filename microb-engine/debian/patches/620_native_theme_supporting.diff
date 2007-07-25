@@ -46,7 +46,31 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
  gint
  moz_gtk_init()
  {
-@@ -618,21 +618,21 @@
+@@ -595,19 +595,20 @@
+ {
+     GtkStateType state_type = ConvertGtkState(state);
+     GtkShadowType shadow_type = (selected)?GTK_SHADOW_IN:GTK_SHADOW_OUT;
+     gint indicator_size, indicator_spacing;
+     gint x, y, width, height;
+     GtkWidget *w;
+     GtkStyle *style;
+ 
+-    if (state->focused && state_type == GTK_STATE_NORMAL)
+-      state_type = GTK_STATE_PRELIGHT;
+-
++    //if (state->focused && state_type == GTK_STATE_NORMAL)
++      //state_type = GTK_STATE_PRELIGHT;
++    state_type = GTK_STATE_NORMAL;
++
+     if (isradio) {
+         moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);
+         w = gRadiobuttonWidget;
+     } else {
+         moz_gtk_checkbox_get_metrics(&indicator_size, &indicator_spacing);
+         w = gCheckboxWidget;
+     }
+ 
+@@ -618,28 +619,28 @@
      y = rect->y + (rect->height - indicator_size) / 2;
      width = indicator_size;
      height = indicator_size;
@@ -68,9 +92,17 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
           GTK_WIDGET_UNSET_FLAGS(w, GTK_SENSITIVE);
  
      GTK_TOGGLE_BUTTON(w)->active = selected;
-       
+-      
++
      if (isradio) {
-@@ -777,16 +777,17 @@
+         gtk_paint_option(style, drawable, state_type, shadow_type, cliprect,
+                          gRadiobuttonWidget, "radiobutton", x, y,
+                          width, height);
+     }
+     else {
+         gtk_paint_check(style, drawable, state_type, shadow_type, cliprect, 
+                         gCheckboxWidget, "checkbutton", x, y, width, height);
+@@ -777,16 +778,17 @@
                                GdkDrawable* drawable, GdkRectangle* rect,
                                GdkRectangle* cliprect, GtkWidgetState* state)
  {
@@ -88,7 +120,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
      else
          scrollbar = GTK_SCROLLBAR(gVertScrollbarWidget);
  
-@@ -818,17 +819,22 @@
+@@ -818,17 +820,22 @@
      adj->value = state->curpos;
      adj->upper = state->maxpos;
      gtk_adjustment_changed(adj);
@@ -112,7 +144,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
      return MOZ_GTK_SUCCESS;
  }
  
-@@ -1013,19 +1019,19 @@
+@@ -1013,19 +1020,19 @@
          height -= 2 * focus_width;
  
          TSOffsetStyleGCs(style, x, y);
@@ -135,7 +167,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
  static gint
  moz_gtk_option_menu_paint(GdkDrawable* drawable, GdkRectangle* rect,
                            GdkRectangle* cliprect, GtkWidgetState* state)
-@@ -1161,25 +1167,25 @@
+@@ -1161,25 +1168,25 @@
      /* this is for drawing a prelight box */
      if (state_type == GTK_STATE_PRELIGHT || state_type == GTK_STATE_ACTIVE) {
          gtk_paint_flat_box(style, drawable, GTK_STATE_PRELIGHT, GTK_SHADOW_ETCHED_OUT,
