@@ -46,6 +46,30 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
  gint
  moz_gtk_init()
  {
+@@ -618,21 +618,21 @@
+     y = rect->y + (rect->height - indicator_size) / 2;
+     width = indicator_size;
+     height = indicator_size;
+   
+     style = w->style;
+     TSOffsetStyleGCs(style, x, y);
+ 
+     /* Some themes check the widget state themselves. */
+-    if (state->focused)
++    /*if (state->focused)
+         GTK_WIDGET_SET_FLAGS(w, GTK_HAS_FOCUS);
+     else
+         GTK_WIDGET_UNSET_FLAGS(w, GTK_HAS_FOCUS);
+-
++    */
+     if (state_type != GTK_STATE_INSENSITIVE)
+          GTK_WIDGET_SET_FLAGS(w, GTK_SENSITIVE);
+     else
+          GTK_WIDGET_UNSET_FLAGS(w, GTK_SENSITIVE);
+ 
+     GTK_TOGGLE_BUTTON(w)->active = selected;
+       
+     if (isradio) {
 @@ -777,16 +777,17 @@
                                GdkDrawable* drawable, GdkRectangle* rect,
                                GdkRectangle* cliprect, GtkWidgetState* state)
@@ -111,6 +135,34 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
  static gint
  moz_gtk_option_menu_paint(GdkDrawable* drawable, GdkRectangle* rect,
                            GdkRectangle* cliprect, GtkWidgetState* state)
+@@ -1161,25 +1167,25 @@
+     /* this is for drawing a prelight box */
+     if (state_type == GTK_STATE_PRELIGHT || state_type == GTK_STATE_ACTIVE) {
+         gtk_paint_flat_box(style, drawable, GTK_STATE_PRELIGHT, GTK_SHADOW_ETCHED_OUT,
+                            cliprect, gCheckboxWidget,
+                            "checkbutton",
+                            rect->x, rect->y, rect->width, rect->height);
+     }
+ 
+-    if (state_type != GTK_STATE_NORMAL && state_type != GTK_STATE_PRELIGHT)
++    /*if (state_type != GTK_STATE_NORMAL && state_type != GTK_STATE_PRELIGHT)
+         state_type = GTK_STATE_NORMAL;
+ 
+     if (state->focused && !interior_focus) {
+         gtk_paint_focus(style, drawable, state_type, cliprect, gCheckboxWidget,
+                         "checkbutton",
+                         rect->x, rect->y, rect->width, rect->height);
+     }
+-
++    */
+     return MOZ_GTK_SUCCESS;
+ }
+ 
+ static gint
+ moz_gtk_toggle_label_paint(GdkDrawable* drawable, GdkRectangle* rect,
+                            GdkRectangle* cliprect, GtkWidgetState* state, 
+                            gboolean isradio)
+ {
 Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp
