@@ -94,13 +94,14 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
      /* offset by indicator_spacing, and centered vertically within the rect */
 -    indicator_size = rect->width < rect->height ? rect->width : rect->height;
 -    indicator_size -= indicator_spacing;
+-    x = rect->x + indicator_spacing;
 +    // old implementation
 +    /*indicator_size = rect->width < rect->height ? rect->width : rect->height;
 +    indicator_size -= indicator_spacing;*/
 +    if (MIN(rect->width, rect->height) < indicator_size)
 +        indicator_size = MIN(rect->width, rect->height);
 +
-     x = rect->x + indicator_spacing;
++    x = rect->x; //+ indicator_spacing;
      y = rect->y + (rect->height - indicator_size) / 2;
 +
      width = indicator_size;
