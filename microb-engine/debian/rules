@@ -466,7 +466,7 @@ ifeq ($(cross_compile),y)
 endif
 	find ./debian/tmp/usr/lib
 	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
-	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CURDIR)/debian/tmp/usr/include/
+	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CURDIR)/debian/tmp/usr/include/microb-engine/
 	dh_install --sourcedir=$(CURDIR)/debian/tmp --list-missing
 	$(XPT_LINK) only_ship_this.xpt $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/*.xpt
 	rm $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/*.xpt
