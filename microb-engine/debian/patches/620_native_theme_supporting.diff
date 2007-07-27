@@ -46,7 +46,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
  gint
  moz_gtk_init()
  {
-@@ -595,19 +595,20 @@
+@@ -595,51 +595,57 @@
  {
      GtkStateType state_type = ConvertGtkState(state);
      GtkShadowType shadow_type = (selected)?GTK_SHADOW_IN:GTK_SHADOW_OUT;
@@ -57,11 +57,10 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
  
 -    if (state->focused && state_type == GTK_STATE_NORMAL)
 -      state_type = GTK_STATE_PRELIGHT;
--
 +    //if (state->focused && state_type == GTK_STATE_NORMAL)
 +      //state_type = GTK_STATE_PRELIGHT;
 +    state_type = GTK_STATE_NORMAL;
-+
+ 
      if (isradio) {
          moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);
          w = gRadiobuttonWidget;
@@ -70,8 +69,18 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
          w = gCheckboxWidget;
      }
  
-@@ -618,28 +619,28 @@
+     /* offset by indicator_spacing, and centered vertically within the rect */
+-    indicator_size = rect->width < rect->height ? rect->width : rect->height;
+-    indicator_size -= indicator_spacing;
++    // old implementation
++    /*indicator_size = rect->width < rect->height ? rect->width : rect->height;
++    indicator_size -= indicator_spacing;*/
++    if (MIN(rect->width, rect->height) < indicator_size)
++        indicator_size = MIN(rect->width, rect->height);
++
+     x = rect->x + indicator_spacing;
      y = rect->y + (rect->height - indicator_size) / 2;
++
      width = indicator_size;
      height = indicator_size;
    
@@ -102,7 +111,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
      else {
          gtk_paint_check(style, drawable, state_type, shadow_type, cliprect, 
                          gCheckboxWidget, "checkbutton", x, y, width, height);
-@@ -777,16 +778,17 @@
+@@ -777,16 +783,17 @@
                                GdkDrawable* drawable, GdkRectangle* rect,
                                GdkRectangle* cliprect, GtkWidgetState* state)
  {
@@ -120,7 +129,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
      else
          scrollbar = GTK_SCROLLBAR(gVertScrollbarWidget);
  
-@@ -818,17 +820,22 @@
+@@ -818,17 +825,22 @@
      adj->value = state->curpos;
      adj->upper = state->maxpos;
      gtk_adjustment_changed(adj);
@@ -144,7 +153,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
      return MOZ_GTK_SUCCESS;
  }
  
-@@ -1013,19 +1020,19 @@
+@@ -1013,19 +1025,19 @@
          height -= 2 * focus_width;
  
          TSOffsetStyleGCs(style, x, y);
@@ -167,7 +176,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
  static gint
  moz_gtk_option_menu_paint(GdkDrawable* drawable, GdkRectangle* rect,
                            GdkRectangle* cliprect, GtkWidgetState* state)
-@@ -1161,25 +1168,25 @@
+@@ -1161,25 +1173,25 @@
      /* this is for drawing a prelight box */
      if (state_type == GTK_STATE_PRELIGHT || state_type == GTK_STATE_ACTIVE) {
          gtk_paint_flat_box(style, drawable, GTK_STATE_PRELIGHT, GTK_SHADOW_ETCHED_OUT,
