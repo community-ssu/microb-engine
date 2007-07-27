@@ -1,3 +1,17 @@
+microb-engine (1.0.3-8) unstable; urgency=low
+
+  * Fixed bug:libnss3-dev package is broken. Fixes: NB#64441
+  * Fix alignment for radio/check widgets
+  * Fix for downscaling support
+  * Small fix to improve gtk toggle buttons drawing
+  * Fixed bug:native widgets painting is obsolete for comboboxes. Fixes: NB#59498
+  * Fixed bug:native widgets drawing double focus. Fixes: NB#59555
+  * Broken docs.google.com/spreadsheets back
+  * Fixed major crash that was ther reason of last reject :(
+  * Need to fix problem with opacity rule.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 27 Jul 2007 17:11:50 +0300
+
 microb-engine (1.0.3-7) unstable; urgency=low
 
   * fixing set preference, core bug was setPref needed a prefservice param 
