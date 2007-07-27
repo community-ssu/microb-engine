@@ -2,6 +2,28 @@ Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp
 +++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+@@ -874,19 +874,19 @@
+       break;
+   case NS_THEME_DROPDOWN_BUTTON:
+     {
+       moz_gtk_get_dropdown_arrow_size(&aResult->width, &aResult->height);
+       *aIsOverridable = PR_FALSE;
+     }
+     break;
+   case NS_THEME_CHECKBOX:
+-  case NS_THEME_CHECKBOX_SMALL:
++  //case NS_THEME_CHECKBOX_SMALL:
+   case NS_THEME_RADIO:
+-  case NS_THEME_RADIO_SMALL:
++  //case NS_THEME_RADIO_SMALL:
+     {
+       gint indicator_size, indicator_spacing;
+ 
+       if (IsCheckboxWidgetType(aWidgetType)) {
+         moz_gtk_checkbox_get_metrics(&indicator_size, &indicator_spacing);
+       } else {
+         moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);
+       }
 @@ -1050,17 +1050,17 @@
    case NS_THEME_SCROLLBAR_TRACK_VERTICAL:
    case NS_THEME_SCROLLBAR_THUMB_HORIZONTAL:
