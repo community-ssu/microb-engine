@@ -471,6 +471,7 @@ endif
 	$(XPT_LINK) only_ship_this.xpt $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/*.xpt
 	rm $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/*.xpt
 	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/nspr
+	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/nss
 	mv only_ship_this.xpt $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/tablet.xpt
 	perl $(CURDIR)/debian/resources/tools/remove.target.license.pl $(CURDIR)/debian/microb-engine/usr/lib/$(packagename)/chrome
 	perl $(CURDIR)/debian/resources/tools/remove.target.license.pl $(CURDIR)/debian/microb-engine/usr/lib/$(packagename)/res
