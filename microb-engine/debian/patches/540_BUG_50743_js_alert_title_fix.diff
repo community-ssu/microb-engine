@@ -1,3 +1,4 @@
+# Fixed bug#50743:malformedURI error message must be rephrased.
 Index: mozilla/dom/src/base/nsGlobalWindow.cpp
 ===================================================================
 --- mozilla.orig/dom/src/base/nsGlobalWindow.cpp

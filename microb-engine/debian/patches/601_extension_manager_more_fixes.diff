@@ -1,3 +1,4 @@
+# Fixes to the extension manager functionality.
 Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 ===================================================================
 --- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
