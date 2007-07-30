@@ -1,3 +1,4 @@
+# BMO 375179. Patch imported from the bug.
 Index: mozilla/extensions/spellcheck/src/Makefile.in
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/Makefile.in

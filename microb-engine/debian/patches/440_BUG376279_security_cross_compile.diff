@@ -1,4 +1,4 @@
-#Bug 376279  Wrong detection of OS_TEST in CROSS_COMPILE configuration
+# BMO 376279. Wrong detection of OS_TEST in CROSS_COMPILE configuration. Patch imported from the bug.
 --- mozilla/security/manager/Makefile.in.orig	2007-01-06 16:27:21.000000000 +0200
 +++ mozilla/security/manager/Makefile.in	2007-04-02 22:24:46.231700500 +0300
 @@ -202,20 +202,21 @@ DEFAULT_GMAKE_FLAGS += \
