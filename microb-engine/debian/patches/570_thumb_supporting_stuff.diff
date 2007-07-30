@@ -1,3 +1,5 @@
+# Thumb supporting stuff: Changed callback attaching method to avoid overriding signals.
+# contact: Anton Rogaynis ext-anton(dot)rogaynis(at)nokia.com
 --- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-05-09 10:27:11.000000000 +0300
 +++ mozilla/widget/src/gtk2/nsWindow.cpp	2007-05-09 10:35:32.000000000 +0300
 @@ -3027,17 +3027,17 @@
