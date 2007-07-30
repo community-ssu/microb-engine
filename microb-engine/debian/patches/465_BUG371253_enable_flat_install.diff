@@ -1,3 +1,4 @@
+# BMO 371253. Patch imported from the bug.
 Index: mozilla/config/rules.mk
 ===================================================================
 --- mozilla.orig/config/rules.mk
