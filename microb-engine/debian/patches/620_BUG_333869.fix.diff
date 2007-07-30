@@ -1,3 +1,4 @@
+# BMO 333869. Patch imported from the bug.
 Index: nsDocShellEditorData.cpp
 ===================================================================
 RCS file: /cvsroot/mozilla/docshell/base/nsDocShellEditorData.cpp,v
