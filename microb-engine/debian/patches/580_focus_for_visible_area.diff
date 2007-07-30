@@ -1,3 +1,6 @@
+# make widgets focusable if it's in visible area
+# fixed problem with scrolling to focused widget by js
+# contact: Anton Rogaynis ext-anton(dot)rogaynis(at)nokia.com
 Index: mozilla/content/html/content/src/nsHTMLInputElement.cpp
 ===================================================================
 --- mozilla.orig/content/html/content/src/nsHTMLInputElement.cpp
