@@ -1,3 +1,8 @@
+# Support native gtk widgets: 
+# - scaling widgets
+# - drawing according native theme
+# - fixed some stuff related to forms.css
+# contact: Anton Rogaynis ext-anton(.)rogaynis(@)nokia.com
 Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp

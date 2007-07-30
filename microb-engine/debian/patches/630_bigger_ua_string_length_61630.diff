@@ -1,3 +1,4 @@
+# increasing size of UA string
 --- mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp.orig	2007-06-14 01:42:08.000000000 +0300
 +++ mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp	2007-06-27 00:26:05.000000000 +0300
 @@ -2756,21 +2756,21 @@ nsresult nsPluginHostImpl::ReloadPlugins
