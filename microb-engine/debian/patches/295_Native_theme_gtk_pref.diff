@@ -1,8 +1,7 @@
-## Patches for microb-engine
-## Oleg Romashin romaxa@gmail.com
-##
-## DP: Adding special preference for enabling NativeThemeGtk
-## Bug 372079  Mozilla Should have some preference for enabling GtkNative widgets rendering in layout
+# Patches for microb-engine
+# Oleg Romashin romaxa@gmail.com
+# DP: Adding special preference for enabling NativeThemeGtk
+# Bug 372079  Mozilla Should have some preference for enabling GtkNative widgets rendering in layout
 
 Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
 ===================================================================

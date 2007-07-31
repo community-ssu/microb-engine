@@ -1,6 +1,5 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
 # Bug 359812: No reason to use XUL based button in netError.xhtml
 Index: mozilla/docshell/resources/content/netError.xhtml
 ===================================================================

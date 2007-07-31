@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: Extension for zooming another HTML elements img,radio,checkbox
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: Extension for zooming another HTML elements img,radio,checkbox
 
 Index: mozilla/extensions/imagezoom/Makefile.in
 ===================================================================

@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP:Bug 238598 nbsp character is passed to nsFontMetrics GetTextDimensions
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP:Bug 238598 nbsp character is passed to nsFontMetrics GetTextDimensions
 
 Index: mozilla/gfx/src/gtk/nsFontMetricsXft.cpp
 ===================================================================

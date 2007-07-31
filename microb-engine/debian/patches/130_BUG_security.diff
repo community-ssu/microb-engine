@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: Fix building with new make.
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: Fix building with new make.
 
 Index: mozilla/security/coreconf/rules.mk
 ===================================================================

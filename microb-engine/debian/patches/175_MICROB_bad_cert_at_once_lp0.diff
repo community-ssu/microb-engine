@@ -1,8 +1,7 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: New BadCertificate Listener Interface
-## NOBUGFIXME
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: New BadCertificate Listener Interface
+# NOBUGFIXME
 
 Index: security/manager/pki/src/nsNSSDialogs.cpp
 ===================================================================

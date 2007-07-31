@@ -1,5 +1,4 @@
 # Provide contentLength for download clients.
-
 # NOTE: It might fail sometimes.
 --- mozilla/uriloader/exthandler/nsIExternalHelperAppService.idl.orig	2007-03-07 16:22:50.000000000 -0400
 +++ mozilla/uriloader/exthandler/nsIExternalHelperAppService.idl	2007-03-07 16:23:20.000000000 -0400

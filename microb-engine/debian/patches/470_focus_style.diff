@@ -1,3 +1,4 @@
+# Changed styling for MAC
 Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp

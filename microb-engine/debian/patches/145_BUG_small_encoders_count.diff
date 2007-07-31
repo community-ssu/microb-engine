@@ -1,8 +1,7 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: This patch should fix problem with stripped libc (uclibc) library
-##     Parsing of proxy,http headers failed without this workaround
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: This patch should fix problem with stripped libc (uclibc) library
+#     Parsing of proxy,http headers failed without this workaround
 
 Index: mozilla/intl/uconv/native/nsNativeUConvService.cpp
 ===================================================================

@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## Bug 93213  embedding/browser/gtk/tests built even with --disable-tests
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# Bug 93213  embedding/browser/gtk/tests built even with --disable-tests
 
 Index: mozilla/configure.in
 ===================================================================

@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: Stripping Filepicker component, (exists in gtkmozembed)
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: Stripping Filepicker component, (exists in gtkmozembed)
 
 Index: widget/src/gtk2/Makefile.in
 ===================================================================

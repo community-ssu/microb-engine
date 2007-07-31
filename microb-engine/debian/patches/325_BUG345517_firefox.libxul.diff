@@ -1,6 +1,5 @@
 # Building firefox with libxul
 #
-#
 Index: mozilla/xpfe/components/search/src/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/components/search/src/Makefile.in

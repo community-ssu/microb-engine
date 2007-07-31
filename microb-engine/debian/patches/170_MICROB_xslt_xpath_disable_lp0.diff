@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: Building mozilla without XSLT/XPATH support
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: Building mozilla without XSLT/XPATH support
 
 Index: configure.in
 ===================================================================

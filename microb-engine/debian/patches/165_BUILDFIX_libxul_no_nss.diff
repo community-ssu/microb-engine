@@ -1,8 +1,7 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: Building libxul when enabled system nss
-## NOBUGFIXME
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: Building libxul when enabled system nss
+# NOBUGFIXME
 
 Index: mozilla/toolkit/library/libxul-rules.mk
 ===================================================================

@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## Bug 252033  gtk2+xft text clipping problem: only first word of line is rendered, rest of text displays on mouseover
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# Bug 252033  gtk2+xft text clipping problem: only first word of line is rendered, rest of text displays on mouseover
 
 === gfx/src/gtk/nsFontMetricsXft.cpp
 ==================================================================

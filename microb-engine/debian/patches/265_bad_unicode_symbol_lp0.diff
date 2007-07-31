@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: HACK Disable showing some unicode symbols
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: HACK Disable showing some unicode symbols
 
 Index: layout/generic/nsTextTransformer.h
 ===================================================================

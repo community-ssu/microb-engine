@@ -1,8 +1,8 @@
-## 25_entropy.dpatch by Mike Hommey <glandium@debian.org>
-##
-## All lines beginning with `## DP:' are a description of the patch.
-## DP: Remove code that called netstat to gain so called entropy. It's pretty
-## DP: useless on a Linux system. Thanks Wichert Akkerman. bz#51429.
+# 25_entropy.dpatch by Mike Hommey <glandium@debian.org>
+#
+# All lines beginning with `## DP:' are a description of the patch.
+# DP: Remove code that called netstat to gain so called entropy. It's pretty
+# DP: useless on a Linux system. Thanks Wichert Akkerman. bz#51429.
 
 === config/autoconf.mk.in
 ==================================================================

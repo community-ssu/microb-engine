@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: Timings for page loading on TestApplication
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: Timings for page loading on TestApplication
 
 Index: mozilla/embedding/browser/gtk/tests/TestGtkEmbed.cpp
 ===================================================================

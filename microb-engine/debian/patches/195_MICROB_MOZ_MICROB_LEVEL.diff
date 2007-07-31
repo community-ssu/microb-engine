@@ -1,7 +1,6 @@
-## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-##
-## DP: Additional strips for toolkit libxul library
+# Patches for microb-engine
+# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# DP: Additional strips for toolkit libxul library
 
 Index: mozilla/extensions/spatialnavigation/src/Makefile.in
 ===================================================================
