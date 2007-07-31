@@ -1,7 +1,7 @@
 diff -Naur mozilla.orig/toolkit/library/libxul-export.map mozilla/toolkit/library/libxul-export.map
 --- mozilla.orig/toolkit/library/libxul-export.map	1970-01-01 00:00:00.000000000 +0000
 +++ mozilla/toolkit/library/libxul-export.map	2007-04-15 15:30:34.000000000 +0000
-@@ -0,0 +1,25 @@
+@@ -0,0 +1,26 @@
 +{
 +  global: 
 +	_GLOBAL_OFFSET_TABLE_;
@@ -24,7 +24,8 @@ diff -Naur mozilla.orig/toolkit/library/libxul-export.map mozilla/toolkit/librar
 +	NS_*;
 +	CRMF_*;
 +	XRE_*;
-+       _ZTV14nsGetInterface;
++   _ZTV14nsGetInterface;
++   _ZNK12nsIPresShell18GetRootScrollFrameE;
 +  local: *;
 +};
 diff -Naur mozilla.orig/toolkit/library/libxul-rules.mk mozilla/toolkit/library/libxul-rules.mk
