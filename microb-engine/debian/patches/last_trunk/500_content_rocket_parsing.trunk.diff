@@ -1,3 +1,5 @@
+# This will allow to increase mMaxTokenProcessingTime for fast first painting and good performance
+# 495_layout_state_listener.trunk.diff also there 
 Index: mozilla/content/base/src/nsContentSink.h
 ===================================================================
 --- mozilla.orig/content/base/src/nsContentSink.h

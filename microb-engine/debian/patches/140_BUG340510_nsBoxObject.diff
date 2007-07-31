@@ -1,6 +1,6 @@
 # Patches for microb-engine
-# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
-# DP: Fix for working with calendar.gmail.com with disable xul.
+# Oleg Romashin <oleg.romashin@nokia.com>
+# DP: Fix for working with calendar.gmail.com with disabled xul.
 
 Index: mozilla/layout/base/Makefile.in
 ===================================================================

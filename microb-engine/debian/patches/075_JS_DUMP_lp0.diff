@@ -1,3 +1,7 @@
+# Enable JS_DUMP for our build
+# Probably can be disabled for default build
+# Also some automatic tests can't see console output without "\n"
+# Probably can be fixed more properly
 Index: dom/src/base/Makefile.in
 ===================================================================
 --- dom/src/base/Makefile.in.orig

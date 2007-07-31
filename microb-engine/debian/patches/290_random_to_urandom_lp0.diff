@@ -1,5 +1,6 @@
 # Component manager should not use /dev/random for generation ranodm numbers
 # It cause hangs on embedding platforms,which does not have enough devices for generation required entropy
+# Bug somewhere exists but it is very old
 Index: nsprpub/pr/src/md/unix/uxrng.c
 ===================================================================
 --- nsprpub/pr/src/md/unix/uxrng.c.orig

@@ -1,3 +1,4 @@
+# Don't remember why this appears here, probably some internal requirement
 Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
 ===================================================================
 --- mozilla.orig/uriloader/exthandler/nsExternalHelperAppService.cpp

@@ -1,5 +1,6 @@
-# Experimental implementation of separate XFT engine, just for fun
-#
+# Experimental implementation of separate XFT engine, just for fun (Not finished, no time, no expierence :( )
+# Slow pango solution (building Gecko on small system XLIB,XFT).
+# probably somewhere in far future will be fixed on Cairo side
 Index: mozilla/gfx/thebes/public/Makefile.in
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/Makefile.in

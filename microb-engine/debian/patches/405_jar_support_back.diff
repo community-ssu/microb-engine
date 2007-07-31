@@ -1,5 +1,5 @@
 # Add Jar support for urls back
-# Fixed openign URLS in bugzilla: jar:https://.....
+# Fixed openign URLS in bugzilla: jar:https://....., backout after 195_MICROB_MOZ_MICROB_LEVEL.diff patch
 --- mozilla/toolkit/library/libxul-config.mk.orig	2007-02-22 22:41:59.000000000 +0200
 +++ mozilla/toolkit/library/libxul-config.mk	2007-02-23 08:37:06.621979000 +0200
 @@ -248,23 +248,26 @@ COMPONENT_LIBS += \

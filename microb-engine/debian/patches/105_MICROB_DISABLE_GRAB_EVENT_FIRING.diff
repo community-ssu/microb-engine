@@ -1,6 +1,6 @@
 # 99-unnamed.dpatch by  <agomes@>
 # All lines beginning with `## DP:' are a description of the patch.
-# DP: No description.
+# DP: See patch name
 
 Index: mozilla/widget/src/gtk2/nsDragService.cpp
 ===================================================================

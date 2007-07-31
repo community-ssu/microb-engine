@@ -1,3 +1,5 @@
+# May be it is wrong
+# appears after performance crazy hacking ;)
 --- mozilla/netwerk/base/src/nsNetSegmentUtils.h.orig	2003-04-23 06:47:34.000000000 +0300
 +++ mozilla/netwerk/base/src/nsNetSegmentUtils.h	2007-04-16 11:11:13.409332250 +0300
 @@ -38,22 +38,22 @@

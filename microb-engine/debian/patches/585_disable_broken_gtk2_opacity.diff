@@ -1,4 +1,6 @@
 # Fixed proper displaying of http://www.ajaxdaddy.com/35mm-photo-viewer.php page
+# Patch is buggy, and cause some problems
+# we have to fix broken opacity in current gtk2 gfx
 --- mozilla/layout/style/nsCSSParser.cpp.orig	2007-06-02 17:50:31.000000000 +0300
 +++ mozilla/layout/style/nsCSSParser.cpp	2007-06-02 17:57:38.000000000 +0300
 @@ -4723,21 +4723,25 @@ PRBool CSSParserImpl::ParseSingleValuePr

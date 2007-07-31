@@ -1,3 +1,5 @@
+# Try to manage by plugins supending/resuming before and after page load
+# 235_Plugin_Notification.diff in gtkmozembed
 Index: mozilla/modules/plugin/base/public/nsplugindefs.h
 ===================================================================
 --- mozilla.orig/modules/plugin/base/public/nsplugindefs.h

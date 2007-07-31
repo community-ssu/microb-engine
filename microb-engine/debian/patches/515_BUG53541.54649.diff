@@ -1,3 +1,4 @@
+# Some problems with  certificate chain when file not availabe, do not remember exactly
 --- mozilla/security/manager/ssl/src/nsNSSComponent.cpp.orig	2007-04-25 17:01:18.000000000 +0300
 +++ mozilla/security/manager/ssl/src/nsNSSComponent.cpp	2007-04-25 17:02:46.228513750 +0300
 @@ -715,35 +715,42 @@ nsNSSComponent::InstallLoadableRoots()

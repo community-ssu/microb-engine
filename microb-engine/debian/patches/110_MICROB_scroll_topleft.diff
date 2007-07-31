@@ -1,6 +1,7 @@
 # 99-unnamed.dpatch by  <agomes@>
 # All lines beginning with `## DP:' are a description of the patch.
-# DP: No description.
+# DP:ROMAXA: I'm sure this patch not required anymore, after using of
+# 175_Disable_ScrollTopLeftHack.diff in gtkmozembed patchset
 
 Index: mozilla/content/html/content/src/nsGenericHTMLElement.cpp
 ===================================================================

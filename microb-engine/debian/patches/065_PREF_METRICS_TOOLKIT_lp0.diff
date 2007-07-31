@@ -1,3 +1,4 @@
+# Broken linkage with PERF Metrics tools in XULRUNNER Configuration
 Index: toolkit/library/libxul-config.mk
 ===================================================================
 --- toolkit/library/libxul-config.mk.orig

@@ -1,3 +1,5 @@
+# Hack which will allow to disable some mouse events or replace it with others...
+# Ex: Replace mousedown on mouseclick on gmail (problems with stylus iteractions)
 --- mozilla/dom/src/base/nsDOMClassInfo.cpp.orig	2007-04-26 02:00:41.000000000 +0300
 +++ mozilla/dom/src/base/nsDOMClassInfo.cpp	2007-04-29 17:13:25.423111000 +0300
 @@ -6553,20 +6553,36 @@ nsEventReceiverSH::AddEventListenerHelpe

@@ -1,5 +1,6 @@
 # Added preference for disabling Restoring to previous zoom value on page
-#
+# Internal requirements
+
 Index: mozilla/docshell/base/nsDocShell.cpp
 ===================================================================
 --- mozilla.orig/docshell/base/nsDocShell.cpp

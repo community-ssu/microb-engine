@@ -1,5 +1,5 @@
 # Patches for microb-engine
-# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# Oleg Romashin <oleg.romashin@nokia.com>
 # Bug 51429  RNG_SystemInfoForRNG possible "netstat" zombie process
 
 === security/nss/lib/freebl/unix_rand.c

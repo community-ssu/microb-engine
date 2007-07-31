@@ -1,3 +1,5 @@
+# Fast link to about:config from about
+# XUL disabled about:config page, see debian/resources/branding/microb/content/config.html
 Index: docshell/base/nsAboutRedirector.cpp
 ===================================================================
 --- docshell/base/nsAboutRedirector.cpp.orig

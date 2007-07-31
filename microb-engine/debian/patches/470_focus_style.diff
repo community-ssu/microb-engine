@@ -1,4 +1,5 @@
 # Changed styling for MAC
+# Disabled double focusing (should be focus property)
 Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp

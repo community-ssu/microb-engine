@@ -1,5 +1,6 @@
 # NOBUGFIXME
-#
+# don't remember, but probably this is bug same as 
+#Bug 389638  Broken cairo linkage in embedding-profile < default
 Index: mozilla/toolkit/library/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/library/Makefile.in

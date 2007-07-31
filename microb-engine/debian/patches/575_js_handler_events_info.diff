@@ -1,3 +1,5 @@
+# I hope it will be possible to integrate this feature in Gecko...
+# It will allow to know about some events which was handled by JS handlers (Allow to make more better stylus/panning/ajax iteractions handling)
 Index: mozilla/content/events/src/nsEventListenerManager.cpp
 ===================================================================
 --- mozilla.orig/content/events/src/nsEventListenerManager.cpp

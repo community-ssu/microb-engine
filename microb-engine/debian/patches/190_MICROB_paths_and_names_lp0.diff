@@ -1,5 +1,5 @@
 # Patches for microb-engine
-# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# Oleg Romashin <oleg.romashin@nokia.com>
 # DP: Renaming mozilla directories names and folders for MicroB project
 
 Index: build/unix/Makefile.in

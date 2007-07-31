@@ -1,7 +1,9 @@
 ## Patches for microb-engine
-## Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+## Oleg Romashin <oleg.romashin@nokia.com>
 ##
 ## DP: Building mozilla without XSLT/XPATH support
+# After discussing with Benjamin about this, he sad it is very bad Idea, and he don't
+# want to make available Gecko building without xslt
 
 Index: configure.in
 ===================================================================

@@ -1,6 +1,7 @@
 # Patches for microb-engine
-# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# Oleg Romashin <oleg.romashin@nokia.com>
 # DP: Fix building with new make.
+#[Bug 325148] perl syntax error from rules.mk: make 3.81 changes backslash-newline behavior inside single-quoted strings
 
 Index: mozilla/security/coreconf/rules.mk
 ===================================================================

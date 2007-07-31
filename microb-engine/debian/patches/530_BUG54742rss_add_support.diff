@@ -1,3 +1,5 @@
+# Add support for some rss types
+# works XMLPrettyPrint hacks
 --- mozilla/layout/build/nsLayoutModule.cpp.orig	2007-04-26 02:00:44.000000000 +0300
 +++ mozilla/layout/build/nsLayoutModule.cpp	2007-04-26 16:33:43.799281250 +0300
 @@ -1044,20 +1044,30 @@ static const nsModuleComponentInfo gComp

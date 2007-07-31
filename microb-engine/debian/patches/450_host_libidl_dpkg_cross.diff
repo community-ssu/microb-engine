@@ -1,3 +1,4 @@
+# Build configuration for HOST libidl libraries
 --- mozilla/configure.in.orig	2007-04-03 09:51:29.000000000 +0300
 +++ mozilla/configure.in	2007-04-03 11:06:19.871374500 +0300
 @@ -7230,22 +7230,22 @@ int main() {

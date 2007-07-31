@@ -1,5 +1,7 @@
 # Implemnentation of OutputHandler Interface, 
 # for supporting third party protocols in write mode
+# see 350_GnomeVfsWriteSupport.diff
+# 
 Index: mozilla/netwerk/base/public/Makefile.in
 ===================================================================
 --- mozilla.orig/netwerk/base/public/Makefile.in

@@ -1,3 +1,4 @@
+# As I remember unresolved symbol in XULRUnner configuration
 Index: mozilla/modules/libutil/src/stopwatch.cpp
 ===================================================================
 --- mozilla.orig/modules/libutil/src/stopwatch.cpp

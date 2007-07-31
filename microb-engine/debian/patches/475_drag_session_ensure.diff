@@ -1,6 +1,6 @@
 # Drag service disabled in MicroB and this bustage crash fix for bug 
 # 50652 Suspend device when you drag marked letters from URL and ..
-#
+# Disabled dragging workaround fix
 Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp

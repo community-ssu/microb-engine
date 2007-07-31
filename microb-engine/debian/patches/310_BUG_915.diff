@@ -1,4 +1,5 @@
 # 915 implement inheritance of alignment attributes from columns (align, valign, char, charoff, (lang, dir)?)
+# + some improvement from me
 # N#36653 N#36659
 Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
 ===================================================================

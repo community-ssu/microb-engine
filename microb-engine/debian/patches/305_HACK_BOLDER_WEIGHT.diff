@@ -1,4 +1,5 @@
 #MicroB 50059 [WIN VS LIN FONTS] Displayed text is not bold. //Should be fixed properly
+# Probably not required anymore
 Index: mozilla/layout/style/nsRuleNode.cpp
 ===================================================================
 --- mozilla.orig/layout/style/nsRuleNode.cpp

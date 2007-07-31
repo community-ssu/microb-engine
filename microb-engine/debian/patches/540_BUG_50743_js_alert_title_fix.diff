@@ -1,4 +1,6 @@
 # Fixed bug#50743:malformedURI error message must be rephrased.
+# we have to see difference between JS and not JS alerts
+# gmozillaengine.c:2628
 Index: mozilla/dom/src/base/nsGlobalWindow.cpp
 ===================================================================
 --- mozilla.orig/dom/src/base/nsGlobalWindow.cpp

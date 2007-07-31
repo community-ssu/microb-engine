@@ -1,3 +1,4 @@
+# Some fixes for image loading like Opera
 diff -ruN -U 8 -p mozilla.orig/extensions/permissions/nsContentBlocker.cpp mozilla/extensions/permissions/nsContentBlocker.cpp
 --- mozilla.orig/extensions/permissions/nsContentBlocker.cpp	2007-06-16 11:20:56.000000000 -0400
 +++ mozilla/extensions/permissions/nsContentBlocker.cpp	2007-06-16 11:19:17.000000000 -0400

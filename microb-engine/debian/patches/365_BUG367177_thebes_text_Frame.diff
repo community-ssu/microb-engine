@@ -1,5 +1,5 @@
 # Additional checking for buggy nsTextFrameThebes class
-#
+# Probably not required anymore
 Index: mozilla/gfx/thebes/src/gfxPangoFonts.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPangoFonts.cpp

@@ -1,3 +1,5 @@
+# 010_BUG349921_toolkit_branding.diff
+# allow to use Branding directory in xulrunner configuration
 Index: mozilla/toolkit/toolkit-tiers.mk
 ===================================================================
 --- mozilla.orig/toolkit/toolkit-tiers.mk

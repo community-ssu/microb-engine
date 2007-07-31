@@ -1,3 +1,5 @@
+# It does not work very well, we have to check,test, and fix it
+#
 --- mozilla/profile/dirserviceprovider/src/nsProfileLock.cpp.orig	2007-04-04 17:38:59.000000000 +0300
 +++ mozilla/profile/dirserviceprovider/src/nsProfileLock.cpp	2007-04-04 17:51:02.672617250 +0300
 @@ -51,46 +51,50 @@

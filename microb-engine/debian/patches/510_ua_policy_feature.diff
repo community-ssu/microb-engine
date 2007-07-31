@@ -1,3 +1,6 @@
+# Allow to use different UserAgent string for different pages
+# Disable chats for GMAIL
+# see microb-engine/debian/prefs/all.js:137[0-1]
 --- mozilla/dom/src/base/nsGlobalWindow.cpp.orig	2007-04-23 16:20:59.000000000 +0300
 +++ mozilla/dom/src/base/nsGlobalWindow.cpp	2007-04-24 18:44:49.023502000 +0300
 @@ -7951,20 +7951,37 @@ nsNavigator::SetDocShell(nsIDocShell *aD

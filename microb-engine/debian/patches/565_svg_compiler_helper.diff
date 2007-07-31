@@ -1,3 +1,4 @@
+# Will help to build SVG without cairo enabled (gtk2 gfx)
 --- mozilla/layout/build/Makefile.in.orig	2007-05-06 08:18:40.000000000 +0300
 +++ mozilla/layout/build/Makefile.in	2007-05-06 12:30:45.792838000 +0300
 @@ -196,20 +196,21 @@ ifdef MOZ_XTF

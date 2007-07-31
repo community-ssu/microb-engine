@@ -1,4 +1,4 @@
-# Implementation of Extension manager functionality.
+# Implementation of Extension manager in TestGtkEmbed (mot XRE_main based applications) functionality.
 diff -ruN -p -u10 mozilla.orig/toolkit/library/libxul-config.mk mozilla/toolkit/library/libxul-config.mk
 --- mozilla.orig/toolkit/library/libxul-config.mk	2007-06-01 18:46:14.000000000 +0300
 +++ mozilla/toolkit/library/libxul-config.mk	2007-06-01 19:43:36.000000000 +0300

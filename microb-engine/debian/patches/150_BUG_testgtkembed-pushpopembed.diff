@@ -1,5 +1,5 @@
 # Patches for microb-engine
-# Oleg Romashin <ext-oleg.2.romashin@nokia.com>
+# Oleg Romashin <oleg.romashin@nokia.com>
 # Bug 372077  TestGtkEmbed Application should use gtk_moz_embed_*_startup properly
 
 Index: mozilla/embedding/browser/gtk/tests/TestGtkEmbed.cpp

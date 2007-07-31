@@ -1,3 +1,4 @@
+# Dragging disable... 
 --- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-04-26 02:01:13.000000000 +0300
 +++ mozilla/widget/src/gtk2/nsWindow.cpp	2007-04-26 12:27:58.561761500 +0300
 @@ -3037,34 +3037,36 @@ nsWindow::NativeCreate(nsIWidget        

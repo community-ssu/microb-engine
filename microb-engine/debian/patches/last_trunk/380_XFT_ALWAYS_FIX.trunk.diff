@@ -1,6 +1,7 @@
 # Additional fix for using more less normal font in ENABLE_XFT_FAST_PATH_ALWAYS mode
 # added bool preference "gfx.pango.force.one.font" to setup Always fast mode
 # export MOZ_PANGO_FONT_NAME="your font" to choose more proper font
+# nsFontMetricsXft::SetupFCPattern should be implemented with ENABLE_XFT_FAST_PATH_ALWAYS 
 Index: mozilla/gfx/thebes/src/gfxPangoFonts.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPangoFonts.cpp

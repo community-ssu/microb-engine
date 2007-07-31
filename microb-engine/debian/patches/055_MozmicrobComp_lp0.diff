@@ -1,3 +1,6 @@
+# This patch will allow to build gtkmozembed library as shared library which preloaded
+# in dependentlibs.list list
+# Requires 245_BUG347731_MOZILLA_INTERNAL_API_lp0.diff applyed (To fix using some Internal API)
 Index: xpcom/glue/standalone/nsGlueLinkingDlopen.cpp
 ===================================================================
 --- xpcom/glue/standalone/nsGlueLinkingDlopen.cpp.orig

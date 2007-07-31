@@ -1,5 +1,5 @@
-# Fix for correct drawing checkbox and radio buttons in Native GtkTheme
-#
+# Fix for correct drawing/scaling checkbox and radio buttons in Native GtkTheme
+# Probably not required in trunk
 Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp

@@ -1,3 +1,6 @@
+# Allow to get info about First frame painting
+# Related to hacks with progress bar
+# gtkmozembed 220_connection_state_optimization2.diff
 Index: mozilla/docshell/base/nsIDocShell.idl
 ===================================================================
 --- mozilla.orig/docshell/base/nsIDocShell.idl

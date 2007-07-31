@@ -1,3 +1,4 @@
+# Immediate painting (User perception hacks)
 Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp

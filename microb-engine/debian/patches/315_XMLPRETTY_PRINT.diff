@@ -1,4 +1,5 @@
-# Patch for using XMLPretty printer XSL as normal RSS reader
+# Patch for using XMLPretty printer XSL as normal RSS reader without new component
+# (need help to improve it)
 #
 Index: mozilla/content/xml/document/resources/XMLPrettyPrint.xsl
 ===================================================================
