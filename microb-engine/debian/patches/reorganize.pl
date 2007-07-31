@@ -23,6 +23,13 @@ while(my $line=<FILE>) {
 	$new_ser .= $k."_$patch".$opts."\n";
     $i += 5;
   } else {
+      if ($line=~/^(.*)\/(.*)\.diff(.*)$/) {
+        if ($1!~/^\#/) {
+        mkdir("new/".$1);
+        system("cp $line new/".$1);
+#        print ("$1;$2;$3;$4\n");
+        }
+      }
       $new_ser .= $line."\n";
   }
 }
