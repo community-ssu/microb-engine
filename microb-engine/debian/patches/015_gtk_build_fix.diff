@@ -1860,3 +1860,61 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
    // clip to decode region
    PRInt32 j = aSX + aSWidth;
    PRInt32 z;
+--- mozilla/layout/base/nsDisplayList.cpp.orig	2007-08-01 12:18:55.000000000 +0300
++++ mozilla/layout/base/nsDisplayList.cpp	2007-08-01 12:20:55.000000000 +0300
+@@ -771,26 +771,26 @@ void nsDisplayOpacity::Paint(nsDisplayLi
+ {
+   // XXX This way of handling 'opacity' creates exponential time blowup in the
+   // depth of nested translucent elements. This will be fixed when we move to
+   // cairo with support for real alpha channels in surfaces, so we don't have
+   // to do this white/black hack anymore.
+   float opacity = mFrame->GetStyleDisplay()->mOpacity;
+ 
+   nsRect bounds;
+   bounds.IntersectRect(GetBounds(aBuilder), aDirtyRect);
+ 
+-#ifdef MOZ_CAIRO_GFX
+-
+   nsCOMPtr<nsIDeviceContext> devCtx;
+   aCtx->GetDeviceContext(*getter_AddRefs(devCtx));
+   float a2p = 1.0f / devCtx->AppUnitsPerDevPixel();
+ 
++#ifdef MOZ_CAIRO_GFX
++
+   nsRefPtr<gfxContext> ctx = (gfxContext*)aCtx->GetNativeGraphicData(nsIRenderingContext::NATIVE_THEBES_CONTEXT);
+ 
+   ctx->Save();
+ 
+   ctx->NewPath();
+   ctx->Rectangle(gfxRect(bounds.x * a2p,
+                          bounds.y * a2p,
+                          bounds.width * a2p,
+                          bounds.height * a2p),
+                  PR_TRUE);
+@@ -824,21 +824,25 @@ void nsDisplayOpacity::Paint(nsDisplayLi
+   nsDisplayWrapList::Paint(aBuilder, buffers->mBlackCX, bounds);
+   if (buffers->mWhiteCX) {
+     nsDisplayWrapList::Paint(aBuilder, buffers->mWhiteCX, bounds);
+   }
+ 
+   nsTransform2D* transform;
+   nsresult rv = aCtx->GetCurrentTransform(transform);
+   if (NS_FAILED(rv))
+     return;
+ 
+-  nsRect damageRectInPixels = bounds;
++  nsRect damageRectInPixels(bounds.x * a2p,
++                         bounds.y * a2p,
++                         bounds.width * a2p,
++                         bounds.height * a2p);
++
+   transform->TransformCoord(&damageRectInPixels.x, &damageRectInPixels.y,
+                             &damageRectInPixels.width, &damageRectInPixels.height);
+   // If blender creation failed then we would have not received a buffers object
+   nsIBlender* blender = vm->GetBlender();
+   blender->Blend(0, 0, damageRectInPixels.width, damageRectInPixels.height,
+                  buffers->mBlackCX, aCtx,
+                  damageRectInPixels.x, damageRectInPixels.y,
+                  opacity, buffers->mWhiteCX,
+                  NS_RGB(0, 0, 0), NS_RGB(255, 255, 255));
+   delete buffers;
