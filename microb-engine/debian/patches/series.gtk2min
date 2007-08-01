@@ -252,6 +252,7 @@ trunk_updates/attachment.cgi?id=270653.diff
 620_native_theme_supporting.diff
 620_BUG_333869.fix.diff
 630_bigger_ua_string_length_61630.diff
+635_GetRootScrollFrameOpen.diff
 
 perf_addon/JSBreakExperimental.diff
 #perf_addon/JSWakeupNative.diff

@@ -1,0 +1,25 @@
+--- mozilla/layout/base/nsIPresShell.h.orig	2007-08-01 04:10:46.000000000 +0300
++++ mozilla/layout/base/nsIPresShell.h	2007-08-01 03:50:47.000000000 +0300
+@@ -292,21 +292,21 @@ public:
+   /**
+    * This calls through to the frame manager to get the root frame.
+    * Callers inside of gklayout should use FrameManager()->GetRootFrame()
+    * instead, as it's more efficient.
+    */
+   virtual NS_HIDDEN_(nsIFrame*) GetRootFrame() const;
+ 
+   /*
+    * Get root scroll frame from FrameManager()->GetRootFrame().
+    */
+-  nsIFrame* GetRootScrollFrame() const;
++  virtual NS_HIDDEN_(nsIFrame*) GetRootScrollFrame() const;
+ 
+   /*
+    * The same as GetRootScrollFrame, but returns an nsIScrollableFrame
+    */
+   nsIScrollableFrame* GetRootScrollFrameAsScrollable() const;
+ 
+   /**
+    * Returns the page sequence frame associated with the frame hierarchy.
+    * Returns NULL if not a paginated view.
+    */
