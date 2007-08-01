@@ -1,4 +1,4 @@
-# Some times crash was happens here on closing, until was not fixed in 
+# Some times crash used to happen here on closing, until was not fixed in 
 # 150_BUG_testgtkembed-pushpopembed.diff
 # 155_BUG_mainthreadalreadydead.diff
 # Maybe not required anymore... maybe some checks is still useful

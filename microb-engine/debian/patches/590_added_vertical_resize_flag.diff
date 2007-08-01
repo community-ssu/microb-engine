@@ -1,4 +1,4 @@
-# Added new flag to grasp vertical resizing
+# Added new flag to control vertical resizing
 # contact: Anton Rogaynis ext-anton(dot)rogaynis(at)nokia.com
 --- mozilla/embedding/browser/webBrowser/nsIEmbeddingSiteWindow.idl.orig	2004-04-18 18:00:40.000000000 -0400
 +++ mozilla/embedding/browser/webBrowser/nsIEmbeddingSiteWindow.idl	2007-06-03 20:07:32.000000000 -0400
