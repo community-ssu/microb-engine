@@ -1,9 +1,33 @@
-#Handle the vertical resizing in the first pass reflow correctly when we've previously done a special height reflow.  b=381507
-# Bug 381507  Nested percentage-height tables grow endlessly on any window resize
+Handle the vertical resizing in the first pass reflow correctly when we've previously done a special height reflow.  b=381507
+
 diff --git a/layout/generic/nsHTMLReflowState.cpp b/layout/generic/nsHTMLReflowState.cpp
 --- a/layout/generic/nsHTMLReflowState.cpp
 +++ b/layout/generic/nsHTMLReflowState.cpp
-@@ -374,7 +374,6 @@ nsHTMLReflowState::InitResizeFlags(nsPre
+@@ -52,6 +52,7 @@
+ #include "nsLineBox.h"
+ #include "nsImageFrame.h"
+ #include "nsTableFrame.h"
++#include "nsTableCellFrame.h"
+ #include "nsIServiceManager.h"
+ #include "nsIPercentHeightObserver.h"
+ #include "nsContentUtils.h"
+@@ -364,8 +365,14 @@ nsHTMLReflowState::InitResizeFlags(nsPre
+ 
+   // XXX Should we really need to null check mCBReflowState?  (We do for
+   // at least nsBoxFrame).
+-  if (mFlags.mSpecialHeightReflow && IS_TABLE_CELL(frame->GetType()) &&
++  if (IS_TABLE_CELL(frame->GetType()) &&
++      (mFlags.mSpecialHeightReflow ||
++       (frame->GetFirstInFlow()->GetStateBits() &
++         NS_TABLE_CELL_HAD_SPECIAL_REFLOW)) &&
+       (frame->GetStateBits() & NS_FRAME_CONTAINS_RELATIVE_HEIGHT)) {
++    // Need to set the bit on the cell so that
++    // mCBReflowState->mFlags.mVResize is set correctly below when
++    // reflowing descendant.
+     mFlags.mVResize = PR_TRUE;
+   } else if (mCBReflowState && !frame->IsContainingBlock()) {
+     // XXX Is this problematic for relatively positioned inlines acting
+@@ -374,7 +381,6 @@ nsHTMLReflowState::InitResizeFlags(nsPre
    } else if (mComputedHeight == NS_AUTOHEIGHT) {
      if (eCompatibility_NavQuirks == aPresContext->CompatibilityMode() &&
          mCBReflowState) {
@@ -11,12 +35,12 @@ diff --git a/layout/generic/nsHTMLReflowState.cpp b/layout/generic/nsHTMLReflowS
        mFlags.mVResize = mCBReflowState->mFlags.mVResize;
      } else {
        mFlags.mVResize = mFlags.mHResize || NS_SUBTREE_DIRTY(frame); 
-@@ -384,6 +383,31 @@ nsHTMLReflowState::InitResizeFlags(nsPre
+@@ -384,6 +390,25 @@ nsHTMLReflowState::InitResizeFlags(nsPre
      mFlags.mVResize = frame->GetSize().height !=
                          mComputedHeight + mComputedBorderPadding.TopBottom();
    }
 +
-+  PRBool dependsOnCBHeight =
++  const PRBool dependsOnCBHeight =
 +    mStylePosition->mHeight.GetUnit() == eStyleUnit_Percent ||
 +    mStylePosition->mMinHeight.GetUnit() == eStyleUnit_Percent ||
 +    mStylePosition->mMaxHeight.GetUnit() == eStyleUnit_Percent ||
@@ -25,25 +49,19 @@ diff --git a/layout/generic/nsHTMLReflowState.cpp b/layout/generic/nsHTMLReflowS
 +    frame->IsBoxFrame();
 +
 +  // If we're the child of a table cell that performs special height
-+  // reflows and we could be the child that requires them, or we're the
-+  // anonymous block inside the table cell, always set the vertical
-+  // resize in case this is the first pass before the special height
-+  // reflow.
++  // reflows and we could be the child that requires them, always set
++  // the vertical resize in case this is the first pass before the
++  // special height reflow.
 +  if (!mFlags.mVResize && mCBReflowState &&
 +      IS_TABLE_CELL(mCBReflowState->frame->GetType()) &&
-+       // child of cell with percent
-+      (dependsOnCBHeight ||
-+       // outer table for such a child
-+       frame->GetType() == nsGkAtoms::tableOuterFrame ||
-+       // cell's anonymous block
-+       mCBReflowState == parentReflowState))
++      dependsOnCBHeight)
 +    mFlags.mVResize = PR_TRUE;
 +
 +  // Set NS_FRAME_CONTAINS_RELATIVE_HEIGHT if it's needed.
  
    // It would be nice to check that |mComputedHeight != NS_AUTOHEIGHT|
    // &&ed with the percentage height check.  However, this doesn't get
-@@ -392,13 +416,7 @@ nsHTMLReflowState::InitResizeFlags(nsPre
+@@ -392,13 +417,7 @@ nsHTMLReflowState::InitResizeFlags(nsPre
    // of table cells) can cause not just a single percentage height to
    // become fixed, but an entire descendant chain of percentage heights
    // to become fixed.
@@ -58,10 +76,48 @@ diff --git a/layout/generic/nsHTMLReflowState.cpp b/layout/generic/nsHTMLReflowS
      const nsHTMLReflowState *rs = this;
      PRBool hitCBReflowState = PR_FALSE;
      do {
+diff --git a/layout/tables/nsTableCellFrame.cpp b/layout/tables/nsTableCellFrame.cpp
+--- a/layout/tables/nsTableCellFrame.cpp
++++ b/layout/tables/nsTableCellFrame.cpp
+@@ -756,6 +756,10 @@ NS_METHOD nsTableCellFrame::Reflow(nsPre
+   DO_GLOBAL_REFLOW_COUNT("nsTableCellFrame");
+   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
+ 
++  if (aReflowState.mFlags.mSpecialHeightReflow) {
++    GetFirstInFlow()->AddStateBits(NS_TABLE_CELL_HAD_SPECIAL_REFLOW);
++  }
++
+   // work around pixel rounding errors, round down to ensure we don't exceed the avail height in
+   nscoord availHeight = aReflowState.availableHeight;
+ 
+@@ -819,7 +823,11 @@ NS_METHOD nsTableCellFrame::Reflow(nsPre
+   // but only those than are tables in standards mode.  NeedsToObserve
+   // will determine how far this is propagated to descendants.
+   kidReflowState.mPercentHeightObserver = this;
+-  if (aReflowState.mFlags.mSpecialHeightReflow) {
++  if (aReflowState.mFlags.mSpecialHeightReflow ||
++      (GetFirstInFlow()->GetStateBits() & NS_TABLE_CELL_HAD_SPECIAL_REFLOW)) {
++    // We need to force the kid to have mVResize set if we've had a
++    // special reflow in the past, since the non-special reflow needs to
++    // resize back to what it was without the special height reflow.
+     kidReflowState.mFlags.mVResize = PR_TRUE;
+   }
+ 
+diff --git a/layout/tables/nsTableCellFrame.h b/layout/tables/nsTableCellFrame.h
+--- a/layout/tables/nsTableCellFrame.h
++++ b/layout/tables/nsTableCellFrame.h
+@@ -52,6 +52,7 @@ class nsTableFrame;
+  * Additional frame-state bits
+  */
+ #define NS_TABLE_CELL_CONTENT_EMPTY       0x80000000
++#define NS_TABLE_CELL_HAD_SPECIAL_REFLOW  0x20000000
+ #define NS_TABLE_CELL_HAS_PCT_OVER_HEIGHT 0x10000000
+ 
+ /**
 diff --git a/layout/tables/nsTableFrame.cpp b/layout/tables/nsTableFrame.cpp
 --- a/layout/tables/nsTableFrame.cpp
 +++ b/layout/tables/nsTableFrame.cpp
-@@ -1872,7 +1872,12 @@ NS_METHOD nsTableFrame::Reflow(nsPresCon
+@@ -1865,7 +1865,12 @@ NS_METHOD nsTableFrame::Reflow(nsPresCon
    PRBool haveDesiredHeight = PR_FALSE;
    PRBool reflowedChildren  = PR_FALSE;
  
