@@ -47,14 +47,14 @@ Index: mozilla/toolkit/components/Makefile.in
 +	$(NULL)
 +endif
 +
- ifndef MOZ_SUITE
- # XXX Suite doesn't want these just yet
  ifdef MOZ_XUL
  DIRS += \
  	autocomplete \
  	passwordmgr \
  	satchel \
  	$(NULL)
+ endif # MOZ_XUL
+ 
 Index: mozilla/toolkit/library/libxul-config.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-config.mk
@@ -142,7 +142,17 @@ Index: mozilla/xpfe/components/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/components/Makefile.in
 +++ mozilla/xpfe/components/Makefile.in
-@@ -71,19 +71,22 @@
+@@ -62,28 +62,28 @@
+ # the jar.mn file that lives parallel to this Makefile. The jar.mn is responsible
+ # for the packaging of a large number of chrome files these apps don't need. 
+ DEFINES += -DSUPPRESS_CHROME
+ endif
+ 
+ DIRS = \
+         find \
+         filepicker \
++        directory \
+         $(NULL)
  
  ifdef MOZ_RDF
  DIRS += \
@@ -151,21 +161,17 @@ Index: mozilla/xpfe/components/Makefile.in
          $(NULL)
  endif
  
-+DIRS += \
-+        directory
-+        $(NULL)
-+
  ifdef MOZ_HAVE_BROWSER
  DIRS += \
 -        directory \
          resetPref \
-         killAll \
          $(NULL)
  
  ifndef MOZ_PHOENIX
  ifndef MOZ_XULRUNNER
  DIRS += \
          related \
+         autocomplete \
 Index: mozilla/xpfe/components/build/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/components/build/Makefile.in

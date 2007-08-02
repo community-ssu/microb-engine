@@ -228,7 +228,7 @@ Index: mozilla/gfx/src/thebes/nsThebesImage.cpp
          // See bug 324698.  This is a workaround.
          //
          // Set the filter to CAIRO_FILTER_FAST if we're scaling up -- otherwise,
-@@ -500,16 +540,36 @@
+@@ -488,16 +528,36 @@
      nsRefPtr<gfxASurface> tmpSurfaceGrip;
  
      if (mSinglePixel && !hasPadding) {
@@ -237,8 +237,8 @@ Index: mozilla/gfx/src/thebes/nsThebesImage.cpp
          nsRefPtr<gfxASurface> surface;
          PRInt32 width, height;
  
-+        gfxFloat scale = gfxFloat(nsIDeviceContext::AppUnitsPerCSSPixel()) /
-+                         gfxFloat(dx->AppUnitsPerDevPixel());
++        gfxFloat scale = gfxFloat(dx->AppUnitsPerDevPixel()) /
++                         gfxFloat(nsIDeviceContext::AppUnitsPerCSSPixel());
 +
 +        if (mNeedOptimize) {
 +            DelayedOptimize(nsnull, scale, scale);
@@ -265,22 +265,21 @@ Index: mozilla/gfx/src/thebes/nsThebesImage.cpp
  
              // Reject over-wide or over-tall images.
              if (!AllowedImageSize(width, height))
-@@ -547,20 +607,19 @@
-             p0.y = - floor(fmod(offset.y, gfxFloat(height)) + 0.5);
-         } else {
-             p0.x = - floor(offset.x + 0.5);
-             p0.y = - floor(offset.y + 0.5);
-         }
+@@ -529,19 +589,18 @@
+         gfxMatrix patMat;
+         gfxPoint p0;
+ 
+         p0.x = - floor(offset.x + 0.5);
+         p0.y = - floor(offset.y + 0.5);
          // Scale factor to account for CSS pixels; note that the offset (and 
          // therefore p0) is in device pixels, while the width and height are in
          // CSS pixels.
--        gfxFloat scale = gfxFloat(nsIDeviceContext::AppUnitsPerCSSPixel()) / 
--                         gfxFloat(dx->AppUnitsPerDevPixel());
--        patMat.Scale(1.0 / scale, 1.0 / scale);
--        patMat.Translate(p0);
+-        gfxFloat scale = gfxFloat(dx->AppUnitsPerDevPixel()) /
+-                         gfxFloat(nsIDeviceContext::AppUnitsPerCSSPixel());
+-        patMat.Scale(scale, scale);
 +        if (!mScaleOptimized)
-+            patMat.Scale(1.0 / scale, 1.0 / scale);
-+        patMat.Translate(gfxPoint(p0.x, p0.y));
++        patMat.Scale(1.0 / scale, 1.0 / scale);
+         patMat.Translate(p0);
  
          pat = new gfxPattern(surface);
          pat->SetExtend(gfxPattern::EXTEND_REPEAT);
@@ -288,8 +287,7 @@ Index: mozilla/gfx/src/thebes/nsThebesImage.cpp
  
  #ifndef XP_MACOSX
          if (scale > 1.0) {
-             // See bug 324698.  This is a workaround.  See comments
-@@ -582,19 +641,24 @@
+@@ -562,19 +621,24 @@
  
      return NS_OK;
  }
@@ -319,8 +317,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatform.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatform.cpp
-@@ -58,16 +58,17 @@
- #include "nsIPref.h"
+@@ -59,16 +59,17 @@
  #include "nsServiceManagerUtils.h"
  
  #ifdef MOZ_ENABLE_GLITZ
@@ -328,16 +325,17 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  #endif
  
  #include "cairo.h"
+ #include "lcms.h"
 +#include "prenv.h"
+ 
+ #include "nsIPrefService.h"
+ #include "nsIPrefBranch.h"
  
  gfxPlatform *gPlatform = nsnull;
  int gGlitzState = -1;
- 
- gfxPlatform*
- gfxPlatform::GetPlatform()
- {
-     return gPlatform;
-@@ -190,40 +191,58 @@
+ static cmsHPROFILE gCMSOutputProfile = nsnull;
+ static cmsHTRANSFORM gCMSRGBTransform = nsnull;
+@@ -197,40 +198,58 @@
              }
          }
      }
@@ -403,7 +401,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatform.h
 +++ mozilla/gfx/thebes/public/gfxPlatform.h
-@@ -83,17 +83,17 @@
+@@ -86,17 +86,17 @@
       * and image format.  If fastPixelAccess is TRUE,
       * create a surface that is optimized for rapid pixel
       * changing.
@@ -426,7 +424,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -139,18 +139,20 @@
+@@ -141,18 +141,20 @@
      }
  
      // XXX we really need a different interface here, something that passes

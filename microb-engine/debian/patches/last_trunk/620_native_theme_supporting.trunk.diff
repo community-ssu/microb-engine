@@ -1,0 +1,308 @@
+# Support native gtk widgets: 
+# - scaling widgets
+# - drawing according native theme
+# - fixed some stuff related to forms.css
+# contact: Anton Rogaynis ext-anton(.)rogaynis(@)nokia.com
+Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+@@ -810,19 +810,19 @@
+       break;
+   case NS_THEME_DROPDOWN_BUTTON:
+     {
+       moz_gtk_get_dropdown_arrow_size(&aResult->width, &aResult->height);
+       *aIsOverridable = PR_FALSE;
+     }
+     break;
+   case NS_THEME_CHECKBOX:
+-  case NS_THEME_CHECKBOX_SMALL:
++  //case NS_THEME_CHECKBOX_SMALL:
+   case NS_THEME_RADIO:
+-  case NS_THEME_RADIO_SMALL:
++  //case NS_THEME_RADIO_SMALL:
+     {
+       gint indicator_size, indicator_spacing;
+ 
+       if (IsCheckboxWidgetType(aWidgetType)) {
+         moz_gtk_checkbox_get_metrics(&indicator_size, &indicator_spacing);
+       } else {
+         moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);
+       }
+@@ -987,17 +987,17 @@
+   case NS_THEME_SCROLLBAR_TRACK_VERTICAL:
+   case NS_THEME_SCROLLBAR_THUMB_HORIZONTAL:
+   case NS_THEME_SCROLLBAR_THUMB_VERTICAL:
+     // case NS_THEME_SCROLLBAR_GRIPPER_HORIZONTAL:  (n/a for gtk)
+     // case NS_THEME_SCROLLBAR_GRIPPER_VERTICAL:  (n/a for gtk)
+   case NS_THEME_TEXTFIELD:
+   case NS_THEME_TEXTFIELD_MULTILINE:
+     // case NS_THEME_TEXTFIELD_CARET:
+-    // case NS_THEME_DROPDOWN_BUTTON:
++  case NS_THEME_DROPDOWN_BUTTON:
+   case NS_THEME_DROPDOWN_TEXTFIELD:
+   case NS_THEME_SCALE_HORIZONTAL:
+   case NS_THEME_SCALE_THUMB_HORIZONTAL:
+   case NS_THEME_SCALE_VERTICAL:
+   case NS_THEME_SCALE_THUMB_VERTICAL:
+     // case NS_THEME_SCALE_THUMB_START:
+     // case NS_THEME_SCALE_THUMB_END:
+     // case NS_THEME_SCALE_TICK:
+Index: mozilla/widget/src/gtk2/gtk2drawing.c
+===================================================================
+--- mozilla.orig/widget/src/gtk2/gtk2drawing.c
++++ mozilla/widget/src/gtk2/gtk2drawing.c
+@@ -455,18 +455,18 @@
+         } else {
+             x -= focus_width + focus_pad;
+             y -= focus_width + focus_pad;
+             width += 2 * (focus_width + focus_pad);
+             height += 2 * (focus_width + focus_pad);
+         }
+ 
+         TSOffsetStyleGCs(style, x, y);
+-        gtk_paint_focus(style, drawable, button_state, cliprect,
+-                        widget, "button", x, y, width, height);
++        //gtk_paint_focus(style, drawable, button_state, cliprect,
++        //                widget, "button", x, y, width, height);
+     }
+ 
+     return MOZ_GTK_SUCCESS;
+ }
+ 
+ gint
+ moz_gtk_init()
+ {
+@@ -595,40 +595,44 @@
+ {
+     GtkStateType state_type = ConvertGtkState(state);
+     GtkShadowType shadow_type = (selected)?GTK_SHADOW_IN:GTK_SHADOW_OUT;
+     gint indicator_size, indicator_spacing;
+     gint x, y, width, height;
+     GtkWidget *w;
+     GtkStyle *style;
+ 
++    state_type = GTK_STATE_NORMAL;
+     if (isradio) {
+         moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);
+         w = gRadiobuttonWidget;
+     } else {
+         moz_gtk_checkbox_get_metrics(&indicator_size, &indicator_spacing);
+         w = gCheckboxWidget;
+     }
+ 
+     /* offset by indicator_spacing, and centered vertically within the rect */
+-    indicator_size = rect->width < rect->height ? rect->width : rect->height;
+-    indicator_size -= indicator_spacing;
+-    x = rect->x + indicator_spacing;
++    if (MIN(rect->width, rect->height) < indicator_size)
++        indicator_size = MIN(rect->width, rect->height);
++
++    x = rect->x; //+ indicator_spacing;
+     y = rect->y + (rect->height - indicator_size) / 2;
+     width = indicator_size;
+     height = indicator_size;
+   
+     style = w->style;
+     TSOffsetStyleGCs(style, x, y);
+ 
+     /* Some themes check the widget state themselves. */
++		/*
+     if (state->focused)
+         GTK_WIDGET_SET_FLAGS(w, GTK_HAS_FOCUS);
+     else
+         GTK_WIDGET_UNSET_FLAGS(w, GTK_HAS_FOCUS);
++		*/
+ 
+     if (state_type != GTK_STATE_INSENSITIVE)
+          GTK_WIDGET_SET_FLAGS(w, GTK_SENSITIVE);
+     else
+          GTK_WIDGET_UNSET_FLAGS(w, GTK_SENSITIVE);
+ 
+     GTK_TOGGLE_BUTTON(w)->active = selected;
+       
+@@ -784,16 +788,17 @@
+                               GdkDrawable* drawable, GdkRectangle* rect,
+                               GdkRectangle* cliprect, GtkWidgetState* state)
+ {
+     GtkStateType state_type = (state->inHover || state->active) ?
+         GTK_STATE_PRELIGHT : GTK_STATE_NORMAL;
+     GtkStyle* style;
+     GtkScrollbar *scrollbar;
+     GtkAdjustment *adj;
++    GtkShadowType shadow_type = GTK_SHADOW_OUT;
+ 
+     ensure_scrollbar_widget();
+ 
+     if (widget == MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL)
+         scrollbar = GTK_SCROLLBAR(gHorizScrollbarWidget);
+     else
+         scrollbar = GTK_SCROLLBAR(gVertScrollbarWidget);
+ 
+@@ -825,17 +830,22 @@
+     adj->value = state->curpos;
+     adj->upper = state->maxpos;
+     gtk_adjustment_changed(adj);
+ 
+     style = GTK_WIDGET(scrollbar)->style;
+ 
+     TSOffsetStyleGCs(style, rect->x, rect->y);
+ 
+-    gtk_paint_slider(style, drawable, state_type, GTK_SHADOW_OUT, cliprect,
++    if (state->active) {
++      state_type = GTK_STATE_ACTIVE;
++      shadow_type = GTK_SHADOW_IN;
++    }
++
++    gtk_paint_slider(style, drawable, state_type, shadow_type, cliprect,
+                      GTK_WIDGET(scrollbar), "slider", rect->x, rect->y,
+                      rect->width,  rect->height,
+                      (widget == MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL) ?
+                      GTK_ORIENTATION_HORIZONTAL : GTK_ORIENTATION_VERTICAL);
+ 
+     return MOZ_GTK_SUCCESS;
+ }
+ 
+@@ -1020,19 +1030,19 @@
+         height -= 2 * focus_width;
+ 
+         TSOffsetStyleGCs(style, x, y);
+         gtk_paint_shadow(style, drawable, GTK_STATE_NORMAL, GTK_SHADOW_IN,
+                          cliprect, gEntryWidget, "entry",
+                          x, y, width, height);
+ 
+         TSOffsetStyleGCs(style, rect->x, rect->y);
+-        gtk_paint_focus(style, drawable,  GTK_STATE_NORMAL, cliprect,
+-                        gEntryWidget, "entry",
+-                        rect->x, rect->y, rect->width, rect->height);
++        //gtk_paint_focus(style, drawable,  GTK_STATE_NORMAL, cliprect,
++        //                gEntryWidget, "entry",
++        //                rect->x, rect->y, rect->width, rect->height);
+     }
+ 
+     return MOZ_GTK_SUCCESS;
+ }
+ 
+ static gint
+ moz_gtk_option_menu_paint(GdkDrawable* drawable, GdkRectangle* rect,
+                           GdkRectangle* cliprect, GtkWidgetState* state)
+@@ -1168,25 +1178,25 @@
+     /* this is for drawing a prelight box */
+     if (state_type == GTK_STATE_PRELIGHT || state_type == GTK_STATE_ACTIVE) {
+         gtk_paint_flat_box(style, drawable, GTK_STATE_PRELIGHT, GTK_SHADOW_ETCHED_OUT,
+                            cliprect, gCheckboxWidget,
+                            "checkbutton",
+                            rect->x, rect->y, rect->width, rect->height);
+     }
+ 
+-    if (state_type != GTK_STATE_NORMAL && state_type != GTK_STATE_PRELIGHT)
++    /*if (state_type != GTK_STATE_NORMAL && state_type != GTK_STATE_PRELIGHT)
+         state_type = GTK_STATE_NORMAL;
+ 
+     if (state->focused && !interior_focus) {
+         gtk_paint_focus(style, drawable, state_type, cliprect, gCheckboxWidget,
+                         "checkbutton",
+                         rect->x, rect->y, rect->width, rect->height);
+     }
+-
++    */
+     return MOZ_GTK_SUCCESS;
+ }
+ 
+ static gint
+ moz_gtk_toggle_label_paint(GdkDrawable* drawable, GdkRectangle* rect,
+                            GdkRectangle* cliprect, GtkWidgetState* state, 
+                            gboolean isradio)
+ {
+Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp
++++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+@@ -51,17 +51,17 @@
+ nscolor   nsLookAndFeel::sMenuText = 0;
+ nscolor   nsLookAndFeel::sMenuHover = 0;
+ nscolor   nsLookAndFeel::sMenuHoverText = 0;
+ nscolor   nsLookAndFeel::sMenuBackground = 0;
+ nscolor   nsLookAndFeel::sButtonBackground = 0;
+ nscolor   nsLookAndFeel::sTextDisabled = 0;
+ nscolor   nsLookAndFeel::sButtonText = 0;
+ nscolor   nsLookAndFeel::sButtonOuterLightBorder = 0;
+-nscolor   nsLookAndFeel::sButtonInnerDarkBorder = 0;
++nscolor   nsLookAndFeel::sButtonInnerDarkBorder = NS_RGB(0xb3,0xb3,0xb3); // forms.css
+ PRUnichar nsLookAndFeel::sInvisibleCharacter = PRUnichar('*');
+ 
+ //-------------------------------------------------------------------------
+ //
+ // Query interface implementation
+ //
+ //-------------------------------------------------------------------------
+ nsLookAndFeel::nsLookAndFeel() : nsXPLookAndFeel()
+Index: mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
+===================================================================
+--- mozilla.orig/widget/src/xpwidgets/nsNativeTheme.cpp
++++ mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
+@@ -47,19 +47,19 @@
+ #include "nsINameSpaceManager.h"
+ #include "nsIDOMHTMLInputElement.h"
+ #include "nsILookAndFeel.h"
+ #include "nsThemeConstants.h"
+ #include "nsIComponentManager.h"
+ 
+ nsMargin                  nsNativeTheme::sButtonBorderSize(2, 2, 2, 2);
+ nsMargin                  nsNativeTheme::sButtonDisabledBorderSize(1, 1, 1, 1);
+-PRUint8                   nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
+-PRUint8                   nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_OUTSET;
+-nsILookAndFeel::nsColorID nsNativeTheme::sButtonBorderColorID = nsILookAndFeel::eColor_buttonface;
++PRUint8  nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_SOLID; // instead of INSET, forms.css
++PRUint8  nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_SOLID; // instead of OUTSET, forms.css
++nsILookAndFeel::nsColorID nsNativeTheme::sButtonBorderColorID = nsILookAndFeel::eColor_threedshadow;// instead of buttonface, forms.css
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonDisabledBorderColorID = nsILookAndFeel::eColor_buttonshadow;
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonBGColorID = nsILookAndFeel::eColor_buttonface;
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonDisabledBGColorID = nsILookAndFeel::eColor_buttonface;
+ 
+ nsMargin                  nsNativeTheme::sTextfieldBorderSize(2, 2, 2, 2);
+ PRUint8                   nsNativeTheme::sTextfieldBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
+ nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBorderColorID = nsILookAndFeel::eColor_threedface;
+ PRBool                    nsNativeTheme::sTextfieldBGTransparent = PR_FALSE;
+@@ -287,36 +287,37 @@
+ 
+       if (defaultBGTransparent) {
+         if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_COLOR_TRANSPARENT))
+           return PR_TRUE;
+       } else if (ourBG->mBackgroundColor != defaultBGColor ||
+                  ourBG->mBackgroundFlags & NS_STYLE_BG_COLOR_TRANSPARENT)
+         return PR_TRUE;
+ 
+-      if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_IMAGE_NONE))
+-        return PR_TRUE;
++      //if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_IMAGE_NONE))
++        //return PR_TRUE;
+ 
+       // Check whether border style or color differs from default
+       const nsStyleBorder* ourBorder = aFrame->GetStyleBorder();
+ 
+       for (PRInt32 i = 0; i < 4; ++i) {
+         if (ourBorder->GetBorderStyle(i) != defaultBorderStyle)
+           return PR_TRUE;
+ 
+         PRBool borderFG, borderClear;
+         nscolor borderColor;
+         ourBorder->GetBorderColor(i, borderColor, borderFG, borderClear);
+         if (borderColor != defaultBorderColor || borderClear)
+           return PR_TRUE;
+       }
+ 
+       // Check whether border size differs from default
+-      if (ourBorder->GetBorder() != defaultBorderSize)
+-        return PR_TRUE;
++      // commented because off wrong converting.
++      //if (ourBorder->GetBorder() != defaultBorderSize)
++        //return PR_TRUE;
+     }
+   }
+ 
+   return PR_FALSE;
+ }
+ 
+ // treeheadercell:
+ nsNativeTheme::TreeSortDirection

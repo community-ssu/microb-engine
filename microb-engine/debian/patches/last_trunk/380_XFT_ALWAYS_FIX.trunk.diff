@@ -132,7 +132,8 @@ Index: mozilla/gfx/thebes/src/gfxPangoFonts.cpp
      //printf ("%s, %f, %d, %d\n", NS_ConvertUTF16toUTF8(mName).get(), GetStyle()->size, ThebesStyleToPangoStyle(GetStyle()), ThebesStyleToPangoWeight(GetStyle()));
  #ifndef THEBES_USE_PANGO_CAIRO
      mPangoCtx = pango_xft_get_context(GDK_DISPLAY(), 0);
-@@ -864,17 +901,17 @@
+@@ -876,17 +913,17 @@
+ gfxPangoFontGroup::InitTextRun(gfxTextRun *aTextRun, const gchar *aUTF8Text,
                                 PRUint32 aUTF8Length, PRUint32 aUTF8HeaderLength,
                                 PRBool aTake8BitPath)
  {
@@ -140,9 +141,8 @@ Index: mozilla/gfx/thebes/src/gfxPangoFonts.cpp
      CreateGlyphRunsXft(aTextRun, aUTF8Text + aUTF8HeaderLength, aUTF8Length - aUTF8HeaderLength);
  #else
  #if defined(ENABLE_XFT_FAST_PATH_8BIT)
-     // We need to always use Pango for RTL text, in case glyph mirroring is required
--    if (aTake8BitPath && !aTextRun->IsRightToLeft()) {
-+    if (aTake8BitPath && !aTextRun->IsRightToLeft() || sForceOneFont) {
+-    if (aTake8BitPath && CanTakeFastPath(aTextRun->GetFlags())) {
++    if (aTake8BitPath && CanTakeFastPath(aTextRun->GetFlags()) || sForceOneFont) {
          CreateGlyphRunsXft(aTextRun, aUTF8Text + aUTF8HeaderLength, aUTF8Length - aUTF8HeaderLength);
          return;
      }

@@ -9,7 +9,7 @@ Index: configure.in
 ===================================================================
 --- configure.in.orig
 +++ configure.in
-@@ -4072,16 +4072,18 @@
+@@ -4073,16 +4073,18 @@
  MOZ_JAVAXPCOM=
  MOZ_JSDEBUGGER=1
  MOZ_JSLOADER=1
@@ -28,13 +28,13 @@ Index: configure.in
  MOZ_NO_INSPECTOR_APIS=
  MOZ_NO_XPCOM_OBSOLETE=
  MOZ_NO_FAST_LOAD=
-@@ -7114,16 +7116,42 @@
-    fi
+@@ -7118,16 +7120,42 @@
+     PKG_CHECK_MODULES(LCMS, lcms >= $LCMS_VERSION)
  fi
  
- AC_SUBST(MOZ_TREE_CAIRO)
- AC_SUBST(MOZ_CAIRO_CFLAGS)
- AC_SUBST(MOZ_CAIRO_LIBS)
+ AC_SUBST(MOZ_NATIVE_LCMS)
+ AC_SUBST(LCMS_CFLAGS)
+ AC_SUBST(LCMS_LIBS)
  
  dnl ========================================================
 +dnl disable xpath services
@@ -75,7 +75,7 @@ Index: config/autoconf.mk.in
 ===================================================================
 --- config/autoconf.mk.in.orig
 +++ config/autoconf.mk.in
-@@ -188,16 +188,18 @@
+@@ -185,16 +185,18 @@
  ENABLE_STRIP	= @ENABLE_STRIP@
  
  ClientWallet=1

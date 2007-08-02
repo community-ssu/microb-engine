@@ -34,80 +34,11 @@ Index: mozilla/docshell/base/nsDocShell.cpp
      // Notify the old content viewer that it's being hidden.
      FirePageHideNotification(!mSavingOldViewer);
  
-Index: mozilla/gfx/public/nsIDeviceContext.h
-===================================================================
---- mozilla.orig/gfx/public/nsIDeviceContext.h
-+++ mozilla/gfx/public/nsIDeviceContext.h
-@@ -460,16 +460,21 @@
- 
-   /**
-    * Check to see if the DPI has changed
-    * @return whether there was actually a change in the DPI
-    *         (whether AppUnitsPerDevPixel() or AppUnitsPerInch() changed)
-   */
-   virtual PRBool CheckDPIChange() = 0;
- 
-+  virtual PRBool SetPixelScale(float aScale) = 0;
-+  float GetPixelScale() const { return mPixelScale; }
-+
- protected:
-   PRInt32 mAppUnitsPerDevPixel;
-   PRInt32 mAppUnitsPerInch;
-+  PRInt32 mAppUnitsPerDevNotScaledPixel;
-+  float   mPixelScale;
- };
- 
- NS_DEFINE_STATIC_IID_ACCESSOR(nsIDeviceContext, NS_IDEVICE_CONTEXT_IID)
- 
- #endif /* nsIDeviceContext_h___ */
-Index: mozilla/gfx/src/nsDeviceContext.cpp
-===================================================================
---- mozilla.orig/gfx/src/nsDeviceContext.cpp
-+++ mozilla/gfx/src/nsDeviceContext.cpp
-@@ -51,16 +51,17 @@
- #include "nsCRT.h"
- #include "nsIRenderingContext.h"
- 
- NS_IMPL_ISUPPORTS3(DeviceContextImpl, nsIDeviceContext, nsIObserver, nsISupportsWeakReference)
- 
- DeviceContextImpl::DeviceContextImpl()
- {
-   mAppUnitsPerDevPixel = -1;
-+  mAppUnitsPerDevNotScaledPixel = -1;
-   mAppUnitsPerInch = -1;
-   mFontCache = nsnull;
-   mWidget = nsnull;
-   mFontAliasTable = nsnull;
- 
- #ifdef NS_DEBUG
-   mInitialized = PR_FALSE;
- #endif
 Index: mozilla/gfx/src/thebes/nsThebesDeviceContext.cpp
 ===================================================================
 --- mozilla.orig/gfx/src/thebes/nsThebesDeviceContext.cpp
 +++ mozilla/gfx/src/thebes/nsThebesDeviceContext.cpp
-@@ -235,18 +235,20 @@
- 
-     } else {
-         /* set mAppUnitsPerDevPixel so we're using exactly 72 dpi, even
-          * though that means we have a non-integer number of device "pixels"
-          * per CSS pixel
-          */
-         mAppUnitsPerDevPixel = (AppUnitsPerCSSPixel() * 96) / dpi;
-     }
-+    mAppUnitsPerDevNotScaledPixel = mAppUnitsPerDevPixel;
- 
-     mAppUnitsPerInch = NSIntPixelsToAppUnits(dpi, mAppUnitsPerDevPixel);
-+    mPixelScale = (float)nsIDeviceContext::AppUnitsPerCSSPixel()/(float)mAppUnitsPerDevPixel;
- 
-     return NS_OK;
- }
- 
- NS_IMETHODIMP
- nsThebesDeviceContext::Init(nsNativeWidget aWidget)
- {
-     mWidget = aWidget;
-@@ -395,17 +397,17 @@
+@@ -397,17 +397,17 @@
  
      aFont->name = fontName;
      aFont->style = fontStyle.style;
@@ -126,19 +57,16 @@ Index: mozilla/gfx/src/thebes/nsThebesDeviceContext.cpp
  
  NS_IMETHODIMP
  nsThebesDeviceContext::CheckFontExistence(const nsString& aFaceName)
-@@ -730,8 +732,20 @@
-     PRInt32 oldDevPixels = mAppUnitsPerDevPixel;
-     PRInt32 oldInches = mAppUnitsPerInch;
- 
-     SetDPI();
- 
-     return oldDevPixels != mAppUnitsPerDevPixel ||
-            oldInches != mAppUnitsPerInch;
- }
-+
-+PRBool
-+nsThebesDeviceContext::SetPixelScale(float aScale)
-+{
+@@ -744,15 +744,24 @@
+     if (aScale <= 0) {
+         NS_NOTREACHED("Invalid pixel scale value");
+         return PR_FALSE;
+     }
+     PRInt32 oldAppUnitsPerDevPixel = mAppUnitsPerDevPixel;
+     mPixelScale = aScale;
+     UpdateScaledAppUnits();
+     return oldAppUnitsPerDevPixel != mAppUnitsPerDevPixel;
++/*
 +    if (aScale != 0.0 && mPixelScale == aScale)
 +        return PR_FALSE;
 +    if (mPixelScale == 1.0)
@@ -146,34 +74,19 @@ Index: mozilla/gfx/src/thebes/nsThebesDeviceContext.cpp
 +    mAppUnitsPerDevPixel = (PRInt32)((float)mAppUnitsPerDevNotScaledPixel / aScale);
 +    mPixelScale = aScale;
 +    return PR_TRUE;
-+}
-Index: mozilla/gfx/src/thebes/nsThebesDeviceContext.h
-===================================================================
---- mozilla.orig/gfx/src/thebes/nsThebesDeviceContext.h
-+++ mozilla/gfx/src/thebes/nsThebesDeviceContext.h
-@@ -110,16 +110,17 @@
-     NS_IMETHOD AbortDocument(void);
-     NS_IMETHOD BeginPage(void);
-     NS_IMETHOD EndPage(void);
-     /* end printing goop */
++*/
+ }
  
-     static void DebugShowCairoSurface (const char *aName, cairo_surface_t *aSurface);
- 
-     virtual PRBool CheckDPIChange();
-+    virtual PRBool SetPixelScale(float aScale);
- 
-     nsNativeWidget GetWidget() { return mWidget; }
- #ifdef XP_WIN
-     HDC GetPrintHDC() {
-         if (mPrintingSurface) {
-             NS_ASSERTION(mPrintingSurface->GetType() == gfxASurface::SurfaceTypeWin32, "invalid surface type");
-             return reinterpret_cast<gfxWindowsSurface*>(mPrintingSurface.get())->GetDC();
-         }
+ void
+ nsThebesDeviceContext::UpdateScaledAppUnits()
+ {
+     mAppUnitsPerDevPixel = PR_MAX(1, PRInt32(float(mAppUnitsPerDevNotScaledPixel) / mPixelScale));
+ }
 Index: mozilla/layout/base/nsDocumentViewer.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsDocumentViewer.cpp
 +++ mozilla/layout/base/nsDocumentViewer.cpp
-@@ -405,16 +405,17 @@
+@@ -407,16 +407,17 @@
    nsCOMPtr<nsIDOMFocusListener> mFocusListener;
  
    nsCOMPtr<nsIContentViewer> mPreviousViewer;
@@ -191,7 +104,7 @@ Index: mozilla/layout/base/nsDocumentViewer.cpp
    unsigned      mStopped : 1;
    unsigned      mLoaded : 1;
    unsigned      mDeferredWindowClose : 1;
-@@ -502,17 +503,17 @@
+@@ -504,17 +505,17 @@
  
  #endif // NS_PRINTING
  }
@@ -210,7 +123,7 @@ Index: mozilla/layout/base/nsDocumentViewer.cpp
  NS_IMPL_RELEASE(DocumentViewerImpl)
  
  NS_INTERFACE_MAP_BEGIN(DocumentViewerImpl)
-@@ -681,16 +682,17 @@
+@@ -683,16 +684,17 @@
    mWindow->GetBounds(bounds);
  
    nscoord width = mPresContext->DevPixelsToAppUnits(bounds.width);
@@ -228,7 +141,7 @@ Index: mozilla/layout/base/nsDocumentViewer.cpp
    mViewManager->SetDefaultBackgroundColor(mPresContext->DefaultBackgroundColor());
  
    if (aDoInitialReflow) {
-@@ -2514,43 +2516,50 @@
+@@ -2649,43 +2651,50 @@
              (*aFunc)(markupCV, aClosure);
            }
          }
@@ -285,18 +198,16 @@ Index: mozilla/layout/base/nsDocumentViewer.cpp
  
    if (mViewManager) {
      mViewManager->EndUpdateViewBatch(NS_VMREFRESH_NO_SYNC);
-@@ -2565,16 +2574,55 @@
-   NS_ENSURE_ARG_POINTER(aTextZoom);
-   NS_ASSERTION(!mPresContext || mPresContext->TextZoom() == mTextZoom, 
-                "mPresContext->TextZoom() != mTextZoom");
+@@ -2703,28 +2712,47 @@
  
    *aTextZoom = mTextZoom;
    return NS_OK;
  }
  
-+NS_IMETHODIMP
-+DocumentViewerImpl::SetFullZoom(float aFullZoom)
-+{
+ NS_IMETHODIMP
+ DocumentViewerImpl::SetFullZoom(float aFullZoom)
+ {
+-  if (mPresContext) {
 +  mFullZoom = aFullZoom;
 +
 +  if (mViewManager) {
@@ -313,39 +224,35 @@ Index: mozilla/layout/base/nsDocumentViewer.cpp
 +  // Now change our own zoom
 +
 +  if (mPresContext && aFullZoom != mPresContext->FullZoom()) {
-+      mPresContext->SetFullZoom(aFullZoom);
-+  }
-+
+       mPresContext->SetFullZoom(aFullZoom);
+   }
+ 
 +  if (mViewManager) {
 +    mViewManager->EndUpdateViewBatch(NS_VMREFRESH_NO_SYNC);
 +  }
 +
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+DocumentViewerImpl::GetFullZoom(float* aFullZoom)
-+{
-+  NS_ENSURE_ARG_POINTER(aFullZoom);
-+  if (mPresContext->FullZoom() != mFullZoom)
-+     printf("DocumentViewerImpl:WARNING: mPresContext->FullZoom() != mFullZoom\n");
-+  *aFullZoom = mFullZoom;
-+  return NS_OK;
-+}
-+
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ DocumentViewerImpl::GetFullZoom(float* aFullZoom)
+ {
+   NS_ENSURE_ARG_POINTER(aFullZoom);
+-  *aFullZoom = mPresContext ? mPresContext->GetFullZoom() : 1.0;
++  *aFullZoom = mPresContext ? mFullZoom : 1.0;
+   return NS_OK;
+ }
+ 
  static void
  SetChildAuthorStyleDisabled(nsIMarkupDocumentViewer* aChild, void* aClosure)
  {
    PRBool styleDisabled  = *static_cast<PRBool*>(aClosure);
    aChild->SetAuthorStyleDisabled(styleDisabled);
- }
- 
- 
 Index: mozilla/layout/base/nsPresContext.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.cpp
 +++ mozilla/layout/base/nsPresContext.cpp
-@@ -174,17 +174,18 @@
+@@ -176,17 +176,18 @@
                            NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
      mDefaultMonospaceFont("monospace", NS_FONT_STYLE_NORMAL,
                            NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
@@ -365,7 +272,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
  
    SetBackgroundImageDraw(PR_TRUE);		// always draw the background
    SetBackgroundColorDraw(PR_TRUE);
-@@ -271,16 +272,19 @@
+@@ -273,16 +274,19 @@
  #ifdef IBMBIDI
    nsContentUtils::UnregisterPrefCallback("bidi.", PrefChangedCallback, this);
  
@@ -385,7 +292,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
  
  NS_IMPL_ISUPPORTS1(nsPresContext, nsIObserver)
  
-@@ -524,16 +528,20 @@
+@@ -526,16 +530,20 @@
  
    // * document colors
    GetDocumentColorPreferences();
@@ -406,7 +313,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
    }
  
    colorStr =
-@@ -656,38 +664,69 @@
+@@ -673,24 +681,31 @@
  
  void
  nsPresContext::PreferenceChanged(const char* aPrefName)
@@ -416,7 +323,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
      bounds *= 1.0f / AppUnitsPerDevPixel();
      if (mDeviceContext->CheckDPIChange() && mShell) {
 -      mDeviceContext->FlushFontCache();
-+      //ROMAXA mDeviceContext->FlushFontCache();
++      // ROMAXA mDeviceContext->FlushFontCache();
  
 -      nsIViewManager* vm = GetViewManager();
        nscoord width = DevPixelsToAppUnits(bounds.width);
@@ -438,50 +345,12 @@ Index: mozilla/layout/base/nsPresContext.cpp
      }
      return;
    }
-   // we use a zero-delay timer to coalesce multiple pref updates
-   if (!mPrefChangedTimer)
-   {
-     mPrefChangedTimer = do_CreateInstance("@mozilla.org/timer;1");
-     if (!mPrefChangedTimer)
-       return;
-     mPrefChangedTimer->InitWithFuncCallback(nsPresContext::PrefChangedUpdateTimerCallback, (void*)this, 0, nsITimer::TYPE_ONE_SHOT);
+   if (!nsCRT::strcmp(aPrefName, sMinFontSizePref)) {
+     mAutoQualityMinFontSizePixelsPref = nsContentUtils::GetIntPref(sMinFontSizePref);
+     ClearStyleDataAndReflow();
+     return;
    }
- }
- 
- void
-+nsPresContext::SetFullZoom(float aZoom, PRBool onlyDevice)
-+{
-+  nsRect bounds(mVisibleArea);
-+  bounds *= 1.0f / AppUnitsPerDevPixel();
-+  if (!mShell || !mDeviceContext->SetPixelScale(aZoom) || onlyDevice)
-+    return;
-+  mFullZoom = aZoom;
-+//  mDeviceContext->FlushFontCache();
-+  nscoord width = DevPixelsToAppUnits(bounds.width);
-+  nscoord height = DevPixelsToAppUnits(bounds.height);
-+  if (nsContentUtils::GetBoolPref("layout.full.zoom.mode.fast", PR_FALSE)) {
-+    /* XXX this way of reflow works 3x faster, but buggy
-+       Internal scrolbars also resized (Iframe, textarea...)
-+    */
-+    mShell->FrameNeedsReflow(mShell->GetRootFrame(), nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
-+    mShell->ResizeReflow(width, height);
-+    return;
-+  }
-+  nsIViewManager* vm = GetViewManager();
-+  vm->SetWindowDimensions(width, height);
-+  ClearStyleDataAndReflow();
-+}
-+
-+void
- nsPresContext::UpdateAfterPreferencesChanged()
- {
-   mPrefChangedTimer = nsnull;
- 
-   nsCOMPtr<nsIDocShellTreeItem> docShell(do_QueryReferent(mContainer));
-   if (docShell) {
-     PRInt32 docShellType;
-     docShell->GetItemType(&docShellType);
-@@ -711,16 +750,18 @@
+@@ -733,16 +748,18 @@
  nsPresContext::Init(nsIDeviceContext* aDeviceContext)
  {
    NS_ASSERTION(!(mInitialized == PR_TRUE), "attempt to reinit pres context");
@@ -500,7 +369,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
    nsresult rv = CallGetService(kLookAndFeelCID, &mLookAndFeel);
    if (NS_FAILED(rv)) {
      NS_ERROR("LookAndFeel service must be implemented for this toolkit");
-@@ -759,16 +800,19 @@
+@@ -781,16 +798,19 @@
                                         this);
  #ifdef IBMBIDI
    nsContentUtils::RegisterPrefCallback("bidi.", PrefChangedCallback,
@@ -513,18 +382,62 @@ Index: mozilla/layout/base/nsPresContext.cpp
 +                                       nsPresContext::PrefChangedCallback,
 +                                       this);
  
+   // This is observed thanks to the browser.display. observer above.
+   mAutoQualityMinFontSizePixelsPref = nsContentUtils::GetIntPref(sMinFontSizePref);
+ 
    rv = mEventManager->Init();
    NS_ENSURE_SUCCESS(rv, rv);
  
    mEventManager->SetPresContext(this);
+@@ -1078,31 +1098,40 @@
  
- #ifdef DEBUG
-   mInitialized = PR_TRUE;
+ const nsFont*
+ nsPresContext::GetDefaultFontExternal(PRUint8 aFontID) const
+ {
+   return GetDefaultFontInternal(aFontID);
+ }
+ 
+ void
+-nsPresContext::SetFullZoom(float aZoom)
++nsPresContext::SetFullZoom(float aZoom, PRBool onlyDevice)
+ {
+   nsPresContext* rootPresContext = RootPresContext();
+   if (rootPresContext != this) {
+     NS_WARNING("Zoom set on non-root prescontext");
+     rootPresContext->SetFullZoom(aZoom);
+     return;
+   }
+   nsRect bounds(mVisibleArea);
+   bounds.ScaleRoundPreservingCentersInverse(AppUnitsPerDevPixel());
+-  if (!mShell || !mDeviceContext->SetPixelScale(aZoom))
++  if (!mShell || !mDeviceContext->SetPixelScale(aZoom) || onlyDevice)
+     return;
+-  mDeviceContext->FlushFontCache();
++  mFullZoom = aZoom;
++  // mDeviceContext->FlushFontCache();
+   nscoord width = DevPixelsToAppUnits(bounds.width);
+   nscoord height = DevPixelsToAppUnits(bounds.height);
++  if (nsContentUtils::GetBoolPref("layout.full.zoom.mode.fast", PR_FALSE)) {
++    /* XXX this way of reflow works 3x faster, but buggy
++       Internal scrolbars also resized (Iframe, textarea...)
++    */
++    mShell->FrameNeedsReflow(mShell->GetRootFrame(), nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
++    mShell->ResizeReflow(width, height);
++    return;
++  }
+   GetViewManager()->SetWindowDimensions(width, height);
+   ClearStyleDataAndReflow();
+ }
+ 
+ imgIRequest*
+ nsPresContext::LoadImage(imgIRequest* aImage, nsIFrame* aTargetFrame)
+ {
+   // look and see if we have a loader for the target frame.
 Index: mozilla/layout/base/nsPresContext.h
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.h
 +++ mozilla/layout/base/nsPresContext.h
-@@ -444,27 +444,31 @@
+@@ -457,28 +457,32 @@
    float GetPrintPreviewScale() { return mPPScale; }
    void SetPrintPreviewScale(float aScale) { mPPScale = aScale; }
  
@@ -535,17 +448,18 @@ Index: mozilla/layout/base/nsPresContext.h
    float TextZoom() { return mTextZoom; }
 +  float FullZoom() { return mFullZoom; }
 +  PRBool TrueZoomMode() { return mTrueZoomMode; }
-   void SetTextZoomInternal(float aZoom) {
+   void SetTextZoom(float aZoom) {
      mTextZoom = aZoom;
      ClearStyleDataAndReflow();
    }
-   virtual NS_HIDDEN_(void) SetTextZoomExternal(float aZoom);
- #ifdef _IMPL_NS_LAYOUT
-   void SetTextZoom(float aZoom) { SetTextZoomInternal(aZoom); }
- #else
-   void SetTextZoom(float aZoom) { SetTextZoomExternal(aZoom); }
- #endif
  
+   float GetFullZoom() {return mDeviceContext->GetPixelScale();}
+   void SetFullZoom(float aZoom);
+ 
+   nscoord GetAutoQualityMinFontSize() {
+     return DevPixelsToAppUnits(mAutoQualityMinFontSizePixelsPref);
+   }
+   
 +  void SetFullZoom(float aZoom, PRBool onlyDevice = PR_FALSE);
 +
    static PRInt32 AppUnitsPerCSSPixel() { return nsIDeviceContext::AppUnitsPerCSSPixel(); }
@@ -556,7 +470,7 @@ Index: mozilla/layout/base/nsPresContext.h
    { return NSIntPixelsToAppUnits(aPixels,
                                   nsIDeviceContext::AppUnitsPerCSSPixel()); }
  
-@@ -740,16 +744,17 @@
+@@ -754,16 +758,17 @@
  
    nsILinkHandler*       mLinkHandler;   // [WEAK]
    nsIAtom*              mLangGroup;     // [STRONG]
@@ -566,6 +480,7 @@ Index: mozilla/layout/base/nsPresContext.h
  
    float                 mTextZoom;      // Text zoom, defaults to 1.0
 +  float                 mFullZoom;      // Text zoom, defaults to 1.0
+   PRInt32               mAutoQualityMinFontSizePixelsPref;
  
  #ifdef IBMBIDI
    nsBidiPresUtils*      mBidiUtils;
@@ -573,8 +488,7 @@ Index: mozilla/layout/base/nsPresContext.h
  
    nsCOMPtr<nsITheme> mTheme;
    nsCOMPtr<nsILanguageAtomService> mLangService;
-   nsCOMPtr<nsIPrintSettings> mPrintSettings;
-@@ -816,16 +821,17 @@
+@@ -831,16 +836,17 @@
  #ifdef IBMBIDI
    unsigned              mIsVisual : 1;
    unsigned              mIsBidiSystem : 1;
@@ -592,30 +506,6 @@ Index: mozilla/layout/base/nsPresContext.h
  
    // these are private, use the list in nsFont.h if you want a public list
    enum {
-Index: mozilla/docshell/base/nsIMarkupDocumentViewer.idl
-===================================================================
---- mozilla.orig/docshell/base/nsIMarkupDocumentViewer.idl
-+++ mozilla/docshell/base/nsIMarkupDocumentViewer.idl
-@@ -59,16 +59,19 @@
- 	/*
- 	Scrolls to a given DOM content node. 
- 	*/
- 	void scrollToNode(in nsIDOMNode node);
- 
- 	/** The amount by which to scale all text. Default is 1.0. */
- 	attribute float textZoom;
- 
-+	/** The amount by which to scale all layout. Default is 1.0. */
-+	attribute float fullZoom;
-+
- 	/** Disable entire author style level (including HTML presentation hints) */
- 	attribute boolean authorStyleDisabled;
- 
- 	/*
- 	XXX Comment here!
- 	*/
- 	attribute ACString defaultCharacterSet;
- 
 Index: mozilla/gfx/src/thebes/nsSystemFontsGTK2.cpp
 ===================================================================
 --- mozilla.orig/gfx/src/thebes/nsSystemFontsGTK2.cpp
@@ -707,7 +597,7 @@ Index: mozilla/layout/generic/nsGfxScrollFrame.cpp
  
    // We're forcing the padding on our scrolled frame, so let it know what that
    // padding is.
-@@ -1418,20 +1420,25 @@
+@@ -1416,20 +1418,25 @@
    }
  
    if (mIsRoot) {
@@ -733,3 +623,35 @@ Index: mozilla/layout/generic/nsGfxScrollFrame.cpp
    }
  
    NS_ASSERTION(result.mHorizontal != NS_STYLE_OVERFLOW_VISIBLE &&
+--- mozilla/layout/base/nsPresContext.h.orig	2007-08-02 11:11:19.000000000 +0300
++++ mozilla/layout/base/nsPresContext.h	2007-08-02 14:27:02.000000000 +0300
+@@ -463,28 +463,26 @@ public:
+ 
+   float TextZoom() { return mTextZoom; }
+   float FullZoom() { return mFullZoom; }
+   PRBool TrueZoomMode() { return mTrueZoomMode; }
+   void SetTextZoom(float aZoom) {
+     mTextZoom = aZoom;
+     ClearStyleDataAndReflow();
+   }
+ 
+   float GetFullZoom() {return mDeviceContext->GetPixelScale();}
+-  void SetFullZoom(float aZoom);
++  void SetFullZoom(float aZoom, PRBool onlyDevice = PR_FALSE);
+ 
+   nscoord GetAutoQualityMinFontSize() {
+     return DevPixelsToAppUnits(mAutoQualityMinFontSizePixelsPref);
+   }
+   
+-  void SetFullZoom(float aZoom, PRBool onlyDevice = PR_FALSE);
+-
+   static PRInt32 AppUnitsPerCSSPixel() { return nsIDeviceContext::AppUnitsPerCSSPixel(); }
+   PRInt32 AppUnitsPerDevPixel() const  { return mDeviceContext->AppUnitsPerDevPixel(); }
+   PRInt32 AppUnitsPerInch() const      { return mDeviceContext->AppUnitsPerInch(); }
+ 
+   static nscoord CSSPixelsToAppUnits(PRInt32 aPixels)
+   { return NSIntPixelsToAppUnits(aPixels,
+                                  nsIDeviceContext::AppUnitsPerCSSPixel()); }
+ 
+   static nscoord CSSPixelsToAppUnits(float aPixels)
+   { return NSFloatPixelsToAppUnits(aPixels,

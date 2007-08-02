@@ -151,7 +151,7 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
  #include "nsFrameTraversal.h"
  #include "nsIArray.h"
  #include "nsIBaseWindow.h"
-@@ -276,9 +281,8 @@
+@@ -269,9 +274,8 @@
        scriptContext->SetScriptsEnabled(PR_TRUE, PR_TRUE);
      }
        
@@ -176,11 +176,11 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
  #include "nsSpatialNavigationPrivate.h"
 +#include "nsComponentManagerUtils.h"
 +#include "nsRect.h"
+ #include "nsIDOMNSElement.h"
+ #include "nsIDOMTextRectangle.h"
  
  #ifdef DEBUG_outputframes
  #include "nsIFrameDebug.h"
  #endif
  
  static PRBool is_space(char c)
- {
-   return (c == ' '  || c == '\f' || c == '\n' ||
