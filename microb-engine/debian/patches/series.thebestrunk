@@ -14,7 +14,7 @@ snav/962_snav_improvements.diff
 #snav/990_spatial_stylus_navigation.diff
 snav/555_BUG_52019.diff
 snav/BUG_55568_invalid_read.vl.diff
-snav/BUG_FirstElSkip.diff
+last_trunk/snav/BUG_FirstElSkip.trunk.diff
 snav/BUG_Visiblity.diff
 snav/BUG_NewUnitsForSnav.diff
 snav/BUG_FixBrokenDirection.diff
@@ -37,7 +37,7 @@ last_trunk/140_BUG340510_nsBoxObject.trunk.diff
 150_BUG_testgtkembed-pushpopembed.diff
 last_trunk/155_BUG_mainthreadalreadydead.trunk.diff
 160_MICROB_about_fixes_lp0.diff -p0
-165_BUILDFIX_libxul_no_nss.diff
+last_trunk/165_BUILDFIX_libxul_no_nss.trunk.diff
 last_trunk/170_MICROB_xslt_xpath_disable_lp0.trunk.diff -p0
 last_trunk/175_MICROB_bad_cert_at_once_lp0.trunk.diff -p0
 180_MICROB_fittoview_extension.diff
@@ -90,8 +90,8 @@ perf_addon/605_css_erros_parsing_disable.diff
 
 #debug_tools/images_debug.diff
 415_cairo_fast_image_render.diff
-420_total_cairo_unantialias.diff
-425_cairo_buggy_repeat_fix.diff
+last_trunk/420_total_cairo_unantialias.trunk.diff
+last_trunk/425_cairo_buggy_repeat_fix.trunk.diff
 #debug_tools/cairo_debug_composite.diff
 last_trunk/435_BUG375179_spellcheck_libxul.trunk.diff
 
@@ -128,7 +128,7 @@ gtkmozembed/001_gnomevfs_downloads.diff
 570_thumb_supporting_stuff.diff
 575_js_handler_events_info.diff
 crash/625_BUG56960_layout_indexof_crash.diff 
-580_focus_for_visible_area.diff
+last_trunk/580_focus_for_visible_area.trunk.diff
 590_added_vertical_resize_flag.diff
 
 #Extension Manager
@@ -141,7 +141,7 @@ last_trunk/600_extension_manager.trunk.diff
 
 
 621_native_theme_supporting_old.diff
-620_native_theme_supporting.diff
+last_trunk/620_native_theme_supporting.trunk.diff
 last_trunk/620_BUG_333869.fix.trunk.diff
 630_bigger_ua_string_length_61630.diff
 635_GetRootScrollFrameOpen.diff
@@ -192,6 +192,3 @@ crash/JS_Destroy.Crash.diff
 
 480_BUG377077_probably_workaround_fix.diff
 485_netwerk_buffer_count.diff
-
-
-
