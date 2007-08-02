@@ -204,47 +204,47 @@ perf_addon/JSBreakExperimental.diff
 
 #Part which not included in minimal patchset
 
-075_JS_DUMP_lp0.diff -p0
-080_OUTSIDE_js_binary.diff
+#075_JS_DUMP_lp0.diff -p0
+#080_OUTSIDE_js_binary.diff
 090_LAYOUT_LOGGIN_FINALIZE_lp0.diff -p0
-110_MICROB_scroll_topleft.diff
-145_BUG_small_encoders_count.diff
-210_BUG242145_jidctint.diff
-260_240282_perf_load_lp0.diff -p0
-265_bad_unicode_symbol_lp0.diff -p0
-275_BUG_353882_lp0.diff -p0
-280_BUG_339358_lp0.diff -p0
-285_BUG_311566.diff
-305_HACK_BOLDER_WEIGHT.diff
+#110_MICROB_scroll_topleft.diff
+#145_BUG_small_encoders_count.diff
+#210_BUG242145_jidctint.diff
+#260_240282_perf_load_lp0.diff -p0
+#265_bad_unicode_symbol_lp0.diff -p0
+#275_BUG_353882_lp0.diff -p0
+#280_BUG_339358_lp0.diff -p0
+#285_BUG_311566.diff
+#305_HACK_BOLDER_WEIGHT.diff
 310_BUG_915.diff
-360_BUG368182_xft_engine.diff
-365_BUG367177_thebes_text_Frame.diff
+#360_BUG368182_xft_engine.diff
+#365_BUG367177_thebes_text_Frame.diff
 
 #Place for Reflow Branch related patches
-reflow/attachment.cgi?id=247769.diff
-reflow/attachment.cgi?id=247914.diff
+#reflow/attachment.cgi?id=247769.diff
+#reflow/attachment.cgi?id=247914.diff
 reflow/attachment.cgi?id=248028.diff
-reflow/attachment.cgi?id=248061.diff
-reflow/attachment.cgi?id=248241.diff
-reflow/attachment.cgi?id=251149.diff
+#reflow/attachment.cgi?id=248061.diff
+#reflow/attachment.cgi?id=248241.diff
+#reflow/attachment.cgi?id=251149.diff
 reflow/BUG_381507_gmail.chats.diff
 
-375_jprof_linking_fix.diff
-380_XFT_ALWAYS_FIX.diff
-385_system_cairo_build.diff
+#375_jprof_linking_fix.diff
+#380_XFT_ALWAYS_FIX.diff
+#385_system_cairo_build.diff
 430_bug372703_bustage_fix.diff
 
 crash/395_TrimSpaceFixCrash.diff
-crash/465_NB53478_cache_session_crash.diff
+#crash/465_NB53478_cache_session_crash.diff
 crash/FitToViewRandomCrashes.diff
 crash/JS_Destroy.Crash.diff
-crash/nsRuleNodeWalkTree.crash.debug.diff
+#crash/nsRuleNodeWalkTree.crash.debug.diff
 
-440_BUG376279_security_cross_compile.diff
-445_nspr_dpkg_cross.diff
-450_host_libidl_dpkg_cross.diff
-455_xpcom_uclibc.diff
-460_uclibc_strings_index.diff
+#440_BUG376279_security_cross_compile.diff
+#445_nspr_dpkg_cross.diff
+#450_host_libidl_dpkg_cross.diff
+#455_xpcom_uclibc.diff
+#460_uclibc_strings_index.diff
 
 480_BUG377077_probably_workaround_fix.diff
 485_netwerk_buffer_count.diff
