@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# cd microb-engine/debian/patches 
+# ../resources/tools/patch_des.sh series.thebestrunk  > patches.html
+
 mkdir ./temp_patches
 for str in `cat $1`; do cp $str ./temp_patches/ 2>&1| > /dev/null; done
 cd ./temp_patches
