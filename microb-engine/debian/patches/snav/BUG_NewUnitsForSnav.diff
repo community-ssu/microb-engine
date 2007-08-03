@@ -1,3 +1,5 @@
+# Bug 390426  [spatial] Integer Overflow after new Units migration
+#
 Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
 ===================================================================
 --- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp

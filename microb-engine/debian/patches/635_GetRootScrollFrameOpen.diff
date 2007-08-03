@@ -1,3 +1,5 @@
+# Open GetRootScrollFrame symbol for using it in panning functionality in gtkmozembed
+# Fast WorkAround
 --- mozilla/layout/base/nsIPresShell.h.orig	2007-08-01 04:10:46.000000000 +0300
 +++ mozilla/layout/base/nsIPresShell.h	2007-08-01 03:50:47.000000000 +0300
 @@ -292,21 +292,21 @@ public:

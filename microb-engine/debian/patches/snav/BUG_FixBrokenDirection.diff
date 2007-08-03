@@ -1,3 +1,6 @@
+# Some times after using fudge function width and height gets negative value 
+# Workaround? (may be not)
+#
 diff -ruN -p -U10 mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
 --- mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2007-07-14 17:01:17.000000000 +0300
 +++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2007-07-15 12:29:43.000000000 +0300

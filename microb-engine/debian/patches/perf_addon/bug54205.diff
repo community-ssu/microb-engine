@@ -1,3 +1,4 @@
+# Hide all not used symbols from engine
 diff -Naur mozilla.orig/toolkit/library/libxul-export.map mozilla/toolkit/library/libxul-export.map
 --- mozilla.orig/toolkit/library/libxul-export.map	1970-01-01 00:00:00.000000000 +0000
 +++ mozilla/toolkit/library/libxul-export.map	2007-04-15 15:30:34.000000000 +0000

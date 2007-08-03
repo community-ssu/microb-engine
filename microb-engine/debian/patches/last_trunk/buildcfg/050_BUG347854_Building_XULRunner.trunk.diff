@@ -1,3 +1,4 @@
+# BUG347854_Building_XULRunner
 Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp

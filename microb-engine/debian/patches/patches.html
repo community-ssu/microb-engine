@@ -14,10 +14,10 @@
 </td></tr>
 <tr><td> ./bug54205.diff </td>
 <td>
+<br> Hide all not used symbols from engine
 </td></tr>
 <tr><td> ./575_js_handler_events_info.diff </td>
 <td>
-<br> author: romaxa
 <br> I hope it will be possible to integrate this feature in Gecko...
 <br> It will allow to know about some events which was handled by JS handlers (Allow to make more better stylus/panning/ajax iteractions handling)
 </td></tr>
@@ -52,6 +52,8 @@
 </td></tr>
 <tr><td> ./635_GetRootScrollFrameOpen.diff </td>
 <td>
+<br> Open GetRootScrollFrame symbol for using it in panning functionality in gtkmozembed
+<br> Fast WorkAround
 </td></tr>
 <tr><td> ./615_do_not_load_partial_cached_content.diff </td>
 <td>
@@ -97,6 +99,8 @@
 </td></tr>
 <tr><td> ./240_Sound_Drag_XIM_disable.trunk.diff </td>
 <td>
+<br> Footprint race
+<br> Removing services wich probably useless on our device
 </td></tr>
 <tr><td> ./185_MICROB_imagezoom_extension.diff </td>
 <td>
@@ -132,6 +136,10 @@
 </td></tr>
 <tr><td> ./BUG_Visiblity.diff </td>
 <td>
+<br> Workaround
+<br> Some times spatial navigation cant see some elements
+<br> Probably coordinates calculation bug, may be somethin else wrong in viewManager->GetRectVisibility
+<br> usage
 </td></tr>
 <tr><td> ./315_XMLPRETTY_PRINT.diff </td>
 <td>
@@ -145,6 +153,9 @@
 </td></tr>
 <tr><td> ./BUG_FixBrokenDirection.diff </td>
 <td>
+<br> Some times after using fudge function width and height gets negative value 
+<br> Workaround? (may be not)
+<br>
 </td></tr>
 <tr><td> ./580_focus_for_visible_area.trunk.diff </td>
 <td>
@@ -175,6 +186,8 @@
 </td></tr>
 <tr><td> ./BUG_NewUnitsForSnav.diff </td>
 <td>
+<br> Bug 390426  [spatial] Integer Overflow after new Units migration
+<br>
 </td></tr>
 <tr><td> ./145_BUG_small_encoders_count.diff </td>
 <td>
@@ -240,6 +253,9 @@
 </td></tr>
 <tr><td> ./FitToViewRandomCrashes.diff </td>
 <td>
+<br> Once when engine was crashes after some memory corruptions in other place
+<br> It was crashes somewhere here... some workaround checks...
+<br> Probably it is wrong
 </td></tr>
 <tr><td> ./485_netwerk_buffer_count.diff </td>
 <td>
@@ -248,6 +264,8 @@
 </td></tr>
 <tr><td> ./035_BUG350363_xmlextras_toolkit_define_using.diff </td>
 <td>
+<br> BUG350363
+<br> Probably already useless patch
 </td></tr>
 <tr><td> ./445_nspr_dpkg_cross.diff </td>
 <td>
@@ -297,6 +315,8 @@
 </td></tr>
 <tr><td> ./BUG_FirstElSkip.trunk.diff </td>
 <td>
+<br> Looks like we always skipping first element while enumerating frames...
+<br> Fix for disabling such behaviour as scrolling and focus moving together
 </td></tr>
 <tr><td> ./415_cairo_fast_image_render.diff </td>
 <td>
@@ -317,6 +337,7 @@
 </td></tr>
 <tr><td> ./460_stylecontext_random_crash.diff </td>
 <td>
+<br> Not sure about this fix, but once it was crashed here...
 </td></tr>
 <tr><td> ./450_host_libidl_dpkg_cross.diff </td>
 <td>
@@ -329,6 +350,7 @@
 </td></tr>
 <tr><td> ./395_TrimSpaceFixCrash.diff </td>
 <td>
+<br> Some random crashes fixes (workarounds) after memory corruptions 
 </td></tr>
 <tr><td> ./555_connect_move_signal_after_default.diff </td>
 <td>
@@ -364,6 +386,7 @@
 </td></tr>
 <tr><td> ./550_BUG54340_optimization_options.diff </td>
 <td>
+<br> Codesourcery gcc 3.4.4 compiler workarounds
 </td></tr>
 <tr><td> ./300_BUG372081_disable_profile_sighandler.diff </td>
 <td>
@@ -372,6 +395,8 @@
 </td></tr>
 <tr><td> ./480_BUG377077_probably_workaround_fix.diff </td>
 <td>
+<br> Once or twice it was crashes here...
+<br> Random crash workaround fix
 </td></tr>
 <tr><td> ./375_jprof_linking_fix.diff </td>
 <td>
@@ -403,6 +428,7 @@
 </td></tr>
 <tr><td> ./545_BUG54340_findkeyword_inline.diff </td>
 <td>
+<br> Somebody says it will increase speed
 </td></tr>
 <tr><td> ./220_NO_WEBBRZ_CHROME_LISTNRS_lp0.diff </td>
 <td>
@@ -465,9 +491,13 @@
 </td></tr>
 <tr><td> ./BUG_zero_size_links.diff </td>
 <td>
+<br> Some <a> links (ex: google.com 1 2 3 4 5 ...) have size 0                                                                                                             
+<br> Check their parent
+<br> Probably we have to check child instead  parent...
 </td></tr>
 <tr><td> ./962_snav_improvements.diff </td>
 <td>
+<br> Don't remember what is it :(
 </td></tr>
 <tr><td> ./205_BUILD_CONFIG_xul_manual_enable.diff </td>
 <td>
@@ -496,6 +526,7 @@
 </td></tr>
 <tr><td> ./540_BUG54340_js_malloc.diff </td>
 <td>
+<br> Some Performance optimizations
 </td></tr>
 <tr><td> ./490_minimize_paint_delay.diff </td>
 <td>
@@ -511,6 +542,7 @@
 </td></tr>
 <tr><td> ./JS_Destroy.Crash.diff </td>
 <td>
+<br> JS Crash fix (google, zooming ... don't remember exact testcase, but not very random)
 </td></tr>
 <tr><td> ./570_thumb_supporting_stuff.diff </td>
 <td>
@@ -520,6 +552,8 @@
 </td></tr>
 <tr><td> ./555_BUG_52019.diff </td>
 <td>
+<br> Hack to emulate mouse movements when navigate with keyboard
+<br> Help for some pages with JS menus...
 </td></tr>
 <tr><td> ./110_MICROB_scroll_topleft.diff </td>
 <td>
@@ -548,6 +582,8 @@
 </td></tr>
 <tr><td> ./605_css_erros_parsing_disable.diff </td>
 <td>
+<br> XXX turn this off for minimo builds
+<br> 
 </td></tr>
 <tr><td> ./590_added_vertical_resize_flag.diff </td>
 <td>
@@ -612,10 +648,10 @@
 </td></tr>
 <tr><td> ./050_BUG347854_Building_XULRunner.trunk.diff </td>
 <td>
+<br> BUG347854_Building_XULRunner
 </td></tr>
 <tr><td> ./545_jsevent.policy.renamer.diff </td>
 <td>
-<br> author: romaxa
 <br> Hack which will allow to disable some mouse events or replace it with others...
 <br> Ex: Replace mousedown on mouseclick on gmail (problems with stylus iteractions)
 </td></tr>
@@ -625,12 +661,18 @@
 </td></tr>
 <tr><td> ./620_BUG_333869.fix.trunk.diff </td>
 <td>
+<br> Bug 333869  After changing designMode, the input element become unusable
 </td></tr>
 <tr><td> ./new_cached_scale.trunk.diff </td>
 <td>
+<br> Not very good way to do pre-scaling
+<br> See https://bugzilla.mozilla.org/show_bug.cgi?id=386440
+<br> https://bugzilla.mozilla.org/show_bug.cgi?id=386440<br>c10
+<br> Also we have to find any way to create gfx backend with minimal Xrender functionality
 </td></tr>
 <tr><td> ./001_gnomevfs_downloads.diff </td>
 <td>
+<br> Engine part for enabling saving/downloading on different protocols gnomevfs/smb...
 </td></tr>
 <tr><td> ./070_BUILDFIX_embedding_tests.diff </td>
 <td>
@@ -640,6 +682,8 @@
 </td></tr>
 <tr><td> ./045_getClientRects.diff </td>
 <td>
+<br> As I understand it is already in trunk
+<br> Probably useless patch
 </td></tr>
 <tr><td> ./560_NativeSuspendImplementation.diff </td>
 <td>

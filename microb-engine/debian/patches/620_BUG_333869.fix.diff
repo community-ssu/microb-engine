@@ -1,4 +1,4 @@
-# BMO 333869. Patch imported from the bug.
+# Bug 333869  After changing designMode, the input element become unusable
 Index: nsDocShellEditorData.cpp
 ===================================================================
 RCS file: /cvsroot/mozilla/docshell/base/nsDocShellEditorData.cpp,v

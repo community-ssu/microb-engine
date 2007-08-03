@@ -1,3 +1,4 @@
+# Engine part for enabling saving/downloading on different protocols gnomevfs/smb...
 Index: EmbedDownloadMgr.cpp
 ===================================================================
 RCS file: /opt/tinderbox/rsync/cvs.mozilla.org/mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.cpp,v

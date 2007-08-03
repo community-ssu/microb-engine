@@ -1,3 +1,5 @@
+# Footprint race
+# Removing services wich probably useless on our device
 Index: mozilla/widget/src/gtk2/Makefile.in
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/Makefile.in

@@ -1,3 +1,5 @@
+# Looks like we always skipping first element while enumerating frames...
+# Fix for disabling such behaviour as scrolling and focus moving together
 Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
 ===================================================================
 --- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp

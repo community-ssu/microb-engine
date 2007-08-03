@@ -1,3 +1,4 @@
+# Some random crashes fixes (workarounds) after memory corruptions 
 Index: mozilla/xpcom/string/src/nsTStringObsolete.cpp
 ===================================================================
 --- mozilla.orig/xpcom/string/src/nsTStringObsolete.cpp

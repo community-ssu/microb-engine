@@ -1,3 +1,4 @@
+# Somebody says it will increase speed
 diff -Naur mozilla.old/js/src/jsscan.c mozilla/js/src/jsscan.c
 --- mozilla.old/js/src/jsscan.c 2007-04-17 11:44:03.000000000 +0000
 +++ mozilla/js/src/jsscan.c 2007-04-20 16:23:01.000000000 +0000

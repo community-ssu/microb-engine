@@ -1,3 +1,5 @@
+# Hack to emulate mouse movements when navigate with keyboard
+# Help for some pages with JS menus...
 Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
 ===================================================================
 --- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp

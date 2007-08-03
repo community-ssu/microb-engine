@@ -1,3 +1,5 @@
+# XXX turn this off for minimo builds
+# 
 --- mozilla/layout/style/nsCSSScanner.h.orig	2007-06-04 21:34:02.000000000 +0300
 +++ mozilla/layout/style/nsCSSScanner.h	2007-06-04 21:34:07.000000000 +0300
 @@ -40,21 +40,21 @@

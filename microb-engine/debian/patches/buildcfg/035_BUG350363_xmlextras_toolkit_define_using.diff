@@ -1,3 +1,5 @@
+# BUG350363
+# Probably already useless patch
 Index: mozilla/toolkit/library/libxul-config.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-config.mk

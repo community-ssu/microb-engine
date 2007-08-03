@@ -1,3 +1,4 @@
+# Some Performance optimizations
 diff -Naur mozilla.old/js/src/jsapi.c mozilla/js/src/jsapi.c
 --- mozilla.old/js/src/jsapi.c	2007-04-17 11:44:02.000000000 +0000
 +++ mozilla/js/src/jsapi.c	2007-04-22 15:33:37.000000000 +0000

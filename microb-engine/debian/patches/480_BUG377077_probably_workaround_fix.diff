@@ -1,3 +1,5 @@
+# Once or twice it was crashes here...
+# Random crash workaround fix
 Index: mozilla/layout/generic/nsBlockFrame.cpp
 ===================================================================
 --- mozilla.orig/layout/generic/nsBlockFrame.cpp

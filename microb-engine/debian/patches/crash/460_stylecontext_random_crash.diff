@@ -1,3 +1,4 @@
+# Not sure about this fix, but once it was crashed here...
 --- mozilla/layout/style/nsStyleContext.cpp.orig	2007-01-30 15:19:55.000000000 +0200
 +++ mozilla/layout/style/nsStyleContext.cpp	2007-03-27 09:16:39.286476000 +0300
 @@ -166,21 +166,21 @@ nsStyleContext::FindChildWithRules(const

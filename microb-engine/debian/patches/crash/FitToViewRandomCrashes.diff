@@ -1,3 +1,6 @@
+# Once when engine was crashes after some memory corruptions in other place
+# It was crashes somewhere here... some workaround checks...
+# Probably it is wrong
 --- mozilla/layout/style/nsStyleStruct.cpp.orig	2007-05-16 18:51:38.000000000 +0300
 +++ mozilla/layout/style/nsStyleStruct.cpp	2007-06-19 14:43:41.000000000 +0300
 @@ -1577,21 +1578,21 @@ nsStyleUserInterface::nsStyleUserInterfa

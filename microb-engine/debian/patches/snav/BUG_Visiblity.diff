@@ -1,3 +1,7 @@
+# Workaround
+# Some times spatial navigation cant see some elements
+# Probably coordinates calculation bug, may be somethin else wrong in viewManager->GetRectVisibility
+# usage
 diff -ruN -p -U10 mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
 --- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2007-07-15 14:07:18.000000000 +0300
 +++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2007-07-15 14:17:01.000000000 +0300

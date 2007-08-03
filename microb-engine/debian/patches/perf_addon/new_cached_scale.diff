@@ -1,3 +1,7 @@
+# Not very good way to do pre-scaling 
+# See https://bugzilla.mozilla.org/show_bug.cgi?id=386440
+# https://bugzilla.mozilla.org/show_bug.cgi?id=386440#c10
+# Also we have to find any way to create gfx backend with minimal Xrender functionality
 Index: mozilla/gfx/src/thebes/nsThebesImage.h
 ===================================================================
 --- mozilla.orig/gfx/src/thebes/nsThebesImage.h

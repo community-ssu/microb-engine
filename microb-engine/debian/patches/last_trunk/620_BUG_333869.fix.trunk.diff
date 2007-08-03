@@ -1,3 +1,4 @@
+# Bug 333869  After changing designMode, the input element become unusable
 Index: mozilla/docshell/base/nsDocShellEditorData.cpp
 ===================================================================
 --- mozilla.orig/docshell/base/nsDocShellEditorData.cpp

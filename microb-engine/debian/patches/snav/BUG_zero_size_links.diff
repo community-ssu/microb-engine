@@ -1,3 +1,6 @@
+# Some <a> links (ex: google.com 1 2 3 4 5 ...) have size 0                                                                                                             
+# Check their parent
+# Probably we have to check child instead  parent...
 --- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h.orig	2007-07-15 14:21:48.000000000 +0300
 +++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2007-07-16 10:03:42.000000000 +0300
 @@ -215,20 +215,21 @@ nsresult createFrameTraversal         (n

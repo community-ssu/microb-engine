@@ -1,3 +1,4 @@
+# Codesourcery gcc 3.4.4 compiler workarounds
 Index: mozilla/embedding/browser/gtk/src/Makefile.in
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/src/Makefile.in
