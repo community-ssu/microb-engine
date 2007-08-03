@@ -1,0 +1,700 @@
+<html><table border="2">
+<tr><td> ./610_image_loading_only_cached.diff </td>
+<td>
+<br> Some fixes for image loading like Opera
+</td></tr>
+<tr><td> ./385_system_cairo_build.diff </td>
+<td>
+<br> Fixed building with system cairo library
+<br> 
+</td></tr>
+<tr><td> ./065_PREF_METRICS_TOOLKIT_lp0.diff </td>
+<td>
+<br> Broken linkage with PERF Metrics tools in XULRUNNER Configuration
+</td></tr>
+<tr><td> ./bug54205.diff </td>
+<td>
+</td></tr>
+<tr><td> ./575_js_handler_events_info.diff </td>
+<td>
+<br> author: romaxa
+<br> I hope it will be possible to integrate this feature in Gecko...
+<br> It will allow to know about some events which was handled by JS handlers (Allow to make more better stylus/panning/ajax iteractions handling)
+</td></tr>
+<tr><td> ./530_BUG54742rss_add_support.diff </td>
+<td>
+<br> Add support for some rss types
+<br> works XMLPrettyPrint hacks
+</td></tr>
+<tr><td> ./415_BUG371882_Editor_Crash.diff </td>
+<td>
+<br> Bug 371882  Editor crashed in nsHTMLEditor::GetCSSBackgroundColorState 
+<br> 52020 Browser crashes on page: http://www.spellchecker.net/asp/CuteEditor/scayt_Demo.asp
+</td></tr>
+<tr><td> ./275_BUG_353882_lp0.trunk.diff </td>
+<td>
+<br>353882
+<br>performance enhancements to nsCSSFrameConstructor::ConstructFrameByDisplayType
+</td></tr>
+<tr><td> ./080_OUTSIDE_js_binary.diff </td>
+<td>
+<br> 25_entropy.dpatch by Mike Hommey <glandium@debian.org>
+<br>
+<br> All lines beginning with `<br><br> DP:' are a description of the patch.
+<br> DP: Remove code that called netstat to gain so called entropy. It's pretty
+<br> DP: useless on a Linux system. Thanks Wichert Akkerman. bz<br>51429.
+</td></tr>
+<tr><td> ./495_layout_state_listener.trunk.diff </td>
+<td>
+<br> Allow to get info about First frame painting
+<br> Related to hacks with progress bar
+<br> gtkmozembed 220_connection_state_optimization2.diff
+</td></tr>
+<tr><td> ./635_GetRootScrollFrameOpen.diff </td>
+<td>
+</td></tr>
+<tr><td> ./615_do_not_load_partial_cached_content.diff </td>
+<td>
+<br> Preventing microb to read partial cached content. It causes some problems on download stuff.
+<br> Solved bug: 43765
+</td></tr>
+<tr><td> ./thread_wait_block.diff </td>
+<td>
+<br> Experimental patch for fixing problem with live locks in thread system
+<br> Fixed random hangs on page load
+<br> need to check on crashes
+</td></tr>
+<tr><td> ./attachment.cgi?id=246204.trunk.diff </td>
+<td>
+<br>Bug 360789  White/brown/gray sporadic squares when refreshing a page
+<br>
+</td></tr>
+<tr><td> ./075_JS_DUMP_lp0.diff </td>
+<td>
+<br> Enable JS_DUMP for our build
+<br> Probably can be disabled for default build
+<br> Also some automatic tests can't see console output without "\n"
+<br> Probably can be fixed more properly
+</td></tr>
+<tr><td> ./165_BUILDFIX_libxul_no_nss.trunk.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Building libxul when enabled system nss
+<br> NOBUGFIXME
+</td></tr>
+<tr><td> ./435_BUG375179_spellcheck_libxul.trunk.diff </td>
+<td>
+<br> BMO 375179. Patch imported from the bug.
+<br> Allow building spellchecker as separate extension
+</td></tr>
+<tr><td> ./140_BUG340510_nsBoxObject.trunk.diff </td>
+<td>
+<br><br> Patches for microb-engine
+<br><br> Oleg Romashin <oleg.romashin@nokia.com>
+<br><br>
+<br><br> DP: Fix for working with calendar.gmail.com with disables xul.
+</td></tr>
+<tr><td> ./240_Sound_Drag_XIM_disable.trunk.diff </td>
+<td>
+</td></tr>
+<tr><td> ./185_MICROB_imagezoom_extension.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Extension for zooming another HTML elements img,radio,checkbox
+<br> Not required anymore after fixing 4821
+</td></tr>
+<tr><td> ./200_BUG369722_ARM_EABI_lp0.trunk.diff </td>
+<td>
+<br>Bug 369722  prdtoa.c jsnum.h txDouble.h not required IEEE_ARM define on Codesourcery EABI gcc3.4.4 compiler
+</td></tr>
+<tr><td> ./505_BUG50404_button_colors.diff </td>
+<td>
+<br> change style of disabled text area
+</td></tr>
+<tr><td> ./095_OUTSIDE_entropy.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> Bug 51429  RNG_SystemInfoForRNG possible "netstat" zombie process
+</td></tr>
+<tr><td> ./395_gnomevfs_downloads.trunk.diff </td>
+<td>
+<br> Additional fixes for Downloads implementation with gnomevfs protocol
+<br>
+</td></tr>
+<tr><td> ./055_MozmicrobComp_lp0.diff </td>
+<td>
+<br> This patch will allow to build gtkmozembed library as shared library which preloaded
+<br> in dependentlibs.list list
+<br> Requires 245_BUG347731_MOZILLA_INTERNAL_API_lp0.diff applyed (To fix using some Internal API)
+</td></tr>
+<tr><td> ./BUG_Visiblity.diff </td>
+<td>
+</td></tr>
+<tr><td> ./315_XMLPRETTY_PRINT.diff </td>
+<td>
+<br> Patch for using XMLPretty printer XSL as normal RSS reader without new component
+<br> (need help to improve it)
+<br>
+</td></tr>
+<tr><td> ./420_total_cairo_unantialias.trunk.diff </td>
+<td>
+<br> Some antialias hack for fast cairo rendering (broken :()
+</td></tr>
+<tr><td> ./BUG_FixBrokenDirection.diff </td>
+<td>
+</td></tr>
+<tr><td> ./580_focus_for_visible_area.trunk.diff </td>
+<td>
+<br> make widgets focusable if it's in visible area
+<br> fixed problem with scrolling to focused widget by js
+<br> contact: Anton Rogaynis ext-anton(dot)rogaynis(at)nokia.com
+</td></tr>
+<tr><td> ./060_BUG349921_toolkit_branding.diff </td>
+<td>
+<br> 010_BUG349921_toolkit_branding.diff
+<br> allow to use Branding directory in xulrunner configuration
+</td></tr>
+<tr><td> ./400_download_full_disk_fix.trunk.diff </td>
+<td>
+<br> It adds support to restart a download if disk gets full (out of space) while downloading.
+<br> NOTE: It does not recover download across browser sessions. Once browser is closed, 
+<br> downloads are gone.
+</td></tr>
+<tr><td> ./515_BUG53541.54649.diff </td>
+<td>
+<br> Some problems with  certificate chain when file not availabe, do not remember exactly
+</td></tr>
+<tr><td> ./475_drag_session_ensure.diff </td>
+<td>
+<br> Drag service disabled in MicroB and this bustage crash fix for bug 
+<br> 50652 Suspend device when you drag marked letters from URL and ..
+<br> Disabled dragging workaround fix
+</td></tr>
+<tr><td> ./BUG_NewUnitsForSnav.diff </td>
+<td>
+</td></tr>
+<tr><td> ./145_BUG_small_encoders_count.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: This patch should fix problem with stripped libc (uclibc) library
+<br>     Parsing of proxy,http headers failed without this workaround
+<br> Only with native uconv enabled (and probably wrong ;) )
+</td></tr>
+<tr><td> ./250_BUG347731_SpatialNavigationFIXED_LIBXUL.trunk.diff </td>
+<td>
+<br>extensions/spatialnavigation doesn't build with libxul and bsmedberg's latest landing
+</td></tr>
+<tr><td> ./270_BUG359812_neterror_noxul.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> Bug 359812: No reason to use XUL based button in netError.xhtml
+</td></tr>
+<tr><td> ./125_MICROB_autoset_grehome_display.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Autoset of some variables
+</td></tr>
+<tr><td> ./540_BUG_50743_js_alert_title_fix.diff </td>
+<td>
+<br> Fixed bug<br>50743:malformedURI error message must be rephrased.
+<br> we have to see difference between JS and not JS alerts
+<br> gmozillaengine.c:2628
+</td></tr>
+<tr><td> ./430_bug372703_bustage_fix.diff </td>
+<td>
+<br>Bug 372703  No visual content in chat windows when using GTalk in Gmail. (edit)
+<br> Bustage after https://bugzilla.mozilla.org/show_bug.cgi?id=371536 
+</td></tr>
+<tr><td> ./340_Fix_NativeGtkButtonsWidgets.diff </td>
+<td>
+<br> Fix for correct drawing/scaling checkbox and radio buttons in Native GtkTheme
+<br> Probably not required in trunk
+</td></tr>
+<tr><td> ./120_MICROB_moz_xremote_disable.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Appears at the time of removing everything from Gecko...
+</td></tr>
+<tr><td> ./310_BUG_915.diff </td>
+<td>
+<br> 915 implement inheritance of alignment attributes from columns (align, valign, char, charoff, (lang, dir)?)
+<br> + some improvement from me
+<br> N<br>36653 N<br>36659
+</td></tr>
+<tr><td> ./BUG_55568_invalid_read.vl.diff </td>
+<td>
+<br>55568 Accessing already freed memory
+</td></tr>
+<tr><td> ./510_ua_policy_feature.diff </td>
+<td>
+<br> Allow to use different UserAgent string for different pages
+<br> Disable chats for GMAIL
+<br> see microb-engine/debian/prefs/all.js:137[0-1]
+</td></tr>
+<tr><td> ./FitToViewRandomCrashes.diff </td>
+<td>
+</td></tr>
+<tr><td> ./485_netwerk_buffer_count.diff </td>
+<td>
+<br> May be it is wrong
+<br> appears after performance crazy hacking ;)
+</td></tr>
+<tr><td> ./035_BUG350363_xmlextras_toolkit_define_using.diff </td>
+<td>
+</td></tr>
+<tr><td> ./445_nspr_dpkg_cross.diff </td>
+<td>
+<br>Bug 376256 – NSPR cross-compilation with dpkg-cross is fail
+</td></tr>
+<tr><td> ./JSBreakExperimental.diff </td>
+<td>
+<br> Make UI Responsive while JS Script is working 
+</td></tr>
+<tr><td> ./360_BUG368182_xft_engine.diff </td>
+<td>
+<br> Experimental implementation of separate XFT engine, just for fun (Not finished, no time, no expierence :( )
+<br> Slow pango solution (building Gecko on small system XLIB,XFT).
+<br> probably somewhere in far future will be fixed on Cairo side
+</td></tr>
+<tr><td> ./320_BUG_toolkit_cairo_linkage.diff </td>
+<td>
+<br> NOBUGFIXME
+<br> don't remember, but probably this is bug same as 
+<br>Bug 389638  Broken cairo linkage in embedding-profile < default
+</td></tr>
+<tr><td> ./190_MICROB_paths_and_names_lp0.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Renaming mozilla directories names and folders for MicroB project
+</td></tr>
+<tr><td> ./350_GnomeVfsWriteSupport.diff </td>
+<td>
+<br> Support for gnomevfs write functionality
+<br> Required nsIOutputProtocolHandler.h patch, and some fixes in nsIWebPersist class
+<br> 345_BUG382486_EngineOutputProtocolSupport.diff
+</td></tr>
+<tr><td> ./345_BUG382486_EngineOutputProtocolSupport.diff </td>
+<td>
+<br> Implemnentation of OutputHandler Interface, 
+<br> for supporting third party protocols in write mode
+<br> see 350_GnomeVfsWriteSupport.diff
+<br> 
+</td></tr>
+<tr><td> ./090_LAYOUT_LOGGIN_FINALIZE_lp0.diff </td>
+<td>
+<br> Some times crash used to happen here on closing, until was not fixed in 
+<br> 150_BUG_testgtkembed-pushpopembed.diff
+<br> 155_BUG_mainthreadalreadydead.diff
+<br> Maybe not required anymore... maybe some checks is still useful
+</td></tr>
+<tr><td> ./BUG_FirstElSkip.trunk.diff </td>
+<td>
+</td></tr>
+<tr><td> ./415_cairo_fast_image_render.diff </td>
+<td>
+<br> Small hacks for cairo fast image rendering
+<br> Disabled FILTER image
+<br>
+</td></tr>
+<tr><td> ./460_uclibc_strings_index.diff </td>
+<td>
+<br>Bug 376533  uClibc strings/index and childiterator.index conficts
+</td></tr>
+<tr><td> ./230_DisableInternalMozFilepicker_lp0.trunk.diff </td>
+<td>
+<br><br> Patches for microb-engine
+<br><br> Oleg Romashin <oleg.romashin@nokia.com>
+<br><br>
+<br><br> DP: Stripping Filepicker component, (exists in gtkmozembed)
+</td></tr>
+<tr><td> ./460_stylecontext_random_crash.diff </td>
+<td>
+</td></tr>
+<tr><td> ./450_host_libidl_dpkg_cross.diff </td>
+<td>
+<br> Build configuration for HOST libidl libraries
+</td></tr>
+<tr><td> ./160_MICROB_about_fixes_lp0.diff </td>
+<td>
+<br> Fast link to about:config from about
+<br> XUL disabled about:config page, see debian/resources/branding/microb/content/config.html
+</td></tr>
+<tr><td> ./395_TrimSpaceFixCrash.diff </td>
+<td>
+</td></tr>
+<tr><td> ./555_connect_move_signal_after_default.diff </td>
+<td>
+<br> Will allow to handle move signal outside from mozilla/widget/gtk2
+</td></tr>
+<tr><td> ./235_DisableNativeGtkPrintClass_lp0.trunk.diff </td>
+<td>
+<br><br> Patches for microb-engine
+<br><br> Oleg Romashin <oleg.romashin@nokia.com>
+<br><br>
+<br><br> DP: Additional disabling Printing support
+</td></tr>
+<tr><td> ./355_MICROB_PANGO_LINKING.diff </td>
+<td>
+<br> Fix for linkage libxul.so library with pangoft in old GTK/PANGO configuration
+<br>
+</td></tr>
+<tr><td> ./445_snav_crash.diff </td>
+<td>
+<br> Bug 373008  [spatial] [@ nsSpatialNavigation::getContentInDirection - nsSpatialNavigation::handleMove]
+<br>
+</td></tr>
+<tr><td> ./225_Timeout_TestGtkEmbed.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Timings for page loading on TestApplication
+<br> Also part for building TestGtkEmbed with JPROF (should be separate patch 375_jprof_linking_fix.diff)
+</td></tr>
+<tr><td> ./spidermonkey_alloc.trunk.diff </td>
+<td>
+<br> http://celtickane.com/projects/jsspeed.php 
+</td></tr>
+<tr><td> ./550_BUG54340_optimization_options.diff </td>
+<td>
+</td></tr>
+<tr><td> ./300_BUG372081_disable_profile_sighandler.diff </td>
+<td>
+<br> It does not work very well, we have to check,test, and fix it
+<br>
+</td></tr>
+<tr><td> ./480_BUG377077_probably_workaround_fix.diff </td>
+<td>
+</td></tr>
+<tr><td> ./375_jprof_linking_fix.diff </td>
+<td>
+<br> Fix for linking jprof library with ld-linux.so.2
+<br> See http://developer.mozilla.org/en/docs/Setting_up_jprof
+<br>
+</td></tr>
+<tr><td> ./470_focus_style.diff </td>
+<td>
+<br> Changed styling for MAC
+<br> Disabled double focusing (should be focus property)
+</td></tr>
+<tr><td> ./135_MICROB_microb_defines.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: MOZ_MICROB configure option
+</td></tr>
+<tr><td> ./380_XFT_ALWAYS_FIX.trunk.diff </td>
+<td>
+<br> Additional fix for using more less normal font in ENABLE_XFT_FAST_PATH_ALWAYS mode
+<br> added bool preference "gfx.pango.force.one.font" to setup Always fast mode
+<br> export MOZ_PANGO_FONT_NAME="your font" to choose more proper font
+<br> nsFontMetricsXft::SetupFCPattern should be implemented with ENABLE_XFT_FAST_PATH_ALWAYS 
+</td></tr>
+<tr><td> ./335_DISABLE_DEFAULT_DOWNLOAD_SUFFIX.diff </td>
+<td>
+<br> Don't remember why this appears here, probably some internal requirement
+</td></tr>
+<tr><td> ./545_BUG54340_findkeyword_inline.diff </td>
+<td>
+</td></tr>
+<tr><td> ./220_NO_WEBBRZ_CHROME_LISTNRS_lp0.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Stripping not used components
+</td></tr>
+<tr><td> ./611_image_loading_force_reload.diff </td>
+<td>
+<br> Some fixes for image loading like Opera
+</td></tr>
+<tr><td> ./630_bigger_ua_string_length_61630.diff </td>
+<td>
+<br> increasing size of UA string
+</td></tr>
+<tr><td> ./621_native_theme_supporting_old.diff </td>
+<td>
+<br> support for not gtk themed forms
+</td></tr>
+<tr><td> ./155_BUG_mainthreadalreadydead.trunk.diff </td>
+<td>
+<br><br> Patches for microb-engine
+<br><br> Oleg Romashin <oleg.romashin@nokia.com>
+<br><br>
+<br><br> DP: Some related to bug 372077
+</td></tr>
+<tr><td> ./625_BUG56960_layout_indexof_crash.diff </td>
+<td>
+<br>56960
+<br>[crash] Browser crashed during page loading and scrolling down
+</td></tr>
+<tr><td> ./115_MICROB_moz_mork_disable.trunk.diff </td>
+<td>
+<br><br> Patches for microb-engine
+<br><br> Oleg Romashin <oleg.romashin@nokia.com>
+<br><br>
+<br><br> DP: Some Combinations for normal building without mork,storage and others.
+<br><br> Now we cannot use without storage because a lot of components dependent on storage (security, cookies dom_storage)
+</td></tr>
+<tr><td> ./500_content_rocket_parsing.trunk.diff </td>
+<td>
+<br> This will allow to increase mMaxTokenProcessingTime for fast first painting and good performance
+<br> 495_layout_state_listener.trunk.diff also there 
+</td></tr>
+<tr><td> ./255_perf_metrics_fix.diff </td>
+<td>
+<br> As I remember unresolved symbol in XULRUnner configuration
+</td></tr>
+<tr><td> ./600_extension_manager.trunk.diff </td>
+<td>
+<br> Implementation of Extension manager in TestGtkEmbed (mot XRE_main based applications) functionality.
+</td></tr>
+<tr><td> ./295_Native_theme_gtk_pref.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin romaxa@gmail.com
+<br> DP: Adding special preference for enabling NativeThemeGtk
+<br> Bug 372079  Mozilla Should have some preference for enabling GtkNative widgets rendering in layout
+<br> Fixed in trunk
+</td></tr>
+<tr><td> ./BUG_zero_size_links.diff </td>
+<td>
+</td></tr>
+<tr><td> ./962_snav_improvements.diff </td>
+<td>
+</td></tr>
+<tr><td> ./205_BUILD_CONFIG_xul_manual_enable.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Added manual enable/disable for xul and rdf
+<br> Should be possible to build with RDF or XUL+RDF
+</td></tr>
+<tr><td> ./020_BUG4821_full_page_zoom.trunk.diff </td>
+<td>
+<br> Bug 4821 (pagezoom)  Full zooming not functional (images, objects as well as text) (page zoom like opera)
+<br>
+</td></tr>
+<tr><td> ./195_MICROB_MOZ_MICROB_LEVEL.trunk.diff </td>
+<td>
+<br><br> Patches for microb-engine
+<br><br> Oleg Romashin <oleg.romashin@nokia.com>
+<br><br>
+<br><br> DP: Additional strips for toolkit libxul library
+</td></tr>
+<tr><td> ./290_random_to_urandom_lp0.diff </td>
+<td>
+<br> Component manager should not use /dev/random for generation ranodm numbers
+<br> It cause hangs on embedding platforms,which does not have enough devices for generation required entropy
+<br> Bug somewhere exists but it is very old
+</td></tr>
+<tr><td> ./540_BUG54340_js_malloc.diff </td>
+<td>
+</td></tr>
+<tr><td> ./490_minimize_paint_delay.diff </td>
+<td>
+<br> Immediate painting (User perception hacks)
+</td></tr>
+<tr><td> ./565_svg_compiler_helper.diff </td>
+<td>
+<br> Will help to build SVG without cairo enabled (gtk2 gfx)
+</td></tr>
+<tr><td> ./245_BUG347731_MOZILLA_INTERNAL_API_lp0.trunk.diff </td>
+<td>
+<br>extensions/spatialnavigation doesn't build with libxul and bsmedberg's latest landing
+</td></tr>
+<tr><td> ./JS_Destroy.Crash.diff </td>
+<td>
+</td></tr>
+<tr><td> ./570_thumb_supporting_stuff.diff </td>
+<td>
+<br> Thumb supporting stuff: Changed callback attaching method to avoid overriding signals.
+<br> contact: Anton Rogaynis ext-anton(dot)rogaynis(at)nokia.com
+<br> 555_connect_move_signal_after_default.diff
+</td></tr>
+<tr><td> ./555_BUG_52019.diff </td>
+<td>
+</td></tr>
+<tr><td> ./110_MICROB_scroll_topleft.diff </td>
+<td>
+<br> 99-unnamed.dpatch by  <agomes@>
+<br> All lines beginning with `<br><br> DP:' are a description of the patch.
+<br> DP:ROMAXA: I'm sure this patch not required anymore, after using of
+<br> 175_Disable_ScrollTopLeftHack.diff in gtkmozembed patchset
+</td></tr>
+<tr><td> ./130_BUG_security.trunk.diff </td>
+<td>
+<br><br> Patches for microb-engine
+<br><br> Oleg Romashin <oleg.romashin@nokia.com>
+<br><br>
+<br><br> DP: Fix building with new make.
+<br><br> [Bug 325148] perl syntax error from rules.mk: make 3.81 changes backslash-newline behavior inside single-quoted strings
+</td></tr>
+<tr><td> ./100_OUTSIDE_zip.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Avoid needing zip if not required. bz:331785. Debian patchset
+</td></tr>
+<tr><td> ./045_BUG323928_bustage_fix_rev2_lp0.trunk.diff </td>
+<td>
+<br>Bug 386862  Building GTK2 Linux embedding-profile=basic failed 
+</td></tr>
+<tr><td> ./605_css_erros_parsing_disable.diff </td>
+<td>
+</td></tr>
+<tr><td> ./590_added_vertical_resize_flag.diff </td>
+<td>
+<br> Added new flag to control vertical resizing
+<br> contact: Anton Rogaynis ext-anton(dot)rogaynis(at)nokia.com
+</td></tr>
+<tr><td> ./525_BUG_52028_fast_fix_without_storage_enabling.diff </td>
+<td>
+<br> Fix for some broken pages with will not works at all if MOZ_STORAGE disabled
+</td></tr>
+<tr><td> ./410_window_title_XMLPrettyPrint.trunk.diff </td>
+<td>
+<br>Fixed window title problem with XML pretty-print.
+<br>
+</td></tr>
+<tr><td> ./620_native_theme_supporting.trunk.diff </td>
+<td>
+<br> Support native gtk widgets: 
+<br> - scaling widgets
+<br> - drawing according native theme
+<br> - fixed some stuff related to forms.css
+<br> contact: Anton Rogaynis ext-anton(.)rogaynis(@)nokia.com
+</td></tr>
+<tr><td> ./405_jar_support_back.diff </td>
+<td>
+<br> Add Jar support for urls back
+<br> Fixed openign URLS in bugzilla: jar:https://....., backout after 195_MICROB_MOZ_MICROB_LEVEL.diff patch
+</td></tr>
+<tr><td> ./440_BUG376279_security_cross_compile.diff </td>
+<td>
+<br> BMO 376279. Wrong detection of OS_TEST in CROSS_COMPILE configuration. Patch imported from the bug.
+</td></tr>
+<tr><td> ./601_extension_manager_more_fixes.diff </td>
+<td>
+<br> Fixes to the extension manager functionality.
+</td></tr>
+<tr><td> ./520_drag_remove_at_all.diff </td>
+<td>
+<br> Dragging disable... 
+</td></tr>
+<tr><td> ./attachment.cgi?id=248061.trunk.diff </td>
+<td>
+<br>Bug 363248  [reflow branch] Table caption regression  PATCH
+</td></tr>
+<tr><td> ./150_BUG_testgtkembed-pushpopembed.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> Bug 372077  TestGtkEmbed Application should use gtk_moz_embed_*_startup properly
+</td></tr>
+<tr><td> ./175_MICROB_bad_cert_at_once_lp0.trunk.diff </td>
+<td>
+<br><br> Patches for microb-engine
+<br><br> Oleg Romashin <oleg.romashin@nokia.com>
+<br><br>
+<br><br> DP: New BadCertificate Listener Interface
+<br><br> NOBUGFIXME
+</td></tr>
+<tr><td> ./465_BUG371253_enable_flat_install.diff </td>
+<td>
+<br> BMO 371253. Patch imported from the bug.
+</td></tr>
+<tr><td> ./050_BUG347854_Building_XULRunner.trunk.diff </td>
+<td>
+</td></tr>
+<tr><td> ./545_jsevent.policy.renamer.diff </td>
+<td>
+<br> author: romaxa
+<br> Hack which will allow to disable some mouse events or replace it with others...
+<br> Ex: Replace mousedown on mouseclick on gmail (problems with stylus iteractions)
+</td></tr>
+<tr><td> ./455_xpcom_uclibc.diff </td>
+<td>
+<br>Bug 376530  Fix CycleCollector building with uClibc library
+</td></tr>
+<tr><td> ./620_BUG_333869.fix.trunk.diff </td>
+<td>
+</td></tr>
+<tr><td> ./new_cached_scale.trunk.diff </td>
+<td>
+</td></tr>
+<tr><td> ./001_gnomevfs_downloads.diff </td>
+<td>
+</td></tr>
+<tr><td> ./070_BUILDFIX_embedding_tests.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> Bug 93213  embedding/browser/gtk/tests built even with --disable-tests
+</td></tr>
+<tr><td> ./045_getClientRects.diff </td>
+<td>
+</td></tr>
+<tr><td> ./560_NativeSuspendImplementation.diff </td>
+<td>
+<br> Implementation of SuspendNative Event like in mac
+</td></tr>
+<tr><td> ./365_BUG367177_thebes_text_Frame.diff </td>
+<td>
+<br> Additional checking for buggy nsTextFrameThebes class
+<br> Probably not required anymore
+</td></tr>
+<tr><td> ./180_MICROB_fittoview_extension.diff </td>
+<td>
+<br> Patches for microb-engine
+<br> Oleg Romashin <oleg.romashin@nokia.com>
+<br> DP: Extension Fit To View mozilla layout
+<br> We have to integrate it into mozilla tree
+</td></tr>
+<tr><td> ./170_MICROB_xslt_xpath_disable_lp0.trunk.diff </td>
+<td>
+<br><br> Patches for microb-engine
+<br><br> Oleg Romashin <oleg.romashin@nokia.com>
+<br><br>
+<br><br> DP: Building mozilla without XSLT/XPATH support
+<br> After discussing with Benjamin about this, he sad it is very bad Idea, and he don't
+<br> want to make available Gecko building without xslt
+</td></tr>
+<tr><td> ./105_MICROB_DISABLE_GRAB_EVENT_FIRING.diff </td>
+<td>
+<br> 99-unnamed.dpatch by  <agomes@>
+<br> All lines beginning with `<br><br> DP:' are a description of the patch.
+<br> DP: See patch name
+</td></tr>
+<tr><td> ./330_MBUG_42865_zoom_navigation_fix.diff </td>
+<td>
+<br> Added preference for disabling Restoring to previous zoom value on page
+<br> Internal requirements
+</td></tr>
+<tr><td> ./395_SNAV_BUGS.diff </td>
+<td>
+<br> Overall improvements on Spatial navigation (snav) default algorithm. 
+<br> Solved bugs: 51075, 49691, 44373, 35989, 35989, 51092, 51012, 51992, 51989. 
+</td></tr>
+<tr><td> ./325_BUG345517_firefox.libxul.diff </td>
+<td>
+<br> Building firefox with libxul
+<br>
+</td></tr>
+<tr><td> ./425_cairo_buggy_repeat_fix.trunk.diff </td>
+<td>
+<br> Allow cairo to use fast image rendering instead composite
+</td></tr>
+<tr><td> ./390_DONT_CHECKIN_adding_get_content_length_method.diff </td>
+<td>
+<br> Provide contentLength for download clients.
+<br> gtkmozembed 075_DONT_CHECKIN_get_content_length.diff 
+<br> NOTE: It might fail sometimes.
+</td></tr>
+</table></html>
