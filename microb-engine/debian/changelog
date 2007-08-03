@@ -10,9 +10,13 @@ microb-engine (1.0.3-11) unstable; urgency=low
 
 microb-engine (1.0.3-10) unstable; urgency=low
 
-  * Fixed CSS3 opacity (spreadsheets.google.com ...)
+  * Fixed CSS3 opacity (spreadsheets.google.com ...) Fixes: NB#53448
   * Fixed crash GetRootScrollFrame (workaround)
   * Added ( series.gtk2min -> vanilla ) with minimal patchset (removed old bugs, patches,...)
+  * Fixed broken rendering of styled button with empty title (background-image
+    + value = "") imdb.com. Fixes: NB#52194
+  * Fixed bug browser crashes while trying to access frame specific CSM.
+    Fixes: NB#64066
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 01 Aug 2007 13:14:58 +0300
 
