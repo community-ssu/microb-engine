@@ -1,0 +1,164 @@
+# Bug 385367  IsWidgetStyled uses NS_THEME_DROPDOWN inappropriately
+Index: mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
+===================================================================
+--- mozilla.orig/widget/src/xpwidgets/nsNativeTheme.cpp
++++ mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
+@@ -45,37 +45,46 @@
+ #include "nsIEventStateManager.h"
+ #include "nsString.h"
+ #include "nsINameSpaceManager.h"
+ #include "nsIDOMHTMLInputElement.h"
+ #include "nsILookAndFeel.h"
+ #include "nsThemeConstants.h"
+ #include "nsIComponentManager.h"
+ 
+-nsMargin nsNativeTheme::sButtonBorderSize(2, 2, 2, 2);
+-nsMargin nsNativeTheme::sButtonDisabledBorderSize(1, 1, 1, 1);
+-PRUint8  nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
+-PRUint8  nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_OUTSET;
++nsMargin                  nsNativeTheme::sButtonBorderSize(2, 2, 2, 2);
++nsMargin                  nsNativeTheme::sButtonDisabledBorderSize(1, 1, 1, 1);
++PRUint8                   nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
++PRUint8                   nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_OUTSET;
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonBorderColorID = nsILookAndFeel::eColor_buttonface;
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonDisabledBorderColorID = nsILookAndFeel::eColor_buttonshadow;
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonBGColorID = nsILookAndFeel::eColor_buttonface;
+ nsILookAndFeel::nsColorID nsNativeTheme::sButtonDisabledBGColorID = nsILookAndFeel::eColor_buttonface;
+-nsMargin nsNativeTheme::sTextfieldBorderSize(2, 2, 2, 2);
+-PRUint8  nsNativeTheme::sTextfieldBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
++
++nsMargin                  nsNativeTheme::sTextfieldBorderSize(2, 2, 2, 2);
++PRUint8                   nsNativeTheme::sTextfieldBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
+ nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBorderColorID = nsILookAndFeel::eColor_threedface;
+-PRBool   nsNativeTheme::sTextfieldBGTransparent = PR_FALSE;
++PRBool                    nsNativeTheme::sTextfieldBGTransparent = PR_FALSE;
+ nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBGColorID = nsILookAndFeel::eColor__moz_field;
+ nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldDisabledBGColorID = nsILookAndFeel::eColor_threedface;
+-nsMargin nsNativeTheme::sListboxBorderSize(2, 2, 2, 2);
+-PRUint8  nsNativeTheme::sListboxBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
++
++nsMargin                  nsNativeTheme::sListboxBorderSize(2, 2, 2, 2);
++PRUint8                   nsNativeTheme::sListboxBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
+ nsILookAndFeel::nsColorID nsNativeTheme::sListboxBorderColorID = nsILookAndFeel::eColor_threedface;
+-PRBool   nsNativeTheme::sListboxBGTransparent = PR_FALSE;
++PRBool                    nsNativeTheme::sListboxBGTransparent = PR_FALSE;
+ nsILookAndFeel::nsColorID nsNativeTheme::sListboxBGColorID = nsILookAndFeel::eColor__moz_field;
+ nsILookAndFeel::nsColorID nsNativeTheme::sListboxDisabledBGColorID = nsILookAndFeel::eColor_threedface;
+ 
++nsMargin                  nsNativeTheme::sComboboxBorderSize(2, 2, 2, 2);
++PRUint8                   nsNativeTheme::sComboboxBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
++nsILookAndFeel::nsColorID nsNativeTheme::sComboboxBorderColorID = nsILookAndFeel::eColor_threedface;
++PRBool                    nsNativeTheme::sComboboxBGTransparent = PR_FALSE;
++nsILookAndFeel::nsColorID nsNativeTheme::sComboboxBGColorID = nsILookAndFeel::eColor__moz_field;
++nsILookAndFeel::nsColorID nsNativeTheme::sComboboxDisabledBGColorID = nsILookAndFeel::eColor_threedface;
++
+ nsNativeTheme::nsNativeTheme()
+ {
+ }
+ 
+ nsIPresShell *
+ nsNativeTheme::GetPresShell(nsIFrame* aFrame)
+ {
+   if (!aFrame)
+@@ -192,17 +201,18 @@
+   // Check for specific widgets to see if HTML has overridden the style.
+   if (aFrame && (aWidgetType == NS_THEME_BUTTON ||
+                  aWidgetType == NS_THEME_TEXTFIELD ||
+                  aWidgetType == NS_THEME_TEXTFIELD_MULTILINE ||
+                  aWidgetType == NS_THEME_LISTBOX ||
+                  aWidgetType == NS_THEME_DROPDOWN)) {
+ 
+     if (aFrame->GetContent()->IsNodeOfType(nsINode::eHTML)) {
+-      nscolor defaultBGColor, defaultBorderColor;
++      nscolor defaultBGColor;
++      nscolor defaultBorderColor;
+       PRUint8 defaultBorderStyle;
+       nsMargin defaultBorderSize;
+       PRBool defaultBGTransparent = PR_FALSE;
+ 
+       nsILookAndFeel *lookAndFeel = aPresContext->LookAndFeel();
+ 
+       switch (aWidgetType) {
+       case NS_THEME_BUTTON:
+@@ -227,41 +237,47 @@
+                                 defaultBGColor);
+         }
+         break;
+ 
+       case NS_THEME_TEXTFIELD:
+       case NS_THEME_TEXTFIELD_MULTILINE:
+         defaultBorderStyle = sTextfieldBorderStyle;
+         ConvertMarginToAppUnits(sTextfieldBorderSize, defaultBorderSize);
+-        lookAndFeel->GetColor(sTextfieldBorderColorID,
+-                              defaultBorderColor);
++        lookAndFeel->GetColor(sTextfieldBorderColorID, defaultBorderColor);
+         if (!(defaultBGTransparent = sTextfieldBGTransparent)) {
+           if (IsDisabled(aFrame))
+-            lookAndFeel->GetColor(sTextfieldDisabledBGColorID,
+-                                  defaultBGColor);
++            lookAndFeel->GetColor(sTextfieldDisabledBGColorID, defaultBGColor);
+           else
+-            lookAndFeel->GetColor(sTextfieldBGColorID,
+-                                  defaultBGColor);
++            lookAndFeel->GetColor(sTextfieldBGColorID, defaultBGColor);
+         }
+         break;
+ 
+       case NS_THEME_LISTBOX:
+-      case NS_THEME_DROPDOWN:
+         defaultBorderStyle = sListboxBorderStyle;
+         ConvertMarginToAppUnits(sListboxBorderSize, defaultBorderSize);
+-        lookAndFeel->GetColor(sListboxBorderColorID,
+-                              defaultBorderColor);
++        lookAndFeel->GetColor(sListboxBorderColorID, defaultBorderColor);
+         if (!(defaultBGTransparent = sListboxBGTransparent)) {
+           if (IsDisabled(aFrame))
+-            lookAndFeel->GetColor(sListboxDisabledBGColorID,
+-                                  defaultBGColor);
++            lookAndFeel->GetColor(sListboxDisabledBGColorID, defaultBGColor);
++          else
++            lookAndFeel->GetColor(sListboxBGColorID, defaultBGColor);
++        }
++        break;
++
++      case NS_THEME_DROPDOWN:
++        defaultBorderStyle = sComboboxBorderStyle;
++        ConvertMarginToAppUnits(sComboboxBorderSize, defaultBorderSize);
++        lookAndFeel->GetColor(sComboboxBorderColorID, defaultBorderColor);
++        defaultBGTransparent = sComboboxBGTransparent;
++        if (!defaultBGTransparent) {
++          if (IsDisabled(aFrame))
++            lookAndFeel->GetColor(sComboboxDisabledBGColorID, defaultBGColor);
+           else
+-            lookAndFeel->GetColor(sListboxBGColorID,
+-                                  defaultBGColor);
++            lookAndFeel->GetColor(sComboboxBGColorID, defaultBGColor);
+         }
+         break;
+ 
+       default:
+         NS_ERROR("nsNativeTheme::IsWidgetStyled widget type not handled");
+         return PR_FALSE;
+       }
+ 
+Index: mozilla/widget/src/xpwidgets/nsNativeTheme.h
+===================================================================
+--- mozilla.orig/widget/src/xpwidgets/nsNativeTheme.h
++++ mozilla/widget/src/xpwidgets/nsNativeTheme.h
+@@ -152,9 +152,16 @@
+   static nsILookAndFeel::nsColorID sTextfieldBGColorID;
+   static nsILookAndFeel::nsColorID sTextfieldDisabledBGColorID;
+   static nsMargin                  sListboxBorderSize;
+   static PRUint8                   sListboxBorderStyle;
+   static nsILookAndFeel::nsColorID sListboxBorderColorID;
+   static PRBool                    sListboxBGTransparent;
+   static nsILookAndFeel::nsColorID sListboxBGColorID;
+   static nsILookAndFeel::nsColorID sListboxDisabledBGColorID;
++  // comboboxes
++  static nsMargin                  sComboboxBorderSize;
++  static PRUint8                   sComboboxBorderStyle;
++  static nsILookAndFeel::nsColorID sComboboxBorderColorID;
++  static PRBool                    sComboboxBGTransparent;
++  static nsILookAndFeel::nsColorID sComboboxBGColorID;
++  static nsILookAndFeel::nsColorID sComboboxDisabledBGColorID;
+ };

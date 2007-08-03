@@ -1,0 +1,44 @@
+#Bug 389659  Scrollbar dragging broken when using fullZoom != 1.0
+Index: base/src/nsSliderFrame.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/layout/xul/base/src/nsSliderFrame.cpp,v
+retrieving revision 1.168
+diff -p -u -1 -0 -r1.168 nsSliderFrame.cpp
+--- mozilla/layout/xul/base/src/nsSliderFrame.cpp	8 Jul 2007 07:08:33 -0000	1.168
++++ mozilla/layout/xul/base/src/nsSliderFrame.cpp	26 Jul 2007 22:21:14 -0000
+@@ -849,32 +849,23 @@ nsSliderFrame::MouseDown(nsIDOMEvent* aM
+       do_GetService("@mozilla.org/widget/lookandfeel;1", &rv);
+     if (NS_SUCCEEDED(rv)) {
+       PRInt32 scrollToClickMetric;
+       rv = lookNFeel->GetMetric(nsILookAndFeel::eMetric_ScrollToClick,
+                                 scrollToClickMetric);
+       if (NS_SUCCEEDED(rv) && scrollToClickMetric == 1)
+         scrollToClick = PR_TRUE;
+     }
+   }
+ 
+-  PRInt32 clientPosPx;
+-  nsIntRect screenRect = GetScreenRect();
+-  nscoord pos;
+-  if (isHorizontal) {
+-    mouseEvent->GetScreenX(&clientPosPx);
+-    pos = nsPresContext::CSSPixelsToAppUnits(clientPosPx) - 
+-          PresContext()->DevPixelsToAppUnits(screenRect.x);
+-  } else {
+-    mouseEvent->GetScreenY(&clientPosPx);
+-    pos = nsPresContext::CSSPixelsToAppUnits(clientPosPx) - 
+-          PresContext()->DevPixelsToAppUnits(screenRect.y);
+-  }
++  nsPoint pt =  nsLayoutUtils::GetDOMEventCoordinatesRelativeTo(mouseEvent,
++                                                                this);
++  nscoord pos = isHorizontal ? pt.x : pt.y;
+ 
+   // If shift click or middle button, first
+   // place the middle of the slider thumb under the click
+   nsCOMPtr<nsIContent> scrollbar;
+   nscoord pospx = 0;
+   if (scrollToClick) {
+     nscoord onePixel = nsPresContext::CSSPixelsToAppUnits(1);
+     pospx = pos/onePixel;
+ 
+     // adjust so that the middle of the thumb is placed under the click

@@ -29,7 +29,7 @@ Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
        } else {
          moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);
        }
-@@ -1050,17 +1050,17 @@
+@@ -1051,17 +1051,17 @@
    case NS_THEME_SCROLLBAR_TRACK_VERTICAL:
    case NS_THEME_SCROLLBAR_THUMB_HORIZONTAL:
    case NS_THEME_SCROLLBAR_THUMB_VERTICAL:
@@ -266,23 +266,23 @@ Index: mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
  #include "nsThemeConstants.h"
  #include "nsIComponentManager.h"
  
- nsMargin nsNativeTheme::sButtonBorderSize(2, 2, 2, 2);
- nsMargin nsNativeTheme::sButtonDisabledBorderSize(1, 1, 1, 1);
--PRUint8  nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
--PRUint8  nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_OUTSET;
+ nsMargin                  nsNativeTheme::sButtonBorderSize(2, 2, 2, 2);
+ nsMargin                  nsNativeTheme::sButtonDisabledBorderSize(1, 1, 1, 1);
+-PRUint8                   nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
+-PRUint8                   nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_OUTSET;
 -nsILookAndFeel::nsColorID nsNativeTheme::sButtonBorderColorID = nsILookAndFeel::eColor_buttonface;
-+PRUint8  nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_SOLID; // instead of INSET, forms.css
-+PRUint8  nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_SOLID; // instead of OUTSET, forms.css
++PRUint8                   nsNativeTheme::sButtonActiveBorderStyle = NS_STYLE_BORDER_STYLE_SOLID; // instead of INSET, forms.css
++PRUint8                   nsNativeTheme::sButtonInactiveBorderStyle = NS_STYLE_BORDER_STYLE_SOLID; // instead of OUTSET, forms.css
 +nsILookAndFeel::nsColorID nsNativeTheme::sButtonBorderColorID = nsILookAndFeel::eColor_threedshadow;// instead of buttonface, forms.css
  nsILookAndFeel::nsColorID nsNativeTheme::sButtonDisabledBorderColorID = nsILookAndFeel::eColor_buttonshadow;
  nsILookAndFeel::nsColorID nsNativeTheme::sButtonBGColorID = nsILookAndFeel::eColor_buttonface;
  nsILookAndFeel::nsColorID nsNativeTheme::sButtonDisabledBGColorID = nsILookAndFeel::eColor_buttonface;
- nsMargin nsNativeTheme::sTextfieldBorderSize(2, 2, 2, 2);
- PRUint8  nsNativeTheme::sTextfieldBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
+ 
+ nsMargin                  nsNativeTheme::sTextfieldBorderSize(2, 2, 2, 2);
+ PRUint8                   nsNativeTheme::sTextfieldBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
  nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBorderColorID = nsILookAndFeel::eColor_threedface;
- PRBool   nsNativeTheme::sTextfieldBGTransparent = PR_FALSE;
- nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBGColorID = nsILookAndFeel::eColor__moz_field;
-@@ -270,36 +270,37 @@
+ PRBool                    nsNativeTheme::sTextfieldBGTransparent = PR_FALSE;
+@@ -291,36 +291,37 @@
  
        if (defaultBGTransparent) {
          if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_COLOR_TRANSPARENT))

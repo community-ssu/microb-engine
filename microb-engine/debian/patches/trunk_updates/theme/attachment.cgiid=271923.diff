@@ -1,0 +1,71 @@
+# Bug 367571  all themes supporting 'scrollbar' should support 'scrollbar-small' 
+Index: widget/src/gtk2/nsNativeThemeGTK.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp,v
+retrieving revision 1.100
+diff -u -8 -p -r1.100 nsNativeThemeGTK.cpp
+--- m/widget/src/gtk2/nsNativeThemeGTK.cpp	4 Jul 2007 15:49:45 -0000	1.100
++++ m/widget/src/gtk2/nsNativeThemeGTK.cpp	11 Jul 2007 22:53:34 -0000
+@@ -955,16 +955,17 @@ nsNativeThemeGTK::ThemeSupportsWidget(ns
+     case NS_THEME_TAB_LEFT_EDGE:
+     case NS_THEME_TAB_RIGHT_EDGE:
+     case NS_THEME_TAB_PANELS:
+   case NS_THEME_TOOLTIP:
+     // case NS_THEME_SPINNER:
+   case NS_THEME_SPINNER_UP_BUTTON:
+   case NS_THEME_SPINNER_DOWN_BUTTON:
+     // case NS_THEME_SCROLLBAR:  (n/a for gtk)
++    // case NS_THEME_SCROLLBAR_SMALL: (n/a for gtk)
+   case NS_THEME_SCROLLBAR_BUTTON_UP:
+   case NS_THEME_SCROLLBAR_BUTTON_DOWN:
+   case NS_THEME_SCROLLBAR_BUTTON_LEFT:
+   case NS_THEME_SCROLLBAR_BUTTON_RIGHT:
+   case NS_THEME_SCROLLBAR_TRACK_HORIZONTAL:
+   case NS_THEME_SCROLLBAR_TRACK_VERTICAL:
+   case NS_THEME_SCROLLBAR_THUMB_HORIZONTAL:
+   case NS_THEME_SCROLLBAR_THUMB_VERTICAL:
+Index: widget/src/windows/nsNativeThemeWin.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/widget/src/windows/nsNativeThemeWin.cpp,v
+retrieving revision 3.85
+diff -u -8 -p -r3.85 nsNativeThemeWin.cpp
+--- m/widget/src/windows/nsNativeThemeWin.cpp	4 Jul 2007 15:49:45 -0000	3.85
++++ m/widget/src/windows/nsNativeThemeWin.cpp	11 Jul 2007 22:53:34 -0000
+@@ -317,16 +317,17 @@ nsNativeThemeWin::GetTheme(PRUint8 aWidg
+     case NS_THEME_TAB_RIGHT_EDGE:
+     case NS_THEME_TAB_PANEL:
+     case NS_THEME_TAB_PANELS: {
+       if (!mTabTheme)
+         mTabTheme = openTheme(NULL, L"Tab");
+       return mTabTheme;
+     }
+     case NS_THEME_SCROLLBAR:
++    case NS_THEME_SCROLLBAR_SMALL:
+     case NS_THEME_SCROLLBAR_TRACK_VERTICAL:
+     case NS_THEME_SCROLLBAR_TRACK_HORIZONTAL:
+     case NS_THEME_SCROLLBAR_BUTTON_UP:
+     case NS_THEME_SCROLLBAR_BUTTON_DOWN:
+     case NS_THEME_SCROLLBAR_BUTTON_LEFT:
+     case NS_THEME_SCROLLBAR_BUTTON_RIGHT:
+     case NS_THEME_SCROLLBAR_THUMB_VERTICAL:
+     case NS_THEME_SCROLLBAR_THUMB_HORIZONTAL:
+@@ -678,17 +679,18 @@ nsNativeThemeWin::GetThemePartAndState(n
+           aState = TS_HOVER;
+         else
+           aState = TS_NORMAL;
+       }
+       return NS_OK;    
+     }
+     case NS_THEME_TOOLBOX:
+     case NS_THEME_STATUSBAR:
+-    case NS_THEME_SCROLLBAR: {
++    case NS_THEME_SCROLLBAR:
++    case NS_THEME_SCROLLBAR_SMALL: {
+       aPart = aState = 0;
+       return NS_OK; // These have no part or state.
+     }
+     case NS_THEME_TOOLBAR: {
+       // Use -1 to indicate we don't wish to have the theme background drawn
+       // for this item. We will pass any nessessary information via aState,
+       // and will render the item using separate code.
+       aPart = -1;

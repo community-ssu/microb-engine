@@ -156,23 +156,23 @@ perf_addon/JSBreakExperimental.diff
 090_LAYOUT_LOGGIN_FINALIZE_lp0.diff -p0
 110_MICROB_scroll_topleft.diff
 145_BUG_small_encoders_count.diff
-210_BUG242145_jidctint.diff
-260_240282_perf_load_lp0.diff -p0
+#210_BUG242145_jidctint.diff
+#260_240282_perf_load_lp0.diff -p0
 last_trunk/275_BUG_353882_lp0.trunk.diff -p0
-280_BUG_339358_lp0.diff -p0
-285_BUG_311566.diff
-305_HACK_BOLDER_WEIGHT.diff
+#280_BUG_339358_lp0.diff -p0
+#285_BUG_311566.diff
+#305_HACK_BOLDER_WEIGHT.diff
 310_BUG_915.diff
 360_BUG368182_xft_engine.diff
 365_BUG367177_thebes_text_Frame.diff
 
 #Place for Reflow Branch related patches
-last_trunk/reflow/attachment.cgi?id=247769.trunk.diff
-last_trunk/reflow/attachment.cgi?id=247914.trunk.diff
+#last_trunk/reflow/attachment.cgi?id=247769.trunk.diff
+#last_trunk/reflow/attachment.cgi?id=247914.trunk.diff
 last_trunk/reflow/attachment.cgi?id=248061.trunk.diff
-reflow/attachment.cgi?id=248028.diff
-reflow/attachment.cgi?id=248241.diff
-reflow/attachment.cgi?id=251149.diff
+#reflow/attachment.cgi?id=248028.diff
+#reflow/attachment.cgi?id=248241.diff
+#reflow/attachment.cgi?id=251149.diff
 
 375_jprof_linking_fix.diff
 last_trunk/380_XFT_ALWAYS_FIX.trunk.diff
@@ -180,7 +180,7 @@ last_trunk/380_XFT_ALWAYS_FIX.trunk.diff
 430_bug372703_bustage_fix.diff
 
 crash/395_TrimSpaceFixCrash.diff
-crash/465_NB53478_cache_session_crash.diff
+#crash/465_NB53478_cache_session_crash.diff
 crash/FitToViewRandomCrashes.diff
 crash/JS_Destroy.Crash.diff
 
