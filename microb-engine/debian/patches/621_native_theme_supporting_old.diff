@@ -31,8 +31,8 @@ Index: mozilla/layout/style/forms.css
 +button,
 +select {
 +  background-color: Window !important;
-+  background: Window url("form-widgets/button.png") repeat-x bottom right !important;
-+  border: 2px solid ThreeDShadow !important;
++  background: Window url("form-widgets/button.png") repeat-x bottom right;
++  border: 2px solid ThreeDShadow;
 +  color: ButtonText !important;
 +  margin: 2px !important;
 +  padding: 0 1px !important;
