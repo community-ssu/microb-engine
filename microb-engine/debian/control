@@ -3,11 +3,11 @@ Priority: optional
 Maintainer: Oleg Romashin <oleg.romashin@nokia.com>
 Build-Depends: debhelper (>= 4.0.0), libidl-dev, libxt-dev, autoconf2.13, libgtk2.0-dev, automake1.7, libjpeg62-dev, libpng12-dev | libpng-dev, libosso-gnomevfs2-dev | libgnomevfs2-dev, quilt, bc, sharutils
 Standards-Version: 3.6.2
-Section: user/libs
+Section: libs
 
 Package: libnspr4
 Architecture: any
-Section: user/libs
+Section: libs
 Depends: ${shlibs:Depends}
 Conflicts: libnspr3
 Replaces: libnspr3
@@ -25,7 +25,7 @@ Description: Netscape Portable Runtime Library
 
 Package: libnss3
 Architecture: any
-Section: user/libs
+Section: libs
 Depends: ${shlibs:Depends}, libnss3-certs (= ${Source-Version}) | softpkcs11
 Description: Network Security Service Libraries - runtime
  This package provides the runtime libraries needed to use the Netscape
@@ -33,7 +33,7 @@ Description: Network Security Service Libraries - runtime
 
 Package: libnss3-certs
 Architecture: any
-Section: user/libs
+Section: libs
 Depends: ${shlibs:Depends}
 Conflicts: softpkcs11
 Replaces: softpkcs11
@@ -42,7 +42,7 @@ Description: Network Security Service Libraries - runtime
  SSL/TLS layer, including S/MIME and key management.
 
 Package: microb-engine
-Section: user/libs
+Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libnss3, libnspr4
 Description: Package of MicroB libraries based on Mozilla
@@ -97,7 +97,7 @@ Description: Debug package for MicroB refui
 
 Package: microb-spellcheck
 Architecture: any
-Section: user/libs
+Section: libs
 Depends: ${shlibs:Depends}
 Description: Spellcheck extension for Mozilla
  This package provides a Mozilla extension for checking spelling
