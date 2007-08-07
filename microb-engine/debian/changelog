@@ -1,6 +1,6 @@
 microb-engine (1.0.3-12) unstable; urgency=low
 
-  * Changed section name(user/libs to libs) in debain control file.
+  * Changed section name(user/libs to libs) in Debian control file.
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Tue,  7 Aug 2007 12:36:45 +0300
 
