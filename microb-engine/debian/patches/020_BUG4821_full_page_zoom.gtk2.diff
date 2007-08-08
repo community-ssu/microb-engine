@@ -692,6 +692,25 @@ Index: mozilla/gfx/src/gtk/nsDeviceContextGTK.cpp
  {
    nsresult rv;
    nsCOMPtr<nsIPref> prefs = do_GetService(NS_PREF_CONTRACTID, &rv);
+@@ -606,17 +607,17 @@
+     // if we couldn't get the pref or it's negative, and the OS
+     // value is under 96ppi, then use 96.
+     mDpi = 96;
+   }
+ 
+   // make p2t a nice round number - this prevents rounding problems
+   mAppUnitsPerDevPixel = ((float)AppUnitsPerCSSPixel() * 96.) / (float)mDpi;
+   mAppUnitsPerInch = NSIntPixelsToAppUnits(mDpi, mAppUnitsPerDevPixel);
+-  mAppUnitsPerDevPixel = mAppUnitsPerDevPixel;
++  mAppUnitsPerDevNotScaledPixel = mAppUnitsPerDevPixel;
+   mPixelScale = (float)nsIDeviceContext::AppUnitsPerCSSPixel()/(float)mAppUnitsPerDevPixel;
+ 
+   // XXX need to reflow all documents
+   return NS_OK;
+ }
+ 
+ static void DoClearCachedSystemFonts()
+ {
 @@ -669,16 +670,28 @@
        }
      }
