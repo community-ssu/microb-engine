@@ -223,5 +223,4 @@ usr/lib/microb-engine/components/nsExtensionManager.js
 usr/lib/microb-engine/components/*xulappinfo*
 usr/lib/microb-engine/*jprof*
 ../patches/*.js usr/lib/microb-engine/components
-../resources/form-widgets/* usr/lib/microb-engine/res/form-widgets
 usr/lib/microb-engine/regxpcom
