@@ -51,7 +51,7 @@ Index: mozilla/layout/style/forms.css
 +}
 +
 +/* Radio buttons */
-+
++/* Broken scaling, many crashes in Stretch after zooming
 +input[type="radio"] {
 +  background-color: inherit !important;
 +  background-image: url("form-widgets/radio.png") !important;
@@ -76,9 +76,9 @@ Index: mozilla/layout/style/forms.css
 +  background-color: transparent !important;
 +  border: none !important;
 +}
-+
++*/
 +/* Checkboxes */
-+
++/* Broken scaling, many crashes in Stretch after zooming
 +input[type="checkbox"] {
 +  background-color: -moz-Field !important;
 +  background-image: url("form-widgets/checkbox.png") !important;
@@ -90,7 +90,7 @@ Index: mozilla/layout/style/forms.css
 +input[type="checkbox"]:checked {
 +  background-image: url("form-widgets/checkbox-checked.png") !important;
 +}
-+
++*/
 +/* Dropdowns  */
 +
 +select,
@@ -109,13 +109,13 @@ Index: mozilla/layout/style/forms.css
 +  -moz-border-right-colors: ThreeDShadow Window;
 +  -moz-border-top-colors: ThreeDShadow ThreeDHighlight;
 +}
-+
++/*  Broken scaling, many crashes in Stretch after zooming
 +select > input[type="button"]{
 +  background: transparent url("form-widgets/droparrow.png") no-repeat center center !important;
 +  border: none !important;
 +  width: 6px !important;
 +}
-+
++*/
 +
  %if OSARCH==OS2
  input {
