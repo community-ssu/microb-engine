@@ -1,3 +1,14 @@
+microb-engine (1.0.3-13) unstable; urgency=low
+
+  * Disabled good theming of radio/check buttons, dropdowns... because we have
+    broken Stretch/composite functionality
+  * Fixed division by 0 on gfx GTK2
+  * Fixed default zoom value
+  * Added comment to 226_ZoomControlsTestGtkEmbed.diff
+  * Added controls for zoom testing
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 10 Aug 2007 11:14:38 +0300
+
 microb-engine (1.0.3-12) unstable; urgency=low
 
   * Changed section name(user/libs to libs) in Debian control file.
