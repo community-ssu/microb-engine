@@ -4,22 +4,23 @@ Index: mozilla/extensions/spellcheck/src/Makefile.in
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/Makefile.in
 +++ mozilla/extensions/spellcheck/src/Makefile.in
-@@ -43,17 +43,23 @@
+@@ -43,17 +43,24 @@
  include $(DEPTH)/config/autoconf.mk
  
  MODULE		= spellchecker
  LIBRARY_NAME	= spellchecker
  MODULE_NAME     = mozSpellCheckerModule
- SHORT_LIBNAME = spellchk
+ SHORT_LIBNAME   = spellchk
  EXPORT_LIBRARY  = 1
  IS_COMPONENT	= 1
 +
 +ifdef IS_COMPONENT
 +FORCE_SHARED_LIB = 1
 +else
- LIBXUL_LIBRARY = 1
+ LIBXUL_LIBRARY  = 1
 +FORCE_STATIC_LIB = 1
 +endif
++
  
  REQUIRES	= xpcom \
  		  string \
@@ -28,13 +29,13 @@ Index: mozilla/extensions/spellcheck/src/Makefile.in
  		  layout \
  		  dom \
  		  necko \
-@@ -78,20 +84,27 @@
+@@ -78,21 +85,28 @@
  ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
  SHARED_LIBRARY_LIBS += ../osxspell/src/$(LIB_PREFIX)osxspell_s.$(LIB_SUFFIX)
  LOCAL_INCLUDES += -I$(srcdir)/../osxspell/src
  else
- SHARED_LIBRARY_LIBS += ../myspell/src/$(LIB_PREFIX)myspell_s.$(LIB_SUFFIX)
- LOCAL_INCLUDES += -I$(srcdir)/../myspell/src
+ SHARED_LIBRARY_LIBS += ../hunspell/src/$(LIB_PREFIX)hunspell_s.$(LIB_SUFFIX)
+ LOCAL_INCLUDES += -I$(srcdir)/../hunspell/src
  endif
  
 -EXTRA_DSO_LDOPTS = \
@@ -45,12 +46,13 @@ Index: mozilla/extensions/spellcheck/src/Makefile.in
 +	  $(EXTRA_DSO_LIBS) \
  		$(MOZ_COMPONENT_LIBS) \
 -		$(MOZ_UNICHARUTIL_LIBS) \
+-		$(NULL)
 +	  $(NULL)
 +
 +# Some stuff still exists and it undefined, like NS_NewAdoptingStringEnumerator
 +EXTRA_DSO_LDOPTS += \
 +	  ../../../xpcom/build/$(LIB_PREFIX)xpcom_core.$(LIB_SUFFIX) \
- 		$(NULL)
++	  $(NULL)
  
  include $(topsrcdir)/config/rules.mk
  
@@ -58,6 +60,7 @@ Index: mozilla/extensions/spellcheck/src/Makefile.in
  CFLAGS   += -fno-unit-at-a-time
  CXXFLAGS += -fno-unit-at-a-time
  endif
+ 
 Index: mozilla/extensions/spellcheck/src/mozSpellChecker.h
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/mozSpellChecker.h
@@ -127,7 +130,7 @@ Index: mozilla/extensions/spellcheck/src/mozSpellChecker.cpp
  mozSpellChecker::mozSpellChecker()
  {
  }
-@@ -318,17 +320,17 @@
+@@ -317,17 +319,17 @@
    NS_FREE_XPCOM_ALLOCATED_POINTER_ARRAY(count, words);
  
    return NS_OK;
@@ -146,7 +149,7 @@ Index: mozilla/extensions/spellcheck/src/mozSpellChecker.cpp
  NS_IMETHODIMP 
  mozSpellChecker::SetCurrentDictionary(const nsAString &aDictionary)
  {
-@@ -336,17 +338,17 @@
+@@ -335,17 +337,17 @@
      return NS_ERROR_NULL_POINTER;
   
    nsresult res;
@@ -452,217 +455,11 @@ Index: mozilla/extensions/spellcheck/src/mozEnglishWordUtils.cpp
    mLanguage.AssignLiteral("en");
  
    nsresult rv;
-Index: mozilla/extensions/spellcheck/myspell/src/mozMySpell.h
-===================================================================
---- mozilla.orig/extensions/spellcheck/myspell/src/mozMySpell.h
-+++ mozilla/extensions/spellcheck/myspell/src/mozMySpell.h
-@@ -54,17 +54,17 @@
-  *
-  * ***** END LICENSE BLOCK ***** */
- #ifndef mozMySpell_h__
- #define mozMySpell_h__
- 
- #include "myspell.hxx"
- #include "mozISpellCheckingEngine.h"
- #include "mozIPersonalDictionary.h"
--#include "nsString.h"
-+#include "nsStringGlue.h"
- #include "nsCOMPtr.h"
- #include "nsIObserver.h"
- #include "nsIUnicodeEncoder.h"
- #include "nsIUnicodeDecoder.h"
- #include "nsInterfaceHashtable.h"
- #include "nsWeakReference.h"
- 
- #define MOZ_MYSPELL_CONTRACTID "@mozilla.org/spellchecker/myspell;1"
-Index: mozilla/extensions/spellcheck/myspell/src/Makefile.in
-===================================================================
---- mozilla.orig/extensions/spellcheck/myspell/src/Makefile.in
-+++ mozilla/extensions/spellcheck/myspell/src/Makefile.in
-@@ -39,17 +39,17 @@
- srcdir		= @srcdir@
- VPATH		= @srcdir@
- 
- include $(DEPTH)/config/autoconf.mk
- 
- MODULE		= myspell
- LIBRARY_NAME	= myspell_s
- FORCE_STATIC_LIB = 1
--LIBXUL_LIBRARY  = 1
-+#LIBXUL_LIBRARY  = 1
- 
- REQUIRES	= xpcom \
- 		  string \
- 		  uconv \
- 		  unicharutil \
- 		  spellchecker \
- 		  xulapp \
- 		  $(NULL)
-@@ -62,9 +62,17 @@
- 		  myspell.cpp \
- 		  mozMySpell.cpp \
-                   $(NULL)
- 
- ifdef MOZ_XUL_APP
- CPPSRCS += mozMySpellDirProvider.cpp
- endif
- 
-+EXTRA_DSO_LDOPTS += \
-+		  $(XPCOM_GLUE_LDOPTS) \
-+		  $(XPCOM_FROZEN_LDOPTS) \
-+		  $(LIBS_DIR) \
-+		  $(EXTRA_DSO_LIBS) \
-+		  $(MOZ_COMPONENT_LIBS) \
-+		  $(NULL)
-+
- include $(topsrcdir)/config/rules.mk
-Index: mozilla/extensions/spellcheck/myspell/src/mozMySpell.cpp
-===================================================================
---- mozilla.orig/extensions/spellcheck/myspell/src/mozMySpell.cpp
-+++ mozilla/extensions/spellcheck/myspell/src/mozMySpell.cpp
-@@ -53,18 +53,20 @@
-  * http://www.cs.ucla.edu/ficus-members/geoff/ispell.html
-  * (the home page for ispell)
-  *
-  * ***** END LICENSE BLOCK ***** */
- 
- /* based on MySpell (c) 2001 by Kevin Hendicks  */
- 
- #include "mozMySpell.h"
-+#ifdef MOZILLA_INTERNAL_API
- #include "nsReadableUtils.h"
- #include "nsXPIDLString.h"
-+#endif
- #include "nsIObserverService.h"
- #include "nsISimpleEnumerator.h"
- #include "nsIDirectoryEnumerator.h"
- #include "nsDirectoryServiceUtils.h"
- #include "nsDirectoryServiceDefs.h"
- #include "mozISpellI18NManager.h"
- #include "nsICharsetConverterManager.h"
- #include "nsUnicharUtilCIID.h"
-@@ -75,16 +77,20 @@
- NS_IMPL_ISUPPORTS3(mozMySpell,
-                    mozISpellCheckingEngine,
-                    nsIObserver,
-                    nsISupportsWeakReference)
- 
- nsresult
- mozMySpell::Init()
- {
-+  /* XXX if constructor with : mMySpell(nsnull) inside .h file
-+     then mMySpell=0x1 ? GCC4.2.1, if it in cpp then ok
-+	 here workaround */
-+  mMySpell = nsnull;
-   if (!mDictionaries.Init())
-     return NS_ERROR_OUT_OF_MEMORY;
- 
-   LoadDictionaryList();
- 
-   nsCOMPtr<nsIObserverService> obs =
-     do_GetService("@mozilla.org/observer-service;1");
-   if (obs) {
-@@ -405,21 +411,21 @@
- 
- /* boolean Check (in wstring word); */
- NS_IMETHODIMP mozMySpell::Check(const PRUnichar *aWord, PRBool *aResult)
- {
-   NS_ENSURE_ARG_POINTER(aWord);
-   NS_ENSURE_ARG_POINTER(aResult);
-   NS_ENSURE_TRUE(mMySpell, NS_ERROR_FAILURE);
- 
--  nsXPIDLCString charsetWord;
-+  nsCString charsetWord;
-   nsresult rv = ConvertCharset(aWord, getter_Copies(charsetWord));
-   NS_ENSURE_SUCCESS(rv, rv);
- 
--  *aResult = mMySpell->spell(charsetWord);
-+  *aResult = mMySpell->spell(charsetWord.get());
- 
- 
-   if (!*aResult && mPersonalDictionary) 
-     rv = mPersonalDictionary->Check(aWord, mLanguage.get(), aResult);
-   
-   return rv;
- }
- 
-@@ -428,22 +434,22 @@
- {
-   NS_ENSURE_ARG_POINTER(aSuggestions);
-   NS_ENSURE_ARG_POINTER(aSuggestionCount);
-   NS_ENSURE_TRUE(mMySpell, NS_ERROR_FAILURE);
- 
-   nsresult rv;
-   *aSuggestionCount = 0;
-   
--  nsXPIDLCString charsetWord;
-+  nsCString charsetWord;
-   rv = ConvertCharset(aWord, getter_Copies(charsetWord));
-   NS_ENSURE_SUCCESS(rv, rv);
- 
-   char ** wlst;
--  *aSuggestionCount = mMySpell->suggest(&wlst, charsetWord);
-+  *aSuggestionCount = mMySpell->suggest(&wlst, charsetWord.get());
- 
-   if (*aSuggestionCount) {    
-     *aSuggestions  = (PRUnichar **)nsMemory::Alloc(*aSuggestionCount * sizeof(PRUnichar *));    
-     if (*aSuggestions) {
-       PRUint32 index = 0;
-       for (index = 0; index < *aSuggestionCount && NS_SUCCEEDED(rv); ++index) {
-         // Convert the suggestion to utf16     
-         PRInt32 inLength = nsCRT::strlen(wlst[index]);
-Index: mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.cpp
-===================================================================
---- mozilla.orig/extensions/spellcheck/myspell/src/mozMySpellDirProvider.cpp
-+++ mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.cpp
-@@ -32,17 +32,19 @@
-  * and other provisions required by the GPL or the LGPL. If you do not delete
-  * the provisions above, a recipient may use your version of this file under
-  * the terms of any one of the MPL, the GPL or the LGPL.
-  *
-  * ***** END LICENSE BLOCK ***** */
- 
- #include "mozMySpellDirProvider.h"
- #include "nsXULAppAPI.h"
--#include "nsString.h"
-+#include "nsStringGlue.h"
-+#include "nsServiceManagerUtils.h"
-+#include "nsIProperties.h"
- 
- #include "mozISpellCheckingEngine.h"
- #include "nsICategoryManager.h"
- 
- NS_IMPL_ISUPPORTS2(mozMySpellDirProvider,
- 		   nsIDirectoryServiceProvider,
- 		   nsIDirectoryServiceProvider2)
- 
-Index: mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.h
-===================================================================
---- mozilla.orig/extensions/spellcheck/myspell/src/mozMySpellDirProvider.h
-+++ mozilla/extensions/spellcheck/myspell/src/mozMySpellDirProvider.h
-@@ -36,16 +36,17 @@
-  * ***** END LICENSE BLOCK ***** */
- 
- #ifndef mozMySpellDirProvider_h__
- #define mozMySpellDirProvider_h__
- 
- #include "nsIDirectoryService.h"
- #include "nsIGenericFactory.h"
- #include "nsISimpleEnumerator.h"
-+#include "nsCOMPtr.h"
- 
- class mozMySpellDirProvider :
-   public nsIDirectoryServiceProvider2
- {
- public:
-   NS_DECL_ISUPPORTS
-   NS_DECL_NSIDIRECTORYSERVICEPROVIDER
-   NS_DECL_NSIDIRECTORYSERVICEPROVIDER2
 Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -5472,21 +5472,16 @@
+@@ -5464,21 +5464,16 @@
      MOZ_EXTENSIONS=`echo $MOZ_EXTENSIONS | sed -e 's|universalchardet||g'`
  fi
  

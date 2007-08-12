@@ -122,8 +122,7 @@ usr/lib/microb-engine/chrome/toolkit/content/global/viewZoomOverlay.js
 usr/lib/microb-engine/chrome/toolkit/content/global/globalOverlay.xul
 usr/lib/microb-engine/chrome/toolkit/content/global/dialogOverlay.xul
 usr/lib/microb-engine/chrome/toolkit/content/global/dialogOverlay.js
-usr/lib/microb-engine/chrome/toolkit/content/global/nsTreeController.js
-usr/lib/microb-engine/chrome/toolkit/content/global/nsTreeSorting.js
+usr/lib/microb-engine/chrome/toolkit/content/global/nsTree*.js
 usr/lib/microb-engine/chrome/toolkit/content/global/nsUserSettings.js
 usr/lib/microb-engine/chrome/toolkit/content/global/strres.js
 usr/lib/microb-engine/chrome/toolkit/content/global/platformHTMLBindings.xml
@@ -223,4 +222,4 @@ usr/lib/microb-engine/components/nsExtensionManager.js
 usr/lib/microb-engine/components/*xulappinfo*
 usr/lib/microb-engine/*jprof*
 ../patches/*.js usr/lib/microb-engine/components
-usr/lib/microb-engine/regxpcom
+usr/lib/microb-engine/regxp*

@@ -6,7 +6,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -5960,16 +5960,29 @@ MOZ_ARG_ENABLE_BOOL(xpctools,
+@@ -5750,16 +5750,29 @@
  dnl ========================================================
  dnl build the tests by default
  dnl ========================================================
@@ -36,9 +36,9 @@ Index: mozilla/configure.in
  MOZ_ARG_HEADER(Individual module options)
  
  dnl ========================================================
-@@ -7622,16 +7635,17 @@ AC_SUBST(MOZ_XPRINT_CFLAGS)
- AC_SUBST(MOZ_XPRINT_LDFLAGS)
- AC_SUBST(MOZ_ENABLE_XPRINT)
+@@ -7409,16 +7422,17 @@
+ AC_SUBST(HAVE_XIE)
+ AC_SUBST(MOZ_XIE_LIBS)
  AC_SUBST(MOZ_ENABLE_POSTSCRIPT)
  
  AC_SUBST(XPCOM_USE_LEA)
@@ -58,7 +58,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -112,16 +112,17 @@ INCREMENTAL_LINKER = @INCREMENTAL_LINKER
+@@ -112,16 +112,17 @@
  MACOSX_DEPLOYMENT_TARGET = @MACOSX_DEPLOYMENT_TARGET@
  MOZ_MAIL_NEWS	= @MOZ_MAIL_NEWS@
  MOZ_CALENDAR	= @MOZ_CALENDAR@
@@ -83,8 +83,9 @@ Index: mozilla/embedding/browser/gtk/gtkembed.pkg
 @@ -1,9 +1,11 @@
  [gtkembed]
  dist/bin/@DLLP@gtkembedmoz@DLLS@
+-dist/bin/TestGtkEmbed
 +#if ENABLE_EMBEDDING_TESTS
- dist/bin/TestGtkEmbed
++dist/bin/TestGtkEmbed@BINS@
 +#endif
  
  #if ENABLE_TESTS
@@ -96,7 +97,7 @@ Index: mozilla/embedding/browser/gtk/Makefile.in
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/Makefile.in
 +++ mozilla/embedding/browser/gtk/Makefile.in
-@@ -42,15 +42,13 @@ srcdir		= @srcdir@
+@@ -42,15 +42,13 @@
  VPATH		= @srcdir@
  
  include $(DEPTH)/config/autoconf.mk

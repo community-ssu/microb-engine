@@ -387,7 +387,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
      mCanPaginatedScroll(PR_FALSE),
 -    mIsRootPaginatedDocument(PR_FALSE)
 +    mIsRootPaginatedDocument(PR_FALSE),
-+    mFullZoom(1.0f), mTrueZoomMode(PR_FALSE)
++    mTrueZoomMode(PR_FALSE)
  {
    // NOTE! nsPresContext::operator new() zeroes out all members, so don't
    // bother initializing members to 0.

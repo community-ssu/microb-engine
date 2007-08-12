@@ -1,4 +1,4 @@
-last_trunk/020_BUG4821_full_page_zoom.trunk.diff
+#last_trunk/020_BUG4821_full_page_zoom.trunk.diff
 
 # BUILD BUSTAGE
 buildcfg/035_BUG350363_xmlextras_toolkit_define_using.diff
@@ -7,7 +7,7 @@ last_trunk/buildcfg/050_BUG347854_Building_XULRunner.trunk.diff
 # BUILD BUSTAGE
 
 # SNAV
-snav/045_getClientRects.diff -p0
+#snav/045_getClientRects.diff -p0
 snav/395_SNAV_BUGS.diff
 snav/445_snav_crash.diff
 snav/962_snav_improvements.diff
@@ -41,14 +41,15 @@ last_trunk/165_BUILDFIX_libxul_no_nss.trunk.diff
 last_trunk/170_MICROB_xslt_xpath_disable_lp0.trunk.diff -p0
 last_trunk/175_MICROB_bad_cert_at_once_lp0.trunk.diff -p0
 180_MICROB_fittoview_extension.diff
-185_MICROB_imagezoom_extension.diff
-190_MICROB_paths_and_names_lp0.diff -p0
+#185_MICROB_imagezoom_extension.diff
+last_trunk/190_MICROB_paths_and_names_lp0.trunk.diff -p0
 last_trunk/195_MICROB_MOZ_MICROB_LEVEL.trunk.diff
 last_trunk/200_BUG369722_ARM_EABI_lp0.trunk.diff -p0
 205_BUILD_CONFIG_xul_manual_enable.diff
 #260_MICROB_frameset_layout_adjustments.diff 
 220_NO_WEBBRZ_CHROME_LISTNRS_lp0.diff -p0
 225_Timeout_TestGtkEmbed.diff
+226_ZoomControlsTestGtkEmbed.diff
 last_trunk/230_DisableInternalMozFilepicker_lp0.trunk.diff -p0
 last_trunk/235_DisableNativeGtkPrintClass_lp0.trunk.diff -p0
 last_trunk/240_Sound_Drag_XIM_disable.trunk.diff
@@ -61,7 +62,7 @@ last_trunk/250_BUG347731_SpatialNavigationFIXED_LIBXUL.trunk.diff
 300_BUG372081_disable_profile_sighandler.diff
 315_XMLPRETTY_PRINT.diff
 320_BUG_toolkit_cairo_linkage.diff
-325_BUG345517_firefox.libxul.diff
+#325_BUG345517_firefox.libxul.diff
 330_MBUG_42865_zoom_navigation_fix.diff
 335_DISABLE_DEFAULT_DOWNLOAD_SUFFIX.diff
 340_Fix_NativeGtkButtonsWidgets.diff
@@ -78,7 +79,7 @@ last_trunk/410_window_title_XMLPrettyPrint.trunk.diff
 
 #Performance improvements
 last_trunk/perf_addon/attachment.cgi?id=246204.trunk.diff
-last_trunk/perf_addon/new_cached_scale.trunk.diff
+#last_trunk/perf_addon/new_cached_scale.trunk.diff
 perf_addon/bug54205.diff
 perf_addon/540_BUG54340_js_malloc.diff
 perf_addon/545_BUG54340_findkeyword_inline.diff
@@ -90,8 +91,8 @@ perf_addon/605_css_erros_parsing_disable.diff
 
 #debug_tools/images_debug.diff
 415_cairo_fast_image_render.diff
-last_trunk/420_total_cairo_unantialias.trunk.diff
-last_trunk/425_cairo_buggy_repeat_fix.trunk.diff
+#last_trunk/420_total_cairo_unantialias.trunk.diff
+#last_trunk/425_cairo_buggy_repeat_fix.trunk.diff
 #debug_tools/cairo_debug_composite.diff
 last_trunk/435_BUG375179_spellcheck_libxul.trunk.diff
 
@@ -101,7 +102,6 @@ crash/415_BUG371882_Editor_Crash.diff
 crash/460_stylecontext_random_crash.diff
 #CRASHES
 
-465_BUG371253_enable_flat_install.diff
 470_focus_style.diff
 475_drag_session_ensure.diff
 490_minimize_paint_delay.diff
@@ -136,7 +136,7 @@ last_trunk/600_extension_manager.trunk.diff
 601_extension_manager_more_fixes.diff
 
 #Image loading
-610_image_loading_only_cached.diff
+last_trunk/610_image_loading_only_cached.trunk.diff
 611_image_loading_force_reload.diff
 
 

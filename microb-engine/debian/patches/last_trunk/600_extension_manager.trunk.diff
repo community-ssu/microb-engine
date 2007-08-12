@@ -1,10 +1,9 @@
 # Implementation of Extension manager in TestGtkEmbed (mot XRE_main based applications) functionality.
-diff -ruN -p -u10 mozilla.orig/toolkit/library/libxul-config.mk mozilla/toolkit/library/libxul-config.mk
---- mozilla.orig/toolkit/library/libxul-config.mk	2007-06-01 18:46:14.000000000 +0300
-+++ mozilla/toolkit/library/libxul-config.mk	2007-06-01 19:43:36.000000000 +0300
-@@ -250,24 +250,27 @@ COMPONENT_LIBS += \
- ifdef MOZ_STORAGE
- COMPONENT_LIBS += \
+Index: mozilla/toolkit/library/libxul-config.mk
+===================================================================
+--- mozilla.orig/toolkit/library/libxul-config.mk
++++ mozilla/toolkit/library/libxul-config.mk
+@@ -259,20 +259,23 @@
    satchel \
    $(NULL)
  endif
@@ -13,7 +12,7 @@ diff -ruN -p -u10 mozilla.orig/toolkit/library/libxul-config.mk mozilla/toolkit/
  COMPONENT_LIBS += \
  	jar$(VERSION_NUMBER) \
  	$(NULL)
-+	
++
 +COMPONENT_LIBS += \
 + 	commandlines \
 + 	$(NULL)
@@ -29,14 +28,11 @@ diff -ruN -p -u10 mozilla.orig/toolkit/library/libxul-config.mk mozilla/toolkit/
  COMPONENT_LIBS += ucvmath
  endif
  
- ifneq (,$(MOZ_ENABLE_XPRINT))
- STATIC_LIBS += xlibrgb
-diff -ruN -p -u10 mozilla.orig/toolkit/library/nsStaticXULComponents.cpp mozilla/toolkit/library/nsStaticXULComponents.cpp
---- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp	2007-06-01 18:46:14.000000000 +0300
-+++ mozilla/toolkit/library/nsStaticXULComponents.cpp	2007-06-01 19:43:12.000000000 +0300
-@@ -267,21 +267,20 @@
- #define XULENABLED_MODULES                   \
-     MODULE(tkAutoCompleteModule)             \
+Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
+===================================================================
+--- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
++++ mozilla/toolkit/library/nsStaticXULComponents.cpp
+@@ -263,17 +263,16 @@
      MODULE(PKI)
  #endif
  #else
@@ -54,11 +50,7 @@ diff -ruN -p -u10 mozilla.orig/toolkit/library/nsStaticXULComponents.cpp mozilla
  
  #ifdef MOZ_SPELLCHECK
  #define SPELLCHECK_MODULE MODULE(mozSpellCheckerModule)
- #else
- #define SPELLCHECK_MODULE
-@@ -315,20 +314,21 @@
-     MODULE(embedcomponents)                  \
-     MODULE(Browser_Embedding_Module)         \
+@@ -311,16 +310,17 @@
      OJI_MODULES                              \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \
@@ -76,14 +68,11 @@ diff -ruN -p -u10 mozilla.orig/toolkit/library/nsStaticXULComponents.cpp mozilla
      XREMOTE_MODULES                          \
      XPINSTALL_MODULES                        \
      JSDEBUGGER_MODULES                       \
-     MODULE(BOOT)                             \
-     MODULE(NSS)                              \
-diff -ruN -p -u10 mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
---- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	2007-06-01 18:46:15.000000000 +0300
-+++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	2007-06-01 19:57:41.000000000 +0300
-@@ -349,20 +349,22 @@ function getDirNoCreate(key, pathArray) 
-  *          specified by |key|
-  * @param   shouldCreate
+Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
+===================================================================
+--- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
++++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
+@@ -354,16 +354,18 @@
   *          true if the directory hierarchy specified in |pathArray|
   *          should be created if it does not exist,
   *          false otherwise.
@@ -102,11 +91,7 @@ diff -ruN -p -u10 mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager
    }
    dir.followLinks = false;
    return dir;
- }
- 
-@@ -621,21 +623,22 @@ function newURI(spec) {
- function getURIFromFile(file) {
-   var ioServ = Components.classes["@mozilla.org/network/io-service;1"]
+@@ -612,17 +614,18 @@
                           .getService(Components.interfaces.nsIIOService);
    return ioServ.newFileURI(file);
  }
@@ -126,11 +111,7 @@ diff -ruN -p -u10 mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager
   *          RDF String Literal or Resource
   * @returns String value of the literal or resource, or undefined if the object
   *          supplied is not a RDF string literal or resource.
-  */
- function stringData(literalOrResource) {
-@@ -2635,32 +2638,37 @@ BlocklistItemData.prototype = {
-     return { minVersion: minVersion, maxVersion: maxVersion };
-   }
+@@ -2614,28 +2617,33 @@
  };
  
  /**
@@ -166,11 +147,7 @@ diff -ruN -p -u10 mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager
    gOS.addObserver(this, "xpcom-shutdown", false);
  
    gConsole = Components.classes["@mozilla.org/consoleservice;1"]
-                        .getService(Components.interfaces.nsIConsoleService);  
-   
-@@ -4209,24 +4217,25 @@ ExtensionManager.prototype = {
-           if (abi != null) {
-             requireABICompatibility = true;
+@@ -4216,20 +4224,21 @@
              // If we don't know our ABI, we can't be compatible
              if (abi == gXPCOMABI && abi != UNKNOWN_XPCOM_ABI) {
                foundMatchingOSAndABI = true;
@@ -193,14 +170,11 @@ diff -ruN -p -u10 mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager
        return installData;
      }
       
-     // Check the target application range specified by the extension metadata.
-     if (gCheckCompatibility &&
-diff -ruN -p -u10 mozilla.orig/toolkit/xre/nsAppRunner.cpp mozilla/toolkit/xre/nsAppRunner.cpp
---- mozilla.orig/toolkit/xre/nsAppRunner.cpp	2007-06-01 18:46:15.000000000 +0300
-+++ mozilla/toolkit/xre/nsAppRunner.cpp	2007-06-01 19:45:34.000000000 +0300
-@@ -794,35 +794,37 @@ ScopedXPCOMStartup::~ScopedXPCOMStartup(
-     mServiceManager = nsnull;
-   }
+Index: mozilla/toolkit/xre/nsAppRunner.cpp
+===================================================================
+--- mozilla.orig/toolkit/xre/nsAppRunner.cpp
++++ mozilla/toolkit/xre/nsAppRunner.cpp
+@@ -824,31 +824,33 @@
  }
  
  // {95d89e3e-a169-41a3-8e56-719978e15b12}
@@ -216,7 +190,7 @@ diff -ruN -p -u10 mozilla.orig/toolkit/xre/nsAppRunner.cpp mozilla/toolkit/xre/n
      XULAPPINFO_SERVICE_CONTRACTID,
      AppInfoConstructor
    }
- #ifdef MOZ_AIRBAG
+ #ifdef MOZ_CRASHREPORTER
  ,
    {
      "nsXULAppInfo",
@@ -234,14 +208,11 @@ diff -ruN -p -u10 mozilla.orig/toolkit/xre/nsAppRunner.cpp mozilla/toolkit/xre/n
  static nsStaticModuleInfo const kXREStaticModules[] =
  {
    {
-     "Apprunner",
-     Apprunner_NSGetModule
-diff -ruN -p -u10 mozilla.orig/xulrunner/build.mk mozilla/xulrunner/build.mk
---- mozilla.orig/xulrunner/build.mk	2007-06-01 18:46:09.000000000 +0300
-+++ mozilla/xulrunner/build.mk	2007-06-01 18:56:46.000000000 +0300
-@@ -66,18 +66,20 @@ endif
- ifeq ($(OS_ARCH),OS2)
- ifdef ENABLE_TESTS
+Index: mozilla/xulrunner/build.mk
+===================================================================
+--- mozilla.orig/xulrunner/build.mk
++++ mozilla/xulrunner/build.mk
+@@ -68,16 +68,18 @@
  tier_app_dirs += embedding/tests
  endif
  endif
@@ -260,9 +231,10 @@ diff -ruN -p -u10 mozilla.orig/xulrunner/build.mk mozilla/xulrunner/build.mk
  
  package:
  	@$(MAKE) -C xulrunner/installer
-diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/Makefile.in mozilla/embedding/components/xulappinfo/Makefile.in
---- mozilla/embedding/components/xulappinfo.orig/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/embedding/components/xulappinfo/Makefile.in	2006-04-10 14:38:10.000000000 +0300
+Index: mozilla/embedding/components/xulappinfo/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/embedding/components/xulappinfo/Makefile.in
 @@ -0,0 +1,63 @@
 +#
 +# ***** BEGIN LICENSE BLOCK *****
@@ -327,9 +299,10 @@ diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/Makefile.in mozil
 +nsIXULAppInfo.idl: $(topsrcdir)/xpcom/system/nsIXULAppInfo.idl
 +	$(NSINSTALL) $(topsrcdir)/xpcom/system/nsIXULAppInfo.idl .
 +
-diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/xulappinfo.js mozilla/embedding/components/xulappinfo/xulappinfo.js
---- mozilla/embedding/components/xulappinfo.orig/xulappinfo.js	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/embedding/components/xulappinfo/xulappinfo.js	2006-04-19 13:35:05.000000000 +0300
+Index: mozilla/embedding/components/xulappinfo/xulappinfo.js
+===================================================================
+--- /dev/null
++++ mozilla/embedding/components/xulappinfo/xulappinfo.js
 @@ -0,0 +1,88 @@
 +const XULAPPINFO_CONTRACTID = "@mozilla.org/xre/app-info;1";
 +const XULAPPINFO_CID = Components.ID("{f8b59582-5808-4e6e-a467-339e9c82756f}");

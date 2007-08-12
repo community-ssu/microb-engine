@@ -51,30 +51,6 @@ Index: mozilla/extensions/ftv/src/Makefile.in
  	rm -f $@
  	$(PREPROCESS_FTV_CSS) > $@
  
-Index: mozilla/extensions/imagezoom/src/Makefile.in
-===================================================================
---- mozilla.orig/extensions/imagezoom/src/Makefile.in
-+++ mozilla/extensions/imagezoom/src/Makefile.in
-@@ -93,14 +93,19 @@
- FINAL_TARGET=$(DIST)/xpi-stage/$(XPI_NAME)/platform/$(OS_TARGET)_$(TARGET_XPCOM_ABI)
- endif
- endif
- 
- #EXTRA_COMPONENTS = $(srcdir)/SimpleTest.js
- 
- include $(topsrcdir)/config/rules.mk
- 
-+ifdef GNU_CC
-+CFLAGS   += -fno-unit-at-a-time
-+CXXFLAGS += -fno-unit-at-a-time
-+endif
-+
- #libs:: $(EXPORT_RESOURCE)
- #	$(INSTALL) $^ $(DIST)/bin/res
- 
- #install:: $(EXPORT_RESOURCE)
- #	$(SYSINSTALL) $(IFLAGS1) $^ $(DESTDIR)$(mozappdir)/res
- 
 Index: mozilla/extensions/spatialnavigation/src/Makefile.in
 ===================================================================
 --- mozilla.orig/extensions/spatialnavigation/src/Makefile.in

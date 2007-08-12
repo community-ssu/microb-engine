@@ -1,0 +1,126 @@
+# Some fixes for image loading like Opera
+Index: mozilla/extensions/permissions/nsContentBlocker.cpp
+===================================================================
+--- mozilla.orig/extensions/permissions/nsContentBlocker.cpp
++++ mozilla/extensions/permissions/nsContentBlocker.cpp
+@@ -40,22 +40,26 @@
+ #include "nsIServiceManager.h"
+ #include "nsIDocShellTreeItem.h"
+ #include "nsIPrefService.h"
+ #include "nsIPrefBranch.h"
+ #include "nsIDocShell.h"
+ #include "nsString.h"
+ #include "nsContentPolicyUtils.h"
+ #include "nsIObjectLoadingContent.h"
++#include "nsNetCID.h"
++#include "nsICacheService.h"
++#include "imgICache.h"
+ 
+ // Possible behavior pref values
+ // Those map to the nsIPermissionManager values where possible
+ #define BEHAVIOR_ACCEPT nsIPermissionManager::ALLOW_ACTION
+ #define BEHAVIOR_REJECT nsIPermissionManager::DENY_ACTION
+ #define BEHAVIOR_NOFOREIGN 3
++#define BEHAVIOR_ONLYCACHE 4
+ 
+ // From nsIContentPolicy
+ static const char *kTypeString[NUMBER_OF_TYPES] = {"other", 
+                                                    "script",
+                                                    "image",
+                                                    "stylesheet",
+                                                    "object",
+                                                    "document",
+@@ -135,17 +139,17 @@
+ {
+   PRInt32 val;
+ 
+ #define PREF_CHANGED(_P) (!aPref || !strcmp(aPref, _P))
+ 
+   for(PRUint32 i = 0; i < NUMBER_OF_TYPES; ++i) {
+     if (PREF_CHANGED(kTypeString[i]) &&
+         NS_SUCCEEDED(aPrefBranch->GetIntPref(kTypeString[i], &val)))
+-      mBehaviorPref[i] = LIMIT(val, 1, 3, 1);
++      mBehaviorPref[i] = LIMIT(val, 1, 4, 1);
+   }
+ 
+ }
+ 
+ // nsIContentPolicy Implementation
+ NS_IMETHODIMP 
+ nsContentBlocker::ShouldLoad(PRUint32          aContentType,
+                              nsIURI           *aContentLocation,
+@@ -284,17 +288,17 @@
+   switch (permission) {
+   case BEHAVIOR_ACCEPT:
+     *aPermission = PR_TRUE;
+     break;
+   case BEHAVIOR_REJECT:
+     *aPermission = PR_FALSE;
+     break;
+ 
+-  case BEHAVIOR_NOFOREIGN:
++  case BEHAVIOR_NOFOREIGN: {
+     // Third party checking
+ 
+     // Need a requesting uri for third party checks to work.
+     if (!aFirstURI)
+       return NS_OK;
+ 
+     PRBool trustedSource = PR_FALSE;
+     rv = aFirstURI->SchemeIs("chrome", &trustedSource);
+@@ -346,17 +350,31 @@
+     // |firstUri| there is a dot. That means both url are in the same domain
+     if ((firstHost.Length() > tail.Length() && 
+          firstHost.CharAt(firstHost.Length() - tail.Length() - 1) != '.') || 
+         !tail.Equals(firstTail)) {
+       *aPermission = PR_FALSE;
+     }
+     break;
+   }
+-  
++  case BEHAVIOR_ONLYCACHE:
++    nsresult rv;
++    nsCOMPtr<imgICache> cacheService = do_GetService("@mozilla.org/image/cache;1", &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++#ifndef DEBUG
++    nsCOMPtr<nsIProperties> entryProp;
++    rv = cacheService->FindEntryProperties(aCurrentURI, getter_AddRefs(entryProp));
++    if (entryProp)
++        *aPermission = PR_TRUE;
++    else
++#endif
++        *aPermission = PR_FALSE;
++    break;
++  }
++
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsContentBlocker::Observe(nsISupports     *aSubject,
+                           const char      *aTopic,
+                           const PRUnichar *aData)
+ {
+Index: mozilla/extensions/permissions/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/permissions/Makefile.in
++++ mozilla/extensions/permissions/Makefile.in
+@@ -55,16 +55,18 @@
+ 		  string \
+ 		  necko \
+ 		  dom \
+ 		  widget \
+ 		  content \
+ 		  layout \
+ 		  pref \
+ 		  docshell \
++		  imglib2 \
++		  nkcache \
+ 		  caps \
+ 		  xpconnect \
+ 		  js \
+ 		  $(NULL)
+ 
+ CPPSRCS		= \
+ 		  nsModuleFactory.cpp \
+ 		  nsContentBlocker.cpp \

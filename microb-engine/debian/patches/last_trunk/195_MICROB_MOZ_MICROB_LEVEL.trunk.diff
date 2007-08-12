@@ -50,11 +50,11 @@ Index: mozilla/toolkit/components/Makefile.in
  ifdef MOZ_XUL
  DIRS += \
  	autocomplete \
- 	passwordmgr \
  	satchel \
  	$(NULL)
  endif # MOZ_XUL
  
+ ifdef MOZ_SUITE
 Index: mozilla/toolkit/library/libxul-config.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-config.mk
@@ -202,11 +202,11 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
 ===================================================================
 --- mozilla.orig/xpfe/components/build/nsModule.cpp
 +++ mozilla/xpfe/components/build/nsModule.cpp
-@@ -54,17 +54,17 @@
+@@ -53,17 +53,17 @@
+ #include "nsDownloadProxy.h"
  
  #if defined(XP_WIN)
  #include "nsWindowsHooks.h"
- #include "nsUrlWidget.h"
  #endif // Windows
  
  #endif // MOZ_SUITE
@@ -221,7 +221,7 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  
  // {9491C382-E3C4-11D2-BDBE-0050040A9B44}
  #define NS_GLOBALHISTORY_CID \
-@@ -74,17 +74,17 @@
+@@ -73,34 +73,34 @@
      "@mozilla.org/rdf/datasource;1?name=history"
  
  #ifdef MOZ_RDF
@@ -240,11 +240,10 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(RelatedLinksHandlerImpl, Init)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsGlobalHistory, Init)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsDownloadManager, Init)
-@@ -92,17 +92,17 @@
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsDownloadProxy)
  
  #if defined(XP_WIN)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsWindowsHooks)
- NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsUrlWidget, Init)
  #endif // Windows
  
  #endif // MOZ_SUITE
@@ -259,9 +258,9 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  static NS_METHOD
  RegisterProc(nsIComponentManager *aCompMgr,
               nsIFile *aPath,
-@@ -165,30 +165,30 @@
-     { NS_IURLWIDGET_CLASSNAME, NS_IURLWIDGET_CID,
-       NS_IURLWIDGET_CONTRACTID, nsUrlWidgetConstructor },
+@@ -161,30 +161,30 @@
+ 
+ #ifdef XP_WIN
      { NS_IWINDOWSHOOKS_CLASSNAME, NS_IWINDOWSHOOKS_CID,
        NS_IWINDOWSHOOKS_CONTRACTID, nsWindowsHooksConstructor },
  #endif // XP_WIN

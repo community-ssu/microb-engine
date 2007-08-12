@@ -55,6 +55,7 @@ snav/BUG_zero_size_links.diff
 #260_MICROB_frameset_layout_adjustments.diff 
 220_NO_WEBBRZ_CHROME_LISTNRS_lp0.diff -p0
 225_Timeout_TestGtkEmbed.diff
+226_ZoomControlsTestGtkEmbed.diff
 230_DisableInternalMozFilepicker_lp0.diff -p0
 235_DisableNativeGtkPrintClass_lp0.diff -p0
 240_Sound_Drag_XIM_disable.diff
