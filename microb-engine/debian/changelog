@@ -1,3 +1,12 @@
+microb-engine (1.0.3-14) unstable; urgency=low
+
+  * Updated for building with branch and trunk mozilla.tar.gz
+  * Added depends for microb-refui
+  * Removed resources installing from engine (while crashes in gfx will not
+    fixed)
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 12 Aug 2007 20:23:31 +0300
+
 microb-engine (1.0.3-13) unstable; urgency=low
 
   * Disabled good theming of radio/check buttons, dropdowns... because we have
