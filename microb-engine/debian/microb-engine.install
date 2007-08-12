@@ -2,6 +2,8 @@
 usr/lib/microb-engine/libxpcom.so
 usr/lib/microb-engine/libmozjs.so
 usr/lib/microb-engine/libxul.so
+usr/lib/microb-engine/libsqlite3*so
+usr/lib/microb-engine/libnssdbm3*so
 usr/lib/microb-engine/chrome/en-US/locale/en-US/necko/necko.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/css.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/xbl.properties
