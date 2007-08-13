@@ -33,7 +33,7 @@ QUILT_PATCHES:=$(CURDIR)/debian/patches
 STAMP_DIR:=$(CURDIR)/stampdir
 STAMPDIR_LOG:=$(CURDIR)/stampdir/log
 STAMPDIR_PATCH:=$(CURDIR)/stampdir/log/patch
-series_file:=series.gtk2
+series_file:=series.$(config)
 
 GCCVER=.gcc$(shell gcc --version | grep gcc | cut -d ' ' -f 3)
 
