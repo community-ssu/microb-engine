@@ -43,8 +43,8 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
 +  nsPoint pt(rect.x, rect.y);
 +  pt.x += (PRInt32)rect.width / 2;
 +  pt.y += (PRInt32)rect.height / 2;
-+  event.refPoint.x = pt.x / 60;
-+  event.refPoint.y = pt.y / 60;
++  event.refPoint.x = pt.x;
++  event.refPoint.y = pt.y;
 +  event.time = PR_IntervalNow();
 +  nsEventStatus status;
 +  viewManager->DispatchEvent(&event, &status);
