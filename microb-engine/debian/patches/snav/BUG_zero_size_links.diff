@@ -52,7 +52,7 @@
 -  NS_ENSURE_TRUE(aFrame, result);
 -  
 -  nsCOMPtr<nsIDOMNSElement> nsElem = do_QueryInterface(aFrame->GetContent());
-+  nsCOMPtr<nsIDOMNSElement> nsElem = do_QueryInterface(aNode);
++  if (!aNode) return result; nsCOMPtr<nsIDOMNSElement> nsElem = do_QueryInterface(aNode);
    NS_ENSURE_TRUE(nsElem, result);
    nsCOMPtr<nsIDOMTextRectangle> domrect;
    nsElem->GetBoundingClientRect(getter_AddRefs(domrect));
@@ -66,11 +66,11 @@
 +  if (result.width && result.height) return result;
 +  // Some <a> links (ex: google.com 1 2 3 4 5 ...) have size 0
 +  // Check their parent
-+  nsCOMPtr<nsIDOMNode> pnode = do_QueryInterface(nsElem);
-+  NS_ENSURE_TRUE(pnode, result);
-+  pnode->GetParentNode(getter_AddRefs(pnode));
-+  NS_ENSURE_TRUE(pnode, result);
-+  return makeRectRelativeToGlobalView(pnode);
++  nsCOMPtr<nsIDOMNode> node = do_QueryInterface(nsElem);
++  if (!node) return result;
++  node->GetFirstChild(getter_AddRefs(child));
++  if (!child) return result;
++  return makeRectRelativeToGlobalView(child);
  }
  
  
