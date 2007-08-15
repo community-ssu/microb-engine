@@ -120,7 +120,7 @@ pref("accessibility.warn_on_browsewithcaret", true);
 // Most users will want 1, 3, or 7.
 // On OS X, we use Full Keyboard Access system preference,
 // unless accessibility.tabfocus is set by the user.
-pref("accessibility.tabfocus", 1);
+pref("accessibility.tabfocus", 7);
 pref("accessibility.tabfocus_applies_to_xul", false);
 
 pref("accessibility.usetexttospeech", "");
