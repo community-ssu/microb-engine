@@ -589,8 +589,8 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  }
 +  else
 +  {
-+    classValue.AppendLiteral(" ftv");
 +    classValue.AppendLiteral(" ftvAll");
++    classValue.AppendLiteral(" ftv");
 +
 +    if (nname.LowerCaseEqualsLiteral("td"))
 +    {
@@ -878,7 +878,7 @@ Index: mozilla/layout/base/nsIPresShell.h
 ===================================================================
 --- mozilla.orig/layout/base/nsIPresShell.h
 +++ mozilla/layout/base/nsIPresShell.h
-@@ -729,16 +729,19 @@
+@@ -699,16 +699,19 @@
  
    void AddWeakFrame(nsWeakFrame* aWeakFrame);
    void RemoveWeakFrame(nsWeakFrame* aWeakFrame);
@@ -902,7 +902,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -998,16 +998,19 @@
+@@ -1012,16 +1012,19 @@
    virtual void ListStyleSheets(FILE *out, PRInt32 aIndent = 0);
    virtual void VerifyStyleTree();
  #endif
@@ -922,7 +922,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
    void UnsuppressAndInvalidate();
  
    void     WillCauseReflow() { ++mChangeNestCount; }
-@@ -1113,16 +1116,17 @@
+@@ -1094,16 +1097,17 @@
  #ifdef DEBUG
    PRUint32                  mUpdateCount;
  #endif
@@ -940,7 +940,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
    // middle of frame construction and the like... it really shouldn't be
    // needed, one hopes, but it is for now.
    PRUint32  mChangeNestCount;
-@@ -5780,16 +5784,28 @@
+@@ -5390,16 +5394,28 @@
    nsIPresShell *shell = aDocument->GetPrimaryShell();
    if (shell)
      shell->Freeze();
@@ -969,7 +969,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
      EnumeratePlugins(domDoc, NS_LITERAL_STRING("applet"), StopPluginInstance);
      EnumeratePlugins(domDoc, NS_LITERAL_STRING("embed"), StopPluginInstance);
    }
-@@ -6065,16 +6081,19 @@
+@@ -5675,16 +5691,19 @@
  #endif
  
  nsresult
@@ -993,14 +993,13 @@ Index: mozilla/extensions/ftv/src/ftv.css
 ===================================================================
 --- /dev/null
 +++ mozilla/extensions/ftv/src/ftv.css
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,47 @@
 +* {
-+  max-width: 100% ! important;
++  max-width: 100% !important;
 +}
 +
 +*.ftvAll {
-+  width:auto !important;
-+  height:auto !important;
++  width: auto !important;
 +  left:auto !important;
 +  float:none !important;
 +  padding:0px !important;
@@ -1030,9 +1029,15 @@ Index: mozilla/extensions/ftv/src/ftv.css
 +
 +img.ftv {
 +  vertical-align:bottom !important;
++  width: 100% !important;
 +}
 +
++embed.ftv {
++  width: 100% !important;
++}
++
++
 +div.ftv {
-+  min-width:1px !important;
++  vertical-align:bottom !important;
 +}
 +
