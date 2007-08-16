@@ -1,10 +1,10 @@
 # Changed styling for MAC
 # Disabled double focusing (should be focus property)
---- mozilla/layout/base/nsPresShell.cpp.orig	2007-07-13 14:41:17.000000000 +0300
-+++ mozilla/layout/base/nsPresShell.cpp	2007-07-13 14:41:29.000000000 +0300
-@@ -2051,37 +2050,37 @@ nsresult PresShell::SetPrefFocusRules(vo
-       PRUint8 focusRingWidth = mPresContext->FocusRingWidth();
-       PRBool focusRingOnAnything = mPresContext->GetFocusRingOnAnything();
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp
++++ mozilla/layout/base/nsPresShell.cpp
+@@ -2050,33 +2050,33 @@
  
        if ((NS_SUCCEEDED(result) && focusRingWidth != 1 && focusRingWidth <= 4 ) || focusRingOnAnything) {
          PRUint32 index = 0;
@@ -42,13 +42,11 @@
    return result;
  }
  
- void
- PresShell::AddUserSheet(nsISupports* aSheet)
---- mozilla/widget/src/gtk2/nsLookAndFeel.cpp.orig	2007-08-14 13:13:32.000000000 +0300
-+++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp	2007-08-14 13:14:09.000000000 +0300
-@@ -167,21 +167,21 @@ nsresult nsLookAndFeel::NativeGetColor(c
-     case eColor_background:
-         // desktop background
+Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp
++++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+@@ -168,17 +168,17 @@
          aColor = GDK_COLOR_TO_NS_RGB(mStyle->bg[GTK_STATE_NORMAL]);
          break;
      case eColor_captiontext:
@@ -67,10 +65,7 @@
      case eColor_highlighttext:
          // text of selected item
          aColor = GDK_COLOR_TO_NS_RGB(mStyle->text[GTK_STATE_SELECTED]);
-         break;
-     case eColor_inactiveborder:
-@@ -212,21 +212,21 @@ nsresult nsLookAndFeel::NativeGetColor(c
-         // menu text
+@@ -212,16 +212,20 @@
          aColor = sMenuText;
          break;
      case eColor_scrollbar:
@@ -79,11 +74,10 @@
          break;
  
      case eColor_threedface:
-         // 3-D face color
--        aColor = sTextDisabled;
++        // 3-D face color
 +        aColor = GDK_COLOR_TO_NS_RGB(mStyle->bg[GTK_STATE_INSENSITIVE]);
-         break;
- 
++        break;
++
      case eColor_buttonface:
          // 3-D face color
          aColor = sButtonBackground;
@@ -92,9 +86,7 @@
      case eColor_buttontext:
          // text on push buttons
          aColor = sButtonText;
-@@ -298,20 +298,24 @@ nsresult nsLookAndFeel::NativeGetColor(c
-         break;
-     case eColor__moz_cellhighlighttext:
+@@ -295,16 +299,20 @@
          aColor = GDK_COLOR_TO_NS_RGB(mStyle->text[GTK_STATE_ACTIVE]);
          break;
      case eColor__moz_menuhover:
@@ -115,5 +107,3 @@
      }
  
      return res;
- }
- 

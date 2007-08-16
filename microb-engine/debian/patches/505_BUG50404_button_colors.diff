@@ -1,9 +1,9 @@
 # change style of disabled text area
---- mozilla/widget/src/gtk2/nsLookAndFeel.cpp.orig	2007-05-28 11:47:14.000000000 +0300
-+++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp	2007-05-31 16:20:02.000000000 +0300
-@@ -46,20 +46,21 @@
- #define GDK_COLOR_TO_NS_RGB(c) \
-     ((nscolor) NS_RGB(c.red>>8, c.green>>8, c.blue>>8))
+Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp
++++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+@@ -48,16 +48,17 @@
  
  nscolor   nsLookAndFeel::sInfoText = 0;
  nscolor   nsLookAndFeel::sInfoBackground = 0;
@@ -21,36 +21,7 @@
  //-------------------------------------------------------------------------
  //
  // Query interface implementation
- //
- //-------------------------------------------------------------------------
-@@ -210,20 +211,24 @@ nsresult nsLookAndFeel::NativeGetColor(c
-     case eColor_menutext:
-         // menu text
-         aColor = sMenuText;
-         break;
-     case eColor_scrollbar:
-         // scrollbar gray area
-         aColor = GDK_COLOR_TO_NS_RGB(mStyle->bg[GTK_STATE_ACTIVE]);
-         break;
- 
-     case eColor_threedface:
-+        // 3-D face color
-+        aColor = sTextDisabled;
-+        break;
-+
-     case eColor_buttonface:
-         // 3-D face color
-         aColor = sButtonBackground;
-         break;
- 
-     case eColor_buttontext:
-         // text on push buttons
-         aColor = sButtonText;
-         break;
- 
-@@ -659,20 +664,23 @@ nsLookAndFeel::InitLookAndFeel()
-             GDK_COLOR_TO_NS_RGB(style->dark[GTK_STATE_NORMAL]);
-     }
+@@ -665,16 +666,19 @@
  
      gtk_widget_destroy(window);
  
@@ -70,13 +41,11 @@
  nsLookAndFeel::GetPasswordCharacter()
  {
      return sInvisibleCharacter;
- }
- 
---- mozilla/widget/src/gtk2/nsLookAndFeel.h.orig	2006-10-23 23:48:05.000000000 +0300
-+++ mozilla/widget/src/gtk2/nsLookAndFeel.h	2007-05-31 16:14:55.000000000 +0300
-@@ -61,20 +61,21 @@ protected:
-     // Cached colors, we have to create a dummy widget to actually
-     // get the style
+Index: mozilla/widget/src/gtk2/nsLookAndFeel.h
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsLookAndFeel.h
++++ mozilla/widget/src/gtk2/nsLookAndFeel.h
+@@ -63,16 +63,17 @@
  
      static nscolor sInfoBackground;
      static nscolor sInfoText;
@@ -94,5 +63,3 @@
      static void InitLookAndFeel();
      void InitWidget() {
          mWidget = gtk_invisible_new();
-         gtk_object_ref(GTK_OBJECT(mWidget));
-         gtk_object_sink(GTK_OBJECT(mWidget));
