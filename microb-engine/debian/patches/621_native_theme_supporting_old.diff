@@ -3,7 +3,40 @@ Index: mozilla/layout/style/forms.css
 ===================================================================
 --- mozilla.orig/layout/style/forms.css
 +++ mozilla/layout/style/forms.css
-@@ -559,16 +559,121 @@
+@@ -284,32 +284,16 @@
+    * to make sure that our left border+padding matches the left
+    * border+padding of a combobox so that our scrollbar will line up
+    * with the dropmarker.  So set our left border to 2px.
+    */
+   border: 1px outset black !important;
+   border-left-width: 2px ! important;
+ } 
+ 
+-input[disabled],
+-textarea[disabled],
+-option[disabled],
+-optgroup[disabled],
+-select[disabled] {
+-  -moz-user-input: disabled;
+-  -moz-user-focus: ignore;
+-  color: GrayText;
+-  background-color: ThreeDFace;
+-  cursor: inherit;
+-}
+-
+-option[disabled],
+-optgroup[disabled] {
+-  background-color: transparent;
+-}
+ 
+ /* hidden inputs */
+ input[type="hidden"] {
+   -moz-appearance: none;
+   display: none;
+   padding: 0;
+   border: 0;
+   cursor: auto;
+@@ -559,16 +543,139 @@
  @media print {
    input, textarea, select, button {
      -moz-user-input: none !important;
@@ -30,7 +63,7 @@ Index: mozilla/layout/style/forms.css
 +input[type="submit"],
 +button,
 +select {
-+  background-color: Window !important;
++  background-color: Window;
 +  background: Window url("form-widgets/button.png") repeat-x bottom right;
 +  border: 2px solid ThreeDShadow;
 +  color: ButtonText !important;
@@ -97,8 +130,8 @@ Index: mozilla/layout/style/forms.css
 +select:not([size]),
 +select[size="0"],
 +select[size="1"] {
-+  background-color: Window !important;
-+  background: Window url("form-widgets/button.png") repeat-x bottom right !important;
++  background-color: Window;
++  background: Window url("form-widgets/button.png") repeat-x bottom right;
 +  border: 2px solid ThreeDShadow !important;
 +  color: ButtonText !important;
 +  margin: 2px !important;
@@ -109,6 +142,24 @@ Index: mozilla/layout/style/forms.css
 +  -moz-border-right-colors: ThreeDShadow Window;
 +  -moz-border-top-colors: ThreeDShadow ThreeDHighlight;
 +}
++
++input[disabled],
++textarea[disabled],
++option[disabled],
++optgroup[disabled],
++select[disabled] {
++  -moz-user-input: disabled;
++  -moz-user-focus: ignore;
++  color: GrayText !important;
++  background-color: ThreeDFace;
++  cursor: inherit;
++}
++
++option[disabled],
++optgroup[disabled] {
++  background-color: transparent;
++}
++
 +/*  Broken scaling, many crashes in Stretch after zooming
 +select > input[type="button"]{
 +  background: transparent url("form-widgets/droparrow.png") no-repeat center center !important;
