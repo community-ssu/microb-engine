@@ -1,3 +1,26 @@
+microb-engine (1.0.3-15) unstable; urgency=low
+
+  * Fixed SNAV compilation problem
+  * Fixed possible crash on yahoo
+  * Fixed moving of mouse to the proper place
+  * Bug 1831 make description for about:config localizable
+    includes engineer's English for all localizations
+  * Fixed bug:55046 By pressing the Tab button in the text area of the web
+    page the focus goes to the non-text entry field
+  * Fixed bug: Scrolling to not visible focusable element might
+    not happen. Fixes: NB#44373
+  * Fixed bug: fit width to view changes only part of the page. Fixes: NB#60297
+  * Fixed bug: Dvice doesn't use proxy configuration scripts
+    (*.pac). Fixes: NB#62885
+  * Fixed bug: disabled textarea is shown badly. Fixes: NB#50404
+  * Fixed bug: rocker does not work in text. Fixes: NB#65844
+  * Fixed bug: some drop-down menus are disabled and should be 
+    dimmed. Fixes: NB#60893
+  * Added libsqlite and nssdbm libraries
+  * Added symlink for mozilla-config in system directory
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 17 Aug 2007 19:15:30 +0300
+
 microb-engine (1.0.3-14) unstable; urgency=low
 
   * Updated for building with branch and trunk mozilla.tar.gz
