@@ -67,7 +67,7 @@
 +  // Some <a> links (ex: google.com 1 2 3 4 5 ...) have size 0
 +  // Check their parent
 +  nsCOMPtr<nsIDOMNode> node = do_QueryInterface(nsElem);
-+  if (!node) return result;
++  if (!node) return result; nsCOMPtr<nsIDOMNode> child;
 +  node->GetFirstChild(getter_AddRefs(child));
 +  if (!child) return result;
 +  return makeRectRelativeToGlobalView(child);
