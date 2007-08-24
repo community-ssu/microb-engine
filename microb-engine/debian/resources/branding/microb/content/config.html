@@ -68,7 +68,7 @@ function fillQueryMap()
  {
   bit = query[i];
   bits = bit.split(/=/);
-  queryMap[bits[0]] = unescape(bits[1]);
+  queryMap[bits[0]] = unescape((bits[1]||'').replace(/\+/g," "));
  }
 }
 fillQueryMap();
@@ -118,11 +118,15 @@ function formatPrefs(limit)
  flushAccum();
 }
 var pmap = {};
+var fmap = {};
 (function (){
  var ps = Components.interfaces.nsIPrefBranch;
  pmap[ps.PREF_STRING] = "setCharPref";
+ fmap[ps.PREF_STRING] = function (value) { return value.replace(/^\s*"(.*)"\s*$/,"$1"); };
  pmap[ps.PREF_INT] = "setIntPref";
+ fmap[ps.PREF_INT] = function (value) { return value - 0; };
  pmap[ps.PREF_BOOL] = "setBoolPref";
+ fmap[ps.PREF_BOOL] = function (value) { return /1|true|yes/i.test(value); };
 })();
 var boolRe = /^\s*(?:true|false)\s*$/i;
 var intRe = /^\s*\d+\s*$/;
@@ -151,10 +155,7 @@ function setPref(name, value)
  {
   document.write("<title>Error<\/title><h3>oops i don't know how to handle "+type+"<\/h3><a href='"+location+"'>back<\/a>");
  } else {
-  if (type == ps.PREF_STRING) {
-   value = value.replace(/^\s*"(.*)"\s*$/,"$1");
-  }
-  ps[pmap[type]](name, value);
+  ps[pmap[type]](name, fmap[type](value));
  }
 }
 formatSetPref();
