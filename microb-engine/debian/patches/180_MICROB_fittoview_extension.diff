@@ -317,7 +317,7 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 ===================================================================
 --- /dev/null
 +++ mozilla/extensions/ftv/src/nsFitToView.cpp
-@@ -0,0 +1,556 @@
+@@ -0,0 +1,558 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim:set ts=2 sw=2 sts=2 tw=80 et cindent: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -720,7 +720,9 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  nsCOMPtr<nsIDOMDocument> doc;
 +  rv = aWindow->GetDocument(getter_AddRefs(doc));
 +  NS_ENSURE_SUCCESS(rv, rv);
-+  aWindow->ScrollTo(0,0);
++  PRInt32 yCoord = 0;
++  aWindow->GetScrollY(&yCoord);
++  aWindow->ScrollTo(0,yCoord);
 +
 +  OptimizeDocument(EM_MULT, doc);
 +
