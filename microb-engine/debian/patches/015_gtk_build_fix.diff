@@ -1818,7 +1818,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
 ===================================================================
 --- mozilla.orig/gfx/src/gtk/nsImageGTK.cpp
 +++ mozilla/gfx/src/gtk/nsImageGTK.cpp
-@@ -675,34 +675,39 @@
+@@ -675,34 +675,41 @@
      UpdateCachedImage();
  
    if ((mAlphaDepth==1) && mIsSpacer)
@@ -1852,6 +1852,8 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
 -  srcHeight = aSHeight;
 +  srcWidth = mWidth<ssW?mWidth - 1:aSWidth;
 +  srcHeight = mHeight<ssH?mHeight - 1:aSHeight;
++  if (!srcWidth) srcWidth = 1;
++  if (!srcHeight) srcHeight = 1;
    dstWidth = aDWidth;
    dstHeight = aDHeight;
    dstOrigX = aDX;
@@ -1860,11 +1862,11 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
    // clip to decode region
    PRInt32 j = aSX + aSWidth;
    PRInt32 z;
---- mozilla/layout/base/nsDisplayList.cpp.orig	2007-08-01 12:18:55.000000000 +0300
-+++ mozilla/layout/base/nsDisplayList.cpp	2007-08-01 12:20:55.000000000 +0300
-@@ -771,26 +771,26 @@ void nsDisplayOpacity::Paint(nsDisplayLi
- {
-   // XXX This way of handling 'opacity' creates exponential time blowup in the
+Index: mozilla/layout/base/nsDisplayList.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsDisplayList.cpp
++++ mozilla/layout/base/nsDisplayList.cpp
+@@ -773,22 +773,22 @@
    // depth of nested translucent elements. This will be fixed when we move to
    // cairo with support for real alpha channels in surfaces, so we don't have
    // to do this white/black hack anymore.
@@ -1889,11 +1891,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
    ctx->Rectangle(gfxRect(bounds.x * a2p,
                           bounds.y * a2p,
                           bounds.width * a2p,
-                          bounds.height * a2p),
-                  PR_TRUE);
-@@ -824,21 +824,25 @@ void nsDisplayOpacity::Paint(nsDisplayLi
-   nsDisplayWrapList::Paint(aBuilder, buffers->mBlackCX, bounds);
-   if (buffers->mWhiteCX) {
+@@ -826,17 +826,21 @@
      nsDisplayWrapList::Paint(aBuilder, buffers->mWhiteCX, bounds);
    }
  
@@ -1916,5 +1914,3 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
                   buffers->mBlackCX, aCtx,
                   damageRectInPixels.x, damageRectInPixels.y,
                   opacity, buffers->mWhiteCX,
-                  NS_RGB(0, 0, 0), NS_RGB(255, 255, 255));
-   delete buffers;
