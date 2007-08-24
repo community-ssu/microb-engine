@@ -23,7 +23,7 @@ diff -ruN -p -U10 mozilla/extensions/spatialnavigation/src.orig/nsSpatialNavigat
 +    nsString DMode;
 +    htmlDoc->GetDesignMode(DMode);
 +    designMode = DMode.EqualsLiteral("on");
-+    return NS_OK;
++    if (designMode) return NS_OK;
 +  }
    
    if (targetContent->IsNodeOfType(nsINode::eHTML_FORM_CONTROL)) 
