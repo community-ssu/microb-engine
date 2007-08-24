@@ -199,7 +199,6 @@ trunk_updates/theme/attachment.cgiid=274177.diff
 trunk_updates/attachment.cgi?id=274065.diff
 #
 
-621_native_theme_supporting_old.diff
 620_native_theme_supporting.diff
 620_BUG_333869.fix.diff
 630_bigger_ua_string_length_61630.diff

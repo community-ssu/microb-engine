@@ -141,7 +141,6 @@ last_trunk/610_image_loading_only_cached.trunk.diff
 611_image_loading_force_reload.diff
 
 
-621_native_theme_supporting_old.diff
 last_trunk/620_native_theme_supporting.trunk.diff
 last_trunk/620_BUG_333869.fix.trunk.diff
 630_bigger_ua_string_length_61630.diff
