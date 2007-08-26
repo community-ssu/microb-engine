@@ -58,6 +58,13 @@ Depends: ${shlibs:Depends}, microb-engine, libgtkmozembed
 Description: TestGtkEmbed refui for MicroB
  This package provides a simple GUI for testing the browser engine
 
+Package: microb-xulrunner
+Architecture: any
+Section: user/extras
+Depends: ${shlibs:Depends}, microb-engine, libgtkmozembed
+Description: Xulrunner files for MicroB engine
+ This package provides a simple GUI for testing the browser engine
+
 Package: microb-engine-dev
 Section: libdevel
 Architecture: any
@@ -94,6 +101,13 @@ Architecture: any
 Depends: microb-refui (= ${Source-Version})
 Description: Debug package for MicroB refui
  Debug symbols file for the microb refui
+
+Package: microb-xulrunner-dbg
+Section: libdevel
+Architecture: any
+Depends: microb-xulrunner (= ${Source-Version})
+Description: Debug Xulrunner files for MicroB engine
+ This package provides a simple GUI for testing the browser engine
 
 Package: microb-spellcheck
 Architecture: any

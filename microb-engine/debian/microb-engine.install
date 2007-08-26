@@ -32,7 +32,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/global/plugins.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/preferences.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/regionNames.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/dialog.properties
-usr/lib/microb-engine/chrome/en-US/locale/en-US/global/tabbrowser.properties
+usr/lib/microb-engine/chrome/en-US/locale/en-US/global/tabbrowser*.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/viewSource.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/wizard.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/charsetOverlay.dtd
@@ -112,7 +112,7 @@ usr/lib/microb-engine/chrome/toolkit/content/global/bindings/splitter.xml
 usr/lib/microb-engine/chrome/toolkit/content/global/bindings/spinbuttons.xml
 usr/lib/microb-engine/chrome/toolkit/content/global/bindings/stringbundle.xml
 usr/lib/microb-engine/chrome/toolkit/content/global/bindings/tabbox.xml
-usr/lib/microb-engine/chrome/toolkit/content/global/bindings/tabbrowser.xml
+usr/lib/microb-engine/chrome/toolkit/content/global/bindings/tabbrowser*.xml
 usr/lib/microb-engine/chrome/toolkit/content/global/bindings/text.xml
 usr/lib/microb-engine/chrome/toolkit/content/global/bindings/textbox.xml
 usr/lib/microb-engine/chrome/toolkit/content/global/mozilla.xhtml
