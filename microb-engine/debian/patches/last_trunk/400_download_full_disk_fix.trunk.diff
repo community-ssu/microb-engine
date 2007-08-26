@@ -5,8 +5,7 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.h
 ===================================================================
 --- mozilla.orig/uriloader/exthandler/nsExternalHelperAppService.h
 +++ mozilla/uriloader/exthandler/nsExternalHelperAppService.h
-@@ -458,16 +458,25 @@
-    * we need to remember the final destination until we are ready to use it.
+@@ -472,16 +472,25 @@
     */
    nsCOMPtr<nsIFile> mFinalFileDestination;
  
@@ -14,7 +13,7 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.h
  
    char mDataBuffer[DATA_BUFFER_SIZE];
  
-+  /**
+   /**
 +   * XXX: Download recover stuff
 +   */
 +  PRBool mWriteError;
@@ -23,7 +22,7 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.h
 +  PRUint32 mOutputOffsetTemp;
 +  const char *bufPtr;
 +
-   /**
++  /**
     * Creates the temporary file for the download and an output stream for it.
     * Upon successful return, both mTempFile and mOutStream will be valid.
     */
@@ -31,11 +30,12 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.h
    /**
     * When we download a helper app, we are going to retarget all load
     * notifications into our own docloader and load group instead of
+    * using the window which initiated the load....RetargetLoadNotifications
 Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
 ===================================================================
 --- mozilla.orig/uriloader/exthandler/nsExternalHelperAppService.cpp
 +++ mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
-@@ -113,16 +113,18 @@
+@@ -117,16 +117,18 @@
  
  #include "nsIGlobalHistory.h" // to mark downloads as visited
  #include "nsIGlobalHistory2.h" // to mark downloads as visited
@@ -49,12 +49,12 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
  #include "nsCRT.h"
  
  #include "nsMIMEInfoImpl.h"
- #include "nsHandlerAppImpl.h"
+ #include "nsLocalHandlerApp.h"
  
  #ifdef PR_LOGGING
  PRLogModuleInfo* nsExternalHelperAppService::mLog = nsnull;
  #endif
-@@ -1537,16 +1539,18 @@
+@@ -1486,16 +1488,18 @@
  , mShouldCloseWindow(PR_FALSE)
  , mReceivedDispositionInfo(PR_FALSE)
  , mStopRequestIssued(PR_FALSE)
@@ -73,7 +73,7 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
    AppendUTF8toUTF16(aTempFileExtension, mTempFileExtension);
  
    // replace platform specific path separator and illegal characters to avoid any confusion
-@@ -2127,59 +2131,134 @@
+@@ -2076,59 +2080,134 @@
          }
      }
  }
@@ -211,7 +211,7 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
        // Send progress notification.
        if (mWebProgressListener)
        {
-@@ -2189,35 +2268,40 @@
+@@ -2138,20 +2217,25 @@
      else
      {
        // An error occurred, notify listener.
@@ -239,19 +239,3 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
  {
    mStopRequestIssued = PR_TRUE;
    mRequest = nsnull;
-   // Cancel if the request did not complete successfully.
-   if (!mCanceled && NS_FAILED(aStatus))
-   {
-     // Send error notification.
-     nsAutoString tempFilePath;
-     if (mTempFile)
--      mTempFile->GetPath(tempFilePath);
-+      mTempFile->GetPath(tempFilePath);
-     SendStatusChange( kReadError, aStatus, request, tempFilePath );
- 
-     Cancel(aStatus);
-   }
- 
-   // first, check to see if we've been canceled....
-   if (mCanceled)
-     return NS_OK;

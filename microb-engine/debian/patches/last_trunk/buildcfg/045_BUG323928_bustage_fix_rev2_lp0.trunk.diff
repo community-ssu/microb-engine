@@ -36,41 +36,26 @@ Index: mozilla/widget/src/gtk2/nsDeviceContextSpecG.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsDeviceContextSpecG.cpp
 +++ mozilla/widget/src/gtk2/nsDeviceContextSpecG.cpp
-@@ -395,16 +395,17 @@
-                    nsIDeviceContextSpec)
- 
- //#define USE_PDF 1
- #include "gfxPDFSurface.h"
- #include "gfxPSSurface.h"
- #include "nsUnitConversion.h"
- NS_IMETHODIMP nsDeviceContextSpecGTK::GetSurfaceForPrinter(gfxASurface **aSurface)
- {
-+#ifdef MOZ_ENABLE_POSTSCRIPT
-   const char *path;
-   GetPath(&path);
- 
+@@ -407,18 +407,21 @@
    double width, height;
    mPrintSettings->GetEffectivePageSize(&width, &height);
    // convert twips to points
    width /= 20;
    height /= 20;
-@@ -431,16 +432,19 @@
-   gfxPSSurface *surface = new gfxPSSurface(stream, gfxSize(width, height));
- #endif
- //  surface->SetDPI(600, 600);
-   
-   *aSurface = surface;
-   NS_ADDREF(*aSurface);
  
-   return NS_OK;
-+#else
-+  return NS_ERROR_FAILURE;
+   DO_PR_DEBUG_LOG(("\"%s\", %f, %f\n", path, width, height));
+ 
+-  nsresult rv = nsPrintJobFactoryGTK::CreatePrintJob(this, mPrintJob);
++  nsresult rv;
++#ifdef MOZ_ENABLE_POSTSCRIPT
++	rv = nsPrintJobFactoryGTK::CreatePrintJob(this, mPrintJob);
+   if (NS_FAILED(rv))
 +#endif
- }
+     return rv;
  
- /** -------------------------------------------------------
-  *  Initialize the nsDeviceContextSpecGTK
-  *  @update   dc 2/15/98
-  *  @update   syd 3/2/99
-  */
- NS_IMETHODIMP nsDeviceContextSpecGTK::Init(nsIWidget *aWidget,
+   nsCOMPtr<nsILocalFile> file;
+   rv = mPrintJob->GetSpoolFile(getter_AddRefs(file));
+   if (NS_FAILED(rv))
+     return rv;
+ 
+   nsCOMPtr<nsIFileOutputStream> stream = do_CreateInstance("@mozilla.org/network/file-output-stream;1");

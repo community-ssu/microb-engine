@@ -9,7 +9,7 @@ Index: configure.in
 ===================================================================
 --- configure.in.orig
 +++ configure.in
-@@ -4073,16 +4073,18 @@
+@@ -4106,16 +4106,18 @@
  MOZ_JAVAXPCOM=
  MOZ_JSDEBUGGER=1
  MOZ_JSLOADER=1
@@ -28,7 +28,7 @@ Index: configure.in
  MOZ_NO_INSPECTOR_APIS=
  MOZ_NO_XPCOM_OBSOLETE=
  MOZ_NO_FAST_LOAD=
-@@ -7118,16 +7120,42 @@
+@@ -7154,16 +7156,42 @@
      PKG_CHECK_MODULES(LCMS, lcms >= $LCMS_VERSION)
  fi
  
@@ -75,8 +75,8 @@ Index: config/autoconf.mk.in
 ===================================================================
 --- config/autoconf.mk.in.orig
 +++ config/autoconf.mk.in
-@@ -185,16 +185,18 @@
- ENABLE_STRIP	= @ENABLE_STRIP@
+@@ -184,16 +184,18 @@
+ PKG_SKIP_STRIP	= @PKG_SKIP_STRIP@
  
  ClientWallet=1
  CookieManagement=1
@@ -94,29 +94,6 @@ Index: config/autoconf.mk.in
  
  MOZ_XUL                    = @MOZ_XUL@
  MOZ_RDF                    = @MOZ_RDF@
-Index: content/xslt/Makefile.in
-===================================================================
---- content/xslt/Makefile.in.orig
-+++ content/xslt/Makefile.in
-@@ -37,15 +37,17 @@
- 
- DEPTH = ../..
- topsrcdir	= @top_srcdir@
- srcdir		= @srcdir@
- VPATH		= @srcdir@
- 
- include $(DEPTH)/config/autoconf.mk
- 
--DIRS = public src
-+DIRS = public
-+
-+DIRS += src
- 
- ifdef ENABLE_TESTS
- DIRS += tests/buster
- endif
- 
- include $(topsrcdir)/config/rules.mk
 Index: content/xslt/src/Makefile.in
 ===================================================================
 --- content/xslt/src/Makefile.in.orig
@@ -252,11 +229,11 @@ Index: layout/build/nsLayoutModule.cpp
 ===================================================================
 --- layout/build/nsLayoutModule.cpp.orig
 +++ layout/build/nsLayoutModule.cpp
-@@ -98,25 +98,29 @@
+@@ -95,25 +95,29 @@
+ #include "nsContentList.h"
+ #include "nsSyncLoadService.h"
+ #include "nsBox.h"
  #include "nsIFrameTraversal.h"
- #ifndef MOZ_CAIRO_GFX
- #include "nsISelectionImageService.h"
- #endif
  #include "nsLayoutCID.h"
  #include "nsILanguageAtomService.h"
  #include "nsStyleSheetService.h"
@@ -284,7 +261,7 @@ Index: layout/build/nsLayoutModule.cpp
  
  // DOM includes
  #include "nsDOMException.h"
-@@ -260,34 +264,41 @@
+@@ -257,34 +261,41 @@
  PR_STATIC_CALLBACK(nsresult) Initialize(nsIModule* aSelf);
  static void Shutdown();
  
@@ -331,7 +308,7 @@ Index: layout/build/nsLayoutModule.cpp
  
  // Per bug 209804, it is necessary to observe the "xpcom-shutdown" event and
  // perform shutdown of the layout modules at that time instead of waiting for
-@@ -1280,37 +1291,40 @@
+@@ -1262,37 +1273,40 @@
      nsnull,
      CreatePluginDocument },
  

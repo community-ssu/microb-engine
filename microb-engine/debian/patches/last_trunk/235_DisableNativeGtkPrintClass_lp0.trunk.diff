@@ -45,12 +45,12 @@ Index: widget/src/gtk2/Makefile.in
  		nsImageToPixbuf.cpp \
  		nsAccessibilityHelper.cpp \
  		nsIdleServiceGTK.cpp \
- 	  $(NULL)
+ 		$(NULL)
  
  ifdef MOZ_ENABLE_POSTSCRIPT
- CPPSRCS		+= \
- 	  nsPrintJobFactoryGTK.cpp \
- 	  nsPrintJobGTK.cpp \
+ CPPSRCS        += \
+ 		nsPrintJobFactoryGTK.cpp \
+ 		nsPrintJobGTK.cpp \
  	  $(NULL)
  endif
  

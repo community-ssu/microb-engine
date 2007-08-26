@@ -49,15 +49,15 @@ Index: mozilla/js/src/jsstr.c
  
      JS_ASSERT(JSSTRING_IS_DEPENDENT(str));
      base = JSSTRDEP_BASE(str);
-@@ -145,28 +157,28 @@
+@@ -136,25 +148,25 @@
+         return left;
  
-     if (JSSTRING_IS_DEPENDENT(left) ||
-         !(*js_GetGCThingFlags(left) & GCF_MUTABLE)) {
+     JSSTRING_CHARS_AND_LENGTH(left, ls, ln);
+     if (ln == 0)
+         return right;
+ 
+     if (!JSSTRING_IS_MUTABLE(left)) {
          /* We must copy if left does not own a buffer to realloc. */
-         ln = JSSTRING_LENGTH(left);
-         if (ln == 0)
-             return right;
-         ls = JSSTRING_CHARS(left);
 -        s = (jschar *) JS_malloc(cx, (ln + rn + 1) * sizeof(jschar));
 +        s = (jschar *) JS_malloc(cx, js_allocSize(ln + rn + 1));
          if (!s)
@@ -66,10 +66,7 @@ Index: mozilla/js/src/jsstr.c
          ldep = NULL;
      } else {
          /* We can realloc left's space and make it depend on our result. */
-         ln = left->length;
-         if (ln == 0)
-             return right;
-         ls = left->chars;
+         JS_ASSERT(!JSSTRING_IS_DEPENDENT(left));
 -        s = (jschar *) JS_realloc(cx, ls, (ln + rn + 1) * sizeof(jschar));
 +        s = (jschar *) JS_realloc(cx, ls, js_allocSize(ln + rn + 1));
          if (!s)
@@ -79,11 +76,11 @@ Index: mozilla/js/src/jsstr.c
          lrdist = (size_t)(rs - ls);
          if (lrdist < ln)
              rs = s + lrdist;
-         left->chars = ls = s;
-@@ -177,17 +189,17 @@
+         left->u.chars = ls = s;
+@@ -165,17 +177,17 @@
      n = ln + rn;
      s[n] = 0;
-     str = js_NewString(cx, s, n, GCF_MUTABLE);
+     str = js_NewString(cx, s, n);
      if (!str) {
          /* Out of memory: clean up any space we (re-)allocated. */
          if (!ldep) {
@@ -92,14 +89,14 @@ Index: mozilla/js/src/jsstr.c
 -            s = (jschar *) JS_realloc(cx, ls, (ln + 1) * sizeof(jschar));
 +            s = (jschar *) JS_realloc(cx, ls, js_allocSize(ln + 1));
              if (s)
-                 left->chars = s;
+                 left->u.chars = s;
          }
      } else {
+         JSSTRING_SET_MUTABLE(str);
+ 
          /* Morph left into a dependent prefix if we realloc'd its buffer. */
          if (ldep) {
-             JSPREFIX_SET_LENGTH(ldep, ln);
-             JSPREFIX_SET_BASE(ldep, str);
-@@ -1573,18 +1585,17 @@
+@@ -1566,18 +1578,17 @@
      leftlen = cx->regExpStatics.lastMatch.chars - left;
      rdata->leftIndex = cx->regExpStatics.lastMatch.chars - JSSTRING_CHARS(str);
      rdata->leftIndex += cx->regExpStatics.lastMatch.length;
@@ -119,7 +116,7 @@ Index: mozilla/js/src/jsstr.c
      chars += rdata->index;
      rdata->index += growth;
      js_strncpy(chars, left, leftlen);
-@@ -1660,17 +1671,17 @@
+@@ -1653,17 +1664,17 @@
          do_replace(cx, &rdata, chars + leftlen);
          rdata.chars = chars;
          rdata.length = length;
@@ -138,60 +135,41 @@ Index: mozilla/js/src/jsstr.c
      js_strncpy(chars + rdata.length, cx->regExpStatics.rightContext.chars,
                 rightlen);
      chars[length] = 0;
-@@ -4555,17 +4566,17 @@
+@@ -4605,17 +4616,17 @@
+     size_t total;
      jschar *newchars;
  
-     JS_ASSERT(!JSSTRING_IS_DEPENDENT(str));
-     total = str->length + length + 1;
-     if (!str->chars ||
-         JS_HOWMANY(total, URI_CHUNK) > JS_HOWMANY(str->length + 1, URI_CHUNK)) {
+     total = buf->length + length + 1;
+     if (!buf->chars ||
+         JS_HOWMANY(total, URI_CHUNK) > JS_HOWMANY(buf->length + 1, URI_CHUNK)) {
          total = JS_ROUNDUP(total, URI_CHUNK);
-         newchars = (jschar *) JS_realloc(cx, str->chars,
+         newchars = (jschar *) JS_realloc(cx, buf->chars,
 -                                         total * sizeof(jschar));
 +                                         js_allocSize(total));
          if (!newchars)
              return JS_FALSE;
-         str->chars = newchars;
+         buf->chars = newchars;
      }
-     js_strncpy(str->chars + str->length, chars, length);
-     str->length += length;
-     str->chars[str->length] = 0;
+     js_strncpy(buf->chars + buf->length, chars, length);
+     buf->length += length;
+     buf->chars[buf->length] = 0;
      return JS_TRUE;
-@@ -4642,17 +4653,17 @@
-         }
-     }
+@@ -4628,17 +4639,17 @@
+     size_t n;
+     JSString *str;
  
      /*
       * Shrinking realloc can fail (e.g., with a BSD-style allocator), but we
-      * don't worry about that case here.  Worst case, R hangs onto URI_CHUNK-1
-      * more jschars than it needs.
+      * don't worry about that case here.
       */
--    chars = (jschar *) JS_realloc(cx, R->chars, (R->length+1) * sizeof(jschar));
-+    chars = (jschar *) JS_realloc(cx, R->chars, js_allocSize(R->length+1));
-     if (chars)
-         R->chars = chars;
-     *rval = STRING_TO_JSVAL(R);
-     return JS_TRUE;
- }
+     n = cb->length;
+-    chars = (jschar *) JS_realloc(cx, cb->chars, (n + 1) * sizeof(jschar));
++    chars = (jschar *) JS_realloc(cx, cb->chars, js_allocSize(n + 1));
+     if (!chars)
+         chars = cb->chars;
+     str = js_NewString(cx, chars, n);
+     if (!str)
+         return JS_FALSE;
  
- static JSBool
- Decode(JSContext *cx, JSString *str, const jschar *reservedSet, jsval *rval)
-@@ -4735,17 +4746,17 @@
-         }
-     }
- 
-     /*
-      * Shrinking realloc can fail (e.g., with a BSD-style allocator), but we
-      * don't worry about that case here.  Worst case, R hangs onto URI_CHUNK-1
-      * more jschars than it needs.
-      */
--    chars = (jschar *) JS_realloc(cx, R->chars, (R->length+1) * sizeof(jschar));
-+    chars = (jschar *) JS_realloc(cx, R->chars, js_allocSize(R->length+1));
-     if (chars)
-         R->chars = chars;
-     *rval = STRING_TO_JSVAL(R);
-     return JS_TRUE;
- 
- bad:
-     JS_ReportErrorNumber(cx, js_GetErrorMessage, NULL, JSMSG_BAD_URI);
-     return JS_FALSE;
+     /* Successful allocation transfer ownership of cb->chars to the string. */
+ #ifdef DEBUG

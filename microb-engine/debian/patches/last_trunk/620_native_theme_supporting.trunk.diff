@@ -73,7 +73,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
  gint
  moz_gtk_init()
  {
-@@ -595,40 +595,44 @@
+@@ -595,28 +595,30 @@
  {
      GtkStateType state_type = ConvertGtkState(state);
      GtkShadowType shadow_type = (selected)?GTK_SHADOW_IN:GTK_SHADOW_OUT;
@@ -106,22 +106,8 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
      style = w->style;
      TSOffsetStyleGCs(style, x, y);
  
-     /* Some themes check the widget state themselves. */
-+		/*
-     if (state->focused)
-         GTK_WIDGET_SET_FLAGS(w, GTK_HAS_FOCUS);
-     else
-         GTK_WIDGET_UNSET_FLAGS(w, GTK_HAS_FOCUS);
-+		*/
- 
-     if (state_type != GTK_STATE_INSENSITIVE)
-          GTK_WIDGET_SET_FLAGS(w, GTK_SENSITIVE);
-     else
-          GTK_WIDGET_UNSET_FLAGS(w, GTK_SENSITIVE);
- 
-     GTK_TOGGLE_BUTTON(w)->active = selected;
-       
-@@ -784,16 +788,17 @@
+     gtk_widget_set_sensitive(w, !state->disabled);
+@@ -774,16 +776,17 @@
                                GdkDrawable* drawable, GdkRectangle* rect,
                                GdkRectangle* cliprect, GtkWidgetState* state)
  {
@@ -139,7 +125,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
      else
          scrollbar = GTK_SCROLLBAR(gVertScrollbarWidget);
  
-@@ -825,17 +830,22 @@
+@@ -815,17 +818,22 @@
      adj->value = state->curpos;
      adj->upper = state->maxpos;
      gtk_adjustment_changed(adj);
@@ -163,30 +149,30 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
      return MOZ_GTK_SUCCESS;
  }
  
-@@ -1020,19 +1030,19 @@
-         height -= 2 * focus_width;
+@@ -1014,19 +1022,19 @@
  
-         TSOffsetStyleGCs(style, x, y);
-         gtk_paint_shadow(style, drawable, GTK_STATE_NORMAL, GTK_SHADOW_IN,
-                          cliprect, gEntryWidget, "entry",
-                          x, y, width, height);
+     TSOffsetStyleGCs(style, x, y);
+     gtk_paint_shadow(style, drawable, GTK_STATE_NORMAL, GTK_SHADOW_IN,
+                      cliprect, gEntryWidget, "entry", x, y, width, height);
  
-         TSOffsetStyleGCs(style, rect->x, rect->y);
--        gtk_paint_focus(style, drawable,  GTK_STATE_NORMAL, cliprect,
--                        gEntryWidget, "entry",
--                        rect->x, rect->y, rect->width, rect->height);
-+        //gtk_paint_focus(style, drawable,  GTK_STATE_NORMAL, cliprect,
-+        //                gEntryWidget, "entry",
-+        //                rect->x, rect->y, rect->width, rect->height);
+     if (state->focused && !state->disabled) {
+         if (!interior_focus) {
+             TSOffsetStyleGCs(style, rect->x, rect->y);
+-            gtk_paint_focus(style, drawable,  GTK_STATE_NORMAL, cliprect,
+-                            gEntryWidget, "entry",
+-                            rect->x, rect->y, rect->width, rect->height);
++            // gtk_paint_focus(style, drawable,  GTK_STATE_NORMAL, cliprect,
++            //                 gEntryWidget, "entry",
++            //                 rect->x, rect->y, rect->width, rect->height);
+         }
+ 
+         /* Now unset the focus flag. We don't want other entries to look like they're focused too! */
+         GTK_WIDGET_UNSET_FLAGS(gEntryWidget, GTK_HAS_FOCUS);
      }
  
      return MOZ_GTK_SUCCESS;
  }
- 
- static gint
- moz_gtk_option_menu_paint(GdkDrawable* drawable, GdkRectangle* rect,
-                           GdkRectangle* cliprect, GtkWidgetState* state)
-@@ -1168,25 +1178,25 @@
+@@ -1166,25 +1174,25 @@
      /* this is for drawing a prelight box */
      if (state_type == GTK_STATE_PRELIGHT || state_type == GTK_STATE_ACTIVE) {
          gtk_paint_flat_box(style, drawable, GTK_STATE_PRELIGHT, GTK_SHADOW_ETCHED_OUT,
@@ -264,7 +250,7 @@ Index: mozilla/widget/src/xpwidgets/nsNativeTheme.cpp
  PRUint8                   nsNativeTheme::sTextfieldBorderStyle = NS_STYLE_BORDER_STYLE_INSET;
  nsILookAndFeel::nsColorID nsNativeTheme::sTextfieldBorderColorID = nsILookAndFeel::eColor_threedface;
  PRBool                    nsNativeTheme::sTextfieldBGTransparent = PR_FALSE;
-@@ -287,36 +287,37 @@
+@@ -288,36 +288,37 @@
  
        if (defaultBGTransparent) {
          if (!(ourBG->mBackgroundFlags & NS_STYLE_BG_COLOR_TRANSPARENT))

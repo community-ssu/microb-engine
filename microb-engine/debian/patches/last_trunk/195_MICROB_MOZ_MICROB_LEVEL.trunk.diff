@@ -86,11 +86,11 @@ Index: mozilla/toolkit/library/libxul-config.mk
  	pipnss \
  	$(NULL)
  
- ifdef MOZ_PLUGINS
- DEFINES += -DMOZ_PLUGINS
+ ifdef MOZ_XMLEXTRAS
  COMPONENT_LIBS += \
- 	gkplugin \
-@@ -134,16 +131,22 @@
+ 	xmlextras \
+ 	$(NULL)
+@@ -140,16 +137,22 @@
  endif
  
  ifdef MOZ_XPFE_COMPONENTS
@@ -113,7 +113,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
  
  ifdef MOZ_XPINSTALL
  DEFINES += -DMOZ_XPINSTALL
-@@ -253,16 +256,24 @@
+@@ -252,16 +255,24 @@
  	$(NULL)
  ifdef MOZ_STORAGE
  COMPONENT_LIBS += \
@@ -193,17 +193,17 @@ Index: mozilla/xpfe/components/build/Makefile.in
  
  # Suite specific includes
  ifdef MOZ_SUITE
- REQUIRES += history downloadmanager
+ REQUIRES += downloadmanager
  
  SHARED_LIBRARY_LIBS += \
  	../download-manager/src/$(LIB_PREFIX)downloadmanager_s.$(LIB_SUFFIX) \
- 	../history/src/$(LIB_PREFIX)history_s.$(LIB_SUFFIX) \
+ 	../related/src/$(LIB_PREFIX)related_s.$(LIB_SUFFIX) \
 Index: mozilla/xpfe/components/build/nsModule.cpp
 ===================================================================
 --- mozilla.orig/xpfe/components/build/nsModule.cpp
 +++ mozilla/xpfe/components/build/nsModule.cpp
-@@ -53,17 +53,17 @@
- #include "nsDownloadProxy.h"
+@@ -56,17 +56,17 @@
+ #endif
  
  #if defined(XP_WIN)
  #include "nsWindowsHooks.h"
@@ -219,10 +219,10 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  #include "nsCURILoader.h"
  #include "nsXPFEComponentsCID.h"
  
+ #if !defined(MOZ_PLACES)
  // {9491C382-E3C4-11D2-BDBE-0050040A9B44}
- #define NS_GLOBALHISTORY_CID \
-@@ -73,34 +73,34 @@
-     "@mozilla.org/rdf/datasource;1?name=history"
+@@ -78,17 +78,17 @@
+ #endif
  
  #ifdef MOZ_RDF
  // Factory constructors
@@ -238,9 +238,10 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  
  #ifdef MOZ_SUITE
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(RelatedLinksHandlerImpl, Init)
- NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsGlobalHistory, Init)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsDownloadManager, Init)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsDownloadProxy)
+@@ -98,17 +98,17 @@
+ #endif
  
  #if defined(XP_WIN)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsWindowsHooks)
@@ -258,7 +259,7 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  static NS_METHOD
  RegisterProc(nsIComponentManager *aCompMgr,
               nsIFile *aPath,
-@@ -161,30 +161,30 @@
+@@ -172,30 +172,30 @@
  
  #ifdef XP_WIN
      { NS_IWINDOWSHOOKS_CLASSNAME, NS_IWINDOWSHOOKS_CID,
@@ -344,9 +345,9 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  #define SPELLCHECK_MODULE
  #endif
  
- #define XUL_MODULES                          \
-     MODULE(xpconnect)                        \
-@@ -273,17 +287,16 @@
+ #ifdef MOZ_XMLEXTRAS
+ #define XMLEXTRAS_MODULE MODULE(nsXMLExtrasModule)
+@@ -279,17 +293,16 @@
      MODULE(nsUConvModule)                    \
      MODULE(nsI18nModule)                     \
      MODULE(nsChardetModule)                  \
@@ -364,7 +365,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      GFX_MODULES                              \
      WIDGET_MODULES                           \
      MODULE(nsImageLib2Module)                \
-@@ -298,22 +311,21 @@
+@@ -303,22 +316,21 @@
      OJI_MODULES                              \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \
@@ -387,4 +388,4 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      MODULE(NSS)                              \
      SYSTEMPREF_MODULES                       \
      SPELLCHECK_MODULE                        \
-     LAYOUT_DEBUG_MODULE                      \
+     XMLEXTRAS_MODULE                         \

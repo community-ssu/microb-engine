@@ -1,8 +1,6 @@
 #last_trunk/020_BUG4821_full_page_zoom.trunk.diff
 
 # BUILD BUSTAGE
-buildcfg/035_BUG350363_xmlextras_toolkit_define_using.diff
-last_trunk/buildcfg/045_BUG323928_bustage_fix_rev2_lp0.trunk.diff
 last_trunk/buildcfg/050_BUG347854_Building_XULRunner.trunk.diff
 # BUILD BUSTAGE
 
@@ -37,7 +35,7 @@ last_trunk/130_BUG_security.trunk.diff
 last_trunk/140_BUG340510_nsBoxObject.trunk.diff
 150_BUG_testgtkembed-pushpopembed.diff
 last_trunk/155_BUG_mainthreadalreadydead.trunk.diff
-160_MICROB_about_fixes_lp0.diff -p0
+#160_MICROB_about_fixes_lp0.diff -p0
 last_trunk/165_BUILDFIX_libxul_no_nss.trunk.diff
 last_trunk/170_MICROB_xslt_xpath_disable_lp0.trunk.diff -p0
 last_trunk/175_MICROB_bad_cert_at_once_lp0.trunk.diff -p0
@@ -125,7 +123,6 @@ gtkmozembed/001_gnomevfs_downloads.diff
 
 555_connect_move_signal_after_default.diff
 560_NativeSuspendImplementation.diff
-565_svg_compiler_helper.diff
 570_thumb_supporting_stuff.diff
 575_js_handler_events_info.diff
 crash/625_BUG56960_layout_indexof_crash.diff 
@@ -174,7 +171,6 @@ last_trunk/reflow/attachment.cgi?id=248061.trunk.diff
 #reflow/attachment.cgi?id=248241.diff
 #reflow/attachment.cgi?id=251149.diff
 
-375_jprof_linking_fix.diff
 last_trunk/380_XFT_ALWAYS_FIX.trunk.diff
 385_system_cairo_build.diff
 430_bug372703_bustage_fix.diff

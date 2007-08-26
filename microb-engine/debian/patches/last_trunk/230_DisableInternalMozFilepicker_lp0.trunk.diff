@@ -28,9 +28,9 @@ Index: widget/src/gtk2/Makefile.in
 @@ -113,16 +112,22 @@
  
  ifdef MOZ_ENABLE_POSTSCRIPT
- CPPSRCS		+= \
- 	  nsPrintJobFactoryGTK.cpp \
- 	  nsPrintJobGTK.cpp \
+ CPPSRCS        += \
+ 		nsPrintJobFactoryGTK.cpp \
+ 		nsPrintJobGTK.cpp \
  	  $(NULL)
  endif
  
