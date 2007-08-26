@@ -1,3 +1,22 @@
+microb-engine (1.0.3-16) unstable; urgency=low
+
+  * Fixed back spatial navigation (was broken on this week)
+  * Fixed bug:Page state is not preserved in FTV mode. Fixes: NB#66436
+  * Fixed bug:Security Testing: Browser crashes while opening GIF images.
+    Fixes: NB#66409
+  * Fixed bug:about:config Set Preference is not working with boolean types.
+    Fixes: NB#66688
+  * fixing url parsing to handle spaces (they're converted to plus as part of
+    urls)
+  * Fixed bug:Fixed broken CSS style for form controls.
+  * Fixed bug:Click on the zooming bar on the left once, and you get a CSM
+    menu launched. Fixes: NB#65859
+  * Fixed bug:microb-refui should depend on libgtkmozembed. Fixes: MB#1810
+  * Fixed bug:By pressing the Tab button in the text area of the web page the
+    focus goes to the non-text entry field. Fixes: NB#55046
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 26 Aug 2007 16:04:37 +0300
+
 microb-engine (1.0.3-15) unstable; urgency=low
 
   * Fixed SNAV compilation problem
