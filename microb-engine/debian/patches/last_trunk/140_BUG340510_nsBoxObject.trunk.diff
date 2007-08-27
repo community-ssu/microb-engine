@@ -252,3 +252,29 @@
      "@mozilla.org/layout/xul-boxobject-menu;1",
      CreateNewMenuBoxObject },
  
+--- mozilla/layout/build/nsLayoutModule.cpp.orig	2007-08-27 02:45:38.000000000 +0300
++++ mozilla/layout/build/nsLayoutModule.cpp	2007-08-27 07:28:10.000000000 +0300
+@@ -230,22 +230,22 @@ class nsIDocumentLoaderFactory;
+ /* 0ddf4df8-4dbb-4133-8b79-9afb966514f5 */
+ #define NS_PLUGINDOCLOADERFACTORY_CID \
+ { 0x0ddf4df8, 0x4dbb, 0x4133, { 0x8b, 0x79, 0x9a, 0xfb, 0x96, 0x65, 0x14, 0xf5 } }
+ 
+ #define NS_WINDOWCOMMANDTABLE_CID \
+  { /* 0DE2FBFA-6B7F-11D7-BBBA-0003938A9D96 */        \
+   0x0DE2FBFA, 0x6B7F, 0x11D7, {0xBB, 0xBA, 0x00, 0x03, 0x93, 0x8A, 0x9D, 0x96} }
+ 
+ static NS_DEFINE_CID(kWindowCommandTableCID, NS_WINDOWCOMMANDTABLE_CID);
+ 
+-#ifdef MOZ_XUL
+ #include "nsIBoxObject.h"
++#ifdef MOZ_XUL
+ #include "nsIXULDocument.h"
+ #include "nsIXULPopupListener.h"
+ #include "nsIXULPrototypeCache.h"
+ #include "nsIXULSortService.h"
+ 
+ #ifndef MOZ_NO_INSPECTOR_APIS
+ #include "inDOMView.h"
+ #include "inDeepTreeWalker.h"
+ #include "inFlasher.h"
+ #include "inCSSValueSearch.h"

@@ -49,6 +49,7 @@ last_trunk/200_BUG369722_ARM_EABI_lp0.trunk.diff -p0
 220_NO_WEBBRZ_CHROME_LISTNRS_lp0.diff -p0
 225_Timeout_TestGtkEmbed.diff
 226_ZoomControlsTestGtkEmbed.diff
+227_ftv_testgtkembed.diff
 last_trunk/230_DisableInternalMozFilepicker_lp0.trunk.diff -p0
 last_trunk/235_DisableNativeGtkPrintClass_lp0.trunk.diff -p0
 last_trunk/240_Sound_Drag_XIM_disable.trunk.diff

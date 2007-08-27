@@ -85,6 +85,7 @@ snav/SNAV_rich_edit.diff
 220_NO_WEBBRZ_CHROME_LISTNRS_lp0.diff -p0
 225_Timeout_TestGtkEmbed.diff
 226_ZoomControlsTestGtkEmbed.diff
+227_ftv_testgtkembed.diff
 230_DisableInternalMozFilepicker_lp0.diff -p0
 235_DisableNativeGtkPrintClass_lp0.diff -p0
 240_Sound_Drag_XIM_disable.gtk2.diff
