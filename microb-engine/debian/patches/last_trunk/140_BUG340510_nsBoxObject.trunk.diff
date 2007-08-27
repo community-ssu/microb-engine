@@ -1,3 +1,8 @@
+## Patches for microb-engine
+## Oleg Romashin <oleg.romashin@nokia.com>
+##
+## DP: Fix for working with calendar.gmail.com with disables xul.
+
 --- mozilla/dom/src/base/nsDOMClassInfo.cpp.orig	2007-08-27 00:26:43.000000000 +0300
 +++ mozilla/dom/src/base/nsDOMClassInfo.cpp	2007-08-27 00:41:30.000000000 +0300
 @@ -807,23 +807,26 @@ static nsDOMClassInfoData sClassInfoData
