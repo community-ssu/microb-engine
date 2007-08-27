@@ -1,0 +1,527 @@
+===================================================================
+RCS file: /cvsroot/mozilla/modules/plugin/base/public/ npapi.h,v
+retrieving revision 3.45
+retrieving revision 3.46
+Index: mozilla/modules/plugin/base/public/npapi.h
+===================================================================
+--- mozilla.orig/modules/plugin/base/public/npapi.h
++++ mozilla/modules/plugin/base/public/npapi.h
+@@ -32,17 +32,17 @@
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ 
+ /*
+- *  npapi.h $Revision: 3.45 $
++ *  npapi.h $Revision: 3.46 $
+  *  Netscape client plug-in API spec
+  */
+ 
+ #ifndef _NPAPI_H_
+ #define _NPAPI_H_
+ 
+ #ifdef __OS2__
+ #pragma pack(1)
+@@ -115,17 +115,17 @@
+ #	endif
+ #endif
+ 
+ /*----------------------------------------------------------------------*/
+ /*                        Plugin Version Constants                      */
+ /*----------------------------------------------------------------------*/
+ 
+ #define NP_VERSION_MAJOR 0
+-#define NP_VERSION_MINOR 18
++#define NP_VERSION_MINOR 19
+ 
+ 
+ /* The OS/2 version of Netscape uses RC_DATA to define the
+    mime types, file extensions, etc that are required.
+    Use a vertical bar to separate types, end types with \0.
+    FileVersion and ProductVersion are 32bit ints, all other
+    entries are strings the MUST be terminated wwith a \0.
+ 
+@@ -634,28 +634,29 @@
+  */
+ #define NP_NOERR  NP_NOERR_is_obsolete_use_NPERR_NO_ERROR
+ #define NP_EINVAL NP_EINVAL_is_obsolete_use_NPERR_GENERIC_ERROR
+ #define NP_EABORT NP_EABORT_is_obsolete_use_NPRES_USER_BREAK
+ 
+ /*
+  * Version feature information
+  */
+-#define NPVERS_HAS_STREAMOUTPUT           8
+-#define NPVERS_HAS_NOTIFICATION           9
+-#define NPVERS_HAS_LIVECONNECT            9
+-#define NPVERS_WIN16_HAS_LIVECONNECT      9
+-#define NPVERS_68K_HAS_LIVECONNECT        11
+-#define NPVERS_HAS_WINDOWLESS             11
+-#define NPVERS_HAS_XPCONNECT_SCRIPTING    13
+-#define NPVERS_HAS_NPRUNTIME_SCRIPTING    14
+-#define NPVERS_HAS_FORM_VALUES            15
+-#define NPVERS_HAS_POPUPS_ENABLED_STATE   16
+-#define NPVERS_HAS_RESPONSE_HEADERS       17
+-#define NPVERS_HAS_NPOBJECT_ENUM          18
++#define NPVERS_HAS_STREAMOUTPUT             8
++#define NPVERS_HAS_NOTIFICATION             9
++#define NPVERS_HAS_LIVECONNECT              9
++#define NPVERS_WIN16_HAS_LIVECONNECT        9
++#define NPVERS_68K_HAS_LIVECONNECT          11
++#define NPVERS_HAS_WINDOWLESS               11
++#define NPVERS_HAS_XPCONNECT_SCRIPTING      13
++#define NPVERS_HAS_NPRUNTIME_SCRIPTING      14
++#define NPVERS_HAS_FORM_VALUES              15
++#define NPVERS_HAS_POPUPS_ENABLED_STATE     16
++#define NPVERS_HAS_RESPONSE_HEADERS         17
++#define NPVERS_HAS_NPOBJECT_ENUM            18
++#define NPVERS_HAS_PLUGIN_THREAD_ASYNC_CALL 19
+ 
+ /*----------------------------------------------------------------------*/
+ /*                        Function Prototypes                           */
+ /*----------------------------------------------------------------------*/
+ 
+ #if defined(_WINDOWS) && !defined(WIN32)
+ #define NP_LOADDS  _loadds
+ #else
+@@ -738,16 +739,19 @@
+ #endif
+ NPError NP_LOADDS NPN_GetValue(NPP instance, NPNVariable variable, void *value);
+ NPError NP_LOADDS NPN_SetValue(NPP instance, NPPVariable variable, void *value);
+ void    NP_LOADDS NPN_InvalidateRect(NPP instance, NPRect *invalidRect);
+ void    NP_LOADDS NPN_InvalidateRegion(NPP instance, NPRegion invalidRegion);
+ void    NP_LOADDS NPN_ForceRedraw(NPP instance);
+ void    NP_LOADDS NPN_PushPopupsEnabledState(NPP instance, NPBool enabled);
+ void    NP_LOADDS NPN_PopPopupsEnabledState(NPP instance);
++void    NP_LOADDS NPN_PluginThreadAsyncCall(NPP instance,
++                                            void (*func) (void *),
++                                            void *userData);
+ 
+ #ifdef __cplusplus
+ }  /* end extern "C" */
+ #endif
+ 
+ #endif /* RC_INVOKED */
+ #ifdef __OS2__
+ #pragma pack()
+Index: mozilla/modules/plugin/base/public/npupp.h
+===================================================================
+--- mozilla.orig/modules/plugin/base/public/npupp.h
++++ mozilla/modules/plugin/base/public/npupp.h
+@@ -479,16 +479,23 @@
+ 
+ /* NPN_Enumerate */
+ typedef bool (* NP_LOADDS NPN_EnumerateUPP)(NPP npp, NPObject *obj, NPIdentifier **identifier, uint32_t *count);
+ #define NewNPN_EnumerateProc(FUNC)		\
+ 		((NPN_EnumerateUPP) (FUNC))
+ #define CallNPN_EnumerateProc(FUNC, ARG1, ARG2, ARG3, ARG4)		\
+ 		(*(FUNC))((ARG1), (ARG2), (ARG3), (ARG4))
+ 
++/* NPN_Enumerate */
++typedef void (* NP_LOADDS NPN_PluginThreadAsyncCallUPP)(NPP instance, void (*func)(void *), void *userData);
++#define NewNPN_PluginThreadAsyncCallProc(FUNC) \
++		((NPN_PluginThreadAsyncCallUPP) (FUNC))
++#define CallNPN_PluginThreadAsyncCallProc(FUNC, ARG1, ARG2, ARG3) \
++		(*(FUNC))((ARG1), (ARG2), (ARG3))
++
+ 
+ /******************************************************************************************
+  * The actual plugin function table definitions
+  *******************************************************************************************/
+ 
+ typedef struct _NPPluginFuncs {
+     uint16 size;
+     uint16 version;
+@@ -549,16 +556,17 @@
+     NPN_RemovePropertyUPP removeproperty;
+     NPN_HasPropertyUPP hasproperty;
+     NPN_HasMethodUPP hasmethod;
+     NPN_ReleaseVariantValueUPP releasevariantvalue;
+     NPN_SetExceptionUPP setexception;
+     NPN_PushPopupsEnabledStateUPP pushpopupsenabledstate;
+     NPN_PopPopupsEnabledStateUPP poppopupsenabledstate;
+     NPN_EnumerateUPP enumerate;
++    NPN_PluginThreadAsyncCallUPP pluginthreadasynccall;
+ } NPNetscapeFuncs;
+ 
+ 
+ #ifdef XP_MACOSX
+ /******************************************************************************************
+  * Mac platform-specific plugin glue stuff
+  *******************************************************************************************/
+ 
+Index: mozilla/modules/plugin/base/src/ns4xPlugin.cpp
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/ns4xPlugin.cpp
++++ mozilla/modules/plugin/base/src/ns4xPlugin.cpp
+@@ -35,20 +35,23 @@
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ // TODO: Implement Java callbacks
+ 
+ #include "prtypes.h"
+ #include "prmem.h"
++#include "prclist.h"
++#include "nsAutoLock.h"
+ #include "ns4xPlugin.h"
+ #include "ns4xPluginInstance.h"
+ #include "ns4xPluginStreamListener.h"
+ #include "nsIServiceManager.h"
++#include "nsThreadUtils.h"
+ 
+ #include "nsIMemory.h"
+ #include "nsIPluginStreamListener.h"
+ #include "nsPluginsDir.h"
+ #include "nsPluginSafety.h"
+ #include "nsIPrefService.h"
+ #include "nsIPrefBranch.h"
+ #include "nsPluginLogging.h"
+@@ -77,16 +80,19 @@
+ #ifdef MOZ_WIDGET_GTK2
+ #include <gdk/gdk.h>
+ #include <gdk/gdkx.h>
+ #include "gtk2xtbin.h"
+ #endif
+ 
+ #include "nsJSNPRuntime.h"
+ 
++static PRLock *sPluginThreadAsyncCallLock = nsnull;
++static PRCList sPendingAsyncCalls = PR_INIT_STATIC_CLIST(&sPendingAsyncCalls);
++
+ // POST/GET stream type
+ enum eNPPStreamTypeInternal {
+   eNPPStreamTypeInternal_Get,
+   eNPPStreamTypeInternal_Post
+ };
+ 
+ ////////////////////////////////////////////////////////////////////////
+ // CID's && IID's
+@@ -155,16 +161,19 @@
+   _forceredraw(NPP npp);
+ 
+   static void NP_CALLBACK
+   _pushpopupsenabledstate(NPP npp, NPBool enabled);
+ 
+   static void NP_CALLBACK
+   _poppopupsenabledstate(NPP npp);
+ 
++  static void NP_CALLBACK
++  _pluginthreadasynccall(NPP instance, void (*func)(void *), void *userData);
++
+   static const char* NP_CALLBACK
+   _useragent(NPP npp);
+ 
+   static void* NP_CALLBACK
+   _memalloc (uint32 size);
+ 
+ #ifdef OJI
+   static JRIEnv* NP_CALLBACK
+@@ -370,16 +379,24 @@
+     NewNPN_SetExceptionProc(FP2TV(_setexception));
+ 
+   CALLBACKS.pushpopupsenabledstate =
+     NewNPN_PushPopupsEnabledStateProc(FP2TV(_pushpopupsenabledstate));
+ 
+   CALLBACKS.poppopupsenabledstate =
+     NewNPN_PopPopupsEnabledStateProc(FP2TV(_poppopupsenabledstate));
+ 
++  CALLBACKS.pluginthreadasynccall =
++    NewNPN_PluginThreadAsyncCallProc(FP2TV(_pluginthreadasynccall));
++
++  if (!sPluginThreadAsyncCallLock) {
++    sPluginThreadAsyncCallLock =
++      nsAutoLock::NewLock("sPluginThreadAsyncCallLock");
++  }
++
+   initialized = TRUE;
+ 
+   NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL,("NPN callbacks initialized\n"));
+ }
+ 
+ 
+ ////////////////////////////////////////////////////////////////////////
+ // nsISupports stuff
+@@ -2180,9 +2197,156 @@
+ {
+   ns4xPluginInstance *inst = (ns4xPluginInstance *)npp->ndata;
+   if (!inst)
+     return;
+ 
+   inst->PopPopupsEnabledState();
+ }
+ 
++class nsPluginThreadRunnable : public nsRunnable,
++                               public PRCList
++{
++public:
++  nsPluginThreadRunnable(NPP instance, void (*func)(void *), void *userData);
++  virtual ~nsPluginThreadRunnable();
++
++  NS_IMETHOD Run();
++
++  PRBool IsForInstance(NPP instance)
++  {
++    return (mInstance == instance);
++  }
++
++  void Invalidate()
++  {
++    mFunc = nsnull;
++  }
++
++  PRBool IsValid()
++  {
++    return (mFunc != nsnull);
++  }
++
++private:
++  NPP mInstance;
++  void (*mFunc)(void *);
++  void *mUserData;
++};
++
++nsPluginThreadRunnable::nsPluginThreadRunnable(NPP instance,
++                                               void (*func)(void *),
++                                               void *userData)
++  : mInstance(instance), mFunc(func), mUserData(userData)
++{
++  if (!sPluginThreadAsyncCallLock) {
++    // Failed to create lock, not much we can do here then...
++    mFunc = nsnull;
++
++    return;
++  }
++
++  PR_INIT_CLIST(this);
++
++  {
++    nsAutoLock lock(sPluginThreadAsyncCallLock);
++
++    ns4xPluginInstance *inst = (ns4xPluginInstance *)instance->ndata;
++    if (!inst || !inst->IsStarted()) {
++      // The plugin was stopped, ignore this async call.
++      mFunc = nsnull;
++
++      return;
++    }
++
++    PR_APPEND_LINK(this, &sPendingAsyncCalls);
++  }
++}
++
++nsPluginThreadRunnable::~nsPluginThreadRunnable()
++{
++  if (!sPluginThreadAsyncCallLock) {
++    return;
++  }
++
++  {
++    nsAutoLock lock(sPluginThreadAsyncCallLock);
++
++    PR_REMOVE_LINK(this);
++  }
++}
++
++NS_IMETHODIMP
++nsPluginThreadRunnable::Run()
++{
++  if (mFunc) {
++    NS_TRY_SAFE_CALL_VOID(mFunc(mUserData), nsnull, nsnull);
++  }
++
++  return NS_OK;
++}
++
++void NP_CALLBACK
++_pluginthreadasynccall(NPP instance, void (*func)(void *), void *userData)
++{
++  nsRefPtr<nsPluginThreadRunnable> evt =
++    new nsPluginThreadRunnable(instance, func, userData);
++
++  if (evt && evt->IsValid()) {
++    NS_DispatchToMainThread(evt);
++  }
++}
++
++void
++OnPluginDestroy(NPP instance)
++{
++  if (!sPluginThreadAsyncCallLock) {
++    return;
++  }
++
++  {
++    nsAutoLock lock(sPluginThreadAsyncCallLock);
++
++    if (PR_CLIST_IS_EMPTY(&sPendingAsyncCalls)) {
++      return;
++    }
++
++    nsPluginThreadRunnable *r =
++      (nsPluginThreadRunnable *)PR_LIST_HEAD(&sPendingAsyncCalls);
++
++    do {
++      if (r->IsForInstance(instance)) {
++        r->Invalidate();
++      }
++
++      r = (nsPluginThreadRunnable *)PR_NEXT_LINK(r);
++    } while (r != &sPendingAsyncCalls);
++  }
++}
++
++void
++OnShutdown()
++{
++  NS_ASSERTION(PR_CLIST_IS_EMPTY(&sPendingAsyncCalls),
++               "Pending async plugin call list not cleaned up!");
++
++  if (sPluginThreadAsyncCallLock) {
++    nsAutoLock::DestroyLock(sPluginThreadAsyncCallLock);
++  }
++}
++
++void
++EnterAsyncPluginThreadCallLock()
++{
++  if (sPluginThreadAsyncCallLock) {
++    PR_Lock(sPluginThreadAsyncCallLock);
++  }
++}
++
++void
++ExitAsyncPluginThreadCallLock()
++{
++  if (sPluginThreadAsyncCallLock) {
++    PR_Unlock(sPluginThreadAsyncCallLock);
++  }
++}
++
+ NPP NPPStack::sCurrentNPP = nsnull;
+Index: mozilla/modules/plugin/base/src/ns4xPlugin.h
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/ns4xPlugin.h
++++ mozilla/modules/plugin/base/src/ns4xPlugin.h
+@@ -248,16 +248,27 @@
+ PR_END_EXTERN_C
+ 
+ const char *
+ PeekException();
+ 
+ void
+ PopException();
+ 
++void
++OnPluginDestroy(NPP instance);
++
++void
++OnShutdown();
++
++void
++EnterAsyncPluginThreadCallLock();
++void
++ExitAsyncPluginThreadCallLock();
++
+ class NPPStack
+ {
+ public:
+   static NPP Peek()
+   {
+     return sCurrentNPP;
+   }
+ 
+Index: mozilla/modules/plugin/base/src/ns4xPluginInstance.cpp
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/ns4xPluginInstance.cpp
++++ mozilla/modules/plugin/base/src/ns4xPluginInstance.cpp
+@@ -868,18 +868,18 @@
+ 
+ ////////////////////////////////////////////////////////////////////////
+ NS_IMETHODIMP ns4xPluginInstance::Start(void)
+ {
+   PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("ns4xPluginInstance::Start this=%p\n",this));
+ 
+   if(mStarted)
+     return NS_OK;
+-  else
+-    return InitializePlugin(mPeer); 
++
++  return InitializePlugin(mPeer);
+ }
+ 
+ 
+ ////////////////////////////////////////////////////////////////////////
+ NS_IMETHODIMP ns4xPluginInstance::Stop(void)
+ {
+   PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("ns4xPluginInstance::Stop this=%p\n",this));
+ 
+@@ -899,16 +899,24 @@
+     gtk_widget_destroy(mXtBin);
+     mXtBin = 0;
+   }
+ #endif
+ 
+   if(!mStarted)
+     return NS_OK;
+ 
++  // Make sure we lock while we're writing to mStarted after we've
++  // started as other threads might be checking that inside a lock.
++  EnterAsyncPluginThreadCallLock();
++  mStarted = PR_FALSE;
++  ExitAsyncPluginThreadCallLock();
++
++  OnPluginDestroy(&fNPP);
++
+   if (fCallbacks->destroy == NULL)
+     return NS_ERROR_FAILURE; // XXX right error?
+ 
+   NPSavedData *sdata = 0;
+ 
+   // clean up open streams
+   for(nsInstanceStream *is = mStreams; is != nsnull;) {
+     ns4xPluginStreamListener * listener = is->mPluginStreamListener;
+@@ -924,18 +932,16 @@
+       listener->CleanUpStream(NPRES_USER_BREAK);
+   }
+ 
+   NS_TRY_SAFE_CALL_RETURN(error, CallNPP_DestroyProc(fCallbacks->destroy, &fNPP, &sdata), fLibrary, this);
+ 
+   NPP_PLUGIN_LOG(PLUGIN_LOG_NORMAL,
+   ("NPP Destroy called: this=%p, npp=%p, return=%d\n", this, &fNPP, error));
+ 
+-  mStarted = PR_FALSE;
+-
+   nsJSNPRuntime::OnPluginDestroy(&fNPP);
+ 
+   if(error != NPERR_NO_ERROR)
+     return NS_ERROR_FAILURE;
+   else
+     return NS_OK;
+ }
+ 
+Index: mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/nsPluginHostImpl.cpp
++++ mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp
+@@ -6356,16 +6356,17 @@
+                                         const char *aTopic,
+                                         const PRUnichar *someData)
+ {
+ #ifdef NS_DEBUG
+   printf("nsPluginHostImpl::Observe \"%s\"\n", aTopic ? aTopic : "");
+ #endif
+   if (!nsCRT::strcmp(NS_XPCOM_SHUTDOWN_OBSERVER_ID, aTopic))
+   {
++    OnShutdown();
+     Destroy();
+     UnloadUnusedLibraries();
+     sInst->Release();
+   }
+   if (!nsCRT::strcmp(NS_PREFBRANCH_PREFCHANGE_TOPIC_ID, aTopic)) {
+     NS_ASSERTION(someData &&
+                  nsDependentString(someData).EqualsLiteral("security.enable_java"),
+                  "Unexpected pref");

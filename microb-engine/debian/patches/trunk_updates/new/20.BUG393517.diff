@@ -1,0 +1,80 @@
+Index: mozilla/layout/base/nsCSSFrameConstructor.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsCSSFrameConstructor.cpp
++++ mozilla/layout/base/nsCSSFrameConstructor.cpp
+@@ -436,16 +436,17 @@
+ GetFieldSetAreaFrame(nsIFrame* aFieldsetFrame)
+ {
+   // Depends on the fieldset child frame order - see ConstructFieldSetFrame() below.
+   nsIFrame* firstChild = aFieldsetFrame->GetFirstChild(nsnull);
+   return firstChild && firstChild->GetNextSibling() ? firstChild->GetNextSibling() : firstChild;
+ }
+ 
+ //----------------------------------------------------------------------
++
+ //
+ // When inline frames get weird and have block frames in them, we
+ // annotate them to help us respond to incremental content changes
+ // more easily.
+ 
+ static inline PRBool
+ IsFrameSpecial(nsIFrame* aFrame)
+ {
+@@ -460,16 +461,30 @@
+   aFrame = aFrame->GetFirstInFlow();
+ 
+   void* value = aFrame->GetProperty(nsGkAtoms::IBSplitSpecialSibling);
+ 
+   *aResult = NS_STATIC_CAST(nsIFrame*, value);
+ }
+ 
+ static nsIFrame*
++GetIBSplitSpecialPrevSibling(nsIFrame* aFrame)
++{
++  NS_PRECONDITION(IsFrameSpecial(aFrame) && !IsInlineFrame(aFrame),
++                  "Shouldn't call this");
++
++  // We only store the "special sibling" annotation with the first
++  // frame in the continuation chain. Walk back to find that frame now.
++  return
++    static_cast<nsIFrame*>
++    (aFrame->GetFirstContinuation()->
++       GetProperty(nsGkAtoms::IBSplitSpecialPrevSibling));
++}
++
++static nsIFrame*
+ GetLastSpecialSibling(nsFrameManager* aFrameManager, nsIFrame* aFrame)
+ {
+   for (nsIFrame *frame = aFrame, *next; ; frame = next) {
+     GetSpecialSibling(aFrameManager, frame, &next);
+     if (!next)
+       return frame;
+   }
+   NS_NOTREACHED("unreachable code");
+@@ -615,23 +630,21 @@
+  * inline that preceded it.  DO NOT CHANGE THAT -- the
+  * GetParentStyleContextFrame code depends on it!  It is useful for
+  * finding the "special parent" of a frame (i.e., a frame from which a
+  * good parent style context can be obtained), one looks at the
+  * special previous sibling annotation of the real parent of the frame
+  * (if the real parent has NS_FRAME_IS_SPECIAL).
+  */
+ inline void
+-MarkIBSpecialPrevSibling(nsPresContext* aPresContext,
+-                         nsIFrame *aAnonymousFrame,
++MarkIBSpecialPrevSibling(nsIFrame *aAnonymousFrame,
+                          nsIFrame *aSpecialParent)
+ {
+-  aPresContext->PropertyTable()->SetProperty(aAnonymousFrame,
+-                                      nsGkAtoms::IBSplitSpecialPrevSibling,
+-                                             aSpecialParent, nsnull, nsnull);
++  aAnonymousFrame->SetProperty(nsGkAtoms::IBSplitSpecialPrevSibling,
++                               aSpecialParent, nsnull, nsnull);
+ }
+ 
+ // -----------------------------------------------------------
+ 
+ // Helper function that recursively removes content to frame mappings and
+ // undisplayed content mappings.
+ // This differs from DeletingFrameSubtree() because the frames have not yet been
+ // added to the frame hierarchy.

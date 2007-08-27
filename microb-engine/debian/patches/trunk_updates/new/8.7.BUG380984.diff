@@ -1,0 +1,61 @@
+Index: mozilla/modules/plugin/base/public/npupp.h
+===================================================================
+RCS file: /cvsroot/mozilla/modules/plugin/base/public/npupp.h,v
+retrieving revision 3.23
+diff -u -p -U 8 -r3.23 npupp.h
+--- mozilla/modules/plugin/base/public/npupp.h	19 Jul 2006 15:39:29 -0000	3.23
++++ mozilla/modules/plugin/base/public/npupp.h	22 Jun 2007 02:03:02 -0000
+@@ -618,16 +618,28 @@ typedef OSErr (* NP_LOADDS BP_GetSupport
+ #else
+ #if defined(__OS2__)
+ #define OSCALL _System
+ #else
+ #define OSCALL
+ #endif
+ #endif
+ 
++#if defined(XP_UNIX)
++/* GCC 3.3 and later support the visibility attribute. */
++#if defined(__GNUC__) && \
++    ((__GNUC__ >= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3))
++#define NP_VISIBILITY_DEFAULT __attribute__((visibility("default")))
++#else
++#define NP_VISIBILITY_DEFAULT
++#endif
++
++#define NP_EXPORT(__type) NP_VISIBILITY_DEFAULT __type
++#endif
++
+ #if defined( _WINDOWS ) || defined (__OS2__)
+ 
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+ 
+ /* plugin meta member functions */
+ #if defined(__OS2__)
+@@ -667,20 +679,20 @@ char*	NP_GetMIMEDescription();
+ #ifdef XP_UNIX
+ 
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+ 
+ /* plugin meta member functions */
+ 
+-char*	NP_GetMIMEDescription(void);
+-NPError	NP_Initialize(NPNetscapeFuncs*, NPPluginFuncs*);
+-NPError	NP_Shutdown(void);
+-NPError NP_GetValue(void *future, NPPVariable aVariable, void *aValue);
++NP_EXPORT(char*)   NP_GetMIMEDescription(void);
++NP_EXPORT(NPError) NP_Initialize(NPNetscapeFuncs*, NPPluginFuncs*);
++NP_EXPORT(NPError) NP_Shutdown(void);
++NP_EXPORT(NPError) NP_GetValue(void *future, NPPVariable aVariable, void *aValue);
+ 
+ #ifdef __cplusplus
+ }
+ #endif
+ 
+ #endif /* XP_UNIX */
+ 
+ #endif /* _NPUPP_H_ */

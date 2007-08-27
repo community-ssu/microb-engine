@@ -1,0 +1,684 @@
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables/ nsTableOuterFrame.cpp,v
+retrieving revision 3.312
+retrieving revision 3.313
+diff -u -r3.312 -r3.313
+--- mozilla/layout/tables/nsTableOuterFrame.cpp	2007/07/04 02:15:33	3.312
++++ mozilla/layout/tables/nsTableOuterFrame.cpp	2007/07/05 15:39:29	3.313
+@@ -137,6 +137,21 @@
+                                                   aIsChild);
+ }
+ 
++#ifdef ACCESSIBILITY
++NS_IMETHODIMP nsTableCaptionFrame::GetAccessible(nsIAccessible** aAccessible)
++{
++  *aAccessible = nsnull;
++  if (!GetRect().IsEmpty()) {
++    nsCOMPtr<nsIAccessibilityService> accService = do_GetService("@mozilla.org/accessibilityService;1");
++    if (accService) {
++      return accService->CreateHTMLCaptionAccessible(NS_STATIC_CAST(nsIFrame*, this), aAccessible);
++    }
++  }
++
++  return NS_ERROR_FAILURE;
++}
++#endif
++
+ #ifdef NS_DEBUG
+ NS_IMETHODIMP
+ nsTableCaptionFrame::GetFrameName(nsAString& aResult) const
+===================================================================
+RCS file: /cvsroot/mozilla/layout/tables nsTableOuterFrame.h,v
+retrieving revision 3.125
+retrieving revision 3.126
+diff -u -r3.125 -r3.126
+--- mozilla/layout/tables/nsTableOuterFrame.h	2007/04/22 19:15:24	3.125
++++ mozilla/layout/tables/nsTableOuterFrame.h	2007/07/05 15:39:29	3.126
+@@ -60,6 +60,10 @@
+   NS_IMETHOD GetParentStyleContextFrame(nsPresContext* aPresContext,
+                                         nsIFrame**      aProviderFrame,
+                                         PRBool*         aIsChild);
++#ifdef ACCESSIBILITY
++  NS_IMETHOD GetAccessible(nsIAccessible** aAccessible);
++#endif
++
+ #ifdef NS_DEBUG
+   NS_IMETHOD GetFrameName(nsAString& aResult) const;
+ #endif
+===================================================================
+RCS file: /cvsroot/mozilla/accessible/public nsIAccessibilityService.idl,v
+retrieving revision 1.57
+retrieving revision 1.58
+diff -u -r1.57 -r1.58
+--- mozilla/accessible/public/nsIAccessibilityService.idl	2007/05/16 13:38:05	1.57
++++ mozilla/accessible/public/nsIAccessibilityService.idl	2007/07/05 15:39:29	1.58
+@@ -45,7 +45,7 @@
+ interface nsObjectFrame;
+ interface nsIContent;
+ 
+-[uuid(e4cdb7c5-d029-4bee-bff5-99455c6e0057)]
++[uuid(0e9e2f00-b6f1-440d-821f-6b09d264cdaf)]
+ interface nsIAccessibilityService : nsIAccessibleRetrieval
+ {
+   nsIAccessible createOuterDocAccessible(in nsIDOMNode aNode);
+@@ -74,6 +74,7 @@
+   nsIAccessible createHTMLTableHeadAccessible(in nsIDOMNode aDOMNode);
+   nsIAccessible createHTMLTextAccessible(in nsISupports aFrame);
+   nsIAccessible createHTMLTextFieldAccessible(in nsISupports aFrame);
++  nsIAccessible createHTMLCaptionAccessible(in nsISupports aFrame);
+ 
+   nsIAccessible getAccessible(in nsIDOMNode aNode, in nsIPresShell aPresShell,                          
+                               in nsIWeakReference aWeakShell, 
+===================================================================
+RCS file: /cvsroot/mozilla/accessible/public nsIAccessibleTable.idl,v
+retrieving revision 1.6
+retrieving revision 1.7
+diff -u -r1.6 -r1.7
+--- mozilla/accessible/public/nsIAccessibleTable.idl	2007/05/11 12:21:43	1.6
++++ mozilla/accessible/public/nsIAccessibleTable.idl	2007/07/05 15:39:29	1.7
+@@ -43,11 +43,11 @@
+ 
+ interface nsIAccessible;
+ 
+-[scriptable, uuid(a776fee4-c0b8-4872-9e1e-72017243383f)]
++[scriptable, uuid(dc13d184-a6df-45a1-92f0-5476fdaebc5a)]
+ interface nsIAccessibleTable : nsISupports
+ {
+-           attribute nsIAccessible       caption;
+-           attribute AString           summary;
++  readonly attribute nsIAccessible       caption;
++  readonly attribute AString             summary;
+   readonly attribute long                columns;
+   readonly attribute nsIAccessibleTable  columnHeader;
+   readonly attribute long                rows;
+===================================================================
+RCS file: /cvsroot/mozilla/accessible/src/base nsAccessibilityService.cpp,v
+retrieving revision 1.229
+retrieving revision 1.230
+diff -u -r1.229 -r1.230
+--- mozilla/accessible/src/base/nsAccessibilityService.cpp	2007/07/05 11:29:28	1.229
++++ mozilla/accessible/src/base/nsAccessibilityService.cpp	2007/07/05 15:39:29	1.230
+@@ -477,7 +477,6 @@
+   else if (tag == nsAccessibilityAtoms::abbr ||
+            tag == nsAccessibilityAtoms::acronym ||
+            tag == nsAccessibilityAtoms::blockquote ||
+-           tag == nsAccessibilityAtoms::caption ||
+            tag == nsAccessibilityAtoms::dd ||
+            tag == nsAccessibilityAtoms::dl ||
+            tag == nsAccessibilityAtoms::dt ||
+@@ -882,6 +881,24 @@
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsAccessibilityService::CreateHTMLCaptionAccessible(nsISupports *aFrame, nsIAccessible **_retval)
++{
++  nsIFrame* frame;
++  nsCOMPtr<nsIDOMNode> node;
++  nsCOMPtr<nsIWeakReference> weakShell;
++  nsresult rv = GetInfo(aFrame, &frame, getter_AddRefs(weakShell), getter_AddRefs(node));
++  if (NS_FAILED(rv))
++    return rv;
++
++  *_retval = new nsHTMLCaptionAccessible(node, weakShell);
++  if (! *_retval) 
++    return NS_ERROR_OUT_OF_MEMORY;
++
++  NS_ADDREF(*_retval);
++  return NS_OK;
++}
++
+ NS_IMETHODIMP nsAccessibilityService::GetCachedAccessible(nsIDOMNode *aNode, 
+                                                           nsIWeakReference *aWeakShell,
+                                                           nsIAccessible **aAccessible)
+@@ -1369,6 +1386,10 @@
+     }
+ 
+     if (tryFrame) {
++      if (frame->GetRect().IsEmpty()) {
++        *aIsHidden = PR_TRUE;
++        return NS_OK;
++      }
+       frame->GetAccessible(getter_AddRefs(newAcc)); // Try using frame to do it
+     }
+   }
+===================================================================
+RCS file: /cvsroot/mozilla/accessible/src/base nsAccessibilityAtomList.h,v
+retrieving revision 1.63
+retrieving revision 1.64
+diff -u -r1.63 -r1.64
+--- mozilla/accessible/src/base/nsAccessibilityAtomList.h	2007/06/30 20:06:13	1.63
++++ mozilla/accessible/src/base/nsAccessibilityAtomList.h	2007/07/05 15:39:29	1.64
+@@ -90,7 +90,6 @@
+ ACCESSIBILITY_ATOM(blockquote, "blockquote")
+ ACCESSIBILITY_ATOM(br, "br")
+ ACCESSIBILITY_ATOM(body, "body")
+-ACCESSIBILITY_ATOM(caption, "caption")
+ ACCESSIBILITY_ATOM(choices, "choices") // XForms
+ ACCESSIBILITY_ATOM(description, "description")    // XUL
+ ACCESSIBILITY_ATOM(dd, "dd")
+===================================================================
+RCS file: /cvsroot/mozilla/accessible/src/atk nsXULTreeAccessibleWrap.h,v
+retrieving revision 1.5
+retrieving revision 1.6
+diff -u -r1.5 -r1.6
+--- mozilla/accessible/src/atk/nsXULTreeAccessibleWrap.h	2005/12/31 12:57:13	1.5
++++ mozilla/accessible/src/atk/nsXULTreeAccessibleWrap.h	2007/07/05 15:39:30	1.6
+@@ -57,10 +57,6 @@
+ 
+   NS_IMETHOD GetChildCount(PRInt32 *_retval);
+   NS_IMETHOD ChangeSelection(PRInt32 aIndex, PRUint8 aMethod, PRBool *aSelState);
+-    
+-private:
+-  nsCOMPtr<nsIAccessible> mCaption;
+-  nsString mSummary;
+ };
+ 
+ class nsXULTreeColumnsAccessibleWrap : public nsXULTreeColumnsAccessible,
+@@ -72,10 +68,6 @@
+ 
+   nsXULTreeColumnsAccessibleWrap(nsIDOMNode* aDOMNode, nsIWeakReference* aShell);
+   virtual ~nsXULTreeColumnsAccessibleWrap() {}
+-
+-private:
+-  nsCOMPtr<nsIAccessible> mCaption;
+-  nsString mSummary;
+ };
+ 
+ #endif
+===================================================================
+RCS file: /cvsroot/mozilla/accessible/src/atk nsXULTreeAccessibleWrap.cpp,v
+retrieving revision 1.17
+retrieving revision 1.18
+diff -u -r1.17 -r1.18
+--- mozilla/accessible/src/atk/nsXULTreeAccessibleWrap.cpp	2007/06/07 02:43:45	1.17
++++ mozilla/accessible/src/atk/nsXULTreeAccessibleWrap.cpp	2007/07/05 15:39:30	1.18
+@@ -50,7 +50,6 @@
+ nsXULTreeAccessibleWrap::nsXULTreeAccessibleWrap(nsIDOMNode *aDOMNode, nsIWeakReference *aShell):
+ nsXULTreeAccessible(aDOMNode, aShell)
+ {
+-  mCaption = nsnull;
+ }
+ 
+ // tree's children count is row count * col count + treecols count
+@@ -78,26 +77,13 @@
+ 
+ NS_IMETHODIMP nsXULTreeAccessibleWrap::GetCaption(nsIAccessible **aCaption)
+ {
+-  *aCaption = mCaption;
+-  NS_IF_ADDREF(*aCaption);
+-  return NS_OK;
+-}
+-
+-NS_IMETHODIMP nsXULTreeAccessibleWrap::SetCaption(nsIAccessible *aCaption)
+-{
+-  mCaption = aCaption;
++  *aCaption = nsnull;
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP nsXULTreeAccessibleWrap::GetSummary(nsAString &aSummary)
+ {
+-  aSummary = mSummary;
+-  return NS_OK;
+-}
+-
+-NS_IMETHODIMP nsXULTreeAccessibleWrap::SetSummary(const nsAString &aSummary)
+-{
+-  mSummary = aSummary;
++  aSummary.Truncate();
+   return NS_OK;
+ }
+ 
+@@ -426,32 +412,17 @@
+ nsXULTreeColumnsAccessibleWrap::nsXULTreeColumnsAccessibleWrap(nsIDOMNode *aDOMNode, nsIWeakReference *aShell):
+ nsXULTreeColumnsAccessible(aDOMNode, aShell)
+ {
+-  mCaption = nsnull;
+ }
+ 
+ NS_IMETHODIMP nsXULTreeColumnsAccessibleWrap::GetCaption(nsIAccessible **aCaption)
+ {
+-  *aCaption = mCaption;
+-  NS_IF_ADDREF(*aCaption);
+-
+-  return NS_OK;
+-}
+-
+-NS_IMETHODIMP nsXULTreeColumnsAccessibleWrap::SetCaption(nsIAccessible *aCaption)
+-{
+-  mCaption = aCaption;
++  *aCaption = nsnull;
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP nsXULTreeColumnsAccessibleWrap::GetSummary(nsAString &aSummary)
+ {
+-  aSummary = mSummary;
+-  return NS_OK;
+-}
+-
+-NS_IMETHODIMP nsXULTreeColumnsAccessibleWrap::SetSummary(const nsAString &aSummary)
+-{
+-  mSummary = aSummary;
++  aSummary.Truncate();
+   return NS_OK;
+ }
+ 
+===================================================================
+RCS file: /cvsroot/mozilla/accessible/src/html nsHTMLTableAccessible.cpp,v
+retrieving revision 1.51
+retrieving revision 1.52
+diff -u -r1.51 -r1.52
+--- mozilla/accessible/src/html/nsHTMLTableAccessible.cpp	2007/05/17 08:21:49	1.51
++++ mozilla/accessible/src/html/nsHTMLTableAccessible.cpp	2007/07/05 15:39:29	1.52
+@@ -49,7 +49,6 @@
+ #include "nsIAccessibilityService.h"
+ #include "nsIDOMCSSStyleDeclaration.h"
+ #include "nsIDOMHTMLCollection.h"
+-#include "nsIDOMHTMLTableCaptionElem.h"
+ #include "nsIDOMHTMLTableCellElement.h"
+ #include "nsIDOMHTMLTableElement.h"
+ #include "nsIDOMHTMLTableRowElement.h"
+@@ -92,7 +91,6 @@
+ nsHTMLTableAccessible::nsHTMLTableAccessible(nsIDOMNode* aDomNode, nsIWeakReference* aShell):
+ nsAccessibleWrap(aDomNode, aShell)
+ { 
+-  mHasCaption = PR_FALSE;
+ }
+ 
+ void nsHTMLTableAccessible::CacheChildren()
+@@ -102,51 +100,37 @@
+     mAccChildCount = eChildCountUninitialized;
+     return;
+   }
+-
++  
+   if (mAccChildCount == eChildCountUninitialized) {
+-    PRInt32 childCount = 0;
+-    nsCOMPtr<nsPIAccessible> privatePrevAccessible;
++    nsAccessible::CacheChildren();
+     nsCOMPtr<nsIAccessible> captionAccessible;
+-    GetCaption(getter_AddRefs(captionAccessible));
+-    if (captionAccessible) {
+-      mHasCaption = PR_TRUE;
+-      SetFirstChild(captionAccessible);
+-      ++ childCount;
+-      privatePrevAccessible = do_QueryInterface(captionAccessible);
+-      privatePrevAccessible->SetParent(this);
+-    }
+-    else {
+-      mHasCaption = PR_FALSE;
+-    }
+-
+-    PRBool allowsAnonChildren = PR_FALSE;
+-    GetAllowsAnonChildAccessibles(&allowsAnonChildren);
+-    nsAccessibleTreeWalker walker(mWeakShell, mDOMNode, allowsAnonChildren);
+-    walker.mState.frame = GetFrame();
+-
+-    walker.GetFirstChild();
+-    while (walker.mState.accessible) {
+-      nsCOMPtr<nsIContent> content(do_QueryInterface(walker.mState.domNode));
+-      NS_ASSERTION(content, "Creating accessible for node in HTMLTable with no content");
+-      if (content && content->IsNodeOfType(nsINode::eHTML) &&
+-          content->Tag() == nsAccessibilityAtoms::caption) {
+-        // We have already dealt with caption, ignore this one
+-        walker.GetNextSibling();
+-        continue;
+-      }
+-
+-      ++ childCount;
+-      if (privatePrevAccessible) {
+-        privatePrevAccessible->SetNextSibling(walker.mState.accessible);
+-      }
+-      else {
+-        SetFirstChild(walker.mState.accessible);
++    while (NextChild(captionAccessible)) {
++      if (Role(captionAccessible) == nsIAccessibleRole::ROLE_CAPTION) {
++        nsCOMPtr<nsIAccessible> captionParentAccessible;
++        captionAccessible->GetParent(getter_AddRefs(captionParentAccessible));
++        if (captionParentAccessible != this) {
++          NS_WARNING("Should not happen: parser ensures caption is the table's child, not the tbody's");
++          return;
++        }
++        nsCOMPtr<nsIAccessible> beforeCaptionAccessible;
++        captionAccessible->GetPreviousSibling(getter_AddRefs(beforeCaptionAccessible));
++        if (beforeCaptionAccessible) {
++          // Move caption accessible so that it's the first child
++          nsCOMPtr<nsIAccessible> afterCaptionAccessible;
++          captionAccessible->GetNextSibling(getter_AddRefs(afterCaptionAccessible));
++          nsCOMPtr<nsPIAccessible> privateAcc = do_QueryInterface(beforeCaptionAccessible);
++          privateAcc->SetNextSibling(afterCaptionAccessible);
++          GetFirstChild(getter_AddRefs(afterCaptionAccessible));
++          SetFirstChild(captionAccessible);
++          privateAcc = do_QueryInterface(captionAccessible);
++          privateAcc->SetNextSibling(afterCaptionAccessible);        
++        }
++        // Don't check for more captions, because nsAccessibilityService ensures
++        // we don't create accessibles for the other captions, since only the
++        // first is actually visible
++        break;
+       }
+-      privatePrevAccessible = do_QueryInterface(walker.mState.accessible);
+-      privatePrevAccessible->SetParent(this);
+-      walker.GetNextSibling();
+     }
+-    mAccChildCount = childCount;
+   }
+ }
+ 
+@@ -173,34 +157,14 @@
+ {
+   aName.Truncate();  // Default name is blank
+ 
+-  if (mRoleMapEntry) {
+-    nsAccessible::GetName(aName);
+-    if (!aName.IsEmpty()) {
+-      return NS_OK;
+-    }
+-  }
+-
+-  nsCOMPtr<nsIDOMElement> element(do_QueryInterface(mDOMNode));
+-  if (element) {
+-    nsCOMPtr<nsIDOMNodeList> captions;
+-    nsAutoString nameSpaceURI;
+-    element->GetNamespaceURI(nameSpaceURI);
+-    element->GetElementsByTagNameNS(nameSpaceURI, NS_LITERAL_STRING("caption"), 
+-                                    getter_AddRefs(captions));
+-    if (captions) {
+-      nsCOMPtr<nsIDOMNode> captionNode;
+-      captions->Item(0, getter_AddRefs(captionNode));
+-      if (captionNode) {
+-        nsCOMPtr<nsIContent> captionContent(do_QueryInterface(captionNode));
+-        AppendFlatStringFromSubtree(captionContent, &aName);
+-      }
+-    }
+-    if (aName.IsEmpty()) {
+-      nsCOMPtr<nsIContent> content(do_QueryInterface(element));
+-      NS_ASSERTION(content, "No content for DOM element");
++  nsAccessible::GetName(aName);
++  if (aName.IsEmpty()) {
++    nsCOMPtr<nsIContent> content(do_QueryInterface(mDOMNode));
++    if (content) { 
+       content->GetAttr(kNameSpaceID_None, nsAccessibilityAtoms::summary, aName);
+     }
+   }
++
+   return NS_OK;
+ }
+ 
+@@ -226,65 +190,39 @@
+ }
+ 
+ NS_IMETHODIMP
+-nsHTMLTableAccessible::GetCaption(nsIAccessible **aCaption)
++nsHTMLTableAccessible::GetAccessibleRelated(PRUint32 aRelationType,
++                                            nsIAccessible **aRelated)
+ {
+-  *aCaption = nsnull;
+-  nsresult rv = NS_OK;
++  NS_ENSURE_ARG_POINTER(aRelated);
++  *aRelated = nsnull;
+ 
+-  nsCOMPtr<nsIDOMHTMLTableElement> table(do_QueryInterface(mDOMNode));
+-  NS_ENSURE_TRUE(table, NS_ERROR_FAILURE);
+-
+-  nsCOMPtr<nsIDOMHTMLTableCaptionElement> caption;
+-  rv = table->GetCaption(getter_AddRefs(caption));
+-  NS_ENSURE_SUCCESS(rv, rv);
+-
+-  nsCOMPtr<nsIDOMNode> captionNode(do_QueryInterface(caption));
+-  if (!captionNode) {
+-    return NS_OK;
++  if (!mDOMNode) {
++    return NS_ERROR_FAILURE;
+   }
+ 
+-  nsCOMPtr<nsIAccessibilityService> accService = GetAccService();
+-  NS_ENSURE_TRUE(accService, NS_ERROR_FAILURE);
+-
+-  accService->GetCachedAccessible(captionNode, mWeakShell, aCaption);
+-  if (*aCaption)
+-    return NS_OK;
++  nsresult rv = nsAccessibleWrap::GetAccessibleRelated(aRelationType, aRelated);
++  if (NS_FAILED(rv) || *aRelated) {
++    // Either the node is shut down, or another relation mechanism has been used
++    return rv;
++  }
+ 
+-  nsCOMPtr<nsIPresShell> presShell(GetPresShell());
+-  nsCOMPtr<nsIContent> content(do_QueryInterface(captionNode));
+-  NS_ENSURE_TRUE(presShell && content, NS_ERROR_FAILURE);
+-  nsIFrame* frame = presShell->GetPrimaryFrameFor(content);
+-  if (!frame) {
+-    return NS_OK;
++  if (aRelationType == nsIAccessibleRelation::RELATION_DESCRIBED_BY) {
++    return GetCaption(aRelated);
+   }
+-  accService->CreateHyperTextAccessible(frame, aCaption);
+-  nsCOMPtr<nsPIAccessNode> accessNode(do_QueryInterface(*aCaption));
+-  return accessNode ? accessNode->Init() : NS_ERROR_FAILURE;
++
++  return NS_OK;
+ }
+ 
++
+ NS_IMETHODIMP
+-nsHTMLTableAccessible::SetCaption(nsIAccessible *aCaption)
++nsHTMLTableAccessible::GetCaption(nsIAccessible **aCaption)
+ {
+-  nsresult rv = NS_OK;
+-
+-  nsCOMPtr<nsIDOMHTMLTableElement> table(do_QueryInterface(mDOMNode));
+-  NS_ENSURE_TRUE(table, NS_ERROR_FAILURE);
+-
+-  nsCOMPtr<nsIAccessNode> accessNode(do_QueryInterface(aCaption));
+-  NS_ASSERTION(accessNode, "Unable to QI to nsIAccessNode");
+-  nsCOMPtr<nsIDOMNode> domNode;
+-  rv = accessNode->GetDOMNode(getter_AddRefs(domNode));
+-  NS_ENSURE_SUCCESS(rv, rv);
+-
+-  nsCOMPtr<nsIDOMNode> newDOMNode;
+-  rv = domNode->CloneNode(PR_TRUE, getter_AddRefs(newDOMNode));
+-  NS_ENSURE_SUCCESS(rv, rv);
+-
+-  nsCOMPtr<nsIDOMHTMLTableCaptionElement>
+-    captionElement(do_QueryInterface(newDOMNode));
+-  NS_ENSURE_TRUE(captionElement, NS_ERROR_FAILURE);
+-
+-  return table->SetCaption(captionElement);
++  nsCOMPtr<nsIAccessible> firstChild;
++  GetFirstChild(getter_AddRefs(firstChild));
++  if (firstChild && Role(firstChild) == nsIAccessibleRole::ROLE_CAPTION) {
++    NS_ADDREF(*aCaption = firstChild);
++  }
++  return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+@@ -297,15 +235,6 @@
+ }
+ 
+ NS_IMETHODIMP
+-nsHTMLTableAccessible::SetSummary(const nsAString &aSummary)
+-{
+-  nsCOMPtr<nsIDOMHTMLTableElement> table(do_QueryInterface(mDOMNode));
+-  NS_ENSURE_TRUE(table, NS_ERROR_FAILURE);
+-
+-  return table->SetSummary(aSummary);
+-}
+-
+-NS_IMETHODIMP
+ nsHTMLTableAccessible::GetColumns(PRInt32 *aColumns)
+ {
+   nsITableLayout *tableLayout;
+@@ -820,20 +749,39 @@
+                                     isSelected);
+ }
+ 
+-#ifdef SHOW_LAYOUT_HEURISTIC
+ NS_IMETHODIMP nsHTMLTableAccessible::GetDescription(nsAString& aDescription)
+ {
+   // Helpful for debugging layout vs. data tables
+   aDescription.Truncate();
+-  PRBool isProbablyForLayout;
+-  IsProbablyForLayout(&isProbablyForLayout);
+-  aDescription = mLayoutHeuristic;
++  nsAccessible::GetDescription(aDescription);
++  if (!aDescription.IsEmpty()) {
++    return NS_OK;
++  }
++
++  nsCOMPtr<nsIAccessible> captionAccessible;
++  GetCaption(getter_AddRefs(captionAccessible));
++  nsCOMPtr<nsIAccessNode> captionAccessNode = do_QueryInterface(captionAccessible);
++  if (captionAccessNode) {
++    nsCOMPtr<nsIDOMNode> captionNode;
++    captionAccessNode->GetDOMNode(getter_AddRefs(captionNode));
++    nsCOMPtr<nsIContent> captionContent = do_QueryInterface(captionNode);
++    if (captionContent) {
++      AppendFlatStringFromSubtree(captionContent, &aDescription);
++    }
++  }
++#ifdef SHOW_LAYOUT_HEURISTIC
++  if (aDescription.IsEmpty()) {
++    PRBool isProbablyForLayout;
++    IsProbablyForLayout(&isProbablyForLayout);
++    aDescription = mLayoutHeuristic;
++  }
+ #ifdef DEBUG_A11Y
+   printf("\nTABLE: %s\n", NS_ConvertUTF16toUTF8(mLayoutHeuristic).get());
+ #endif
++#endif
++
+   return NS_OK;
+ }
+-#endif
+ 
+ PRBool nsHTMLTableAccessible::HasDescendant(char *aTagName, PRBool aAllowEmpty)
+ {
+@@ -1060,24 +1008,12 @@
+ }
+ 
+ NS_IMETHODIMP
+-nsHTMLTableHeadAccessible::SetCaption(nsIAccessible *aCaption)
+-{
+-  return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-
+-NS_IMETHODIMP
+ nsHTMLTableHeadAccessible::GetSummary(nsAString &aSummary)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ NS_IMETHODIMP
+-nsHTMLTableHeadAccessible::SetSummary(const nsAString &aSummary)
+-{
+-  return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-
+-NS_IMETHODIMP
+ nsHTMLTableHeadAccessible::GetColumnHeader(nsIAccessibleTable **aColumnHeader)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+@@ -1098,3 +1034,29 @@
+   return rows->GetLength((PRUint32 *)aRows);
+ }
+ 
++NS_IMETHODIMP
++nsHTMLCaptionAccessible::GetAccessibleRelated(PRUint32 aRelationType,
++                                              nsIAccessible **aRelated)
++{
++  NS_ENSURE_ARG_POINTER(aRelated);
++  *aRelated = nsnull;
++
++  if (!mDOMNode) {
++    return NS_ERROR_FAILURE;
++  }
++
++  nsresult rv = nsHyperTextAccessible::GetAccessibleRelated(aRelationType, aRelated);
++  if (NS_FAILED(rv) || *aRelated) {
++    // Either the node is shut down, or another relation mechanism has been used
++    return rv;
++  }
++
++  if (aRelationType == nsIAccessibleRelation::RELATION_DESCRIPTION_FOR) {
++    return GetParent(aRelated);
++  }
++
++  return NS_OK;
++}
++
++
++
+===================================================================
+RCS file: /cvsroot/mozilla/accessible/src/html nsHTMLTableAccessible.h,v
+retrieving revision 1.28
+retrieving revision 1.29
+diff -u -r1.28 -r1.29
+--- mozilla/accessible/src/html/nsHTMLTableAccessible.h	2007/05/11 12:21:43	1.28
++++ mozilla/accessible/src/html/nsHTMLTableAccessible.h	2007/07/05 15:39:29	1.29
+@@ -71,9 +71,8 @@
+   NS_IMETHOD GetState(PRUint32 *aState, PRUint32 *aExtraState);
+   NS_IMETHOD GetName(nsAString& aResult);
+   virtual nsresult GetAttributesInternal(nsIPersistentProperties *aAttributes);
+-#ifdef SHOW_LAYOUT_HEURISTIC
+   NS_IMETHOD GetDescription(nsAString& aDescription);
+-#endif
++  NS_IMETHOD GetAccessibleRelated(PRUint32 aRelationType, nsIAccessible **aRelated);
+ 
+ protected:
+ 
+@@ -106,7 +105,6 @@
+                      PRInt32        aColIndex,
+                      nsIDOMElement* &aCell);
+   PRBool HasDescendant(char *aTagName, PRBool aAllowEmpty = PR_TRUE);
+-  PRBool mHasCaption;
+ #ifdef SHOW_LAYOUT_HEURISTIC
+   nsAutoString mLayoutHeuristic;
+ #endif
+@@ -124,11 +122,21 @@
+ 
+   /* nsIAccessibleTable */
+   NS_IMETHOD GetCaption(nsIAccessible **aCaption);
+-  NS_IMETHOD SetCaption(nsIAccessible *aCaption);
+   NS_IMETHOD GetSummary(nsAString &aSummary);
+-  NS_IMETHOD SetSummary(const nsAString &aSummary);
+   NS_IMETHOD GetColumnHeader(nsIAccessibleTable **aColumnHeader);
+   NS_IMETHOD GetRows(PRInt32 *aRows);
+ };
+ 
++class nsHTMLCaptionAccessible : public nsHyperTextAccessibleWrap
++{
++public:
++  nsHTMLCaptionAccessible(nsIDOMNode *aDomNode, nsIWeakReference *aShell) :
++    nsHyperTextAccessibleWrap(aDomNode, aShell) { }
++
++  // nsIAccessible
++  NS_IMETHOD GetRole(PRUint32 *aRole)
++    { *aRole = nsIAccessibleRole::ROLE_CAPTION; return NS_OK; }
++  NS_IMETHOD GetAccessibleRelated(PRUint32 aRelationType, nsIAccessible **aRelated);
++};
++
+ #endif  
+===================================================================
+RCS file: /cvsroot/mozilla/accessible/src/html nsHyperTextAccessible.cpp,v
+retrieving revision 1.61
+retrieving revision 1.62
+diff -u -r1.61 -r1.62
+--- mozilla/accessible/src/html/nsHyperTextAccessible.cpp	2007/07/05 11:29:29	1.61
++++ mozilla/accessible/src/html/nsHyperTextAccessible.cpp	2007/07/05 15:39:29	1.62
+@@ -140,10 +140,7 @@
+ 
+   nsIAtom *tag = content->Tag();
+ 
+-  if (tag == nsAccessibilityAtoms::caption) {
+-    *aRole = nsIAccessibleRole::ROLE_CAPTION;
+-  }
+-  else if (tag == nsAccessibilityAtoms::form) {
++  if (tag == nsAccessibilityAtoms::form) {
+     *aRole = nsIAccessibleRole::ROLE_FORM;
+   }
+   else if (tag == nsAccessibilityAtoms::div ||
+

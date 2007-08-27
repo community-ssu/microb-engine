@@ -1,0 +1,750 @@
+#commit 618e5d934dd0c5f05a3f68e44f13deaef461cbf5
+#Author: Michael Wu <flamingice@sourmilk.net>
+#Date:   Fri Jul 13 17:19:32 2007 -0700
+#
+#    asdf
+#
+diff --git a/content/base/src/nsObjectLoadingContent.cpp b/content/base/src/nsObjectLoadingContent.cpp
+index 9d3661e..0bb9a0a 100644
+--- a/content/base/src/nsObjectLoadingContent.cpp
++++ b/content/base/src/nsObjectLoadingContent.cpp
+@@ -147,39 +147,47 @@ nsAsyncInstantiateEvent::Run()
+   } else {
+     LOG(("OBJLC [%p]: Discarding event, data changed\n", mContent));
+   }
+ 
+   return NS_OK;
+ }
+ 
+ /**
+- * A task for firing PluginNotFound DOM Events.
++ * A task for firing PluginNotFound and PluginBlocklisted DOM Events.
+  */
+-class nsPluginNotFoundEvent : public nsRunnable {
++class nsPluginErrorEvent : public nsRunnable {
+ public:
+   nsCOMPtr<nsIContent> mContent;
++  PRBool mBlocklisted;
+ 
+-  nsPluginNotFoundEvent(nsIContent* aContent)
+-    : mContent(aContent)
++  nsPluginErrorEvent(nsIContent* aContent, PRBool aBlocklisted)
++    : mContent(aContent),
++      mBlocklisted(aBlocklisted)
+   {}
+ 
+-  ~nsPluginNotFoundEvent() {}
++  ~nsPluginErrorEvent() {}
+ 
+   NS_IMETHOD Run();
+ };
+ 
+ NS_IMETHODIMP
+-nsPluginNotFoundEvent::Run()
++nsPluginErrorEvent::Run()
+ {
+   LOG(("OBJLC []: Firing plugin not found event for content %p\n",
+        mContent.get()));
+-  nsContentUtils::DispatchTrustedEvent(mContent->GetDocument(), mContent,
+-                                       NS_LITERAL_STRING("PluginNotFound"),
+-                                       PR_TRUE, PR_TRUE);
++  if (mBlocklisted)
++    nsContentUtils::DispatchTrustedEvent(mContent->GetDocument(), mContent,
++                                         NS_LITERAL_STRING("PluginBlocklisted"),
++                                         PR_TRUE, PR_TRUE);
++  else
++    nsContentUtils::DispatchTrustedEvent(mContent->GetDocument(), mContent,
++                                         NS_LITERAL_STRING("PluginNotFound"),
++                                         PR_TRUE, PR_TRUE);
++
+   return NS_OK;
+ }
+ 
+ class AutoNotifier {
+   public:
+     AutoNotifier(nsObjectLoadingContent* aContent, PRBool aNotify) :
+       mContent(aContent), mNotify(aNotify) {
+         mOldType = aContent->Type();
+@@ -421,18 +429,19 @@ nsObjectLoadingContent::OnStartRequest(n
+       // Need to fallback here (instead of using the case below), so that we can
+       // set mTypeUnsupported without it being overwritten. This is also why we
+       // return early.
+       Fallback(PR_FALSE);
+ 
+       PluginSupportState pluginState = GetPluginSupportState(thisContent,
+                                                              mContentType);
+       // Do nothing, but fire the plugin not found event if needed
+-      if (pluginState == ePluginUnsupported) {
+-        FirePluginNotFound(thisContent);
++      if (pluginState == ePluginUnsupported ||
++          pluginState == ePluginBlocklisted) {
++        FirePluginError(thisContent, pluginState == ePluginBlocklisted);
+       }
+       if (pluginState != ePluginDisabled) {
+         mTypeUnsupported = PR_TRUE;
+       }
+       return NS_BINDING_ABORTED;
+   }
+ 
+   if (mFinalListener) {
+@@ -882,18 +891,19 @@ nsObjectLoadingContent::LoadObject(nsIUR
+         rv = mFrameLoader->LoadURI(aURI);
+         break;
+       case eType_Loading:
+         NS_NOTREACHED("Should not have a loading type here!");
+       case eType_Null:
+         // No need to load anything
+         PluginSupportState pluginState = GetPluginSupportState(thisContent,
+                                                                aTypeHint);
+-        if (pluginState == ePluginUnsupported) {
+-          FirePluginNotFound(thisContent);
++        if (pluginState == ePluginUnsupported ||
++            pluginState == ePluginBlocklisted) {
++          FirePluginError(thisContent, pluginState == ePluginBlocklisted);
+         }
+         if (pluginState != ePluginDisabled) {
+           fallback.TypeUnsupported();
+         }
+ 
+         break;
+     };
+     return NS_OK;
+@@ -1188,25 +1198,26 @@ nsObjectLoadingContent::NotifyStateChang
+     nsCOMPtr<nsIPresShell> shell;
+     while ((shell = iter.GetNextShell())) {
+       shell->RecreateFramesFor(thisContent);
+     }
+   }
+ }
+ 
+ /* static */ void
+-nsObjectLoadingContent::FirePluginNotFound(nsIContent* thisContent)
++nsObjectLoadingContent::FirePluginError(nsIContent* thisContent,
++                                        PRBool blocklisted)
+ {
+-  LOG(("OBJLC []: Dispatching PluginNotFound event for content %p\n",
++  LOG(("OBJLC []: Dispatching nsPluginErrorEvent for content %p\n",
+        thisContent));
+ 
+-  nsCOMPtr<nsIRunnable> ev = new nsPluginNotFoundEvent(thisContent);
++  nsCOMPtr<nsIRunnable> ev = new nsPluginErrorEvent(thisContent, blocklisted);
+   nsresult rv = NS_DispatchToCurrentThread(ev);
+   if (NS_FAILED(rv)) {
+-    NS_WARNING("failed to dispatch nsPluginNotFoundEvent");
++    NS_WARNING("failed to dispatch nsPluginErrorEvent");
+   }
+ }
+ 
+ nsObjectLoadingContent::ObjectType
+ nsObjectLoadingContent::GetTypeOfContent(const nsCString& aMIMEType)
+ {
+   PRUint32 caps = GetCapabilities();
+ 
+@@ -1432,10 +1443,14 @@ nsObjectLoadingContent::GetPluginSupport
+ /* static */ nsObjectLoadingContent::PluginSupportState
+ nsObjectLoadingContent::GetPluginDisabledState(const nsCString& aContentType)
+ {
+   nsCOMPtr<nsIPluginHost> host(do_GetService("@mozilla.org/plugin/host;1"));
+   if (!host) {
+     return ePluginUnsupported;
+   }
+   nsresult rv = host->IsPluginEnabledForType(aContentType.get());
+-  return rv == NS_ERROR_PLUGIN_DISABLED ? ePluginDisabled : ePluginUnsupported;
++  if (rv == NS_ERROR_PLUGIN_DISABLED)
++    return ePluginDisabled;
++  if (rv == NS_ERROR_PLUGIN_BLOCKLISTED)
++    return ePluginBlocklisted;
++  return ePluginUnsupported;
+ }
+diff --git a/content/base/src/nsObjectLoadingContent.h b/content/base/src/nsObjectLoadingContent.h
+index 4c47f3b..915222a 100644
+--- a/content/base/src/nsObjectLoadingContent.h
++++ b/content/base/src/nsObjectLoadingContent.h
+@@ -251,17 +251,17 @@ #endif
+      */
+     void NotifyStateChanged(ObjectType aOldType, PRInt32 aOldState,
+                             PRBool aSync);
+ 
+     /**
+      * Fires the "Plugin not found" event. This function doesn't do any checks
+      * whether it should be fired, the caller should do that.
+      */
+-    static void FirePluginNotFound(nsIContent* thisContent);
++    static void FirePluginError(nsIContent* thisContent, PRBool blocklisted);
+ 
+     ObjectType GetTypeOfContent(const nsCString& aMIMEType);
+ 
+     /**
+      * For a classid, returns the MIME type that can be used to instantiate
+      * a plugin for this ID.
+      *
+      * @return NS_ERROR_NOT_AVAILABLE Unsupported class ID.
+@@ -295,16 +295,17 @@ #endif
+      */
+     static PRBool ShouldShowDefaultPlugin(nsIContent* aContent,
+                                           const nsCString& aContentType);
+ 
+     enum PluginSupportState {
+       ePluginUnsupported,  // The plugin is not supported (not installed, say)
+       ePluginDisabled,     // The plugin has been explicitly disabled by the
+                            // user.
++      ePluginBlocklisted,  // The plugin is blocklisted and disabled
+       ePluginOtherState    // Something else (e.g. not a plugin at all as far
+                            // as we can tell).
+     };
+ 
+     /**
+      * Get the plugin support state for the given content node and MIME type.
+      * This is used for purposes of determining whether to fire PluginNotFound
+      * events etc.  aContentType is the MIME type we ended up with.
+diff --git a/modules/plugin/base/public/nsIPluginTag.idl b/modules/plugin/base/public/nsIPluginTag.idl
+index 97182e5..67353ef 100644
+--- a/modules/plugin/base/public/nsIPluginTag.idl
++++ b/modules/plugin/base/public/nsIPluginTag.idl
+@@ -33,16 +33,17 @@
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsISupports.idl"
+ 
+-[scriptable, uuid(42f9c725-e13d-47d5-bf1d-f9b0a9ee5cf7)]
++[scriptable, uuid(e8b85cb4-6281-40b1-b54d-da825487b73a)]
+ interface nsIPluginTag : nsISupports
+ {
+   readonly attribute ACString description;
+   readonly attribute ACString filename;
+   readonly attribute ACString name;
+            attribute boolean  disabled;
++           attribute boolean  blocklisted;
+ };
+diff --git a/modules/plugin/base/public/nsPluginError.h b/modules/plugin/base/public/nsPluginError.h
+index 1cddcb6..470aa4a 100644
+--- a/modules/plugin/base/public/nsPluginError.h
++++ b/modules/plugin/base/public/nsPluginError.h
+@@ -39,10 +39,11 @@
+ ////////////////////////////////////////////////////////////////////////////////
+ #ifndef nsPluginError_h__
+ #define nsPluginError_h__
+ 
+ #include "nsError.h"
+ 
+ #define NS_ERROR_PLUGINS_PLUGINSNOTCHANGED    NS_ERROR_GENERATE_FAILURE(NS_ERROR_MODULE_PLUGINS,1000)
+ #define NS_ERROR_PLUGIN_DISABLED    NS_ERROR_GENERATE_FAILURE(NS_ERROR_MODULE_PLUGINS,1001)
++#define NS_ERROR_PLUGIN_BLOCKLISTED    NS_ERROR_GENERATE_FAILURE(NS_ERROR_MODULE_PLUGINS,1002)
+ 
+ #endif   // nsPluginError_h__
+diff --git a/modules/plugin/base/src/nsPluginHostImpl.cpp b/modules/plugin/base/src/nsPluginHostImpl.cpp
+index f727c33..14a035f 100644
+--- a/modules/plugin/base/src/nsPluginHostImpl.cpp
++++ b/modules/plugin/base/src/nsPluginHostImpl.cpp
+@@ -526,26 +526,29 @@ PRBool nsActivePluginList::remove(nsActi
+   return PR_FALSE;
+ }
+ 
+ 
+ ////////////////////////////////////////////////////////////////////////
+ // This method terminates all running instances of plugins and collects their
+ // documents to be returned through an array. This method is used
+ // when we are shutting down or when a plugins.refresh(1) happens.
+-void nsActivePluginList::stopRunning(nsISupportsArray* aReloadDocs)
++// If aPluginTag is given, then only that plugin is terminated
++void nsActivePluginList::stopRunning(nsISupportsArray* aReloadDocs,
++                                     nsPluginTag* aPluginTag)
+ {
+   if(mFirst == nsnull)
+     return;
+ 
+   PRBool doCallSetWindowAfterDestroy = PR_FALSE;
+ 
+   for(nsActivePlugin * p = mFirst; p != nsnull; p = p->mNext)
+   {
+-    if(!p->mStopped && p->mInstance)
++    if(!p->mStopped && p->mInstance &&
++       (!aPluginTag || aPluginTag == p->mPluginTag))
+     {
+       // then determine if the plugin wants Destroy to be called after
+       // Set Window.  This is for bug 50547.
+       p->mInstance->GetValue(nsPluginInstanceVariable_CallSetWindowAfterDestroyBool,
+                              (void *) &doCallSetWindowAfterDestroy);
+       if (doCallSetWindowAfterDestroy) {
+         p->mInstance->Stop();
+         p->mInstance->Destroy();
+@@ -984,23 +987,46 @@ nsPluginTag::GetDisabled(PRBool* aDisabl
+ }
+ 
+ NS_IMETHODIMP
+ nsPluginTag::SetDisabled(PRBool aDisabled)
+ {
+   if (HasFlag(NS_PLUGIN_FLAG_ENABLED) == !aDisabled)
+     return NS_OK;
+ 
+-  /* TODO: stop plugin if it's currently running */
+   if (aDisabled)
+     UnMark(NS_PLUGIN_FLAG_ENABLED);
+   else
+     Mark(NS_PLUGIN_FLAG_ENABLED);
+ 
+-  mPluginHost->UpdatePluginInfo();
++  mPluginHost->UpdatePluginInfo(this);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsPluginTag::GetBlocklisted(PRBool* aBlocklisted)
++{
++  *aBlocklisted = HasFlag(NS_PLUGIN_FLAG_BLOCKLISTED);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsPluginTag::SetBlocklisted(PRBool aBlocklisted)
++{
++  if (HasFlag(NS_PLUGIN_FLAG_BLOCKLISTED) == aBlocklisted)
++    return NS_OK;
++
++  if (aBlocklisted) {
++    Mark(NS_PLUGIN_FLAG_BLOCKLISTED);
++    if (HasFlag(NS_PLUGIN_FLAG_ENABLED))
++      UnMark(NS_PLUGIN_FLAG_ENABLED);
++  } else
++    UnMark(NS_PLUGIN_FLAG_BLOCKLISTED);
++
++  mPluginHost->UpdatePluginInfo(nsnull);
+   return NS_OK;
+ }
+ 
+ //----------------------------------------------------------------------
+ // helper struct for asynchronous handeling of plugin unloading
+ class nsPluginUnloadEvent : public nsRunnable {
+ public:
+   nsPluginUnloadEvent(PRLibrary* aLibrary)
+@@ -2748,17 +2774,17 @@ nsresult nsPluginHostImpl::ReloadPlugins
+ 
+   nsCOMPtr<nsISupportsArray> instsToReload;
+ 
+   if(reloadPages) {
+     NS_NewISupportsArray(getter_AddRefs(instsToReload));
+ 
+     // Then stop any running plugin instances but hold on to the documents in the array
+     // We are going to need to restart the instances in these documents later
+-    mActivePluginList.stopRunning(instsToReload);
++    mActivePluginList.stopRunning(instsToReload, nsnull);
+   }
+ 
+   // clean active plugin list
+   mActivePluginList.removeAllStopped();
+ 
+   // shutdown plugins and kill the list if there are no running plugins
+   nsRefPtr<nsPluginTag> prev;
+   nsRefPtr<nsPluginTag> next;
+@@ -3245,17 +3271,17 @@ NS_IMETHODIMP nsPluginHostImpl::Destroy(
+ 
+   if (mIsDestroyed)
+     return NS_OK;
+ 
+   mIsDestroyed = PR_TRUE;
+ 
+   // we should call nsIPluginInstance::Stop and nsIPluginInstance::SetWindow
+   // for those plugins who want it
+-  mActivePluginList.stopRunning(nsnull);
++  mActivePluginList.stopRunning(nsnull, nsnull);
+ 
+   // at this point nsIPlugin::Shutdown calls will be performed if needed
+   mActivePluginList.shut();
+ 
+   if (nsnull != mPluginPath)
+   {
+     PR_Free(mPluginPath);
+     mPluginPath = nsnull;
+@@ -4102,33 +4128,36 @@ nsPluginHostImpl::SetUpDefaultPluginInst
+   return result;
+ }
+ 
+ 
+ ////////////////////////////////////////////////////////////////////////
+ NS_IMETHODIMP
+ nsPluginHostImpl::IsPluginEnabledForType(const char* aMimeType)
+ {
+-  if (!mJavaEnabled && IsJavaMIMEType(aMimeType)) {
+-    // Return DISABLED whether we have a java plugin or not -- if it's
+-    // disabled, it's disabled.
+-    return NS_ERROR_PLUGIN_DISABLED;
+-  }
+-
+   // Pass PR_FALSE as the second arg so we can return NS_ERROR_PLUGIN_DISABLED
+   // for disabled plug-ins.
+   nsPluginTag *plugin = FindPluginForType(aMimeType, PR_FALSE);
+   if (!plugin) {
+     return NS_ERROR_FAILURE;
+   }
+ 
+-  if (!plugin->HasFlag(NS_PLUGIN_FLAG_ENABLED)) {
++  if (!mJavaEnabled && IsJavaMIMEType(aMimeType)) {
++    // Return DISABLED whether we have a java plugin or not -- if it's
++    // disabled, it's disabled.
+     return NS_ERROR_PLUGIN_DISABLED;
+   }
+ 
++  if (!plugin->HasFlag(NS_PLUGIN_FLAG_ENABLED)) {
++    if (plugin->HasFlag(NS_PLUGIN_FLAG_BLOCKLISTED))
++      return NS_ERROR_PLUGIN_BLOCKLISTED;
++    else
++      return NS_ERROR_PLUGIN_DISABLED;
++  }
++
+   return NS_OK;
+ }
+ 
+ 
+ ////////////////////////////////////////////////////////////////////////
+ // check comma delimitered extensions
+ static int CompareExtensions(const char *aExtensionList, const char *aExtension)
+ {
+@@ -5030,22 +5059,23 @@ #endif
+     localfile->InitWithPath(pfd->mFilename);
+     PRInt64 fileModTime = pfd->mModTime;
+ 
+     // Look for it in our cache
+     nsRefPtr<nsPluginTag> pluginTag;
+     RemoveCachedPluginsInfo(NS_ConvertUTF16toUTF8(pfd->mFilename).get(),
+                             getter_AddRefs(pluginTag));
+ 
+-    PRBool pluginEnabled = PR_TRUE;
++    PRUint32 oldFlags = NS_PLUGIN_FLAG_ENABLED;
+     if (pluginTag) {
+       // If plugin changed, delete cachedPluginTag and don't use cache
+       if (LL_NE(fileModTime, pluginTag->mLastModifiedTime)) {
+         // Plugins has changed. Don't use cached plugin info.
+-        pluginEnabled = pluginTag->HasFlag(NS_PLUGIN_FLAG_ENABLED);
++        oldFlags = pluginTag->Flags() &
++                   (NS_PLUGIN_FLAG_ENABLED | NS_PLUGIN_FLAG_BLOCKLISTED);
+         pluginTag = nsnull;
+ 
+         // plugin file changed, flag this fact
+         *aPluginsChanged = PR_TRUE;
+       }
+       else {
+         // if it is unwanted plugin we are checking for, get it back to the cache info list
+         // if this is a duplicate plugin, too place it back in the cache info list marking unwantedness
+@@ -5112,19 +5142,23 @@ #endif
+       pluginTag = new nsPluginTag(&info);
+       pluginFile.FreePluginInfo(info);
+ 
+       if(pluginTag == nsnull)
+         return NS_ERROR_OUT_OF_MEMORY;
+ 
+       pluginTag->mLibrary = pluginLibrary;
+       pluginTag->mLastModifiedTime = fileModTime;
+-      if (!pluginEnabled || (IsJavaPluginTag(pluginTag) && !mJavaEnabled))
++      if (!(oldFlags & NS_PLUGIN_FLAG_ENABLED) ||
++          (IsJavaPluginTag(pluginTag) && !mJavaEnabled))
+         pluginTag->UnMark(NS_PLUGIN_FLAG_ENABLED);
+ 
++      if (oldFlags & NS_PLUGIN_FLAG_BLOCKLISTED)
++        pluginTag->Mark(NS_PLUGIN_FLAG_BLOCKLISTED);
++
+       // if this is unwanted plugin we are checkin for, or this is a duplicate plugin,
+       // add it to our cache info list so we can cache the unwantedness of this plugin
+       // when we sync cached plugins to registry
+       NS_ASSERTION(!pluginTag->HasFlag(NS_PLUGIN_FLAG_UNWANTED),
+                    "Brand-new tags should not be unwanted");
+       if((checkForUnwantedPlugins && isUnwantedPlugin(pluginTag)) ||
+          IsDuplicatePlugin(pluginTag) ||
+          IsUnwantedJavaPlugin(pluginTag)) {
+@@ -5218,16 +5252,21 @@ NS_IMETHODIMP nsPluginHostImpl::LoadPlug
+   // only if plugins have changed will we ask XPTI to refresh
+   if (pluginschanged) {
+     // rescan XPTI to catch any newly installed interfaces
+     nsCOMPtr<nsIInterfaceInfoManager>
+       iim(do_GetService(NS_INTERFACEINFOMANAGER_SERVICE_CONTRACTID));
+ 
+     if (iim)
+       iim->AutoRegisterInterfaces();
++
++    nsCOMPtr<nsIObserverService>
++      obsService(do_GetService("@mozilla.org/observer-service;1"));
++    if (obsService)
++      obsService->NotifyObservers(nsnull, "plugins-list-updated", nsnull);
+   }
+ 
+   return NS_OK;
+ }
+ 
+ #include "nsITimelineService.h"
+ 
+ // if aCreatePluginList is false we will just scan for plugins
+@@ -5279,17 +5318,17 @@ #endif
+     ScanPluginsDirectoryList(dirList, compManager, aCreatePluginList, &pluginschanged);
+ 
+     if (pluginschanged)
+       *aPluginsChanged = PR_TRUE;
+ 
+     // if we are just looking for possible changes,
+     // no need to proceed if changes are detected
+     if (!aCreatePluginList && *aPluginsChanged) {
+-      ClearCachedPluginInfoList();
++      mCachedPlugins = nsnull;
+       return NS_OK;
+     }
+   }
+ 
+   mPluginsLoaded = PR_TRUE; // at this point 'some' plugins have been loaded,
+                             // the rest is optional
+ 
+ #if defined (XP_WIN)
+@@ -5306,17 +5345,17 @@ #if defined (XP_WIN)
+       ScanPluginsDirectoryList(dirList, compManager, aCreatePluginList, &pluginschanged);
+ 
+       if (pluginschanged)
+         *aPluginsChanged = PR_TRUE;
+ 
+       // if we are just looking for possible changes,
+       // no need to proceed if changes are detected
+       if (!aCreatePluginList && *aPluginsChanged) {
+-        ClearCachedPluginInfoList();
++        mCachedPlugins = nsnull;
+         return NS_OK;
+       }
+     }
+   }
+ 
+ 
+   // Scan the installation paths of our popular plugins if the prefs are enabled
+ 
+@@ -5354,17 +5393,17 @@ #if defined (XP_WIN)
+       ScanPluginsDirectory(dirToScan, compManager, aCreatePluginList, &pluginschanged, bFilterUnwanted);
+ 
+       if (pluginschanged)
+         *aPluginsChanged = PR_TRUE;
+ 
+       // if we are just looking for possible changes,
+       // no need to proceed if changes are detected
+       if (!aCreatePluginList && *aPluginsChanged) {
+-        ClearCachedPluginInfoList();
++        mCachedPlugins = nsnull;
+         return NS_OK;
+       }
+     }
+   }
+ 
+ #endif
+ 
+   // if get to this point and did not detect changes in plugins
+@@ -5382,27 +5421,27 @@ #endif
+     // and therefor their info did not get removed from the cache info list during directory scan;
+     // flag this fact
+     if (cachecount > 0)
+       *aPluginsChanged = PR_TRUE;
+   }
+ 
+   // if we are not creating the list, there is no need to proceed
+   if (!aCreatePluginList) {
+-    ClearCachedPluginInfoList();
++    mCachedPlugins = nsnull;
+     return NS_OK;
+   }
+ 
+   // if we are creating the list, it is already done;
+   // update the plugins info cache if changes are detected
+   if (*aPluginsChanged)
+     WritePluginInfo();
+ 
+   // No more need for cached plugins. Clear it up.
+-  ClearCachedPluginInfoList();
++  mCachedPlugins = nsnull;
+ 
+   /*
+    * XXX Big time hack alert!!!!
+    *     Because Real Player 8 installs in the components folder, we must have this one off
+    *     scan for nppl3260.dll because XPCOM has shut off nsGetFactory type plugins.
+    *     When we stop supporting Real 8 or they fix their installer, this can go away.
+    */
+   if (aCreatePluginList)
+@@ -5420,21 +5459,16 @@ #endif
+   mPlugins = prev;
+ 
+   NS_TIMELINE_STOP_TIMER("LoadPlugins");
+   NS_TIMELINE_MARK_TIMER("LoadPlugins");
+ 
+   return NS_OK;
+ }
+ 
+-void nsPluginHostImpl::ClearCachedPluginInfoList()
+-{
+-  mCachedPlugins = nsnull;
+-}
+-
+ ////////////////////////////////////////////////////////////////////////
+ nsresult
+ nsPluginHostImpl::LoadXPCOMPlugins(nsIComponentManager* aComponentManager)
+ {
+   // the component reg is a flat file now see 48888
+   // we have to reimplement this method if we need it
+ 
+   // The "new style" XPCOM plugins have their information stored in
+@@ -5444,21 +5478,38 @@ nsPluginHostImpl::LoadXPCOMPlugins(nsICo
+   //
+   // Enumerate through that list now, creating an nsPluginTag for
+   // each.
+ 
+   return NS_OK;
+ }
+ 
+ nsresult
+-nsPluginHostImpl::UpdatePluginInfo()
++nsPluginHostImpl::UpdatePluginInfo(nsPluginTag* aPluginTag)
+ {
+   ReadPluginInfo();
+   WritePluginInfo();
+-  ClearCachedPluginInfoList();
++  mCachedPlugins = nsnull;
++
++  if (!aPluginTag || aPluginTag->HasFlag(NS_PLUGIN_FLAG_ENABLED))
++    return NS_OK;
++
++  nsCOMPtr<nsISupportsArray> instsToReload;
++  NS_NewISupportsArray(getter_AddRefs(instsToReload));
++  mActivePluginList.stopRunning(instsToReload, aPluginTag);
++  mActivePluginList.removeAllStopped();
++  
++  PRUint32 c;
++  if (instsToReload &&
++      NS_SUCCEEDED(instsToReload->Count(&c)) &&
++      c > 0) {
++    nsCOMPtr<nsIRunnable> ev = new nsPluginDocReframeEvent(instsToReload);
++    if (ev)
++      NS_DispatchToCurrentThread(ev);
++  }
+ 
+   return NS_OK;
+ }
+ 
+ nsresult
+ nsPluginHostImpl::WritePluginInfo()
+ {
+ 
+@@ -6373,28 +6424,19 @@ NS_IMETHODIMP nsPluginHostImpl::Observe(
+ 
+     if (enabled != mJavaEnabled) {
+       mJavaEnabled = enabled;
+       // We want to keep the java PluginTag around so we'll know that it's
+       // actually disabled, not just not present.  So just manually mark it as
+       // disabled so at least FindPluginForType/Extension doesn't return
+       // anything.
+       for (nsPluginTag* cur = mPlugins; cur; cur = cur->mNext) {
+-        if (IsJavaPluginTag(cur)) {
+-          if (mJavaEnabled) {
+-            cur->Mark(NS_PLUGIN_FLAG_ENABLED);
+-          } else {
+-            cur->UnMark(NS_PLUGIN_FLAG_ENABLED);
+-          }
+-        }
++        if (IsJavaPluginTag(cur))
++          cur->SetDisabled(!mJavaEnabled);
+       }            
+-      
+-      // Pass PR_TRUE for reloadPages because otherwise if there is a java
+-      // plugin running somewhere it won't get turned off
+-      return ReloadPlugins(PR_TRUE);
+     }
+   }
+   return NS_OK;
+ }
+ 
+ ////////////////////////////////////////////////////////////////////////
+ NS_IMETHODIMP
+ nsPluginHostImpl::HandleBadPlugin(PRLibrary* aLibrary, nsIPluginInstance *aInstance)
+diff --git a/modules/plugin/base/src/nsPluginHostImpl.h b/modules/plugin/base/src/nsPluginHostImpl.h
+index 1aeb2ed..5ef2c11 100644
+--- a/modules/plugin/base/src/nsPluginHostImpl.h
++++ b/modules/plugin/base/src/nsPluginHostImpl.h
+@@ -70,20 +70,21 @@ #include "nsIFactory.h"
+ 
+ class ns4xPlugin;
+ class nsIComponentManager;
+ class nsIFile;
+ class nsIChannel;
+ class nsIRegistry;
+ class nsPluginHostImpl;
+ 
+-#define NS_PLUGIN_FLAG_ENABLED    0x0001    // is this plugin enabled?
+-#define NS_PLUGIN_FLAG_OLDSCHOOL  0x0002    // is this a pre-xpcom plugin?
+-#define NS_PLUGIN_FLAG_FROMCACHE  0x0004    // this plugintag info was loaded from cache
+-#define NS_PLUGIN_FLAG_UNWANTED   0x0008    // this is an unwanted plugin
++#define NS_PLUGIN_FLAG_ENABLED      0x0001    // is this plugin enabled?
++#define NS_PLUGIN_FLAG_OLDSCHOOL    0x0002    // is this a pre-xpcom plugin?
++#define NS_PLUGIN_FLAG_FROMCACHE    0x0004    // this plugintag info was loaded from cache
++#define NS_PLUGIN_FLAG_UNWANTED     0x0008    // this is an unwanted plugin
++#define NS_PLUGIN_FLAG_BLOCKLISTED  0x0010    // this is a blocklisted plugin
+ 
+ /**
+  * A linked-list of plugin information that is used for
+  * instantiating plugins and reflecting plugin information
+  * into JavaScript.
+  */
+ class nsPluginTag : public nsIPluginTag
+ {
+@@ -193,17 +194,17 @@ public:
+   PRBool add(nsActivePlugin * plugin);
+   PRBool remove(nsActivePlugin * plugin);
+   nsActivePlugin * find(nsIPluginInstance* instance);
+   nsActivePlugin * find(const char * mimetype);
+   nsActivePlugin * findStopped(const char * url);
+   PRUint32 getStoppedCount();
+   nsActivePlugin * findOldestStopped();
+   void removeAllStopped();
+-  void stopRunning(nsISupportsArray* aReloadDocs);
++  void stopRunning(nsISupportsArray* aReloadDocs, nsPluginTag* aPluginTag);
+   PRBool IsLastInstance(nsActivePlugin * plugin);
+ };
+ 
+ class nsPluginHostImpl : public nsIPluginManager2,
+                          public nsIPluginHost,
+                          public nsIFileUtilities,
+                          public nsICookieStorage,
+                          public nsIObserver,
+@@ -314,18 +315,19 @@ public:
+   AddHeadersToChannel(const char *aHeadersData, PRUint32 aHeadersDataLen, 
+                       nsIChannel *aGenericChannel);
+ 
+   NS_IMETHOD
+   AddUnusedLibrary(PRLibrary * aLibrary);
+ 
+   static nsresult GetPluginTempDir(nsIFile **aDir);
+ 
+-  // Writes updated plugins settings to disk
+-  nsresult UpdatePluginInfo();
++  // Writes updated plugins settings to disk and unloads the plugin
++  // if it is now disabled
++  nsresult UpdatePluginInfo(nsPluginTag* aPluginTag);
+ 
+ private:
+   NS_IMETHOD
+   TrySetUpPluginInstance(const char *aMimeType, nsIURI *aURL, nsIPluginInstanceOwner *aOwner);
+ 
+   nsresult
+   LoadXPCOMPlugins(nsIComponentManager* aComponentManager);
+ 
+@@ -404,19 +406,16 @@ private:
+   // checks whether aTag is a "java" plugin tag (a tag for a plugin
+   // that does Java)
+   PRBool IsJavaPluginTag(nsPluginTag * aPluginTag);
+ 
+   // checks whether aTag is a "java" plugin tag (a tag for a plugin
+   // that does Java)
+   PRBool IsJavaMIMEType(const char *aType);
+ 
+-  // destroys plugin info list
+-  void ClearCachedPluginInfoList();
+-  
+   nsresult EnsurePrivateDirServiceProvider();
+ 
+   nsresult GetPrompt(nsIPluginInstanceOwner *aOwner, nsIPrompt **aPrompt);
+ 
+   // one-off hack to include nppl3260.dll from the components folder
+   nsresult ScanForRealInComponentsFolder(nsIComponentManager * aCompManager);
+ 
+   // calls PostPluginUnloadEvent for each library in mUnusedLibraries

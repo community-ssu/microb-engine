@@ -1,0 +1,404 @@
+Index: mozilla/content/base/src/nsObjectLoadingContent.cpp
+===================================================================
+--- mozilla.orig/content/base/src/nsObjectLoadingContent.cpp
++++ mozilla/content/base/src/nsObjectLoadingContent.cpp
+@@ -123,29 +123,30 @@
+   if (mContent->mPendingInstantiateEvent != this)
+     return NS_OK;
+   mContent->mPendingInstantiateEvent = nsnull;
+ 
+   // Make sure that we still have the right frame (NOTE: we don't need to check
+   // the type here - GetFrame() only returns object frames, and that means we're
+   // a plugin)
+   // Also make sure that we still refer to the same data.
+-  if (mContent->GetFrame(PR_FALSE) == mFrame &&
++  nsIObjectFrame* frame = mContent->GetFrame(PR_FALSE);
++  if (frame == mFrame &&
+       mContent->mURI == mURI &&
+       mContent->mContentType.Equals(mContentType)) {
+     if (LOG_ENABLED()) {
+       nsCAutoString spec;
+       if (mURI) {
+         mURI->GetSpec(spec);
+       }
+       LOG(("OBJLC [%p]: Handling Instantiate event: Type=<%s> URI=%p<%s>\n",
+            mContent, mContentType.get(), mURI.get(), spec.get()));
+     }
+ 
+-    nsresult rv = mContent->Instantiate(mContentType, mURI);
++    nsresult rv = mContent->Instantiate(frame, mContentType, mURI);
+     if (NS_FAILED(rv)) {
+       mContent->Fallback(PR_TRUE);
+     }
+   } else {
+     LOG(("OBJLC [%p]: Discarding event, data changed\n", mContent));
+   }
+ 
+   return NS_OK;
+@@ -610,17 +611,17 @@
+     if (!frame) {
+       return NS_OK;
+     }
+   }
+ 
+   // We may have a plugin instance already; if so, do nothing
+   nsresult rv = frame->GetPluginInstance(*aInstance);
+   if (!*aInstance) {
+-    rv = Instantiate(mContentType, mURI);
++    rv = Instantiate(frame, mContentType, mURI);
+     if (NS_SUCCEEDED(rv)) {
+       rv = frame->GetPluginInstance(*aInstance);
+     } else {
+       Fallback(PR_TRUE);
+     }
+   }
+   return rv;
+ }
+@@ -893,16 +894,17 @@
+        (aURI && IsPluginEnabledByExtension(aURI, overrideType)))) {
+     NS_ASSERTION(aTypeHint.IsEmpty() ^ overrideType.IsEmpty(),
+                  "Exactly one of aTypeHint and overrideType should be empty!");
+ 
+     ObjectType newType;
+     if (overrideType.IsEmpty()) {
+       newType = GetTypeOfContent(aTypeHint);
+     } else {
++      mContentType = overrideType;
+       newType = eType_Plugin;
+     }
+ 
+     if (newType != mType) {
+       LOG(("OBJLC [%p]: (eOverrideServerType) Changing type from %u to %u\n", this, mType, newType));
+ 
+       UnloadContent();
+ 
+@@ -919,27 +921,28 @@
+         if (!mFrameLoader) {
+           return NS_ERROR_OUT_OF_MEMORY;
+         }
+       }
+ 
+       // Must notify here for plugins
+       // If aNotify is false, we'll just wait until we get a frame and use the
+       // async instantiate path.
++      // XXX is this still needed? (for documents?)
+       mType = newType;
+       if (aNotify)
+         notifier.Notify();
+     }
+     switch (newType) {
+       case eType_Image:
+         // Don't notify, because we will take care of that ourselves.
+         rv = LoadImage(aURI, aForceLoad, PR_FALSE);
+         break;
+       case eType_Plugin:
+-        rv = Instantiate(aTypeHint, aURI);
++        rv = TryInstantiate(mContentType, mURI);
+         break;
+       case eType_Document:
+         rv = mFrameLoader->LoadURI(aURI);
+         break;
+       case eType_Loading:
+         NS_NOTREACHED("Should not have a loading type here!");
+       case eType_Null:
+         // No need to load anything
+@@ -981,18 +984,16 @@
+ 
+   if (isSupportedClassID ||
+       (!aURI && !aTypeHint.IsEmpty() &&
+        GetTypeOfContent(aTypeHint) == eType_Plugin)) {
+     // No URI, but we have a type. The plugin will handle the load.
+     // Or: supported class id, plugin will handle the load.
+     LOG(("OBJLC [%p]: (classid) Changing type from %u to eType_Plugin\n", this, mType));
+     mType = eType_Plugin;
+-    if (aNotify)
+-      notifier.Notify();
+ 
+     // At this point, the stored content type
+     // must be equal to our type hint. Similar,
+     // our URI must be the requested URI.
+     // (->Equals would suffice, but == is cheaper
+     // and handles NULL)
+     NS_ASSERTION(mContentType.Equals(aTypeHint), "mContentType wrong!");
+     NS_ASSERTION(mURI == aURI, "mURI wrong!");
+@@ -1005,35 +1006,33 @@
+       // here instead of the plugin URI for instantiation via class ID, so I
+       // continue to do so. Why that is, no idea...
+       GetObjectBaseURI(thisContent, getter_AddRefs(mURI));
+       if (!mURI) {
+         mURI = aURI;
+       }
+     }
+ 
+-    rv = Instantiate(mContentType, mURI);
++    rv = TryInstantiate(mContentType, mURI);
+     return NS_OK;
+   }
+ 
+   if (!aURI) {
+     // No URI and no type... nothing we can do.
+     LOG(("OBJLC [%p]: no URI\n", this));
+     rv = NS_ERROR_NOT_AVAILABLE;
+     return NS_OK;
+   }
+ 
+   if (!CanHandleURI(aURI)) {
+     LOG(("OBJLC [%p]: can't handle URI\n", this));
+     // E.g. mms://
+     mType = eType_Plugin;
+-    if (aNotify)
+-      notifier.Notify();
+ 
+-    rv = Instantiate(aTypeHint, aURI);
++    rv = TryInstantiate(aTypeHint, aURI);
+     return NS_OK;
+   }
+ 
+   nsCOMPtr<nsILoadGroup> group = doc->GetDocumentLoadGroup();
+   nsCOMPtr<nsIChannel> chan;
+   rv = NS_NewChannel(getter_AddRefs(chan), aURI, nsnull, group, this);
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+@@ -1394,23 +1393,39 @@
+   } while (1);
+ 
+   nsIObjectFrame* objFrame;
+   CallQueryInterface(frame, &objFrame);
+   return objFrame;
+ }
+ 
+ nsresult
+-nsObjectLoadingContent::Instantiate(const nsACString& aMIMEType, nsIURI* aURI)
++nsObjectLoadingContent::TryInstantiate(const nsACString& aMIMEType,
++                                       nsIURI* aURI)
+ {
+   nsIObjectFrame* frame = GetFrame(PR_FALSE);
+   if (!frame) {
+-    LOG(("OBJLC [%p]: Attempted to instantiate, but have no frame\n", this));
++    LOG(("OBJLC [%p]: No frame yet\n", this));
+     return NS_OK; // Not a failure to have no frame
+   }
++  nsIFrame* iframe;
++  CallQueryInterface(frame, &iframe);
++  if (iframe->GetStateBits() & NS_FRAME_FIRST_REFLOW) {
++    LOG(("OBJLC [%p]: Frame hasn't been reflown yet\n", this));
++    return NS_OK; // Not a failure to have no frame
++  }
++  return Instantiate(frame, aMIMEType, aURI);
++}
++
++nsresult
++nsObjectLoadingContent::Instantiate(nsIObjectFrame* aFrame,
++                                    const nsACString& aMIMEType,
++                                    nsIURI* aURI)
++{
++  NS_ASSERTION(aFrame, "Must have a frame here");
+ 
+   nsCString typeToUse(aMIMEType);
+   if (typeToUse.IsEmpty() && aURI) {
+     IsPluginEnabledByExtension(aURI, typeToUse);
+   }
+ 
+   nsCOMPtr<nsIURI> baseURI;
+   if (!aURI) {
+@@ -1421,19 +1436,19 @@
+     NS_ASSERTION(thisContent, "must be a content");
+ 
+     GetObjectBaseURI(thisContent, getter_AddRefs(baseURI));
+     aURI = baseURI;
+   }
+ 
+   // We'll always have a type or a URI by the time we get here
+   NS_ASSERTION(aURI || !typeToUse.IsEmpty(), "Need a URI or a type");
+-  LOG(("OBJLC [%p]: Calling [%p]->Instantiate(<%s>, %p)\n", this, frame,
++  LOG(("OBJLC [%p]: Calling [%p]->Instantiate(<%s>, %p)\n", this, aFrame,
+        typeToUse.get(), aURI));
+-  return frame->Instantiate(typeToUse.get(), aURI);
++  return aFrame->Instantiate(typeToUse.get(), aURI);
+ }
+ 
+ /* static */ PRBool
+ nsObjectLoadingContent::ShouldShowDefaultPlugin(nsIContent* aContent,
+                                                 const nsCString& aContentType)
+ {
+   if (nsContentUtils::GetBoolPref("plugin.default_plugin_disabled", PR_FALSE)) {
+     return PR_FALSE;
+Index: mozilla/content/base/src/nsObjectLoadingContent.h
+===================================================================
+--- mozilla.orig/content/base/src/nsObjectLoadingContent.h
++++ mozilla/content/base/src/nsObjectLoadingContent.h
+@@ -280,21 +280,27 @@
+      * presentation 0.  If aFlushLayout is true, this function will
+      * flush layout before trying to get the frame.  This is needed
+      * in some cases by plug-ins to ensure that NPP_SetWindow() gets
+      * called (from nsObjectFrame::DidReflow).
+      */
+     nsIObjectFrame* GetFrame(PRBool aFlushLayout);
+ 
+     /**
++     * Checks if we have a frame that's ready for instantiation, and if so,
++     * calls Instantiate().
++     */
++    nsresult TryInstantiate(const nsACString& aMIMEType, nsIURI* aURI);
++
++    /**
+      * Instantiates the plugin. This differs from GetFrame()->Instantiate() in
+      * that it ensures that the URI will be non-null, and that a MIME type
+      * will be passed.
+      */
+-    nsresult Instantiate(const nsACString& aMIMEType, nsIURI* aURI);
++    nsresult Instantiate(nsIObjectFrame* aFrame, const nsACString& aMIMEType, nsIURI* aURI);
+ 
+     /**
+      * Whether to treat this content as a plugin, even though we can't handle
+      * the type. This function impl should match the checks in the plugin host.
+      * aContentType is the MIME type we ended up with.
+      */
+     static PRBool ShouldShowDefaultPlugin(nsIContent* aContent,
+                                           const nsCString& aContentType);
+Index: mozilla/layout/generic/nsObjectFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsObjectFrame.cpp
++++ mozilla/layout/generic/nsObjectFrame.cpp
+@@ -493,21 +493,17 @@
+ nsObjectFrame::Init(nsIContent*      aContent,
+                     nsIFrame*        aParent,
+                     nsIFrame*        aPrevInFlow)
+ {
+ #ifdef DEBUG
+   mInstantiating = PR_FALSE;
+ #endif
+ 
+-  nsresult rv = nsObjectFrameSuper::Init(aContent, aParent, aPrevInFlow);
+-  nsCOMPtr<nsIObjectLoadingContent> objContent(do_QueryInterface(mContent));
+-  NS_ASSERTION(objContent, "Why not an object loading content?");
+-  objContent->HasNewFrame(this);
+-  return rv;
++  return nsObjectFrameSuper::Init(aContent, aParent, aPrevInFlow);
+ }
+ 
+ void
+ nsObjectFrame::Destroy()
+ {
+   NS_ASSERTION(!mInstantiating, "about to crash due to bug 136927");
+ 
+   // we need to finish with the plugin before native window is destroyed
+@@ -711,17 +707,16 @@
+   }
+ 
+   // if we are printing or print previewing, bail for now
+   if (aPresContext->Medium() == nsGkAtoms::print) {
+     aStatus = NS_FRAME_COMPLETE;
+     return NS_OK;
+   }
+ 
+-
+   FixupWindow(nsSize(aMetrics.width, aMetrics.height));
+ 
+   aStatus = NS_FRAME_COMPLETE;
+ 
+   NS_FRAME_SET_TRUNCATION(aStatus, aReflowState, aMetrics);
+   return NS_OK;
+ }
+ 
+@@ -763,41 +758,43 @@
+ #ifdef DEBUG
+   mInstantiating = PR_FALSE;
+ #endif
+ 
+   if (appShell) {
+     appShell->ResumeNative();
+   }
+ 
+-  // XXX having to do this sucks. it'd be better to move the code from DidReflow
+-  // to FixupWindow or something.
+-  PresContext()->GetPresShell()->
+-    FrameNeedsReflow(this, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
+   return rv;
+ }
+ 
+ void
+ nsObjectFrame::FixupWindow(const nsSize& aSize)
+ {
+   nsPresContext* presContext = PresContext();
+ 
+   if (!mInstanceOwner)
+     return;
+ 
+   nsPluginWindow  *window;
+   mInstanceOwner->GetWindow(window);
+ 
+   NS_ENSURE_TRUE(window, /**/);
+ 
+-  nsPoint origin;
+-  nsIView *parentWithView;
+-  GetOffsetFromView(origin, &parentWithView);
+-  window->x = presContext->AppUnitsToDevPixels(origin.x);
+-  window->y = presContext->AppUnitsToDevPixels(origin.y);
++#ifdef XP_MACOSX
++  mInstanceOwner->FixUpPluginWindow(ePluginPaintDisable);
++#endif
++
++  PRBool windowless = (window->type == nsPluginWindowType_Drawable);
++
++  nsPoint origin = GetWindowOriginInPixels(windowless);
++
++  window->x = origin.x;
++  window->y = origin.y;
++
+   window->width = presContext->AppUnitsToDevPixels(aSize.width);
+   window->height = presContext->AppUnitsToDevPixels(aSize.height);
+ 
+   // on the Mac we need to set the clipRect to { 0, 0, 0, 0 } for now. This will keep
+   // us from drawing on screen until the widget is properly positioned, which will not
+   // happen until we have finished the reflow process.
+   window->clipRect.top = 0;
+   window->clipRect.left = 0;
+@@ -879,16 +876,25 @@
+   return origin;
+ }
+ 
+ NS_IMETHODIMP
+ nsObjectFrame::DidReflow(nsPresContext*            aPresContext,
+                          const nsHTMLReflowState*  aReflowState,
+                          nsDidReflowStatus         aStatus)
+ {
++  // Do this check before calling the superclass, as that clears
++  // NS_FRAME_FIRST_REFLOW
++  if (aStatus == NS_FRAME_REFLOW_FINISHED &&
++      (GetStateBits() & NS_FRAME_FIRST_REFLOW)) {
++    nsCOMPtr<nsIObjectLoadingContent> objContent(do_QueryInterface(mContent));
++    NS_ASSERTION(objContent, "Why not an object loading content?");
++    objContent->HasNewFrame(this);
++  }
++
+   nsresult rv = nsObjectFrameSuper::DidReflow(aPresContext, aReflowState, aStatus);
+ 
+   // The view is created hidden; once we have reflowed it and it has been
+   // positioned then we show it.
+   if (aStatus != NS_FRAME_REFLOW_FINISHED) 
+     return rv;
+ 
+   PRBool bHidden = IsHidden();
+@@ -1330,21 +1336,16 @@
+     return rv;
+   mInstanceOwner->SetPluginHost(pluginHost);
+ 
+   // This must be done before instantiating the plugin
+   FixupWindow(mRect.Size());
+ 
+   rv = pluginHost->InstantiatePluginForChannel(aChannel, mInstanceOwner, aStreamListener);
+ 
+-  // XXX having to do this sucks. it'd be better to move the code from DidReflow
+-  // to FixupWindow.
+-  PresContext()->GetPresShell()->
+-    FrameNeedsReflow(this, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
+-
+   return rv;
+ }
+ 
+ nsresult
+ nsObjectFrame::Instantiate(const char* aMimeType, nsIURI* aURI)
+ {
+   NS_ASSERTION(aMimeType || aURI, "Need a type or a URI!");
+   nsresult rv = PrepareInstanceOwner();

@@ -1,0 +1,441 @@
+
+===================================================================
+RCS file: /cvsroot/mozilla/editor/libeditor/base PlaceholderTxn.cpp,v
+retrieving revision 1.35
+retrieving revision 1.36
+diff -u -r1.35 -r1.36
+--- mozilla/editor/libeditor/base/PlaceholderTxn.cpp	2007/01/11 14:38:02	1.35
++++ mozilla/editor/libeditor/base/PlaceholderTxn.cpp	2007/07/02 14:01:27	1.36
+@@ -133,8 +133,8 @@
+   // we are absorbing all txn's if mAbsorb is lit.
+   if (mAbsorb)
+   { 
+-    IMETextTxn*  otherTxn = nsnull;
+-    if (NS_SUCCEEDED(aTransaction->QueryInterface(IMETextTxn::GetCID(),(void**)&otherTxn)) && otherTxn)
++    nsRefPtr<IMETextTxn> otherTxn;
++    if (NS_SUCCEEDED(aTransaction->QueryInterface(IMETextTxn::GetCID(), getter_AddRefs(otherTxn))) && otherTxn)
+     {
+       // special handling for IMETextTxn's: they need to merge with any previous
+       // IMETextTxn in this placeholder, if possible.
+@@ -157,7 +157,6 @@
+           AppendChild(editTxn);
+         }
+       }
+-      NS_IF_RELEASE(otherTxn);
+     }
+     else if (!plcTxn)  // see bug 171243: just drop incoming placeholders on the floor.
+     {                  // their children will be swallowed by this preexisting one.
+===================================================================
+RCS file: /cvsroot/mozilla/editor/libeditor/base nsEditor.cpp,v
+retrieving revision 1.495
+retrieving revision 1.496
+diff -u -r1.495 -r1.496
+--- mozilla/editor/libeditor/base/nsEditor.cpp	2007/06/30 03:09:53	1.495
++++ mozilla/editor/libeditor/base/nsEditor.cpp	2007/07/02 14:01:27	1.496
+@@ -645,8 +645,9 @@
+     // this transaction goes through here.  I bet this is a record.
+     
+     // We start off with an EditTxn since that's what the factory returns.
+-    EditTxn *editTxn;
+-    result = TransactionFactory::GetNewTransaction(PlaceholderTxn::GetCID(), &editTxn);
++    nsRefPtr<EditTxn> editTxn;
++    result = TransactionFactory::GetNewTransaction(PlaceholderTxn::GetCID(),
++                                                   getter_AddRefs(editTxn));
+     if (NS_FAILED(result)) { return result; }
+     if (!editTxn) { return NS_ERROR_NULL_POINTER; }
+ 
+@@ -683,9 +684,6 @@
+         }
+       }
+     }
+-    
+-    // txn mgr will now own this if it's around, and if it isn't we don't care
+-    NS_IF_RELEASE(editTxn);    
+   }
+ 
+   if (aTxn)
+@@ -1269,13 +1267,12 @@
+ NS_IMETHODIMP 
+ nsEditor::SetAttribute(nsIDOMElement *aElement, const nsAString & aAttribute, const nsAString & aValue)
+ {
+-  ChangeAttributeTxn *txn;
+-  nsresult result = CreateTxnForSetAttribute(aElement, aAttribute, aValue, &txn);
++  nsRefPtr<ChangeAttributeTxn> txn;
++  nsresult result = CreateTxnForSetAttribute(aElement, aAttribute, aValue,
++                                             getter_AddRefs(txn));
+   if (NS_SUCCEEDED(result))  {
+     result = DoTransaction(txn);  
+   }
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+   return result;
+ }
+ 
+@@ -1305,13 +1302,12 @@
+ NS_IMETHODIMP 
+ nsEditor::RemoveAttribute(nsIDOMElement *aElement, const nsAString& aAttribute)
+ {
+-  ChangeAttributeTxn *txn;
+-  nsresult result = CreateTxnForRemoveAttribute(aElement, aAttribute, &txn);
++  nsRefPtr<ChangeAttributeTxn> txn;
++  nsresult result = CreateTxnForRemoveAttribute(aElement, aAttribute,
++                                                getter_AddRefs(txn));
+   if (NS_SUCCEEDED(result))  {
+     result = DoTransaction(txn);  
+   }
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+   return result;
+ }
+ 
+@@ -1393,8 +1389,9 @@
+   for (i = 0; i < mActionListeners.Count(); i++)
+     mActionListeners[i]->WillCreateNode(aTag, aParent, aPosition);
+ 
+-  CreateElementTxn *txn;
+-  nsresult result = CreateTxnForCreateElement(aTag, aParent, aPosition, &txn);
++  nsRefPtr<CreateElementTxn> txn;
++  nsresult result = CreateTxnForCreateElement(aTag, aParent, aPosition,
++                                              getter_AddRefs(txn));
+   if (NS_SUCCEEDED(result)) 
+   {
+     result = DoTransaction(txn);  
+@@ -1404,8 +1401,6 @@
+       NS_ASSERTION((NS_SUCCEEDED(result)), "GetNewNode can't fail if txn::DoTransaction succeeded.");
+     }
+   }
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+   
+   mRangeUpdater.SelAdjCreateNode(aParent, aPosition);
+   
+@@ -1426,13 +1421,12 @@
+   for (i = 0; i < mActionListeners.Count(); i++)
+     mActionListeners[i]->WillInsertNode(aNode, aParent, aPosition);
+ 
+-  InsertElementTxn *txn;
+-  nsresult result = CreateTxnForInsertElement(aNode, aParent, aPosition, &txn);
++  nsRefPtr<InsertElementTxn> txn;
++  nsresult result = CreateTxnForInsertElement(aNode, aParent, aPosition,
++                                              getter_AddRefs(txn));
+   if (NS_SUCCEEDED(result))  {
+     result = DoTransaction(txn);  
+   }
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+ 
+   mRangeUpdater.SelAdjInsertNode(aParent, aPosition);
+ 
+@@ -1454,8 +1448,8 @@
+   for (i = 0; i < mActionListeners.Count(); i++)
+     mActionListeners[i]->WillSplitNode(aNode, aOffset);
+ 
+-  SplitElementTxn *txn;
+-  nsresult result = CreateTxnForSplitNode(aNode, aOffset, &txn);
++  nsRefPtr<SplitElementTxn> txn;
++  nsresult result = CreateTxnForSplitNode(aNode, aOffset, getter_AddRefs(txn));
+   if (NS_SUCCEEDED(result))  
+   {
+     result = DoTransaction(txn);
+@@ -1465,8 +1459,6 @@
+       NS_ASSERTION((NS_SUCCEEDED(result)), "result must succeeded for GetNewNode");
+     }
+   }
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+ 
+   mRangeUpdater.SelAdjSplitNode(aNode, aOffset, *aNewLeftNode);
+ 
+@@ -1501,15 +1493,12 @@
+   for (i = 0; i < mActionListeners.Count(); i++)
+     mActionListeners[i]->WillJoinNodes(aLeftNode, aRightNode, aParent);
+ 
+-  JoinElementTxn *txn;
+-  result = CreateTxnForJoinNode(aLeftNode, aRightNode, &txn);
++  nsRefPtr<JoinElementTxn> txn;
++  result = CreateTxnForJoinNode(aLeftNode, aRightNode, getter_AddRefs(txn));
+   if (NS_SUCCEEDED(result))  {
+     result = DoTransaction(txn);  
+   }
+ 
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+-
+   mRangeUpdater.SelAdjJoinNodes(aLeftNode, aRightNode, aParent, offset, (PRInt32)oldLeftNodeLen);
+   
+   for (i = 0; i < mActionListeners.Count(); i++)
+@@ -1532,15 +1521,12 @@
+   for (i = 0; i < mActionListeners.Count(); i++)
+     mActionListeners[i]->WillDeleteNode(aElement);
+ 
+-  DeleteElementTxn *txn;
+-  result = CreateTxnForDeleteElement(aElement, &txn);
++  nsRefPtr<DeleteElementTxn> txn;
++  result = CreateTxnForDeleteElement(aElement, getter_AddRefs(txn));
+   if (NS_SUCCEEDED(result))  {
+     result = DoTransaction(txn);  
+   }
+ 
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+-
+   for (i = 0; i < mActionListeners.Count(); i++)
+     mActionListeners[i]->DidDeleteNode(aElement, result);
+ 
+@@ -2586,7 +2572,7 @@
+                                                      nsIDOMCharacterData *aTextNode, 
+                                                      PRInt32 aOffset, PRBool suppressIME)
+ {
+-  EditTxn *txn;
++  nsRefPtr<EditTxn> txn;
+   nsresult result;
+   // suppressIME s used when editor must insert text, yet this text is not
+   // part of current ime operation.  example: adjusting whitespace around an ime insertion.
+@@ -2635,13 +2621,18 @@
+       } // for
+     } // if
+ 
+-    result = CreateTxnForIMEText(aStringToInsert, (IMETextTxn**)&txn);
++    nsRefPtr<IMETextTxn> imeTxn;
++    result = CreateTxnForIMEText(aStringToInsert, getter_AddRefs(imeTxn));
++    txn = imeTxn;
+   }
+   else
+   {
+-    result = CreateTxnForInsertText(aStringToInsert, aTextNode, aOffset, (InsertTextTxn**)&txn);
++    nsRefPtr<InsertTextTxn> insertTxn;
++    result = CreateTxnForInsertText(aStringToInsert, aTextNode, aOffset,
++                                    getter_AddRefs(insertTxn));
++    txn = insertTxn;
+   }
+-  if (NS_FAILED(result)) return result;  // we potentially leak txn here?
++  if (NS_FAILED(result)) return result;
+ 
+   // let listeners know what's up
+   PRInt32 i;
+@@ -2677,13 +2668,10 @@
+     {
+       DeleteNode(mIMETextNode);
+       mIMETextNode = nsnull;
+-      ((IMETextTxn*)txn)->MarkFixed();  // mark the ime txn "fixed"
++      NS_STATIC_CAST(IMETextTxn*, txn.get())->MarkFixed();  // mark the ime txn "fixed"
+     }
+   }
+   
+-  // The transaction system (if any) has taken ownership of txns.
+-  // aggTxn released at end of routine.
+-  NS_IF_RELEASE(txn);
+   return result;
+ }
+ 
+@@ -2820,8 +2808,9 @@
+                               PRUint32             aOffset,
+                               PRUint32             aLength)
+ {
+-  DeleteTextTxn *txn;
+-  nsresult result = CreateTxnForDeleteText(aElement, aOffset, aLength, &txn);
++  nsRefPtr<DeleteTextTxn> txn;
++  nsresult result = CreateTxnForDeleteText(aElement, aOffset, aLength,
++                                           getter_AddRefs(txn));
+   nsAutoRules beginRulesSniffing(this, kOpDeleteText, nsIEditor::ePrevious);
+   if (NS_SUCCEEDED(result))  
+   {
+@@ -2836,8 +2825,6 @@
+     for (i = 0; i < mActionListeners.Count(); i++)
+       mActionListeners[i]->DidDeleteText(aElement, aOffset, aLength, result);
+   }
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+   return result;
+ }
+ 
+@@ -4406,10 +4393,12 @@
+   nsCOMPtr<nsISelection>selection;
+   nsresult res = GetSelection(getter_AddRefs(selection));
+   if (NS_FAILED(res)) return res;
+-  EditAggregateTxn *txn;
++  nsRefPtr<EditAggregateTxn> txn;
+   nsCOMPtr<nsIDOMNode> deleteNode;
+   PRInt32 deleteCharOffset = 0, deleteCharLength = 0;
+-  res = CreateTxnForDeleteSelection(aAction, &txn, getter_AddRefs(deleteNode), &deleteCharOffset, &deleteCharLength);
++  res = CreateTxnForDeleteSelection(aAction, getter_AddRefs(txn),
++                                    getter_AddRefs(deleteNode),
++                                    &deleteCharOffset, &deleteCharLength);
+   nsCOMPtr<nsIDOMCharacterData> deleteCharData(do_QueryInterface(deleteNode));
+ 
+   if (NS_SUCCEEDED(res))  
+@@ -4442,9 +4431,6 @@
+         mActionListeners[i]->DidDeleteNode(deleteNode, res);
+   }
+ 
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+-
+   return res;
+ }
+ 
+===================================================================
+RCS file: /cvsroot/mozilla/editor/libeditor/html nsHTMLCSSUtils.cpp,v
+retrieving revision 1.42
+retrieving revision 1.43
+diff -u -r1.42 -r1.43
+--- mozilla/editor/libeditor/html/nsHTMLCSSUtils.cpp	2007/01/16 17:04:16	1.42
++++ mozilla/editor/libeditor/html/nsHTMLCSSUtils.cpp	2007/07/02 14:01:27	1.43
+@@ -57,6 +57,7 @@
+ #include "nsHTMLCSSUtils.h"
+ #include "nsColor.h"
+ #include "nsAttrName.h"
++#include "nsAutoPtr.h"
+ 
+ static
+ void ProcessBValue(const nsAString * aInputString, nsAString & aOutputString,
+@@ -465,8 +466,9 @@
+ nsHTMLCSSUtils::SetCSSProperty(nsIDOMElement *aElement, nsIAtom * aProperty, const nsAString & aValue,
+                                PRBool aSuppressTransaction)
+ {
+-  ChangeCSSInlineStyleTxn *txn;
+-  nsresult result = CreateCSSPropertyTxn(aElement, aProperty, aValue, &txn, PR_FALSE);
++  nsRefPtr<ChangeCSSInlineStyleTxn> txn;
++  nsresult result = CreateCSSPropertyTxn(aElement, aProperty, aValue,
++                                         getter_AddRefs(txn), PR_FALSE);
+   if (NS_SUCCEEDED(result))  {
+     if (aSuppressTransaction) {
+       result = txn->DoTransaction();
+@@ -475,8 +477,6 @@
+       result = mHTMLEditor->DoTransaction(txn);
+     }
+   }
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+   return result;
+ }
+ 
+@@ -499,8 +499,9 @@
+ nsHTMLCSSUtils::RemoveCSSProperty(nsIDOMElement *aElement, nsIAtom * aProperty, const nsAString & aValue,
+                                   PRBool aSuppressTransaction)
+ {
+-  ChangeCSSInlineStyleTxn *txn;
+-  nsresult result = CreateCSSPropertyTxn(aElement, aProperty, aValue, &txn, PR_TRUE);
++  nsRefPtr<ChangeCSSInlineStyleTxn> txn;
++  nsresult result = CreateCSSPropertyTxn(aElement, aProperty, aValue,
++                                         getter_AddRefs(txn), PR_TRUE);
+   if (NS_SUCCEEDED(result))  {
+     if (aSuppressTransaction) {
+       result = txn->DoTransaction();
+@@ -509,8 +510,6 @@
+       result = mHTMLEditor->DoTransaction(txn);
+     }
+   }
+-  // The transaction system (if any) has taken ownership of txn
+-  NS_IF_RELEASE(txn);
+   return result;
+ }
+ 
+===================================================================
+RCS file: /cvsroot/mozilla/editor/libeditor/html nsHTMLEditor.cpp,v
+retrieving revision 1.554
+retrieving revision 1.555
+diff -u -r1.554 -r1.555
+--- mozilla/editor/libeditor/html/nsHTMLEditor.cpp	2007/06/28 02:48:19	1.554
++++ mozilla/editor/libeditor/html/nsHTMLEditor.cpp	2007/07/02 14:01:27	1.555
+@@ -708,11 +708,11 @@
+ NS_IMETHODIMP 
+ nsHTMLEditor::SetDocumentTitle(const nsAString &aTitle)
+ {
+-  SetDocTitleTxn *txn;
+-  nsresult result = TransactionFactory::GetNewTransaction(SetDocTitleTxn::GetCID(), (EditTxn **)&txn);
++  nsRefPtr<EditTxn> txn;
++  nsresult result = TransactionFactory::GetNewTransaction(SetDocTitleTxn::GetCID(), getter_AddRefs(txn));
+   if (NS_SUCCEEDED(result))  
+   {
+-    result = txn->Init(this, &aTitle);
++    result = NS_STATIC_CAST(SetDocTitleTxn*, txn.get())->Init(this, &aTitle);
+ 
+     if (NS_SUCCEEDED(result)) 
+     {
+@@ -721,8 +721,6 @@
+ 
+       result = nsEditor::DoTransaction(txn);  
+     }
+-    // The transaction system (if any) has taken ownership of txn
+-    NS_IF_RELEASE(txn);
+   }
+   return result;
+ }
+@@ -3569,8 +3567,8 @@
+   if (!sheet)
+     return NS_ERROR_UNEXPECTED;
+ 
+-  RemoveStyleSheetTxn* txn;
+-  rv = CreateTxnForRemoveStyleSheet(sheet, &txn);
++  nsRefPtr<RemoveStyleSheetTxn> txn;
++  rv = CreateTxnForRemoveStyleSheet(sheet, getter_AddRefs(txn));
+   if (!txn) rv = NS_ERROR_NULL_POINTER;
+   if (NS_SUCCEEDED(rv))
+   {
+@@ -3581,8 +3579,6 @@
+     // Remove it from our internal list
+     rv = RemoveStyleSheetFromList(aURL);
+   }
+-  // The transaction system (if any) has taken ownership of txns
+-  NS_IF_RELEASE(txn);
+   
+   return rv;
+ }
+@@ -4100,8 +4096,8 @@
+   if (!mLastStyleSheetURL.IsEmpty())
+     RemoveStyleSheet(mLastStyleSheetURL);
+ 
+-  AddStyleSheetTxn* txn;
+-  rv = CreateTxnForAddStyleSheet(aSheet, &txn);
++  nsRefPtr<AddStyleSheetTxn> txn;
++  rv = CreateTxnForAddStyleSheet(aSheet, getter_AddRefs(txn));
+   if (!txn) rv = NS_ERROR_NULL_POINTER;
+   if (NS_SUCCEEDED(rv))
+   {
+@@ -4129,8 +4125,6 @@
+       }
+     }
+   }
+-  // The transaction system (if any) has taken ownership of txns
+-  NS_IF_RELEASE(txn);
+ 
+   return NS_OK;
+ }
+===================================================================
+RCS file: /cvsroot/mozilla/editor/libeditor/text nsTextEditRules.cpp,v
+retrieving revision 1.208
+retrieving revision 1.209
+diff -u -r1.208 -r1.209
+--- mozilla/editor/libeditor/text/nsTextEditRules.cpp	2007/06/28 02:48:19	1.208
++++ mozilla/editor/libeditor/text/nsTextEditRules.cpp	2007/07/02 14:01:27	1.209
+@@ -62,6 +62,7 @@
+ #include "nsUnicharUtils.h"
+ #include "nsILookAndFeel.h"
+ #include "nsWidgetsCID.h"
++#include "DeleteTextTxn.h"
+ 
+ // for IBMBIDI
+ #include "nsIPresShell.h"
+@@ -1225,17 +1226,16 @@
+       if (offset == -1) break; // done with this node
+       
+       // delete the newline
+-      EditTxn *txn;
++      nsRefPtr<DeleteTextTxn> txn;
+       // note 1: we are not telling edit listeners about these because they don't care
+       // note 2: we are not wrapping these in a placeholder because we know they already are,
+       //         or, failing that, undo is disabled
+-      res = mEditor->CreateTxnForDeleteText(textNode, offset, 1, (DeleteTextTxn**)&txn);
++      res = mEditor->CreateTxnForDeleteText(textNode, offset, 1,
++                                            getter_AddRefs(txn));
+       if (NS_FAILED(res))  return res; 
+       if (!txn)  return NS_ERROR_OUT_OF_MEMORY;
+       res = mEditor->DoTransaction(txn); 
+       if (NS_FAILED(res))  return res; 
+-      // The transaction system (if any) has taken ownership of txn
+-      NS_IF_RELEASE(txn);
+       
+       // insert a break
+       res = mEditor->CreateBR(textNode, offset, address_of(brNode));
+

@@ -1,0 +1,90 @@
+Index: content/base/src/nsXMLHttpRequest.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/content/base/src/nsXMLHttpRequest.cpp,v
+retrieving revision 1.182
+diff -u -p -r1.182 nsXMLHttpRequest.cpp
+--- a/content/base/src/nsXMLHttpRequest.cpp	17 Jun 2007 13:50:50 -0000	1.182
++++ a/content/base/src/nsXMLHttpRequest.cpp	18 Jun 2007 09:44:36 -0000
+@@ -1275,28 +1275,19 @@ nsXMLHttpRequest::OnStartRequest(nsIRequ
+   nsCOMPtr<nsIChannel> channel(do_QueryInterface(request));
+   NS_ENSURE_TRUE(channel, NS_ERROR_UNEXPECTED);
+ 
++  mChannel->SetOwner(mPrincipal);
++
+   mReadRequest = request;
+   mContext = ctxt;
+   mState |= XML_HTTP_REQUEST_PARSEBODY;
+   ChangeState(XML_HTTP_REQUEST_LOADED);
+ 
+-  // XXXbz this is probably all wrong when not called from JS... and possibly
+-  // even then! Fixing that requires giving XMLHttpRequest some principals
+-  // when inited.  Until then, cases when we don't actually parse the
+-  // document will give our mDocument he wrong principal.  I'm just not sure
+-  // how wrong it can get...  Shouldn't be too bad as long as mScriptContext
+-  // is sane, I guess.
+-  nsCOMPtr<nsIDocument> doc = GetDocumentFromScriptContext(mScriptContext);
+   nsIURI* uri = GetBaseURI();
+-  nsIPrincipal* principal = nsnull;
+-  if (doc) {
+-    principal = doc->NodePrincipal();
+-  }
+ 
+   // Create an empty document from it 
+   const nsAString& emptyStr = EmptyString();
+   nsresult rv = nsContentUtils::CreateDocument(emptyStr, emptyStr, nsnull, uri,
+-                                               uri, principal,
++                                               uri, mPrincipal,
+                                                getter_AddRefs(mDocument));
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+@@ -1520,6 +1511,12 @@ nsXMLHttpRequest::Send(nsIVariant *aBody
+   //     if there are no event listeners set and we are doing
+   //     an asynchronous call.
+ 
++  nsCOMPtr<nsIDocument> doc =
++    do_QueryInterface(nsContentUtils::GetDocumentFromCaller());
++  if (doc) {
++    mPrincipal = doc->NodePrincipal();
++  }
++
+   // Ignore argument if method is GET, there is no point in trying to
+   // upload anything
+   nsCAutoString method;
+@@ -1528,18 +1525,11 @@ nsXMLHttpRequest::Send(nsIVariant *aBody
+   if (httpChannel) {
+     httpChannel->GetRequestMethod(method); // If GET, method name will be uppercase
+ 
+-    nsCOMPtr<nsIDocument> doc =
+-      do_QueryInterface(nsContentUtils::GetDocumentFromCaller());
+-
+-    if (doc) {
+-      nsIPrincipal *principal = doc->NodePrincipal();
++    if (mPrincipal) {
++      nsCOMPtr<nsIURI> codebase;
++      mPrincipal->GetURI(getter_AddRefs(codebase));
+ 
+-      if (principal) {
+-        nsCOMPtr<nsIURI> codebase;
+-        principal->GetURI(getter_AddRefs(codebase));
+-
+-        httpChannel->SetReferrer(codebase);
+-      }
++      httpChannel->SetReferrer(codebase);
+     }
+   }
+ 
+Index: content/base/src/nsXMLHttpRequest.h
+===================================================================
+RCS file: /cvsroot/mozilla/content/base/src/nsXMLHttpRequest.h,v
+retrieving revision 1.61
+diff -u -p -r1.61 nsXMLHttpRequest.h
+--- a/content/base/src/nsXMLHttpRequest.h	18 Feb 2007 14:38:01 -0000	1.61
++++ a/content/base/src/nsXMLHttpRequest.h	18 Jun 2007 09:44:36 -0000
+@@ -158,6 +158,7 @@ protected:
+   already_AddRefed<nsIHttpChannel> GetCurrentHttpChannel();
+ 
+   nsCOMPtr<nsISupports> mContext;
++  nsCOMPtr<nsIPrincipal> mPrincipal;
+   nsCOMPtr<nsIChannel> mChannel;
+   nsCOMPtr<nsIRequest> mReadRequest;
+   nsCOMPtr<nsIDOMDocument> mDocument;
