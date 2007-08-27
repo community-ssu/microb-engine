@@ -1,0 +1,108 @@
+--- mozilla/embedding/browser/gtk/tests/TestGtkEmbed.cpp.orig	2007-08-26 20:28:10.000000000 +0300
++++ mozilla/embedding/browser/gtk/tests/TestGtkEmbed.cpp	2007-08-26 22:56:08.000000000 +0300
+@@ -64,20 +64,21 @@ typedef struct _TestGtkBrowser {
+   GtkWidget  *fileClose;
+   GtkWidget  *fileQuit;
+   GtkWidget  *toolbarHBox;
+   GtkWidget  *toolbar;
+   GtkWidget  *backButton;
+   GtkWidget  *stopButton;
+   GtkWidget  *forwardButton;
+   GtkWidget  *zoominButton;
+   GtkWidget  *zoomstdButton;
+   GtkWidget  *zoomoutButton;
++  GtkWidget  *ftvButton;
+   GtkWidget  *reloadButton;
+   GtkWidget  *urlEntry;
+   GtkWidget  *mozEmbed;
+   GtkWidget  *progressAreaHBox;
+   GtkWidget  *progressBar;
+   GtkWidget  *statusAlign;
+   GtkWidget  *statusBar;
+   const char *statusMessage;
+   int         loadPercent;
+   int         bytesLoaded;
+@@ -103,20 +104,22 @@ static void            set_browser_visib
+ 
+ static int num_browsers = 0;
+ 
+ // callbacks from the UI
+ static void     back_clicked_cb    (GtkButton   *button, 
+ 				    TestGtkBrowser *browser);
+ static void     stop_clicked_cb    (GtkButton   *button,
+ 				    TestGtkBrowser *browser);
+ static void     forward_clicked_cb (GtkButton   *button,
+ 				    TestGtkBrowser *browser);
++static void     ftv_clicked_cb     (GtkButton   *button,
++				    TestGtkBrowser *browser);
+ static void     zoomin_clicked_cb  (GtkButton   *button, 
+ 				    TestGtkBrowser *browser);
+ static void     zoomstd_clicked_cb (GtkButton   *button,
+ 				    TestGtkBrowser *browser);
+ static void     zoomout_clicked_cb (GtkButton   *button,
+ 				    TestGtkBrowser *browser);
+ static void     reload_clicked_cb  (GtkButton   *button,
+ 				    TestGtkBrowser *browser);
+ static void     url_activate_cb    (GtkEditable *widget, 
+ 				    TestGtkBrowser *browser);
+@@ -438,20 +441,30 @@ new_gtk_browser(guint32 chromeMask)
+ 			    browser);
+   // new forward button
+   browser->forwardButton =
+     gtk_toolbar_append_item(GTK_TOOLBAR(browser->toolbar),
+ 			    "Forward",
+ 			    "Forward",
+ 			    "Forward",
+ 			    0, // XXX replace with icon
+ 			    GTK_SIGNAL_FUNC(forward_clicked_cb),
+ 			    browser);
++  // new ftv button
++  browser->ftvButton =
++    gtk_toolbar_append_item(GTK_TOOLBAR(browser->toolbar),
++			    "ftv",
++			    "ftv",
++			    "ftv",
++			    0, // XXX replace with icon
++			    GTK_SIGNAL_FUNC(ftv_clicked_cb),
++			    browser);
++
+   // new zoomin button
+   browser->zoominButton =
+     gtk_toolbar_append_item(GTK_TOOLBAR(browser->toolbar),
+ 			    "z+",
+ 			    "z+",
+ 			    "z+",
+ 			    0, // XXX replace with icon
+ 			    GTK_SIGNAL_FUNC(zoomin_clicked_cb),
+ 			    browser);
+   // new zoomstd button
+@@ -675,20 +688,29 @@ stop_clicked_cb (GtkButton *button, Test
+   gtk_moz_embed_stop_load(GTK_MOZ_EMBED(browser->mozEmbed));
+ }
+ 
+ void
+ forward_clicked_cb (GtkButton *button, TestGtkBrowser *browser)
+ {
+   g_print("forward_clicked_cb\n");
+   gtk_moz_embed_go_forward(GTK_MOZ_EMBED(browser->mozEmbed));
+ }
+ 
++void
++ftv_clicked_cb (GtkButton *button, TestGtkBrowser *browser)
++{
++    g_print("ftv_clicked_cb\n");
++    gtk_moz_embed_common_observe("@mozilla.org/extensions/ftv;1", NULL, "set_optimized_view", NULL);
++    gtk_moz_embed_common_observe("@mozilla.org/extensions/ftv;1", NULL, "optimized_view", NULL);
++}
++
++
+ static gint zoom_level = 100;
+ 
+ void
+ zoomin_clicked_cb (GtkButton *button, TestGtkBrowser *browser)
+ {
+   g_print("zoomin_clicked_cb\n");
+   zoom_level += 20;
+   gtk_moz_embed_set_zoom_level(GTK_MOZ_EMBED(browser->mozEmbed), zoom_level, NULL);
+ }
+ 
