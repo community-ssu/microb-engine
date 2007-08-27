@@ -1,9 +1,9 @@
 # Make UI Responsive while JS Script is working 
---- mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp.orig	2007-06-25 12:57:57.000000000 +0300
-+++ mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp	2007-06-25 15:34:01.000000000 +0300
-@@ -199,20 +199,26 @@ nsBaseAppShell::SuspendNative(void)
- }
- 
+Index: mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
+===================================================================
+--- mozilla.orig/widget/src/xpwidgets/nsBaseAppShell.cpp
++++ mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
+@@ -201,16 +201,22 @@
  NS_IMETHODIMP
  nsBaseAppShell::ResumeNative(void)
  {
@@ -26,13 +26,11 @@
  nsBaseAppShell::OnDispatchedEvent(nsIThreadInternal *thr)
  {
    PRInt32 lastVal = PR_AtomicSet(&mNativeEventPending, 1);
-   if (lastVal == 1)
-     return NS_OK;
---- mozilla/widget/public/nsIAppShell.idl.orig	2007-03-23 01:04:51.000000000 +0200
-+++ mozilla/widget/public/nsIAppShell.idl	2007-06-25 15:14:36.000000000 +0300
-@@ -89,11 +89,16 @@ interface nsIAppShell : nsISupports
-    * event loop).
-    */
+Index: mozilla/widget/public/nsIAppShell.idl
+===================================================================
+--- mozilla.orig/widget/public/nsIAppShell.idl
++++ mozilla/widget/public/nsIAppShell.idl
+@@ -91,9 +91,14 @@
    void suspendNative();
  
    /**
@@ -47,11 +45,11 @@
 +   */
 +  void wakeupNative(in boolean mayWait);
  };
---- mozilla/dom/src/base/nsJSEnvironment.cpp.orig	2007-06-15 09:44:18.000000000 +0300
-+++ mozilla/dom/src/base/nsJSEnvironment.cpp	2007-06-25 15:53:02.000000000 +0300
-@@ -119,20 +119,24 @@
- #define FORCE_PR_LOG 1
- #endif
+Index: mozilla/dom/src/base/nsJSEnvironment.cpp
+===================================================================
+--- mozilla.orig/dom/src/base/nsJSEnvironment.cpp
++++ mozilla/dom/src/base/nsJSEnvironment.cpp
+@@ -121,16 +121,22 @@
  #include "prlog.h"
  #include "prthread.h"
  
@@ -62,6 +60,8 @@
  
 +#include "nsWidgetsCID.h"
 +#include "nsIAppShell.h"
++#include "nsIBaseWindow.h"
++
 +static NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
 +
  const size_t gStackSize = 8192;
@@ -72,11 +72,7 @@
  
  // Thank you Microsoft!
  #ifndef WINCE
- #ifdef CompareString
- #undef CompareString
-@@ -705,20 +709,23 @@ nsJSContext::DOMBranchCallback(JSContext
-     // script has run
-     ctx->mBranchCallbackTime = PR_Now();
+@@ -707,16 +713,34 @@
  
      ctx->mIsTrackingChromeCodeTime =
        ::JS_IsSystemObject(cx, ::JS_GetGlobalObject(cx));
@@ -86,8 +82,23 @@
  
    if (callbackCount & MAYBE_GC_BRANCH_COUNT_MASK) {
 +    nsCOMPtr<nsIAppShell> appShell = do_GetService(kAppShellCID);
-+    if (appShell)
-+      appShell->WakeupNative(PR_FALSE);
++    if (appShell) {
++      nsCOMPtr<nsPIDOMWindow> win(do_QueryInterface(ctx->GetGlobalObject()));
++      if (win) {
++        nsIDocShell *docShell = win->GetDocShell();
++        if (docShell) {
++          nsCOMPtr<nsIBaseWindow> baseWin(do_QueryInterface(docShell));
++          if (baseWin) {
++            baseWin->SetEnabled(PR_FALSE);
++            ctx->SetScriptsEnabled(PR_FALSE, PR_TRUE);
++            appShell->WakeupNative(PR_FALSE);
++            baseWin->SetEnabled(PR_TRUE);
++            ctx->SetScriptsEnabled(PR_TRUE, PR_TRUE);
++            return JS_TRUE;
++          }
++        }
++      }
++    }
      return JS_TRUE;
    }
  
@@ -96,5 +107,113 @@
    // ScriptEvaluated to be called, and clearing our branch callback time and
    // count. See bug 302333.
    PRTime callbackTime = ctx->mBranchCallbackTime;
+@@ -1737,34 +1761,38 @@
+ nsJSContext::CallEventHandler(nsISupports* aTarget, void *aScope, void *aHandler,
+                               nsIArray *aargv, nsIVariant **arv)
+ {
+   NS_ENSURE_TRUE(mIsInitialized, NS_ERROR_NOT_INITIALIZED);
  
-   // Run the GC if we get this far.
+   if (!mScriptsEnabled) {
+     return NS_OK;
+   }
++  printf("CallEventHandler Start: this:%p, targ:%p\n", this, aTarget);
++
+   nsresult rv;
+   JSObject* target = nsnull;
+   nsAutoGCRoot root(&target, &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+   rv = JSObjectFromInterface(aTarget, aScope, &target);
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   jsval rval = JSVAL_VOID;
+ 
+   // This one's a lot easier than EvaluateString because we don't have to
+   // hassle with principals: they're already compiled into the JS function.
+   // xxxmarkh - this comment is no longer true - principals are not used at
+   // all now, and never were in some cases.
+ 
+   nsCOMPtr<nsIJSContextStack> stack =
+     do_GetService("@mozilla.org/js/xpc/ContextStack;1", &rv);
+-  if (NS_FAILED(rv) || NS_FAILED(stack->Push(mContext)))
++  if (NS_FAILED(rv) || NS_FAILED(stack->Push(mContext))) {
++    printf("CallEventHandler End  : this:%p, targ:%p\n", this, aTarget);
+     return NS_ERROR_FAILURE;
++  }
+ 
+   // check if the event handler can be run on the object in question
+   rv = sSecurityManager->CheckFunctionAccess(mContext, aHandler, target);
+   if (NS_SUCCEEDED(rv)) {
+     // We're not done yet!  Some event listeners are confused about their
+     // script context, so check whether we might actually be the wrong script
+     // context.  To be safe, do CheckFunctionAccess checks for both.
+     nsCOMPtr<nsIContent> content = do_QueryInterface(aTarget);
+@@ -1783,16 +1811,17 @@
+             if (NS_SUCCEEDED(rv)) {
+               rv = sSecurityManager->CheckFunctionAccess(cx, aHandler,
+                                                          target);
+               // Here we lose no matter what; we don't want to leave the wrong
+               // cx on the stack.  I guess default to leaving mContext, to
+               // cover those cases when we really do have a different context
+               // for the handler and the node.  That's probably safer.
+               if (NS_FAILED(stack->Pop(nsnull))) {
++                printf("CallEventHandler End  : this:%p, targ:%p\n", this, aTarget);
+                 return NS_ERROR_FAILURE;
+               }
+             }
+           }
+         }
+       }
+     }
+   }
+@@ -1809,16 +1838,17 @@
+     // the safe scope in many cases, which isn't very useful.  Wrapping aTarget
+     // was OK because those typically have PreCreate methods that give them the
+     // right scope anyway, and we want to make sure that the arguments end up
+     // in the same scope as aTarget.
+     rv = ConvertSupportsTojsvals(aargv, target, &argc,
+                                  NS_REINTERPRET_CAST(void **, &argv), &mark);
+     if (NS_FAILED(rv)) {
+       stack->Pop(nsnull);
++      printf("CallEventHandler End  : this:%p, targ:%p\n", this, aTarget);
+       return rv;
+     }
+   
+     AutoFreeJSStack stackGuard(mContext, mark); // ensure always freed.
+ 
+     jsval funval = OBJECT_TO_JSVAL(aHandler);
+     JSAutoRequest ar(mContext);
+     PRBool ok = ::JS_CallFunctionValue(mContext, target,
+@@ -1834,29 +1864,32 @@
+       // Don't pass back results from failed calls.
+       rval = JSVAL_VOID;
+ 
+       // Tell the caller that the handler threw an error.
+       rv = NS_ERROR_FAILURE;
+     }
+   }
+ 
+-  if (NS_FAILED(stack->Pop(nsnull)))
++  if (NS_FAILED(stack->Pop(nsnull))) {
++    printf("CallEventHandler End  : this:%p, targ:%p\n", this, aTarget);
+     return NS_ERROR_FAILURE;
++  }
+ 
+   // Convert to variant before calling ScriptEvaluated, as it may GC, meaning
+   // we would need to root rval.
+   JSAutoRequest ar(mContext);
+   if (NS_SUCCEEDED(rv)) {
+     rv = nsContentUtils::XPConnect()->JSToVariant(mContext, rval, arv);
+   }
+ 
+   // ScriptEvaluated needs to come after we pop the stack
+   ScriptEvaluated(PR_TRUE);
+ 
++  printf("CallEventHandler End  : this:%p, targ:%p\n", this, aTarget);
+   return rv;
+ }
+ 
+ nsresult
+ nsJSContext::BindCompiledEventHandler(nsISupports* aTarget, void *aScope,
+                                       nsIAtom *aName,
+                                       void *aHandler)
+ {
