@@ -1,0 +1,87 @@
+? content/events/test/test_bug238987_2.html
+Index: content/events/src/nsDOMBeforeUnloadEvent.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/content/events/src/nsDOMBeforeUnloadEvent.cpp,v
+retrieving revision 1.2
+diff -u -8 -p -r1.2 nsDOMBeforeUnloadEvent.cpp
+--- a/content/events/src/nsDOMBeforeUnloadEvent.cpp	28 Apr 2005 23:47:55 -0000	1.2
++++ a/content/events/src/nsDOMBeforeUnloadEvent.cpp	23 Aug 2007 09:10:19 -0000
+@@ -54,16 +54,21 @@ nsDOMBeforeUnloadEvent::nsDOMBeforeUnloa
+   else {
+     mEventIsInternal = PR_TRUE;
+     mEvent->time = PR_Now();
+   }
+ }
+ 
+ nsDOMBeforeUnloadEvent::~nsDOMBeforeUnloadEvent() 
+ {
++  if (mEventIsInternal &&
++      mEvent->eventStructType == NS_BEFORE_PAGE_UNLOAD_EVENT) {
++      delete static_cast<nsBeforePageUnloadEvent*>(mEvent);
++      mEvent = nsnull;
++  }
+ }
+ 
+ NS_IMPL_ADDREF_INHERITED(nsDOMBeforeUnloadEvent, nsDOMEvent)
+ NS_IMPL_RELEASE_INHERITED(nsDOMBeforeUnloadEvent, nsDOMEvent)
+ 
+ NS_INTERFACE_MAP_BEGIN(nsDOMBeforeUnloadEvent)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMBeforeUnloadEvent)
+   NS_INTERFACE_MAP_ENTRY_CONTENT_CLASSINFO(BeforeUnloadEvent)
+Index: content/events/src/nsDOMCommandEvent.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/content/events/src/nsDOMCommandEvent.cpp,v
+retrieving revision 1.2
+diff -u -8 -p -r1.2 nsDOMCommandEvent.cpp
+--- a/content/events/src/nsDOMCommandEvent.cpp	8 Jul 2007 07:08:07 -0000	1.2
++++ a/content/events/src/nsDOMCommandEvent.cpp	23 Aug 2007 09:10:19 -0000
+@@ -46,16 +46,24 @@ nsDOMCommandEvent::nsDOMCommandEvent(nsP
+   mEvent->time = PR_Now();
+   if (aEvent) {
+     mEventIsInternal = PR_FALSE;
+   } else {
+     mEventIsInternal = PR_TRUE;
+   }
+ }
+ 
++nsDOMCommandEvent::~nsDOMCommandEvent()
++{
++  if (mEventIsInternal && mEvent->eventStructType == NS_COMMAND_EVENT) {
++    delete static_cast<nsCommandEvent*>(mEvent);
++    mEvent = nsnull;
++  }
++}
++
+ NS_INTERFACE_MAP_BEGIN(nsDOMCommandEvent)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMCommandEvent)
+   NS_INTERFACE_MAP_ENTRY_CONTENT_CLASSINFO(CommandEvent)
+ NS_INTERFACE_MAP_END_INHERITING(nsDOMEvent)
+ 
+ NS_IMPL_ADDREF_INHERITED(nsDOMCommandEvent, nsDOMEvent)
+ NS_IMPL_RELEASE_INHERITED(nsDOMCommandEvent, nsDOMEvent)
+ 
+Index: content/events/src/nsDOMCommandEvent.h
+===================================================================
+RCS file: /cvsroot/mozilla/content/events/src/nsDOMCommandEvent.h,v
+retrieving revision 1.1
+diff -u -8 -p -r1.1 nsDOMCommandEvent.h
+--- a/content/events/src/nsDOMCommandEvent.h	1 Dec 2006 11:09:51 -0000	1.1
++++ a/content/events/src/nsDOMCommandEvent.h	23 Aug 2007 09:10:19 -0000
+@@ -42,16 +42,17 @@
+ #include "nsDOMEvent.h"
+ 
+ class nsDOMCommandEvent : public nsDOMEvent,
+                           public nsIDOMCommandEvent
+ {
+ public:
+   nsDOMCommandEvent(nsPresContext* aPresContext,
+                     nsCommandEvent* aEvent);
++  ~nsDOMCommandEvent();
+ 
+   NS_DECL_ISUPPORTS_INHERITED
+ 
+   NS_DECL_NSIDOMCOMMANDEVENT
+ 
+   // Forward to base class
+   NS_FORWARD_TO_NSDOMEVENT
+ };
