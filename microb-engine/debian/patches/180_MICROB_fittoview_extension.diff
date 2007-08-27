@@ -1,12 +1,6 @@
-# Patches for microb-engine
-# Oleg Romashin <oleg.romashin@nokia.com>
-# DP: Extension Fit To View mozilla layout
-# We have to integrate it into mozilla tree
-
-Index: mozilla/extensions/ftv/Makefile.in
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/Makefile.in
+diff -ruN -p -U10 mozilla/extensions/ftv.orig/Makefile.in mozilla/extensions/ftv/Makefile.in
+--- mozilla/extensions/ftv.orig/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/Makefile.in	2007-08-27 02:19:27.000000000 +0300
 @@ -0,0 +1,37 @@
 +
 +DEPTH=../..
@@ -45,10 +39,9 @@ Index: mozilla/extensions/ftv/Makefile.in
 +DIRS   += public
 +
 +include $(topsrcdir)/config/rules.mk
-Index: mozilla/extensions/ftv/install.rdf
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/install.rdf
+diff -ruN -p -U10 mozilla/extensions/ftv.orig/install.rdf mozilla/extensions/ftv/install.rdf
+--- mozilla/extensions/ftv.orig/install.rdf	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/install.rdf	2007-08-27 02:19:27.000000000 +0300
 @@ -0,0 +1,40 @@
 +<?xml version="1.0"?>
 +
@@ -90,10 +83,9 @@ Index: mozilla/extensions/ftv/install.rdf
 +    <em:homepageURL>http://www.mozilla.org/access/keyboard/snav/</em:homepageURL>
 +  </Description>
 +</RDF>
-Index: mozilla/extensions/ftv/public/Makefile.in
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/public/Makefile.in
+diff -ruN -p -U10 mozilla/extensions/ftv.orig/public/Makefile.in mozilla/extensions/ftv/public/Makefile.in
+--- mozilla/extensions/ftv.orig/public/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/public/Makefile.in	2007-08-27 02:19:27.000000000 +0300
 @@ -0,0 +1,50 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
@@ -145,10 +137,9 @@ Index: mozilla/extensions/ftv/public/Makefile.in
 +XPIDLSRCS	= nsIFitToView.idl
 +
 +include $(topsrcdir)/config/rules.mk
-Index: mozilla/extensions/ftv/public/nsIFitToView.idl
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/public/nsIFitToView.idl
+diff -ruN -p -U10 mozilla/extensions/ftv.orig/public/nsIFitToView.idl mozilla/extensions/ftv/public/nsIFitToView.idl
+--- mozilla/extensions/ftv.orig/public/nsIFitToView.idl	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/public/nsIFitToView.idl	2007-08-27 02:19:27.000000000 +0300
 @@ -0,0 +1,47 @@
 +/* vim:set ts=2 sw=2 sts=2 et cin: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -197,11 +188,10 @@ Index: mozilla/extensions/ftv/public/nsIFitToView.idl
 +   */
 +  long extra(in long a, in long b);
 +};
-Index: mozilla/extensions/ftv/src/Makefile.in
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/src/Makefile.in
-@@ -0,0 +1,111 @@
+diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensions/ftv/src/Makefile.in
+--- mozilla/extensions/ftv.orig/src/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/src/Makefile.in	2007-08-27 08:11:38.000000000 +0300
+@@ -0,0 +1,108 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
 +# Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -252,15 +242,7 @@ Index: mozilla/extensions/ftv/src/Makefile.in
 +ifneq ($(OS_ARCH),WINNT)
 +SHORT_LIBNAME = ftv
 +endif
-+IS_COMPONENT	= 1
-+
-+ifdef IS_COMPONENT
-+DEFINES += -DDYN_FTV
 +FORCE_SHARED_LIB = 1
-+else
-+LIBXUL_LIBRARY  = 1
-+FORCE_STATIC_LIB = 1
-+endif
 +
 +REQUIRES = \
 +    dom \
@@ -302,6 +284,11 @@ Index: mozilla/extensions/ftv/src/Makefile.in
 +
 +include $(topsrcdir)/config/rules.mk
 +
++ifdef GNU_CC
++CFLAGS   += -fno-unit-at-a-time
++CXXFLAGS += -fno-unit-at-a-time
++endif
++
 +FTV_CSS_SRC = $(srcdir)/ftv.css
 +PREPROCESS_FTV_CSS = $(PERL) $(MOZILLA_DIR)/config/preprocessor.pl --marker=% $(DEFINES) $(ACDEFINES) $(FTV_CSS_SRC)
 +
@@ -313,11 +300,61 @@ Index: mozilla/extensions/ftv/src/Makefile.in
 +libs:: $(DIST)/bin/res/ftv.css
 +
 +install:: $(DESTDIR)$(mozappdir)/res/ftv.css
-Index: mozilla/extensions/ftv/src/nsFitToView.cpp
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/src/nsFitToView.cpp
-@@ -0,0 +1,558 @@
+diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/ftv.css mozilla/extensions/ftv/src/ftv.css
+--- mozilla/extensions/ftv.orig/src/ftv.css	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/src/ftv.css	2007-08-27 02:19:27.000000000 +0300
+@@ -0,0 +1,47 @@
++* {
++  max-width: 100% !important;
++}
++
++*.ftvAll {
++  width: auto !important;
++  left:auto !important;
++  float:none !important;
++  padding:0px !important;
++  margin:0px !important;
++  white-space:normal !important;
++  clear:left !important;
++}
++
++td.ftvHalf {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++}
++
++td.ftvFull {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++}
++
++tr.ftv, tbody.ftv, table.ftv {
++  display:block !important;
++  height:auto !important;
++}
++
++img.ftv {
++  vertical-align:bottom !important;
++  width: 100% !important;
++}
++
++embed.ftv {
++  width: 100% !important;
++}
++
++
++div.ftv {
++  vertical-align:bottom !important;
++}
++
+diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/nsFitToView.cpp mozilla/extensions/ftv/src/nsFitToView.cpp
+--- mozilla/extensions/ftv.orig/src/nsFitToView.cpp	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/src/nsFitToView.cpp	2007-08-27 08:17:29.000000000 +0300
+@@ -0,0 +1,506 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim:set ts=2 sw=2 sts=2 tw=80 et cindent: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -357,47 +394,34 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 + *
 + * ***** END LICENSE BLOCK ***** */
 +
++#include "nsCURILoader.h"
++#include "nsICategoryManager.h"
++#include "nsIDOMAbstractView.h"
++#include "nsIDOMDocument.h"
++#include "nsIDOMDocumentView.h"
++#include "nsIDOMHTMLElement.h"
++#include "nsIDOMHTMLIFrameElement.h"
++#include "nsIDOMNSDocument.h"
++#include "nsIDOMNSElement.h"
++#include "nsIDOMNSHTMLElement.h"
++#include "nsIDOMNode.h"
++#include "nsIDOMNodeList.h"
++#include "nsIDOMTextRectangle.h"
++#include "nsIDOMWindow.h"
++#include "nsIDOMWindowCollection.h"
++#include "nsIDocument.h"
 +#include "nsIGenericFactory.h"
 +#include "nsIObserver.h"
-+#include "nsIPrefService.h"
-+#include "nsIPrefBranch2.h"
-+#include "nsICategoryManager.h"
-+#include "nsNetUtil.h"
-+#include "nsIStyleSheetService.h"
-+#include "prprf.h"
-+#include "nsIDOMDocument.h"
-+#include "nsIDOMNodeList.h"
-+#include "nsIDOMWindow.h"
-+#include "nsIWindowWatcher.h"
-+#include "nsIDOMWindowCollection.h"
-+#include "nsIDOMDocumentView.h"
-+#include "nsIDOMHTMLIFrameElement.h"
-+#include "nsIFormControl.h"
-+#include "nsIContent.h"
-+#include "nsIDocument.h"
-+#include "nsIPresShell.h"
-+#include "nsIFrame.h"
-+#include "nsIWebProgressListener.h"
-+#include "nsWeakReference.h"
-+#include "nsIWebProgress.h"
-+#include "nsCURILoader.h"
-+#include "nsIDocShell.h"
-+#include "imgIRequest.h"
-+#include "imgIContainer.h"
-+#include "nsIDOMHTMLImageElement.h"
-+#include "nsIDOMAbstractView.h"
-+#include "nsIDOMCSSStyleDeclaration.h"
-+#include "nsIDOMViewCSS.h"
-+#include "nsIDOMCSSPrimitiveValue.h"
-+#include "nsIDOMElementCSSInlineStyle.h"
-+#include "nsIDOMNSHTMLElement.h"
-+#include "nsIDOMNSHTMLElement.h"
 +#include "nsIPref.h"
-+#ifdef DYN_FTV
-+#include "nsStringAPI.h"
-+#else
-+#include "nsString.h"
-+#endif
++#include "nsIPresShell.h"
++#include "nsIStyleSheetService.h"
++#include "nsIWebProgress.h"
++#include "nsIWebProgressListener.h"
++#include "nsIWindowWatcher.h"
++#include "nsNetUtil.h"
++#include "nsRect.h"
++#include "nsStringGlue.h"
++#include "nsWeakReference.h"
 +
 +#define EM_MULT 16.
 +#define NS_FRAME_HAS_RELATIVE_SIZE 0x01000000
@@ -405,8 +429,8 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +
 +// TODO auto reload nsFitToView in C.
 +class nsFitToView : public nsIObserver,
-+  public nsIWebProgressListener,
-+  public nsSupportsWeakReference
++                    public nsIWebProgressListener,
++                    public nsSupportsWeakReference
 +{
 +public:
 +  nsFitToView();
@@ -416,28 +440,24 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  nsresult DoOptimize(nsISupports *aObject = nsnull, const void * data = nsnull);
 +
 +  NS_DECL_ISUPPORTS
-+    NS_DECL_NSIOBSERVER
-+    NS_DECL_NSIWEBPROGRESSLISTENER
++  NS_DECL_NSIOBSERVER
++  NS_DECL_NSIWEBPROGRESSLISTENER
 +
 +private:
-+    nsresult OptimizeElement(float aCurOptimize, nsIDOMNode * node, nsIPresShell* aPresShell, nsIDOMViewCSS *defaultCSSView, nsRect &wrect);
-+    nsresult OptimizeDocument(float aCurrOptimizeVal, nsIDOMDocument *aDocument);
-+    nsresult OptimizeWindow(nsIDOMWindow *aWindow);
-+    nsresult OptimizeElementsByTag(float aCurrOptimizeVal, nsIDOMDocument *aDocument, nsIPresShell* ps, nsString aTag, nsIDOMViewCSS *defaultCSSView = nsnull);
-+    PRBool mAttached;
-+    PRBool mOptimizeFull;
-+    PRUint32 mNewOptimize;
-+    PRUint32 mCurOptimize;
-+    PRBool mRelativeOptimize;
-+    PRUint32 mLoadedImagesCnt;
-+    PRBool mDoOnloadOptimizing;
-+    PRBool mDoOptimize;
-+    PRBool mSetOptimizing;
++  nsresult OptimizeElement(float aCurOptimize, nsIDOMNode * node, nsRect &wrect);
++  nsresult OptimizeDocument(float aCurrOptimizeVal, nsIDOMDocument *aDocument);
++  nsresult OptimizeWindow(nsIDOMWindow *aWindow);
++  nsresult OptimizeElementsByTag(float aCurrOptimizeVal, nsIDOMDocument *aDocument, nsString aTag);
++  PRBool mAttached;
++  PRBool mOptimizeFull;
++  PRUint32 mNewOptimize;
++  PRUint32 mCurOptimize;
++  PRBool mRelativeOptimize;
++  PRUint32 mLoadedImagesCnt;
++  PRBool mDoOnloadOptimizing;
++  PRBool mDoOptimize;
++  PRBool mSetOptimizing;
 +};
-+
-+#define DEFAULT_REGRESSION 40
-+static PRInt32 regression = DEFAULT_REGRESSION;
-+static PRBool gIsStarted = PR_FALSE;
 +
 +/* void onStateChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in unsigned long aStateFlags, in nsresult aStatus); */
 +NS_IMETHODIMP nsFitToView::OnStateChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, PRUint32 aStateFlags, nsresult aStatus)
@@ -456,7 +476,7 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +    nsCOMPtr<nsIDOMWindow> domWin;
 +    rv = aWebProgress->GetDOMWindow(getter_AddRefs(domWin));
 +    NS_ENSURE_SUCCESS(rv, NS_OK);
-+	OptimizeWindow(domWin);
++    OptimizeWindow(domWin);
 +  }
 +  return NS_ERROR_NOT_IMPLEMENTED;
 +}
@@ -481,7 +501,6 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +{
 +  return NS_ERROR_NOT_IMPLEMENTED;
 +}
-+
 +
 +nsFitToView::nsFitToView()
 +{
@@ -518,51 +537,33 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  return NS_OK;
 +}
 +
-+static nsresult
-+GetNodePresShell(nsIDOMNode *node, nsIPresShell* *aPresShell)
-+{
-+  NS_ENSURE_TRUE(node, NS_ERROR_FAILURE);
-+  nsCOMPtr<nsIDOMDocument> doc;
-+  node->GetOwnerDocument(getter_AddRefs(doc));
-+  return GetDocumentPresShell(doc, aPresShell);
-+}
-+
-+
-+
 +nsresult
-+nsFitToView::OptimizeElement(float aCurOptimize, nsIDOMNode * node, nsIPresShell* aPresShell, nsIDOMViewCSS *defaultCSSView, nsRect &wrect)
++nsFitToView::OptimizeElement(float aCurOptimize, nsIDOMNode * node, nsRect &wrect)
 +{
-+  //printf("nsFitToView::OptimizeElement\n");
++//  printf("nsFitToView::OptimizeElement\n");
 +  nsresult rv;
-+  nsRect srect;
-+
 +  nsCOMPtr<nsIDOMHTMLElement> element = do_QueryInterface(node, &rv);
 +  if(NS_FAILED(rv))
 +    return NS_OK;
 +
-+  if (!aPresShell)
-+    return NS_ERROR_FAILURE;
-+
-+  nsIFrame* frame = nsnull;
-+  if (aPresShell)
-+  {
-+    nsCOMPtr<nsIContent> iContent = do_QueryInterface(element, &rv);
-+    NS_ENSURE_SUCCESS(rv, rv);
-+    frame = aPresShell->GetPrimaryFrameFor(iContent);
-+    NS_ENSURE_TRUE(frame, rv);
-+    srect = frame->GetRect();
-+    nsPresContext *context = aPresShell->GetPresContext();
-+    if (!context)
-+      return NS_ERROR_FAILURE;
-+    srect.width = context->AppUnitsToDevPixels(srect.width);
-+    srect.height = context->AppUnitsToDevPixels(srect.height);
-+  }
-+
-+  if (!srect.width || !srect.height)
-+    return NS_ERROR_FAILURE;
-+
 +  nsRect rect(0,0,0,0);
-+  rect = frame->GetScreenRectExternal();
++  nsCOMPtr<nsIDOMNSElement> nsdel = do_QueryInterface(element, &rv);
++  nsCOMPtr<nsIDOMElement> ndel = do_QueryInterface(element, &rv);
++  nsCOMPtr<nsIDOMTextRectangle> domrect;
++  nsdel->GetBoundingClientRect(getter_AddRefs(domrect));
++  float pleft,pright,ptop,pbottom;
++  domrect->GetLeft(&pleft);
++  domrect->GetRight(&pright);
++  domrect->GetTop(&ptop);
++  domrect->GetBottom(&pbottom);
++  rect = nsRect(PRInt32(pleft), PRInt32(ptop), PRInt32(pright - pleft), PRInt32(pbottom - ptop));
++
++  nsString nname;
++  node->GetNodeName(nname);
++
++  if (!rect.width || !rect.height)
++    return NS_ERROR_FAILURE;
++
 +  PRBool full = PR_FALSE, half = PR_FALSE;
 +  if (rect.x >= wrect.x + wrect.width)
 +  {
@@ -575,15 +576,12 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  if (!half && !full)
 +    return NS_OK;
 +
-+  nsString nname;
-+  node->GetNodeName(nname);
 +
 +  NS_NAMED_LITERAL_STRING(class_attr, "class");
 +  nsString classValue;
 +  element->GetAttribute(class_attr, classValue);
 +
-+  if (nname.LowerCaseEqualsLiteral("body")
-+  )
++  if (nname.LowerCaseEqualsLiteral("body"))
 +  {
 +    classValue.AppendLiteral(" ftv");
 +  }
@@ -603,13 +601,15 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +      }
 +    }
 +  }
++
++  //printf("OptimizeElement:'%s' [%i,%i,%i,%i]\n", NS_ConvertUTF16toUTF8(nname).get() , rect.x, rect.y, rect.width, rect.height);
 +  element->SetAttribute(class_attr, classValue);
 +  return rv;
 +}
 +
 +
 +nsresult
-+nsFitToView::OptimizeElementsByTag(float aCurrOptimizeVal, nsIDOMDocument *aDocument, nsIPresShell* ps, nsString aTag, nsIDOMViewCSS *defaultCSSView)
++nsFitToView::OptimizeElementsByTag(float aCurrOptimizeVal, nsIDOMDocument *aDocument, nsString aTag)
 +{
 +  nsresult rv;
 +  nsCOMPtr<nsIDOMNodeList> nodelist;
@@ -619,23 +619,19 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  nsCOMPtr<nsIDOMElement> del;
 +  rv = aDocument->GetDocumentElement(getter_AddRefs(del));
 +  NS_ENSURE_SUCCESS(rv, rv);
++  nsCOMPtr<nsIDOMNSElement> nsdel = do_QueryInterface(del, &rv);
 +  nsRect wrect(0,0,0,0);
 +  {
-+    nsCOMPtr<nsIContent> content = do_QueryInterface(del, &rv);
-+    NS_ENSURE_SUCCESS(rv, rv);
-+    nsCOMPtr<nsIDocument> doc = content->GetDocument();
-+    if (doc)
-+    {
-+      nsIPresShell* presShell = doc->GetPrimaryShell();
-+      if (presShell)
-+      {
-+        nsIFrame* frame = presShell->GetPrimaryFrameFor(content);
-+        if (frame)
-+          wrect = frame->GetScreenRectExternal();
-+        //                printf("Doc Rect: x: %i, y: %i, w: %i, rx: %i, h: %i\n", wrect.x, wrect.y, wrect.width, wrect.width+wrect.x, wrect.height);
-+      }
-+    }
++    nsCOMPtr<nsIDOMTextRectangle> domrect;
++    nsdel->GetBoundingClientRect(getter_AddRefs(domrect));
++    float pleft,pright,ptop,pbottom;
++    domrect->GetLeft(&pleft);
++    domrect->GetRight(&pright);
++    domrect->GetTop(&ptop);
++    domrect->GetBottom(&pbottom);
++    wrect = nsRect(PRInt32(pleft), PRInt32(ptop), PRInt32(pright - pleft), PRInt32(pbottom - ptop));
 +  }
++  //printf("OptimizeElementbyTag: WRECT [%i,%i,%i,%i]\n", wrect.x, wrect.y, wrect.width, wrect.height);
 +
 +  if( !nodelist )
 +    return NS_ERROR_FAILURE;
@@ -649,7 +645,7 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +    rv |= nodelist->Item(i, getter_AddRefs(node));
 +    if (!NS_FAILED(rv) && node)
 +    {
-+      rv |= OptimizeElement(aCurrOptimizeVal, node, ps, defaultCSSView, wrect);
++      rv |= OptimizeElement(aCurrOptimizeVal, node, wrect);
 +    }
 +    if (NS_FAILED(rv))
 +      zoomed--;
@@ -663,21 +659,13 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +{
 +  nsresult rv;
 +  nsCOMPtr<nsIPresShell> ps;
-+
-+  nsCOMPtr<nsIDOMDocumentView> docView(do_QueryInterface(aDocument));
-+  NS_ENSURE_TRUE(docView, NS_ERROR_FAILURE);
-+  nsCOMPtr<nsIDOMAbstractView> defaultView;
-+  docView->GetDefaultView(getter_AddRefs(defaultView));
-+  nsCOMPtr<nsIDOMViewCSS> defaultCSSView(do_QueryInterface(defaultView));
-+  NS_ENSURE_TRUE(defaultCSSView, NS_ERROR_FAILURE);
-+
 +  GetDocumentPresShell(aDocument, getter_AddRefs(ps));
-+  if(ps)
-+    ps->LockReflow();
++//  if(ps)
++//    ps->LockReflow();
 +
 +  if (mDoOptimize)
 +  {
-+    OptimizeElementsByTag(aCurrOptimizeVal, aDocument, ps, NS_LITERAL_STRING( "*" ), defaultCSSView);
++    OptimizeElementsByTag(aCurrOptimizeVal, aDocument, NS_LITERAL_STRING( "*" ));
 +  }
 +
 +  nsCOMPtr<nsIDOMNodeList> nodelist;
@@ -703,7 +691,7 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +
 +  if(ps)
 +  {
-+    ps->UnLockReflow();
++//    ps->UnLockReflow();
 +    ps->StyleChangeReflow();
 +  }
 +
@@ -746,16 +734,14 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +nsFitToView::SetOptimize(nsISupports *aObject, const void * data)
 +{
 +  nsCOMPtr<nsIStyleSheetService> styleSheetService = do_GetService("@mozilla.org/content/style-sheet-service;1");
-+  if (styleSheetService) {
-+    nsCOMPtr<nsIURI> uri;
-+    NS_NewURI(getter_AddRefs(uri), NS_LITERAL_CSTRING("resource://gre/res/ftv.css"));
-+    if (uri) {
-+      if (mSetOptimizing) {
-+          styleSheetService->LoadAndRegisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
-+      } else {
-+          styleSheetService->UnregisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
-+      }
-+    }
++  NS_ENSURE_TRUE(styleSheetService, NS_OK);
++  nsCOMPtr<nsIURI> uri;
++  NS_NewURI(getter_AddRefs(uri), NS_LITERAL_CSTRING("resource://gre/res/ftv.css"));
++  NS_ENSURE_TRUE(uri, NS_OK);
++  if (mSetOptimizing) {
++    styleSheetService->LoadAndRegisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
++  } else {
++    styleSheetService->UnregisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
 +  }
 +  return NS_OK;
 +}
@@ -846,7 +832,6 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +    return DoOptimize(aSubject);
 +  }
 +
-+
 +  return NS_OK;
 +}
 +
@@ -880,7 +865,7 @@ Index: mozilla/layout/base/nsIPresShell.h
 ===================================================================
 --- mozilla.orig/layout/base/nsIPresShell.h
 +++ mozilla/layout/base/nsIPresShell.h
-@@ -699,16 +699,19 @@
+@@ -727,16 +727,19 @@
  
    void AddWeakFrame(nsWeakFrame* aWeakFrame);
    void RemoveWeakFrame(nsWeakFrame* aWeakFrame);
@@ -904,7 +889,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -1012,16 +1012,19 @@
+@@ -990,16 +990,19 @@
    virtual void ListStyleSheets(FILE *out, PRInt32 aIndent = 0);
    virtual void VerifyStyleTree();
  #endif
@@ -924,7 +909,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
    void UnsuppressAndInvalidate();
  
    void     WillCauseReflow() { ++mChangeNestCount; }
-@@ -1094,16 +1097,17 @@
+@@ -1108,16 +1111,17 @@
  #ifdef DEBUG
    PRUint32                  mUpdateCount;
  #endif
@@ -942,7 +927,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
    // middle of frame construction and the like... it really shouldn't be
    // needed, one hopes, but it is for now.
    PRUint32  mChangeNestCount;
-@@ -5390,16 +5394,28 @@
+@@ -5849,16 +5853,28 @@
    nsIPresShell *shell = aDocument->GetPrimaryShell();
    if (shell)
      shell->Freeze();
@@ -971,7 +956,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
      EnumeratePlugins(domDoc, NS_LITERAL_STRING("applet"), StopPluginInstance);
      EnumeratePlugins(domDoc, NS_LITERAL_STRING("embed"), StopPluginInstance);
    }
-@@ -5675,16 +5691,19 @@
+@@ -6123,16 +6139,19 @@
  #endif
  
  nsresult
@@ -991,55 +976,3 @@ Index: mozilla/layout/base/nsPresShell.cpp
      }
  #endif
  
-Index: mozilla/extensions/ftv/src/ftv.css
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/src/ftv.css
-@@ -0,0 +1,47 @@
-+* {
-+  max-width: 100% !important;
-+}
-+
-+*.ftvAll {
-+  width: auto !important;
-+  left:auto !important;
-+  float:none !important;
-+  padding:0px !important;
-+  margin:0px !important;
-+  white-space:normal !important;
-+  clear:left !important;
-+}
-+
-+td.ftvHalf {
-+  display:block !important;
-+  valign:top !important;
-+  align:left !important;
-+  height:auto !important;
-+}
-+
-+td.ftvFull {
-+  display:block !important;
-+  valign:top !important;
-+  align:left !important;
-+  height:auto !important;
-+}
-+
-+tr.ftv, tbody.ftv, table.ftv {
-+  display:block !important;
-+  height:auto !important;
-+}
-+
-+img.ftv {
-+  vertical-align:bottom !important;
-+  width: 100% !important;
-+}
-+
-+embed.ftv {
-+  width: 100% !important;
-+}
-+
-+
-+div.ftv {
-+  vertical-align:bottom !important;
-+}
-+
