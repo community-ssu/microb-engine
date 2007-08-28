@@ -24,7 +24,7 @@ ROOT_CMD=fakeroot
 BUILD_CMD=dpkg
 
 GFX=gtk2
-CONFIG=b3
+CONFIG=gtk2
 
 #GFX=thebes
 #CONFIG=thebes
