@@ -258,6 +258,7 @@ crash/JS_Destroy.Crash.diff
 550_onchange_text_input_fix.diff
 trunk_updates/BUG_370525_gmail_chats.diff
 640_mouse_event_order.diff
+650_BUG204011_theme_change.diff
 
 
 # Crash, plugins, updates, not tested!!!
