@@ -157,3 +157,55 @@ Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
  
    PRBool mNavigationFramesState;
  };
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp.orig	2007-08-29 15:43:58.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2007-08-29 15:55:45.000000000 +0300
+@@ -667,20 +667,21 @@ nsSpatialNavigation::handleMove(int dire
+   PRBool doScroll = getFocusedContent(direction, getter_AddRefs(focusedContent));
+ 
+   // there are some websites which have no focusable elements,
+   // only text, for example. In these cases, scrolling have to be
+   // performed by snav.
+   if (!focusedContent) {
+      if (doScroll)
+        ScrollWindow(direction, getContentWindow());
+      return NS_OK;
+   }
++  
+   nsPresContext* presContext = getPresContext(focusedContent);
+   if(!presContext)
+     return NS_ERROR_NULL_POINTER;
+ 
+   nsIFrame* focusedFrame;
+   getFrameForContent(focusedContent, &focusedFrame);
+ 
+   nsRect focusedRect;
+   PRBool isAREA = isArea(focusedContent);
+   if (!isAREA) 
+@@ -833,22 +834,26 @@ nsSpatialNavigation::getFocusedContent(i
+     return PR_TRUE;
+   }
+ 
+   contentWindow = getContentWindow();
+   DisableJSScope foopy (contentWindow);
+ 
+   //xxxx should/can we prevent it from going into chrome???
+ //  if (direction == eNavLeft || direction == eNavUp)
+    focusController->MoveFocus(PR_TRUE, nsnull);
+    nsresult rv = focusController->GetFocusedElement(getter_AddRefs(element));
+-   if (element)
++   if (element) {
++     nsCOMPtr<nsIContent> c = do_QueryInterface(element);
++     foopy.~DisableJSScope();
++     setFocusedContent(c);
+      return PR_FALSE;
++   }
+ //  else
+ //    focusController->MoveFocus(PR_FALSE, nsnull);
+   
+   // so there is no focused content -- lets make some up, hightlight it and return.  
+ //  focusController->GetFocusedElement(getter_AddRefs(element));
+   return PR_TRUE;
+ }
+ 
+ void 
+ nsSpatialNavigation::setFocusedContent(nsIContent* c)
