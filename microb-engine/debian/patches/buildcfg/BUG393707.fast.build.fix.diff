@@ -1,0 +1,30 @@
+--- mozilla/embedding/components/windowwatcher/src/nsWindowWatcher.cpp.orig	2007-08-23 20:39:59.000000000 +0300
++++ mozilla/embedding/components/windowwatcher/src/nsWindowWatcher.cpp	2007-08-29 23:04:58.000000000 +0300
+@@ -920,23 +920,26 @@ nsWindowWatcher::OpenWindowJSInternal(ns
+ 
+     // Dispatch dialog events etc, but we only want to do that if
+     // we're opening a modal content window (the helper classes are
+     // no-ops if given no window), for chrome dialogs we don't want to
+     // do any of that (it's done elsewhere for us).
+ 
+     if (windowIsModalContentDialog) {
+       modalContentWindow = do_QueryInterface(*_retval);
+     }
+ 
++#ifdef MOZ_XUL
+     nsAutoWindowStateHelper windowStateHelper(modalContentWindow);
+ 
+-    if (!windowStateHelper.DefaultEnabled()) {
++    if (!windowStateHelper.DefaultEnabled())
++#endif
++    {
+       // Default to cancel not opening the modal window.
+       NS_RELEASE(*_retval);
+ 
+       return NS_OK;
+     }
+ 
+     // Reset popup state while opening a modal dialog, and firing
+     // events about the dialog, to prevent the current state from
+     // being active the whole time a modal dialog is open.
+     nsAutoPopupStatePusher popupStatePusher(modalContentWindow, openAbused);
