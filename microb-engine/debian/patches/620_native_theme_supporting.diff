@@ -255,3 +255,28 @@ Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
  //
  //-------------------------------------------------------------------------
  nsLookAndFeel::nsLookAndFeel() : nsXPLookAndFeel()
+--- mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp.orig	2007-08-29 18:09:12.000000000 +0300
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp	2007-08-29 18:10:14.000000000 +0300
+@@ -1069,21 +1069,21 @@ nsNativeThemeGTK::ThemeSupportsWidget(ns
+   case NS_THEME_RADIO_CONTAINER:
+   case NS_THEME_CHECKBOX_LABEL:
+   case NS_THEME_RADIO_LABEL:
+   case NS_THEME_MENUBAR:
+   case NS_THEME_MENUPOPUP:
+   case NS_THEME_MENUITEM:
+   case NS_THEME_CHECKMENUITEM:
+   case NS_THEME_RADIOMENUITEM:
+   case NS_THEME_WINDOW:
+   case NS_THEME_DIALOG:
+-  case NS_THEME_DROPDOWN:
++    // case NS_THEME_DROPDOWN:  // (Our silly GTK doues not support gtk_option_menu anymore)
+   case NS_THEME_DROPDOWN_TEXT:
+     return !IsWidgetStyled(aPresContext, aFrame, aWidgetType);
+   }
+ 
+   return PR_FALSE;
+ }
+ 
+ NS_IMETHODIMP_(PRBool)
+ nsNativeThemeGTK::WidgetIsContainer(PRUint8 aWidgetType)
+ {
