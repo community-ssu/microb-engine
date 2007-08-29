@@ -3,11 +3,11 @@
 ##
 ## DP: Fix for working with calendar.gmail.com with disables xul.
 
---- mozilla/dom/src/base/nsDOMClassInfo.cpp.orig	2007-08-27 00:26:43.000000000 +0300
-+++ mozilla/dom/src/base/nsDOMClassInfo.cpp	2007-08-27 00:41:30.000000000 +0300
-@@ -807,23 +807,26 @@ static nsDOMClassInfoData sClassInfoData
-   NS_DEFINE_CLASSINFO_DATA(XULDocument, nsDocumentSH,
-                            DOCUMENT_SCRIPTABLE_FLAGS |
+Index: mozilla/dom/src/base/nsDOMClassInfo.cpp
+===================================================================
+--- mozilla.orig/dom/src/base/nsDOMClassInfo.cpp
++++ mozilla/dom/src/base/nsDOMClassInfo.cpp
+@@ -809,19 +809,22 @@
                             nsIXPCScriptable::WANT_ENUMERATE)
    NS_DEFINE_CLASSINFO_DATA(XULElement, nsElementSH,
                             ELEMENT_SCRIPTABLE_FLAGS)
@@ -31,11 +31,7 @@
  
    // Crypto classes
    NS_DEFINE_CLASSINFO_DATA(Crypto, nsDOMGenericSH,
-                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
-   NS_DEFINE_CLASSINFO_DATA(CRMFObject, nsDOMGenericSH,
-@@ -2468,25 +2471,27 @@ nsDOMClassInfo::Init()
- 
-   DOM_CLASSINFO_MAP_BEGIN(XULCommandDispatcher, nsIDOMXULCommandDispatcher)
+@@ -2470,21 +2473,23 @@
      DOM_CLASSINFO_MAP_ENTRY(nsIDOMXULCommandDispatcher)
    DOM_CLASSINFO_MAP_END
  #endif
@@ -60,13 +56,11 @@
      DOM_CLASSINFO_MAP_ENTRY(nsITreeContentView)
      DOM_CLASSINFO_MAP_ENTRY(nsITreeView)
    DOM_CLASSINFO_MAP_END
- #endif
- 
---- mozilla/dom/public/nsDOMClassInfoID.h.orig	2007-08-27 00:26:43.000000000 +0300
-+++ mozilla/dom/public/nsDOMClassInfoID.h	2007-08-27 00:41:30.000000000 +0300
-@@ -171,22 +171,25 @@ enum nsDOMClassInfoID {
-   eDOMClassInfo_Range_id,
-   eDOMClassInfo_Selection_id,
+Index: mozilla/dom/public/nsDOMClassInfoID.h
+===================================================================
+--- mozilla.orig/dom/public/nsDOMClassInfoID.h
++++ mozilla/dom/public/nsDOMClassInfoID.h
+@@ -173,18 +173,21 @@
  
    // XUL classes
  #ifdef MOZ_XUL
@@ -89,13 +83,11 @@
    eDOMClassInfo_Crypto_id,
    eDOMClassInfo_CRMFObject_id,
    eDOMClassInfo_Pkcs11_id,
-   
-   // DOM Traversal classes
---- mozilla/layout/xul/base/src/nsBoxObject.cpp.orig	2007-08-27 01:35:06.000000000 +0300
-+++ mozilla/layout/xul/base/src/nsBoxObject.cpp	2007-08-27 01:34:58.000000000 +0300
-@@ -45,21 +45,25 @@
- #include "nsIContent.h"
- #include "nsIFrame.h"
+Index: mozilla/layout/xul/base/src/nsBoxObject.cpp
+===================================================================
+--- mozilla.orig/layout/xul/base/src/nsBoxObject.cpp
++++ mozilla/layout/xul/base/src/nsBoxObject.cpp
+@@ -47,17 +47,21 @@
  #include "nsIDocShell.h"
  #include "nsReadableUtils.h"
  #include "nsILookAndFeel.h"
@@ -117,13 +109,11 @@
  
  // Static IIDs/CIDs. Try to minimize these.
  static NS_DEFINE_CID(kLookAndFeelCID, NS_LOOKANDFEEL_CID);
- 
- // Implementation /////////////////////////////////////////////////////////////////
---- mozilla/layout/base/Makefile.in.orig	2007-08-27 00:26:43.000000000 +0300
-+++ mozilla/layout/base/Makefile.in	2007-08-27 01:36:22.000000000 +0300
-@@ -132,20 +132,32 @@ CPPSRCS		= \
- 		nsLayoutHistoryState.cpp \
- 		nsLayoutUtils.cpp \
+Index: mozilla/layout/base/Makefile.in
+===================================================================
+--- mozilla.orig/layout/base/Makefile.in
++++ mozilla/layout/base/Makefile.in
+@@ -134,16 +134,28 @@
  		nsPresContext.cpp \
  		nsPresShell.cpp \
  		nsPresState.cpp \
@@ -152,11 +142,7 @@
  endif                
  
  FORCE_STATIC_LIB = 1
- 
- include $(topsrcdir)/config/rules.mk
-@@ -172,10 +184,21 @@ LOCAL_INCLUDES += \
- endif
- 
+@@ -174,8 +186,19 @@
  ifdef MOZ_SVG
  LOCAL_INCLUDES += \
          -I$(srcdir)/../svg/base/src
@@ -176,11 +162,11 @@
 +
 +GARBAGE    += nsIBoxObject.idl nsPIBoxObject.h nsBoxObject.cpp
 +endif
---- mozilla/layout/build/nsLayoutModule.cpp.orig	2007-08-27 00:27:29.000000000 +0300
-+++ mozilla/layout/build/nsLayoutModule.cpp	2007-08-27 00:41:30.000000000 +0300
-@@ -383,22 +383,23 @@ Shutdown()
-   gInitialized = PR_FALSE;
- 
+Index: mozilla/layout/build/nsLayoutModule.cpp
+===================================================================
+--- mozilla.orig/layout/build/nsLayoutModule.cpp
++++ mozilla/layout/build/nsLayoutModule.cpp
+@@ -374,18 +374,19 @@
    nsLayoutStatics::Release();
  }
  
@@ -201,11 +187,7 @@
  nsresult NS_NewTreeBoxObject(nsIBoxObject** aResult);
  #endif
  
- #ifdef MOZ_ENABLE_CANVAS
- nsresult NS_NewCanvasRenderingContext2D(nsIDOMCanvasRenderingContext2D** aResult);
-@@ -441,22 +442,23 @@ ctor_(nsISupports* aOuter, REFNSIID aIID
-   return rv;                                              \
- }
+@@ -432,18 +433,19 @@
  
  #ifdef DEBUG
  MAKE_CTOR(CreateNewFrameUtil,             nsIFrameUtil,                NS_NewFrameUtil)
@@ -226,11 +208,7 @@
  MAKE_CTOR(CreateNewContainerBoxObject,  nsIBoxObject,           NS_NewContainerBoxObject)
  #endif // MOZ_XUL
  
- #ifndef MOZ_NO_INSPECTOR_APIS
- #ifdef MOZ_XUL
-@@ -810,26 +812,26 @@ static const nsModuleComponentInfo gComp
-     CreateCaret },
- 
+@@ -801,22 +803,22 @@
    // XXX ick
    { "Presentation shell",
      NS_PRESSHELL_CID,
@@ -255,31 +233,3 @@
    { "XUL Menu Box Object",
      NS_MENUBOXOBJECT_CID,
      "@mozilla.org/layout/xul-boxobject-menu;1",
-     CreateNewMenuBoxObject },
- 
---- mozilla/layout/build/nsLayoutModule.cpp.orig	2007-08-27 02:45:38.000000000 +0300
-+++ mozilla/layout/build/nsLayoutModule.cpp	2007-08-27 07:28:10.000000000 +0300
-@@ -230,22 +230,22 @@ class nsIDocumentLoaderFactory;
- /* 0ddf4df8-4dbb-4133-8b79-9afb966514f5 */
- #define NS_PLUGINDOCLOADERFACTORY_CID \
- { 0x0ddf4df8, 0x4dbb, 0x4133, { 0x8b, 0x79, 0x9a, 0xfb, 0x96, 0x65, 0x14, 0xf5 } }
- 
- #define NS_WINDOWCOMMANDTABLE_CID \
-  { /* 0DE2FBFA-6B7F-11D7-BBBA-0003938A9D96 */        \
-   0x0DE2FBFA, 0x6B7F, 0x11D7, {0xBB, 0xBA, 0x00, 0x03, 0x93, 0x8A, 0x9D, 0x96} }
- 
- static NS_DEFINE_CID(kWindowCommandTableCID, NS_WINDOWCOMMANDTABLE_CID);
- 
--#ifdef MOZ_XUL
- #include "nsIBoxObject.h"
-+#ifdef MOZ_XUL
- #include "nsIXULDocument.h"
- #include "nsIXULPopupListener.h"
- #include "nsIXULPrototypeCache.h"
- #include "nsIXULSortService.h"
- 
- #ifndef MOZ_NO_INSPECTOR_APIS
- #include "inDOMView.h"
- #include "inDeepTreeWalker.h"
- #include "inFlasher.h"
- #include "inCSSValueSearch.h"

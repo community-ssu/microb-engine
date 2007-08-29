@@ -189,3 +189,6 @@ crash/JS_Destroy.Crash.diff
 
 480_BUG377077_probably_workaround_fix.diff
 485_netwerk_buffer_count.diff
+
+640_mouse_event_order.diff
+last_trunk/630_BUG204011_theme_change.trunk.diff

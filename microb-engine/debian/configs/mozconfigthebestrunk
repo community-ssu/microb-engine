@@ -26,7 +26,7 @@ ac_add_options --enable-crypto
 ac_add_options --enable-necko-protocols="about data http file res ftp"
 ac_add_options --enable-chrome-format=flat
 ac_add_options --enable-plugins
-ac_add_options --enable-extensions="xml-rpc spatialnavigation gnomevfs ftv"
+ac_add_options --enable-extensions="xml-rpc gnomevfs ftv"
 ac_add_options --disable-xinerama
 ac_add_options --enable-xpfe-components # Will add only directory+ftp viewer with profile minimal
 ac_add_options --enable-image-decoders="png gif jpeg bmp"
