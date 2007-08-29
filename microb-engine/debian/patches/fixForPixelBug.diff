@@ -1,0 +1,149 @@
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-08-29 09:20:02.000000000 +0300
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-08-29 11:51:14.000000000 +0300
+@@ -69,21 +69,21 @@ NS_IMPL_ISUPPORTS1(nsRenderingContextGTK
+ 
+ #define NSRECT_TO_GDKRECT(ns,gdk) \
+   PR_BEGIN_MACRO \
+   gdk.x = ns.x; \
+   gdk.y = ns.y; \
+   gdk.width = ns.width; \
+   gdk.height = ns.height; \
+   PR_END_MACRO
+ 
+ #define FROM_TWIPS_INT(_x)  (NSToIntRound((float)((_x)/(mContext->AppUnitsPerDevPixel()))))
+-#define FROM_TWIPS_INT2(_x)  (NSToIntRound((float)((_x)/(mContext->AppUnitsPerDevPixel()))+0.5))
++#define FROM_TWIPS_INT2(_x)  (NSToIntRound((float)((_x)/(mContext->AppUnitsPerDevPixel()))))
+ #define FROM_TWIPS(_x)  ((float)((_x)/(mContext->AppUnitsPerDevPixel())))
+ #define NS_RECT_FROM_TWIPS_RECT(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT2((_r).width), FROM_TWIPS_INT2((_r).height)))
+ 
+ static nsGCCache *gcCache = nsnull;
+ static nsFixedSizeAllocator *gStatePool = nsnull;
+ 
+ nsRenderingContextGTK::nsRenderingContextGTK()
+ {
+   mFontMetrics = nsnull;
+   mContext = nsnull;
+@@ -1525,23 +1525,43 @@ NS_IMETHODIMP nsRenderingContextGTK::Get
+ NS_IMETHODIMP nsRenderingContextGTK::GetRangeWidth(const char *aText, PRUint32 aLength,
+                                                    PRUint32 aStart, PRUint32 aEnd,
+                                                    PRUint32 &aWidth)
+ {
+   return mFontMetrics->GetRangeWidth(aText, aLength, aStart, aEnd, aWidth);
+ }
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::DrawImage(imgIContainer *aImage, const nsRect & twSrcRect, const nsRect & twDestRect)
+ {
+   UpdateGC();
+-  nsRect aDestRect = NS_RECT_FROM_TWIPS_RECT(twDestRect);
+-  #define NS_RECT_FROM_TWIPS_RECT2(_r)   (nsRect(FROM_TWIPS_INT2((_r).x), FROM_TWIPS_INT2((_r).y), FROM_TWIPS_INT2((_r).width), FROM_TWIPS_INT2((_r).height)))
+-  nsRect aSrcRect = NS_RECT_FROM_TWIPS_RECT2(twSrcRect);
++
++  float scale = 1.0f;
++  nsCOMPtr<nsIDeviceContext> theDeviceContext;
++  GetDeviceContext(*getter_AddRefs(theDeviceContext));
++  if (theDeviceContext)
++    scale = theDeviceContext->GetPixelScale();
++
++  double p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
++  nsIntRect pxSr;
++  pxSr.x = NSAppUnitsToIntPixels(twSrcRect.x, p2a/scale);
++  pxSr.y = NSAppUnitsToIntPixels(twSrcRect.y, p2a/scale);
++  pxSr.width = NSAppUnitsToIntPixels(twSrcRect.XMost(), p2a/scale) - pxSr.x;
++  pxSr.height = NSAppUnitsToIntPixels(twSrcRect.YMost(), p2a/scale) - pxSr.y;
++
++  nsIntRect pxDr;
++  pxDr.x = NSAppUnitsToIntPixels(twDestRect.x, p2a/scale);
++  pxDr.y = NSAppUnitsToIntPixels(twDestRect.y, p2a/scale);
++  pxDr.width = NSAppUnitsToIntPixels(twDestRect.XMost(), p2a/scale) - pxDr.x;
++  pxDr.height = NSAppUnitsToIntPixels(twDestRect.YMost(), p2a/scale) - pxDr.y;
++
++  nsRect aDestRect = pxDr;
++  nsRect aSrcRect = pxSr;
++
+   //1,2,3... Some problems with images... stipes....;
+   nsRect dr = aDestRect;
+   mTranMatrix->TransformCoord(&dr.x, &dr.y, &dr.width, &dr.height);
+ 
+   // We should NOT be transforming the source rect (which is based on the image
+   // origin) using the rendering context's translation!
+   // However, given that we are, remember that the transformation of a
+   // height depends on the position, since what we are really doing is
+   // transforming the edges.  So transform *with* a translation, based
+   // on the origin of the *destination* rect, and then fix up the
+--- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-08-29 09:20:02.000000000 +0300
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-08-29 11:54:42.000000000 +0300
+@@ -697,59 +697,61 @@ nsImageGTK::Draw(nsIRenderingContext &aC
+ 
+   if (mDecodedX2 < mDecodedX1 || mDecodedY2 < mDecodedY1)
+     return NS_OK;
+ 
+   float scale = 1.0f;
+   nsCOMPtr<nsIDeviceContext> theDeviceContext;
+   aContext.GetDeviceContext(*getter_AddRefs(theDeviceContext));
+   if (theDeviceContext)
+     scale = theDeviceContext->GetPixelScale();
+ 
++  PRInt32 appUnitsPerDevPixel = 60;
++  if (theDeviceContext)
++    appUnitsPerDevPixel = theDeviceContext->AppUnitsPerDevPixel();
++
++  float p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
++
++
+   PRInt32 origDX = aDX, origDY = aDY, origDWidth = aDWidth, origDHeight = aDHeight;
+-  PRBool hack = ((aDWidth != aSWidth || aDHeight != aSHeight) && mWidth != aSWidth && aSHeight != mHeight);
+   PRInt32 ssW = aSWidth-aSX, ssH = aSHeight - aSY;
+   if (scale != 1.0) {
+-    aSWidth = mWidth - 1;
+-    aDWidth = NSToIntRound((float)(mWidth) * scale);
+-    aDWidth = origDWidth>aDWidth?origDWidth + 1:aDWidth + 1;
++    aSWidth = mWidth;
++    aDWidth = NSToIntRound(((float)(mWidth) * p2a)/appUnitsPerDevPixel);
++    aDWidth = origDWidth>aDWidth?origDWidth:aDWidth;
+     aDX -= aSX;
+     aSX = 0;
+-    aSHeight = mHeight - 1;
+-    aDHeight = NSToIntRound((float)(mHeight) * scale);
+-    aDHeight = origDHeight>aDHeight?origDHeight + 1:aDHeight + 1;
++    aSHeight = mHeight;
++    aDHeight = NSToIntRound(((float)(mHeight) * p2a )/ appUnitsPerDevPixel);
++    aDHeight = origDHeight>aDHeight?origDHeight:aDHeight;
+     aDY -= aSY;
+     aSY = 0;
+   }
+-  else {
+-    if (aSX > 0) aSX -= !hack;
+-    if (aSY > 0) aSY -= !hack;
+-  }
+ 
+ 
+ #ifdef TRACE_IMAGE_ALLOCATION
+   fprintf(stderr, "nsImageGTK::Draw(%p) s=(%4d %4d %4d %4d) d=(%4d %4d %4d %4d)\n",
+          this,
+          aSX, aSY, aSWidth, aSHeight,
+          aDX, aDY, aDWidth, aDHeight);
+ #endif
+ 
+   if (aSWidth <= 0 || aDWidth <= 0 || aSHeight <= 0 || aDHeight <= 0) {
+     return NS_OK;
+   }
+ 
+   // store some values we'll need for scaling...
+ 
+   PRInt32 srcWidth, srcHeight, dstWidth, dstHeight;
+   PRInt32 dstOrigX, dstOrigY;
+ 
+-  srcWidth = mWidth<ssW?mWidth - 1:aSWidth;
+-  srcHeight = mHeight<ssH?mHeight - 1:aSHeight;
++  srcWidth = mWidth<ssW?mWidth:aSWidth;
++  srcHeight = mHeight<ssH?mHeight:aSHeight;
+   if (!srcWidth) srcWidth = 1;
+   if (!srcHeight) srcHeight = 1;
+   dstWidth = aDWidth;
+   dstHeight = aDHeight;
+   dstOrigX = aDX;
+   dstOrigY = aDY;
+ 
+   // clip to decode region
+   PRInt32 j = aSX + aSWidth;
+   PRInt32 z;
