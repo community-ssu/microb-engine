@@ -341,3 +341,16 @@ Index: themes/classic/global/netError.css
    bottom: -1.5em;
    -moz-margin-end: 10px;
    opacity: .4;
+--- toolkit/locales/en-US/chrome/global/about.dtd.orig	2007-08-29 13:59:24.000000000 +0300
++++ toolkit/locales/en-US/chrome/global/about.dtd	2007-08-29 13:59:35.000000000 +0300
+@@ -12,6 +12,10 @@
+ <!ENTITY about.relnotes.linkTitle     "release notes">
+ <!ENTITY about.relnotes.afterLink     "for this version.">
+ 
++<!ENTITY about.config.beforeLink "Change this application's">
++<!ENTITY about.config.linkTitle "internal settings">
++<!ENTITY about.config.afterLink " (unsupported).">
++
+ <!ENTITY about.buildconfig.beforeLink "See the">
+ <!ENTITY about.buildconfig.linkTitle  "build configuration">
+ <!ENTITY about.buildconfig.afterLink  "used for this version.">
