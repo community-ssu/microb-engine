@@ -1,3 +1,4 @@
+# Bug 381512  [FIXr]Seamonkey goes into 99% CPU utilization when I access a PDF document
 Index: mozilla/content/html/document/src/nsPluginDocument.cpp
 ===================================================================
 --- mozilla.orig/content/html/document/src/nsPluginDocument.cpp

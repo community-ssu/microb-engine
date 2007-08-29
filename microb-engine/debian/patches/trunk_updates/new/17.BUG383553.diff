@@ -1,3 +1,4 @@
+#Bug 383553  crash on quit, in nsTimerImpl::Release(), gThread is null
 Index: mozilla/xpcom/threads/TimerThread.cpp
 ===================================================================
 --- mozilla.orig/xpcom/threads/TimerThread.cpp

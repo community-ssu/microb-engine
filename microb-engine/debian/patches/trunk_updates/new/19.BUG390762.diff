@@ -1,3 +1,4 @@
+#Bug 390762  Crash [@ nsFrameManager::UnregisterPlaceholderFrame] with -moz-column and float
 ===================================================================
 RCS file: /cvsroot/mozilla/layout/generic nsBlockFrame.cpp,v
 retrieving revision 3.856

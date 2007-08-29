@@ -1,3 +1,4 @@
+#Bug 347736  Plugin is not loaded if served as text/plain
 Index: mozilla/content/base/src/nsObjectLoadingContent.cpp
 ===================================================================
 --- mozilla.orig/content/base/src/nsObjectLoadingContent.cpp

@@ -1,3 +1,4 @@
+#Bug 386387  ifilm videos do not play, only audio plays 
 Index: nsObjectFrame.cpp
 ===================================================================
 RCS file: /cvsroot/mozilla/layout/generic/nsObjectFrame.cpp,v

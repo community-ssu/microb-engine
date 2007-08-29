@@ -1,3 +1,4 @@
+#Bug 347743  (trunk) Crash when closing tab with windows media player with onblur handler that removes plugin object
 ===================================================================
 RCS file: /cvsroot/mozilla/layout/generic nsObjectFrame.cpp,v
 retrieving revision 1.611

@@ -1,25 +1,8 @@
+#Bug 393517  [FIX]Crash [@ nsFrameConstructorState::ProcessFrameInsertions] with float, XUL, block-in-inline
 Index: mozilla/layout/base/nsCSSFrameConstructor.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsCSSFrameConstructor.cpp
 +++ mozilla/layout/base/nsCSSFrameConstructor.cpp
-@@ -436,16 +436,17 @@
- GetFieldSetAreaFrame(nsIFrame* aFieldsetFrame)
- {
-   // Depends on the fieldset child frame order - see ConstructFieldSetFrame() below.
-   nsIFrame* firstChild = aFieldsetFrame->GetFirstChild(nsnull);
-   return firstChild && firstChild->GetNextSibling() ? firstChild->GetNextSibling() : firstChild;
- }
- 
- //----------------------------------------------------------------------
-+
- //
- // When inline frames get weird and have block frames in them, we
- // annotate them to help us respond to incremental content changes
- // more easily.
- 
- static inline PRBool
- IsFrameSpecial(nsIFrame* aFrame)
- {
 @@ -460,16 +461,30 @@
    aFrame = aFrame->GetFirstInFlow();
  

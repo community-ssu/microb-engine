@@ -1,3 +1,4 @@
+# Bug 389663  CSS test crashes Firefox [@ 0x1d13bf3a] [@ nsImageDocument::CheckOverflowing]
 Index: src/nsImageDocument.cpp
 ===================================================================
 RCS file: /cvsroot/mozilla/content/html/document/src/nsImageDocument.cpp,v

@@ -1,3 +1,4 @@
+# Bug 326337  XMLHttpRequest.responseXML permission denied if document.domain set
 Index: content/base/src/nsXMLHttpRequest.cpp
 ===================================================================
 RCS file: /cvsroot/mozilla/content/base/src/nsXMLHttpRequest.cpp,v
