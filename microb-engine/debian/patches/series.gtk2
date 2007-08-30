@@ -277,6 +277,7 @@ trunk_updates/new/17.BUG383553.diff
 trunk_updates/new/19.BUG390762.diff
 trunk_updates/new/26.BUG390088.diff
 trunk_updates/new/27.BUG393294.diff
+trunk_updates/BUG389694.secure.diff
 
 #plugin beg
 #trunk_updates/new/8.5.BUG382367.diff
