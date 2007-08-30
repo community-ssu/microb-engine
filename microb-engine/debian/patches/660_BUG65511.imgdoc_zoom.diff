@@ -1,5 +1,7 @@
+# Zoom and auto image zoom fixes
+# Works fine on trunk
 --- mozilla/content/html/document/src/nsImageDocument.cpp.orig	2007-08-30 15:41:28.000000000 +0300
-+++ mozilla/content/html/document/src/nsImageDocument.cpp	2007-08-30 15:42:03.000000000 +0300
++++ mozilla/content/html/document/src/nsImageDocument.cpp	2007-08-30 15:45:20.000000000 +0300
 @@ -139,20 +139,21 @@ protected:
  
    PRPackedBool                  mResizeImageByDefault;
@@ -44,7 +46,7 @@
  }
  
  NS_IMPL_ADDREF_INHERITED(nsImageDocument, nsMediaDocument)
-@@ -339,20 +341,28 @@ nsImageDocument::SetScriptGlobalObject(n
+@@ -339,20 +341,29 @@ nsImageDocument::SetScriptGlobalObject(n
  {
    // If the script global object is changing, we need to unhook our event
    // listeners on the window.
@@ -59,8 +61,9 @@
 +      nsIPresShell *shell = GetPrimaryShell();
 +      if (shell) {
 +        nsPresContext* context = shell->GetPresContext();
-+      if (context)
-+        context->SetFullZoom(mStoredZoom, PR_FALSE);
++        if (context)
++          context->SetFullZoom(mStoredZoom, PR_FALSE);
++      }
 +      mStoredZoom = 1.0f;
 +    }
    }
@@ -73,7 +76,7 @@
      if (!mRootContent) {
        // Create synthetic document
        nsresult rv = CreateSyntheticDocument();
-@@ -400,32 +410,49 @@ nsImageDocument::GetImageRequest(imgIReq
+@@ -400,32 +411,49 @@ nsImageDocument::GetImageRequest(imgIReq
    }
  
    *aImageRequest = nsnull;
@@ -123,7 +126,7 @@
  
    RestoreImage();
    FlushPendingNotifications(Flush_Layout);
-@@ -470,21 +497,29 @@ nsImageDocument::RestoreImage()
+@@ -470,21 +498,29 @@ nsImageDocument::RestoreImage()
      imageContent->SetAttr(kNameSpaceID_None, nsGkAtoms::style,
                            NS_LITERAL_STRING("cursor: -moz-zoom-out"), PR_TRUE);
    }
