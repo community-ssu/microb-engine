@@ -259,7 +259,7 @@ crash/JS_Destroy.Crash.diff
 trunk_updates/BUG_370525_gmail_chats.diff
 640_mouse_event_order.diff
 650_BUG204011_theme_change.diff
-
+655_unblock_mouseevents_ontoolbar.diff
 
 # Crash, plugins, updates, not tested!!!
 trunk_updates/new/1.BUG386387.diff
