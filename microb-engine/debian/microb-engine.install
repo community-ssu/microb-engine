@@ -186,6 +186,7 @@ usr/lib/microb-engine/chrome/classic/skin/classic/global/menu.css
 usr/lib/microb-engine/chrome/classic/skin/classic/global/menulist.css
 usr/lib/microb-engine/chrome/classic/skin/classic/global/global.css
 usr/lib/microb-engine/chrome/classic/skin/classic/global/about.css
+usr/lib/microb-engine/chrome/classic/skin/classic/global/icons/warning-large.png
 usr/lib/microb-engine/chrome/classic/skin/classic/global/netError.css
 usr/lib/microb-engine/chrome/classic.manifest
 usr/lib/microb-engine/chrome/comm/content/xbl-marquee/xbl-marquee.xml
