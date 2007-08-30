@@ -279,6 +279,8 @@ trunk_updates/new/26.BUG390088.diff
 trunk_updates/new/27.BUG393294.diff
 trunk_updates/BUG389694.secure.diff
 
+660_BUG65511.imgdoc_zoom.diff
+
 #plugin beg
 #trunk_updates/new/8.5.BUG382367.diff
 #trunk_updates/new/8.bug377783.diff
