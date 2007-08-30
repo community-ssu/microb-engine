@@ -1,7 +1,7 @@
 # Unblock mouse events on the toolbar side of UI.
 # contact: Anton Rogaynis
---- build-tree/mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-08-30 13:53:43.000000000 -0400
-+++ build-tree/mozilla/widget/src/gtk2/nsWindow.cpp	2007-08-30 13:55:02.000000000 -0400
+--- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-08-30 13:53:43.000000000 -0400
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2007-08-30 13:55:02.000000000 -0400
 @@ -4426,10 +4426,11 @@
  {
      LOG(("button_press_event_cb\n"));
