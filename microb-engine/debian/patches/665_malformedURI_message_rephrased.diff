@@ -1,0 +1,12 @@
+#malformedURI message has been changed.(Fixed bug 50743)
+--- dom/locales/en-US/chrome/appstrings.properties.orig	2007-08-31 16:01:22.000000000 +0300
++++ dom/locales/en-US/chrome/appstrings.properties	2007-08-31 16:03:08.000000000 +0300
+@@ -34,7 +34,7 @@
+ #
+ # ***** END LICENSE BLOCK *****
+ 
+-malformedURI=The URL is not valid and cannot be loaded.
++malformedURI=Invalid URL.\nUnable to load.
+ fileNotFound=The file %S cannot be found. Please check the location and try again.
+ dnsNotFound=%S could not be found. Please check the name and try again.
+ protocolNotFound=%S is not a registered protocol.
