@@ -1,3 +1,42 @@
+microb-engine (1.0.3-18) unstable; urgency=low
+
+  * Fixed bug:malformedURI error message must be rephrased. Fixes: NB#50743
+  * Small updated for oforward functionality
+  * Fixed bug:Expanded combobox blocks toolbar and Zoom HWK. Fixes: NB#66625
+  * Fixed bug:Image cropped when zoomed in/out by tapping. Fixes: NB#65511
+  * Fixed bug:Image size is not optimised to the size of browser window.
+    Fixes: NB#65544
+  * Removed some patches for plugin host... Will come back on next week, after testing first patches
+  * Fixed bug:CSS style are incorrectly applied to network error notification
+    pages. Fixes: NB#57857
+  * Updated trunk patchset
+  * Fixed bug:Form elememt render wrong when displayed on colored background.
+    Fixes: NB#66905
+  * Plugin related stuff moved to the end of patchset (for easy disabling)
+  * Fixed bug:Unable to move focus out of text field with rocker. 
+    Fixes: NB#66792.
+  * Fixed bug:[SNAV]JS| MicroB : on mouse move error. Fixes: NB#35989
+  * Additional fix for Bug 35989 [SNAV]JS| MicroB : on mouse move error
+  * Fixed bug with changing theme on fly Bug 393976
+  * Fixed proper drawing of themed buttons
+  * Added patches from trunk (leaks)
+  * Added some crash,leaks,plugins fixes from trunk(Still not tested.). 
+  * Added UI for FitToView feature
+  * Disabled running 2 or more JScripts in the same window.
+  * Improved FTV components Possible build on TRUNK mozilla sources
+  * Fixed problems with getting BOX dimensions
+  * Fixed Some problems in spatial navigation and FTV
+  * Updated to latest trunk
+  * Added xulrunner package
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 31 Aug 2007 20:24:09 +0300
+
+microb-engine (1.0.3-17) unstable; urgency=low
+
+  * Fixed bug:"about:" gives "XML Parsing Error". Fixes: NB#67047
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 29 Aug 2007 14:14:39 +0300
+
 microb-engine (1.0.3-16) unstable; urgency=low
 
   * Fixed back spatial navigation (was broken on this week)
