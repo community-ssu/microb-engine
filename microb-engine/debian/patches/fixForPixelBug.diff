@@ -1,6 +1,7 @@
---- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-08-29 09:20:02.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-08-29 11:51:14.000000000 +0300
-@@ -69,21 +69,21 @@ NS_IMPL_ISUPPORTS1(nsRenderingContextGTK
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-09-03 10:27:52.000000000 +0300
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-09-03 10:30:15.000000000 +0300
+@@ -68,24 +68,23 @@
+ NS_IMPL_ISUPPORTS1(nsRenderingContextGTK, nsIRenderingContext)
  
  #define NSRECT_TO_GDKRECT(ns,gdk) \
    PR_BEGIN_MACRO \
@@ -10,11 +11,13 @@
    gdk.height = ns.height; \
    PR_END_MACRO
  
- #define FROM_TWIPS_INT(_x)  (NSToIntRound((float)((_x)/(mContext->AppUnitsPerDevPixel()))))
+-#define FROM_TWIPS_INT(_x)  (NSToIntRound((float)((_x)/(mContext->AppUnitsPerDevPixel()))))
 -#define FROM_TWIPS_INT2(_x)  (NSToIntRound((float)((_x)/(mContext->AppUnitsPerDevPixel()))+0.5))
-+#define FROM_TWIPS_INT2(_x)  (NSToIntRound((float)((_x)/(mContext->AppUnitsPerDevPixel()))))
- #define FROM_TWIPS(_x)  ((float)((_x)/(mContext->AppUnitsPerDevPixel())))
- #define NS_RECT_FROM_TWIPS_RECT(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT2((_r).width), FROM_TWIPS_INT2((_r).height)))
+-#define FROM_TWIPS(_x)  ((float)((_x)/(mContext->AppUnitsPerDevPixel())))
+-#define NS_RECT_FROM_TWIPS_RECT(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT2((_r).width), FROM_TWIPS_INT2((_r).height)))
++#define FROM_TWIPS_INT(_x)  (NSAppUnitsToIntPixels((_x), (mContext->AppUnitsPerDevPixel())))
++#define FROM_TWIPS(_x)  (NSAppUnitsToFloatPixels((_x),(mContext->AppUnitsPerDevPixel())))
++#define NS_RECT_FROM_TWIPS_RECT(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT((_r).width), FROM_TWIPS_INT((_r).height)))
  
  static nsGCCache *gcCache = nsnull;
  static nsFixedSizeAllocator *gStatePool = nsnull;
@@ -23,7 +26,9 @@
  {
    mFontMetrics = nsnull;
    mContext = nsnull;
-@@ -1525,23 +1525,43 @@ NS_IMETHODIMP nsRenderingContextGTK::Get
+   mSurface = nsnull;
+   mOffscreenSurface = nsnull;
+@@ -1525,23 +1524,43 @@ NS_IMETHODIMP nsRenderingContextGTK::Get
  NS_IMETHODIMP nsRenderingContextGTK::GetRangeWidth(const char *aText, PRUint32 aLength,
                                                     PRUint32 aStart, PRUint32 aEnd,
                                                     PRUint32 &aWidth)
@@ -70,8 +75,8 @@
    // height depends on the position, since what we are really doing is
    // transforming the edges.  So transform *with* a translation, based
    // on the origin of the *destination* rect, and then fix up the
---- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-08-29 09:20:02.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-08-29 11:54:42.000000000 +0300
+--- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-09-03 10:28:12.000000000 +0300
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-09-03 10:29:07.000000000 +0300
 @@ -697,59 +697,61 @@ nsImageGTK::Draw(nsIRenderingContext &aC
  
    if (mDecodedX2 < mDecodedX1 || mDecodedY2 < mDecodedY1)
