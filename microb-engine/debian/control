@@ -26,7 +26,7 @@ Description: Netscape Portable Runtime Library
 Package: libnss3
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}, libnss3-certs (= ${Source-Version}) | softpkcs11
+Depends: ${shlibs:Depends}, libnss3-certs (= ${Source-Version}) | softpkcs11, libnspr4 (= ${Source-Version})
 Description: Network Security Service Libraries - runtime
  This package provides the runtime libraries needed to use the Netscape
  SSL/TLS layer, including S/MIME and key management.
