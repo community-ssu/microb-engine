@@ -55,11 +55,14 @@ cp -rf  $TMP/debian/resources/branding $builddir/
 #cd $(builddir) && cd layout && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/layout/svg ./
 #cd $(builddir) && cd content && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/content/svg ./
 
+echo ""
+echo "Preparing with microb-engine/debian/configs/mozconfig"$CONFIG" ..."
+
 cd $builddir && cp -f ../../debian/configs/mozconfig$CONFIG ./mozconfig
 cd $builddir && rm -f patches && ln -s ../../debian/patches && rm -f patches/series && ln -s series.$GFX patches/series
 cd $builddir 
 
-echo "Applying patches... > patch.stamp"
+echo "Applying patches microb-engine/debian/patches/series.$GFX ... > patch.stamp"
 quilt push -a -v >  $builddir/patch.stamp
 
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../obj-dir" >> ./mozconfig
@@ -83,6 +86,7 @@ autoconf
 
 echo "Preparing engine for building finished"
 echo "Run:"
+echo "    cd scratch_build/build-tree/mozilla"
 echo "    make -f client.mk build_all"
 echo "    ...."
 echo "    http://developer.mozilla.org/en/docs/Build_Documentation"
