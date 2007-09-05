@@ -232,38 +232,6 @@
  // - Shutdown XPCOM timers
  // - Notify "xpcom-shutdown-threads" for thread joins
  // - Shutdown the event queues
---- mozilla/xpcom/glue/standalone/nsXPCOMGlue.cpp.orig	2007-04-24 20:02:51.000000000 +0300
-+++ mozilla/xpcom/glue/standalone/nsXPCOMGlue.cpp	2007-09-05 12:32:45.000000000 +0300
-@@ -146,20 +146,29 @@ NS_InitXPCOM3(nsIServiceManager* *result
-               nsStaticModuleInfo const *staticComponents,
-               PRUint32 componentCount)
- {
-     if (!xpcomFunctions.init3)
-         return NS_ERROR_NOT_INITIALIZED;
-     return xpcomFunctions.init3(result, binDirectory, appFileLocationProvider,
-                                 staticComponents, componentCount);
- }
- 
- XPCOM_API(nsresult)
-+NS_InitXPCOM4(void)
-+{
-+    if (!xpcomFunctions.init4)
-+        return NS_ERROR_NOT_INITIALIZED;
-+    return xpcomFunctions.init4();
-+}
-+
-+
-+XPCOM_API(nsresult)
- NS_ShutdownXPCOM(nsIServiceManager* servMgr)
- {
-     if (!xpcomFunctions.shutdown)
-         return NS_ERROR_NOT_INITIALIZED;
-     return xpcomFunctions.shutdown(servMgr);
- }
- 
- XPCOM_API(nsresult)
- NS_GetServiceManager(nsIServiceManager* *result)
- {
 --- mozilla/toolkit/library/dlldeps-xul.cpp.orig	2006-08-17 17:22:04.000000000 +0300
 +++ mozilla/toolkit/library/dlldeps-xul.cpp	2007-09-05 12:50:38.000000000 +0300
 @@ -37,16 +37,17 @@
@@ -339,3 +307,32 @@
   * @note There are two possibilities for selecting a profile:
   *
   * 1) Select the profile before calling XRE_InitEmbedding. The aAppDirProvider
+--- mozilla/xpcom/glue/standalone/nsXPCOMGlue.cpp.orig	2007-04-24 20:02:51.000000000 +0300
++++ mozilla/xpcom/glue/standalone/nsXPCOMGlue.cpp	2007-09-05 17:16:13.000000000 +0300
+@@ -146,20 +146,26 @@ NS_InitXPCOM3(nsIServiceManager* *result
+               nsStaticModuleInfo const *staticComponents,
+               PRUint32 componentCount)
+ {
+     if (!xpcomFunctions.init3)
+         return NS_ERROR_NOT_INITIALIZED;
+     return xpcomFunctions.init3(result, binDirectory, appFileLocationProvider,
+                                 staticComponents, componentCount);
+ }
+ 
+ XPCOM_API(nsresult)
++NS_InitXPCOM4(void)
++{
++    return NS_ERROR_NOT_INITIALIZED;
++}
++
++XPCOM_API(nsresult)
+ NS_ShutdownXPCOM(nsIServiceManager* servMgr)
+ {
+     if (!xpcomFunctions.shutdown)
+         return NS_ERROR_NOT_INITIALIZED;
+     return xpcomFunctions.shutdown(servMgr);
+ }
+ 
+ XPCOM_API(nsresult)
+ NS_GetServiceManager(nsIServiceManager* *result)
+ {
