@@ -3,28 +3,6 @@
 # export MOZ_XPCOM_NO_THREADS=1 and call XRE_InitThreads after XRE_InitEmbedding
 --- mozilla/xpcom/stub/nsXPComStub.cpp.orig	2007-04-24 20:02:51.000000000 +0300
 +++ mozilla/xpcom/stub/nsXPComStub.cpp	2007-09-05 12:33:44.000000000 +0300
-@@ -94,20 +94,21 @@ static const XPCOMFunctions kFrozenFunct
- 
-     // these functions were added post 1.7 (post Firefox 1.0)
-     &NS_Alloc_P,
-     &NS_Realloc_P,
-     &NS_Free_P,
-     &NS_StringContainerInit2_P,
-     &NS_CStringContainerInit2_P,
-     &NS_StringGetMutableData_P,
-     &NS_CStringGetMutableData_P,
-     &NS_InitXPCOM3_P,
-+    &NS_InitXPCOM4_P,
- 
-     // these functions were added post 1.8
-     &NS_DebugBreak_P,
-     &NS_LogInit_P,
-     &NS_LogTerm_P,
-     &NS_LogAddRef_P,
-     &NS_LogRelease_P,
-     &NS_LogCtor_P,
-     &NS_LogDtor_P,
-     &NS_LogCOMPtrAddRef_P,
 @@ -155,20 +156,28 @@ EXPORT_XPCOM_API(nsresult)
  NS_InitXPCOM3(nsIServiceManager **result,
  	      nsIFile *binDirectory,
