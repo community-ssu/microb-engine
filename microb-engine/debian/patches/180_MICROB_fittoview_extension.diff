@@ -191,7 +191,7 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/public/nsIFitToView.idl mozilla/ex
 diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensions/ftv/src/Makefile.in
 --- mozilla/extensions/ftv.orig/src/Makefile.in	1970-01-01 02:00:00.000000000 +0200
 +++ mozilla/extensions/ftv/src/Makefile.in	2007-08-27 08:11:38.000000000 +0300
-@@ -0,0 +1,108 @@
+@@ -0,0 +1,109 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
 +# Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -243,6 +243,7 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensions
 +SHORT_LIBNAME = ftv
 +endif
 +FORCE_SHARED_LIB = 1
++IS_COMPONENT = 1
 +
 +REQUIRES = \
 +    dom \
