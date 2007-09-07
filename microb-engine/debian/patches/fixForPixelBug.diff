@@ -1,5 +1,5 @@
---- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-09-03 10:27:52.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-09-03 10:30:15.000000000 +0300
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-09-07 14:26:36.000000000 +0300
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-09-07 14:41:41.000000000 +0300
 @@ -68,24 +68,23 @@
  NS_IMPL_ISUPPORTS1(nsRenderingContextGTK, nsIRenderingContext)
  
@@ -28,7 +28,7 @@
    mContext = nsnull;
    mSurface = nsnull;
    mOffscreenSurface = nsnull;
-@@ -1525,23 +1524,43 @@ NS_IMETHODIMP nsRenderingContextGTK::Get
+@@ -1525,23 +1524,52 @@ NS_IMETHODIMP nsRenderingContextGTK::Get
  NS_IMETHODIMP nsRenderingContextGTK::GetRangeWidth(const char *aText, PRUint32 aLength,
                                                     PRUint32 aStart, PRUint32 aEnd,
                                                     PRUint32 &aWidth)
@@ -39,9 +39,6 @@
  NS_IMETHODIMP nsRenderingContextGTK::DrawImage(imgIContainer *aImage, const nsRect & twSrcRect, const nsRect & twDestRect)
  {
    UpdateGC();
--  nsRect aDestRect = NS_RECT_FROM_TWIPS_RECT(twDestRect);
--  #define NS_RECT_FROM_TWIPS_RECT2(_r)   (nsRect(FROM_TWIPS_INT2((_r).x), FROM_TWIPS_INT2((_r).y), FROM_TWIPS_INT2((_r).width), FROM_TWIPS_INT2((_r).height)))
--  nsRect aSrcRect = NS_RECT_FROM_TWIPS_RECT2(twSrcRect);
 +
 +  float scale = 1.0f;
 +  nsCOMPtr<nsIDeviceContext> theDeviceContext;
@@ -50,20 +47,31 @@
 +    scale = theDeviceContext->GetPixelScale();
 +
 +  double p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
-+  nsIntRect pxSr;
-+  pxSr.x = NSAppUnitsToIntPixels(twSrcRect.x, p2a/scale);
-+  pxSr.y = NSAppUnitsToIntPixels(twSrcRect.y, p2a/scale);
-+  pxSr.width = NSAppUnitsToIntPixels(twSrcRect.XMost(), p2a/scale) - pxSr.x;
-+  pxSr.height = NSAppUnitsToIntPixels(twSrcRect.YMost(), p2a/scale) - pxSr.y;
-+
 +  nsIntRect pxDr;
 +  pxDr.x = NSAppUnitsToIntPixels(twDestRect.x, p2a/scale);
 +  pxDr.y = NSAppUnitsToIntPixels(twDestRect.y, p2a/scale);
 +  pxDr.width = NSAppUnitsToIntPixels(twDestRect.XMost(), p2a/scale) - pxDr.x;
 +  pxDr.height = NSAppUnitsToIntPixels(twDestRect.YMost(), p2a/scale) - pxDr.y;
 +
-+  nsRect aDestRect = pxDr;
-+  nsRect aSrcRect = pxSr;
+   nsRect aDestRect = NS_RECT_FROM_TWIPS_RECT(twDestRect);
+-  #define NS_RECT_FROM_TWIPS_RECT2(_r)   (nsRect(FROM_TWIPS_INT2((_r).x), FROM_TWIPS_INT2((_r).y), FROM_TWIPS_INT2((_r).width), FROM_TWIPS_INT2((_r).height)))
+-  nsRect aSrcRect = NS_RECT_FROM_TWIPS_RECT2(twSrcRect);
++  nsRect aSrcRect = NS_RECT_FROM_TWIPS_RECT(twSrcRect);
++
++  // Due to rounding errors with certain scale factors
++  // we need to check the width and height values. With
++  // certain scale factor values NSAppUnitsToIntPixels and
++  // and NS_RECT_FROM_TWIPS_RECT give different values, in
++  // those cases the NSAppUnitsToIntPixels ones are the
++  // correct ones.
++  if ( aDestRect.width != pxDr.width ) {
++    aDestRect.width = pxDr.width;
++    aSrcRect.width = pxDr.width;
++    }
++  if ( aDestRect.height != pxDr.height ) {
++    aDestRect.height = pxDr.height;
++    aSrcRect.height = pxDr.height;
++    }
 +
    //1,2,3... Some problems with images... stipes....;
    nsRect dr = aDestRect;
@@ -75,9 +83,9 @@
    // height depends on the position, since what we are really doing is
    // transforming the edges.  So transform *with* a translation, based
    // on the origin of the *destination* rect, and then fix up the
---- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-09-03 10:28:12.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-09-03 10:29:07.000000000 +0300
-@@ -697,59 +697,61 @@ nsImageGTK::Draw(nsIRenderingContext &aC
+--- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-09-07 14:26:36.000000000 +0300
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-09-07 14:44:40.000000000 +0300
+@@ -697,59 +697,75 @@ nsImageGTK::Draw(nsIRenderingContext &aC
  
    if (mDecodedX2 < mDecodedX1 || mDecodedY2 < mDecodedY1)
      return NS_OK;
@@ -104,6 +112,13 @@
 -    aDWidth = origDWidth>aDWidth?origDWidth + 1:aDWidth + 1;
 +    aSWidth = mWidth;
 +    aDWidth = NSToIntRound(((float)(mWidth) * p2a)/appUnitsPerDevPixel);
++
++    // Fix for rounding errors when drawing
++    // scaled images
++    if ( abs( aDWidth - origDWidth ) == 1 ) {
++      aDWidth > origDWidth ? aDWidth =- 1 : aDWidth =+ 1;
++      }
++
 +    aDWidth = origDWidth>aDWidth?origDWidth:aDWidth;
      aDX -= aSX;
      aSX = 0;
@@ -112,6 +127,13 @@
 -    aDHeight = origDHeight>aDHeight?origDHeight + 1:aDHeight + 1;
 +    aSHeight = mHeight;
 +    aDHeight = NSToIntRound(((float)(mHeight) * p2a )/ appUnitsPerDevPixel);
++
++    // Fix for rounding errors when drawing
++    // scaled images
++    if ( abs( aDHeight - origDHeight ) == 1 ) {
++      aDHeight > origDHeight ? aDHeight =- 1 : aDHeight =+ 1;
++      }
++
 +    aDHeight = origDHeight>aDHeight?origDHeight:aDHeight;
      aDY -= aSY;
      aSY = 0;
