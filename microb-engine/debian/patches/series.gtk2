@@ -286,6 +286,8 @@ trunk_updates/BUG389694.secure.diff
 660_BUG65511.imgdoc_zoom.diff
 665_malformedURI_message_rephrased.diff -p0
 
+670_obex_error_handling.diff
+
 #plugin beg
 #trunk_updates/new/8.5.BUG382367.diff
 #trunk_updates/new/8.bug377783.diff
