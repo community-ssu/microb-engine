@@ -321,7 +321,7 @@ Index: security/manager/ssl/src/nsNSSIOLayer.cpp
 +    }
 +  }
 +
-+  NS_RELEASE(badCertHandler);
++  NS_IF_RELEASE(badCertHandler);
    infoObject->SetBadCertUIStatus(nsNSSSocketInfo::bcuis_was_shown);
    NS_RELEASE(nssCert);
 -  CERT_DestroyCertificate(peerCert); 
