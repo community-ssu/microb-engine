@@ -1,3 +1,20 @@
+microb-engine (1.0.3-19) unstable; urgency=low
+
+  * Disabled wrong workarround for initializing engine in separate thread
+  * Fixed bug:wrong reaction on bluetooth disconnect while loading operation.
+    Fixes: NB#52233
+  * Fixed bug:Fixed broken installation of FTV component. Fixes: NB#68749
+  * Adding about:extensions implementation.
+  * Fixed building of XPCOM stub
+  * Added patch which will allow initialize almost all xpcom in separate
+    thread
+  * Fixed library search patch for microb packages
+  * Added some comments and info in prepare engine script
+  * Added commented updated zooming patch to series file
+  * Added new patch for zom implementation.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun,  9 Sep 2007 17:24:38 +0300
+
 microb-engine (1.0.3-18) unstable; urgency=low
 
   * Fixed bug:malformedURI error message must be rephrased. Fixes: NB#50743
