@@ -129,7 +129,7 @@ perf_addon/550_BUG54340_optimization_options.diff
 perf_addon/thread_wait_block.diff
 perf_addon/spidermonkey_alloc.diff
 perf_addon/605_css_erros_parsing_disable.diff
-perf_addon/delayed_threads_xpcom_init.diff
+#perf_addon/delayed_threads_xpcom_init.diff
 #Performance improvements
 
 #debug_tools/images_debug.diff
