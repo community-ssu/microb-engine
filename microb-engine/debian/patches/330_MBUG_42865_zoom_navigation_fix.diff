@@ -18,7 +18,7 @@ Index: mozilla/docshell/base/nsDocShell.cpp
 +    PRBool saveZoomHistory = PR_FALSE;
 +    mPrefs->GetBoolPref("browser.sessionhistory.disablezoomchange",
 +                        &saveZoomHistory);
-+    if (oldMUDV && newMUDV && !saveZoomHistory)
++    if (oldMUDV && newMUDV && !saveZoomHistory) {
          newMUDV->SetTextZoom(textZoom);
          newMUDV->SetFullZoom(pageZoom);
      }
