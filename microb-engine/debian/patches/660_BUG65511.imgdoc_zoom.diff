@@ -156,3 +156,78 @@
    if (mImageIsResized) {
      mShouldResize = PR_FALSE;
      RestoreImage();
+--- mozilla/content/html/document/src/nsImageDocument.cpp.orig	2007-09-02 17:08:54.000000000 +0300
++++ mozilla/content/html/document/src/nsImageDocument.cpp	2007-09-02 18:18:57.000000000 +0300
+@@ -346,21 +346,21 @@ nsImageDocument::SetScriptGlobalObject(n
+       aScriptGlobalObject != mScriptGlobalObject) {
+     target = do_QueryInterface(mScriptGlobalObject);
+     target->RemoveEventListener(NS_LITERAL_STRING("resize"), this, PR_FALSE);
+     target->RemoveEventListener(NS_LITERAL_STRING("keypress"), this,
+                                 PR_FALSE);
+     if (mStoredZoom != 1.0) {
+       nsIPresShell *shell = GetPrimaryShell();
+       if (shell) {
+         nsPresContext* context = shell->GetPresContext();
+         if (context)
+-          context->SetFullZoom(mStoredZoom, PR_FALSE);
++          context->SetFullZoom(mStoredZoom);
+       }
+       mStoredZoom = 1.0f;
+     }
+   }
+ 
+   // Set the script global object on the superclass before doing
+   // anything that might require it....
+   nsHTMLDocument::SetScriptGlobalObject(aScriptGlobalObject);
+ 
+   if (aScriptGlobalObject) {
+@@ -415,24 +415,24 @@ nsImageDocument::GetImageRequest(imgIReq
+ }
+ 
+ NS_IMETHODIMP
+ nsImageDocument::ShrinkToFit()
+ {
+   // Keep image content alive while changing the attributes.
+   nsIPresShell *shell = GetPrimaryShell();
+   NS_ENSURE_TRUE(shell, NS_OK);
+   nsPresContext* context = shell->GetPresContext();
+   NS_ENSURE_TRUE(context, NS_OK);
+-  float ctxzoom = context->FullZoom();
++  float ctxzoom = context->GetFullZoom();
+   if (ctxzoom != 1.0) {
+     mStoredZoom = ctxzoom;
+-    context->SetFullZoom(1.0, PR_FALSE);
++    context->SetFullZoom(1.0);
+   }
+ 
+   nsCOMPtr<nsIContent> imageContent = mImageContent;
+   nsCOMPtr<nsIDOMHTMLImageElement> image = do_QueryInterface(mImageContent);
+   image->SetWidth(PR_MAX(1, NSToCoordFloor(GetRatio() * mImageWidth)));
+   image->SetHeight(PR_MAX(1, NSToCoordFloor(GetRatio() * mImageHeight)));
+   
+   imageContent->SetAttr(kNameSpaceID_None, nsGkAtoms::style,
+                         NS_LITERAL_STRING("cursor: -moz-zoom-in"), PR_TRUE);
+   
+@@ -506,21 +506,21 @@ nsImageDocument::RestoreImage()
+   
+   UpdateTitleAndCharset();
+   
+   if (mStoredZoom == 1.0)
+     return NS_OK;
+ 
+   nsIPresShell *shell = GetPrimaryShell();
+   NS_ENSURE_TRUE(shell, NS_OK);
+   nsPresContext* context = shell->GetPresContext();
+   NS_ENSURE_TRUE(context, NS_OK);
+-  context->SetFullZoom(mStoredZoom, PR_FALSE);
++  context->SetFullZoom(mStoredZoom);
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsImageDocument::ToggleImageSize()
+ {
+   mShouldResize = PR_TRUE;
+   if (mImageIsResized) {
+     mShouldResize = PR_FALSE;
+     RestoreImage();

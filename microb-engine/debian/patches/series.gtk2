@@ -26,10 +26,10 @@ crash/attachment.cgi?id=205126.diff
 085_BUG252033_xrender_bug.diff
 #GTK2
 
-020_BUG4821_full_page_zoom.gtk2.diff
+#020_BUG4821_full_page_zoom.gtk2.diff
 
-#020_BUG4821_full_page_zoom.gtk2_1.diff
-#fixForPixelBug.diff
+020_BUG4821_full_page_zoom.gtk2_1.diff
+fixForPixelBug.diff
 
 # BUILD BUSTAGE
 buildcfg/025_BUG_53901_noxul_bustage.diff

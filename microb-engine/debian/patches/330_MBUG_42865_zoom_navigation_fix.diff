@@ -5,8 +5,7 @@ Index: mozilla/docshell/base/nsDocShell.cpp
 ===================================================================
 --- mozilla.orig/docshell/base/nsDocShell.cpp
 +++ mozilla/docshell/base/nsDocShell.cpp
-@@ -5531,18 +5531,20 @@
-     mSavingOldViewer = PR_FALSE;
+@@ -5586,17 +5586,20 @@
      mEODForCurrentDocument = PR_FALSE;
  
      // Tell the event loop to favor plevents over user events, see comments
@@ -14,17 +13,17 @@ Index: mozilla/docshell/base/nsDocShell.cpp
      if (++gNumberOfDocumentsLoading == 1)
          FavorPerformanceHint(PR_TRUE, NS_EVENT_STARVATION_DELAY_HINT);
  
--
--    if (oldMUDV && newMUDV)
+ 
+-    if (oldMUDV && newMUDV) {
 +    PRBool saveZoomHistory = PR_FALSE;
 +    mPrefs->GetBoolPref("browser.sessionhistory.disablezoomchange",
 +                        &saveZoomHistory);
 +    if (oldMUDV && newMUDV && !saveZoomHistory)
-         newMUDV->SetTextZoom(zoom);
+         newMUDV->SetTextZoom(textZoom);
+         newMUDV->SetFullZoom(pageZoom);
+     }
  
      nsCOMPtr<nsIDocument> document = do_QueryInterface(domDoc);
      if (document) {
          // Use the uri from the mLSHE we had when we entered this function
          // (which need not match the document's URI if anchors are involved),
-         // since that's the history entry we're loading.  Note that if we use
-         // origLSHE we don't have to worry about whether the entry in question

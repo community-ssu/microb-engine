@@ -161,9 +161,9 @@ Index: gfx/src/nsRect.cpp
  
  #ifdef MAX
 @@ -210,17 +210,17 @@
-   nscoord bottom = NSToCoordRound(float(YMost()) * aScale);
-   x = NSToCoordRound(float(x) * aScale);
-   y = NSToCoordRound(float(y) * aScale);
+   nscoord bottom = NSToCoordRound(float(YMost()) / aScale);
+   x = NSToCoordRound(float(x) / aScale);
+   y = NSToCoordRound(float(y) / aScale);
    width = (right - x);
    height = (bottom - y);
    return *this;
@@ -202,7 +202,7 @@ Index: layout/base/nsPresContext.h
  #include "nsIWeakReference.h"
  #include "nsITheme.h"
  #include "nsILanguageAtomService.h"
-@@ -732,17 +732,19 @@
+@@ -730,17 +730,19 @@
    static NS_HIDDEN_(int) PR_CALLBACK PrefChangedCallback(const char*, void*);
  
    NS_HIDDEN_(void) UpdateAfterPreferencesChanged();
