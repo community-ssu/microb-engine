@@ -52,8 +52,6 @@ mkdir -p $builddir
 
 tar -zxvf $TMP/tarballs/mozilla.tar.gz -C $btree > /dev/null
 cp -rf  $TMP/debian/resources/branding $builddir/
-#cd $(builddir) && cd layout && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/layout/svg ./
-#cd $(builddir) && cd content && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/content/svg ./
 
 echo ""
 echo "Preparing with microb-engine/debian/configs/mozconfig"$CONFIG" ..."
@@ -81,6 +79,13 @@ echo "ac_add_options --enable-optimize=\" -g -O2\"" >> ./mozconfig
 echo "ac_add_options --disable-static" >> ./mozconfig
 echo "ac_add_options --enable-shared" >> ./mozconfig
 echo "ac_add_options --disable-js-static-build" >> ./mozconfig
+
+##SVG BACKPORT BUILDING
+#cd $(builddir) && cd layout && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/layout/svg ./
+#cd $(builddir) && cd content && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/content/svg ./
+#cd $(builddir)
+#echo "ac_add_options --enable-svg" >> ./mozconfig
+##END SVG BACKPORT BUILDING
 
 autoconf
 
