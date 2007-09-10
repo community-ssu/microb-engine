@@ -282,6 +282,8 @@ trunk_updates/new/19.BUG390762.diff
 trunk_updates/new/26.BUG390088.diff
 trunk_updates/new/27.BUG393294.diff
 trunk_updates/BUG389694.secure.diff
+trunk_updates/1.bug380659.diff -p0
+trunk_updates/2.bug380668.diff -p0
 
 660_BUG65511.imgdoc_zoom.diff
 665_malformedURI_message_rephrased.diff -p0
