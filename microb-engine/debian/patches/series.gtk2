@@ -29,7 +29,7 @@ crash/attachment.cgi?id=205126.diff
 #020_BUG4821_full_page_zoom.gtk2.diff
 
 020_BUG4821_full_page_zoom.gtk2_1.diff
-fixForPixelBug.diff
+666_fixForPixelBug.diff
 
 # BUILD BUSTAGE
 buildcfg/025_BUG_53901_noxul_bustage.diff
