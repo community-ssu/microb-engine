@@ -116,7 +116,7 @@
 +    // Fix for rounding errors when drawing
 +    // scaled images
 +    if ( abs( aDWidth - origDWidth ) == 1 ) {
-+      aDWidth > origDWidth ? aDWidth =- 1 : aDWidth =+ 1;
++      aDWidth > origDWidth ? aDWidth -= 1 : aDWidth += 1;
 +      }
 +
 +    aDWidth = origDWidth>aDWidth?origDWidth:aDWidth;
@@ -131,7 +131,7 @@
 +    // Fix for rounding errors when drawing
 +    // scaled images
 +    if ( abs( aDHeight - origDHeight ) == 1 ) {
-+      aDHeight > origDHeight ? aDHeight =- 1 : aDHeight =+ 1;
++      aDHeight > origDHeight ? aDHeight -= 1 : aDHeight += 1;
 +      }
 +
 +    aDHeight = origDHeight>aDHeight?origDHeight:aDHeight;
