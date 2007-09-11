@@ -1,0 +1,18 @@
+# Setting dialog title as "Unknown Protocol" if the URL scheme is unsupported.
+# Fixed bug#65361:invalid_protocol is not shown in most variants.
+--- mozilla/docshell/base/nsDocShell.cpp.orig	2007-09-11 14:57:12.000000000 +0300
++++ mozilla/docshell/base/nsDocShell.cpp	2007-09-11 14:57:21.000000000 +0300
+@@ -3019,8 +3019,12 @@
+             pwin->GetDocument(getter_AddRefs(doc));
+         }
+ 
++        nsAutoString title;
++        if (NS_ERROR_UNKNOWN_PROTOCOL == aError) {
++            title.Insert(NS_LITERAL_STRING("Unknown Protocol"), 0);
++        }
+         // Display a message box
+-        prompter->Alert(nsnull, messageStr.get());
++        prompter->Alert(title.get(), messageStr.get());
+     }
+ 
+     return NS_OK;
