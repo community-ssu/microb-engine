@@ -290,6 +290,7 @@ trunk_updates/2.bug380668.diff -p0
 
 670_obex_error_handling.diff
 675_unknown_protocol_handling.diff
+680_bug54733.diff.diff
 
 #plugin beg
 #trunk_updates/new/8.5.BUG382367.diff
