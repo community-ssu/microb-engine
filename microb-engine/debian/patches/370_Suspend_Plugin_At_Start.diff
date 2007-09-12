@@ -4,7 +4,7 @@ Index: mozilla/modules/plugin/base/public/nsplugindefs.h
 ===================================================================
 --- mozilla.orig/modules/plugin/base/public/nsplugindefs.h
 +++ mozilla/modules/plugin/base/public/nsplugindefs.h
-@@ -330,20 +330,20 @@ struct nsPluginEvent {
+@@ -330,17 +330,17 @@
      uint32      wParam;
      uint32      lParam;
  
@@ -14,89 +14,42 @@ Index: mozilla/modules/plugin/base/public/nsplugindefs.h
      uint32      lParam;
  
 -#elif defined(XP_UNIX) && defined(MOZ_X11)
--    XEvent      event;
 +#elif defined(XP_UNIX)
-+    uint16      event;
+     XEvent      event;
  #else
--    void        *event;
-+    uint16      event;
+     void        *event;
  #endif
  };
  
  /*
   *  Non-standard event types that can be passed to HandleEvent
-  *  (These need to be kept in sync with the events defined in npapi.h.)
-  */
- enum nsPluginEventType {
 Index: mozilla/modules/plugin/base/src/ns4xPluginInstance.cpp
 ===================================================================
 --- mozilla.orig/modules/plugin/base/src/ns4xPluginInstance.cpp
 +++ mozilla/modules/plugin/base/src/ns4xPluginInstance.cpp
-@@ -50,26 +50,30 @@
- #include "nsPluginLogging.h"
- 
- #include "nsPIPluginInstancePeer.h"
- #include "nsPIDOMWindow.h"
- #include "nsIDocument.h"
- 
- #include "nsJSNPRuntime.h"
- 
-+#include "nsIPref.h"
-+
- #ifdef XP_OS2
- #include "nsILegacyPluginWrapperOS2.h"
- #endif
- 
- #ifdef MOZ_WIDGET_GTK2
- #include <gdk/gdk.h>
- #include <gdk/gdkx.h>
- #include "gtk2xtbin.h"
- #endif
- 
-+#define PLUGIN_EVENT_SUSPEND 4
-+
- ////////////////////////////////////////////////////////////////////////
- // CID's && IID's
- static NS_DEFINE_IID(kCPluginManagerCID, NS_PLUGINMANAGER_CID); // needed for NS_TRY_SAFE_CALL
- static NS_DEFINE_IID(kIPluginStreamListenerIID, NS_IPLUGINSTREAMLISTENER_IID);
- 
- ///////////////////////////////////////////////////////////////////////////////
- // ns4xPluginStreamListener Methods
- 
-@@ -1080,19 +1084,40 @@ nsresult ns4xPluginInstance::InitializeP
-   ("NPP New called: this=%p, npp=%p, mime=%s, mode=%d, argc=%d, return=%d\n",
-   this, &fNPP, mimetype, mode, count, error));
- 
+@@ -1062,16 +1062,30 @@
    if(error != NPERR_NO_ERROR) {
      // since the plugin returned failure, these should not be set
      mPeer = nsnull;
      mStarted = PR_FALSE;
  
-+    //PRBool handled;
-+    //PRUint16 eventType = PLUGIN_EVENT_SUSPEND;
-+    //nsPluginEvent event;
-+    //event.event = eventType;
-+    //this->HandleEvent(&event,&handled);
-+
      return NS_ERROR_FAILURE;
    }
--  
+   
++ 	// check the pref
++ 	nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
++ 	PRBool suspend = PR_TRUE;
++  rv = pref->GetBoolPref("plugins.flashhack", &suspend);
++  if (NS_FAILED(rv) || !suspend)
++	  return NS_OK;
++ 	rv = pref->GetBoolPref("plugins.enableSuspending", &suspend);
++  if (NS_FAILED(rv) || !suspend)
++		return NS_OK;
 +
-+    // check the pref
-+    nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
-+    PRBool suspend = PR_TRUE;
-+    PRBool suspend_global = PR_TRUE;
-+    nsresult rv2 = PR_TRUE;
-+    rv = pref->GetBoolPref ("plugins.flashhack",&suspend);
-+    rv2 = pref->GetBoolPref ("plugins.enableSuspending",&suspend_global);
-+
-+    if (NS_SUCCEEDED(rv2) && suspend_global && NS_SUCCEEDED(rv) && suspend) {
-+      PRBool handled;
-+      PRUint16 eventType = PLUGIN_EVENT_SUSPEND;
-+      nsPluginEvent event;
-+      event.event = eventType;
-+      this->HandleEvent(&event,&handled);
-+    }
++	PRBool handled;
++	nsPluginEvent event;
++	event.event.type = PLUGIN_EVENT_SUSPEND;
++	this->HandleEvent(&event, &handled);
    return NS_OK;
  }
  
@@ -105,29 +58,3 @@ Index: mozilla/modules/plugin/base/src/ns4xPluginInstance.cpp
  NS_IMETHODIMP ns4xPluginInstance::Destroy(void)
  {
    PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("ns4xPluginInstance::Destroy this=%p\n",this));
-@@ -1360,16 +1385,25 @@ NS_IMETHODIMP ns4xPluginInstance::Handle
-       npEvent.wParam = event->wParam;
-       npEvent.lParam = event->lParam;
- 
-       NS_TRY_SAFE_CALL_RETURN(result, CallNPP_HandleEventProc(fCallbacks->event,
-                                     &fNPP,
-                                     (void*)&npEvent), fLibrary, this);
- #endif
- 
-+#ifdef XP_UNIX
-+      nsPluginEvent ev;
-+      ev.event = event->event;
-+      NS_TRY_SAFE_CALL_RETURN(result, CallNPP_HandleEventProc(fCallbacks->event,
-+                                                              &fNPP,
-+                                                              (void*)(ev.event)),
-+                              fLibrary, this);
-+#endif
-+
-       NPP_PLUGIN_LOG(PLUGIN_LOG_NOISY,
-       ("NPP HandleEvent called: this=%p, npp=%p, event=%d, return=%d\n", 
-       this, &fNPP, event->event, result));
- 
-       *handled = result;
-     }
- 
-   return NS_OK;
