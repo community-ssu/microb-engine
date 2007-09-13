@@ -5,25 +5,27 @@ Index: mozilla/docshell/base/nsDocShell.cpp
 ===================================================================
 --- mozilla.orig/docshell/base/nsDocShell.cpp
 +++ mozilla/docshell/base/nsDocShell.cpp
-@@ -5586,17 +5586,20 @@
-     mEODForCurrentDocument = PR_FALSE;
- 
-     // Tell the event loop to favor plevents over user events, see comments
-     // in CreateContentViewer.
-     if (++gNumberOfDocumentsLoading == 1)
-         FavorPerformanceHint(PR_TRUE, NS_EVENT_STARVATION_DELAY_HINT);
- 
- 
--    if (oldMUDV && newMUDV) {
-+    PRBool saveZoomHistory = PR_FALSE;
-+    mPrefs->GetBoolPref("browser.sessionhistory.disablezoomchange",
-+                        &saveZoomHistory);
-+    if (oldMUDV && newMUDV && !saveZoomHistory) {
-         newMUDV->SetTextZoom(textZoom);
-         newMUDV->SetFullZoom(pageZoom);
+@@ -5406,17 +5406,22 @@
      }
  
-     nsCOMPtr<nsIDocument> document = do_QueryInterface(domDoc);
-     if (document) {
-         // Use the uri from the mLSHE we had when we entered this function
-         // (which need not match the document's URI if anchors are involved),
+     nsCOMPtr<nsIMarkupDocumentViewer> oldMUDV(do_QueryInterface(mContentViewer));
+     nsCOMPtr<nsIMarkupDocumentViewer> newMUDV(do_QueryInterface(viewer));
+     float textZoom = 1.0f;
+     float pageZoom = 1.0f;
+     if (oldMUDV && newMUDV) {
+         oldMUDV->GetTextZoom(&textZoom);
+-        oldMUDV->GetFullZoom(&pageZoom);
++        PRBool preserveZoom = PR_FALSE;
++        mPrefs->GetBoolPref("browser.shistory.preservezoom", &preserveZoom);
++        if (preserveZoom)
++            newMUDV->GetFullZoom(&pageZoom);
++        else
++            oldMUDV->GetFullZoom(&pageZoom);
+     }
+ 
+     // Protect against mLSHE going away via a load triggered from
+     // pagehide or unload.
+     nsCOMPtr<nsISHEntry> origLSHE = mLSHE;
+ 
+     // Notify the old content viewer that it's being hidden.
+     FirePageHideNotification(!mSavingOldViewer);
