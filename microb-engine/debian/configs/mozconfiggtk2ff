@@ -103,6 +103,7 @@ ac_add_options --disable-url-classifier
 ac_add_options --disable-safe-browsing
 ac_add_options --disable-svg
 ac_add_options --enable-feeds
+ac_add_options --enable-storage
 #ac_add_options --with-branding=other-licenses/branding/firefox
 ac_add_options --enable-application=browser
 ac_add_options --enable-xpinstall
