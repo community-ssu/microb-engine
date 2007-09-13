@@ -153,6 +153,10 @@ endif
 MOZCONFIG_LEV:=$(config)
 series_file:=series.$(config)
 
+ifneq (,$(findstring patches,$(DEB_BUILD_OPTIONS)))
+	series_file:=series.$(shell echo $(DEB_BUILD_OPTIONS) | sed -e 's/.*patches=\([0-9a-zA-Z]\+\).*/\1/')
+endif
+
 ifneq (,$(findstring microbembed,$(DEB_BUILD_OPTIONS)))
 microbembed:=y
 else
