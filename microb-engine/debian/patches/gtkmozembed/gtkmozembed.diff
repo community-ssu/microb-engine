@@ -3646,7 +3646,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +
 +  nsPluginEvent pluginEvent;
 +  PRBool handled;
-+  pluginEvent.event = aEvent;
++  pluginEvent.event.type = aEvent;
 +
 +  nsCOMPtr<nsIDOMNodeList> list;
 +  rv = aDomDoc->GetElementsByTagName(aPluginTag, getter_AddRefs(list));
