@@ -36,20 +36,20 @@ Index: mozilla/modules/plugin/base/src/ns4xPluginInstance.cpp
      return NS_ERROR_FAILURE;
    }
    
-+ 	// check the pref
-+ 	nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
-+ 	PRBool suspend = PR_TRUE;
++  // check the pref
++  nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
++  PRBool suspend = PR_TRUE;
 +  rv = pref->GetBoolPref("plugins.flashhack", &suspend);
 +  if (NS_FAILED(rv) || !suspend)
-+	  return NS_OK;
-+ 	rv = pref->GetBoolPref("plugins.enableSuspending", &suspend);
++    return NS_OK;
++  rv = pref->GetBoolPref("plugins.enableSuspending", &suspend);
 +  if (NS_FAILED(rv) || !suspend)
-+		return NS_OK;
++    return NS_OK;
 +
-+	PRBool handled;
-+	nsPluginEvent event;
-+	event.event.type = PLUGIN_EVENT_SUSPEND;
-+	this->HandleEvent(&event, &handled);
++  PRBool handled;
++  nsPluginEvent event;
++  event.event.type = PLUGIN_EVENT_SUSPEND;
++  this->HandleEvent(&event, &handled);
    return NS_OK;
  }
  
@@ -58,3 +58,28 @@ Index: mozilla/modules/plugin/base/src/ns4xPluginInstance.cpp
  NS_IMETHODIMP ns4xPluginInstance::Destroy(void)
  {
    PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("ns4xPluginInstance::Destroy this=%p\n",this));
+--- mozilla/modules/plugin/base/src/ns4xPluginInstance.cpp.orig	2007-09-13 22:20:52.000000000 +0300
++++ mozilla/modules/plugin/base/src/ns4xPluginInstance.cpp	2007-09-13 22:22:23.000000000 +0300
+@@ -51,20 +51,22 @@
+ 
+ #include "nsPIPluginInstancePeer.h"
+ #include "nsPIDOMWindow.h"
+ #include "nsIDocument.h"
+ 
+ #include "nsJSNPRuntime.h"
+ 
+ #ifdef XP_OS2
+ #include "nsILegacyPluginWrapperOS2.h"
+ #endif
++#include "nsIPref.h"
++#define PLUGIN_EVENT_SUSPEND 3
+ 
+ ////////////////////////////////////////////////////////////////////////
+ // CID's && IID's
+ static NS_DEFINE_IID(kCPluginManagerCID, NS_PLUGINMANAGER_CID); // needed for NS_TRY_SAFE_CALL
+ static NS_DEFINE_IID(kIPluginStreamListenerIID, NS_IPLUGINSTREAMLISTENER_IID);
+ 
+ ///////////////////////////////////////////////////////////////////////////////
+ // ns4xPluginStreamListener Methods
+ 
+ NS_IMPL_ISUPPORTS3(ns4xPluginStreamListener, nsIPluginStreamListener,
