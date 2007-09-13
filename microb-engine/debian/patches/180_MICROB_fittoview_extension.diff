@@ -1,6 +1,7 @@
-diff -ruN -p -U10 mozilla/extensions/ftv.orig/Makefile.in mozilla/extensions/ftv/Makefile.in
---- mozilla/extensions/ftv.orig/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/Makefile.in	2007-08-27 02:19:27.000000000 +0300
+# Fit to View Extension + lock/unlock reflow interface
+diff -ruN -p -U10 ftv.orig/Makefile.in ftv/Makefile.in
+--- mozilla.orig/extensions/ftv/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/Makefile.in	2007-09-12 11:56:05.000000000 +0300
 @@ -0,0 +1,37 @@
 +
 +DEPTH=../..
@@ -39,9 +40,9 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/Makefile.in mozilla/extensions/ftv
 +DIRS   += public
 +
 +include $(topsrcdir)/config/rules.mk
-diff -ruN -p -U10 mozilla/extensions/ftv.orig/install.rdf mozilla/extensions/ftv/install.rdf
---- mozilla/extensions/ftv.orig/install.rdf	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/install.rdf	2007-08-27 02:19:27.000000000 +0300
+diff -ruN -p -U10 ftv.orig/install.rdf ftv/install.rdf
+--- mozilla.orig/extensions/ftv/install.rdf	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/install.rdf	2007-09-12 11:56:05.000000000 +0300
 @@ -0,0 +1,40 @@
 +<?xml version="1.0"?>
 +
@@ -83,9 +84,9 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/install.rdf mozilla/extensions/ftv
 +    <em:homepageURL>http://www.mozilla.org/access/keyboard/snav/</em:homepageURL>
 +  </Description>
 +</RDF>
-diff -ruN -p -U10 mozilla/extensions/ftv.orig/public/Makefile.in mozilla/extensions/ftv/public/Makefile.in
---- mozilla/extensions/ftv.orig/public/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/public/Makefile.in	2007-08-27 02:19:27.000000000 +0300
+diff -ruN -p -U10 ftv.orig/public/Makefile.in ftv/public/Makefile.in
+--- mozilla.orig/extensions/ftv/public/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/public/Makefile.in	2007-09-12 11:56:05.000000000 +0300
 @@ -0,0 +1,50 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
@@ -137,9 +138,9 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/public/Makefile.in mozilla/extensi
 +XPIDLSRCS	= nsIFitToView.idl
 +
 +include $(topsrcdir)/config/rules.mk
-diff -ruN -p -U10 mozilla/extensions/ftv.orig/public/nsIFitToView.idl mozilla/extensions/ftv/public/nsIFitToView.idl
---- mozilla/extensions/ftv.orig/public/nsIFitToView.idl	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/public/nsIFitToView.idl	2007-08-27 02:19:27.000000000 +0300
+diff -ruN -p -U10 ftv.orig/public/nsIFitToView.idl ftv/public/nsIFitToView.idl
+--- mozilla.orig/extensions/ftv/public/nsIFitToView.idl	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/public/nsIFitToView.idl	2007-09-12 11:56:05.000000000 +0300
 @@ -0,0 +1,47 @@
 +/* vim:set ts=2 sw=2 sts=2 et cin: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -188,10 +189,10 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/public/nsIFitToView.idl mozilla/ex
 +   */
 +  long extra(in long a, in long b);
 +};
-diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensions/ftv/src/Makefile.in
---- mozilla/extensions/ftv.orig/src/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/src/Makefile.in	2007-08-27 08:11:38.000000000 +0300
-@@ -0,0 +1,109 @@
+diff -ruN -p -U10 ftv.orig/src/Makefile.in ftv/src/Makefile.in
+--- mozilla.orig/extensions/ftv/src/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/src/Makefile.in	2007-09-13 10:21:13.000000000 +0300
+@@ -0,0 +1,110 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
 +# Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -246,21 +247,22 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensions
 +IS_COMPONENT = 1
 +
 +REQUIRES = \
-+    dom \
-+    layout \
-+    content \
-+    widget \
-+    necko \
-+    windowwatcher \
-+    xpcom \
-+    string \
-+    pref \
-+    gfx \
-+    locale \
-+    docshell \
-+    uriloader \
-+    imglib2 \
-+    $(NULL)
++	dom \
++	layout \
++	content \
++	widget \
++	necko \
++	windowwatcher \
++	xpcom \
++	string \
++	pref \
++	gfx \
++	locale \
++	docshell \
++	uriloader \
++	webbrwsr \
++	imglib2 \
++	$(NULL)
 +
 +CPPSRCS		= nsFitToView.cpp
 +
@@ -301,9 +303,9 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensions
 +libs:: $(DIST)/bin/res/ftv.css
 +
 +install:: $(DESTDIR)$(mozappdir)/res/ftv.css
-diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/ftv.css mozilla/extensions/ftv/src/ftv.css
---- mozilla/extensions/ftv.orig/src/ftv.css	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/src/ftv.css	2007-08-27 02:19:27.000000000 +0300
+diff -ruN -p -U10 ftv.orig/src/ftv.css ftv/src/ftv.css
+--- mozilla.orig/extensions/ftv/src/ftv.css	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/src/ftv.css	2007-09-12 11:56:05.000000000 +0300
 @@ -0,0 +1,47 @@
 +* {
 +  max-width: 100% !important;
@@ -352,10 +354,10 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/ftv.css mozilla/extensions/ftv
 +  vertical-align:bottom !important;
 +}
 +
-diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/nsFitToView.cpp mozilla/extensions/ftv/src/nsFitToView.cpp
---- mozilla/extensions/ftv.orig/src/nsFitToView.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/src/nsFitToView.cpp	2007-08-27 08:17:29.000000000 +0300
-@@ -0,0 +1,506 @@
+diff -ruN -p -U10 ftv.orig/src/nsFitToView.cpp ftv/src/nsFitToView.cpp
+--- mozilla.orig/extensions/ftv/src/nsFitToView.cpp	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/ftv/src/nsFitToView.cpp	2007-09-13 10:28:37.000000000 +0300
+@@ -0,0 +1,512 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim:set ts=2 sw=2 sts=2 tw=80 et cindent: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -423,6 +425,7 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/nsFitToView.cpp mozilla/extens
 +#include "nsRect.h"
 +#include "nsStringGlue.h"
 +#include "nsWeakReference.h"
++#include "nsIWebBrowser.h"
 +
 +#define EM_MULT 16.
 +#define NS_FRAME_HAS_RELATIVE_SIZE 0x01000000
@@ -767,23 +770,28 @@ diff -ruN -p -U10 mozilla/extensions/ftv.orig/src/nsFitToView.cpp mozilla/extens
 +  nsCOMPtr<nsIDOMWindow> parent = nsnull;
 +  if (aObject)
 +  {
-+    parent = do_QueryInterface(aObject, &rv);
-+    if (NS_FAILED(rv) || !parent)
-+    {
-+      nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aObject, &rv);
-+      if (NS_SUCCEEDED(rv) && node)
++    nsCOMPtr <nsIWebBrowser> browser = do_QueryInterface(aObject, &rv);
++    if (NS_SUCCEEDED(rv) && browser)
++      browser->GetContentDOMWindow(getter_AddRefs(parent));
++    if (!parent) {
++      parent = do_QueryInterface(aObject, &rv);
++      if (NS_FAILED(rv) || !parent)
 +      {
-+        nsCOMPtr <nsIDOMDocument> nodeDoc;
-+        rv = node->GetOwnerDocument(getter_AddRefs(nodeDoc));
-+        NS_ENSURE_SUCCESS(rv, rv);
-+        nsCOMPtr <nsIDOMDocumentView> docView = do_QueryInterface(nodeDoc, &rv);
-+        NS_ENSURE_SUCCESS(rv, rv);
-+        nsCOMPtr <nsIDOMAbstractView> absView;
-+        NS_ENSURE_SUCCESS(rv, rv);
-+        rv = docView->GetDefaultView(getter_AddRefs(absView));
-+        NS_ENSURE_SUCCESS(rv, rv);
-+        parent = do_QueryInterface(absView, &rv);
-+        NS_ENSURE_SUCCESS(rv, rv);
++        nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aObject, &rv);
++        if (NS_SUCCEEDED(rv) && node)
++        {
++          nsCOMPtr <nsIDOMDocument> nodeDoc;
++          rv = node->GetOwnerDocument(getter_AddRefs(nodeDoc));
++          NS_ENSURE_SUCCESS(rv, rv);
++          nsCOMPtr <nsIDOMDocumentView> docView = do_QueryInterface(nodeDoc, &rv);
++          NS_ENSURE_SUCCESS(rv, rv);
++          nsCOMPtr <nsIDOMAbstractView> absView;
++          NS_ENSURE_SUCCESS(rv, rv);
++          rv = docView->GetDefaultView(getter_AddRefs(absView));
++          NS_ENSURE_SUCCESS(rv, rv);
++          parent = do_QueryInterface(absView, &rv);
++          NS_ENSURE_SUCCESS(rv, rv);
++        }
 +      }
 +    }
 +  }
