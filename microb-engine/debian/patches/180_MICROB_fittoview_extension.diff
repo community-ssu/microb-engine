@@ -1,7 +1,8 @@
 # Fit to View Extension + lock/unlock reflow interface
-diff -ruN -p -U10 ftv.orig/Makefile.in ftv/Makefile.in
---- mozilla.orig/extensions/ftv/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/Makefile.in	2007-09-12 11:56:05.000000000 +0300
+Index: mozilla/extensions/ftv/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/Makefile.in
 @@ -0,0 +1,37 @@
 +
 +DEPTH=../..
@@ -40,9 +41,10 @@ diff -ruN -p -U10 ftv.orig/Makefile.in ftv/Makefile.in
 +DIRS   += public
 +
 +include $(topsrcdir)/config/rules.mk
-diff -ruN -p -U10 ftv.orig/install.rdf ftv/install.rdf
---- mozilla.orig/extensions/ftv/install.rdf	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/install.rdf	2007-09-12 11:56:05.000000000 +0300
+Index: mozilla/extensions/ftv/install.rdf
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/install.rdf
 @@ -0,0 +1,40 @@
 +<?xml version="1.0"?>
 +
@@ -84,9 +86,10 @@ diff -ruN -p -U10 ftv.orig/install.rdf ftv/install.rdf
 +    <em:homepageURL>http://www.mozilla.org/access/keyboard/snav/</em:homepageURL>
 +  </Description>
 +</RDF>
-diff -ruN -p -U10 ftv.orig/public/Makefile.in ftv/public/Makefile.in
---- mozilla.orig/extensions/ftv/public/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/public/Makefile.in	2007-09-12 11:56:05.000000000 +0300
+Index: mozilla/extensions/ftv/public/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/public/Makefile.in
 @@ -0,0 +1,50 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
@@ -138,9 +141,10 @@ diff -ruN -p -U10 ftv.orig/public/Makefile.in ftv/public/Makefile.in
 +XPIDLSRCS	= nsIFitToView.idl
 +
 +include $(topsrcdir)/config/rules.mk
-diff -ruN -p -U10 ftv.orig/public/nsIFitToView.idl ftv/public/nsIFitToView.idl
---- mozilla.orig/extensions/ftv/public/nsIFitToView.idl	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/public/nsIFitToView.idl	2007-09-12 11:56:05.000000000 +0300
+Index: mozilla/extensions/ftv/public/nsIFitToView.idl
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/public/nsIFitToView.idl
 @@ -0,0 +1,47 @@
 +/* vim:set ts=2 sw=2 sts=2 et cin: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -189,9 +193,10 @@ diff -ruN -p -U10 ftv.orig/public/nsIFitToView.idl ftv/public/nsIFitToView.idl
 +   */
 +  long extra(in long a, in long b);
 +};
-diff -ruN -p -U10 ftv.orig/src/Makefile.in ftv/src/Makefile.in
---- mozilla.orig/extensions/ftv/src/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/src/Makefile.in	2007-09-13 10:21:13.000000000 +0300
+Index: mozilla/extensions/ftv/src/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/src/Makefile.in
 @@ -0,0 +1,110 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
@@ -303,9 +308,10 @@ diff -ruN -p -U10 ftv.orig/src/Makefile.in ftv/src/Makefile.in
 +libs:: $(DIST)/bin/res/ftv.css
 +
 +install:: $(DESTDIR)$(mozappdir)/res/ftv.css
-diff -ruN -p -U10 ftv.orig/src/ftv.css ftv/src/ftv.css
---- mozilla.orig/extensions/ftv/src/ftv.css	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/src/ftv.css	2007-09-12 11:56:05.000000000 +0300
+Index: mozilla/extensions/ftv/src/ftv.css
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/src/ftv.css
 @@ -0,0 +1,47 @@
 +* {
 +  max-width: 100% !important;
@@ -354,10 +360,11 @@ diff -ruN -p -U10 ftv.orig/src/ftv.css ftv/src/ftv.css
 +  vertical-align:bottom !important;
 +}
 +
-diff -ruN -p -U10 ftv.orig/src/nsFitToView.cpp ftv/src/nsFitToView.cpp
---- mozilla.orig/extensions/ftv/src/nsFitToView.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/ftv/src/nsFitToView.cpp	2007-09-13 10:28:37.000000000 +0300
-@@ -0,0 +1,512 @@
+Index: mozilla/extensions/ftv/src/nsFitToView.cpp
+===================================================================
+--- /dev/null
++++ mozilla/extensions/ftv/src/nsFitToView.cpp
+@@ -0,0 +1,518 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim:set ts=2 sw=2 sts=2 tw=80 et cindent: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -461,6 +468,7 @@ diff -ruN -p -U10 ftv.orig/src/nsFitToView.cpp ftv/src/nsFitToView.cpp
 +  PRBool mDoOnloadOptimizing;
 +  PRBool mDoOptimize;
 +  PRBool mSetOptimizing;
++  PRBool mStyleSheetRegistered;
 +};
 +
 +/* void onStateChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in unsigned long aStateFlags, in nsresult aStatus); */
@@ -518,6 +526,7 @@ diff -ruN -p -U10 ftv.orig/src/nsFitToView.cpp ftv/src/nsFitToView.cpp
 +  mDoOnloadOptimizing = PR_FALSE;
 +  mDoOptimize = PR_FALSE;
 +  mSetOptimizing = PR_FALSE;
++  mStyleSheetRegistered = PR_FALSE;
 +}
 +
 +nsFitToView::~nsFitToView()
@@ -743,9 +752,13 @@ diff -ruN -p -U10 ftv.orig/src/nsFitToView.cpp ftv/src/nsFitToView.cpp
 +  NS_NewURI(getter_AddRefs(uri), NS_LITERAL_CSTRING("resource://gre/res/ftv.css"));
 +  NS_ENSURE_TRUE(uri, NS_OK);
 +  if (mSetOptimizing) {
-+    styleSheetService->LoadAndRegisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
++    if (!mStyleSheetRegistered)
++      styleSheetService->LoadAndRegisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
++    mStyleSheetRegistered = PR_TRUE;
 +  } else {
-+    styleSheetService->UnregisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
++    if (mStyleSheetRegistered)
++      styleSheetService->UnregisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
++    mStyleSheetRegistered = PR_FALSE;
 +  }
 +  return NS_OK;
 +}
@@ -874,7 +887,7 @@ Index: mozilla/layout/base/nsIPresShell.h
 ===================================================================
 --- mozilla.orig/layout/base/nsIPresShell.h
 +++ mozilla/layout/base/nsIPresShell.h
-@@ -727,16 +727,19 @@
+@@ -699,16 +699,19 @@
  
    void AddWeakFrame(nsWeakFrame* aWeakFrame);
    void RemoveWeakFrame(nsWeakFrame* aWeakFrame);
@@ -898,7 +911,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -990,16 +990,19 @@
+@@ -1012,16 +1012,19 @@
    virtual void ListStyleSheets(FILE *out, PRInt32 aIndent = 0);
    virtual void VerifyStyleTree();
  #endif
@@ -918,7 +931,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
    void UnsuppressAndInvalidate();
  
    void     WillCauseReflow() { ++mChangeNestCount; }
-@@ -1108,16 +1111,17 @@
+@@ -1094,16 +1097,17 @@
  #ifdef DEBUG
    PRUint32                  mUpdateCount;
  #endif
@@ -936,7 +949,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
    // middle of frame construction and the like... it really shouldn't be
    // needed, one hopes, but it is for now.
    PRUint32  mChangeNestCount;
-@@ -5849,16 +5853,28 @@
+@@ -5390,16 +5394,28 @@
    nsIPresShell *shell = aDocument->GetPrimaryShell();
    if (shell)
      shell->Freeze();
@@ -965,7 +978,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
      EnumeratePlugins(domDoc, NS_LITERAL_STRING("applet"), StopPluginInstance);
      EnumeratePlugins(domDoc, NS_LITERAL_STRING("embed"), StopPluginInstance);
    }
-@@ -6123,16 +6139,19 @@
+@@ -5675,16 +5691,19 @@
  #endif
  
  nsresult
