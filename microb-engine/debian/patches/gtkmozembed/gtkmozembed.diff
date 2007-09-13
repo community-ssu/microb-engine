@@ -1,6 +1,6 @@
-diff -ruN -p -u10 src.orig/EmbedCertificates.cpp src/EmbedCertificates.cpp
---- mozilla/embedding/browser/gtk/src/EmbedCertificates.cpp	2007-05-18 07:38:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedCertificates.cpp	2007-05-18 10:01:24.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedCertificates.cpp mozilla/embedding/browser/gtk/src/EmbedCertificates.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedCertificates.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedCertificates.cpp	2007-09-14 00:46:17.000000000 +0300
 @@ -289,21 +289,21 @@ EmbedCertificates::ConfirmBadCertificate
    PRBool *_retval)
  {
@@ -24,12 +24,32 @@ diff -ruN -p -u10 src.orig/EmbedCertificates.cpp src/EmbedCertificates.cpp
      messint = GTK_MOZ_EMBED_CERT_VERIFIED_OK;
      if (aError & nsIX509Cert::NOT_VERIFIED_UNKNOWN) {
        messint |= GTK_MOZ_EMBED_CERT_NOT_VERIFIED_UNKNOWN;
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cpp mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.cpp
---- mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cpp	2007-05-18 07:38:57.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.cpp	2007-05-18 10:01:24.000000000 +0300
-@@ -64,54 +64,56 @@
- #include "nsIDOM3Document.h"
- #include "nsIContent.h"
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cpp mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.cpp	2007-09-14 00:46:17.000000000 +0300
+@@ -30,20 +30,21 @@
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
++
+ #include "EmbedContextMenuInfo.h"
+ #include "nsIImageLoadingContent.h"
+ #include "imgILoader.h"
+ #include "nsIDOMDocument.h"
+ #include "nsIDOMHTMLDocument.h"
+ #include "nsIDOMHTMLElement.h"
+ #include "nsIDOMHTMLHtmlElement.h"
+ #include "nsIDOMHTMLAnchorElement.h"
+ #include "nsIDOMHTMLImageElement.h"
+ #include "nsIDOMHTMLAreaElement.h"
+@@ -66,52 +67,61 @@
  #include "nsIPresShell.h"
  #include "nsIFormControl.h"
  #include "nsIDOMNSHTMLInputElement.h"
@@ -38,10 +58,16 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
  #include "nsIDOMHTMLTextAreaElement.h"
  #include "nsIDOMNSHTMLDocument.h"
  #include "nsIDOMNodeList.h"
-+#include "nsIDOMWindowInternal.h"
  #include "nsISelection.h"
  #include "nsIDocument.h"
++#include "nsIWidget.h"
++#include "nsIScrollableView.h"
++#include "nsIScrollableViewProvider.h"
++#include "nsIView.h"
++#include "nsIScrollableFrame.h"
++#include "nsIDOMWindowInternal.h"
  #include "EmbedPrivate.h"
++#include "nsGUIEvent.h"
  #include <stdio.h>
  #include <stdarg.h>
  #include <stdlib.h>
@@ -64,7 +90,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
    mEventNode = nsnull;
    mFormRect = nsRect(0,0,0,0);
 +  mIsScrollableElement = PR_TRUE;
-+  mCtxDomWindowScrollable = nsnull;
++  mCtxScrollable = nsnull;
++  mIsJSHandledElement = 0;
  }
  
  EmbedContextMenuInfo::~EmbedContextMenuInfo(void)
@@ -75,7 +102,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
 -  mNSHHTMLElementSc = nsnull;
    mCtxEvent = nsnull;
    mEventNode = nsnull;
-+  mCtxDomWindowScrollable = nsnull;
++  mCtxScrollable = nsnull;
  }
  
  NS_IMPL_ADDREF(EmbedContextMenuInfo)
@@ -86,7 +113,73 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
  
  nsresult
  EmbedContextMenuInfo::SetFrameIndex()
-@@ -197,79 +199,89 @@ EmbedContextMenuInfo::SetFormControlType
+@@ -131,20 +141,41 @@ EmbedContextMenuInfo::SetFrameIndex()
+       nsCOMPtr<nsIDocument> doc = do_QueryInterface(currentDoc);
+       if (doc)
+         mCtxDocTitle = doc->GetDocumentTitle();
+       return NS_OK;
+     }
+   }
+   return NS_ERROR_FAILURE;
+ }
+ 
+ nsresult
++EmbedContextMenuInfo::GetJSHandledInfo(nsIDOMEvent *aEvent, PRInt32 *aIsJSHandled)
++{
++  if (!aEvent && !aIsJSHandled)
++    return NS_ERROR_FAILURE;
++  nsresult rv;
++  if (aEvent) {
++    PRUint32 flags;
++    rv = aEvent->GetPrivateFlags(&flags);
++    if (NS_SUCCEEDED(rv) && (flags & NS_PRIV_EVENT_FLAG_SCRIPT)) {
++      mIsJSHandledElement = aIsJSHandled?*aIsJSHandled:1;
++    } else {
++      mIsJSHandledElement = 0;
++      rv = NS_ERROR_FAILURE;
++    }
++  }
++  if (aIsJSHandled)
++    *aIsJSHandled = mIsJSHandledElement;
++  return rv;
++}
++
++nsresult
+ EmbedContextMenuInfo::GetFormControlType(nsIDOMEvent* aEvent)
+ {
+   if (!aEvent)
+     return NS_OK;
+   nsCOMPtr<nsIDOMNSEvent> nsevent(do_QueryInterface(aEvent));
+   nsCOMPtr<nsIDOMEventTarget> target;
+   nsevent->GetOriginalTarget(getter_AddRefs(target));
+   //    mOrigTarget  = target;
+   if (SetFormControlType(target)) {
+     nsCOMPtr<nsIDOMNode> eventNode = do_QueryInterface(target);
+@@ -178,98 +209,105 @@ EmbedContextMenuInfo::GetFormControlType
+     return NS_OK;
+   }
+   return NS_ERROR_FAILURE;
+ }
+ 
+ nsresult
+ EmbedContextMenuInfo::SetFormControlType(nsIDOMEventTarget *originalTarget)
+ {
+   nsresult rv = NS_ERROR_FAILURE;
+   nsCOMPtr<nsIContent> targetContent = do_QueryInterface(originalTarget);
++  if(!targetContent)
++    return rv;
++  
+   mCtxFormType = 0;
+ #ifdef MOZILLA_1_8_BRANCH
+-  if (targetContent && targetContent->IsContentOfType(nsIContent::eHTML_FORM_CONTROL)) {
++  if (targetContent->IsContentOfType(nsIContent::eHTML_FORM_CONTROL)) {
+ #else
+-  if (targetContent && targetContent->IsNodeOfType(nsIContent::eHTML_FORM_CONTROL)) {
++  if (targetContent->IsNodeOfType(nsIContent::eHTML_FORM_CONTROL)) {
+ #endif
+     nsCOMPtr<nsIFormControl> formControl(do_QueryInterface(targetContent));
+     if (formControl) {
+       mCtxFormType = formControl->GetType();
        rv = NS_OK;
        //#ifdef MOZ_LOGGING
        switch (mCtxFormType) {
@@ -97,33 +190,29 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
        case NS_FORM_BUTTON_SUBMIT:
          break;
        case NS_FORM_INPUT_BUTTON:
-+        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
++        //  mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
          break;
        case NS_FORM_INPUT_CHECKBOX:
-+        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
          break;
++      case NS_FORM_INPUT_RADIO:
++        break;
        case NS_FORM_INPUT_FILE:
-         mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
+-        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
          break;
        case NS_FORM_INPUT_HIDDEN:
-+        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
          break;
        case NS_FORM_INPUT_RESET:
-+        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
          break;
        case NS_FORM_INPUT_IMAGE:
-+        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
          break;
        case NS_FORM_INPUT_PASSWORD:
 -        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
 +        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT_TEXT;
          mEmbedCtxType |= GTK_MOZ_EMBED_CTX_IPASSWORD;
          break;
-       case NS_FORM_INPUT_RADIO:
-+        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
-         break;
+-      case NS_FORM_INPUT_RADIO:
+-        break;
        case NS_FORM_INPUT_SUBMIT:
-+        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
          break;
        case NS_FORM_INPUT_TEXT:
 -        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
@@ -143,6 +232,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
        case NS_FORM_TEXTAREA:
 -        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
 +        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT_TEXT;
++        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_MULTILINE;
          break;
        case NS_FORM_OBJECT:
          break;
@@ -184,7 +274,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
  
  const char*
  EmbedContextMenuInfo::GetSelectedText()
-@@ -358,47 +370,38 @@ EmbedContextMenuInfo::GetImageRequest(im
+@@ -358,47 +396,38 @@ EmbedContextMenuInfo::GetImageRequest(im
                               aRequest);
  }
  
@@ -236,21 +326,204 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
    else if (uTag.LowerCaseEqualsLiteral("a")) {
      nsCOMPtr<nsIDOMHTMLAnchorElement> anchor = do_QueryInterface(node);
      anchor->GetHref(mCtxHref);
-@@ -446,55 +449,59 @@ nsresult
- EmbedContextMenuInfo::UpdateContextData(void *aEvent)
- {
-   NS_ENSURE_ARG_POINTER(aEvent);
-   nsresult rv;
-   nsCOMPtr<nsIDOMEvent> event = do_QueryInterface((nsISupports*)aEvent, &rv);
-   if (NS_FAILED(rv) || !event)
-     return NS_ERROR_FAILURE;
-   return UpdateContextData(event);
+@@ -408,20 +437,27 @@ EmbedContextMenuInfo::CheckDomHtmlNode(n
+         nsCOMPtr<nsIDOMNode> childNode;
+         node->GetFirstChild(getter_AddRefs(childNode));
+         if (childNode) {
+           PRInt32 width, height;
+           rv = CheckDomImageElement(node, mCtxImgHref, &width, &height);
+           if (NS_SUCCEEDED(rv))
+             mEmbedCtxType |= GTK_MOZ_EMBED_CTX_IMAGE;
+         }
+       } else if (StringBeginsWith(mCtxHref, NS_LITERAL_STRING("mailto:"))) {
+         mEmbedCtxType |= GTK_MOZ_EMBED_CTX_EMAIL;
++      } else {
++        nsCOMPtr<nsIDOMNode> childNode;
++        node->GetFirstChild(getter_AddRefs(childNode));
++        if (childNode) {
++          childNode->GetLocalName(uTag);
++          mIsScrollableElement = !uTag.LowerCaseEqualsLiteral("div");
++        }
+       }
+     }
+   }
+   else if (uTag.LowerCaseEqualsLiteral("area")) {
+     nsCOMPtr<nsIDOMHTMLAreaElement> area = do_QueryInterface(node, &rv);
+     if (NS_SUCCEEDED(rv) && area) {
+       PRBool aNoHref = PR_FALSE;
+       rv = area->GetNoHref(&aNoHref);
+       if (aNoHref == PR_FALSE)
+         rv = area->GetHref(mCtxHref);
+@@ -435,66 +471,196 @@ EmbedContextMenuInfo::CheckDomHtmlNode(n
+     PRInt32 width, height;
+     rv = CheckDomImageElement(node, mCtxImgHref, &width, &height);
+     if (NS_SUCCEEDED(rv))
+       mEmbedCtxType |= GTK_MOZ_EMBED_CTX_IMAGE;
+   } else {
+     rv = NS_ERROR_FAILURE;
+   }
+   return rv;
  }
  
 -nsresult
--EmbedContextMenuInfo::GetElementForScroll(nsIDOMEvent *aEvent)
+-EmbedContextMenuInfo::UpdateContextData(void *aEvent)
++static nsIFrame*
++GetParentFrameToScroll(nsPresContext* aPresContext, nsIFrame* aFrame)
+ {
+-  NS_ENSURE_ARG_POINTER(aEvent);
++  if (!aPresContext || !aFrame)
++    return nsnull;
++
++  if (aFrame->GetStyleDisplay()->mPosition == NS_STYLE_POSITION_FIXED)
++    return aPresContext->GetPresShell()->GetRootScrollFrame();
++
++  return aFrame->GetParent();
++}
++
++static PRBool
++ViewIsScrollable(nsIScrollableView* aScrollView)
++{
++  // Can it crash?
++  nsIFrame *frame = NS_STATIC_CAST(nsIFrame*, aScrollView->View()->GetParent()->GetClientData());
++  NS_ENSURE_TRUE(frame, PR_FALSE);
++  nsIScrollableFrame *sf = nsnull;
++  CallQueryInterface(frame, &sf);
++  NS_ENSURE_TRUE(sf, PR_FALSE);
++  nsPresContext::ScrollbarStyles ss = sf->GetScrollbarStyles();
++  if (NS_STYLE_OVERFLOW_HIDDEN != ss.mHorizontal
++      || NS_STYLE_OVERFLOW_HIDDEN != ss.mVertical)
++    return PR_TRUE;
++  return PR_FALSE;
++}
++
++static nsresult
++FindScrollableView(nsPresContext* aPresContext,
++                   nsIFrame* aTargetFrame,
++                   nsIScrollableViewProvider* *aSvp)
++{
++  nsIScrollableView* scrollView = nsnull;
++  nsIFrame* scrollFrame = aTargetFrame;
++  PRBool passToParent = PR_TRUE;
++  for (; scrollFrame && passToParent;
++       scrollFrame = GetParentFrameToScroll(aPresContext, scrollFrame)) {
++    scrollView = nsnull;
++    nsCOMPtr<nsIScrollableViewProvider> svp = do_QueryInterface(scrollFrame);
++    if (svp)
++      scrollView = svp->GetScrollableView();
++
++    if (!scrollView)
++      continue;
++    else
++      if (aSvp)
++        NS_ADDREF(*aSvp = svp);
++
++    if (!ViewIsScrollable(scrollView))
++      continue;
++
++    // Check if the scrollable view can be scrolled any further.
++    nscoord lineHeight;
++    scrollView->GetLineHeight(&lineHeight);
++    if (lineHeight != 0) {
++      PRBool canScroll;
++      if ((NS_SUCCEEDED(scrollView->CanScroll(PR_FALSE, PR_TRUE, canScroll)) && canScroll)
++          || (NS_SUCCEEDED(scrollView->CanScroll(PR_TRUE, PR_TRUE, canScroll)) && canScroll)
++          || (NS_SUCCEEDED(scrollView->CanScroll(PR_TRUE, PR_FALSE, canScroll)) && canScroll)
++          || (NS_SUCCEEDED(scrollView->CanScroll(PR_FALSE, PR_FALSE, canScroll)) && canScroll)
++         ) {
++        passToParent = PR_FALSE;
++        return NS_OK;
++      }
++    }
++  }
++  return NS_ERROR_FAILURE;
++}
++
 +static PRBool
 +IsScrollableWindow(nsIDOMWindow *win)
++{
++  if (!win) return PR_FALSE;
++  nsCOMPtr<nsIDOMWindowInternal> winint = do_QueryInterface(win);
++  if (!winint) return PR_FALSE;
++  PRInt32 maxScrollX = 0, maxScrollY = 0;
++  winint->GetScrollMaxX(&maxScrollX);
++  winint->GetScrollMaxY(&maxScrollY);
++  return maxScrollX || maxScrollY;
++}
++
++inline PRBool
++EmbedContextMenuInfo::GetScrollableViewByNode(void)
++{
++  if (!mEventNode) {
++    nsCOMPtr<nsIWebBrowser> webBrowser;
++    mOwner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
++    webBrowser->GetContentDOMWindow(getter_AddRefs(mCtxDomWindow));
++    NS_ENSURE_TRUE(mCtxDomWindow, PR_FALSE);
++    nsCOMPtr<nsIDOMDocument> document;
++    mCtxDomWindow->GetDocument(getter_AddRefs(document));
++    NS_ENSURE_TRUE(document, PR_FALSE);
++    nsCOMPtr<nsIDOMElement> el;
++    document->GetDocumentElement(getter_AddRefs(el));
++    mEventNode = do_QueryInterface(el);
++    NS_ENSURE_TRUE(mEventNode, PR_FALSE);
++  }
+   nsresult rv;
+-  nsCOMPtr<nsIDOMEvent> event = do_QueryInterface((nsISupports*)aEvent, &rv);
+-  if (NS_FAILED(rv) || !event)
+-    return NS_ERROR_FAILURE;
+-  return UpdateContextData(event);
++  nsIFrame* frame = nsnull;
++  mCtxScrollable = nsnull;
++  nsCOMPtr<nsIContent> iContent = do_QueryInterface(mEventNode, &rv);
++  NS_ENSURE_SUCCESS(rv, PR_FALSE);
++  nsCOMPtr<nsIPresShell> presShell;
++  nsCOMPtr<nsIDOMDocument> doc;
++  mEventNode->GetOwnerDocument(getter_AddRefs(doc));
++  nsCOMPtr<nsIDocument> iDoc = do_QueryInterface(doc);
++  NS_ENSURE_TRUE(iDoc, PR_FALSE);
++  presShell = iDoc->GetPrimaryShell();
++  NS_ENSURE_TRUE(presShell, PR_FALSE);
++  frame = presShell->GetPrimaryFrameFor(iContent);
++  NS_ENSURE_TRUE(frame, PR_FALSE);
++  nsPresContext *context = presShell->GetPresContext();
++  NS_ENSURE_TRUE(context, PR_FALSE);
++  nsCOMPtr<nsIScrollableViewProvider> svp;
++  if (NS_SUCCEEDED(FindScrollableView(context, frame, getter_AddRefs(svp)))
++      && svp && (mCtxScrollable = svp))
++    return PR_TRUE;
++  return PR_FALSE;
++}
++
++PRBool
++EmbedContextMenuInfo::GetScrollableView(void)
++{
++  if (GetScrollableViewByNode())
++    return PR_TRUE;
++  if (!mCtxDomWindow) {
++    nsCOMPtr<nsIWebBrowser> webBrowser;
++    mOwner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
++    webBrowser->GetContentDOMWindow(getter_AddRefs(mCtxDomWindow));
++  }
++  NS_ENSURE_TRUE(mCtxDomWindow, PR_FALSE);
++  nsCOMPtr<nsIDOMWindow> cur = mCtxDomWindow;
++  nsCOMPtr<nsIDOMWindow> parent = nsnull;
++  if (IsScrollableWindow(cur)) {
++    mCtxScrollable = cur;
++    return PR_TRUE;
++  }
++  while (cur && cur != parent) {
++    cur->GetParent(getter_AddRefs(parent));
++    cur = parent;
++    if (IsScrollableWindow(cur)) {
++      mCtxScrollable = cur;
++      return PR_TRUE;
++    }
++  }
++  return PR_FALSE;
+ }
+ 
+ nsresult
+-EmbedContextMenuInfo::GetElementForScroll(nsIDOMEvent *aEvent)
++EmbedContextMenuInfo::ScrollScrollableView(PRInt32 subX, PRInt32 subY)
  {
 -  if (!aEvent) return NS_ERROR_UNEXPECTED;
 -  nsCOMPtr<nsIDOMNSEvent> nsevent(do_QueryInterface(aEvent));
@@ -263,18 +536,24 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
 -  targetDOMNode->GetOwnerDocument(getter_AddRefs(targetDOMDocument));
 -  if (!targetDOMDocument) return NS_ERROR_UNEXPECTED;
 -  return GetElementForScroll(targetDOMDocument);
-+  if (!win) return PR_FALSE;
-+  nsCOMPtr<nsIDOMWindowInternal> winint = do_QueryInterface(win);
-+  if (!winint) return PR_FALSE;
-+  PRInt32 maxScrollX = 0, maxScrollY = 0;
-+  winint->GetScrollMaxX(&maxScrollX);
-+  winint->GetScrollMaxY(&maxScrollY);
-+  return maxScrollX || maxScrollY;
++  nsresult rv;
++  nsCOMPtr<nsIScrollableViewProvider> svp = do_QueryInterface(mCtxScrollable, &rv);
++  if (svp && !NS_FAILED(rv)) {
++    nsIScrollableView* scrollView = svp->GetScrollableView();
++    NS_ENSURE_TRUE(scrollView, NS_ERROR_FAILURE);
++    return scrollView->ScrollByPixels(subX, subY);
++  }
++
++  nsCOMPtr<nsIDOMWindow> win = do_QueryInterface(mCtxScrollable, &rv);
++  if (!win || NS_FAILED(rv))
++    return NS_ERROR_FAILURE;
++
++  return win->ScrollBy(subX, subY);
  }
  
  nsresult
 -EmbedContextMenuInfo::GetElementForScroll(nsIDOMDocument *targetDOMDocument)
-+EmbedContextMenuInfo::SetScrollableWindow(void)
++EmbedContextMenuInfo::UpdateContextData(void *aEvent)
  {
 -  nsCOMPtr<nsIDOMElement> targetDOMElement;
 -  targetDOMDocument->GetDocumentElement(getter_AddRefs(targetDOMElement));
@@ -290,31 +569,14 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
 -    if (!domBodyNode) return NS_ERROR_UNEXPECTED;
 -    mNSHHTMLElementSc = do_QueryInterface(domBodyNode);
 -    if (!mNSHHTMLElementSc) return NS_ERROR_UNEXPECTED;
-+  nsresult rv;
-+  mCtxDomWindowScrollable = nsnull;
-+  if (!mCtxDomWindow) {
-+    nsCOMPtr<nsIWebBrowser> webBrowser;
-+    mOwner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
-+    webBrowser->GetContentDOMWindow(getter_AddRefs(mCtxDomWindow));
-   }
+-  }
 -  return NS_OK;
-+  NS_ENSURE_TRUE(mCtxDomWindow, NS_ERROR_FAILURE);
-+  nsCOMPtr<nsIDOMWindow> cur = mCtxDomWindow;
-+  nsCOMPtr<nsIDOMWindow> parent = nsnull;
-+  if (IsScrollableWindow(cur)) {
-+    mCtxDomWindowScrollable = cur;
-+    return NS_OK;
-+  }
-+  rv = NS_ERROR_FAILURE;
-+  while (cur && cur != parent) {
-+    cur->GetParent(getter_AddRefs(parent));
-+    cur = parent;
-+    if (IsScrollableWindow(cur)) {
-+      mCtxDomWindowScrollable = cur;
-+      return NS_OK;
-+    }
-+  }
-+  return rv;
++  NS_ENSURE_ARG_POINTER(aEvent);
++  nsresult rv;
++  nsCOMPtr<nsIDOMEvent> event = do_QueryInterface((nsISupports*)aEvent, &rv);
++  if (NS_FAILED(rv) || !event)
++    return NS_ERROR_FAILURE;
++  return UpdateContextData(event);
  }
  
  nsresult
@@ -325,7 +587,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
  
    nsresult rv = nsnull;
    mCtxEvent = aDOMEvent;
-@@ -531,72 +538,80 @@ EmbedContextMenuInfo::UpdateContextData(
+@@ -531,72 +697,84 @@ EmbedContextMenuInfo::UpdateContextData(
      return NS_OK;
  
    mEmbedCtxType = GTK_MOZ_EMBED_CTX_NONE;
@@ -376,12 +638,12 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
      nsCOMPtr<nsIDOM3Document> docuri = do_QueryInterface(mCtxDocument);
      docuri->GetDocumentURI(mCtxURI);
      NS_ENSURE_ARG_POINTER(mOwner);
--    nsCOMPtr<nsIWebBrowser> webBrowser;
--    mOwner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
--    webBrowser->GetContentDOMWindow(getter_AddRefs(mCtxDomWindow));
-+    mOwner->GetDOMWindowByNode(mEventNode, getter_AddRefs(mCtxDomWindow));
+     nsCOMPtr<nsIWebBrowser> webBrowser;
+     mOwner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
+     webBrowser->GetContentDOMWindow(getter_AddRefs(mCtxDomWindow));
      nsCOMPtr<nsIDOMDocument> mainDocument;
      mCtxDomWindow->GetDocument(getter_AddRefs(mainDocument));
++
      if (!mainDocument) {
        return NS_OK;
      }
@@ -402,6 +664,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
 -      mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
 +      mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT_TEXT;
        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_RICHEDIT;
++      mEmbedCtxType |= GTK_MOZ_EMBED_CTX_MULTILINE;
 +      mIsScrollableElement = PR_FALSE;
      }
    }
@@ -413,7 +676,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
      return NS_OK;
    nsCOMPtr<nsIContent> tgContent = do_QueryInterface(mEventTarget);
    nsIFrame* frame = nsnull;
-@@ -611,24 +626,33 @@ EmbedContextMenuInfo::UpdateContextData(
+@@ -611,24 +789,33 @@ EmbedContextMenuInfo::UpdateContextData(
      frame = presShell->GetPrimaryFrameFor(tgContent);
  #endif
    }
@@ -450,10 +713,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cp
    mEmbedCtxType |= GTK_MOZ_EMBED_CTX_DOCUMENT;
    return NS_OK;
  }
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.h mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.h
---- mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.h	2007-05-18 07:38:57.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.h	2007-05-18 10:01:24.000000000 +0300
-@@ -62,40 +62,40 @@
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.h mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.h	2007-09-14 00:46:17.000000000 +0300
+@@ -62,40 +62,44 @@
  class EmbedContextMenuInfo : public nsISupports
  {
  public:
@@ -470,7 +733,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.h 
                                         PRInt32 *aWidth, PRInt32 *aHeight);
    nsresult          GetImageRequest(imgIRequest **aRequest, nsIDOMNode *aDOMNode);
    nsString          GetCtxDocTitle(void) { return mCtxDocTitle; }
-+  nsresult          SetScrollableWindow(void);
++  PRBool            GetScrollableView(void);
++  PRBool            GetScrollableViewByNode(void);
++  nsresult          ScrollScrollableView(PRInt32 subX, PRInt32 subY);
++  nsresult          GetJSHandledInfo(nsIDOMEvent *aEvent, PRInt32 *aIsJSHandled = nsnull);
  
  
    PRInt32                 mX, mY, mObjWidth, mObjHeight, mCtxFrameNum;
@@ -482,11 +748,12 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.h 
    nsCOMPtr<nsIDOMDocument>mCtxDocument;
    nsRect               mFormRect;
    nsCOMPtr<nsIDOMWindow>  mCtxDomWindow;
-+  nsCOMPtr<nsIDOMWindow>  mCtxDomWindowScrollable;
    nsCOMPtr<nsIDOMEvent>   mCtxEvent;
    nsCOMPtr<nsIDOMNSHTMLElement> mNSHHTMLElement;
 -  nsCOMPtr<nsIDOMNSHTMLElement> mNSHHTMLElementSc;
++  nsISupports            *mCtxScrollable;
 +  PRInt32                 mIsScrollableElement;
++  PRInt32                 mIsJSHandledElement;
  private:
    nsresult          SetFrameIndex();
    nsresult          SetFormControlType(nsIDOMEventTarget *originalTarget);
@@ -497,9 +764,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.h 
    nsString                mCtxDocTitle;
  }; // class EmbedContextMenuInfo
  #endif // EmbedContextMenuInfo_h__
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.cpp
---- mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp	2007-05-18 07:39:08.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.cpp	2007-05-18 10:01:24.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.cpp	2007-09-14 00:46:18.000000000 +0300
 @@ -15,20 +15,22 @@
   *
   * The Original Code is mozilla.org code.
@@ -523,9 +790,88 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mo
   * use your version of this file under the terms of the MPL, indicate your
   * decision by deleting the provisions above and replace them with the notice
   * and other provisions required by the GPL or the LGPL. If you do not delete
-@@ -118,51 +120,63 @@ RemoveSchemeFromFilePath(gchar *path)
-     
-   return new_path;
+@@ -63,20 +65,22 @@
+ #include "nsCExternalHandlerService.h"
+ #include "nsMemory.h"
+ #include "nsNetError.h"
+ #include "nsIStreamListener.h"
+ #include "nsIFile.h"
+ #include "nsILocalFile.h"
+ #include "nsNetCID.h"
+ #include <unistd.h>
+ #include "gtkmozembed_download.h"
+ #include "nsIIOService.h"
++#include "nsIProgressEventSink.h"
++#include "nsNetUtil.h"
+ 
+ #define UNKNOWN_FILE_SIZE -1
+ 
+ class EmbedDownloadMgr;
+ class ProgressListener : public nsIWebProgressListener2
+ {
+ public:
+     ProgressListener(EmbedDownload *aDownload):mDownload(aDownload)
+     {
+     }
+@@ -85,84 +89,108 @@ public:
+     {
+     }
+ 
+     NS_DECL_ISUPPORTS
+     NS_DECL_NSIWEBPROGRESSLISTENER
+     NS_DECL_NSIWEBPROGRESSLISTENER2
+ 
+     EmbedDownload *mDownload;
+ };
+ 
++class FetchObserver : public nsIRequestObserver
++                      ,public nsIProgressEventSink
++{
++public:
++    FetchObserver(EmbedDownload *aDownload):mDownload(aDownload)
++    {
++    }
++
++    ~FetchObserver(void)
++    {
++    }
++
++    NS_DECL_ISUPPORTS
++    NS_DECL_NSIREQUESTOBSERVER
++    NS_DECL_NSIPROGRESSEVENTSINK
++    EmbedDownload *mDownload;
++};
++
++NS_IMPL_ISUPPORTS2(FetchObserver, nsIRequestObserver, nsIProgressEventSink)
++
+ NS_IMPL_ISUPPORTS2(ProgressListener, nsIWebProgressListener2, nsIWebProgressListener)
+ NS_IMPL_ISUPPORTS1(EmbedDownloadMgr, nsIHelperAppLauncherDialog)
+ 
+ EmbedDownloadMgr::EmbedDownloadMgr(void)
+ {
+ }
+ 
+ EmbedDownloadMgr::~EmbedDownloadMgr(void)
+ {
+ }
+ 
+-static gchar *
+-RemoveSchemeFromFilePath(gchar *path)
++static char *
++RemoveSchemeFromFilePath(const char *path)
+ {
+-  gchar *new_path = path;
+-
+-  if (!strncmp(path, "file://", 7)) {
+-    /* XXX this should really look for the first non / after file:/ instead of
+-     * assuming file://tmp v. file:///tmp
+-     */
+-    new_path = g_strdup(path+sizeof("file:/"));
+-    g_free(path);
+-  }
+-    
+-  return new_path;
++  return g_strdup(g_str_has_prefix(path, "file://")?&path[7]:path);
  }
  
  NS_IMETHODIMP
@@ -584,7 +930,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mo
    }
  
 -  mDownload->file_name_with_path = RemoveSchemeFromFilePath(mDownload->file_name_with_path);
-+  temp->file_name_with_path = RemoveSchemeFromFilePath(temp->file_name_with_path);
++  char * path = RemoveSchemeFromFilePath(temp->file_name_with_path);
++  NS_Free(temp->file_name_with_path);
++  temp->file_name_with_path = path;
  
    return aLauncher->SaveToDisk(nsnull, PR_FALSE);
  }
@@ -595,7 +943,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mo
  {
    /* File type */
    nsCOMPtr<nsIMIMEInfo> mimeInfo;
-@@ -189,41 +203,49 @@ EmbedDownloadMgr::GetDownloadInfo(nsIHel
+@@ -189,41 +217,50 @@ EmbedDownloadMgr::GetDownloadInfo(nsIHel
    nsCOMPtr<nsIURI> uri;
    rv = aLauncher->GetSource(getter_AddRefs(uri));
    if (NS_FAILED(rv))
@@ -621,6 +969,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mo
 -  mDownload->server = g_strconcat(spec.get(), (gchar *) mDownload->file_name, NULL);
 -  mDownload->file_type = g_strdup(mimeType.get());
 -  mDownload->file_size = UNKNOWN_FILE_SIZE;
++  mDownload->incr_launcher = nsnull;
 +  temp->downloaded_size = -1;
 +  temp->file_name = g_strdup((gchar *) tempFileName.get());
 +  temp->server = g_strconcat(spec.get(), (gchar *) temp->file_name, NULL);
@@ -651,7 +1000,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mo
  
    /* Progress listener to follow the download and connecting it to
       the launcher which controls the download. */
-@@ -242,21 +264,21 @@ NS_IMETHODIMP EmbedDownloadMgr::PromptFo
+@@ -242,21 +279,21 @@ NS_IMETHODIMP EmbedDownloadMgr::PromptFo
  #ifdef OUTPUT_HANDLER_IMPL
  NS_IMETHODIMP EmbedDownloadMgr::PromptForSaveToUri(nsIHelperAppLauncher *aLauncher,
                                                     nsISupports *aWindowContext,
@@ -674,7 +1023,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mo
      return FALSE;
  
    NS_ADDREF (*_retval = uri);
-@@ -272,22 +294,37 @@ NS_IMETHODIMP EmbedDownloadMgr::PromptFo
+@@ -272,22 +309,37 @@ NS_IMETHODIMP EmbedDownloadMgr::PromptFo
  }
  #endif
  
@@ -713,7 +1062,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mo
  {
    if (NS_FAILED(aStatus))
      return NS_ERROR_FAILURE;
-@@ -336,24 +373,26 @@ NS_IMETHODIMP ProgressListener::OnProgre
+@@ -336,24 +388,164 @@ NS_IMETHODIMP ProgressListener::OnProgre
      gtk_signal_emit(GTK_OBJECT(mDownload->parent),
                      moz_embed_download_signals[DOWNLOAD_PROGRESS_SIGNAL],
                      (gulong) aCurSelfProgress, (gulong) aMaxSelfProgress, 1);
@@ -741,10 +1090,167 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.cpp mo
    return NS_OK;
  }
 +
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.h mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.h
---- mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.h	2007-05-18 07:38:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.h	2007-05-18 10:01:24.000000000 +0300
-@@ -57,30 +57,20 @@ class nsIFile;
++NS_IMETHODIMP
++EmbedDownloadMgr::CreateIncrementalDownload(const char *aUrl,
++                                            const char *aDestination,
++                                            PRBool aHidden)
++{
++  //printf("gtkmozembed_download.cpp, Line:%d, Func:%s\n",  __LINE__, __FUNCTION__);
++
++  GtkObject* instance;
++  /* create a Download object */
++  instance = gtk_moz_embed_download_get_restart_flag () ?
++                gtk_moz_embed_download_get_latest_object () : gtk_moz_embed_download_new();
++  // XXX reseting download restart flag ...
++  gtk_moz_embed_download_set_restart_flag (FALSE);
++  if (!instance)
++    return NS_ERROR_FAILURE;
++
++  EmbedDownload *Download = (EmbedDownload *) GTK_MOZ_EMBED_DOWNLOAD(instance)->data;
++  Download->parent = instance;
++  /* Sets download object to keep control of each download. */
++  Download->launcher = nsnull;
++
++  GtkMozEmbedDownload *temp = (GtkMozEmbedDownload *) Download->parent;
++  temp->downloaded_size = -1;
++  temp->file_size = UNKNOWN_FILE_SIZE;
++  temp->server = NS_strdup(aUrl);
++  temp->file_name_with_path = NS_strdup(aDestination);
++  temp->file_name = RemoveSchemeFromFilePath(aDestination);
++
++  return EmbedDownloadMgr::CreateIncrementalDownload(Download);
++}
++
++NS_IMETHODIMP
++EmbedDownloadMgr::CreateIncrementalDownload(EmbedDownload *Download)
++{
++  //printf("gtkmozembed_download.cpp, Line:%d, Func:%s\n",  __LINE__, __FUNCTION__);
++
++  GtkObject* instance = Download->parent;
++  // XXX reseting download restart flag ...
++  gtk_moz_embed_download_set_restart_flag (FALSE);
++  if (!instance)
++    return NS_ERROR_FAILURE;
++
++  /* Sets download object to keep control of each download. */
++  Download->launcher = nsnull;
++
++  GtkMozEmbedDownload *temp = (GtkMozEmbedDownload *) Download->parent;
++
++  nsCOMPtr<nsILocalFile> resultFile;
++  char *new_path = RemoveSchemeFromFilePath(temp->file_name_with_path);
++  nsresult rv = NS_NewNativeLocalFile(nsDependentCString(new_path),
++                                      PR_FALSE, getter_AddRefs(resultFile));
++  NS_ENSURE_SUCCESS(rv, rv);
++  nsCOMPtr<nsIURI> uri;
++  rv = NS_NewURI(getter_AddRefs(uri), temp->server);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  nsCOMPtr <nsIRequestObserver> observer = new FetchObserver(Download);
++  NS_ENSURE_TRUE(observer, rv);
++
++  nsCOMPtr<nsIIncrementalDownload> download =
++      do_CreateInstance(NS_INCREMENTALDOWNLOAD_CONTRACTID, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  Download->incr_launcher = download;
++
++  rv = download->Init(uri, resultFile, -1, 0);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  rv = download->Start(observer, nsnull);
++  NS_ENSURE_SUCCESS(rv, rv);
++  return NS_OK;
++}
++
++
++NS_IMETHODIMP
++FetchObserver::OnStartRequest(nsIRequest *request, nsISupports *context)
++{
++  //printf("FetchObserver::OnStartRequest\n");
++  NS_ENSURE_TRUE(mDownload, NS_OK);
++  mDownload->request = request;
++  GtkMozEmbedDownload *temp = (GtkMozEmbedDownload *) mDownload->parent;
++  gtk_signal_emit(GTK_OBJECT(mDownload->parent),
++                  moz_embed_download_signals[DOWNLOAD_STARTED_SIGNAL], temp->file_name);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++FetchObserver::OnProgress(nsIRequest *request, nsISupports *context,
++                          PRUint64 progress, PRUint64 progressMax)
++{
++  //printf("FetchObserver::OnProgress [%lu/%lu]\n",PRUint32(progress), PRUint32(progressMax));
++  NS_ENSURE_TRUE(mDownload, NS_OK);
++  mDownload->request = request;
++  if (mDownload->isCanceled)
++    return NS_OK;
++  if (progressMax != UNKNOWN_FILE_SIZE)
++    gtk_signal_emit(GTK_OBJECT(mDownload->parent),
++                    moz_embed_download_signals[DOWNLOAD_PROGRESS_SIGNAL],
++                    (gulong) progress, (gulong) progressMax, 1);
++  else
++    gtk_signal_emit(GTK_OBJECT(mDownload->parent),
++                    moz_embed_download_signals[DOWNLOAD_PROGRESS_SIGNAL],
++                    (gulong) progress, 0, 1);
++
++  GtkMozEmbedDownload *temp = (GtkMozEmbedDownload *) mDownload->parent;
++  temp->downloaded_size = progress;
++  temp->file_size = progressMax;
++
++  /* storing current downloaded size. */
++  ((GtkMozEmbedDownload *) mDownload->parent)->downloaded_size = (gulong) progress;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++FetchObserver::OnStatus(nsIRequest *request, nsISupports *context,
++                        nsresult status, const PRUnichar *statusText)
++{
++  //printf("gtkmozembed_download.cpp, Line:%d, Func:%s\n",  __LINE__, __FUNCTION__);
++  NS_ENSURE_TRUE(mDownload, NS_OK);
++  mDownload->request = request;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++FetchObserver::OnStopRequest(nsIRequest *request, nsISupports *context,
++                             nsresult status)
++{
++  //printf("FetchObserver::OnStopRequest [status=%x]\n", status);
++  NS_ENSURE_TRUE(mDownload, NS_OK);
++  mDownload->request = nsnull;
++  GtkMozEmbedDownload *parent = (GtkMozEmbedDownload *) mDownload->parent;
++  if (mDownload->isCanceled)
++    gtk_signal_emit(GTK_OBJECT(mDownload->parent), moz_embed_download_signals[DOWNLOAD_FAILED_SIGNAL]);
++  else if (!parent->is_paused)
++    gtk_signal_emit(GTK_OBJECT(mDownload->parent),
++                    moz_embed_download_signals[DOWNLOAD_COMPLETED_SIGNAL]);
++  return NS_OK;
++}
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.h mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.h	2007-09-14 00:46:18.000000000 +0300
+@@ -40,59 +40,55 @@
+ #ifndef __EmbedDownloadMgr_h
+ #define __EmbedDownloadMgr_h
+ 
+ #include "EmbedPrivate.h"
+ #include "nsIHelperAppLauncherDialog.h"
+ #include "nsIMIMEInfo.h"
+ #include "nsCOMPtr.h"
+ #include "nsIExternalHelperAppService.h"
+ #include "nsIRequest.h"
+ #include "nsILocalFile.h"
++#include "nsIIncrementalDownload.h"
++#include "nsIRequestObserver.h"
+ 
+ #include "nsWeakReference.h"
+ #define EMBED_DOWNLOADMGR_DESCRIPTION "MicroB Download Manager"
+ #define EMBED_DOWNLOADMGR_CID {0x53df12a2, 0x1f4a, 0x4382, {0x99, 0x4e, 0xed, 0x62, 0xcf, 0x0d, 0x6b, 0x3a}}
+ 
+ class nsIURI;
+ class nsIFile;
  class nsIFactory;
  class nsExternalAppHandler;
  
@@ -767,7 +1273,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.h mozi
 -
    /* Pointer to mozilla interfaces */
    nsIHelperAppLauncher* launcher;    /** < The mozilla's download dialog */
++  nsCOMPtr <nsIIncrementalDownload> incr_launcher;
    nsIRequest* request;               /** < The download request */
++  PRBool isCanceled;
  };
  
  class EmbedDownloadMgr : public nsIHelperAppLauncherDialog
@@ -775,10 +1283,46 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedDownloadMgr.h mozi
    public:
      EmbedDownloadMgr();
      virtual ~EmbedDownloadMgr();
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp mozilla/embedding/browser/gtk/src/EmbedEventListener.cpp
---- mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp	2007-05-18 07:38:57.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedEventListener.cpp	2007-05-18 10:01:24.000000000 +0300
-@@ -43,61 +43,95 @@
+ 
+     NS_DECL_ISUPPORTS
+     NS_DECL_NSIHELPERAPPLAUNCHERDIALOG
++    static nsresult CreateIncrementalDownload(const char *aUrl, const char *aDestination, PRBool aHidden = PR_FALSE);
++    static nsresult CreateIncrementalDownload(EmbedDownload *download);
+ 
+   private:
+     /** Gets all informations about a file which is being downloaded.
+     */
+     NS_METHOD GetDownloadInfo(nsIHelperAppLauncher *aLauncher, nsISupports *aContext);
+ 
+     EmbedDownload *mDownload;
+ };
+ #endif /* __EmbedDownloadMgr_h */
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp mozilla/embedding/browser/gtk/src/EmbedEventListener.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedEventListener.cpp	2007-09-14 00:46:18.000000000 +0300
+@@ -16,20 +16,21 @@
+  * The Original Code is mozilla.org code.
+  *
+  * The Initial Developer of the Original Code is
+  * Christopher Blizzard. Portions created by Christopher Blizzard are Copyright (C) Christopher Blizzard.  All Rights Reserved.
+  * Portions created by the Initial Developer are Copyright (C) 2001
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
+  *   Christopher Blizzard <blizzard@mozilla.org>
+  *   Oleg Romashin <romaxa@gmail.com>
++ *   Anton Rogaynis <rogainis@gmail.com>
+  *   Tomaz Noleto <tnoleto@gmail.com>
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either the GNU General Public License Version 2 or later (the "GPL"), or
+  * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+  * decision by deleting the provisions above and replace them with the notice
+@@ -43,61 +44,102 @@
  #include "nsIDOMMouseEvent.h"
  
  #include "nsIDOMNSEvent.h"
@@ -800,22 +1344,28 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 -static PRBool  sMPressed = PR_FALSE, sIsScrolling = PR_FALSE;
 +static PRInt32 spX = 0, spY = 0, sScrollStep = 2;
 +static PRInt32 sgX = 0, sgY = 0;
-+static PRBool  sMPressed = PR_FALSE, sIsScrolling = PR_FALSE, sForcePan = PR_FALSE;
++static PRBool  sMPressed = PR_FALSE, sForcePan = PR_FALSE;
 +static PRBool sDirectPan = PR_TRUE;
-+static PRInt32 sXulType = 0;
++static PRInt16 sIsScrolling = 0, sXulType = 0;
  static char* gFavLocation = NULL;
-+#define START_PANNING_STEP 3
++#define START_PANNING_STEP 8
 +
 +static gboolean
 +motion_notify_event_cb (GtkWidget *widget, GdkEventMotion *event, EmbedEventListener *self);
 +static gboolean
-+enter_notify_event_cb     (GtkWidget *widget, GdkEventCrossing *event, EmbedEventListener *self);
++button_release_event_cb(GtkWidget *widget, GdkEvent *event, EmbedPrivate *self);
 +static gboolean
-+leave_notify_event_cb     (GtkWidget *widget, GdkEventCrossing *event, EmbedEventListener *self);
++button_press_event_cb(GtkWidget *widget, GdkEvent *event, EmbedPrivate *self);
++static gboolean
++enter_notify_event_cb  (GtkWidget *widget, GdkEventCrossing *event, EmbedEventListener *self);
++static gboolean
++leave_notify_event_cb  (GtkWidget *widget, GdkEventCrossing *event, EmbedEventListener *self);
  
  EmbedEventListener::EmbedEventListener(void)
  {
    mOwner = nsnull;
++  mAddonSignals = PR_FALSE;
++  mXSLTransformed = PR_FALSE;
  }
  
  EmbedEventListener::~EmbedEventListener()
@@ -823,6 +1373,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
    delete mCtxInfo;
 +  mOwner = nsnull;
 +  mCtxInfo = nsnull;
++  mAddonSignals = PR_FALSE;
  }
  
  NS_IMPL_ADDREF(EmbedEventListener)
@@ -876,7 +1427,20 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
  
    nsCOMPtr<nsIDOMElement> linkElement;
    linkElement = do_QueryInterface(node);
-@@ -157,21 +191,21 @@ EmbedEventListener::HandleLink(nsIDOMNod
+@@ -145,33 +187,39 @@ EmbedEventListener::HandleLink(nsIDOMNod
+   }
+   else if (name.LowerCaseEqualsLiteral("alternate") &&
+            type.LowerCaseEqualsLiteral("application/rss+xml")) {
+ 
+     NS_ConvertUTF16toUTF8 narrowTitle(title);
+ 
+     gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
+                     moz_embed_signals[RSS_REQUEST],
+                     (gchar *)url.get(),
+                     narrowTitle.get());
++    mXSLTransformed = PR_FALSE;
+   }
+   return NS_OK;
  }
  
  NS_IMETHODIMP
@@ -885,6 +1449,11 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
    nsString eventType;
    aDOMEvent->GetType(eventType);
  
++  if (mOwner->mWindow && eventType.EqualsLiteral("DOMLinkXSLParsed")) {
++    mXSLTransformed = PR_TRUE;
++    return NS_OK;
++  }
++
    if (eventType.EqualsLiteral("focus"))
      if (mCtxInfo->GetFormControlType(aDOMEvent)) {
 -      if (mCtxInfo->mEmbedCtxType & GTK_MOZ_EMBED_CTX_INPUT) {
@@ -899,7 +1468,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
          }
        }
      }
-@@ -194,24 +228,36 @@ EmbedEventListener::HandleEvent(nsIDOMEv
+@@ -194,42 +242,53 @@ EmbedEventListener::HandleEvent(nsIDOMEv
  
      nsCOMPtr<nsIDOMWindow> DOMWindow;
      webBrowser->GetContentDOMWindow(getter_AddRefs(DOMWindow));
@@ -917,6 +1486,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 -      PRUint32 length = 0;
 +    if (nodelist)
        nodelist->GetLength(&length);
+-      if (length >= 1) {
 +    if (!nodelist || length == 0) {
 +      doc->GetElementsByTagName( NS_LITERAL_STRING( "feed" ), getter_AddRefs( nodelist ));
 +      if (nodelist)
@@ -927,8 +1497,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 +      if (nodelist)
 +        nodelist->GetLength(&length);
 +    }
-+    if (nodelist && length >= 1) {
-       if (length >= 1) {
++    if (nodelist && length >= 1 || mXSLTransformed) {
          char *url = gtk_moz_embed_get_location(mOwner->mOwningWidget);
          char *title = gtk_moz_embed_get_title(mOwner->mOwningWidget);
          gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
@@ -938,7 +1507,27 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
          if (url)
            NS_Free(url);
          if (title)
-@@ -286,23 +332,32 @@ EmbedEventListener::KeyPress(nsIDOMEvent
+           NS_Free(title);
+-      }
++        mXSLTransformed = PR_FALSE;
+     }
+   }
+   else if (mOwner->mNeedFav) {
+     mOwner->mNeedFav = PR_FALSE;
+     nsCString favicon_url = mOwner->mPrePath;
+-	favicon_url.AppendLiteral("/favicon.ico");
++    favicon_url.AppendLiteral("/favicon.ico");
+     this->GetFaviconFromURI(favicon_url.get());
+   }
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ EmbedEventListener::KeyDown(nsIDOMEvent* aDOMEvent)
+ {
+   nsCOMPtr<nsIDOMKeyEvent> keyEvent;
+   keyEvent = do_QueryInterface(aDOMEvent);
+@@ -286,115 +345,202 @@ EmbedEventListener::KeyPress(nsIDOMEvent
      aDOMEvent->StopPropagation();
      aDOMEvent->PreventDefault();
    }
@@ -949,11 +1538,15 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
  sLongMPress(void *aOwningWidget)
  {
    // Return TRUE from your signal handler to mark the event as consumed.
+-  if (!sMPressed || sIsScrolling)
 +  if (EmbedPrivate::sTermEmbedding) {
 +      fprintf(stderr,"%s:Warning: Emit signal after destroy\n", __FUNCTION__);
 +      return FALSE;
 +  }
-   if (!sMPressed || sIsScrolling)
++
++  if (!sMPressed || sIsScrolling
++    || (ABS(spX-sgX) > START_PANNING_STEP + 3 || ABS(spY-sgY) > START_PANNING_STEP + 3)
++    )
      return FALSE;
 +
    sMPressed = PR_FALSE;
@@ -971,12 +1564,15 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
    return FALSE;
  }
  
-@@ -313,88 +368,141 @@ EmbedEventListener::MouseDown(nsIDOMEven
+ NS_IMETHODIMP
+ EmbedEventListener::MouseDown(nsIDOMEvent* aDOMEvent)
+ {
+   nsCOMPtr<nsIDOMMouseEvent> mouseEvent;
    mouseEvent = do_QueryInterface(aDOMEvent);
    if (!mouseEvent)
      return NS_OK;
  
-   // Return TRUE from your signal handler to mark the event as consumed.
+-  // Return TRUE from your signal handler to mark the event as consumed.
    sMPressed = PR_TRUE;
    gint return_val = FALSE;
    gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
@@ -987,8 +1583,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
      mClickCount = 2;
      sMPressed = PR_FALSE;
  #if 1
-     if (sLongPressTimer)
-       g_source_remove(sLongPressTimer);
+-    if (sLongPressTimer)
+-      g_source_remove(sLongPressTimer);
++    GLIB_SOURCE_IF_REMOVE(sLongPressTimer);
  #else
      aDOMEvent->StopPropagation();
      aDOMEvent->PreventDefault();
@@ -998,21 +1595,36 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
      sLongPressTimer = g_timeout_add(mLongMPressDelay, sLongMPress, mOwner->mOwningWidget);
 -    ((nsIDOMMouseEvent*)mouseEvent)->GetScreenX(&sX);
 -    ((nsIDOMMouseEvent*)mouseEvent)->GetScreenY(&sY);
++    
++    // Return TRUE from your signal handler to mark the event as consumed.
++    PRInt32 JSHandledInfo = DOM_MOUSE_DOWN;
++    if (mCtxInfo->mIsJSHandledElement == DOM_MOUSE_OVER
++        || mCtxInfo->mIsJSHandledElement == DOM_MOUSE_SCROLL) {
++      return NS_OK;
++    }
++    if (mCtxInfo && NS_SUCCEEDED(mCtxInfo->GetJSHandledInfo(aDOMEvent, &JSHandledInfo))
++        && JSHandledInfo == DOM_MOUSE_DOWN) {
++      return NS_OK;
++    }
++    
 +    if (!sDirectPan) {
-+      ((nsIDOMMouseEvent*)mouseEvent)->GetScreenX(&spX);
-+      ((nsIDOMMouseEvent*)mouseEvent)->GetScreenY(&spY);
++    //((nsIDOMMouseEvent*)mouseEvent)->GetScreenX(&spX);
++    //((nsIDOMMouseEvent*)mouseEvent)->GetScreenY(&spY);
 +    } else {
-+      static gboolean first_connect = TRUE;
-+      if (first_connect) {
++      if (!mAddonSignals) {
 +        GtkWidget * child = gtk_bin_get_child((GtkBin *)mOwner->mOwningWidget);
 +        if (child) {
 +          g_signal_connect(G_OBJECT(child), "motion_notify_event",
 +                           G_CALLBACK(motion_notify_event_cb), this);
++          g_signal_connect(G_OBJECT(child), "button_release_event",
++                           G_CALLBACK(button_release_event_cb), mOwner);
++          g_signal_connect(G_OBJECT(child), "button_press_event",
++                           G_CALLBACK(button_press_event_cb), mOwner);
 +          g_signal_connect(G_OBJECT(child), "enter_notify_event",
 +                           G_CALLBACK(enter_notify_event_cb), this);
 +          g_signal_connect(G_OBJECT(child), "leave_notify_event",
 +                           G_CALLBACK(leave_notify_event_cb), this);
-+          first_connect = FALSE;
++          mAddonSignals = PR_TRUE;
 +        }
 +      }
 +    }
@@ -1031,6 +1643,27 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
    return NS_OK;
  }
  
++static void
++PanStatesReset(EmbedPrivate *self, PRBool aFull = PR_TRUE)
++{
++  GLIB_SOURCE_IF_REMOVE(sLongPressTimer);
++  sMPressed = PR_FALSE;
++  if (self)
++    self->mOpenBlock = sIsScrolling > 2;
++  sIsScrolling = sMPressed;
++  spX = sgX;
++  spY = sgY;
++  sXulType = 0;
++
++  EmbedCommon::SuspendNative(PR_FALSE);
++
++  if (!aFull) return;
++  gint return_val = FALSE;
++  gtk_signal_emit(GTK_OBJECT(self->mOwningWidget),
++                  moz_embed_signals[DOM_MOUSE_UP],
++                  (void *)nsnull, &return_val);
++}
++
  NS_IMETHODIMP
  EmbedEventListener::MouseUp(nsIDOMEvent* aDOMEvent)
  {
@@ -1039,22 +1672,26 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
    if (!mouseEvent)
      return NS_OK;
  
++#if 1
++    GLIB_SOURCE_IF_REMOVE(sLongPressTimer);
++#else
++    aDOMEvent->StopPropagation();
++    aDOMEvent->PreventDefault();
++#endif
++
    // handling event internally, first.
    HandleSelection(mouseEvent);
  
-   // Return TRUE from your signal handler to mark the event as consumed.
-   if (sLongPressTimer)
-     g_source_remove(sLongPressTimer);
-   sMPressed = PR_FALSE;
-   mOwner->mOpenBlock = sIsScrolling;
-   sIsScrolling = sMPressed;
-+  if (sDirectPan) {
-+    spX = sgX;
-+    spY = sgY;
-+  }
-+  sXulType = 0;
++  if (!sDirectPan)
++  PanStatesReset(mOwner, PR_FALSE);
 +
-+  EmbedCommon::SuspendNative(PR_FALSE);
++  mCtxInfo->mIsJSHandledElement = 0;
+   // Return TRUE from your signal handler to mark the event as consumed.
+-  if (sLongPressTimer)
+-    g_source_remove(sLongPressTimer);
+-  sMPressed = PR_FALSE;
+-  mOwner->mOpenBlock = sIsScrolling;
+-  sIsScrolling = sMPressed;
    gint return_val = FALSE;
    gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
                    moz_embed_signals[DOM_MOUSE_UP],
@@ -1090,18 +1727,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 +
 +  if (enabled && success) {
 +    if (mOwner->mLoadFinished && mOwner->mPluginSuspended) {
-+
-+      nsCOMPtr<nsIWebBrowser> webBrowser;
-+      mOwner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
-+      if (!webBrowser)
-+        return NS_ERROR_FAILURE;
-+
-+      nsCOMPtr<nsIDOMWindow> domWin;
-+      webBrowser->GetContentDOMWindow(getter_AddRefs(domWin));
-+      //if (!domWin)
-+      //  return NS_ERROR_FAILURE;
-+
-+      mOwner->NotifyPlugins(domWin, 3);
++      mOwner->NotifyPlugins(3);
 +      mOwner->mPluginSuspended = PR_FALSE;
 +    }
 +  }
@@ -1116,7 +1742,33 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
    mouseEvent = do_QueryInterface(aDOMEvent);
    if (!mouseEvent)
      return NS_OK;
-@@ -503,138 +611,138 @@ EmbedEventListener::FocusOut(nsIDOMEvent
+@@ -413,20 +559,25 @@ EmbedEventListener::MouseDblClick(nsIDOM
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ EmbedEventListener::MouseOver(nsIDOMEvent* aDOMEvent)
+ {
+   nsCOMPtr<nsIDOMMouseEvent> mouseEvent;
+   mouseEvent = do_QueryInterface(aDOMEvent);
+   if (!mouseEvent)
+     return NS_OK;
++  PRInt32 JSHandledInfo = DOM_MOUSE_OVER;
++  if (mCtxInfo && NS_SUCCEEDED(mCtxInfo->GetJSHandledInfo(aDOMEvent, &JSHandledInfo))
++      && JSHandledInfo == DOM_MOUSE_OVER)
++    return NS_OK;
++
+   // Return TRUE from your signal handler to mark the event as consumed.
+   gint return_val = FALSE;
+   gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
+                   moz_embed_signals[DOM_MOUSE_OVER],
+                   (void *)mouseEvent, &return_val);
+   if (return_val) {
+     aDOMEvent->StopPropagation();
+     aDOMEvent->PreventDefault();
+   } else {
+     //mCtxInfo->UpdateContextData(aDOMEvent);
+@@ -503,178 +654,169 @@ EmbedEventListener::FocusOut(nsIDOMEvent
    if (return_val) {
      aDOMEvent->StopPropagation();
      aDOMEvent->PreventDefault();
@@ -1127,6 +1779,13 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
  NS_IMETHODIMP
  EmbedEventListener::MouseMove(nsIDOMEvent* aDOMEvent)
  {
++  PRInt32 JSHandledInfo = DOM_MOUSE_SCROLL;
++  if (mCtxInfo && mCtxInfo->mIsJSHandledElement != DOM_MOUSE_OVER &&
++      NS_SUCCEEDED(mCtxInfo->GetJSHandledInfo(aDOMEvent, &JSHandledInfo))
++      && JSHandledInfo == DOM_MOUSE_SCROLL) {
++    return NS_OK;
++  }
++
 +  if (sMPressed && mCtxInfo && (mCtxInfo->mEmbedCtxType & GTK_MOZ_EMBED_CTX_XUL) && sXulType < 2)
 +     EmbedCommon::SuspendNative(PR_TRUE);
 +
@@ -1139,7 +1798,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 +  if (mCtxInfo &&
 +      (sMPressed &&
 +       (gtk_signal_handler_pending(GTK_OBJECT(mOwner->mOwningWidget),
-+                                                moz_embed_signals[DOM_MOUSE_SCROLL], TRUE)
++                                   moz_embed_signals[DOM_MOUSE_SCROLL], TRUE)
 +        || sForcePan)
 +       && (!(mCtxInfo->mEmbedCtxType & GTK_MOZ_EMBED_CTX_XUL && sXulType != 2))
 +      )
@@ -1184,12 +1843,11 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 +      gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
 +                      moz_embed_signals[DOM_MOUSE_SCROLL],
 +                      (void *)mouseEvent, &return_val);
-+      if ((!return_val || sXulType == 2) && NS_SUCCEEDED(mCtxInfo->SetScrollableWindow())) {
++      if ((!return_val || sXulType == 2) && mCtxInfo->GetScrollableView()) {
 +        sIsScrolling = PR_TRUE;
 +        if (sXulType < 2)
 +          EmbedCommon::SuspendNative(PR_TRUE);
 +
-+//BEGIN HELL PLUGINS SUSPEND STUFF
 +        // suspend plugins when panning
 +        // Only need to suspend when page is already loaded and at the FIRST movement
 +        PRBool enabled = PR_TRUE;
@@ -1198,21 +1856,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 +        if (success && enabled) {
 +          if ( mOwner->mLoadFinished && !mOwner->mPluginSuspended ) {
 +            // do suspend
-+            nsCOMPtr<nsIWebBrowser> webBrowser;
-+            mOwner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
-+            if (!webBrowser)
-+              return NS_ERROR_FAILURE;
-+
-+            nsCOMPtr<nsIDOMWindow> domWin;
-+            webBrowser->GetContentDOMWindow(getter_AddRefs(domWin));
-+            //if (!domWin)
-+            //  return NS_ERROR_FAILURE;
-+
-+            mOwner->NotifyPlugins(domWin, 4);
++            mOwner->NotifyPlugins(4);
 +            mOwner->mPluginSuspended = PR_TRUE;
 +          }
          }
-+//END HELL PLUGINS SUSPEND STUFF
 +      } else {
 +        sMPressed = PR_FALSE;
 +        sIsScrolling = PR_FALSE;
@@ -1245,10 +1892,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 +      spY = newY;
 +      if (!mCtxInfo->mIsScrollableElement)
 +        return NS_OK;
-+      if (sLongPressTimer)
-+        g_source_remove(sLongPressTimer);
-+      if (mCtxInfo->mCtxDomWindowScrollable && !(sDirectPan && aDOMEvent)) {
-+        mCtxInfo->mCtxDomWindowScrollable->ScrollBy(-subX, -subY);
++      GLIB_SOURCE_IF_REMOVE(sLongPressTimer);
++      if (mCtxInfo->mCtxScrollable && !(sDirectPan && aDOMEvent)) {
++        sIsScrolling++;
++        mCtxInfo->ScrollScrollableView(-subX, -subY);
        }
 -      sX = newX;
 -      sY = newY;
@@ -1326,7 +1973,97 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
  
    /* This function gets called everytime that a mousedown or a mouseup
     * event occurs.
-@@ -749,50 +857,64 @@ EmbedEventListener::GetIOService(nsIIOSe
+    */
+-  nsCOMPtr<nsIDOMNSEvent> nsevent(do_QueryInterface(aDOMMouseEvent));
++  nsCOMPtr<nsIDOMNSEvent> nsevent = do_QueryInterface(aDOMMouseEvent, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
+ 
+   nsCOMPtr<nsIDOMEventTarget> target;
+   rv = nsevent->GetOriginalTarget(getter_AddRefs(target));
+-  if (NS_FAILED(rv))
+-    return rv;
++  NS_ENSURE_SUCCESS(rv, rv);
+ 
+-  nsCOMPtr<nsIDOMNode> eventNode = do_QueryInterface(target);
++  nsCOMPtr<nsIDOMNode> eventNode = do_QueryInterface(target, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
+   nsCOMPtr<nsIDOMDocument> domDoc;
+   rv = eventNode->GetOwnerDocument(getter_AddRefs(domDoc));
+-  if (NS_FAILED(rv))
+-    return rv;
++  NS_ENSURE_SUCCESS(rv, rv);
+ 
+   nsCOMPtr<nsIDocument> doc = do_QueryInterface(domDoc, &rv);
+-  if (NS_FAILED(rv) || !doc)
+-    return NS_ERROR_FAILURE;
++  NS_ENSURE_SUCCESS(rv, rv);
+ 
+   nsIPresShell *presShell = doc->GetPrimaryShell();
+-
+   /* Gets nsISelectionController interface for the current context */
+-  mCurSelCon = do_QueryInterface(presShell);
+-  if (!mCurSelCon)
+-    return NS_ERROR_FAILURE;
++  mCurSelCon = do_QueryInterface(presShell, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
+ 
+   /* Gets event type */
+   nsString eventType;
+   rv = aDOMMouseEvent->GetType(eventType);
+-  if (NS_FAILED(rv))
+-    return rv;
++  NS_ENSURE_SUCCESS(rv, rv);
+ 
+   /* Updates context to check which context is being clicked on */
+   mCtxInfo->UpdateContextData(aDOMMouseEvent);
+ 
+   /* If a mousedown after 1 click is done (and if clicked context is not a XUL
+    * one (e.g. scrollbar), the selection is disabled for that context.
+    */
+   if (mCtxInfo->mEmbedCtxType & GTK_MOZ_EMBED_CTX_XUL || mCtxInfo->mEmbedCtxType & GTK_MOZ_EMBED_CTX_RICHEDIT)
+     return rv;
+ 
+@@ -689,32 +831,34 @@ EmbedEventListener::HandleSelection(nsID
+    * number of clicks). If this event occurs after 1 click, the selection of
+    * both last and current contexts are cleaned up.
+    */
+   if (eventType.EqualsLiteral("mouseup")) {
+ 
+     /* Selection controller of current event context */
+     if (mCurSelCon) {
+       rv = mCurSelCon->SetDisplaySelection(nsISelectionController::SELECTION_ON);
+       if (mClickCount == 1) {
+         nsCOMPtr<nsISelection> domSel;
+-        mCurSelCon->GetSelection(nsISelectionController::SELECTION_NORMAL,
+-                                 getter_AddRefs(domSel));
++        rv = mCurSelCon->GetSelection(nsISelectionController::SELECTION_NORMAL,
++                                      getter_AddRefs(domSel));
++        NS_ENSURE_SUCCESS(rv, rv);                              
+         rv = domSel->RemoveAllRanges();
+       }
+     }
+     /* Selection controller of previous event context */
+     if (mLastSelCon) {
+       rv = mLastSelCon->SetDisplaySelection(nsISelectionController::SELECTION_ON);
+       if (mClickCount == 1) {
+         nsCOMPtr<nsISelection> domSel;
+-        mLastSelCon->GetSelection(nsISelectionController::SELECTION_NORMAL,
+-                                  getter_AddRefs(domSel));
++        rv = mLastSelCon->GetSelection(nsISelectionController::SELECTION_NORMAL,
++                                       getter_AddRefs(domSel));
++        NS_ENSURE_SUCCESS(rv, rv);                               
+         rv = domSel->RemoveAllRanges();
+       }
+     }
+ 
+     /* If 1 click was done (despite the event type), sets the last context's
+      * selection controller with current one
+      */
+     if (mClickCount == 1)
+       mLastSelCon = mCurSelCon;
+   } // mouseup
+@@ -748,157 +892,155 @@ EmbedEventListener::GetIOService(nsIIOSe
+ 
    rv = mgr->GetServiceByContractID("@mozilla.org/network/io-service;1",
                                     NS_GET_IID(nsIIOService),
                                     (void **)ioService);
@@ -1336,11 +2073,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
  void
  EmbedEventListener::GeneratePixBuf()
  {
-   GdkPixbuf *pixbuf = NULL;
-+
 +  if (!::gFavLocation)
 +    return;
 +
+   GdkPixbuf *pixbuf = NULL;
    pixbuf = gdk_pixbuf_new_from_file(::gFavLocation, NULL);
 -  if (!pixbuf) {
 +  if (!pixbuf && mOwner->mOwningWidget) {
@@ -1375,7 +2111,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
      return;
    }
  
-+  if (!mOwner->mOwningWidget)
++  if (!(mOwner && mOwner->mOwningWidget))
 +    return;
 +
    gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
@@ -1393,13 +2129,121 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
  void
  EmbedEventListener::GetFaviconFromURI(const char* aURI)
  {
-   gchar *file_name = NS_strdup(aURI);
-   gchar *favicon_uri = NS_strdup(aURI);
+-  gchar *file_name = NS_strdup(aURI);
+-  gchar *favicon_uri = NS_strdup(aURI);
++  nsresult rv = NS_OK;
  
-   gint i = 0;
-   gint rv = 0;
-@@ -884,20 +1006,24 @@ EmbedEventListener::GetFaviconFromURI(co
+-  gint i = 0;
+-  gint rv = 0;
++  if (!aURI)
++    return;
  
+-  nsCOMPtr<nsIWebBrowserPersist> persist = do_CreateInstance(NS_WEBBROWSERPERSIST_CONTRACTID);
+-  if (!persist) {
+-    NS_Free(file_name);
+-    NS_Free(favicon_uri);
++  gchar *file_name = NS_strdup(aURI);
++  if (!file_name)
+     return;
+-  }
+-  persist->SetProgressListener(this);
+ 
++  gint i = 0;
+   while (file_name[i] != '\0') {
+     if (file_name[i] == '/' || file_name[i] == ':')
+       file_name[i] = '_';
+     i++;
+   }
+ 
+   nsCString fileName(file_name);
++  NS_Free(file_name);
+ 
+-  nsCOMPtr<nsILocalFile> favicon_dir = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);
+-
+-  if (!favicon_dir) {
+-    NS_Free(favicon_uri);
+-    NS_Free(file_name);
++  nsCOMPtr<nsIWebBrowserPersist> persist = do_CreateInstance(NS_WEBBROWSERPERSIST_CONTRACTID);
++  if (!persist)
+     return;
+-  }
++  persist->SetProgressListener(this);
+ 
+-  nsCString faviconDir("~/.mozilla/favicon");
+-  favicon_dir->InitWithNativePath(faviconDir);
++  nsCOMPtr<nsILocalFile> favicon_dir = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);
++  if (!favicon_dir)
++    return;
++  favicon_dir->InitWithNativePath(NS_LITERAL_CSTRING("~/.mozilla/favicon"));
+ 
+   PRBool isExist;
+   rv = favicon_dir->Exists(&isExist);
+   if (NS_SUCCEEDED(rv) && !isExist) {
+     rv = favicon_dir->Create(nsIFile::DIRECTORY_TYPE,0775);
+-    if (NS_FAILED(rv)) {
+-      NS_Free(file_name);
+-      NS_Free(favicon_uri);
++    if (NS_FAILED(rv))
+       return;
+-    }
+   }
+ 
+-  nsCAutoString favicon_path("~/.mozilla/favicon");
+   nsCOMPtr<nsILocalFile> target_file = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);
+-  if (!target_file) {
+-    NS_Free(file_name);
+-    NS_Free(favicon_uri);
++  if (!target_file)
+     return;
+-  }
+-  target_file->InitWithNativePath(favicon_path);
++  target_file->InitWithNativePath(NS_LITERAL_CSTRING("~/.mozilla/favicon"));
+   target_file->Append(NS_ConvertUTF8toUTF16(fileName));
+ 
+   nsString path;
+   target_file->GetPath(path);
+   ::gFavLocation = NS_strdup(NS_ConvertUTF16toUTF8(path).get());
+   nsCOMPtr<nsIIOService> ios(do_GetService(NS_IOSERVICE_CONTRACTID));
+   if (!ios) {
+-    NS_Free(file_name);
+-    NS_Free(favicon_uri);
+-    NS_Free(::gFavLocation);
++    if (::gFavLocation)
++      NS_Free(::gFavLocation);
+     gFavLocation = nsnull;
+     return;
+   }
+ 
+   nsCOMPtr<nsIURI> uri;
+-
+-  rv = ios->NewURI(nsDependentCString(favicon_uri), "", nsnull, getter_AddRefs(uri));
++  rv = ios->NewURI(nsDependentCString(aURI), "", nsnull, getter_AddRefs(uri));
+   if (!uri) {
+-    NS_Free(file_name);
+-    NS_Free(favicon_uri);
+-    NS_Free(::gFavLocation);
++    if (::gFavLocation)
++      NS_Free(::gFavLocation);
+     gFavLocation = nsnull;
+     return;
+   }
+-  NS_Free(file_name);
+-  NS_Free(favicon_uri);
+ 
+   // save the favicon if the icon does not exist
+   rv = target_file->Exists(&isExist);
+   if (NS_SUCCEEDED(rv) && !isExist) {
+     rv = persist->SaveURI(uri, nsnull, nsnull, nsnull, "", target_file);
+-    if (NS_FAILED(rv)) {
++    if (NS_FAILED(rv))
+       return;
+-    }
+   }
+-  else {
++  else
+     GeneratePixBuf();
+-  }
+-
  }
  
  NS_IMETHODIMP
@@ -1409,11 +2253,11 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
                                    nsresult aStatus)
  {
    /* if (!(aStateFlags & (STATE_STOP | STATE_IS_NETWORK | STATE_IS_DOCUMENT))){*/
+ 
 +  if (EmbedPrivate::sTermEmbedding) {
 +      fprintf(stderr,"%s:Warning: Emit signal after destroy\n", __FUNCTION__);
 +      return NS_ERROR_FAILURE;
 +  }
- 
    if (aStateFlags & STATE_STOP)
      /* FINISH DOWNLOADING */
      /* XXX sometimes this==0x0 and it cause crash in GeneratePixBuf, need workaround check for this */
@@ -1423,7 +2267,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
    return NS_OK;
  }
  
-@@ -931,10 +1057,74 @@ EmbedEventListener::OnStatusChange(nsIWe
+ NS_IMETHODIMP
+@@ -931,10 +1073,91 @@ EmbedEventListener::OnStatusChange(nsIWe
  }
  
  
@@ -1439,9 +2284,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 +EmbedEventListener::DisableLongPressTimer(GtkWidget *aOwningWidget)
 +{
 +  gint return_val;
-+        
-+  if (sLongPressTimer)
-+    g_source_remove(sLongPressTimer);
++  
++  GLIB_SOURCE_IF_REMOVE(sLongPressTimer);
 +          
 +  gtk_signal_emit(GTK_OBJECT(aOwningWidget),
 +                  moz_embed_signals[DOM_MOUSE_UP],
@@ -1456,28 +2300,45 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 +gboolean
 +motion_notify_event_cb (GtkWidget *widget, GdkEventMotion *event, EmbedEventListener *self)
 +{
-+  sgX = nscoord(event->x_root);
-+  sgY = nscoord(event->y_root);
++  sgX = nscoord(event->x);
++  sgY = nscoord(event->y);
 +
-+  //if (sXulType == 3)
-+  //  return TRUE;
++  if (sXulType == 3)
++    return TRUE;
 +
-+  //if (sIsScrolling || sXulType == 2) {
-+  //  XEvent xevent;
-+  //  PRPackedBool synthEvent = PR_FALSE;
-+  //  while (XCheckWindowEvent(GDK_WINDOW_XDISPLAY(event->window),
-+  //                          GDK_WINDOW_XWINDOW(event->window),
-+  //                           ButtonMotionMask, &xevent)) {
-+  //    synthEvent = PR_TRUE;
-+  //  }
++  if ((sIsScrolling || sXulType == 2) && sXulType != 0) {
++    XEvent xevent;
++    PRPackedBool synthEvent = PR_FALSE;
++    while (XCheckWindowEvent(GDK_WINDOW_XDISPLAY(event->window),
++                             GDK_WINDOW_XWINDOW(event->window),
++                             ButtonMotionMask, &xevent)) {
++      synthEvent = PR_TRUE;
++    }
 +
-+  //  if (sXulType == 2) {
-+  //    self->MouseMove(nsnull);
-+  //    return FALSE;
-+  //  }
-+  //  self->MouseMove(nsnull);
-+  //  return TRUE;
-+  //}
++    if (sXulType == 2) {
++      self->MouseMove(nsnull);
++      return FALSE;
++    }
++    self->MouseMove(nsnull);
++    return TRUE;
++  }
++  return FALSE;
++}
++
++/* static */
++gboolean
++button_release_event_cb (GtkWidget *widget, GdkEvent *event, EmbedPrivate *self)
++{
++  PanStatesReset(self);
++  return FALSE;
++}
++
++/* static */
++gboolean
++button_press_event_cb (GtkWidget *widget, GdkEvent *event, EmbedPrivate *self)
++{
++  spX = nscoord(((GdkEventButton*)event)->x);
++  spY = nscoord(((GdkEventButton*)event)->y);
 +  return FALSE;
 +}
 +
@@ -1498,10 +2359,11 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.cpp 
 +    return TRUE;
 +  return FALSE;
 +}
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.h mozilla/embedding/browser/gtk/src/EmbedEventListener.h
---- mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.h	2007-05-18 07:38:57.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedEventListener.h	2007-05-18 10:01:24.000000000 +0300
-@@ -127,20 +127,22 @@ class EmbedEventListener : public nsIDOM
++
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.h mozilla/embedding/browser/gtk/src/EmbedEventListener.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedEventListener.h	2007-09-14 00:46:18.000000000 +0300
+@@ -127,23 +127,27 @@ class EmbedEventListener : public nsIDOM
    NS_IMETHOD Blur(nsIDOMEvent* aEvent);
    NS_IMETHOD HandleSelection(nsIDOMMouseEvent* aDOMMouseEvent);
  
@@ -1524,8 +2386,13 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedEventListener.h mo
    nsCOMPtr<nsISelectionController> mLastSelCon;
    PRBool mFocusInternalFrame;
    PRInt32 mClickCount;
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.cpp mozilla/embedding/browser/gtk/src/EmbedFilePicker.cpp
---- mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.cpp	2007-05-18 07:38:00.000000000 +0300
++  PRBool mAddonSignals;
++  PRBool mXSLTransformed;
+ };
+ 
+ #endif /* __EmbedEventListener_h */
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.cpp mozilla/embedding/browser/gtk/src/EmbedFilePicker.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.cpp	2007-09-14 00:45:40.000000000 +0300
 +++ mozilla/embedding/browser/gtk/src/EmbedFilePicker.cpp	2007-03-23 17:46:31.000000000 +0200
 @@ -9,25 +9,20 @@
   * the License. You may obtain a copy of the License at
@@ -1553,8 +2420,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.cpp moz
   * in which case the provisions of the GPL or the LGPL are applicable instead
   * of those above. If you wish to allow use of your version of this file only
   * under the terms of either the GPL or the LGPL, and not to allow others to
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.h mozilla/embedding/browser/gtk/src/EmbedFilePicker.h
---- mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.h	2007-05-18 07:38:00.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.h mozilla/embedding/browser/gtk/src/EmbedFilePicker.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.h	2007-09-14 00:45:40.000000000 +0300
 +++ mozilla/embedding/browser/gtk/src/EmbedFilePicker.h	2007-03-23 17:46:31.000000000 +0200
 @@ -9,25 +9,20 @@
   * the License. You may obtain a copy of the License at
@@ -1582,9 +2449,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedFilePicker.h mozil
   * under the terms of either the GPL or the LGPL, and not to allow others to
   * use your version of this file under the terms of the MPL, indicate your
   * decision by deleting the provisions above and replace them with the notice
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp mozilla/embedding/browser/gtk/src/EmbedGlobalHistory.cpp
---- mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp	2007-05-18 07:38:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedGlobalHistory.cpp	2007-05-18 10:01:24.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp mozilla/embedding/browser/gtk/src/EmbedGlobalHistory.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedGlobalHistory.cpp	2007-09-14 00:46:17.000000000 +0300
 @@ -16,20 +16,21 @@
   * The Original Code is mozilla.org code.
   *
@@ -1666,7 +2533,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
  }
  
  // Return the last time an entry was visited
-@@ -203,40 +203,54 @@ PRBool GetIsWritten(HistoryEntry *entry)
+@@ -203,40 +203,53 @@ PRBool GetIsWritten(HistoryEntry *entry)
  
  // Set TRUE when an entry is visited
  nsresult SetIsWritten(HistoryEntry *entry)
@@ -1704,11 +2571,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
 +  nsresult rv = NS_NewURI(getter_AddRefs(aURI), GET_URL(aEntry));
 +  if (NS_FAILED(rv))
 +    return GET_URL(aEntry);
-+  nsCAutoString aHostname;
-+  aURI->GetHost(aHostname);
-+  if (aHostname.IsEmpty())
++  aURI->GetHost(aEntry->mTitle);
++  if (aEntry->mTitle.IsEmpty())
 +    return GET_URL(aEntry);
-+  return aHostname.get();
++  return aEntry->mTitle.get();
 +}
 +
 +// Change the entry title
@@ -1727,7 +2593,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
  int find_insertion_place(gconstpointer a, gconstpointer b)
  {
    PRInt64 lastVisitTime = GetLastVisitTime((HistoryEntry *) a);
-@@ -290,79 +304,79 @@ EmbedGlobalHistory::GetInstance()
+@@ -290,79 +303,79 @@ EmbedGlobalHistory::GetInstance()
    else
      NS_ADDREF(sEmbedGlobalHistory);   // addref the return result
    return sEmbedGlobalHistory;
@@ -1813,7 +2679,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
  }
  
  #define BROKEN_RV_HANDLING_CODE(rv) PR_BEGIN_MACRO                        \
-@@ -422,499 +436,677 @@ NS_IMETHODIMP EmbedGlobalHistory::AddURI
+@@ -422,499 +435,669 @@ NS_IMETHODIMP EmbedGlobalHistory::AddURI
    rv |= aURI->SchemeIs("http", &isHTTP);
    rv |= aURI->SchemeIs("https", &isHTTPS);
    NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
@@ -2142,10 +3008,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
 +  else
 +  {
 +    // get the temporary directory
-+    tempDirString.Assign(g_get_tmp_dir());    
++    tempDirString.Assign(g_get_tmp_dir());
    }
 +  // the history file name
-+  tempDirString.Append(NS_LITERAL_CSTRING("/history.dat"));
++  tempDirString.Append(NS_LITERAL_CSTRING("/history.txt"));
 +  // return the full history path
 +  *aHistoryFile = ToNewCString(tempDirString);
 +  if (!(*aHistoryFile))
@@ -2156,7 +3022,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
  //*****************************************************************************
  // EmbedGlobalHistory
  //*****************************************************************************
- // Open/Create the history.dat file if it does not exist
+-// Open/Create the history.dat file if it does not exist
++// Open/Create the history.txt file if it does not exist
  nsresult EmbedGlobalHistory::InitFile()
  {
 -  if (!mHistoryFile) {
@@ -2196,7 +3063,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
    return NS_OK;
  }
  
- // Get the data from history.dat file
+-// Get the data from history.dat file
++// Get the data from history.txt file
  nsresult EmbedGlobalHistory::LoadData()
  {
 -  nsresult rv = NS_OK;
@@ -2266,7 +3134,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
 +
 +  // get the history length;
    unsigned int counter = g_list_length(list);
-+  
++
 +  // for each history entry
    while (counter > 0) {
 +    // get a history entry
@@ -2313,10 +3181,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
 -  }
 -  LOCAL_FILE *uri = file_handle_uri_new(mHistoryFile);
 -  if (!uri) return NS_ERROR_FAILURE;
--
+ 
 -  gboolean rs = file_handle_uri_exists(uri);
 -  file_handle_uri_release(uri);
- 
+-
 -  if (!rs && NS_FAILED(rv))
 -    return NS_ERROR_FAILURE;
 +    mFlushModeFullWriteNeeded = PR_TRUE;
@@ -2350,7 +3218,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
  // Split an entry in last visit time, title and url.
 -// Add a stored entry in the history.dat file in the history hash table
 -nsresult EmbedGlobalHistory::GetEntry(const char *entry)
-+// Add a stored entry in the history.dat file in the history list
++// Add a stored entry in the history.txt file in the history list
 +nsresult EmbedGlobalHistory::GetEntry(nsCString& string)
  {
 +  char *entry = string.BeginWriting();
@@ -2414,7 +3282,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
    url[urlLength]='\0';
 +  char *title=&url[urlLength + 1];
    title[titleLength]='\0';
-+  
++
 +  // create a new history entry
    HistoryEntry *newEntry = new HistoryEntry;
    if (!newEntry)
@@ -2452,16 +3320,16 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
  }
  
 -
- // Get the history entries from history.dat file
+-// Get the history entries from history.dat file
++// Get the history entries from history.txt file
  nsresult EmbedGlobalHistory::ReadEntries(LOCAL_FILE *file_uri)
  {
 +  // the history file handle has not been initialized
    if (!file_uri)
      return NS_ERROR_FAILURE;
  
--  nsresult rv = NS_OK;
-+  nsresult rv;
- 
+   nsresult rv = NS_OK;
+-
 +  // create an input stream
    nsCOMPtr<nsIInputStream> fileStream;
    NS_NewLocalFileInputStream(getter_AddRefs(fileStream), file_uri);
@@ -2480,7 +3348,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
      safe_limit++;
      if (NS_FAILED(rv))
 -      return NS_OK;
-+      return rv;
++      break;
  
 +    // go to the next line: might be a blank line in the file
      if (utf8Buffer.IsEmpty())
@@ -2490,13 +3358,12 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
 +    // add the entry to the history
 +    rv = GetEntry(utf8Buffer);
 +    if (NS_FAILED(rv))
-+      return rv;
++      break;
    } while (moreData && safe_limit < kMaxSafeReadEntriesCount);
 +  // close the file stream
    fileStream->Close();
 -
--  return rv;
-+  return NS_OK;
+   return rv;
  }
  
  //*****************************************************************************
@@ -2513,7 +3380,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
      return NS_OK;
    }
    nsCAutoString tempString;
-+  // transform the PRInt64 in a nsCAutoString, digit by digit 
++  // transform the PRInt64 in a nsCAutoString, digit by digit
    while (value != nsInt64(0)) {
      PRInt32 ones = PRInt32(value % nsInt64(10));
      value /= nsInt64(10);
@@ -2524,14 +3391,14 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
    return NS_OK;
  }
  
- // Write an entry in the history.dat file
+-// Write an entry in the history.dat file
++// Write an entry in the history.txt file
  nsresult writeEntry(OUTPUT_STREAM *file_handle, HistoryEntry *entry)
  {
 -  nsresult rv = NS_OK;
 -  char sep = (char) defaultSeparator;
 +  nsresult rv;
    char time[14];
-+  char *line;
 +  nsCAutoString tempString;
 +
 +  // get the string equivalent to a PRInt64 value
@@ -2539,6 +3406,11 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
 -  char *line = g_strdup_printf("%s%c%s%c%s%c\n", time, sep, GET_URL(entry), sep, GET_TITLE(entry), sep);
 -  BROKEN_STRING_BUILDER(line);
 -  guint64 size = file_handle_write(file_handle, (gpointer)line);
+-  if (size != strlen(line))
+-    rv = NS_ERROR_FAILURE;
+-  rv |= SetIsWritten(entry);
+-  g_free(line);
+-  return rv;
 +
 +  // add the time string to the entry line
 +  tempString.Assign(time);
@@ -2554,26 +3426,16 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
 +  tempString.Append(defaultSeparator);
 +  // add the line separator to the entry line
 +  tempString.Append("\n");
-+  // build the new line
-+  line = ToNewCString(tempString);
-+  if (!line)
-+    return NS_ERROR_OUT_OF_MEMORY;
 +
 +  // write the new line to the file
-+  guint64 size = file_handle_write(file_handle, (gpointer) line);
++  guint64 size = file_handle_write(file_handle, (gpointer) tempString.get());
 +
 +  // could not write all the line to the file
-   if (size != strlen(line))
--    rv = NS_ERROR_FAILURE;
--  rv |= SetIsWritten(entry);
--  g_free(line);
--  return rv;
++  if (size != tempString.Length())
 +    rv = NS_ERROR_OUT_OF_MEMORY;
 +  rv = SetIsWritten(entry);
 +  if (NS_FAILED(rv))
 +    return rv;
-+  // free the line
-+  NS_Free(line);
 +  return NS_OK;
  }
  
@@ -2606,7 +3468,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
 +    if (entryHasExpired(entry))
        break;
 -    }
-+    
++
      glong accessed;
 +    // transform the last visit time to a readable value in microsecs
      PRInt64 temp, outValue;
@@ -2620,12 +3482,12 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
 -    item[num_items].accessed = accessed;
 -    num_items++;
 +    // set history vector title value
-+    aItem[*aCounter].title = strdup((const char *) GET_TITLE(entry));
++    aItem[*aCounter].title = (const char *) GET_TITLE(entry);
 +
 +    if (!aItem[*aCounter].title)
 +      return NS_ERROR_OUT_OF_MEMORY;
 +    // set history vector url value
-+    aItem[*aCounter].url = strdup((const char *)GET_URL(entry));
++    aItem[*aCounter].url = (const char *)GET_URL(entry);
 +    if (!aItem[*aCounter].url)
 +      return NS_ERROR_OUT_OF_MEMORY;
 +    // set history vector accessed flag
@@ -2637,9 +3499,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.cpp 
    return NS_OK;
  }
 -
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.h mozilla/embedding/browser/gtk/src/EmbedGlobalHistory.h
---- mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.h	2007-05-18 07:38:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedGlobalHistory.h	2007-05-18 10:01:24.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.h mozilla/embedding/browser/gtk/src/EmbedGlobalHistory.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedGlobalHistory.h	2007-09-14 00:46:17.000000000 +0300
 @@ -14,21 +14,21 @@
   *
   * The Original Code is mozilla.org code.
@@ -2726,9 +3588,37 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedGlobalHistory.h mo
  // Default maximum history entries
  static const PRUint32 kDefaultMaxSize = 1000;
  #endif
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.cpp mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp
---- mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.cpp	2007-05-18 07:38:54.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp	2007-05-18 10:01:24.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedGtkTools.h mozilla/embedding/browser/gtk/src/EmbedGtkTools.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedGtkTools.h	2007-03-23 17:56:57.000000000 +0200
++++ mozilla/embedding/browser/gtk/src/EmbedGtkTools.h	2007-09-14 00:46:17.000000000 +0300
+@@ -57,11 +57,24 @@
+ 
+ GtkWidget*
+ GetGtkWidgetForDOMWindow(nsIDOMWindow* aDOMWindow);
+ 
+ GtkWindow*
+ GetGtkWindowForDOMWindow(nsIDOMWindow* aDOMWindow);
+ 
+ nsresult
+ GetContentViewer(nsIWebBrowser *webBrowser, nsIContentViewer **aViewer);
+ 
++/* Helper Macros */
++
++#define GLIB_IF_PTR_FUNC_NULL(_ptr, _func) \
++  PR_BEGIN_MACRO                           \
++    if (_ptr) {                            \
++      _func(_ptr);                         \
++      (_ptr) = 0;                          \
++    }                                      \
++  PR_END_MACRO
++
++#define GLIB_SOURCE_IF_REMOVE(_ptr) GLIB_IF_PTR_FUNC_NULL(_ptr, g_source_remove)
++
+ #endif /* __EmbedTools_h */
++
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.cpp mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp	2007-09-14 00:46:17.000000000 +0300
 @@ -14,23 +14,24 @@
   * License.
   *
@@ -2757,7 +3647,353 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.cpp mo
   * use your version of this file under the terms of the MPL, indicate your
   * decision by deleting the provisions above and replace them with the notice
   * and other provisions required by the GPL or the LGPL. If you do not delete
-@@ -1327,22 +1328,24 @@ EmbedPasswordMgr::Notify(nsIDOMHTMLFormE
+@@ -103,48 +104,51 @@
+ #endif
+ #include "nsIPassword.h"
+ #include "nsIPasswordInternal.h"
+ #include <string.h>
+ 
+ 
+ static const char kPMPropertiesURL[] = "chrome://passwordmgr/locale/passwordmgr.properties";
+ static PRBool sRememberPasswords = PR_FALSE;
+ static PRBool sForceAutocompletion = PR_FALSE;
+ static PRBool sPrefsInitialized = PR_FALSE;
+-static nsIStringBundle* sPMBundle;
+-static nsISecretDecoderRing* sDecoderRing;
+-static EmbedPasswordMgr* sPasswordManager;
++static nsIStringBundle* sPMBundle = nsnull;
++static nsISecretDecoderRing* sDecoderRing = nsnull;
++static EmbedPasswordMgr* sPasswordManager = nsnull;
++
+ class EmbedPasswordMgr::SignonDataEntry
+ {
+ public:
+   nsString userField;
+   nsString userValue;
+   nsString passField;
+   nsString passValue;
+   SignonDataEntry* next;
+   SignonDataEntry() : next(nsnull) { }
+   ~SignonDataEntry() {
+     delete next;
++    next = nsnull;
+   }
+ };
+ 
+ class EmbedPasswordMgr::SignonHashEntry
+ {
+   // Wraps a pointer to the linked list of SignonDataEntry objects.
+   // This allows us to adjust the head of the linked list without a
+   // hashtable operation.
+ public:
+   SignonDataEntry* head;
+   SignonHashEntry(SignonDataEntry* aEntry) : head(aEntry) { }
+   ~SignonHashEntry()
+   {
+     delete head;
++    head = nsnull;
+   }
+ };
+ 
+ class EmbedPasswordMgr::PasswordEntry : public nsIPasswordInternal
+ {
+ public:
+   PasswordEntry(const nsACString& aKey, SignonDataEntry* aData);
+   virtual ~PasswordEntry() { }
+   NS_DECL_ISUPPORTS
+   NS_DECL_NSIPASSWORD
+@@ -234,41 +238,45 @@ NS_INTERFACE_MAP_BEGIN(EmbedPasswordMgr)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMLoadListener)
+   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIDOMEventListener, nsIDOMFocusListener)
+   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
+   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIPasswordManager)
+   NS_INTERFACE_MAP_ENTRY(nsIPromptFactory)
+ NS_INTERFACE_MAP_END
+ 
+ EmbedPasswordMgr::EmbedPasswordMgr()
+ : mAutoCompletingField(nsnull), mCommonObject(nsnull)
+ {
++  if (!sPasswordManager) {
++    sPasswordManager = this;
++    NS_ADDREF(sPasswordManager);   // addref the global
++  }
+ }
+ 
+ EmbedPasswordMgr::~EmbedPasswordMgr()
+ {
++  sPasswordManager = nsnull;
+ }
+ 
+ /* static */
+ EmbedPasswordMgr*
+ EmbedPasswordMgr::GetInstance()
+ {
+   if (!sPasswordManager) {
+-    sPasswordManager = new EmbedPasswordMgr();
++    EmbedPasswordMgr* pwd = new EmbedPasswordMgr();
+     if (!sPasswordManager)
+       return nsnull;
+-    NS_ADDREF(sPasswordManager);   // addref the global
+     if (NS_FAILED(sPasswordManager->Init())) {
+       NS_RELEASE(sPasswordManager);
+       return nsnull;
+     }
+   }
+-  NS_ADDREF(sPasswordManager);   // addref the return result
++  NS_ADDREF(sPasswordManager);   // addref the global
+   return sPasswordManager;
+ }
+ 
+ nsresult
+ EmbedPasswordMgr::Init()
+ {
+   mSignonTable.Init();
+   mRejectTable.Init();
+   mAutoCompleteInputs.Init();
+   sPrefsInitialized = PR_TRUE;
+@@ -285,28 +293,26 @@ EmbedPasswordMgr::Init()
+   branchInternal->AddObserver("forceAutocompletion", this, PR_TRUE);
+   // Be a form submit and web progress observer so that we can save and
+   // prefill passwords.
+   nsCOMPtr<nsIObserverService> obsService = do_GetService(NS_OBSERVERSERVICE_CONTRACTID);
+   NS_ASSERTION(obsService, "No observer service");
+   obsService->AddObserver(this, NS_FORMSUBMIT_SUBJECT, PR_TRUE);
+   nsCOMPtr<nsIWebProgress> progress = do_GetService(NS_DOCUMENTLOADER_SERVICE_CONTRACTID);
+   NS_ASSERTION(progress, "No web progress service");
+   progress->AddProgressListener(this, nsIWebProgress::NOTIFY_STATE_DOCUMENT);
+   // Now read in the signon file
+-  char* signonFile = nsnull;
+-  mPrefBranch->GetCharPref("SignonFileName", &signonFile);
++  nsCString signonFile;
++  mPrefBranch->GetCharPref("SignonFileName", getter_Copies(signonFile));
+   NS_ASSERTION(signonFile, "Fallback for signon filename not present");
+   NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(mSignonFile));
+   NS_ENSURE_TRUE(mSignonFile, NS_ERROR_FAILURE);
+-  mSignonFile->AppendNative(nsCString(signonFile));
+-  nsCString path;
+-  mSignonFile->GetNativePath(path);
++  mSignonFile->AppendNative(signonFile);
+   ReadPasswords(mSignonFile);
+   return NS_OK;
+ }
+ 
+ /* static */ PRBool
+ EmbedPasswordMgr::SingleSignonEnabled()
+ {
+   if (!sPrefsInitialized) {
+     // Create the PasswordManager service to initialize the prefs and callback
+     nsCOMPtr<nsIPasswordManager> manager = do_GetService(NS_PASSWORDMANAGER_CONTRACTID);
+@@ -317,53 +323,61 @@ EmbedPasswordMgr::SingleSignonEnabled()
+ /* static */ NS_METHOD
+ EmbedPasswordMgr::Register(nsIComponentManager* aCompMgr,
+                            nsIFile* aPath,
+                            const char* aRegistryLocation,
+                            const char* aComponentType,
+                            const nsModuleComponentInfo* aInfo)
+ {
+   // By registering in NS_PASSWORDMANAGER_CATEGORY, an instance of the password
+   // manager will be created when a password input is added to a form.  We
+   // can then register that singleton instance as a form submission observer.
++
+   nsresult rv;
+   nsCOMPtr<nsICategoryManager> catman = do_GetService(NS_CATEGORYMANAGER_CONTRACTID, &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+-  char* prevEntry;
++
+   catman->AddCategoryEntry(NS_PASSWORDMANAGER_CATEGORY,
+                            "MicroB Password Manager",
+                            NS_PASSWORDMANAGER_CONTRACTID,
+                            PR_TRUE,
+                            PR_TRUE,
+-                           &prevEntry);
++                           nsnull);
+ 
+   catman->AddCategoryEntry("app-startup",
+                            "MicroB Password Manager",
+                            NS_PASSWORDMANAGER_CONTRACTID,
+                            PR_TRUE,
+                            PR_TRUE,
+-                           &prevEntry);
++                           nsnull);
+ 
+   return NS_OK;
+ }
+ 
+ /* static */ NS_METHOD
+ EmbedPasswordMgr::Unregister(nsIComponentManager* aCompMgr,
+                              nsIFile* aPath,
+                              const char* aRegistryLocation,
+                              const nsModuleComponentInfo* aInfo)
+ {
++
+   nsresult rv;
+   nsCOMPtr<nsICategoryManager> catman = do_GetService(NS_CATEGORYMANAGER_CONTRACTID, &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
++
+   catman->DeleteCategoryEntry(NS_PASSWORDMANAGER_CATEGORY,
+                               NS_PASSWORDMANAGER_CONTRACTID,
+                               PR_TRUE);
++
++  catman->DeleteCategoryEntry("app-startup",
++                              NS_PASSWORDMANAGER_CONTRACTID,
++                              PR_TRUE);
++
+   return NS_OK;
+ }
+ 
+ /* static */ void
+ EmbedPasswordMgr::Shutdown()
+ {
+   NS_IF_RELEASE(sDecoderRing);
+   NS_IF_RELEASE(sPMBundle);
+   NS_IF_RELEASE(sPasswordManager);
+ }
+@@ -380,21 +394,24 @@ EmbedPasswordMgr::AddUser(const nsACStri
+     return NS_OK;
+   // Check for an existing entry for this host + user
+   if (!aHost.IsEmpty()) {
+     SignonHashEntry *hashEnt;
+     if (mSignonTable.Get(aHost, &hashEnt)) {
+       nsString empty;
+       SignonDataEntry *entry = nsnull;
+       FindPasswordEntryInternal(hashEnt->head, aUser, empty, empty, &entry);
+       if (entry) {
+         // Just change the password
+-        return EncryptDataUCS2(aPassword, entry->passValue);
++        if (NS_FAILED(EncryptDataUCS2(aPassword, entry->passValue)))
++            return NS_ERROR_FAILURE;
++        WritePasswords(mSignonFile);
++        return NS_OK;
+       }
+     }
+   }
+   SignonDataEntry* entry = new SignonDataEntry();
+   if (NS_FAILED(EncryptDataUCS2(aUser, entry->userValue)) ||
+       NS_FAILED(EncryptDataUCS2(aPassword, entry->passValue))) {
+     delete entry;
+     return NS_ERROR_FAILURE;
+   }
+   AddSignonData(aHost, entry);
+@@ -717,20 +734,31 @@ EmbedPasswordMgr::AddUserFull(const nsAC
+   //  }
+   entry->userField.Assign(aUserFieldName);
+   entry->passField.Assign(aPassFieldName);
+   EncryptDataUCS2(aUser, entry->userValue);
+   EncryptDataUCS2(aPassword, entry->passValue);
+   AddSignonData(aKey, entry);
+   WritePasswords(mSignonFile);
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP                                                                                                                                                                                             
++EmbedPasswordMgr::AddUserFull2(const nsACString& aKey,                                                                                                                                                    
++                               const nsAString& aUser,                                                                                                                                                   
++                               const nsAString& aPassword,                                                                                                                                               
++                               const nsAString& aUserFieldName,                                                                                                                                          
++                               const nsAString& aPassFieldName,                                                                                                                                          
++                               const nsACString& aActionURL)                                                                                                                                             
++{
++  return AddUserFull(aKey, aUser, aPassword, aUserFieldName, aPassFieldName);
++}
++
+ NS_IMETHODIMP
+ EmbedPasswordMgr::ReadPasswords(nsIFile* aPasswordFile)
+ {
+   nsCOMPtr<nsIInputStream> fileStream;
+   NS_NewLocalFileInputStream(getter_AddRefs(fileStream), aPasswordFile);
+   if (!fileStream)
+     return NS_ERROR_OUT_OF_MEMORY;
+   nsCOMPtr<nsILineInputStream> lineStream = do_QueryInterface(fileStream);
+   NS_ASSERTION(lineStream, "File stream is not an nsILineInputStream");
+   // Read the header
+@@ -769,21 +797,23 @@ EmbedPasswordMgr::ReadPasswords(nsIFile*
+       realm.Assign(utf8Buffer);
+       state = STATE_USERFIELD;
+       break;
+     case STATE_USERFIELD:
+       // Commit any completed entry
+       if (entry) {
+         // Weed out empty username+password entries from corrupted signon files
+         if (entry->userValue.IsEmpty() && entry->passValue.IsEmpty()) {
+           NS_WARNING("Discarding empty password entry");
+           writeOnFinish = PR_TRUE; // so we won't get this on the next startup
+-          delete entry;
++          if (entry)
++            delete entry;
++          entry = nsnull;
+         } else {
+           AddSignonData(realm, entry);
+         }
+       }
+       // If the line is a ., we've reached the end of this realm's entries.
+       if (utf8Buffer.Equals(NS_LITERAL_CSTRING("."))) {
+         entry = nsnull;
+         state = STATE_REALM;
+       } else {
+         entry = new SignonDataEntry();
+@@ -807,21 +837,23 @@ EmbedPasswordMgr::ReadPasswords(nsIFile*
+       state = STATE_PASSVALUE;
+       break;
+     case STATE_PASSVALUE:
+       NS_ASSERTION(entry, "bad state");
+       CopyUTF8toUTF16(utf8Buffer, entry->passValue);
+       state = STATE_USERFIELD;
+       break;
+     }
+   } while (moreData);
+   // Don't leak if the file ended unexpectedly
+-  delete entry;
++  if (entry)
++    delete entry;
++  entry = nsnull;
+   if (writeOnFinish) {
+     fileStream->Close();
+     WritePasswords(mSignonFile);
+   }
+   return NS_OK;
+ }
+ 
+ // nsIObserver implementation
+ NS_IMETHODIMP
+ EmbedPasswordMgr::Observe(nsISupports* aSubject,
+@@ -1110,20 +1142,36 @@ EmbedPasswordMgr::Notify(nsIDOMHTMLFormE
+   PRUint32 numControls;
+   formElement->GetElementCount(&numControls);
+   // Count the number of password fields in the form.
+   nsCOMPtr<nsIDOMHTMLInputElement> userField;
+   nsCOMArray<nsIDOMHTMLInputElement> passFields;
+   PRUint32 i, firstPasswordIndex = numControls;
+   for (i = 0; i < numControls; ++i) {
+     nsCOMPtr<nsIFormControl> control;
+     formElement->GetElementAt(i, getter_AddRefs(control));
+     PRInt32 ctype = control->GetType();
++
++    if (ctype == NS_FORM_INPUT_FILE) {
++
++      nsCOMPtr<nsIDOMWindow> domWindow(do_QueryInterface(aWindow));
++      GtkWidget *parentWidget = GetGtkWidgetForDOMWindow(domWindow);
++      if (parentWidget) {
++
++        gtk_signal_emit(GTK_OBJECT(GTK_MOZ_EMBED(parentWidget)),
++                        moz_embed_signals[FILE_UPLOAD_STARTED]);
++
++        ((EmbedPrivate *) GTK_MOZ_EMBED(parentWidget)->data)->IsUploading = PR_TRUE;
++        }
++
++      return NS_OK;
++    }
++
+     if (ctype == NS_FORM_INPUT_PASSWORD) {
+       nsCOMPtr<nsIDOMHTMLInputElement> elem = do_QueryInterface(control);
+       passFields.AppendObject(elem);
+       if (firstPasswordIndex == numControls)
+         firstPasswordIndex = i;
+     }
+   }
+   nsCOMPtr<nsIPrompt> prompt;
+   aWindow->GetPrompter(getter_AddRefs(prompt));
+   switch (passFields.Count()) {
+@@ -1327,22 +1375,24 @@ EmbedPasswordMgr::Notify(nsIDOMHTMLFormE
                        ptUser.get()
                      };
                      GetLocalizedString(NS_LITERAL_STRING("passwordChangeTitle"),
@@ -2784,10 +4020,101 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.cpp mo
                }
              }
              if (changeEntry) {
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
---- mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp	2007-05-18 07:39:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp	2007-05-18 10:01:24.000000000 +0300
-@@ -107,30 +107,43 @@
+@@ -1730,20 +1780,21 @@ EmbedPasswordMgr::AttachToInput(nsIDOMHT
+   nsCOMPtr<nsIDOMEventTarget> targ = do_QueryInterface(aElement);
+   nsIDOMEventListener* listener = NS_STATIC_CAST(nsIDOMFocusListener*, this);
+   targ->AddEventListener(NS_LITERAL_STRING("blur"), listener, PR_FALSE);
+   targ->AddEventListener(NS_LITERAL_STRING("DOMAutoComplete"), listener, PR_FALSE);
+   mAutoCompleteInputs.Put(aElement, 1);
+ }
+ 
+ PRBool
+ EmbedPasswordMgr::GetPasswordRealm(nsIURI* aURI, nsACString& aRealm)
+ {
++  NS_ENSURE_TRUE(aURI, PR_FALSE);
+   // Note: this _is_ different from getting the uri's prePath!
+   // We don't want to include a username or password that's part of the
+   // URL in the host key... it will cause lookups to work incorrectly, and will
+   // also cause usernames and passwords to be stored in cleartext.
+   nsCAutoString buffer;
+   aURI->GetScheme(buffer);
+   aRealm.Append(buffer);
+   aRealm.Append(NS_LITERAL_CSTRING("://"));
+   aURI->GetHostPort(buffer);
+   if (buffer.IsEmpty()) {
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.h mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.h	2007-04-17 07:06:11.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.h	2007-09-14 00:46:17.000000000 +0300
+@@ -84,21 +84,20 @@ class EmbedPasswordMgr : public nsIPassw
+                          public nsIDOMLoadListener,
+                          public nsSupportsWeakReference
+ {
+ public:
+   class SignonDataEntry;
+   class SignonHashEntry;
+   class PasswordEntry;
+   EmbedPasswordMgr();
+   virtual ~EmbedPasswordMgr();
+   static EmbedPasswordMgr* GetInstance();
+-  static EmbedPasswordMgr* GetInstance(EmbedPrivate *aOwner);
+   nsresult Init();
+   static PRBool SingleSignonEnabled();
+   static NS_METHOD Register(nsIComponentManager* aCompMgr,
+                             nsIFile* aPath,
+                             const char* aRegistryLocation,
+                             const char* aComponentType,
+                             const nsModuleComponentInfo* aInfo);
+   static NS_METHOD Unregister(nsIComponentManager* aCompMgr,
+                               nsIFile* aPath,
+                               const char* aRegistryLocation,
+@@ -171,21 +170,20 @@ protected:
+                                                                     void* aUserData);
+   static void EnsureDecoderRing();
+   nsClassHashtable<nsCStringHashKey,SignonHashEntry> mSignonTable;
+   nsDataHashtable<nsCStringHashKey,PRInt32> mRejectTable;
+   nsDataHashtable<nsISupportsHashKey,PRInt32> mAutoCompleteInputs;
+   nsCOMPtr<nsIFile> mSignonFile;
+   nsCOMPtr<nsIPrefBranch> mPrefBranch;
+   nsIDOMHTMLInputElement* mAutoCompletingField;
+   nsIDOMHTMLInputElement* mGlobalUserField;
+   nsIDOMHTMLInputElement* mGlobalPassField;
+-  SignonHashEntry * mLastSignonHashEntry;
+   int lastIndex;
+   nsCAutoString mLastHostQuery;
+   EmbedCommon* mCommonObject;
+ public:
+   PRBool mFormAttachCount;
+   //  nsAString mLastHostQuery;
+ };
+ 
+ /* 1baf3398-f759-4a72-a21f-0abdc9cc9960 */
+ #define NS_SINGLE_SIGNON_PROMPT_CID \
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp	2007-09-14 00:46:18.000000000 +0300
+@@ -33,20 +33,21 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsIDocShell.h"
+ #include "nsIWebProgress.h"
+ #include "nsIWidget.h"
++#include "nsIHTMLDocument.h"
+ #include "nsCRT.h"
+ #include "nsNetUtil.h"
+ #include "nsIWebBrowserStream.h"
+ #include "nsIHistoryEntry.h"
+ #include "nsIWebBrowserFocus.h"
+ #include "nsIDirectoryService.h"
+ #include "nsAppDirectoryServiceDefs.h"
+ 
+ // for do_GetInterface
+ #include "nsIInterfaceRequestor.h"
+@@ -107,30 +108,46 @@
  #include "nsIDocument.h"
  #include "nsIDOMNSHTMLElement.h"
  #include "nsIDOMNSHTMLInputElement.h"
@@ -2814,13 +4141,16 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +#include "nsIDOMHTMLFrameElement.h"
 +
 +//Plugins
-+#include "plugin/nsplugindefs.h"
-+#include "plugin/nsIPluginInstance.h"
++#include "nsplugindefs.h"
++#include "nsIPluginInstance.h"
 +#include "nsIDOMNodeList.h"
 +#include "nsIPresShell.h"
 +#include "nsIContent.h"
 +#include "nsIObjectFrame.h"
 +#include "nsIDOMHTMLIFrameElement.h"
++
++#include "nsIExtensionManager.h"
++#include "nsICommandLineRunner.h"
 +
  static NS_DEFINE_CID(kCacheServiceCID,           NS_CACHESERVICE_CID);
 +static NS_DEFINE_CID(kAppShellCID,               NS_APPSHELL_CID);
@@ -2834,7 +4164,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  {
    if (!sEmbedCommon)
    {
-@@ -167,20 +180,21 @@ EmbedCommon::Init(void)
+@@ -167,20 +184,21 @@ EmbedCommon::Init(void)
  }
  
  PRUint32     EmbedPrivate::sWidgetCount = 0;
@@ -2845,7 +4175,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  nsISupports  *EmbedPrivate::sProfileLock = nsnull;
  GtkWidget   *EmbedPrivate::sOffscreenWindow = 0;
  GtkWidget   *EmbedPrivate::sOffscreenFixed  = 0;
-+PRBool       EmbedPrivate::sTermEmbedding = PR_FALSE;
++PRBool       EmbedPrivate::sTermEmbedding = PR_TRUE;
  
  nsIDirectoryServiceProvider *EmbedPrivate::sAppFileLocProvider = nsnull;
  
@@ -2856,7 +4186,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
      return nsnull;
  
    // Get the number of browser windows.
-@@ -191,20 +205,31 @@ EmbedCommon::GetAnyLiveWidget()
+@@ -191,20 +209,31 @@ EmbedCommon::GetAnyLiveWidget()
    //FIXME need to choose right window
    GtkMozEmbed *ret = nsnull;
    for (int i = 0; i < count; i++) {
@@ -2888,7 +4218,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  
  static const GTKEmbedDirectoryProvider kDirectoryProvider;
  
-@@ -395,22 +420,24 @@ EmbedPrivate::EmbedPrivate(void)
+@@ -395,24 +424,34 @@ EmbedPrivate::EmbedPrivate(void)
    mContentListener  = nsnull;
    mEventListener    = nsnull;
    mChromeMask       = nsIWebBrowserChrome::CHROME_ALL;
@@ -2903,8 +4233,17 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
    mOpenBlock        = PR_FALSE;
    mNeedFav          = PR_TRUE;
 +  mPluginSuspended  = PR_TRUE;
++  mResizeControl    = PR_FALSE;
++  
++  gboolean bval = TRUE;
++  // Probably VKB Resize control not required anymore, and we can drop it...
++  if (gtk_moz_embed_common_get_pref (G_TYPE_BOOLEAN,"gtkmozembed.resize_control", &bval) && bval)
++    mResizeControl  = PR_TRUE;
  
-   PushStartup();
+-  PushStartup();
++  sWidgetCount++;
++  if (sWidgetCount == 1)
++    PushStartup();
    if (!sWindowList) {
      sWindowList = new nsVoidArray();
    }
@@ -2913,7 +4252,26 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  
  EmbedPrivate::~EmbedPrivate()
  {
-@@ -576,47 +603,62 @@ EmbedPrivate::Hide(void)
+   sWindowList->RemoveElement(this);
+   PopStartup();
+@@ -560,73 +599,101 @@ EmbedPrivate::Show(void)
+ {
+   // Get the nsIWebBrowser object for our embedded window.
+   nsCOMPtr<nsIWebBrowser> webBrowser;
+   mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
+ 
+   // and set the visibility on the thing
+   nsCOMPtr<nsIBaseWindow> baseWindow = do_QueryInterface(webBrowser);
+ 
+   // XXX hack around problem. probably widget/gtk2 window initialization.
+   baseWindow->SetVisibility(PR_FALSE);
+-
++  mWindow->mHidden = 0;
+   baseWindow->SetVisibility(PR_TRUE);
+ }
+ 
+ void
+ EmbedPrivate::Hide(void)
  {
    // Get the nsIWebBrowser object for our embedded window.
    nsCOMPtr<nsIWebBrowser> webBrowser;
@@ -2931,19 +4289,27 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  {
 -  PRInt32 sub   = 0;
 -  PRInt32 diff  = 0;
--
--  if (mDoResizeEmbed){
 +// TODO Should be moved in other place or extension
 +  PRInt32 X, Y, W, H;
 +  mWindow->GetDimensions(nsIEmbeddingSiteWindow::DIM_FLAGS_POSITION | nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_INNER, &X, &Y, &W, &H);
 +  PRInt32 height_diff = ABS(H - aHeight);
-+  if ((mDoResizeEmbed && height_diff != VKB_HEIGHT)
-+       || aWidth - W != 0 || aHeight > H || aHeight > mCurVisibleHeight
-+  ){
+ 
+-  if (mDoResizeEmbed){
++  //printf("EmbedPrivate::Resize: mResizeControl:%s\n", mResizeControl?"TRUE":"FALSE");
++  if (aWidth - W != 0 || !mResizeControl)
++  {
 +    mWindow->SetDimensions(nsIEmbeddingSiteWindow::DIM_FLAGS_POSITION |
 +                           nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_INNER,
 +                           0, 0, aWidth, aHeight);
-+  } else {
++  }
++  else if ((mDoResizeEmbed && height_diff != VKB_HEIGHT) || aHeight > H || aHeight > mCurVisibleHeight)
++  {
++     mWindow->SetDimensions(nsIEmbeddingSiteWindow::DIM_FLAGS_POSITION |
++                            nsIEmbeddingSiteWindow::DIM_FLAGS_VERTICAL |
++                            nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_INNER,
++                           0, 0, aWidth, aHeight);
++  }
++  else {
 +    if (Y < 0) {
 +      mWindow->SetDimensions(nsIEmbeddingSiteWindow::DIM_FLAGS_POSITION, 0, 0, nsnull, nsnull);
 +      return;
@@ -2986,6 +4352,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 -    SetScrollTop(sub + diff);
 -  }
 +  mCurVisibleHeight = aHeight;
++//  mWindow->SetDimensions(nsIEmbeddingSiteWindow::DIM_FLAGS_POSITION |
++//                         nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_INNER,
++//                         0, 0, aWidth, aHeight);
  }
  
  void
@@ -2995,8 +4364,36 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
    // EmbedWindow::DestroyBrowserWindow() as well if someone used a
    // window.close() or something or some other script action to close
    // the window.  No harm setting it again.
-   mIsDestroyed = PR_TRUE;
-@@ -656,20 +698,21 @@ EmbedPrivate::Destroy(void)
+-  mIsDestroyed = PR_TRUE;
++  // if (mIsDestroyed) // NB#65157 Browser crash on http://moto.allegro.pl/4056_volvo.html?order=t&view=gtext web page
++  //  return;
+ 
+   // Get the nsIWebBrowser object for our embedded window.
+   nsCOMPtr<nsIWebBrowser> webBrowser;
+   mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
+ 
+   // Release our progress listener
+   nsCOMPtr<nsISupportsWeakReference> supportsWeak;
+   supportsWeak = do_QueryInterface(mProgressGuard);
+   nsCOMPtr<nsIWeakReference> weakRef;
+   supportsWeak->GetWeakReference(getter_AddRefs(weakRef));
+@@ -643,52 +710,59 @@ EmbedPrivate::Destroy(void)
+   // Now that we have removed the listener, release our progress
+   // object
+   mProgressGuard = nsnull;
+   mProgress = nsnull;
+ 
+   // detach our event listeners and release the event receiver
+   DetachListeners();
+   if (mEventTarget)
+     mEventTarget = nsnull;
+ 
++  mEventListenerGuard = nsnull;
++  mEventListener = nsnull;
++
+   // destroy our child window
+   mWindow->ReleaseChildren();
+ 
    // release navigation
    mNavigation = nsnull;
  
@@ -3007,6 +4404,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  
    mMozWindowWidget = 0;
    mNeedFav = PR_TRUE;
++  mIsDestroyed = PR_TRUE;
 +  mPluginSuspended = PR_TRUE;
  }
  
@@ -3018,7 +4416,203 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  
  void
  EmbedPrivate::LoadCurrentURI(void)
-@@ -815,20 +858,21 @@ EmbedPrivate::PopStartup(void)
+ {
+   if (!mURI.IsEmpty()) {
+     nsCOMPtr<nsPIDOMWindow> piWin;
+     GetPIDOMWindow(getter_AddRefs(piWin));
+ 
+     nsAutoPopupStatePusher popupStatePusher(piWin, openAllowed);
+ 
++    mWindow->mHidden = 1;
+     mNavigation->LoadURI(mURI.get(),                        // URI string
+-                         nsIWebNavigation::LOAD_FLAGS_NONE, // Load flags
++                         nsIWebNavigation::LOAD_FLAGS_NONE | // Load flags
++                         nsIWebNavigation::LOAD_FLAGS_ALLOW_THIRD_PARTY_FIXUP,  // Allow keyword.URL.. functionality
+                          nsnull,                            // Referring URI
+                          nsnull,                            // Post data
+                          nsnull);                           // extra headers
+   }
+ }
+ 
+ void
+ EmbedPrivate::Reload(PRUint32 reloadFlags)
+ {
+   /* Use the session history if it is available, this
+@@ -739,96 +813,159 @@ EmbedPrivate::SetChromeMask(PRUint32 aCh
+   } else {
+     mDoResizeEmbed = PR_FALSE;
+     return;
+   }
+   mChromeMask = aChromeMask;
+ 
+   ApplyChromeMask();
+ }
+ 
+ 
++// Embedding is only initialized (and should only be terminated) if this returns
++// NS_OK *AND* !aNeedsRestart. In all other cases, it is not initialized.
++// Only call XRE_TermEmbedding if Embedding is initialized :)
++nsresult EmbedPrivate::LocalInitEmbedding(nsILocalFile *aGREDir, nsILocalFile
++                                          *aBinDir, nsILocalFile
++                                          *aProfileDir,
++                                          PRBool *aNeedsRestart)
++{
++  nsresult rv;
++  *aNeedsRestart = PR_FALSE;
++  if (EmbedPrivate::sProfileDir) {
++    rv = XRE_LockProfileDirectory(EmbedPrivate::sProfileDir,
++                                  &EmbedPrivate::sProfileLock);
++    if (NS_FAILED(rv))
++      return rv;
++  }
++
++  if (sWidgetCount > 1)
++    XRE_NotifyProfile();
++
++  rv = XRE_InitEmbedding(aGREDir,
++                         aBinDir,
++                         NS_CONST_CAST(GTKEmbedDirectoryProvider*,
++                                       &kDirectoryProvider),
++                         nsnull,
++                         nsnull);
++  if (NS_FAILED(rv))
++    return rv;
++
++  if (aProfileDir) {
++    XRE_NotifyProfile();
++  }
++
++  nsCOMPtr<nsICommandLineRunner>
++    cmdline(do_CreateInstance("@mozilla.org/toolkit/command-line;1", &rv));
++  if (NS_FAILED(rv)) {
++    return rv;
++  }
++
++  nsCOMPtr<nsIExtensionManager>
++    extensionManager(do_GetService("@mozilla.org/extensions/manager;1", &rv));
++  if (NS_FAILED(rv)) {
++    NS_WARNING("Fail to initialize extension manager\n");
++    cmdline = nsnull;
++    return rv;
++  }
++
++  extensionManager->Start(cmdline, aNeedsRestart);
++  if (*aNeedsRestart) {
++    extensionManager = nsnull;
++    cmdline = nsnull;
++  }
++  return NS_OK;
++}
++
+ /* static */
+ void
+ EmbedPrivate::PushStartup(void)
+ {
+-  // increment the number of widgets
+-  sWidgetCount++;
++  if (!EmbedPrivate::sTermEmbedding) {
++    NS_WARNING("Multiple PushStartup call\n");
++    return;
++  }
+ 
+-  // if this is the first widget, fire up xpcom
+-  if (sWidgetCount == 1) {
+-    nsresult rv;
+-    nsCOMPtr<nsILocalFile> binDir;
+-    nsCOMPtr<nsILocalFile> compDir;
+-    if (EmbedPrivate::sCompPath) {
+-      rv = NS_NewNativeLocalFile(nsDependentCString(EmbedPrivate::sCompPath), 1, getter_AddRefs(binDir));
++  nsresult rv = NS_OK;
++  nsCOMPtr<nsILocalFile> binDir;
++  nsCOMPtr<nsILocalFile> compDir;
++  if (EmbedPrivate::sCompPath) {
++    rv = NS_NewNativeLocalFile(nsDependentCString(EmbedPrivate::sCompPath), 1, getter_AddRefs(binDir));
++    if (NS_SUCCEEDED(rv))
+       rv = NS_NewNativeLocalFile(nsDependentCString(EmbedPrivate::sCompPath), 1, getter_AddRefs(compDir));
+-      if (NS_FAILED(rv))
+-        return;
++    if (NS_FAILED(rv))
++      return;
++    rv = compDir->AppendNative(nsDependentCString("components"));
++#if 0
+       PRBool exists;
+-      rv = compDir->AppendNative(nsDependentCString("components"));
+       compDir->Exists(&exists);
+       if (!exists)
+         rv = compDir->Create(nsIFile::DIRECTORY_TYPE, 0700);
+       if (NS_FAILED(rv))
+         return;
+-    } else
+-      NS_ASSERTION(EmbedPrivate::sCompPath, "Warning: Failed to init Component Path.\n");
++#endif
++  }
++  NS_ASSERTION(EmbedPrivate::sCompPath, "Warning: Component Path wasn't set.");
++  NS_ASSERTION(NS_SUCCEEDED(rv), "Can't set Component Path.");
+ 
+-    const char *grePath = sPath;
+-    NS_ASSERTION(grePath, "Warning: Failed to init grePath.\n");
++  const char *grePath = sPath;
++  if (!grePath) {
++    NS_WARNING("grePath wasn't set, will use fallback.");
++    grePath = getenv("MOZILLA_FIVE_HOME");
++  }
+ 
+-    if (!grePath)
+-      grePath = getenv("MOZILLA_FIVE_HOME");
++  if (!grePath)
++    return;
+ 
+-    if (!grePath)
+-      return;
++  nsCOMPtr<nsILocalFile> greDir;
++  rv = NS_NewNativeLocalFile(nsDependentCString(grePath), PR_TRUE,
++                             getter_AddRefs(greDir));
++  if (NS_FAILED(rv))
++    return;
+ 
+-    nsCOMPtr<nsILocalFile> greDir;
+-    rv = NS_NewNativeLocalFile(nsDependentCString(grePath), PR_TRUE,
+-                               getter_AddRefs(greDir));
+-    if (NS_FAILED(rv))
+-      return;
++  PRBool needsRestart = PR_TRUE;
+ 
+-    rv = XRE_InitEmbedding(greDir, binDir,
+-                           NS_CONST_CAST(GTKEmbedDirectoryProvider*,
+-                                         &kDirectoryProvider),
+-                           nsnull, nsnull);
+-    if (NS_FAILED(rv))
++  PRInt32 initCount;
++  for (initCount = 0; initCount < 4 && needsRestart; ++initCount) {
++    rv = LocalInitEmbedding(greDir.get(), binDir.get(), EmbedPrivate::sProfileDir,
++                            &needsRestart);
++    if (NS_FAILED(rv)) {
++      // Embedding isn't initialized!!!
+       return;
+-
+-    if (EmbedPrivate::sProfileDir) {
+-      XRE_NotifyProfile();
+     }
+-
+-    rv = RegisterAppComponents();
+-    NS_ASSERTION(NS_SUCCEEDED(rv), "Warning: Failed to register app components.\n");
+   }
++
++  rv = RegisterComponents(initCount > 1);
++  NS_ASSERTION(NS_SUCCEEDED(rv), "Warning: Failed to register app components.\n");
++  // If this fails, you're probably dead and you should probably term
++  // embedding and mark yourself as dead, but perhaps it isn't critical.
++  EmbedPrivate::sTermEmbedding = PR_FALSE;
+ }
+ 
+ /* static */
+ void
+ EmbedPrivate::PopStartup(void)
+ {
+   sWidgetCount--;
+   if (sWidgetCount == 0) {
+     NS_IF_RELEASE(sCacheService);
+ 
      // destroy the offscreen window
      DestroyOffscreenWindow();
  
@@ -3040,7 +4634,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  void EmbedPrivate::SetPath(const char *aPath)
  {
    if (sPath)
-@@ -1084,21 +1128,23 @@ EmbedPrivate::ChildFocusIn(void)
+@@ -1084,21 +1221,23 @@ EmbedPrivate::ChildFocusIn(void)
    nsresult rv;
    nsCOMPtr<nsIWebBrowser> webBrowser;
    rv = mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
@@ -3064,7 +4658,98 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  
    nsresult rv;
    nsCOMPtr<nsIWebBrowser> webBrowser;
-@@ -1406,22 +1452,21 @@ EmbedPrivate::ClipBoardAction(GtkMozEmbe
+@@ -1178,20 +1317,21 @@ EmbedPrivate::AttachListeners(void)
+   
+   nsCOMPtr<nsIDOMEventTarget> target(do_QueryInterface(mEventTarget));
+   if (!target) {
+     return;
+   }
+   
+   rv = target->AddEventListener(NS_LITERAL_STRING("focus"), eventListener, PR_TRUE);
+   rv = target->AddEventListener(NS_LITERAL_STRING("blur"), eventListener, PR_TRUE);
+   rv = target->AddEventListener(NS_LITERAL_STRING("DOMLinkAdded"), eventListener, PR_TRUE);
+   rv = target->AddEventListener(NS_LITERAL_STRING("load"), eventListener, PR_TRUE);
++  rv = target->AddEventListener(NS_LITERAL_STRING("DOMLinkXSLParsed"), eventListener, PR_TRUE);
+   if (NS_FAILED(rv)) {
+     NS_WARNING("Failed to add Mouse Motion listener\n");
+     return;
+   }
+   // ok, all set.
+   mListenersAttached = PR_TRUE;
+ }
+ 
+ void
+ EmbedPrivate::DetachListeners(void)
+@@ -1238,20 +1378,21 @@ EmbedPrivate::DetachListeners(void)
+   }
+   
+   nsCOMPtr<nsIDOMEventTarget> target(do_QueryInterface(mEventTarget));
+   if (!target) {
+     return;
+   }
+ 
+   rv = target->RemoveEventListener(NS_LITERAL_STRING("focus"), eventListener, PR_TRUE);
+   rv = target->RemoveEventListener(NS_LITERAL_STRING("blur"), eventListener, PR_TRUE);
+   rv = target->RemoveEventListener(NS_LITERAL_STRING("DOMLinkAdded"), eventListener, PR_TRUE);
++  rv = target->RemoveEventListener(NS_LITERAL_STRING("DOMLinkXSLParsed"), eventListener, PR_TRUE);
+   rv = target->RemoveEventListener(NS_LITERAL_STRING("load"), eventListener, PR_TRUE);
+   mListenersAttached = PR_FALSE;
+ }
+ 
+ nsresult
+ EmbedPrivate::GetFocusController(nsIFocusController * *controller)
+ {
+   nsresult rv;
+   if (!controller) {
+     return NS_ERROR_FAILURE;
+@@ -1328,21 +1469,21 @@ EmbedPrivate::GetAtkObjectForCurrentDocu
+     void *atkObj = nsnull;
+     if (NS_SUCCEEDED(acc->GetNativeInterface(&atkObj)))
+       return atkObj;
+   }
+   return nsnull;
+ }
+ #endif /* MOZ_ACCESSIBILITY_ATK */
+ 
+ /* static */
+ nsresult
+-EmbedPrivate::RegisterAppComponents(void)
++EmbedPrivate::RegisterComponents(PRBool aAutoRegister)
+ {
+   nsCOMPtr<nsIComponentRegistrar> cr;
+   nsresult rv = NS_GetComponentRegistrar(getter_AddRefs(cr));
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   nsCOMPtr<nsIComponentManager> cm;
+   rv = NS_GetComponentManager(getter_AddRefs(cm));
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   for (int i = 0; i < sNumAppComps; ++i) {
+@@ -1359,20 +1500,23 @@ EmbedPrivate::RegisterAppComponents(void
+     NS_ASSERTION(NS_SUCCEEDED(rv), "Unable to register factory for component");
+ 
+     // Call the registration hook of the component, if any
+     if (sAppComps[i].mRegisterSelfProc) {
+       rv = sAppComps[i].mRegisterSelfProc(cm, nsnull, nsnull, nsnull,
+                                           &(sAppComps[i]));
+       NS_ASSERTION(NS_SUCCEEDED(rv), "Unable to self-register component");
+     }
+   }
+ 
++  if (aAutoRegister)
++    cr->AutoRegister(nsnull);
++
+   return rv;
+ }
+ 
+ /* static */
+ void
+ EmbedPrivate::EnsureOffscreenWindow(void)
+ {
+   if (sOffscreenWindow)
+     return;
+   sOffscreenWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+@@ -1406,22 +1550,21 @@ EmbedPrivate::ClipBoardAction(GtkMozEmbe
    if (!clipboard)
      return PR_FALSE;
    switch (type) {
@@ -3088,7 +4773,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
      {
        rv = clipboard->CopySelection();
        break;
-@@ -1498,68 +1543,105 @@ EmbedPrivate::FindText(const char *exp, 
+@@ -1498,68 +1641,105 @@ EmbedPrivate::FindText(const char *exp, 
    finder->SetSearchFrames(TRUE); //SearchInFrames
    finder->SetMatchCase(case_sensitive);
    rv = finder->FindNext(&match);
@@ -3223,9 +4908,18 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
    targetNode->GetNodeName(nodeName);
    PRInt32 selectionStart = 0, selectionEnd = 0, textLength = 0;
    nsString buffer;
-@@ -1578,28 +1660,46 @@ EmbedPrivate::InsertTextToNode(nsIDOMNod
+@@ -1570,93 +1750,132 @@ EmbedPrivate::InsertTextToNode(nsIDOMNod
+     NS_ENSURE_SUCCESS(rv, rv);
+     PRBool rdonly = PR_FALSE;
+     input->GetReadOnly(&rdonly);
+     if (rdonly)
+       return NS_ERROR_FAILURE;
+ 
+     nsCOMPtr<nsIDOMNSHTMLTextAreaElement> nsinput;
+     nsinput = do_QueryInterface(targetNode, &rv);
      NS_ENSURE_SUCCESS(rv, rv);
      nsinput->GetTextLength(&textLength);
++    nsString utfstring = NS_ConvertUTF8toUTF16(string);
      if (textLength > 0) {
        NS_ENSURE_SUCCESS(rv, rv);
        rv = input->GetValue(buffer);
@@ -3241,14 +4935,15 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +      if (surr1 != 0 || surr2 != 0) {
 +        /* next 2 strings: use cursor position (selectionStart) instead of textLength */
 +        buffer.Cut(selectionStart + surr1, surr2);
-+        buffer.Insert(NS_ConvertUTF8toUTF16(string), selectionStart + surr1);
++        buffer.Insert(utfstring, selectionStart + surr1);
 +      } else
-+        buffer.Insert(NS_ConvertUTF8toUTF16(string), selectionStart);
++        buffer.Insert(utfstring, selectionStart);
 +    } else
-+        buffer.Assign(NS_ConvertUTF8toUTF16(string));
++        buffer.Assign(utfstring);
  
      input->SetValue(buffer);
-     int len = strlen(string);
+-    int len = strlen(string);
++    int len = utfstring.Length();
      nsinput->SetSelectionRange(selectionStart + len, selectionStart + len);
 +
 +    nsCOMPtr<nsIDOMNSEditableElement> nseditable;
@@ -3258,7 +4953,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +    nsCOMPtr<nsIEditor> theEditor;
 +    nseditable->GetEditor(getter_AddRefs(theEditor));
 +    NS_ENSURE_TRUE(theEditor, NS_OK);
-+
++    
 +    nsCOMPtr<nsISelectionController> selectionController;
 +    theEditor->GetSelectionController(getter_AddRefs(selectionController));
 +    PRBool sync = PR_TRUE;
@@ -3274,8 +4969,12 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
      if (rdonly)
        return NS_ERROR_FAILURE;
  
-@@ -1610,53 +1710,73 @@ EmbedPrivate::InsertTextToNode(nsIDOMNod
- 
+     nsCOMPtr<nsIDOMNSHTMLInputElement> nsinput;
+     nsinput = do_QueryInterface(targetNode, &rv);
+     NS_ENSURE_SUCCESS(rv, rv);
+     nsinput->GetTextLength(&textLength);
+-
++    nsString utfstring = NS_ConvertUTF8toUTF16(string);
      if (textLength > 0) {
        NS_ENSURE_SUCCESS(rv, rv);
        rv = input->GetValue(buffer);
@@ -3292,14 +4991,15 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +      if (surr1 != 0 || surr2 != 0) {
 +        /* next 2 strings: use cursor position (selectionStart) instead of textLength */
 +        buffer.Cut(selectionStart + surr1, surr2);
-+        buffer.Insert(NS_ConvertUTF8toUTF16(string), selectionStart + surr1);
++        buffer.Insert(utfstring, selectionStart + surr1);
 +      } else
-+        buffer.Insert(NS_ConvertUTF8toUTF16(string), selectionStart);
++        buffer.Insert(utfstring, selectionStart);
 +    } else
-+        buffer.Assign(NS_ConvertUTF8toUTF16(string));
++        buffer.Assign(utfstring);
  
      input->SetValue(buffer);
-     int len = strlen(string);
+-    int len = strlen(string);
++    int len = utfstring.Length();
      nsinput->SetSelectionRange(selectionStart + len, selectionStart + len);
 +
 +    nsCOMPtr<nsIDOMNSEditableElement> nseditable;
@@ -3309,7 +5009,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +    nsCOMPtr<nsIEditor> theEditor;
 +    nseditable->GetEditor(getter_AddRefs(theEditor));
 +    NS_ENSURE_TRUE(theEditor, NS_OK);
-+
++    
 +    nsCOMPtr<nsISelectionController> selectionController;
 +    theEditor->GetSelectionController(getter_AddRefs(selectionController));
 +    PRBool sync = PR_TRUE;
@@ -3356,7 +5056,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
    nsresult rv;
    nsCOMPtr<nsIDOMDocument> nodeDoc;
    rv = aNode->GetOwnerDocument(getter_AddRefs(nodeDoc));
-@@ -1667,20 +1787,42 @@ EmbedPrivate::GetDOMWindowByNode(nsIDOMN
+@@ -1667,20 +1886,42 @@ EmbedPrivate::GetDOMWindowByNode(nsIDOMN
    NS_ENSURE_SUCCESS(rv, rv);
    rv = docView->GetDefaultView(getter_AddRefs(absView));
    NS_ENSURE_SUCCESS(rv, rv);
@@ -3399,7 +5099,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
    *aZoomLevel = 100;
  
    nsCOMPtr<nsIDOMWindow> DOMWindow;
-@@ -1692,22 +1834,30 @@ EmbedPrivate::GetZoom(PRInt32 *aZoomLeve
+@@ -1692,22 +1933,30 @@ EmbedPrivate::GetZoom(PRInt32 *aZoomLeve
    } else {
      nsCOMPtr<nsIWebBrowser> webBrowser;
      rv = mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
@@ -3432,7 +5132,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
  {
    nsresult rv;
    nsCOMPtr<nsIDOMWindow> DOMWindow;
-@@ -1722,23 +1872,31 @@ EmbedPrivate::SetZoom(PRInt32 aZoomLevel
+@@ -1722,23 +1971,33 @@ EmbedPrivate::SetZoom(PRInt32 aZoomLevel
      rv = mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
      NS_ENSURE_SUCCESS(rv, rv);
  
@@ -3457,6 +5157,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +      rv = markupViewer->SetFullZoom(zoomLevelFloat);
 +    gtk_widget_queue_draw(GTK_WIDGET(mOwningWidget));
 +  }
++  //update   
++  mWindow->mBaseWindow->SetPosition(0, 0);
    return rv;
  }
  
@@ -3467,7 +5169,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
    *numberOfFrames = 0;
    nsCOMPtr<nsIWebBrowser> webBrowser;
    nsresult rv = mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
-@@ -1887,10 +2045,220 @@ EmbedPrivate::GetSHistoryList(GtkMozHist
+@@ -1887,10 +2146,216 @@ EmbedPrivate::GetSHistoryList(GtkMozHist
       item[numItems].accessed = 0;
  
       if (type == GTK_MOZ_EMBED_BACK_SHISTORY)
@@ -3482,65 +5184,61 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +PRBool
 +EmbedPrivate::CanSelect()
 +{
-+  nsresult rv;
-+
 +  nsCOMPtr<nsIWebBrowser> webBrowser;
-+  rv = mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
-+  if (NS_FAILED(rv))
-+    return PR_TRUE;
++  nsresult rv = mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
++  NS_ENSURE_SUCCESS(rv, PR_TRUE);
 +
-+  nsCOMPtr<nsIWebBrowserFocus> focus(do_GetInterface(webBrowser));
-+  if (!focus)
-+    return PR_TRUE;
++  nsCOMPtr<nsIWebBrowserFocus> focus = do_QueryInterface(webBrowser, &rv);
++  NS_ENSURE_SUCCESS(rv, PR_TRUE);
 +
 +  EmbedContextMenuInfo *ctxInfo;
 +  ctxInfo = mEventListener->GetContextInfo();
++  if (!ctxInfo)
++    return PR_TRUE;
 +
-+  nsIDOMElement *domElement;
-+  rv = focus->GetFocusedElement(&domElement);
++  nsCOMPtr<nsIDOMElement> domElement;
++  rv = focus->GetFocusedElement(getter_AddRefs(domElement));
 +  if (NS_SUCCEEDED(rv)) {
 +    /* if domElement is either an input or text area, get their length to
 +       check if there is anything to select */
 +    if (ctxInfo->mEmbedCtxType & GTK_MOZ_EMBED_CTX_INPUT_TEXT) {
 +      PRInt32 textLength;
 +      if (ctxInfo->mCtxFormType == NS_FORM_TEXTAREA) {
-+        nsCOMPtr<nsIDOMNSHTMLTextAreaElement> textArea = do_QueryInterface(domElement);
-+        if (textArea) {
-+          textArea->GetTextLength(&textLength);
-+          if (textLength == 0)
-+            return PR_FALSE;
-+        }
++        nsCOMPtr<nsIDOMNSHTMLTextAreaElement> textArea = do_QueryInterface(domElement, &rv);
++        NS_ENSURE_SUCCESS(rv, PR_TRUE);
++        textArea->GetTextLength(&textLength);
++        if (textLength == 0)
++          return PR_FALSE;
 +      } else {
-+        nsCOMPtr<nsIDOMNSHTMLInputElement> input = do_QueryInterface(domElement);
-+        if (input) {
-+          input->GetTextLength(&textLength);
-+          if (textLength == 0)
-+            return PR_FALSE;
-+        }
++        nsCOMPtr<nsIDOMNSHTMLInputElement> input = do_QueryInterface(domElement, &rv);
++        NS_ENSURE_SUCCESS(rv, PR_TRUE);
++        input->GetTextLength(&textLength);
++        if (textLength == 0)
++          return PR_FALSE;
 +      }
 +    }
 +    return PR_TRUE;
 +  }
 +
-+  nsIDOMWindow *domWindow;
-+  focus->GetFocusedWindow(&domWindow);
-+  if (domWindow) {
-+    nsIDOMWindowCollection *frames;
-+    rv = domWindow->GetFrames(&frames);
-+    if (NS_SUCCEEDED(rv)) {
-+      /* checks if focused window collection has child frames */
-+      PRUint32 numberChildren;
-+      rv = frames->GetLength(&numberChildren);
-+      if (numberChildren > 0)
-+        return PR_FALSE; /* it is a frameset, not a specific frame */
-+    }
-+  }
++  nsCOMPtr<nsIDOMWindow> domWindow;
++  rv = focus->GetFocusedWindow(getter_AddRefs(domWindow));
++  NS_ENSURE_SUCCESS(rv, PR_TRUE);
++  
++  nsCOMPtr<nsIDOMDocument> domDoc;
++  rv = domWindow->GetDocument(getter_AddRefs(domDoc));
++  NS_ENSURE_SUCCESS(rv, PR_TRUE);
++  
++  /* checks if focused document is a frameset */
++  nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(domDoc, &rv);
++  NS_ENSURE_SUCCESS(rv, PR_TRUE);
++  if (htmlDoc->GetIsFrameset())
++    return PR_FALSE;
 +
 +  return PR_TRUE;
 +}
 +
 +nsresult
-+EmbedPrivate::NotifyPlugins(nsIDOMWindow* aDomWindow, PRUint16 aEvent)
++EmbedPrivate::NotifyPlugins(PRUint16 aEvent, nsIDOMWindow* aDomWindow)
 +{
 +  nsCOMPtr<nsIDOMDocument> domDoc;
 +
@@ -3644,8 +5342,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +  if (!presShell)
 +    return NS_ERROR_FAILURE;
 +
-+  nsPluginEvent pluginEvent;
 +  PRBool handled;
++  nsPluginEvent pluginEvent;
 +  pluginEvent.event.type = aEvent;
 +
 +  nsCOMPtr<nsIDOMNodeList> list;
@@ -3688,9 +5386,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.cpp mozill
 +  }
 +}
 +
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h mozilla/embedding/browser/gtk/src/EmbedPrivate.h
---- mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h	2007-05-18 07:39:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedPrivate.h	2007-05-18 10:01:24.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h mozilla/embedding/browser/gtk/src/EmbedPrivate.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedPrivate.h	2007-09-14 00:46:17.000000000 +0300
 @@ -84,20 +84,21 @@ class nsIDirectoryServiceProvider;
  
  class EmbedCommon {
@@ -3713,7 +5411,32 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h mozilla/
    ~EmbedPrivate();
  
    nsresult    Init            (GtkMozEmbed *aOwningWidget);
-@@ -146,37 +147,39 @@ class EmbedPrivate {
+@@ -109,20 +110,24 @@ class EmbedPrivate {
+   void        Destroy         (void);
+   void        SetURI          (const char *aURI);
+   void        LoadCurrentURI  (void);
+   void        Reload          (PRUint32 reloadFlags);
+ 
+   void        SetChromeMask   (PRUint32 chromeMask);
+   void        ApplyChromeMask ();
+ 
+   static void PushStartup     (void);
+   static void PopStartup      (void);
++  static nsresult LocalInitEmbedding(nsILocalFile *aGREDir,
++                                     nsILocalFile *aBinDir,
++                                     nsILocalFile *aProfileDir,
++                                     PRBool *aNeedsRestart);
+   static void SetPath         (const char *aPath);
+   static void SetCompPath     (const char *aPath);
+ 
+   static void SetAppComponents (const nsModuleComponentInfo* aComps,
+                                 int aNumComponents);
+   static void SetProfilePath  (const char *aDir, const char *aName);
+   static void SetDirectoryServiceProvider (nsIDirectoryServiceProvider * appFileLocProvider);
+ 
+   nsresult OpenStream         (const char *aBaseURI, const char *aContentType);
+   nsresult AppendToStream     (const PRUint8 *aData, PRUint32 aLen);
+@@ -146,37 +151,37 @@ class EmbedPrivate {
    // these are when the widget itself gets focus in and focus out
    // events
    void        ChildFocusIn (void);
@@ -3743,9 +5466,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h mozilla/
                                 GtkMozEmbedSessionHistory type, gint *count);
 -
 +  nsresult    GetTextAndCursorPosition(gchar **aString, PRInt32 *aCursorPos);
-+  nsresult    NotifyPlugins(nsIDOMWindow* aDomWin, PRUint16 aEvent);
-+  nsresult    EnumerateFrames(nsIDOMDocument* aDomDoc, PRUint16 aEvent);
-+  nsresult    EnumeratePlugins(nsIDOMDocument* aDomDoc, const nsAString& aPluginTag, PRUint16 aEvent);
++  nsresult    NotifyPlugins(PRUint16 aEvent, nsIDOMWindow* aDomWin = nsnull);
  
  #ifdef MOZ_ACCESSIBILITY_ATK
    void *GetAtkObjectForCurrentDocument();
@@ -3756,7 +5477,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h mozilla/
    // all of the objects that we own
    EmbedWindow                   *mWindow;
    nsCOMPtr<nsISupports>          mWindowGuard;
-@@ -191,20 +194,21 @@ class EmbedPrivate {
+@@ -191,20 +196,21 @@ class EmbedPrivate {
    nsCOMPtr<nsISHistory>          mSessionHistory;
  
    nsCOMPtr<nsPIDOMEventTarget>   mEventTarget;
@@ -3778,8 +5499,20 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h mozilla/
    // the appshell we have created
    static nsIAppShell            *sAppShell;
    // the list of all open windows
-@@ -227,34 +231,37 @@ class EmbedPrivate {
+@@ -218,43 +224,52 @@ class EmbedPrivate {
+   // chrome mask
+   PRUint32                       mChromeMask;
+   // is this a chrome window?
+   PRBool                         mIsChrome;
+   // has the chrome finished loading?
+   PRBool                         mChromeLoaded;
  
+   // has the network finished loading?
+   PRBool                         mLoadFinished;
+ 
++  // is it uploadind a file ?
++  PRBool                         IsUploading;
++
    // saved window ID for reparenting later
    GtkWidget                     *mMozWindowWidget;
    // has someone called Destroy() on us?
@@ -3796,6 +5529,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h mozilla/
    PRBool                         mListenersAttached;
    PRBool                         mDoResizeEmbed;
 +  PRInt32                        mCurVisibleHeight;
++  PRBool                         mResizeControl;
  
    void GetListener    (void);
    void AttachListeners(void);
@@ -3804,7 +5538,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h mozilla/
    // this will get the PIDOMWindow for this widget
    nsresult        GetPIDOMWindow   (nsPIDOMWindow **aPIWin);
  
-   static nsresult RegisterAppComponents();
+-  static nsresult RegisterAppComponents();
++  static nsresult RegisterComponents(PRBool aAutoRegister);
  
    // offscreen window methods and the offscreen widget
    static void       EnsureOffscreenWindow(void);
@@ -3813,13 +5548,15 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedPrivate.h mozilla/
    static GtkWidget *sOffscreenFixed;
  
 +  PRBool          CanSelect();
++  nsresult        EnumerateFrames(nsIDOMDocument* aDomDoc, PRUint16 aEvent);
++  nsresult        EnumeratePlugins(nsIDOMDocument* aDomDoc, const nsAString& aPluginTag, PRUint16 aEvent);
  };
  
  #endif /* __EmbedPrivate_h */
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozilla/embedding/browser/gtk/src/EmbedProgress.cpp
---- mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp	2007-05-18 07:38:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedProgress.cpp	2007-05-18 10:01:24.000000000 +0300
-@@ -42,169 +42,254 @@
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozilla/embedding/browser/gtk/src/EmbedProgress.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedProgress.cpp	2007-09-14 00:46:17.000000000 +0300
+@@ -42,170 +42,263 @@
  #include "EmbedProgress.h"
  
  #ifdef MOZILLA_INTERNAL_API
@@ -3846,7 +5583,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
 +//#define MOZ_PLUGINS_LAST = 7
 +
  static PRInt32 sStopSignalTimer = 0;
-+static PRBool sNastyProgress = PR_FALSE;
++static PRBool sNastyProgress = PR_TRUE;
 +
  static gboolean
  progress_emit_stop(void * data)
@@ -3857,34 +5594,33 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
 +    }
      g_return_val_if_fail(data, FALSE);
      EmbedPrivate *owner = (EmbedPrivate*)data;
++
++    if (owner->IsUploading) {
++
++        gtk_signal_emit(GTK_OBJECT(owner->mOwningWidget),
++                        moz_embed_signals[FILE_UPLOAD_FINISHED]);
++
++        owner->IsUploading = PR_FALSE;
++        return FALSE;
++    }
++
      if (!owner->mLoadFinished) {
        owner->mLoadFinished = PR_TRUE;
        gtk_signal_emit(GTK_OBJECT(owner->mOwningWidget),
                        moz_embed_signals[NET_STOP]);
      }
 +
-+//BEGIN HELL PLUGIN STUFF
-+    if (!owner->mWindow) return FALSE;
-+    nsCOMPtr<nsIWebBrowser> webBrowser;
-+    owner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
-+    if (!webBrowser) return FALSE;
-+
 +    PRBool enabled = PR_TRUE;
 +    gboolean success = gtk_moz_embed_common_get_pref(G_TYPE_BOOLEAN,"plugins.enableSuspending",&enabled);
 +
 +    if (success && enabled) {
-+      nsCOMPtr<nsIDOMWindow> domWin;
-+      webBrowser->GetContentDOMWindow(getter_AddRefs(domWin));
-+      //if (!domWin)
-+      //  return NS_ERROR_FAILURE;
-+      owner->NotifyPlugins(domWin, 3);
++      owner->NotifyPlugins(3);
 +      owner->mPluginSuspended = PR_FALSE;
 +    }
 +    // when finished loading, disable flash suspending function
 +    // with the help of pref
 +    gboolean btval = FALSE;
 +    gtk_moz_embed_common_set_pref (G_TYPE_BOOLEAN,"plugins.flashhack",&btval);
-+//END HELL PLUGIN STUFF
      return FALSE;
  }
  
@@ -3910,10 +5646,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
  {
    mOwner = aOwner;
    mStopLevel = 0;
-+  gboolean enabled = PR_FALSE;
++  gboolean enabled = PR_TRUE;
 +  if (gtk_moz_embed_common_get_pref(G_TYPE_BOOLEAN,"gtkmozembed.nasty_progress", &enabled)
-+      && enabled)
-+    sNastyProgress = PR_TRUE;
++      && !enabled)
++    sNastyProgress = PR_FALSE;
    return NS_OK;
  }
  
@@ -3925,6 +5661,11 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
  {
 +  PRBool mIsLoadingDocument = PR_TRUE;
 +  aWebProgress->GetIsLoadingDocument(&mIsLoadingDocument);
++  if (mOwner->mWindow->mHidden == 2) {
++    mOwner->Show();
++    gtk_widget_grab_focus(GTK_WIDGET(mOwner->mOwningWidget));
++    mOwner->mWindow->mHidden = 0;
++  }
 +  if (sNastyProgress &&
 +      aStateFlags & GTK_MOZ_EMBED_FLAG_NEGOTIATING &&
 +      aStateFlags & GTK_MOZ_EMBED_FLAG_IS_DOCUMENT) {
@@ -3947,7 +5688,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
         || (aStateFlags & GTK_MOZ_EMBED_FLAG_NEGOTIATING)
        )
       ) {
-       g_source_remove(sStopSignalTimer);
+-      g_source_remove(sStopSignalTimer);
++      GLIB_SOURCE_IF_REMOVE(sStopSignalTimer);
        mStopLevel = 0;
        gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
                        moz_embed_signals[NET_START]);
@@ -3957,7 +5699,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
    }
  
    // if we've got the start flag, emit the signal
-   if ((aStateFlags & GTK_MOZ_EMBED_FLAG_IS_NETWORK) &&
+-  if ((aStateFlags & GTK_MOZ_EMBED_FLAG_IS_NETWORK) &&
++  if ((aStateFlags & GTK_MOZ_EMBED_FLAG_IS_NETWORK || aStateFlags & GTK_MOZ_EMBED_FLAG_NEGOTIATING) &&
        (aStateFlags & GTK_MOZ_EMBED_FLAG_START)) {
      // FIXME: workaround for broken progress values.
      mOwner->mOwningWidget->current_number_of_requests = 0;
@@ -4036,8 +5779,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
  
    if (aStateFlags & GTK_MOZ_EMBED_FLAG_STOP) {
      if (aStateFlags & GTK_MOZ_EMBED_FLAG_IS_NETWORK) {
-       if (sStopSignalTimer)
-         g_source_remove(sStopSignalTimer);
+-      if (sStopSignalTimer)
+-        g_source_remove(sStopSignalTimer);
++      GLIB_SOURCE_IF_REMOVE(sStopSignalTimer);
 +      mShowProgressStopped = PR_TRUE;
        progress_emit_stop(mOwner);
        // let our owner know that the load finished
@@ -4049,12 +5793,13 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
 +      if (success && enabled) {
 +        nsCOMPtr<nsIDOMWindow> domWindow;
 +        aWebProgress->GetDOMWindow(getter_AddRefs(domWindow));
-+        mOwner->NotifyPlugins(domWindow, 3);
++        mOwner->NotifyPlugins(3, domWindow);
 +        mOwner->mPluginSuspended = PR_FALSE;
 +      }
      } else if (mStopLevel == 3) {
-       if (sStopSignalTimer)
-         g_source_remove(sStopSignalTimer);
+-      if (sStopSignalTimer)
+-        g_source_remove(sStopSignalTimer);
++      GLIB_SOURCE_IF_REMOVE(sStopSignalTimer);
        mStopLevel = 0;
 +      mShowProgressStopped = PR_TRUE;
        sStopSignalTimer = g_timeout_add(1000, progress_emit_stop, mOwner);
@@ -4081,6 +5826,12 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
 +  }
 +
    if (mOwner->mURI.Equals(NS_ConvertUTF8toUTF16(tmpString))) {
++    if (!mPagePainted && mOwner->mLoadFinished && !sStopSignalTimer) {
++      mOwner->mLoadFinished = PR_FALSE;
++      sStopSignalTimer = g_timeout_add(1000, progress_emit_stop, mOwner);
++      gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
++                      moz_embed_signals[NET_START]);
++    }
      gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
                      moz_embed_signals[PROGRESS],
                      aCurTotalProgress, aMaxTotalProgress);
@@ -4090,7 +5841,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
  }
  
  NS_IMETHODIMP
-@@ -234,41 +319,40 @@ EmbedProgress::OnLocationChange(nsIWebPr
+ EmbedProgress::OnLocationChange(nsIWebProgress *aWebProgress,
+@@ -234,41 +327,40 @@ EmbedProgress::OnLocationChange(nsIWebPr
      if (domWindow != topDomWindow)
        isSubFrameLoad = PR_TRUE;
    }
@@ -4104,7 +5856,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
 -  mOwner->mNeedFav = PR_TRUE;
  
 +  // suspend plugins
-+  // this->NotifyPlugins(aWebProgress, 4);
++  // this->NotifyPlugins(4);
 +  mOwner->mNeedFav = PR_TRUE;
 +  gboolean bval = TRUE;
 +  gtk_moz_embed_common_set_pref (G_TYPE_BOOLEAN,"plugins.flashhack",&bval);
@@ -4138,7 +5890,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
                                  PRUint32         aState)
  {
    gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
-@@ -314,11 +398,10 @@ EmbedProgress::HandleHTTPStatus(nsIReque
+@@ -314,11 +406,10 @@ EmbedProgress::HandleHTTPStatus(nsIReque
    PRUint32 responseCode = 0;
    nsCString responseText;
    rv = httpChannel->GetResponseStatus(&responseCode);
@@ -4150,9 +5902,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.cpp mozil
    return rv;
  }
 -
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.h mozilla/embedding/browser/gtk/src/EmbedProgress.h
---- mozilla/embedding/browser/gtk/src.orig/EmbedProgress.h	2007-05-18 07:38:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedProgress.h	2007-05-18 10:01:24.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.h mozilla/embedding/browser/gtk/src/EmbedProgress.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedProgress.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedProgress.h	2007-09-14 00:46:17.000000000 +0300
 @@ -57,13 +57,17 @@ class EmbedProgress : public nsIWebProgr
  
    NS_DECL_NSIWEBPROGRESSLISTENER
@@ -4171,10 +5923,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedProgress.h mozilla
  };
  
  #endif /* __EmbedProgress_h */
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
---- mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp	2007-05-18 07:38:57.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedWindow.cpp	2007-05-18 10:01:24.000000000 +0300
-@@ -35,36 +35,39 @@
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
+--- mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedWindow.cpp	2007-09-14 00:46:17.000000000 +0300
+@@ -35,36 +35,40 @@
   * and other provisions required by the GPL or the LGPL. If you do not delete
   * the provisions above, a recipient may use your version of this file under
   * the terms of any one of the MPL, the GPL or the LGPL.
@@ -4204,6 +5956,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla
    mVisibility  = PR_FALSE;
    mIsModal     = PR_FALSE;
 +  mJSFocusEmit = PR_TRUE;
++  mHidden      = 0;
  }
  
  EmbedWindow::~EmbedWindow(void)
@@ -4214,7 +5967,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla
  nsresult
  EmbedWindow::Init(EmbedPrivate *aOwner)
  {
-@@ -121,20 +124,21 @@ EmbedWindow::ReleaseChildren(void)
+@@ -121,20 +125,21 @@ EmbedWindow::ReleaseChildren(void)
  // nsISupports
  
  NS_IMPL_ADDREF(EmbedWindow)
@@ -4236,7 +5989,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla
  EmbedWindow::SetStatus(PRUint32 aStatusType, const PRUnichar *aStatus)
  {
    switch (aStatusType) {
-@@ -269,57 +273,89 @@ EmbedWindow::FocusPrevElement()
+@@ -269,72 +274,115 @@ EmbedWindow::FocusPrevElement()
  }
  
  // nsIEmbeddingSiteWindow
@@ -4261,8 +6014,10 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla
 -    return mBaseWindow->SetSize(aCX, aCY, PR_TRUE);
 +    nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_OUTER)) {
 +    mBaseWindow->SetSize(aCX, aCY, PR_TRUE);
-   }
--  return NS_ERROR_INVALID_ARG;
++  }
++
++  if(aFlags & nsIEmbeddingSiteWindow::DIM_FLAGS_VERTICAL)
++  {
 +    nsCOMPtr<nsIWebBrowser> webBrowser;
 +    mOwner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
 +    NS_ENSURE_TRUE(webBrowser, NS_ERROR_FAILURE);
@@ -4276,7 +6031,11 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla
 +
 +    nsCOMPtr<nsIPresShell> presShell = context->GetPresShell();
 +    NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
-+    return presShell->StyleChangeReflow();
++    presShell->StyleChangeReflow();
+   }
+-  return NS_ERROR_INVALID_ARG;
++
++  return NS_OK;
  }
  
  NS_IMETHODIMP
@@ -4290,6 +6049,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla
 -  }
 -  else if (aFlags & nsIEmbeddingSiteWindow::DIM_FLAGS_POSITION) {
 -    return mBaseWindow->GetPosition(aX, aY);
+-  }
+-  else if (aFlags & (nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_INNER |
 +  nsresult rv = NS_ERROR_INVALID_ARG;
 +  if (aFlags & nsIEmbeddingSiteWindow::DIM_FLAGS_POSITION && aX && aY) {
 +    GdkWindow *window = gtk_widget_get_parent_window(GTK_WIDGET(mOwner->mOwningWidget));
@@ -4297,8 +6058,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla
 +      gdk_window_get_position(window, aX, aY);
 +      rv = NS_OK;
 +    }
-   }
--  else if (aFlags & (nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_INNER |
++  } else
++    rv = NS_OK;
 +  if (aFlags & (nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_INNER |
           nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_OUTER)) {
 -    return mBaseWindow->GetSize(aCX, aCY);
@@ -4343,10 +6104,29 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.cpp mozilla
  }
  
  NS_IMETHODIMP
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.h mozilla/embedding/browser/gtk/src/EmbedWindow.h
---- mozilla/embedding/browser/gtk/src.orig/EmbedWindow.h	2007-01-03 00:23:53.000000000 +0200
-+++ mozilla/embedding/browser/gtk/src/EmbedWindow.h	2007-05-18 10:01:24.000000000 +0300
-@@ -41,67 +41,71 @@
+ EmbedWindow::SetTitle(const PRUnichar *aTitle)
+ {
+   mTitle = aTitle;
+   gtk_signal_emit(GTK_OBJECT(mOwner->mOwningWidget),
+       moz_embed_signals[TITLE]);
++  if (mHidden == 1) {
++    mOwner->Hide();
++    mHidden = 2;
++  }
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ EmbedWindow::GetSiteWindow(void **aSiteWindow)
+ {
+   GtkWidget *ownerAsWidget(GTK_WIDGET(mOwner->mOwningWidget));
+   *aSiteWindow = NS_STATIC_CAST(void *, ownerAsWidget);
+   return NS_OK;
+ }
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.h mozilla/embedding/browser/gtk/src/EmbedWindow.h
+--- mozilla/embedding/browser/gtk/src.orig/EmbedWindow.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedWindow.h	2007-09-14 00:46:17.000000000 +0300
+@@ -41,67 +41,72 @@
  #define __EmbedWindow_h
  
  #ifdef MOZILLA_INTERNAL_API
@@ -4406,6 +6186,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.h mozilla/e
    nsString                 mLinkMessage;
  
    nsCOMPtr<nsIBaseWindow>  mBaseWindow; // [OWNER]
++  PRInt32                  mHidden;
  
  private:
  
@@ -4420,9 +6201,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/EmbedWindow.h mozilla/e
  
  
  #endif /* __EmbedWindow_h */
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/GtkPromptService.cpp mozilla/embedding/browser/gtk/src/GtkPromptService.cpp
---- mozilla/embedding/browser/gtk/src.orig/GtkPromptService.cpp	2007-05-18 07:38:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/GtkPromptService.cpp	2007-05-18 10:01:24.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/GtkPromptService.cpp mozilla/embedding/browser/gtk/src/GtkPromptService.cpp
+--- mozilla/embedding/browser/gtk/src.orig/GtkPromptService.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/GtkPromptService.cpp	2007-09-14 00:46:17.000000000 +0300
 @@ -47,20 +47,21 @@
  #ifdef MOZILLA_INTERNAL_API
  #include "nsString.h"
@@ -4467,20 +6248,34 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/GtkPromptService.cpp mo
    EmbedPrompter prompter;
    prompter.SetTitle(aDialogTitle ? aDialogTitle : NS_LITERAL_STRING("Alert").get());
    prompter.SetMessageText(aDialogText);
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h mozilla/embedding/browser/gtk/src/gtkmozembed.h
---- mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h	2007-05-18 07:38:57.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/gtkmozembed.h	2007-05-18 10:01:24.000000000 +0300
-@@ -180,20 +180,23 @@ struct _GtkMozEmbedClass
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h mozilla/embedding/browser/gtk/src/gtkmozembed.h
+--- mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/gtkmozembed.h	2007-09-14 00:46:17.000000000 +0300
+@@ -174,26 +174,31 @@ struct _GtkMozEmbedClass
+                                 const char *check_msg, gboolean *check_val);
+   gint     (* confirm_ex)      (GtkMozEmbed *embed, const char *title, const char *text, guint bt_flags,
+                                 const char *button1, const char *button2, const char *button3,
+                                 const char *check_msg, gboolean *check_val);
+   gboolean (* prompt)          (GtkMozEmbed *embed, const char *title, const char *text,
+                                 char **value, const char *check_msg, gboolean *check_val);
    gboolean (* prompt_auth)     (GtkMozEmbed *embed, const char *title, const char *text,
                                  char **user, char **pass, const char *check_msg, gboolean *check_val);
    gboolean (* select)          (GtkMozEmbed *embed, const char *title, const char *text,
                                  GList *list, gint *selected_item);
-   void     (* download_request)(GtkMozEmbed *, const char *, const char *, const char *, long, int, gpointer);
-   gboolean (* upload_dialog)   (GtkMozEmbed *, const char *, const char *, char **);
-   void     (* icon_changed)    (GtkMozEmbed *, gpointer*);
-   void     (* mailto)          (GtkMozEmbed *, gchar *);
-   void     (* network_error)   (GtkMozEmbed *, gchar *, const gint, const gchar **);
-   void     (* rss_request)     (GtkMozEmbed *, gchar *, gchar *);
+-  void     (* download_request)(GtkMozEmbed *, const char *, const char *, const char *, long, int, gpointer);
+-  gboolean (* upload_dialog)   (GtkMozEmbed *, const char *, const char *, char **);
+-  void     (* icon_changed)    (GtkMozEmbed *, gpointer*);
+-  void     (* mailto)          (GtkMozEmbed *, gchar *);
+-  void     (* network_error)   (GtkMozEmbed *, gchar *, const gint, const gchar **);
+-  void     (* rss_request)     (GtkMozEmbed *, gchar *, gchar *);
++  void     (* download_request)(GtkMozEmbed *embed, const char *, const char *, const char *, long, int, gpointer);
++  gboolean (* upload_dialog)   (GtkMozEmbed *embed);
++  void     (* file_upload_started)(GtkMozEmbed *embed);
++  void     (* file_upload_finished)(GtkMozEmbed *embed);
++  void     (* icon_changed)    (GtkMozEmbed *embed, gpointer*);
++  void     (* mailto)          (GtkMozEmbed *embed, gchar *);
++  void     (* network_error)   (GtkMozEmbed *embed, gchar *, const gint, const gchar **);
++  void     (* rss_request)     (GtkMozEmbed *embed, gchar *, gchar *);
 +  gint     (* dom_window_focus)(GtkMozEmbed *embed);
 +  gint     (* dom_window_blur) (GtkMozEmbed *embed);
 +
@@ -4494,7 +6289,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h mozilla/e
  /* Tell gtkmozembed where the gtkmozembed libs live. If this is not specified,
     The MOZILLA_FIVE_HOME environment variable is checked. */
  GTKMOZEMBED_API(void,          gtk_moz_embed_set_path,            (const char *aPath))
-@@ -227,26 +230,27 @@ GTKMOZEMBED_API(void,          gtk_moz_e
+@@ -227,26 +232,28 @@ GTKMOZEMBED_API(void,          gtk_moz_e
  GTKMOZEMBED_API(void,          gtk_moz_embed_check_logins,        (GtkMozEmbed *embed))
  GTKMOZEMBED_API(char*,         gtk_moz_embed_get_encoding,        (GtkMozEmbed *embed, gint))
  GTKMOZEMBED_API(void,          gtk_moz_embed_set_encoding,        (GtkMozEmbed *embed, const gchar *, gint))
@@ -4506,13 +6301,15 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h mozilla/e
                                                                     const gchar**location, const gchar **file_type, guint *file_size,
                                                                     gint *width, gint *height))
 -GTKMOZEMBED_API(gboolean,      gtk_moz_embed_insert_text,         (GtkMozEmbed *embed, const gchar*, gpointer node))
+-GTKMOZEMBED_API(gboolean,      gtk_moz_embed_save_target,         (GtkMozEmbed *embed, gchar*, gchar*, gint))
 +GTKMOZEMBED_API(gboolean,      gtk_moz_embed_insert_text,         (GtkMozEmbed *embed, const gchar*, gpointer node, gint surr1, gint surr2))
- GTKMOZEMBED_API(gboolean,      gtk_moz_embed_save_target,         (GtkMozEmbed *embed, gchar*, gchar*, gint))
++GTKMOZEMBED_API(gboolean,      gtk_moz_embed_save_target,         (GtkMozEmbed *embed, const gchar*, const gchar*, gint, gpointer))
  GTKMOZEMBED_API(gint,          gtk_moz_embed_get_shistory_list,   (GtkMozEmbed *embed, GtkMozHistoryItem **GtkHI, guint type))
  GTKMOZEMBED_API(gint,          gtk_moz_embed_get_shistory_index,  (GtkMozEmbed *embed))
  GTKMOZEMBED_API(void,          gtk_moz_embed_shistory_goto_index, (GtkMozEmbed *embed, gint index))
  GTKMOZEMBED_API(gboolean,      gtk_moz_embed_get_server_cert,     (GtkMozEmbed *embed, gpointer *aCert, gpointer))
 +GTKMOZEMBED_API(gboolean,      gtk_moz_embed_get_text,            (GtkMozEmbed *embed, gchar**, gint *curpos))
++GTKMOZEMBED_API(gboolean,      gtk_moz_embed_load_image,          (GtkMozEmbed *embed, const gchar*))
  
  typedef enum
  {
@@ -4523,7 +6320,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h mozilla/e
  typedef enum
  {
    GTK_MOZ_EMBED_SELECT_ALL,
-@@ -260,25 +264,26 @@ typedef enum
+@@ -260,25 +267,26 @@ typedef enum
  } GtkMozEmbedClipboard;
  typedef enum
  {
@@ -4541,7 +6338,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h mozilla/e
    GTK_MOZ_EMBED_CTX_RICHEDIT   = 1 << 10,
 -  GTK_MOZ_EMBED_CTX_ROINPUT    = 1 << 11
 +  GTK_MOZ_EMBED_CTX_ROINPUT    = 1 << 11,
-+  GTK_MOZ_EMBED_CTX_INPUT      = 1 << 12
++  GTK_MOZ_EMBED_CTX_MULTILINE  = 1 << 12
  } GtkMozEmbedContext;
  typedef enum
  {
@@ -4552,10 +6349,71 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h mozilla/e
    GTK_MOZ_EMBED_DIALOG_BUTTON_SAVE,
    GTK_MOZ_EMBED_DIALOG_BUTTON_DONT_SAVE,
    GTK_MOZ_EMBED_DIALOG_BUTTON_REVERT,
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp mozilla/embedding/browser/gtk/src/gtkmozembed2.cpp
---- mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp	2007-05-18 07:38:57.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/gtkmozembed2.cpp	2007-05-18 10:01:24.000000000 +0300
-@@ -583,20 +583,36 @@ gtk_moz_embed_class_init(GtkMozEmbedClas
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp mozilla/embedding/browser/gtk/src/gtkmozembed2.cpp
+--- mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/gtkmozembed2.cpp	2007-09-14 00:46:17.000000000 +0300
+@@ -73,20 +73,23 @@
+ // for strings
+ #ifdef MOZILLA_INTERNAL_API
+ #include "nsXPIDLString.h"
+ #include "nsReadableUtils.h"
+ #else
+ #include "nsStringAPI.h"
+ #include "nsComponentManagerUtils.h"
+ #include "nsServiceManagerUtils.h"
+ #endif
+ 
++#include "nsIImageLoadingContent.h"
++#include "nsIDOMNodeList.h"
++
+ #include "gtkmozembedmarshal.h"
+ 
+ #define NEW_TOOLKIT_STRING(x) g_strdup(NS_ConvertUTF16toUTF8(x).get())
+ #define GET_OBJECT_CLASS_TYPE(x) G_OBJECT_CLASS_TYPE(x)
+ 
+ class nsIDirectoryServiceProvider;
+ 
+ // class and instance initialization
+ 
+ static void
+@@ -542,20 +545,36 @@ gtk_moz_embed_class_init(GtkMozEmbedClas
+     gtk_signal_new("upload_dialog",
+                    GTK_RUN_LAST,
+                    GET_OBJECT_CLASS_TYPE(klass),
+                    GTK_SIGNAL_OFFSET(GtkMozEmbedClass, upload_dialog),
+                    gtkmozembed_BOOL__STRING_STRING_POINTER,
+                    GTK_TYPE_BOOL,
+                    3,
+                    GTK_TYPE_STRING,
+                    GTK_TYPE_STRING,
+                    GTK_TYPE_POINTER);
++  moz_embed_signals[FILE_UPLOAD_STARTED] =
++    gtk_signal_new("file_upload_started",
++                   GTK_RUN_LAST,
++                   GET_OBJECT_CLASS_TYPE(klass),
++                   GTK_SIGNAL_OFFSET(GtkMozEmbedClass, file_upload_started),
++                   gtk_marshal_VOID__VOID,
++                   GTK_TYPE_NONE,
++                   0);
++  moz_embed_signals[FILE_UPLOAD_FINISHED] =
++    gtk_signal_new("file_upload_finished",
++                   GTK_RUN_LAST,
++                   GET_OBJECT_CLASS_TYPE(klass),
++                   GTK_SIGNAL_OFFSET(GtkMozEmbedClass, file_upload_finished),
++                   gtk_marshal_VOID__VOID,
++                   GTK_TYPE_NONE,
++                   0);
+   moz_embed_signals[ICON_CHANGED] =
+     gtk_signal_new("icon_changed",
+                    GTK_RUN_LAST,
+                    GET_OBJECT_CLASS_TYPE(klass),
+                    GTK_SIGNAL_OFFSET(GtkMozEmbedClass, icon_changed),
+                    gtkmozembed_VOID__POINTER,
+                    GTK_TYPE_NONE,
+                    1,
+                    GTK_TYPE_POINTER);
+   moz_embed_signals[MAILTO] =
+@@ -583,20 +602,35 @@ gtk_moz_embed_class_init(GtkMozEmbedClas
    moz_embed_signals[RSS_REQUEST] =
      gtk_signal_new("rss_request",
                     GTK_RUN_LAST,
@@ -4581,7 +6439,6 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp mozill
 +                   GTK_SIGNAL_OFFSET(GtkMozEmbedClass, dom_window_focus),
 +                   gtk_marshal_BOOL__NONE,
 +                   GTK_TYPE_BOOL, 0);
-+
  }
  
  static void
@@ -4592,7 +6449,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp mozill
    embed->common = NULL;
    gtk_widget_set_name(GTK_WIDGET(embed), "gtkmozembed");
  
-@@ -1376,23 +1392,40 @@ gtk_moz_embed_clipboard(GtkMozEmbed *emb
+@@ -1376,23 +1410,30 @@ gtk_moz_embed_clipboard(GtkMozEmbed *emb
  {
    EmbedPrivate *embedPrivate;
    g_return_val_if_fail (embed != NULL, FALSE);
@@ -4612,17 +6469,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp mozill
 +    g_return_if_fail (GTK_IS_MOZ_EMBED(embed));
 +
 +    embedPrivate = (EmbedPrivate *)embed->data;
-+    nsCOMPtr<nsIWebBrowser> webBrowser;
-+    nsCOMPtr<nsIDOMWindow> domWin;
-+
-+    if (embedPrivate->mWindow)
-+      embedPrivate->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
-+
-+    if (webBrowser)
-+      webBrowser->GetContentDOMWindow(getter_AddRefs(domWin));
-+
-+    if (domWin)
-+      embedPrivate->NotifyPlugins(domWin, event);
++    embedPrivate->NotifyPlugins(event);
 +
 +    return;
  }
@@ -4635,7 +6482,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp mozill
    g_return_val_if_fail ((embed != NULL), (gchar *)NULL);
    g_return_val_if_fail (GTK_IS_MOZ_EMBED(embed), (gchar *)NULL);
    embedPrivate = (EmbedPrivate *)embed->data;
-@@ -1473,39 +1506,54 @@ gtk_moz_embed_get_selection(GtkMozEmbed 
+@@ -1473,107 +1514,144 @@ gtk_moz_embed_get_selection(GtkMozEmbed 
    if (embedPrivate->mEventListener) {
      EmbedContextMenuInfo * ctx_menu = embedPrivate->mEventListener->GetContextInfo();
      if (!ctx_menu)
@@ -4684,15 +6531,49 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp mozill
 +}
  
  gboolean
- gtk_moz_embed_save_target(GtkMozEmbed *aEmbed, gchar* aUrl,
-                           gchar* aDestination, gint aSetting)
+-gtk_moz_embed_save_target(GtkMozEmbed *aEmbed, gchar* aUrl,
+-                          gchar* aDestination, gint aSetting)
++gtk_moz_embed_save_target(GtkMozEmbed *aEmbed, const gchar* aUrl,
++                          const gchar* aDestination, gint aSetting, gpointer aCtx)
  {
    //FIXME
    nsresult rv;
+-
+-  g_return_val_if_fail (aEmbed != NULL, FALSE);
+-  nsIWebBrowser *webBrowser = nsnull;
+-  gtk_moz_embed_get_nsIWebBrowser(GTK_MOZ_EMBED(aEmbed), &webBrowser);
+-  g_return_val_if_fail (webBrowser != NULL, FALSE);
+-
+   nsCOMPtr<nsIDOMWindow> DOMWindow;
+-  webBrowser->GetContentDOMWindow(getter_AddRefs(DOMWindow));
+-  g_return_val_if_fail (DOMWindow != NULL, FALSE);
++ 
++  if (aCtx) {
++    nsCOMPtr<nsIDOMNode> node = do_QueryInterface((nsISupports*)aCtx, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    EmbedPrivate *embedPrivate;
++    embedPrivate = (EmbedPrivate *) aEmbed->data;
++    rv = embedPrivate->GetDOMWindowByNode(node, getter_AddRefs(DOMWindow));
++  } else {
++    g_return_val_if_fail (aEmbed != NULL, FALSE);
++    nsIWebBrowser *webBrowser = nsnull;
++    gtk_moz_embed_get_nsIWebBrowser(GTK_MOZ_EMBED(aEmbed), &webBrowser);
++    g_return_val_if_fail (webBrowser != NULL, FALSE);
  
-   g_return_val_if_fail (aEmbed != NULL, FALSE);
-   nsIWebBrowser *webBrowser = nsnull;
-@@ -1527,53 +1575,66 @@ gtk_moz_embed_save_target(GtkMozEmbed *a
++    webBrowser->GetContentDOMWindow(getter_AddRefs(DOMWindow));
++    g_return_val_if_fail (DOMWindow != NULL, FALSE);
++  }
++   
+   nsCOMPtr<nsIDOMDocument> doc;
+   DOMWindow->GetDocument(getter_AddRefs(doc));
+-  g_return_val_if_fail (doc != NULL, FALSE);
++  g_return_val_if_fail (doc != NULL, FALSE); 
+ 
++  
+   nsCOMPtr<nsIWebBrowserPersist> persist =
+     do_CreateInstance(NS_WEBBROWSERPERSIST_CONTRACTID);
+   if (!persist)
+     return FALSE;
  
    nsCOMPtr<nsIIOService> ios(do_GetService(NS_IOSERVICE_CONTRACTID));
    if (!ios)
@@ -4766,10 +6647,156 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed2.cpp mozill
  gtk_moz_embed_get_doc_info(GtkMozEmbed *embed, gpointer node, gint docindex,
                             const gchar**title, const gchar**location,
                             const gchar **file_type, guint *file_size, gint *width, gint *height)
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_common.cpp mozilla/embedding/browser/gtk/src/gtkmozembed_common.cpp
---- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_common.cpp	2007-05-18 07:38:57.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/gtkmozembed_common.cpp	2007-05-18 10:01:24.000000000 +0300
-@@ -467,21 +467,21 @@ gtk_moz_embed_common_get_history_list(Gt
+@@ -1683,10 +1761,71 @@ gtk_moz_embed_get_server_cert(GtkMozEmbe
+   mSecureProvider->GetSSLStatus(getter_AddRefs(SSLStatus));
+   if (!SSLStatus) return FALSE;
+ 
+   nsCOMPtr<nsIX509Cert> serverCert;
+   SSLStatus->GetServerCert(getter_AddRefs(serverCert));
+   if (!serverCert) return FALSE;
+ 
+   *aCert = serverCert;
+   return TRUE;
+ }
++
++gboolean
++gtk_moz_embed_load_image(GtkMozEmbed *embed, const gchar *url)
++{
++  g_return_val_if_fail(embed != NULL, FALSE);
++  g_return_val_if_fail(url != NULL, FALSE);
++  
++  EmbedPrivate *embedPrivate;
++  embedPrivate = (EmbedPrivate *)embed->data;
++
++  if (!embedPrivate || !embedPrivate->mEventListener)
++    return FALSE;
++
++  EmbedContextMenuInfo *ctx_menu = embedPrivate->mEventListener->GetContextInfo();
++  if (!ctx_menu->mCtxDocument)
++    return FALSE;  
++    
++  nsCOMPtr<nsIDOMNodeList> imgList;
++  nsresult rv = ctx_menu->mCtxDocument->GetElementsByTagName(NS_LITERAL_STRING("img"),
++                                                             getter_AddRefs(imgList));
++  NS_ENSURE_SUCCESS(rv, FALSE);                                  
++  
++  PRUint32 imgCount;
++  rv = imgList->GetLength(&imgCount);
++  NS_ENSURE_SUCCESS(rv, FALSE);
++
++  for (guint32 i = 0; i < imgCount; i++) {
++    nsCOMPtr<nsIDOMNode> imgNode;
++    rv = imgList->Item(i, getter_AddRefs(imgNode));
++    if (NS_FAILED(rv))
++      continue;
++        
++    nsCOMPtr<nsIImageLoadingContent> imgContent = do_QueryInterface(imgNode, &rv);
++    if (NS_FAILED(rv))
++      continue;
++    
++    nsCOMPtr<nsIURI> imgUri;
++    rv = imgContent->GetCurrentURI(getter_AddRefs(imgUri));
++    if (NS_FAILED(rv) || !imgUri)
++      continue;
++        
++    nsCAutoString spec;
++    rv = imgUri->GetSpec(spec);
++    if (NS_FAILED(rv))
++      continue;
++    
++    if (spec.Equals(url)) {
++      gint tmp_value = 1, cur_value;
++      gtk_moz_embed_common_get_pref(G_TYPE_INT, "permissions.default.image", &cur_value);
++      if (cur_value != 1) {
++        gtk_moz_embed_common_set_pref(G_TYPE_INT, "permissions.default.image", &tmp_value);
++        imgContent->ForceReload();
++        gtk_moz_embed_common_set_pref(G_TYPE_INT, "permissions.default.image", &cur_value);      
++      }
++      else 
++        imgContent->ForceReload();
++    }
++  }
++  
++  return TRUE;
++}
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_common.cpp mozilla/embedding/browser/gtk/src/gtkmozembed_common.cpp
+--- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_common.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/gtkmozembed_common.cpp	2007-09-14 00:46:17.000000000 +0300
+@@ -71,31 +71,50 @@
+ #include "nsString.h"
+ #else
+ #include "nsStringAPI.h"
+ #include "nsComponentManagerUtils.h"
+ #include "nsServiceManagerUtils.h"
+ #endif
+ // for plugins
+ #include "nsIDOMNavigator.h"
+ #include "nsIDOMPluginArray.h"
+ #include "nsIDOMPlugin.h"
+-#include <plugin/nsIPluginHost.h>
++#include "nsIPluginHost.h"
+ #include "nsIDOMMimeType.h"
+ #include "nsIObserverService.h"
+ 
++#include "nsIRDFDataSource.h"
++#include "nsIRDFService.h"
++#include "nsIExtensionManager.h"
++#include "nsICommandLineRunner.h"
++
+ //for security
+ #include "nsIWebProgressListener.h"
+ 
+ //for cache
+ #include "nsICacheService.h"
+ #include "nsICache.h"
+ 
++// for image loading
++#include "nsIDOMDocument.h"
++#include "nsIDOMNodeList.h"
++#include "nsIImageLoadingContent.h"
++#include "nsIDOMHTMLIFrameElement.h"
++#include "nsIDOMHTMLFrameElement.h"
++#include "nsIDOMHTMLDocument.h"
++#include "nsIDOMHTMLCollection.h"
++
++#define EM_RDF_EXT_DES "http://www.mozilla.org/2004/em-rdf#description"
++#define EM_RDF_EXT_CREATOR "http://www.mozilla.org/2004/em-rdf#creator"
++#define EM_RDF_EXT_STATE "http://www.mozilla.org/2004/em-rdf#userDisabled"
++#define EM_RDF_EXT_APP_DISABLED "http://www.mozilla.org/2004/em-rdf#appDisabled"
++
+ #include "gtkmozembedmarshal.h"
+ #define NEW_TOOLKIT_STRING(x) g_strdup(NS_ConvertUTF16toUTF8(x).get())
+ #define GET_TOOLKIT_STRING(x) NS_ConvertUTF16toUTF8(x).get()
+ #define GET_OBJECT_CLASS_TYPE(x) G_OBJECT_CLASS_TYPE(x)
+ 
+ #define UNACCEPTABLE_CRASHY_GLIB_ALLOCATION(newed) PR_BEGIN_MACRO \
+   /* OOPS this code is using a glib allocation function which     \
+    * will cause the application to crash when it runs out of      \
+    * memory. This is not cool. either g_try methods should be     \
+    * used or malloc, or new (note that gecko /will/ be replacing  \
+@@ -292,20 +311,21 @@ gtk_moz_embed_common_destroy(GtkObject *
+   g_return_if_fail(object != NULL);
+   g_return_if_fail(GTK_IS_MOZ_EMBED_COMMON(object));
+   GtkMozEmbedCommon  *embed = nsnull;
+   EmbedCommon *commonPrivate = nsnull;
+   embed = GTK_MOZ_EMBED_COMMON(object);
+   commonPrivate = (EmbedCommon *)embed->data;
+   if (commonPrivate) {
+     delete commonPrivate;
+     embed->data = NULL;
+   }
++  EmbedPasswordMgr::Shutdown();
+ }
+ 
+ GtkWidget *
+ gtk_moz_embed_common_new(void)
+ {
+   GtkWidget *widget = (GtkWidget*) gtk_type_new(gtk_moz_embed_common_get_type());
+   gtk_widget_set_name(widget, "gtkmozembedcommon");
+   return (GtkWidget *) widget;
+ }
+ 
+@@ -467,21 +487,21 @@ gtk_moz_embed_common_get_history_list(Gt
  gint
  gtk_moz_embed_common_remove_history(gchar *url, gint time) {
    nsresult rv;
@@ -4792,36 +6819,501 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_common.cpp 
  }
  
  GSList*
-@@ -561,24 +561,24 @@ gtk_moz_embed_common_nsx509_to_raw(void 
+@@ -554,92 +574,230 @@ gtk_moz_embed_common_nsx509_to_raw(void 
+ {
+   if (!nsIX509Ptr)
+     return NULL;
+   unsigned char *data;
+   ((nsIX509Cert*)nsIX509Ptr)->GetRawDER(len, (PRUint8 **)&data);
+   if (!data)
+     return NULL;
    return data;
  }
  
- gint
- gtk_moz_embed_common_get_plugins_list(GList **pluginArray)
+-gint
+-gtk_moz_embed_common_get_plugins_list(GList **pluginArray)
++static PRBool
++gtk_moz_embed_common_get_node_value(nsIRDFDataSource *eDataSource,
++                                    nsIRDFResource *itemResource,
++                                    nsIRDFService *rdfService,
++                                    gchar* nodeType, PRUnichar **retval)
++{
++  nsCOMPtr<nsIRDFResource> nodeRDFResource;
++  rdfService->GetResource(NS_LITERAL_CSTRING(nodeType), getter_AddRefs(nodeRDFResource));
++  if (!nodeRDFResource)
++    return PR_FALSE;
++
++  nsCOMPtr<nsIRDFNode> itemNode;
++  eDataSource->GetTarget(itemResource, nodeRDFResource, PR_TRUE, getter_AddRefs(itemNode));
++  if (!itemNode)
++    return PR_FALSE;
++
++  nsCOMPtr<nsIRDFLiteral> itemNodeLiteral = do_QueryInterface(itemNode);
++  if (!itemNodeLiteral)
++    return PR_FALSE;
++
++  PRUnichar *itemType = nsnull;
++  itemNodeLiteral->GetValue(&itemType);
++  *retval= itemType;
++
++  return PR_TRUE;
++}
++
++gboolean
++gtk_moz_embed_common_set_extension_status(gchar *extensionID, gboolean status)
++{
++  g_return_val_if_fail (extensionID != NULL, FALSE);
++  nsCOMPtr<nsIExtensionManager> eManager(do_GetService("@mozilla.org/extensions/manager;1"));
++  if (!eManager)
++    return FALSE;
++
++  nsAutoString id;
++  id.AppendLiteral(extensionID);
++
++  if (status)
++    eManager->EnableItem(id);
++  else
++    eManager->DisableItem(id);
++
++  return TRUE;
++}
++
++static PRBool
++gtk_moz_embed_common_get_component_list(PRUint32 *length, GList **pluginArray)
++{
++  PRUint32 count = 0;
++  nsIUpdateItem **extensions = nsnull;
++
++  nsCOMPtr<nsIExtensionManager> eManager(do_GetService("@mozilla.org/extensions/manager;1"));
++  if (!eManager)
++    return PR_FALSE;
++
++  nsCOMPtr<nsIRDFService> rdfService;
++  rdfService = do_GetService("@mozilla.org/rdf/rdf-service;1");
++  if (!rdfService)
++    return PR_FALSE;
++
++  nsCOMPtr<nsIRDFDataSource> eDataSource;
++  eManager->GetDatasource(getter_AddRefs(eDataSource));
++  if (!eDataSource)
++    return PR_FALSE;
++
++  eManager->GetItemList(nsIUpdateItem::TYPE_EXTENSION, &count,
++                                &extensions);
++
++  for (PRUint32 i = 0; i < count; i++) {
++    nsIUpdateItem *extension = extensions[i];
++    if (extension) {
++      GtkMozPlugin *list_item = g_new0(GtkMozPlugin, 1);
++      nsAutoString itemName;
++      extension->GetName(itemName);
++      if (itemName.IsEmpty())
++        return PR_FALSE;
++
++      nsAutoString itemId;
++      extension->GetId(itemId);
++      if (itemId.IsEmpty())
++        return PR_FALSE;
++
++      nsCString resourceID("urn:mozilla:item:");
++      resourceID.Append(NS_ConvertUTF16toUTF8(itemId));
++      nsCOMPtr<nsIRDFResource> itemResource;
++      rdfService->GetResource(resourceID, getter_AddRefs(itemResource));
++      if (!itemResource)
++        return PR_FALSE;
++
++      PRUnichar *extAppDisabled = nsnull;
++      gtk_moz_embed_common_get_node_value(eDataSource, itemResource, rdfService,
++          EM_RDF_EXT_APP_DISABLED, &extAppDisabled);
++      if ((extAppDisabled) && (nsDependentString(extAppDisabled).Equals(NS_LITERAL_STRING("true"))))
++        return PR_FALSE;
++
++      list_item->title = g_strdup((gchar *)NS_ConvertUTF16toUTF8(itemName).get());
++      list_item->path =  g_strdup((gchar *)NS_ConvertUTF16toUTF8(itemId).get());
++
++      PRUnichar *itemCreator = nsnull;
++      gtk_moz_embed_common_get_node_value(eDataSource, itemResource, rdfService,
++          EM_RDF_EXT_CREATOR, &itemCreator);
++      if (itemCreator)
++        list_item->creator = g_strdup(NS_ConvertUTF16toUTF8(itemCreator).get());
++
++      PRUnichar *itemDescrption = nsnull;
++      gtk_moz_embed_common_get_node_value(eDataSource, itemResource, rdfService,
++          EM_RDF_EXT_DES, &itemDescrption);
++      if(itemDescrption)
++        list_item->type = g_strdup(NS_ConvertUTF16toUTF8(itemDescrption).get());
++
++      PRUnichar *itemState = nsnull;
++      gtk_moz_embed_common_get_node_value(eDataSource, itemResource, rdfService,
++          EM_RDF_EXT_STATE, &itemState);
++      if ((itemState) && (nsDependentString(itemState).Equals(NS_LITERAL_STRING("true"))))
++        list_item->isDisabled = TRUE;
++      else
++        list_item->isDisabled = FALSE;
++
++      list_item->isPlugin = FALSE;
++      *pluginArray = g_list_append(*pluginArray, list_item);
++      *length = *length + 1;
++    }
++  }
++  return PR_TRUE;
++}
++
++static PRBool
++gtk_moz_embed_common_get_npplugin_list(PRUint32 *aLength, GList **pluginArray)
  {
    nsresult rv;
    nsCOMPtr<nsIPluginManager> pluginMan =
      do_GetService(kPluginManagerCID, &rv);
    if (NS_FAILED(rv)) {
 -    g_print("Could not get the plugin manager\n");
+-    return -1;
 +    NS_WARNING("Could not get the plugin manager\n");
-     return -1;
++    return FALSE;
    }
 -  pluginMan->ReloadPlugins(PR_TRUE);  //FIXME XXX MEMLEAK
 +  pluginMan->ReloadPlugins(PR_FALSE);  //FIXME XXX MEMLEAK
  
    nsCOMPtr<nsIPluginHost> pluginHost =
      do_GetService(kPluginManagerCID, &rv);
-   if (NS_FAILED(rv))
-     return -1;
+-  if (NS_FAILED(rv))
+-    return -1;
++  NS_ENSURE_SUCCESS(rv, FALSE);
  
-   PRUint32 aLength;
-   pluginHost->GetPluginCount(&aLength);
+-  PRUint32 aLength;
+-  pluginHost->GetPluginCount(&aLength);
++  pluginHost->GetPluginCount(aLength);
  
    if (!pluginArray)
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.cpp mozilla/embedding/browser/gtk/src/gtkmozembed_download.cpp
---- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.cpp	2007-05-18 07:38:57.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/gtkmozembed_download.cpp	2007-05-18 10:01:24.000000000 +0300
+-    return (gint)aLength;
++    return FALSE;
+ 
+-  nsIDOMPlugin **aItems = nsnull;
+-  aItems = new nsIDOMPlugin*[aLength];
+-  if (!aItems)
+-    return -1; //NO MEMORY
++  nsIDOMPlugin **aItems = new nsIDOMPlugin*[*aLength];
++  NS_ENSURE_TRUE(aItems, FALSE); // OUT OF Memory
+ 
+-  rv = pluginHost->GetPlugins(aLength, aItems);
++  rv = pluginHost->GetPlugins(*aLength, aItems);
+   if (NS_FAILED(rv)) {
++    for (PRUint32 i = 0; i < *aLength; i++)
++      NS_IF_RELEASE(aItems[i]);
+     delete [] aItems;
+-    return -1;
++    return FALSE;
+   }
+ 
+   nsString string;
+-  for (int plugin_index = 0; plugin_index < (gint) aLength; plugin_index++)
+-  {
++  for (int plugin_index = 0; plugin_index < (gint) *aLength; plugin_index++) {
+     GtkMozPlugin *list_item = g_new0(GtkMozPlugin, 1);
+     UNACCEPTABLE_CRASHY_GLIB_ALLOCATION(list_item);
+ 
+     rv = aItems[plugin_index]->GetName(string);
+     if (!NS_FAILED(rv))
+       list_item->title = g_strdup(NS_ConvertUTF16toUTF8(string).get());
+ 
+     aItems[plugin_index]->GetFilename(string);
+     if (!NS_FAILED(rv))
+       list_item->path = g_strdup(NS_ConvertUTF16toUTF8(string).get());
+ 
+     nsCOMPtr<nsIDOMMimeType> mimeType;
+     PRUint32 mime_count = 0;
+     rv = aItems[plugin_index]->GetLength(&mime_count);
+     if (NS_FAILED(rv))
+-      continue;
+-    
++        continue;
++
+     nsString single_mime;
+     string.SetLength(0);
+     for (int mime_index = 0; mime_index < mime_count; ++mime_index) {
+       rv = aItems[plugin_index]->Item(mime_index, getter_AddRefs(mimeType));
+       if (NS_FAILED(rv))
+         continue;
+       rv = mimeType->GetDescription(single_mime);
+       if (!NS_FAILED(rv)) {
++        if(mime_index > 0)
++          string.AppendLiteral(";");
+         string.Append(single_mime);
+-        string.AppendLiteral(";");
+       }
+     }
+-    
++  
+     list_item->type = g_strdup(NS_ConvertUTF16toUTF8(string).get());
++    list_item->isPlugin = TRUE;
++
+     if (!NS_FAILED(rv))
+       *pluginArray = g_list_append(*pluginArray, list_item);
+   }
++  for (PRUint32 i = 0; i < *aLength; i++)
++    NS_IF_RELEASE(aItems[i]);
+   delete [] aItems;
++  return TRUE;
++}
++
++gint
++gtk_moz_embed_common_get_plugins_list(GList **pluginArray)
++{
++  PRUint32 aLength = 0;
++  gtk_moz_embed_common_get_npplugin_list(&aLength, pluginArray);
++  gtk_moz_embed_common_get_component_list(&aLength, pluginArray);
+   return (gint)aLength;
+ }
+ 
+ void
+ gtk_moz_embed_common_reload_plugins()
+ {
+   nsresult rv;
+   nsCOMPtr<nsIPluginManager> pluginMan =
+     do_GetService(kPluginManagerCID, &rv);
+   pluginMan->ReloadPlugins(PR_TRUE); //FIXME XXX MEMLEAK
+@@ -714,10 +872,142 @@ gtk_moz_embed_common_observe(const gchar
+     rv = Observer->Observe((nsISupports*)object, topic, (PRUnichar*)data);
+   } else {
+     //This is the correct?
+     nsCOMPtr<nsIObserverService> obsService =
+       do_GetService("@mozilla.org/observer-service;1", &rv);
+     if (obsService)
+       rv = obsService->NotifyObservers((nsISupports*)object, topic, (PRUnichar*)data);
+   }
+   return NS_FAILED(rv) ? FALSE : TRUE;
+ }
++
++/* Loads all images from all documents (frames and iframes) inside aDoc, recursively */
++static gboolean
++gtk_moz_embed_common_load_images(nsIDOMDocument *aDoc)
++{
++  /* look for img tags */
++  nsresult rv;
++  nsCOMPtr<nsIDOMHTMLDocument> htmlDoc = do_QueryInterface(aDoc, &rv);
++  NS_ENSURE_SUCCESS(rv, FALSE);
++
++  nsCOMPtr<nsIDOMHTMLCollection> imgList;
++  rv = htmlDoc->GetImages(getter_AddRefs(imgList));
++  NS_ENSURE_SUCCESS(rv, FALSE);
++  
++  PRUint32 imgCount;
++  rv = imgList->GetLength(&imgCount);
++  NS_ENSURE_SUCCESS(rv, FALSE);
++
++  guint32 i;
++  for (i = 0; i < imgCount; i++) {
++    nsCOMPtr<nsIDOMNode> imgNode;
++    rv = imgList->Item(i, getter_AddRefs(imgNode));
++    if (NS_FAILED(rv))
++      continue;   
++          
++    nsCOMPtr<nsIImageLoadingContent> imgContent = do_QueryInterface(imgNode, &rv);
++    if (NS_FAILED(rv))
++      continue;  
++
++    imgContent->ForceReload();
++  }
++  
++  /* Look for iframes */
++  nsCOMPtr<nsIDOMNodeList> iframeList;
++  rv = aDoc->GetElementsByTagName(NS_LITERAL_STRING("iframe"),
++                                  getter_AddRefs(iframeList));
++  NS_ENSURE_SUCCESS(rv, FALSE);
++                                  
++  PRUint32 iframeCount;
++  rv = iframeList->GetLength(&iframeCount);
++  NS_ENSURE_SUCCESS(rv, FALSE);
++  
++  /* look for frames */
++  nsCOMPtr<nsIDOMNodeList> frameList;
++  rv = aDoc->GetElementsByTagName(NS_LITERAL_STRING("frame"),
++                                  getter_AddRefs(frameList));
++  NS_ENSURE_SUCCESS(rv, FALSE);
++                                  
++  PRUint32 frameCount;
++  rv = frameList->GetLength(&frameCount);
++  NS_ENSURE_SUCCESS(rv, FALSE);
++
++  if (iframeCount == 0 && frameCount == 0)
++    return TRUE;
++  
++  for (i = 0; i < iframeCount; i++) {
++    nsCOMPtr<nsIDOMNode> iframeNode;
++    rv = iframeList->Item(i, getter_AddRefs(iframeNode));
++    if (NS_FAILED(rv))
++      continue;
++ 
++    nsCOMPtr<nsIDOMHTMLIFrameElement> iframeElement = do_QueryInterface(iframeNode, &rv);
++    if (NS_FAILED(rv))
++      continue;
++
++    nsCOMPtr<nsIDOMDocument> iframeDoc;
++    rv = iframeElement->GetContentDocument(getter_AddRefs(iframeDoc));
++    if (NS_FAILED(rv))
++      continue;
++
++    gtk_moz_embed_common_load_images(iframeDoc);      
++  }
++  
++  for (i = 0; i < frameCount; i++) {
++    nsCOMPtr<nsIDOMNode> frameNode;
++    rv = frameList->Item(i, getter_AddRefs(frameNode));
++    if (NS_FAILED(rv))
++      continue;
++    
++    nsCOMPtr<nsIDOMHTMLFrameElement> frameElement = do_QueryInterface(frameNode, &rv);
++    if (NS_FAILED(rv))
++      continue;
++
++    nsCOMPtr<nsIDOMDocument> frameDoc;
++    rv = frameElement->GetContentDocument(getter_AddRefs(frameDoc));
++    if (NS_FAILED(rv))
++      continue;
++          
++    gtk_moz_embed_common_load_images(frameDoc);      
++  }
++ 
++  return TRUE;
++}
++
++gboolean
++gtk_moz_embed_common_set_image_policy(gint policy)
++{
++  if (gtk_moz_embed_common_set_pref(G_TYPE_INT, "permissions.default.image", &policy))
++     gtk_moz_embed_common_save_prefs();
++  
++  PRInt32 winCount = 0;    
++  if (EmbedPrivate::sWindowList)
++    winCount = EmbedPrivate::sWindowList->Count();
++
++  for (gint i = 0; i < winCount; i++) {
++    EmbedPrivate *tmpPrivate = NS_STATIC_CAST(EmbedPrivate *,
++                                              EmbedPrivate::sWindowList->ElementAt(i));
++    nsCOMPtr<nsIDOMDocument> domDoc;
++    nsresult rv = tmpPrivate->mNavigation->GetDocument(getter_AddRefs(domDoc));
++    if (NS_FAILED(rv))
++      continue;  
++
++    switch (policy) {
++    case GTK_MOZ_EMBED_IMAGE_POLICY_ALWAYS:
++      if (!gtk_moz_embed_common_load_images(domDoc));        
++        continue;
++      break;
++    case GTK_MOZ_EMBED_IMAGE_POLICY_NEVER:
++      tmpPrivate->Reload(nsIWebNavigation::LOAD_FLAGS_NONE);  
++      break;
++    case GTK_MOZ_EMBED_IMAGE_POLICY_NO_EXTERNAL:
++      /* Hide images from external servers */
++      break;
++    case GTK_MOZ_EMBED_IMAGE_POLICY_ONLY_LOADED:
++      if (!gtk_moz_embed_common_load_images(domDoc));        
++        continue; 
++      break;
++    }
++  }
++  
++  return TRUE;
++}
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_common.h mozilla/embedding/browser/gtk/src/gtkmozembed_common.h
+--- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_common.h	2007-03-23 17:56:57.000000000 +0200
++++ mozilla/embedding/browser/gtk/src/gtkmozembed_common.h	2007-09-14 00:46:17.000000000 +0300
+@@ -134,20 +134,31 @@ typedef enum
+   */
+ typedef enum
+ {
+   GTK_MOZ_EMBED_NO_SECURITY = 0,
+   GTK_MOZ_EMBED_LOW_SECURITY,
+   GTK_MOZ_EMBED_MEDIUM_SECURITY,
+   GTK_MOZ_EMBED_HIGH_SECURITY,
+   GTK_MOZ_EMBED_UNKNOWN_SECURITY
+ } GtkMozEmbedSecurityMode;
+ 
++/** GtkMozEmbedImagePolicy
++  * Enumerates image policy
++  */
++typedef enum
++{
++  GTK_MOZ_EMBED_IMAGE_POLICY_ALWAYS = 1,
++  GTK_MOZ_EMBED_IMAGE_POLICY_NEVER,
++  GTK_MOZ_EMBED_IMAGE_POLICY_NO_EXTERNAL,
++  GTK_MOZ_EMBED_IMAGE_POLICY_ONLY_LOADED
++} GtkMozEmbedImagePolicy;
++
+ typedef struct _GtkMozCookieList GtkMozCookieList;
+ struct _GtkMozCookieList
+ {
+     gchar *domain; /** < The domain's name */
+     gchar *name;   /** < The cookie's name */
+     gchar *value;  /** < The cookie's value */
+     gchar *path;   /** < The cookie's path */
+ };
+ typedef struct _GtkMozEmbedCookie GtkMozEmbedCookie;
+ struct _GtkMozEmbedCookie
+@@ -155,53 +166,56 @@ struct _GtkMozEmbedCookie
+     gboolean remember_decision;
+     gboolean accept;
+ };
+ /** @struct GtkMozPlugin.
+  * Defines a Mozilla Plugin.
+  */
+ typedef struct _GtkMozPlugin GtkMozPlugin;
+ struct _GtkMozPlugin
+ {
+     gchar *title;  /** < Plugin title */
++    gchar *creator;  /** < Plugin creator */
+     gchar *path;   /** < Plugin path */
+     gchar *type;   /** < Plugin type */
+     gboolean isDisabled; /** < is plugin enabled */
++    gboolean isPlugin; /** <is plugin or extension*/
+ };
+ 
+ typedef struct _GtkMozLogin GtkMozLogin;
+ struct _GtkMozLogin
+ {
+-    const gchar *user; /** < Plugin title */
+-    const gchar *pass; /** < Plugin path */
+-    const gchar *host; /** < Plugin type */
++    gchar *user; /** < Plugin title */
++    gchar *pass; /** < Plugin path */
++    gchar *host; /** < Plugin type */
+     guint index;
+ };
+ 
+ GTKMOZEMBED_API(GtkType,    gtk_moz_embed_common_get_type,          (void))
+ GTKMOZEMBED_API(GtkWidget*, gtk_moz_embed_common_new,               (void))
+ GTKMOZEMBED_API(gboolean,   gtk_moz_embed_common_set_pref,          (GtkType type, gchar*, gpointer))
+ GTKMOZEMBED_API(gboolean,   gtk_moz_embed_common_get_pref,          (GtkType type, gchar*, gpointer))
+ GTKMOZEMBED_API(gboolean,   gtk_moz_embed_common_save_prefs,        (void))
+ GTKMOZEMBED_API(gboolean,   gtk_moz_embed_common_login,             (GtkWidget *embed, const gchar* username))
+ GTKMOZEMBED_API(gboolean,   gtk_moz_embed_common_remove_passwords,  (const gchar *host, const gchar *user, gint index))
+ GTKMOZEMBED_API(gint,       gtk_moz_embed_common_get_logins,        (const char* uri, GList **list))
+ GTKMOZEMBED_API(gint,       gtk_moz_embed_common_get_history_list,  (GtkMozHistoryItem **GtkHI))
+ GTKMOZEMBED_API(gint,       gtk_moz_embed_common_remove_history,    (gchar *url, gint time))
+ GTKMOZEMBED_API(GSList*,    gtk_moz_embed_common_get_cookie_list,   (void))
+ GTKMOZEMBED_API(gint,       gtk_moz_embed_common_delete_all_cookies,(GSList *deletedCookies))
+ GTKMOZEMBED_API(unsigned char*, gtk_moz_embed_common_nsx509_to_raw, (void *nsIX509Ptr, guint *len))
+ GTKMOZEMBED_API(gint,       gtk_moz_embed_common_get_plugins_list,  (GList **pluginArray))
++GTKMOZEMBED_API(gboolean,   gtk_moz_embed_common_set_extension_status,  (gchar *extensionID, gboolean status))
+ GTKMOZEMBED_API(void,       gtk_moz_embed_common_reload_plugins,    (void))
+ GTKMOZEMBED_API(guint,      gtk_moz_embed_common_get_security_mode, (guint sec_state))
+ GTKMOZEMBED_API(gint,       gtk_moz_embed_common_clear_cache,       (void))
+ GTKMOZEMBED_API(gboolean,   gtk_moz_embed_common_observe,           (const gchar*, gpointer, const gchar*, gunichar*))
+-
++GTKMOZEMBED_API(gboolean,   gtk_moz_embed_common_set_image_policy,  (gint policy))
+ 
+ /*typedef struct _GtkMozEmbedCertContext GtkMozEmbedCertContext;
+ struct _GtkMozEmbedCertContext
+ {
+     GObject * cert;
+     guint message;
+     GtkWidget *parent;
+ };*/
+ #ifdef __cplusplus
+ }
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.cpp mozilla/embedding/browser/gtk/src/gtkmozembed_download.cpp
+--- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/gtkmozembed_download.cpp	2007-09-14 00:46:18.000000000 +0300
 @@ -55,29 +55,32 @@
  #include "nsReadableUtils.h"
  #else
@@ -4856,7 +7348,29 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.cp
    {
      static const GtkTypeInfo moz_embed_download_info =
      {
-@@ -176,109 +179,138 @@ gtk_moz_embed_download_destroy(GtkObject
+@@ -150,20 +153,21 @@ gtk_moz_embed_download_class_init(GtkMoz
+                    G_TYPE_ULONG);
+ }
+ 
+ static void
+ gtk_moz_embed_download_init(GtkMozEmbedDownload *download)
+ {
+   // this is a placeholder for later in case we need to stash data at
+   // a later data and maintain backwards compatibility.
+   download->data = nsnull;
+   EmbedDownload *priv = new EmbedDownload();
++  priv->isCanceled = PR_FALSE;
+   download->data = priv;
+ }
+ 
+ static void
+ gtk_moz_embed_download_destroy(GtkObject *object)
+ {
+   g_return_if_fail(object != NULL);
+   g_return_if_fail(GTK_IS_MOZ_EMBED_DOWNLOAD(object));
+ 
+   GtkMozEmbedDownload  *embed;
+@@ -176,109 +180,153 @@ gtk_moz_embed_download_destroy(GtkObject
      delete downloadPrivate;
      embed->data = NULL;
    }
@@ -4881,7 +7395,8 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.cp
 +  gtk_moz_embed_download_set_restart_flag (TRUE);
 +
 +  // forcing download to restart by loading URL again
-+  gtk_moz_embed_load_url (EmbedCommon::GetAnyLiveWidget(), url);
++  EmbedDownloadMgr::CreateIncrementalDownload(url, filename);
++  //gtk_moz_embed_load_url (EmbedCommon::GetAnyLiveWidget(), url);
 +
 +  return instance;
 +}
@@ -4922,8 +7437,17 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.cp
      return;
  
    if (command == GTK_MOZ_EMBED_DOWNLOAD_CANCEL) {
-     download_priv->launcher->Cancel(GTK_MOZ_EMBED_STATUS_FAILED_USERCANCELED);
-     download_priv->launcher->SetWebProgressListener(nsnull);
+-    download_priv->launcher->Cancel(GTK_MOZ_EMBED_STATUS_FAILED_USERCANCELED);
+-    download_priv->launcher->SetWebProgressListener(nsnull);
++    if (download_priv->launcher) {
++      download_priv->isCanceled = PR_TRUE;
++      download_priv->launcher->Cancel(GTK_MOZ_EMBED_STATUS_FAILED_USERCANCELED);
++      download_priv->launcher->SetWebProgressListener(nsnull);
++    } else if (download_priv->incr_launcher) {
++      download_priv->isCanceled = PR_TRUE;
++      item->is_paused = FALSE;
++      download_priv->incr_launcher->Cancel(GTK_MOZ_EMBED_STATUS_FAILED_USERCANCELED);
++    }
  
      return;
    }
@@ -4931,23 +7455,33 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.cp
 -  if (command == GTK_MOZ_EMBED_DOWNLOAD_RESUME) {
 -    download_priv->request->Resume();
 -    download_priv->is_paused = FALSE;
+-
 +  if (command == GTK_MOZ_EMBED_DOWNLOAD_RESUME && item->is_paused) {
- 
++    if (download_priv->incr_launcher) {
++      EmbedDownloadMgr::CreateIncrementalDownload(download_priv);
++
++    } else
 +    if (download_priv->request) { 
 +        download_priv->request->Resume();
-+        item->is_paused = FALSE;
 +    }
++    item->is_paused = FALSE;
      return;
    }
  
 -  if (command == GTK_MOZ_EMBED_DOWNLOAD_PAUSE) {
-+  if (command == GTK_MOZ_EMBED_DOWNLOAD_PAUSE && !item->is_paused) {
-     if (download_priv->request) {
-       download_priv->request->Suspend();
+-    if (download_priv->request) {
+-      download_priv->request->Suspend();
 -      download_priv->is_paused = TRUE;
-+      item->is_paused = TRUE;
++  if (command == GTK_MOZ_EMBED_DOWNLOAD_PAUSE && !item->is_paused) {
++    if (download_priv->incr_launcher) {
++      download_priv->incr_launcher->Cancel(GTK_MOZ_EMBED_STATUS_FAILED_USERCANCELED);
++    } else {
++      if (download_priv->request) {
++        download_priv->request->Suspend();
++      }
      }
 -
++    item->is_paused = TRUE;
      return;
    }
  
@@ -5006,9 +7540,9 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.cp
 +  return (glong) item->file_size;
  }
 -
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.h mozilla/embedding/browser/gtk/src/gtkmozembed_download.h
---- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.h	2007-05-18 07:38:01.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/gtkmozembed_download.h	2007-05-18 10:01:24.000000000 +0300
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.h mozilla/embedding/browser/gtk/src/gtkmozembed_download.h
+--- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/gtkmozembed_download.h	2007-09-14 00:46:17.000000000 +0300
 @@ -77,20 +77,30 @@ extern "C" {
  #define GTK_IS_MOZ_EMBED_DOWNLOAD(obj)          GTK_CHECK_TYPE((obj), GTK_TYPE_MOZ_EMBED_DOWNLOAD)
  #define GTK_IS_MOZ_EMBED_DOWNLOAD_CLASS(klass)  GTK_CHECK_CLASS_TYPE((klass), GTK_TYPE_MOZ_EMBED_DOWNLOAD)
@@ -5077,10 +7611,32 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_download.h 
  }
  #endif /* __cplusplus */
  #endif /* gtkmozembed_download_h */
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_glue.cpp mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
---- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_glue.cpp	2007-05-18 07:39:00.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp	2007-05-18 10:01:24.000000000 +0300
-@@ -69,21 +69,22 @@
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_glue.cpp mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
+--- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_glue.cpp	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp	2007-09-14 00:46:17.000000000 +0300
+@@ -47,20 +47,21 @@
+ #include "gtkmozembed_download.h"
+ #include "nsXPCOMGlue.h"
+ 
+ #ifndef XPCOM_GLUE
+ #error This file only makes sense when XPCOM_GLUE is defined.
+ #endif
+ 
+ #define GTKMOZEMBED2_FUNCTIONS \
+   GTKF(gtk_moz_embed_download_get_type) \
+   GTKF(gtk_moz_embed_download_new) \
++  GTKF(gtk_moz_embed_download_new_with_url_filename) \
+   GTKF(gtk_moz_embed_common_get_type) \
+   GTKF(gtk_moz_embed_common_new) \
+   GTKF(gtk_moz_embed_common_set_pref) \
+   GTKF(gtk_moz_embed_common_get_pref) \
+   GTKF(gtk_moz_embed_common_save_prefs) \
+   GTKF(gtk_moz_embed_common_remove_passwords) \
+   GTKF(gtk_moz_embed_common_get_history_list) \
+   GTKF(gtk_moz_embed_get_zoom_level) \
+   GTKF(gtk_moz_embed_set_zoom_level) \
+   GTKF(gtk_moz_embed_find_text) \
+@@ -69,21 +70,22 @@
    GTKF(gtk_moz_embed_get_context_info) \
    GTKF(gtk_moz_embed_get_selection) \
    GTKF(gtk_moz_embed_get_doc_info) \
@@ -5093,7 +7649,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_glue.cpp mo
    GTKF(gtk_moz_embed_get_server_cert) \
 -  GTKF(gtk_moz_embed_get_nsIWebBrowser)
 +  GTKF(gtk_moz_embed_get_nsIWebBrowser) \
-+  GTKF(gtk_moz_embed_download_new_with_url_filename)
++  GTKF(gtk_moz_embed_get_text)
  
  #define GTKMOZEMBED_FUNCTIONS \
    GTKF(gtk_moz_embed_get_type) \
@@ -5104,16 +7660,22 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_glue.cpp mo
    GTKF(gtk_moz_embed_set_comp_path) \
    GTKF(gtk_moz_embed_set_profile_path) \
    GTKF(gtk_moz_embed_load_url) \
-diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembedprivate.h mozilla/embedding/browser/gtk/src/gtkmozembedprivate.h
---- mozilla/embedding/browser/gtk/src.orig/gtkmozembedprivate.h	2007-05-18 07:38:01.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/gtkmozembedprivate.h	2007-05-18 10:01:24.000000000 +0300
-@@ -89,20 +89,22 @@ enum {
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembedprivate.h mozilla/embedding/browser/gtk/src/gtkmozembedprivate.h
+--- mozilla/embedding/browser/gtk/src.orig/gtkmozembedprivate.h	2007-09-14 00:45:40.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/gtkmozembedprivate.h	2007-09-14 00:46:17.000000000 +0300
+@@ -85,24 +85,28 @@ enum {
+   CONFIRM_EX,
+   PROMPT,
+   PROMPT_AUTH,
+   SELECT,
    DOWNLOAD_REQUEST,
    DOM_MOUSE_SCROLL,
    DOM_MOUSE_LONG_PRESS,
    DOM_FOCUS,
    DOM_BLUR,
    UPLOAD_DIALOG,
++  FILE_UPLOAD_STARTED,
++  FILE_UPLOAD_FINISHED,
    ICON_CHANGED,
    MAILTO,
    NETWORK_ERROR,
