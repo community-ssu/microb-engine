@@ -7692,3 +7692,87 @@ diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembedprivate.h mo
  enum {
    COMMON_CERT_DIALOG,
    COMMON_CERT_PASSWD_DIALOG,
+--- mozilla/embedding/browser/gtk/src/Makefile.in.orig	2007-09-14 00:42:43.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/Makefile.in	2007-09-14 07:44:14.000000000 +0300
+@@ -60,31 +60,31 @@ ifdef MOZ_GTKEMBED_DYN
+ DEFINES += -DFIXED_BUG347731
+ FORCE_SHARED_LIB = 1
+ ifdef MOZ_ENABLE_LIBXUL
+ LIBXUL_LIBRARY  = 
+ endif
+ endif
+ 
+ DEFINES += -DIMPL_XREAPI
+ 
+ # New Stuff in GtkMozEmbed
+-ifdef MOZ_MICROBEMBED
++#ifdef MOZ_MICROBEMBED
+ DEFINES += -DBAD_CERT_LISTENER2
+ #Probably scrolling can be fixed without this hack
+ DEFINES += -DMOZ_SCROLL_TOP_LEFT_HACK
+ 
+ MOZ_NO_GECKO_UI_FALLBACK_1_8_COMPAT = 1
+ DEFINES += -DMOZ_NO_GECKO_UI_FALLBACK_1_8_COMPAT
+ 
+ MOZ_GTKPASSWORD_INTERFACE = 1
+ DEFINES += -DMOZ_GTKPASSWORD_INTERFACE
+-endif
++#endif
+ 
+ REQUIRES	= xpcom \
+ 		  string \
+ 		  content \
+ 		  docshell \
+ 		  necko \
+ 		  widget \
+ 		  dom \
+ 		  gfx \
+ 		  intl \
+@@ -106,20 +106,25 @@ REQUIRES	= xpcom \
+ 		  nspr \
+ 		  xulapp \
+ 		  exthandler \
+ 		  mimetype \
+ 		  chardet \
+ 		  find \
+ 		  webbrowserpersist \
+ 		  cookie \
+ 		  nkcache \
+ 		  pipboot \
++		  plugin \
++		  extensions \
++		  rdf \
++		  toolkitcomps \
++		  view \
+ 		  $(NULL)
+ 
+ ifdef ACCESSIBILITY
+ REQUIRES        += accessibility
+ endif
+ 
+ CPPSRCS		= \
+ 		gtkmozembed2.cpp \
+ 		EmbedPrivate.cpp \
+ 		EmbedWindow.cpp \
+@@ -180,20 +185,21 @@ EXPORTS		+= \
+ 		gtkmozembed_download.h \
+ 		$(NULL)
+ endif
+ 
+ ifdef MOZ_GTKEMBED_DYN
+ ifneq (,$(filter gtk2 qt,$(MOZ_WIDGET_TOOLKIT)))
+ EXTRA_DSO_LDOPTS += \
+ 		$(DIST)/lib/libxpcomglue_s.$(LIB_SUFFIX) \
+ 		$(MOZ_COMPONENT_LIBS) \
+ 		$(MOZ_GTK2_LIBS) \
++		$(XLIBS) \
+ 		$(NULL)
+ 
+ #Any Idea what can be used instead -lxul in FF configuration?
+ ifndef MOZ_ENABLE_LIBXUL
+ EXTRA_DSO_LDOPTS += \
+ 		-lxul \
+ 		$(NULL)
+ endif
+ endif
+ endif
