@@ -3618,7 +3618,7 @@ diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedGtkTools.h mozilla
 +
 diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.cpp mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp
 --- mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.cpp	2007-09-14 00:45:40.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp	2007-09-14 00:46:17.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp	2007-09-14 07:51:58.000000000 +0300
 @@ -14,23 +14,24 @@
   * License.
   *
@@ -3764,9 +3764,10 @@ diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/EmbedPasswordMgr.cpp mo
    // Now read in the signon file
 -  char* signonFile = nsnull;
 -  mPrefBranch->GetCharPref("SignonFileName", &signonFile);
+-  NS_ASSERTION(signonFile, "Fallback for signon filename not present");
 +  nsCString signonFile;
 +  mPrefBranch->GetCharPref("SignonFileName", getter_Copies(signonFile));
-   NS_ASSERTION(signonFile, "Fallback for signon filename not present");
++  NS_ASSERTION(signonFile.get(), "Fallback for signon filename not present");
    NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(mSignonFile));
    NS_ENSURE_TRUE(mSignonFile, NS_ERROR_FAILURE);
 -  mSignonFile->AppendNative(nsCString(signonFile));
@@ -6248,6 +6249,94 @@ diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/GtkPromptService.cpp mo
    EmbedPrompter prompter;
    prompter.SetTitle(aDialogTitle ? aDialogTitle : NS_LITERAL_STRING("Alert").get());
    prompter.SetMessageText(aDialogText);
+diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/Makefile.in mozilla/embedding/browser/gtk/src/Makefile.in
+--- mozilla/embedding/browser/gtk/src.orig/Makefile.in	2007-09-14 00:42:43.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/Makefile.in	2007-09-14 09:11:39.000000000 +0300
+@@ -60,31 +60,31 @@ ifdef MOZ_GTKEMBED_DYN
+ DEFINES += -DFIXED_BUG347731
+ FORCE_SHARED_LIB = 1
+ ifdef MOZ_ENABLE_LIBXUL
+ LIBXUL_LIBRARY  = 
+ endif
+ endif
+ 
+ DEFINES += -DIMPL_XREAPI
+ 
+ # New Stuff in GtkMozEmbed
+-ifdef MOZ_MICROBEMBED
++#ifdef MOZ_MICROBEMBED
+ DEFINES += -DBAD_CERT_LISTENER2
+ #Probably scrolling can be fixed without this hack
+-DEFINES += -DMOZ_SCROLL_TOP_LEFT_HACK
++#DEFINES += -DMOZ_SCROLL_TOP_LEFT_HACK
+ 
+-MOZ_NO_GECKO_UI_FALLBACK_1_8_COMPAT = 1
+-DEFINES += -DMOZ_NO_GECKO_UI_FALLBACK_1_8_COMPAT
++#MOZ_NO_GECKO_UI_FALLBACK_1_8_COMPAT = 1
++#DEFINES += -DMOZ_NO_GECKO_UI_FALLBACK_1_8_COMPAT
+ 
+ MOZ_GTKPASSWORD_INTERFACE = 1
+ DEFINES += -DMOZ_GTKPASSWORD_INTERFACE
+-endif
++#endif
+ 
+ REQUIRES	= xpcom \
+ 		  string \
+ 		  content \
+ 		  docshell \
+ 		  necko \
+ 		  widget \
+ 		  dom \
+ 		  gfx \
+ 		  intl \
+@@ -106,20 +106,25 @@ REQUIRES	= xpcom \
+ 		  nspr \
+ 		  xulapp \
+ 		  exthandler \
+ 		  mimetype \
+ 		  chardet \
+ 		  find \
+ 		  webbrowserpersist \
+ 		  cookie \
+ 		  nkcache \
+ 		  pipboot \
++		  plugin \
++		  extensions \
++		  rdf \
++		  toolkitcomps \
++		  view \
+ 		  $(NULL)
+ 
+ ifdef ACCESSIBILITY
+ REQUIRES        += accessibility
+ endif
+ 
+ CPPSRCS		= \
+ 		gtkmozembed2.cpp \
+ 		EmbedPrivate.cpp \
+ 		EmbedWindow.cpp \
+@@ -180,20 +185,21 @@ EXPORTS		+= \
+ 		gtkmozembed_download.h \
+ 		$(NULL)
+ endif
+ 
+ ifdef MOZ_GTKEMBED_DYN
+ ifneq (,$(filter gtk2 qt,$(MOZ_WIDGET_TOOLKIT)))
+ EXTRA_DSO_LDOPTS += \
+ 		$(DIST)/lib/libxpcomglue_s.$(LIB_SUFFIX) \
+ 		$(MOZ_COMPONENT_LIBS) \
+ 		$(MOZ_GTK2_LIBS) \
++		$(XLIBS) \
+ 		$(NULL)
+ 
+ #Any Idea what can be used instead -lxul in FF configuration?
+ ifndef MOZ_ENABLE_LIBXUL
+ EXTRA_DSO_LDOPTS += \
+ 		-lxul \
+ 		$(NULL)
+ endif
+ endif
+ endif
 diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h mozilla/embedding/browser/gtk/src/gtkmozembed.h
 --- mozilla/embedding/browser/gtk/src.orig/gtkmozembed.h	2007-09-14 00:45:40.000000000 +0300
 +++ mozilla/embedding/browser/gtk/src/gtkmozembed.h	2007-09-14 00:46:17.000000000 +0300
@@ -7692,112 +7781,3 @@ diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembedprivate.h mo
  enum {
    COMMON_CERT_DIALOG,
    COMMON_CERT_PASSWD_DIALOG,
---- mozilla/embedding/browser/gtk/src/Makefile.in.orig	2007-09-14 00:42:43.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/Makefile.in	2007-09-14 07:44:14.000000000 +0300
-@@ -60,31 +60,31 @@ ifdef MOZ_GTKEMBED_DYN
- DEFINES += -DFIXED_BUG347731
- FORCE_SHARED_LIB = 1
- ifdef MOZ_ENABLE_LIBXUL
- LIBXUL_LIBRARY  = 
- endif
- endif
- 
- DEFINES += -DIMPL_XREAPI
- 
- # New Stuff in GtkMozEmbed
--ifdef MOZ_MICROBEMBED
-+#ifdef MOZ_MICROBEMBED
- DEFINES += -DBAD_CERT_LISTENER2
- #Probably scrolling can be fixed without this hack
- DEFINES += -DMOZ_SCROLL_TOP_LEFT_HACK
- 
- MOZ_NO_GECKO_UI_FALLBACK_1_8_COMPAT = 1
- DEFINES += -DMOZ_NO_GECKO_UI_FALLBACK_1_8_COMPAT
- 
- MOZ_GTKPASSWORD_INTERFACE = 1
- DEFINES += -DMOZ_GTKPASSWORD_INTERFACE
--endif
-+#endif
- 
- REQUIRES	= xpcom \
- 		  string \
- 		  content \
- 		  docshell \
- 		  necko \
- 		  widget \
- 		  dom \
- 		  gfx \
- 		  intl \
-@@ -106,20 +106,25 @@ REQUIRES	= xpcom \
- 		  nspr \
- 		  xulapp \
- 		  exthandler \
- 		  mimetype \
- 		  chardet \
- 		  find \
- 		  webbrowserpersist \
- 		  cookie \
- 		  nkcache \
- 		  pipboot \
-+		  plugin \
-+		  extensions \
-+		  rdf \
-+		  toolkitcomps \
-+		  view \
- 		  $(NULL)
- 
- ifdef ACCESSIBILITY
- REQUIRES        += accessibility
- endif
- 
- CPPSRCS		= \
- 		gtkmozembed2.cpp \
- 		EmbedPrivate.cpp \
- 		EmbedWindow.cpp \
-@@ -180,20 +185,21 @@ EXPORTS		+= \
- 		gtkmozembed_download.h \
- 		$(NULL)
- endif
- 
- ifdef MOZ_GTKEMBED_DYN
- ifneq (,$(filter gtk2 qt,$(MOZ_WIDGET_TOOLKIT)))
- EXTRA_DSO_LDOPTS += \
- 		$(DIST)/lib/libxpcomglue_s.$(LIB_SUFFIX) \
- 		$(MOZ_COMPONENT_LIBS) \
- 		$(MOZ_GTK2_LIBS) \
-+		$(XLIBS) \
- 		$(NULL)
- 
- #Any Idea what can be used instead -lxul in FF configuration?
- ifndef MOZ_ENABLE_LIBXUL
- EXTRA_DSO_LDOPTS += \
- 		-lxul \
- 		$(NULL)
- endif
- endif
- endif
---- mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp.orig	2007-09-14 07:51:52.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp	2007-09-14 07:51:58.000000000 +0300
-@@ -295,21 +295,21 @@ EmbedPasswordMgr::Init()
-   // prefill passwords.
-   nsCOMPtr<nsIObserverService> obsService = do_GetService(NS_OBSERVERSERVICE_CONTRACTID);
-   NS_ASSERTION(obsService, "No observer service");
-   obsService->AddObserver(this, NS_FORMSUBMIT_SUBJECT, PR_TRUE);
-   nsCOMPtr<nsIWebProgress> progress = do_GetService(NS_DOCUMENTLOADER_SERVICE_CONTRACTID);
-   NS_ASSERTION(progress, "No web progress service");
-   progress->AddProgressListener(this, nsIWebProgress::NOTIFY_STATE_DOCUMENT);
-   // Now read in the signon file
-   nsCString signonFile;
-   mPrefBranch->GetCharPref("SignonFileName", getter_Copies(signonFile));
--  NS_ASSERTION(signonFile, "Fallback for signon filename not present");
-+  NS_ASSERTION(signonFile.get(), "Fallback for signon filename not present");
-   NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(mSignonFile));
-   NS_ENSURE_TRUE(mSignonFile, NS_ERROR_FAILURE);
-   mSignonFile->AppendNative(signonFile);
-   ReadPasswords(mSignonFile);
-   return NS_OK;
- }
- 
- /* static */ PRBool
- EmbedPasswordMgr::SingleSignonEnabled()
- {
