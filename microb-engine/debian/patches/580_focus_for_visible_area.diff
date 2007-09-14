@@ -23,7 +23,45 @@ Index: mozilla/content/html/content/src/nsHTMLInputElement.cpp
  //
  #define BF_DISABLED_CHANGED 0
  #define BF_HANDLING_CLICK 1
-@@ -1133,19 +1134,79 @@
+@@ -333,16 +334,18 @@
+    * so that it won't be possible to 'leak' the value from a text-input to a
+    * file-input. Additionally, the logic for this value is kept as simple as
+    * possible to avoid accidental errors where the wrong filename is used.
+    * Therefor the filename is always owned by this member, never by the frame.
+    * Whenever the frame wants to change the filename it has to call
+    * SetFileName to update this member.
+    */
+   nsAutoPtr<nsString>      mFileName;
++private:
++  PRBool                   mJSFocus;
+ };
+ 
+ #ifdef ACCESSIBILITY
+ //Helper method
+ static nsresult FireEventForAccessibility(nsIDOMHTMLInputElement* aTarget,
+                                           nsPresContext* aPresContext,
+                                           const nsAString& aEventType);
+ #endif
+@@ -353,17 +356,17 @@
+ 
+ NS_IMPL_NS_NEW_HTML_ELEMENT_CHECK_PARSER(Input)
+ 
+ nsHTMLInputElement::nsHTMLInputElement(nsINodeInfo *aNodeInfo,
+                                        PRBool aFromParser)
+   : nsGenericHTMLFormElement(aNodeInfo),
+     mType(NS_FORM_INPUT_TEXT), // default value
+     mBitField(0),
+-    mValue(nsnull)
++    mValue(nsnull), mJSFocus(PR_FALSE)
+ {
+   SET_BOOLBIT(mBitField, BF_PARSER_CREATING, aFromParser);
+ }
+ 
+ nsHTMLInputElement::~nsHTMLInputElement()
+ {
+   DestroyImageLoadingContent();
+   if (mValue) {
+@@ -1133,23 +1136,83 @@
  {
    if (ShouldFocus(this)) {
      SetElementFocus(PR_FALSE);
@@ -92,15 +130,40 @@ Index: mozilla/content/html/content/src/nsHTMLInputElement.cpp
 +
  NS_IMETHODIMP
  nsHTMLInputElement::Focus()
--{
-+{
+ {
+-  if (ShouldFocus(this)) {
++  mJSFocus = PR_TRUE;
 +  nsresult rv = SetSpecialFocus(this);
-+  NS_ENSURE_SUCCESS(rv, NS_OK);
-   if (ShouldFocus(this)) {
++  if (NS_SUCCEEDED(rv) && ShouldFocus(this)) {
      SetElementFocus(PR_TRUE);
    }
- 
+-
++  mJSFocus = PR_FALSE;
    return NS_OK;
  }
  
  void
+ nsHTMLInputElement::SetFocus(nsPresContext* aPresContext)
+ {
+   if (!aPresContext)
+     return;
+@@ -1172,17 +1235,18 @@
+     nsIFocusController *focusController = win->GetRootFocusController();
+     if (focusController) {
+       PRBool isActive = PR_FALSE;
+       focusController->GetActive(&isActive);
+       if (!isActive) {
+         focusController->SetFocusedWindow(win);
+         focusController->SetFocusedElement(this);
+ 
+-        return;
++        if (!mJSFocus) return;
++        focusController->SetActive(PR_TRUE);
+       }
+     }
+   }
+ 
+   SetFocusAndScrollIntoView(aPresContext);
+ }
+ 
+ NS_IMETHODIMP
