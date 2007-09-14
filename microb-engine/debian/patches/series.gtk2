@@ -309,3 +309,7 @@ trunk_updates/2.bug380668.diff -p0
 #trunk_updates/new/24.BUG390385.diff
 ##trunk_updates/new/25.BUG391261.diff
 #plugin end
+
+
+valgrind/bug66825.diff
+

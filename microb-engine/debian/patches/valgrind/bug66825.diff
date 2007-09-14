@@ -1,0 +1,24 @@
+--- mozilla/layout/generic/nsSelection.cpp.orig	2007-03-31 00:11:44.000000000 +0300
++++ mozilla/layout/generic/nsSelection.cpp	2007-09-14 16:57:39.000000000 +0300
+@@ -3926,20 +3926,21 @@ nsFrameSelection::GetDelayedCaretData()
+ // nsTypedSelection implementation
+ 
+ // note: this can return a nil anchor node
+ 
+ nsTypedSelection::nsTypedSelection(nsFrameSelection *aList)
+ {
+   mFrameSelection = aList;
+   mFixupState = PR_FALSE;
+   mDirection = eDirNext;
+   mCachedOffsetForFrame = nsnull;
++  mType = nsISelectionController::SELECTION_NORMAL;
+ }
+ 
+ 
+ nsTypedSelection::nsTypedSelection()
+ {
+   mFrameSelection = nsnull;
+   mFixupState = PR_FALSE;
+   mDirection = eDirNext;
+   mCachedOffsetForFrame = nsnull;
+ }
