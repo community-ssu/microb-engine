@@ -7776,3 +7776,28 @@ diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/gtkmozembedprivate.h mo
  endif
  endif
  endif
+--- mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp.orig	2007-09-14 07:51:52.000000000 +0300
++++ mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp	2007-09-14 07:51:58.000000000 +0300
+@@ -295,21 +295,21 @@ EmbedPasswordMgr::Init()
+   // prefill passwords.
+   nsCOMPtr<nsIObserverService> obsService = do_GetService(NS_OBSERVERSERVICE_CONTRACTID);
+   NS_ASSERTION(obsService, "No observer service");
+   obsService->AddObserver(this, NS_FORMSUBMIT_SUBJECT, PR_TRUE);
+   nsCOMPtr<nsIWebProgress> progress = do_GetService(NS_DOCUMENTLOADER_SERVICE_CONTRACTID);
+   NS_ASSERTION(progress, "No web progress service");
+   progress->AddProgressListener(this, nsIWebProgress::NOTIFY_STATE_DOCUMENT);
+   // Now read in the signon file
+   nsCString signonFile;
+   mPrefBranch->GetCharPref("SignonFileName", getter_Copies(signonFile));
+-  NS_ASSERTION(signonFile, "Fallback for signon filename not present");
++  NS_ASSERTION(signonFile.get(), "Fallback for signon filename not present");
+   NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(mSignonFile));
+   NS_ENSURE_TRUE(mSignonFile, NS_ERROR_FAILURE);
+   mSignonFile->AppendNative(signonFile);
+   ReadPasswords(mSignonFile);
+   return NS_OK;
+ }
+ 
+ /* static */ PRBool
+ EmbedPasswordMgr::SingleSignonEnabled()
+ {
