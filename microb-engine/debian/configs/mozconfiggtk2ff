@@ -20,6 +20,7 @@ ac_add_options --with-embedding-profile=minimal
 ac_add_options --disable-updater
 ac_add_options --disable-accessibility
 ac_add_options --enable-feeds
+ac_add_options --enable-storage
 ac_add_options --disable-webservices
 #Should be enabled in Micro base
 ac_add_options --enable-crypto
