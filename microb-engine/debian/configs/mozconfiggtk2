@@ -29,7 +29,7 @@ ac_add_options --enable-plugins
 ac_add_options --enable-extensions="xml-rpc spatialnavigation gnomevfs ftv spellcheck"
 ac_add_options --disable-xinerama
 ac_add_options --enable-xpfe-components # Will add only directory+ftp viewer with profile minimal
-ac_add_options --enable-image-decoders="png gif jpeg bmp"
+ac_add_options --enable-image-decoders="png gif jpeg bmp xbm"
 
 #Perf Improvements
 ac_add_options --disable-necko-small-buffers
