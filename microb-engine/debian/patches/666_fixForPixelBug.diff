@@ -1,8 +1,8 @@
---- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-09-07 14:26:36.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-09-07 14:41:41.000000000 +0300
-@@ -68,24 +68,23 @@
- NS_IMPL_ISUPPORTS1(nsRenderingContextGTK, nsIRenderingContext)
- 
+Index: mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsRenderingContextGTK.cpp
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
+@@ -70,20 +70,19 @@
  #define NSRECT_TO_GDKRECT(ns,gdk) \
    PR_BEGIN_MACRO \
    gdk.x = ns.x; \
@@ -26,11 +26,7 @@
  {
    mFontMetrics = nsnull;
    mContext = nsnull;
-   mSurface = nsnull;
-   mOffscreenSurface = nsnull;
-@@ -1525,23 +1524,52 @@ NS_IMETHODIMP nsRenderingContextGTK::Get
- NS_IMETHODIMP nsRenderingContextGTK::GetRangeWidth(const char *aText, PRUint32 aLength,
-                                                    PRUint32 aStart, PRUint32 aEnd,
+@@ -1527,19 +1526,48 @@
                                                     PRUint32 &aWidth)
  {
    return mFontMetrics->GetRangeWidth(aText, aLength, aStart, aEnd, aWidth);
@@ -81,13 +77,49 @@
    // origin) using the rendering context's translation!
    // However, given that we are, remember that the transformation of a
    // height depends on the position, since what we are really doing is
-   // transforming the edges.  So transform *with* a translation, based
-   // on the origin of the *destination* rect, and then fix up the
---- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-09-07 14:26:36.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-09-07 14:44:40.000000000 +0300
-@@ -697,59 +697,75 @@ nsImageGTK::Draw(nsIRenderingContext &aC
- 
-   if (mDecodedX2 < mDecodedX1 || mDecodedY2 < mDecodedY1)
+Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
+===================================================================
+--- mozilla.orig/gfx/src/gtk/nsImageGTK.cpp
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp
+@@ -609,17 +609,17 @@
+   if (!skipHorizontal)
+     XlibStretchHorizontal(xd1, xd2, xs1, xs2, scaleStartY, scaleEndY,
+                           startColumn, endColumn,
+                           skipVertical?dstOrigX:-startColumn, skipVertical?dstOrigY:-scaleStartY,
+                           aSrcImage, aTmpImage, (skipVertical?gc:copygc));
+   
+   if (!skipVertical) {
+     for (d=0; d<=dx; d++) {
+-      if ((yd1 >= startRow) && (yd1 <= endRow)) {
++      if ((yd1 >= startRow) && (yd1 < endRow)) {
+         gdk_draw_pixmap(aDstImage, gc, aTmpImage,
+                         (skipHorizontal?startColumn:0), ys1-scaleStartY,
+                         aDX, dstOrigY+yd1,
+                         endColumn-startColumn, 1);
+       }
+       while (e>=0) {
+ 	      ys1 += sy;
+ 	      e -= dx2;
+@@ -658,17 +658,17 @@
+   dy = abs((int)(y2-y1));
+   sx = sign(x2-x1);
+   sy = sign(y2-y1);
+   e = dy-dx;
+   dx2 = dx;
+   dy += 1;
+   if (!dx2) dx2=1;
+   for (d=0; d<=dx; d++) {
+-    if ((x1 >= startColumn) && (x1 <= endColumn)) {
++    if ((x1 >= startColumn) && (x1 < endColumn)) {
+       gdk_draw_pixmap(aDstImage, gc, aSrcImage,
+                       y1, ymin, x1+offsetX, ymin+offsetY,
+                       1, ymax-ymin);
+     }
+     while (e>=0) {
+       y1 += sy;
+       e -= dx2;
+     }
+@@ -699,35 +699,51 @@
      return NS_OK;
  
    float scale = 1.0f;
@@ -150,8 +182,7 @@
           aSX, aSY, aSWidth, aSHeight,
           aDX, aDY, aDWidth, aDHeight);
  #endif
- 
-   if (aSWidth <= 0 || aDWidth <= 0 || aSHeight <= 0 || aDHeight <= 0) {
+@@ -736,18 +752,18 @@
      return NS_OK;
    }
  
@@ -172,5 +203,3 @@
    dstOrigY = aDY;
  
    // clip to decode region
-   PRInt32 j = aSX + aSWidth;
-   PRInt32 z;
