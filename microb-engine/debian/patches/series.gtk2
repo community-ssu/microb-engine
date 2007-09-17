@@ -295,7 +295,7 @@ trunk_updates/2.bug380668.diff -p0
 675_unknown_protocol_handling.diff
 680_bug54733.diff.diff
 690_BUG65694.error_page.true.zoom.diff
-700_BUG65694.error_page.true.zoom.diff
+700_BUG65700.theeming.diff
 
 #plugin beg
 #trunk_updates/new/8.5.BUG382367.diff
