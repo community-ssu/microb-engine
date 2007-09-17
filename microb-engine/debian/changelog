@@ -1,3 +1,48 @@
+microb-engine (1.0.3-20) unstable; urgency=low
+
+  * Fixed bug:link navigation should be triggered by key-up not key-down and only
+    if scrolling isn't triggered. Fixes: MB#1791
+  * Fixed bug:Incorrect focus behaviour when scrolling page with HW keys.
+    Fixes: NB#50934
+  * Fixed bug:onFocus is not set on input element by the Select HW Key..
+    Fixes: NB#55701
+  * Added storage building for FF config
+  * Fixed bug:some drop-down menus are disabled and should be dimmed. 
+    Fixes: NB#60893
+  * Fixed bug:Valgrind reported unconditional jumps in Browser. Fixes: NB#66825
+  * Fixed bug with Javascript focus
+  * Fixed building gecko 1.8 compat by default
+  * Fixed building PasswordManager with DEBUG, logging options
+  * Updated moztree gtkmozembed
+  * Fixed storage enabled
+  * Added patch from some hiddens JS bugs
+  * Added FF configuration option
+  * Disabled double registration for FTV component
+  * Fixed fit to view set for special browser window
+  * Fixed bug:Zoom level not preserved. Fixes: NB#69384
+  * Enabled Windowless mode
+  * Fixed HandleEvent plugins handling
+  * Enabled using system cairo
+  * Fixed bug:WB toolbar lacks RSS button for BBC feeds. Fixes: NB#54733
+  * Fixed bug:uri_link_error_invalid_protocol isnot shown in most variants.
+    Fixes: NB#65361
+  * Fixed bug:Images flicker after zooming.. Fixes: NB#68855
+  * Update 666_fixForPixelBug.diff patch
+  * Added proper option for building SVG backport
+  * Rename fixForPixelBug.diff to 666_fixForPixelBug.diff
+  * Fixed crash on Incremental download test with htpps
+  * Fixed bug:Unable to pan image. Fixes: NB#65521
+  * Fixed bug:Pages using charset UTF-8 look bad when opened from local file
+    system. FixeS: NB#66781
+  * Fixed bug:Triple scrollbars on cnn.com page zoomed to 300%. 
+    Fixes: NB#61550
+  * Fixed bug:Focus stays in location bar after page is loaded. Fixes: NB#63870
+  * Fixed bug:Auto - focus not working properly. Fixes: NB#66666
+  * Fixed bug:[GFX-GTK2] Page 'www.nordea.com' is rendered
+    incorrectly. Fixes: NB#54907
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 17 Sep 2007 09:30:14 +0300
+
 microb-engine (1.0.3-19) unstable; urgency=low
 
   * Disabled wrong workarround for initializing engine in separate thread
