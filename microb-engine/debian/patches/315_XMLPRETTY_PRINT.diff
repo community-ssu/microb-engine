@@ -16,7 +16,7 @@ Index: mozilla/content/xml/document/resources/XMLPrettyPrint.xsl
     - the License. You may obtain a copy of the License at
     - http://www.mozilla.org/MPL/
     -
-@@ -31,135 +31,79 @@
+@@ -31,135 +31,78 @@
     - use your version of this file under the terms of the MPL, indicate your
     - decision by deleting the provisions above and replace them with the notice
     - and other provisions required by the LGPL or the GPL. If you do not delete
@@ -173,7 +173,6 @@ Index: mozilla/content/xml/document/resources/XMLPrettyPrint.xsl
 +					 </div>
 +					 <br/>
 +					 <hr/>
-+					 <xsl:apply-templates select="rss/channel"/>
 +					 <xsl:apply-templates select="rdf:RDF/channel"/>
 +				 </body>
 +			 </html>
