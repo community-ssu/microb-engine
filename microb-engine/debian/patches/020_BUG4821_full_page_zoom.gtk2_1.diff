@@ -1253,15 +1253,15 @@ Index: mozilla/layout/generic/nsGfxScrollFrame.cpp
      nsCOMPtr<nsISupports> container = presContext->GetContainer();
      nsCOMPtr<nsIScrollable> scrollable = do_QueryInterface(container);
      if (scrollable) {
-+      if (presContext->TrueZoomMode()) {
-+        result.mHorizontal = NS_STYLE_OVERFLOW_AUTO;
-+        result.mVertical = NS_STYLE_OVERFLOW_AUTO;
-+      } else {
++      //if (presContext->TrueZoomMode()) {
++      //  result.mHorizontal = NS_STYLE_OVERFLOW_AUTO;
++      //  result.mVertical = NS_STYLE_OVERFLOW_AUTO;
++      //} else {
        HandleScrollPref(scrollable, nsIScrollable::ScrollOrientation_X,
                         result.mHorizontal);
        HandleScrollPref(scrollable, nsIScrollable::ScrollOrientation_Y,
                         result.mVertical);
-+      }
++      //}
      }
    } else {
      const nsStyleDisplay *disp = mOuter->GetStyleDisplay();
