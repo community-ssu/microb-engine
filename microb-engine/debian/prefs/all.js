@@ -47,7 +47,8 @@
 // SYNTAX HINTS:  dashes are delimiters.  Use underscores instead.
 //  The first character after a period must be alphabetic.
 
-pref("keyword.URL", "http://www.google.com/search?ie=UTF-8&oe=utf-8&q=");
+//pref("keyword.URL", "http://www.google.com/search?ie=UTF-8&oe=utf-8&q=");
+pref("keyword.URL", "http://www.google.com/search?ie=UTF-8&oe=UTF-8&btnI=I%27m+Feeling+Lucky&q=");
 pref("keyword.enabled", true);
 pref("general.useragent.locale", "chrome://navigator/locale/navigator.properties");
 pref("general.useragent.contentlocale", "chrome://navigator-region/locale/region.properties");
