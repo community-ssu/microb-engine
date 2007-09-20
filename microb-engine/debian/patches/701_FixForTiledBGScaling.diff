@@ -1,0 +1,72 @@
+--- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-09-20 09:28:38.000000000 +0300
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-09-20 09:37:17.000000000 +0300
+@@ -1988,20 +1988,69 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+   if (mDecodedX1 > 0) {
+     validWidth -= mDecodedX1;
+     validX = mDecodedX1; 
+     partial = PR_TRUE;
+   }
+ 
+   if (aTileRect.width == 0 || aTileRect.height == 0 ||
+       validWidth == 0 || validHeight == 0) {
+     return NS_OK;
+   }
++  
++  // Get scale factor
++  float scale = 1.0f;
++  nsCOMPtr<nsIDeviceContext> theDeviceContext;
++  aContext.GetDeviceContext(*getter_AddRefs(theDeviceContext));
++  if (theDeviceContext)
++    scale = theDeviceContext->GetPixelScale();
++
++  // If the page is scaled do tiling by hand. This
++  // is not the most optimal way but it works.
++  if (scale != 1.0) {
++    PRInt32 appUnitsPerDevPixel = 60;
++    if (theDeviceContext)
++      appUnitsPerDevPixel = theDeviceContext->AppUnitsPerDevPixel();
++
++    float p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
++
++    // Calculate scales image width and height
++    PRInt32 dWidth = NSToIntRound(((float)(mWidth) * p2a)/appUnitsPerDevPixel);
++    PRInt32 dHeight = NSToIntRound(((float)(mHeight) * p2a )/ appUnitsPerDevPixel);
++
++    // Get starting and ending coordinates
++    PRInt32 aY0 = aTileRect.y - aSYOffset,
++            aX0 = aTileRect.x - aSXOffset,
++            aY1 = aTileRect.y + aTileRect.height,
++            aX1 = aTileRect.x + aTileRect.width;
++
++    // Set up clipping and call Draw().
++    aContext.PushState();
++    ((nsRenderingContextGTK&)aContext).SetClipRectInPixels(
++      aTileRect, nsClipCombine_kIntersect);
++    ((nsRenderingContextGTK&)aContext).UpdateGC();
++
++#ifdef DEBUG_TILING
++      printf("Warning: using slow tiling\n");
++#endif
++
++      for (PRInt32 y = aY0; y < aY1; y += dHeight + aPadY) {
++        for (PRInt32 x = aX0; x < aX1; x += dWidth + aPadX) {
++            // Use Draw method, the method draws the image
++            // in scaled mode
++            Draw( aContext, aSurface, 0, 0, mWidth, mHeight,
++              x, y, dWidth, dHeight );
++          }
++        }
++    aContext.PopState();
++
++    return NS_OK;
++  }
+ 
+   if (partial || (mAlphaDepth == 8) || (aPadX || aPadY)) {
+     PRInt32 aY0 = aTileRect.y - aSYOffset,
+             aX0 = aTileRect.x - aSXOffset,
+             aY1 = aTileRect.y + aTileRect.height,
+             aX1 = aTileRect.x + aTileRect.width;
+ 
+     // Set up clipping and call Draw().
+     aContext.PushState();
+     ((nsRenderingContextGTK&)aContext).SetClipRectInPixels(
