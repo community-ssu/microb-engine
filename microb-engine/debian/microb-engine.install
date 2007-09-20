@@ -11,6 +11,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/global/xul.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout_errors.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/netError.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/global.dtd
+usr/lib/microb-engine/chrome/en-US/locale/en-US/global/prompts.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/appstrings.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/charsetTitles.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/global-strres.properties
