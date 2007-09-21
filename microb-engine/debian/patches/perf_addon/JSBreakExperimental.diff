@@ -90,10 +90,10 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
 +          nsCOMPtr<nsIBaseWindow> baseWin(do_QueryInterface(docShell));
 +          if (baseWin) {
 +            baseWin->SetEnabled(PR_FALSE);
-+            ctx->SetScriptsEnabled(PR_FALSE, PR_TRUE);
++            ctx->SetScriptsEnabled(PR_FALSE, PR_FALSE);
 +            appShell->WakeupNative(PR_FALSE);
 +            baseWin->SetEnabled(PR_TRUE);
-+            ctx->SetScriptsEnabled(PR_TRUE, PR_TRUE);
++            ctx->SetScriptsEnabled(PR_TRUE, PR_FALSE);
 +            return JS_TRUE;
 +          }
 +        }
