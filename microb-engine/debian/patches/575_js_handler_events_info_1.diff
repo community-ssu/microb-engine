@@ -131,3 +131,42 @@
  {
    NS_ASSERTION(mInner, "SmartCardEvent called without Init");
    return mInner->InitEvent(eventTypeArg, canBubbleArg, cancelableArg);
+--- mozilla/widget/public/nsGUIEvent.h.orig	2007-09-21 11:48:05.000000000 +0300
++++ mozilla/widget/public/nsGUIEvent.h	2007-09-21 14:25:57.000000000 +0300
+@@ -364,32 +364,34 @@ enum nsWindowZ {
+ 
+ class nsEvent
+ {
+ protected:
+   nsEvent(PRBool isTrusted, PRUint32 msg, PRUint8 structType)
+     : eventStructType(structType),
+       message(msg),
+       refPoint(0, 0),
+       time(0),
+       flags(isTrusted ? NS_EVENT_FLAG_TRUSTED : NS_EVENT_FLAG_NONE),
+-      userType(0)
++      userType(0),
++      jsflags(0)
+   {
+   }
+ 
+ public:
+   nsEvent(PRBool isTrusted, PRUint32 msg)
+     : eventStructType(NS_EVENT),
+       message(msg),
+       refPoint(0, 0),
+       time(0),
+       flags(isTrusted ? NS_EVENT_FLAG_TRUSTED : NS_EVENT_FLAG_NONE),
+-      userType(0)
++      userType(0),
++      jsflags(0)
+   {
+   }
+ 
+   // See event struct types
+   PRUint8     eventStructType;
+   // See GUI MESSAGES,
+   PRUint32    message;
+   // In widget relative coordinates, not modified by layout code.
+   nsPoint     refPoint;
+   // Elapsed time, in milliseconds, from a platform-specific zero time
