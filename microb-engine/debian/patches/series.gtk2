@@ -175,7 +175,8 @@ gtkmozembed/gtkmozembed.diff
 560_NativeSuspendImplementation.diff
 565_svg_compiler_helper.diff
 570_thumb_supporting_stuff.diff
-575_js_handler_events_info.diff
+#575_js_handler_events_info.diff
+575_js_handler_events_info_1.diff
 crash/625_BUG56960_layout_indexof_crash.diff 
 580_focus_for_visible_area.diff
 #585_disable_broken_gtk2_opacity.diff
@@ -267,6 +268,7 @@ trunk_updates/BUG_370525_gmail_chats.diff
 640_mouse_event_order.diff
 650_BUG204011_theme_change.diff
 655_unblock_mouseevents_ontoolbar.diff
+701_FixForTiledBGScaling.diff
 
 # Crash, plugins, updates, not tested!!!
 trunk_updates/new/1.BUG386387.diff
