@@ -270,22 +270,7 @@ trunk_updates/BUG_370525_gmail_chats.diff
 655_unblock_mouseevents_ontoolbar.diff
 701_FixForTiledBGScaling.diff
 
-# Crash, plugins, updates, not tested!!!
-trunk_updates/new/1.BUG386387.diff
-trunk_updates/new/2.bug326337.diff
-trunk_updates/new/3.BUG382778.diff
-trunk_updates/new/5.BUG386561.diff
-trunk_updates/new/6.BUG386820.diff
-trunk_updates/new/7.BUG386614.diff
-
-trunk_updates/new/10.bug374810.diff
-trunk_updates/new/13.BUG386799.diff
 trunk_updates/new/14.BUG389663.diff
-trunk_updates/new/15.BUG386266.diff
-trunk_updates/new/17.BUG383553.diff
-trunk_updates/new/19.BUG390762.diff
-trunk_updates/new/26.BUG390088.diff
-trunk_updates/new/27.BUG393294.diff
 trunk_updates/BUG389694.secure.diff
 trunk_updates/1.bug380659.diff -p0
 trunk_updates/2.bug380668.diff -p0
@@ -298,6 +283,25 @@ trunk_updates/2.bug380668.diff -p0
 680_bug54733.diff.diff
 690_BUG65694.error_page.true.zoom.diff
 700_BUG65700.theeming.diff
+
+valgrind/bug66825.diff
+
+# Crash, plugins, updates, not tested!!!
+#trunk_updates/new/1.BUG386387.diff
+#trunk_updates/new/2.bug326337.diff
+#trunk_updates/new/3.BUG382778.diff
+#trunk_updates/new/5.BUG386561.diff
+#trunk_updates/new/6.BUG386820.diff
+#trunk_updates/new/7.BUG386614.diff
+#trunk_updates/new/10.bug374810.diff
+#trunk_updates/new/13.BUG386799.diff
+
+#trunk_updates/new/15.BUG386266.diff
+#trunk_updates/new/17.BUG383553.diff
+#trunk_updates/new/19.BUG390762.diff
+#trunk_updates/new/26.BUG390088.diff
+#trunk_updates/new/27.BUG393294.diff
+# Crash, plugins, updates, not tested!!!
 
 #plugin beg
 #trunk_updates/new/8.5.BUG382367.diff
@@ -314,7 +318,3 @@ trunk_updates/2.bug380668.diff -p0
 #trunk_updates/new/24.BUG390385.diff
 ##trunk_updates/new/25.BUG391261.diff
 #plugin end
-
-
-valgrind/bug66825.diff
-
