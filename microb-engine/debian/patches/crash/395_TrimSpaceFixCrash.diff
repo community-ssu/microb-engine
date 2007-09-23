@@ -3,7 +3,7 @@ Index: mozilla/xpcom/string/src/nsTStringObsolete.cpp
 ===================================================================
 --- mozilla.orig/xpcom/string/src/nsTStringObsolete.cpp
 +++ mozilla/xpcom/string/src/nsTStringObsolete.cpp
-@@ -437,16 +437,18 @@
+@@ -437,16 +437,18 @@ nsTString_CharT::Trim( const char* aSet,
  
    /**
     * nsTString::CompressWhitespace
@@ -26,7 +26,7 @@ Index: mozilla/content/html/document/src/nsHTMLContentSink.cpp
 ===================================================================
 --- mozilla.orig/content/html/document/src/nsHTMLContentSink.cpp
 +++ mozilla/content/html/document/src/nsHTMLContentSink.cpp
-@@ -2455,16 +2455,18 @@
+@@ -2452,16 +2452,18 @@ HTMLContentSink::UpdateDocumentTitle()
  
    if (!mDocument->GetDocumentTitle().IsVoid()) {
      MOZ_TIMER_DEBUGLOG(("Stop: nsHTMLContentSink::UpdateDocumentTitle()\n"));
@@ -49,7 +49,7 @@ Index: mozilla/docshell/base/nsDocShell.cpp
 ===================================================================
 --- mozilla.orig/docshell/base/nsDocShell.cpp
 +++ mozilla/docshell/base/nsDocShell.cpp
-@@ -3840,32 +3840,34 @@
+@@ -3816,32 +3816,34 @@ nsDocShell::GetTitle(PRUnichar ** aTitle
      *aTitle = ToNewUnicode(mTitle);
      return NS_OK;
  }
@@ -85,3 +85,40 @@ Index: mozilla/docshell/base/nsDocShell.cpp
      // there is no need to update the title. There is no need to
      // go to mSessionHistory to update the title. Setting it in mOSHE 
      // would suffice. 
+Index: mozilla/js/src/jsobj.c
+===================================================================
+--- mozilla.orig/js/src/jsobj.c
++++ mozilla/js/src/jsobj.c
+@@ -2804,23 +2804,25 @@ js_FreeSlot(JSContext *cx, JSObject *obj
+ /* JSVAL_INT_MAX as a string */
+ #define JSVAL_INT_MAX_STRING "1073741823"
+ 
+ #define CHECK_FOR_STRING_INDEX(id)                                            \
+     JS_BEGIN_MACRO                                                            \
+         if (JSID_IS_ATOM(id)) {                                               \
+             JSAtom *atom_ = JSID_TO_ATOM(id);                                 \
+             JSString *str_ = ATOM_TO_STRING(atom_);                           \
+-            const jschar *cp_ = str_->chars;                                  \
+-            JSBool negative_ = (*cp_ == '-');                                 \
+-            if (negative_) cp_++;                                             \
+-            if (JS7_ISDEC(*cp_)) {                                            \
+-                size_t n_ = str_->length - negative_;                         \
+-                if (n_ <= sizeof(JSVAL_INT_MAX_STRING) - 1)                   \
+-                    id = CheckForStringIndex(id, cp_, cp_ + n_, negative_);   \
++            if (str_) {                                                       \
++               const jschar *cp_ = str_->chars;                               \
++    	        JSBool negative_ = (*cp_ == '-');                              \
++               if (negative_) cp_++;                                          \
++               if (JS7_ISDEC(*cp_)) {                                         \
++                   size_t n_ = str_->length - negative_;                      \
++                   if (n_ <= sizeof(JSVAL_INT_MAX_STRING) - 1)                \
++                       id = CheckForStringIndex(id, cp_, cp_ + n_, negative_);\
++               }                                                              \
+             }                                                                 \
+         }                                                                     \
+     JS_END_MACRO
+ 
+ static jsid
+ CheckForStringIndex(jsid id, const jschar *cp, const jschar *end,
+                     JSBool negative)
+ {

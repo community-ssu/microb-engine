@@ -287,20 +287,20 @@ trunk_updates/2.bug380668.diff -p0
 valgrind/bug66825.diff
 
 # Crash, plugins, updates, not tested!!!
-#trunk_updates/new/1.BUG386387.diff
-#trunk_updates/new/2.bug326337.diff
-#trunk_updates/new/3.BUG382778.diff
-#trunk_updates/new/5.BUG386561.diff
-#trunk_updates/new/6.BUG386820.diff
-#trunk_updates/new/7.BUG386614.diff
-#trunk_updates/new/10.bug374810.diff
-#trunk_updates/new/13.BUG386799.diff
+trunk_updates/new/1.BUG386387.diff
+trunk_updates/new/2.bug326337.diff
+trunk_updates/new/3.BUG382778.diff
+trunk_updates/new/5.BUG386561.diff
+trunk_updates/new/6.BUG386820.diff
+trunk_updates/new/7.BUG386614.diff
+trunk_updates/new/10.bug374810.diff
+trunk_updates/new/13.BUG386799.diff
 
-#trunk_updates/new/15.BUG386266.diff
-#trunk_updates/new/17.BUG383553.diff
-#trunk_updates/new/19.BUG390762.diff
-#trunk_updates/new/26.BUG390088.diff
-#trunk_updates/new/27.BUG393294.diff
+trunk_updates/new/15.BUG386266.diff
+trunk_updates/new/17.BUG383553.diff
+trunk_updates/new/19.BUG390762.diff
+trunk_updates/new/26.BUG390088.diff
+trunk_updates/new/27.BUG393294.diff
 # Crash, plugins, updates, not tested!!!
 
 #plugin beg
