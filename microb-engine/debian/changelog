@@ -1,3 +1,30 @@
+microb-engine (1.0.3-22) unstable; urgency=low
+
+  * Fixed bug:Authentication : Server and Message fields are incorrect..
+    Fixes: NB#61394
+  * Fixed often crash in JavaScript after enabling JS suspend in
+    JSBreakExperimental.diff
+  * Disabled trunk updates while not fixed crash
+  * Fixed uninitialized variable in JS flags
+  * Fixed bug:Page www.4players.de is not rendered correctly after zooming its
+    content. Fixes: NB#57072
+  * Add 701_FixForTiledBGScaling.diff
+  * Fixed bug:RSS channel items are duplicated. Fixes: NB#56207
+  * Fixed bug:Internet keywords feature does not call "Google.. Lucky". 
+    Fixes: NB#70218
+  * Fixed bug:Needless scrollbars visible. Fixes: NB#64367
+  * Fixed bug:Network error messages are wider than browser window and they
+    look complex and messy when zoom level is bigger than 100%. 
+    Fixes: NB#65694
+  * Fixed bug:"browse" button on www.zshare.net is two times smaller than on
+    desktop version. Fixes: NB#65700
+  * Fixed bug:xbm file opening causes edless loop. Fixes: NB#68589
+  * Fixed bug:going back to previous page takes some time on www.one.lv.
+    Fixes: NB#60962
+  * Update 666_fixForPixelBug.diff patch
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 23 Sep 2007 21:39:56 +0300
+
 microb-engine (1.0.3-20) unstable; urgency=low
 
   * Fixed bug:link navigation should be triggered by key-up not key-down and only
