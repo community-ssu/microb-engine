@@ -23,6 +23,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout/xmlparser.properti
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout/HtmlForm.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/security/caps.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/about.dtd
+usr/lib/microb-engine/chrome/en-US/locale/en-US/global/prompts.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/brand.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/downloadProgress.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/filepicker.dtd
