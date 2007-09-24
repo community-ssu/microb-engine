@@ -2749,3 +2749,51 @@ Index: modules/plugin/base/src/nsPluginNativeWindowGtk2.cpp
    if(aPluginInstance) {
      nsresult rv;
      nsCOMPtr<nsIPluginInstancePeer> peer;
+--- modules/plugin/base/src/nsPluginNativeWindowGtk2.cpp.orig	2007-09-24 12:19:12.000000000 +0300
++++ modules/plugin/base/src/nsPluginNativeWindowGtk2.cpp	2007-09-24 13:21:26.000000000 +0300
+@@ -196,20 +196,22 @@ nsresult nsPluginNativeWindowGtk2::Creat
+   SetAllocation();
+ 
+   gtk_widget_show(mSocketWidget);
+ 
+   gdk_flush();
+   window = (nsPluginPort *)gtk_socket_get_id(GTK_SOCKET(mSocketWidget));
+ 
+   // Fill out the ws_info structure.
+   // (The windowless case is done in nsObjectFrame.cpp.)
+   GdkWindow *gdkWindow = gdk_window_lookup((XID)window);
++  if (!gdkWindow)
++    return NS_ERROR_FAILURE;
+   mWsInfo.display = GDK_WINDOW_XDISPLAY(gdkWindow);
+   mWsInfo.colormap = GDK_COLORMAP_XCOLORMAP(gdk_drawable_get_colormap(gdkWindow));
+   GdkVisual* gdkVisual = gdk_drawable_get_visual(gdkWindow);
+   mWsInfo.visual = GDK_VISUAL_XVISUAL(gdkVisual);
+   mWsInfo.depth = gdkVisual->depth;
+ 
+   return NS_OK;
+ }
+ 
+ void nsPluginNativeWindowGtk2::SetAllocation() {
+@@ -225,20 +227,22 @@ void nsPluginNativeWindowGtk2::SetAlloca
+ }
+ 
+ nsresult nsPluginNativeWindowGtk2::CreateXtWindow() {
+   NS_ASSERTION(!mSocketWidget,"Already created a socket widget!");
+ 
+ #ifdef NS_DEBUG
+   printf("About to create new xtbin of %i X %i from %p...\n",
+          width, height, (void*)window);
+ #endif
+   GdkWindow *gdkWindow = gdk_window_lookup((XID)window);
++  if (!gdkWindow)
++    return NS_ERROR_FAILURE;
+   mSocketWidget = gtk_xtbin_new(gdkWindow, 0);
+   // Check to see if creating the xtbin failed for some reason.
+   // if it did, we can't go any further.
+   if (!mSocketWidget)
+     return NS_ERROR_FAILURE;
+ 
+   gtk_widget_set_size_request(mSocketWidget, width, height);
+ 
+ #ifdef NS_DEBUG
+   printf("About to show xtbin(%p)...\n", (void*)mSocketWidget); fflush(NULL);
