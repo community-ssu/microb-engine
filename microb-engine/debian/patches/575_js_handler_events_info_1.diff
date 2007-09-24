@@ -1,10 +1,10 @@
 # I hope it will be possible to integrate this feature in Gecko...
 # It will allow to know about some events which was handled by JS handlers (Allow to make more better stylus/panning/ajax iteractions handling)
---- mozilla/content/events/src/nsEventListenerManager.cpp.orig	2007-09-21 11:25:15.000000000 +0300
-+++ mozilla/content/events/src/nsEventListenerManager.cpp	2007-09-21 11:31:09.000000000 +0300
-@@ -1210,22 +1210,22 @@ found:
-              ls->mFlags & NS_PRIV_EVENT_UNTRUSTED_PERMITTED)) {
-           if (!*aDOMEvent) {
+Index: mozilla/content/events/src/nsEventListenerManager.cpp
+===================================================================
+--- mozilla.orig/content/events/src/nsEventListenerManager.cpp
++++ mozilla/content/events/src/nsEventListenerManager.cpp
+@@ -1212,18 +1212,18 @@
              nsEventDispatcher::CreateEvent(aPresContext, aEvent,
                                             EmptyString(), aDOMEvent);
            }
@@ -25,13 +25,11 @@
    }
  
    if (!hasListener) {
-     mNoListenerForEvent = aEvent->message;
-     mNoListenerForEventAtom = aEvent->userType;
---- mozilla/content/events/src/nsDOMEvent.cpp.orig	2007-06-07 06:28:04.000000000 +0300
-+++ mozilla/content/events/src/nsDOMEvent.cpp	2007-09-21 11:32:17.000000000 +0300
-@@ -287,20 +287,27 @@ nsDOMEvent::GetEventPhase(PRUint16* aEve
-     *aEventPhase = nsIDOMEvent::CAPTURING_PHASE;
-   } else if (mEvent->flags & NS_EVENT_FLAG_BUBBLE) {
+Index: mozilla/content/events/src/nsDOMEvent.cpp
+===================================================================
+--- mozilla.orig/content/events/src/nsDOMEvent.cpp
++++ mozilla/content/events/src/nsDOMEvent.cpp
+@@ -289,16 +289,23 @@
      *aEventPhase = nsIDOMEvent::BUBBLING_PHASE;
    } else {
      *aEventPhase = 0;
@@ -55,87 +53,11 @@
  
  NS_IMETHODIMP
  nsDOMEvent::GetCancelable(PRBool* aCancelable)
- {
-   *aCancelable = !(mEvent->flags & NS_EVENT_FLAG_CANT_CANCEL);
---- mozilla/widget/public/nsGUIEvent.h.orig	2007-06-07 06:28:04.000000000 +0300
-+++ mozilla/widget/public/nsGUIEvent.h	2007-09-21 11:43:17.000000000 +0300
-@@ -391,20 +391,22 @@ public:
-   // See GUI MESSAGES,
-   PRUint32    message;
-   // In widget relative coordinates, not modified by layout code.
-   nsPoint     refPoint;
-   // Elapsed time, in milliseconds, from a platform-specific zero time
-   // to the time the message was created
-   PRUint32    time;
-   // Flags to hold event flow stage and capture/bubble cancellation
-   // status. This is used also to indicate whether the event is trusted.
-   PRUint32    flags;
-+  // Flags for storing info about handling events inside JS listeners...
-+  PRUint32    jsflags;
-   // Additional type info for user defined events
-   nsCOMPtr<nsIAtom>     userType;
-   // Event targets, needed by DOM Events
-   // Using nsISupports, not nsIDOMEventTarget because in some cases
-   // nsIDOMEventTarget is implemented as a tearoff.
-   nsCOMPtr<nsISupports> target;
-   nsCOMPtr<nsISupports> currentTarget;
-   nsCOMPtr<nsISupports> originalTarget;
- };
- 
---- mozilla/dom/public/idl/events/nsIDOMEvent.idl.orig	2004-04-18 00:50:09.000000000 +0300
-+++ mozilla/dom/public/idl/events/nsIDOMEvent.idl	2007-09-21 11:34:21.000000000 +0300
-@@ -164,11 +164,17 @@ interface nsIDOMEvent : nsISupports
-    *                       own events use their own prefix to avoid 
-    *                       confusion and lessen the probability of 
-    *                       conflicts with other new events.
-    * @param   canBubbleArg Specifies whether or not the event can bubble.
-    * @param   cancelableArg Specifies whether or not the event's default 
-    *                        action can be prevented.
-    */
-   void                      initEvent(in DOMString eventTypeArg,
-                                       in boolean canBubbleArg,
-                                       in boolean cancelableArg);
-+
-+  /**
-+   * Used to indicate which phase of event flow is currently being
-+   * evaluated.
-+   */
-+  readonly attribute PRUint32           privateFlags;
- };
---- mozilla/security/manager/ssl/src/nsSmartCardEvent.cpp.orig	2005-06-02 19:40:29.000000000 +0300
-+++ mozilla/security/manager/ssl/src/nsSmartCardEvent.cpp	2007-09-21 11:39:12.000000000 +0300
-@@ -223,20 +223,26 @@ NS_IMETHODIMP nsSmartCardEvent::GetTimeS
-   NS_ASSERTION(mInner, "SmartCardEvent called without Init");
-   return mInner->GetTimeStamp(aTimeStamp);
- }
- 
- NS_IMETHODIMP nsSmartCardEvent::StopPropagation()
- {
-   NS_ASSERTION(mInner, "SmartCardEvent called without Init");
-   return mInner->StopPropagation();
- }
- 
-+NS_IMETHODIMP nsSmartCardEvent::GetPrivateFlags(PRUint32* aEventFlags)
-+{
-+  NS_ASSERTION(mInner, "SmartCardEvent called without Init");
-+  return mInner->GetPrivateFlags(aEventFlags);
-+}
-+
- NS_IMETHODIMP nsSmartCardEvent::PreventDefault()
- {
-   NS_ASSERTION(mInner, "SmartCardEvent called without Init");
-   return mInner->PreventDefault();
- }
- 
- NS_IMETHODIMP nsSmartCardEvent::InitEvent(const nsAString & eventTypeArg, PRBool canBubbleArg, PRBool cancelableArg)
- {
-   NS_ASSERTION(mInner, "SmartCardEvent called without Init");
-   return mInner->InitEvent(eventTypeArg, canBubbleArg, cancelableArg);
---- mozilla/widget/public/nsGUIEvent.h.orig	2007-09-21 11:48:05.000000000 +0300
-+++ mozilla/widget/public/nsGUIEvent.h	2007-09-21 14:25:57.000000000 +0300
-@@ -364,32 +364,34 @@ enum nsWindowZ {
- 
- class nsEvent
+Index: mozilla/widget/public/nsGUIEvent.h
+===================================================================
+--- mozilla.orig/widget/public/nsGUIEvent.h
++++ mozilla/widget/public/nsGUIEvent.h
+@@ -366,28 +366,30 @@
  {
  protected:
    nsEvent(PRBool isTrusted, PRUint32 msg, PRUint8 structType)
@@ -168,5 +90,69 @@
    // See GUI MESSAGES,
    PRUint32    message;
    // In widget relative coordinates, not modified by layout code.
-   nsPoint     refPoint;
+@@ -395,16 +397,18 @@
    // Elapsed time, in milliseconds, from a platform-specific zero time
+   // to the time the message was created
+   PRUint32    time;
+   // Flags to hold event flow stage and capture/bubble cancellation
+   // status. This is used also to indicate whether the event is trusted.
+   PRUint32    flags;
+   // Additional type info for user defined events
+   nsCOMPtr<nsIAtom>     userType;
++  // Flags for storing info about handling events inside JS listeners...
++  PRUint32    jsflags;
+   // Event targets, needed by DOM Events
+   // Using nsISupports, not nsIDOMEventTarget because in some cases
+   // nsIDOMEventTarget is implemented as a tearoff.
+   nsCOMPtr<nsISupports> target;
+   nsCOMPtr<nsISupports> currentTarget;
+   nsCOMPtr<nsISupports> originalTarget;
+ };
+ 
+Index: mozilla/dom/public/idl/events/nsIDOMEvent.idl
+===================================================================
+--- mozilla.orig/dom/public/idl/events/nsIDOMEvent.idl
++++ mozilla/dom/public/idl/events/nsIDOMEvent.idl
+@@ -166,9 +166,15 @@
+    *                       conflicts with other new events.
+    * @param   canBubbleArg Specifies whether or not the event can bubble.
+    * @param   cancelableArg Specifies whether or not the event's default 
+    *                        action can be prevented.
+    */
+   void                      initEvent(in DOMString eventTypeArg,
+                                       in boolean canBubbleArg,
+                                       in boolean cancelableArg);
++
++  /**
++   * Used to indicate which phase of event flow is currently being
++   * evaluated.
++   */
++  readonly attribute PRUint32           privateFlags;
+ };
+Index: mozilla/security/manager/ssl/src/nsSmartCardEvent.cpp
+===================================================================
+--- mozilla.orig/security/manager/ssl/src/nsSmartCardEvent.cpp
++++ mozilla/security/manager/ssl/src/nsSmartCardEvent.cpp
+@@ -225,16 +225,22 @@
+ }
+ 
+ NS_IMETHODIMP nsSmartCardEvent::StopPropagation()
+ {
+   NS_ASSERTION(mInner, "SmartCardEvent called without Init");
+   return mInner->StopPropagation();
+ }
+ 
++NS_IMETHODIMP nsSmartCardEvent::GetPrivateFlags(PRUint32* aEventFlags)
++{
++  NS_ASSERTION(mInner, "SmartCardEvent called without Init");
++  return mInner->GetPrivateFlags(aEventFlags);
++}
++
+ NS_IMETHODIMP nsSmartCardEvent::PreventDefault()
+ {
+   NS_ASSERTION(mInner, "SmartCardEvent called without Init");
+   return mInner->PreventDefault();
+ }
+ 
+ NS_IMETHODIMP nsSmartCardEvent::InitEvent(const nsAString & eventTypeArg, PRBool canBubbleArg, PRBool cancelableArg)
+ {
