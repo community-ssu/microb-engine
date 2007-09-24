@@ -1,7 +1,86 @@
---- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-09-20 09:28:38.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-09-20 09:37:17.000000000 +0300
-@@ -1988,20 +1988,69 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
-   if (mDecodedX1 > 0) {
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-09-24 15:23:04.000000000 +0300
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-09-24 14:53:02.000000000 +0300
+@@ -1670,37 +1670,62 @@ NS_IMETHODIMP nsRenderingContextGTK::Rel
+ }
+ 
+ NS_IMETHODIMP
+ nsRenderingContextGTK::DrawTile(imgIContainer *aImage,
+                                 nscoord aXImageStart, nscoord aYImageStart,
+                                 const nsRect *aTargetRect)
+ {
+   nsRect dr(NS_RECT_FROM_TWIPS_RECT(*aTargetRect));
+   aXImageStart = FROM_TWIPS_INT(aXImageStart);
+   aYImageStart = FROM_TWIPS_INT(aYImageStart);
++
+   mTranMatrix->TransformCoord(&dr.x, &dr.y, &dr.width, &dr.height);
+   mTranMatrix->TransformCoord(&aXImageStart, &aYImageStart);
+ 
+   // may have become empty due to transform shinking small number to 0
+   if (dr.IsEmpty())
+     return NS_OK;
+ 
+-  nscoord width, height;
++  nscoord width, height, origWidth, origHeight;
+   aImage->GetWidth(&width);
+   aImage->GetHeight(&height);
++  origWidth = width;
++  origHeight = height;
++
++  // Get scale factor
++  float scale = 1.0f;
++  scale = mContext->GetPixelScale();
++
++  // If the page is scaled calculate the offset values
++  // from scales image width and height
++  if (scale != 1.0) {
++    PRInt32 appUnitsPerDevPixel = 60;
++    //if (theDeviceContext)
++    appUnitsPerDevPixel = mContext->AppUnitsPerDevPixel();
++
++    float p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
++
++    // Calculate scaled image width and height
++    width = NSToIntRound(((float)(width) * p2a)/appUnitsPerDevPixel);
++    height = NSToIntRound(((float)(height) * p2a )/appUnitsPerDevPixel);
++  }
+ 
+   if (width == 0 || height == 0)
+     return NS_OK;
+ 
+   nscoord xOffset = (dr.x - aXImageStart) % width;
+   nscoord yOffset = (dr.y - aYImageStart) % height;
+ 
++  // Restore original width and height values
++  width = origWidth;
++  height = origHeight;
++
+   nsCOMPtr<gfxIImageFrame> iframe;
+   aImage->GetCurrentFrame(getter_AddRefs(iframe));
+   if (!iframe) return NS_ERROR_FAILURE;
+ 
+   nsCOMPtr<nsIImage> img(do_GetInterface(iframe));
+   if (!img) return NS_ERROR_FAILURE;
+ 
+   nsIDrawingSurface *surface = nsnull;
+   GetDrawingSurface(&surface);
+   if (!surface) return NS_ERROR_FAILURE;
+@@ -1708,13 +1733,12 @@ nsRenderingContextGTK::DrawTile(imgICont
+   /* bug 113561 - frame can be smaller than container */
+   nsRect iframeRect;
+   iframe->GetRect(iframeRect);
+   PRInt32 padx = width - iframeRect.width;
+   PRInt32 pady = height - iframeRect.height;
+ 
+   return img->DrawTile(*this, surface,
+                        xOffset - iframeRect.x, yOffset - iframeRect.y,
+                        padx, pady,
+                        dr);
+-
+ }
+ 
+--- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-09-24 15:23:04.000000000 +0300
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-09-24 15:20:39.000000000 +0300
+@@ -1989,20 +1989,69 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
      validWidth -= mDecodedX1;
      validX = mDecodedX1; 
      partial = PR_TRUE;
@@ -11,7 +90,7 @@
        validWidth == 0 || validHeight == 0) {
      return NS_OK;
    }
-+  
+ 
 +  // Get scale factor
 +  float scale = 1.0f;
 +  nsCOMPtr<nsIDeviceContext> theDeviceContext;
@@ -28,7 +107,7 @@
 +
 +    float p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
 +
-+    // Calculate scales image width and height
++    // Calculate scaled image width and height
 +    PRInt32 dWidth = NSToIntRound(((float)(mWidth) * p2a)/appUnitsPerDevPixel);
 +    PRInt32 dHeight = NSToIntRound(((float)(mHeight) * p2a )/ appUnitsPerDevPixel);
 +
@@ -60,7 +139,7 @@
 +
 +    return NS_OK;
 +  }
- 
++
    if (partial || (mAlphaDepth == 8) || (aPadX || aPadY)) {
      PRInt32 aY0 = aTileRect.y - aSYOffset,
              aX0 = aTileRect.x - aSXOffset,
@@ -70,3 +149,4 @@
      // Set up clipping and call Draw().
      aContext.PushState();
      ((nsRenderingContextGTK&)aContext).SetClipRectInPixels(
+       aTileRect, nsClipCombine_kIntersect);
