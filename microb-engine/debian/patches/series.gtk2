@@ -284,6 +284,7 @@ trunk_updates/2.bug380668.diff -p0
 680_bug54733.diff.diff
 690_BUG65694.error_page.true.zoom.diff
 700_BUG65700.theeming.diff
+710_disable_F6_focus.diff
 
 valgrind/bug66825.diff
 
