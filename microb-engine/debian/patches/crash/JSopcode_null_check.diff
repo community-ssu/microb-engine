@@ -26,3 +26,28 @@
          if (!rval)                                                            \
              return NULL;                                                      \
      JS_END_MACRO
+--- mozilla/js/src/jsstr.c.orig	2007-09-24 11:52:07.000000000 +0300
++++ mozilla/js/src/jsstr.c	2007-09-24 16:20:48.000000000 +0300
+@@ -2657,21 +2657,21 @@ js_ValueToPrintable(JSContext *cx, jsval
+ }
+ 
+ JS_FRIEND_API(JSString *)
+ js_ValueToString(JSContext *cx, jsval v)
+ {
+     JSObject *obj;
+     JSString *str;
+ 
+     if (JSVAL_IS_OBJECT(v)) {
+         obj = JSVAL_TO_OBJECT(v);
+-        if (!obj)
++        if (!obj || !(obj)->map->ops)
+             return ATOM_TO_STRING(cx->runtime->atomState.nullAtom);
+         if (!OBJ_DEFAULT_VALUE(cx, obj, JSTYPE_STRING, &v))
+             return NULL;
+     }
+     if (JSVAL_IS_STRING(v)) {
+         str = JSVAL_TO_STRING(v);
+     } else if (JSVAL_IS_INT(v)) {
+         str = js_NumberToString(cx, JSVAL_TO_INT(v));
+     } else if (JSVAL_IS_DOUBLE(v)) {
+         str = js_NumberToString(cx, *JSVAL_TO_DOUBLE(v));
