@@ -1,8 +1,8 @@
---- mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp.orig	2007-09-24 12:19:14.000000000 +0300
-+++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp	2007-09-24 18:41:49.000000000 +0300
-@@ -181,24 +181,20 @@ nsNativeThemeGTK::GetGtkWidgetAndState(P
-                                        GtkThemeWidgetType& aGtkWidgetType,
-                                        GtkWidgetState* aState,
+Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+@@ -183,20 +183,16 @@
                                         gint* aWidgetFlags)
  {
    if (aState) {
@@ -23,13 +23,11 @@
                       aWidgetType == NS_THEME_CHECKBOX_LABEL ||
                       aWidgetType == NS_THEME_RADIO_LABEL)) {
  
-         nsIAtom* atom = nsnull;
-         nsIContent *content = aFrame->GetContent();
---- mozilla/widget/src/gtk2/gtk2drawing.c.orig	2007-09-24 12:19:14.000000000 +0300
-+++ mozilla/widget/src/gtk2/gtk2drawing.c	2007-09-24 18:59:10.000000000 +0300
-@@ -195,30 +195,30 @@ ensure_entry_widget()
-         setup_widget_prototype(gEntryWidget);
-     }
+Index: mozilla/widget/src/gtk2/gtk2drawing.c
+===================================================================
+--- mozilla.orig/widget/src/gtk2/gtk2drawing.c
++++ mozilla/widget/src/gtk2/gtk2drawing.c
+@@ -197,26 +197,26 @@
      return MOZ_GTK_SUCCESS;
  }
  
@@ -58,19 +56,15 @@
      return MOZ_GTK_SUCCESS;
  }
  
- static gint
- ensure_handlebox_widget()
-@@ -627,24 +627,21 @@ moz_gtk_toggle_paint(GdkDrawable* drawab
-   
-     style = w->style;
+@@ -623,20 +623,17 @@
      TSOffsetStyleGCs(style, x, y);
  
      /* Some themes check the widget state themselves. */
-     /*if (state->focused)
+     if (state->focused)
          GTK_WIDGET_SET_FLAGS(w, GTK_HAS_FOCUS);
      else
          GTK_WIDGET_UNSET_FLAGS(w, GTK_HAS_FOCUS);
-     */
+ 
 -    if (state_type != GTK_STATE_INSENSITIVE)
 -         GTK_WIDGET_SET_FLAGS(w, GTK_SENSITIVE);
 -    else
@@ -78,17 +72,13 @@
 +    gtk_widget_set_sensitive(w, !state->disabled);
  
      GTK_TOGGLE_BUTTON(w)->active = selected;
- 
+       
      if (isradio) {
          gtk_paint_option(style, drawable, state_type, shadow_type, cliprect,
                           gRadiobuttonWidget, "radiobutton", x, y,
                           width, height);
      }
-     else {
-         gtk_paint_check(style, drawable, state_type, shadow_type, cliprect, 
-@@ -1110,42 +1107,42 @@ moz_gtk_option_menu_paint(GdkDrawable* d
- static gint
- moz_gtk_dropdown_arrow_paint(GdkDrawable* drawable, GdkRectangle* rect,
+@@ -1100,38 +1097,38 @@
                               GdkRectangle* cliprect, GtkWidgetState* state)
  {
      GdkRectangle arrow_rect, real_arrow_rect;
@@ -133,5 +123,3 @@
  
  static gint
  moz_gtk_container_paint(GdkDrawable* drawable, GdkRectangle* rect,
-                         GdkRectangle* cliprect, GtkWidgetState* state, 
-                         gboolean isradio)
