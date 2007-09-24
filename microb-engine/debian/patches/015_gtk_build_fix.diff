@@ -1256,33 +1256,6 @@ Index: mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
 +
 +}
 +
-Index: mozilla/view/src/nsViewManager.cpp
-===================================================================
---- mozilla.orig/view/src/nsViewManager.cpp
-+++ mozilla/view/src/nsViewManager.cpp
-@@ -574,19 +574,21 @@
-   damageRegion.Sub(damageRegion, opaqueRegion);
- 
-   RenderViews(aView, *localcx, damageRegion, ds);
- 
-   ctx->Restore();
- #else
-   // widgetDamageRectInPixels is the clipped damage area bounds,
-   // in pixels-relative-to-widget-origin
-+#define FROM_TWIPS_INT(_x) NSToIntRound((float)((_x)/((float)p2a)))
-+#define NS_RECT_FROM_TWIPS_RECT(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT((_r).width), FROM_TWIPS_INT((_r).height)))
-   nsRect widgetDamageRectInPixels = damageRect;
-   widgetDamageRectInPixels.MoveBy(-viewRect.x, -viewRect.y);
--  widgetDamageRectInPixels.ScaleRoundOut(t2p);
-+  widgetDamageRectInPixels = NS_RECT_FROM_TWIPS_RECT(widgetDamageRectInPixels);
- 
-   // On the Mac, we normally turn doublebuffering off because Quartz is
-   // doublebuffering for us. But we need to turn it on anyway if we need
-   // to use our blender, which requires access to the "current pixel values"
-   // when it blends onto the canvas.
-   // XXX disable opacity for now on the Mac because of this ... it'll get
-   // reenabled with cairo
-   if (aUpdateFlags & NS_VMREFRESH_DOUBLE_BUFFER)
 Index: mozilla/gfx/src/gtk/Makefile.in
 ===================================================================
 --- mozilla.orig/gfx/src/gtk/Makefile.in
@@ -1914,3 +1887,41 @@ Index: mozilla/layout/base/nsDisplayList.cpp
                   buffers->mBlackCX, aCtx,
                   damageRectInPixels.x, damageRectInPixels.y,
                   opacity, buffers->mWhiteCX,
+--- mozilla/view/src/nsViewManager.cpp.orig	2007-09-24 22:57:35.000000000 +0300
++++ mozilla/view/src/nsViewManager.cpp	2007-09-24 22:58:04.000000000 +0300
+@@ -572,31 +572,33 @@ void nsViewManager::Refresh(nsView *aVie
+   nsRegion opaqueRegion;
+   AddCoveringWidgetsToOpaqueRegion(opaqueRegion, mContext, aView);
+   damageRegion.Sub(damageRegion, opaqueRegion);
+ 
+   RenderViews(aView, *localcx, damageRegion, ds);
+ 
+   ctx->Restore();
+ #else
+   // widgetDamageRectInPixels is the clipped damage area bounds,
+   // in pixels-relative-to-widget-origin
++#define FROM_TWIPS_INT(_x)  (NSAppUnitsToIntPixels((_x), (p2a)))
++#define NS_RECT_FROM_TWIPS_RECT(_r)   (nsRect(FROM_TWIPS_INT((_r).x), FROM_TWIPS_INT((_r).y), FROM_TWIPS_INT((_r).width), FROM_TWIPS_INT((_r).height)))
+   nsRect widgetDamageRectInPixels = damageRect;
+   widgetDamageRectInPixels.MoveBy(-viewRect.x, -viewRect.y);
+-  widgetDamageRectInPixels.ScaleRoundOut(t2p);
++  widgetDamageRectInPixels = NS_RECT_FROM_TWIPS_RECT(widgetDamageRectInPixels);
+ 
+   // On the Mac, we normally turn doublebuffering off because Quartz is
+   // doublebuffering for us. But we need to turn it on anyway if we need
+   // to use our blender, which requires access to the "current pixel values"
+   // when it blends onto the canvas.
+   // XXX disable opacity for now on the Mac because of this ... it'll get
+   // reenabled with cairo
+-  if (aUpdateFlags & NS_VMREFRESH_DOUBLE_BUFFER)
++  if (aUpdateFlags & NS_VMREFRESH_DOUBLE_BUFFER && widgetDamageRectInPixels.width && widgetDamageRectInPixels.height)
+   {
+     nsRect maxWidgetSize;
+     GetMaxWidgetBounds(maxWidgetSize);
+ 
+     nsRect r(0, 0, widgetDamageRectInPixels.width, widgetDamageRectInPixels.height);
+     if (NS_FAILED(localcx->GetBackbuffer(r, maxWidgetSize, PR_FALSE, ds))) {
+       //Failed to get backbuffer so turn off double buffering
+       aUpdateFlags &= ~NS_VMREFRESH_DOUBLE_BUFFER;
+     }
+   }
