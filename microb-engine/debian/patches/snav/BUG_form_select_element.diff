@@ -1,0 +1,134 @@
+--- src/nsSpatialNavigation.cpp.orig	2007-09-26 18:34:36.000000000 +0300
++++ src/nsSpatialNavigation.cpp	2007-09-26 19:47:46.000000000 +0300
+@@ -53,20 +53,21 @@ NS_IMPL_RELEASE(nsSpatialNavigation)
+ 
+ 
+ nsSpatialNavigation::nsSpatialNavigation(nsSpatialNavigationService* aService)
+ {
+   NS_ASSERTION(aService, "Should not create this object without a valid service");
+ 
+   mService = aService; // back pointer -- no reference
+ 
+   mNavigationFramesState = PR_FALSE;
+   mKeyPressedState = 0;
++  mKeyWasDown = PR_FALSE;
+ }
+ 
+ #ifdef DEBUG_romaxa
+ nsresult debug_content(nsISupports *content)
+ {
+   nsresult rv;
+   nsCOMPtr<nsIDOMNode> node;
+   node = do_QueryInterface(content, &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+   nsRect rect = makeRectRelativeToGlobalView(node);
+@@ -117,20 +118,21 @@ nsSpatialNavigation::Left()
+ 
+ NS_IMETHODIMP 
+ nsSpatialNavigation::Right()
+ {
+   return handleMove(eNavRight);
+ }
+ 
+ NS_IMETHODIMP
+ nsSpatialNavigation::KeyDown(nsIDOMEvent* aEvent)
+ {
++  mKeyWasDown = PR_TRUE;
+   if (!mService->mEnabled)
+     return NS_OK;
+ 
+   mKeyPressedCount = 0;
+ /*if (!mKeyPressedState) {
+     aEvent->StopPropagation();
+     aEvent->PreventDefault();
+   }*/
+   return HandleKey(aEvent, PR_FALSE);
+ }
+@@ -140,33 +142,38 @@ nsSpatialNavigation::KeyPress(nsIDOMEven
+ {
+   if (!mService->mEnabled)
+     return NS_OK;
+   mKeyPressedCount++;
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsSpatialNavigation::KeyUp(nsIDOMEvent* aEvent)
+ {
+-  if (!mService->mEnabled)
++  if (!mService->mEnabled) {
++    mKeyWasDown = PR_FALSE;
+     return NS_OK;
++  }
+ 
+   if (mKeyPressedCount > 1) {
+     if (mKeyPressedState == 0) {
+       mKeyPressedState = 1;
+     }
+     
+     mKeyPressedCount = 0;
++    mKeyWasDown = PR_FALSE;
+     return NS_OK;
+   }
+   mKeyPressedCount = 0;
+-  return HandleKey(aEvent, PR_TRUE);
++  nsresult rv = HandleKey(aEvent, PR_TRUE);
++  mKeyWasDown = PR_FALSE;
++  return rv;
+ }
+ 
+ NS_IMETHODIMP
+ nsSpatialNavigation::HandleEvent(nsIDOMEvent* aEvent)
+ {
+   return NS_OK;
+ }
+ 
+ nsresult 
+ nsSpatialNavigation::HandleKey(nsIDOMEvent* aEvent, PRBool aReal)
+@@ -222,20 +229,22 @@ nsSpatialNavigation::HandleKey(nsIDOMEve
+       if (mService->mIgnoreTextFields)
+       {
+         if (formControlType == NS_FORM_TEXTAREA ||
+             formControlType == NS_FORM_INPUT_TEXT ||
+             formControlType == NS_FORM_INPUT_PASSWORD ||
+             formControlType == NS_FORM_INPUT_FILE) 
+         {
+           return NS_OK;
+         }
+       }
++      if (formControlType == NS_FORM_SELECT && !mKeyWasDown)
++        return NS_OK;
+   }
+   else if (mService->mIgnoreTextFields && targetContent->IsNodeOfType(nsINode::eHTML)) 
+   {
+     // Test for isindex, a deprecated kind of text field. We're using a string 
+     // compare because <isindex> is not considered a form control, so it does 
+     // not support nsIFormControl or eHTML_FORM_CONTROL, and it's not worth 
+     // having a table of atoms just for it. 
+     
+       if (isContentOfType(targetContent, "isindex"))
+         return NS_OK;
+--- src/nsSpatialNavigationPrivate.h.orig	2007-09-25 18:03:53.000000000 +0300
++++ src/nsSpatialNavigationPrivate.h	2007-09-26 19:45:13.000000000 +0300
+@@ -165,20 +165,21 @@ private:
+   nsresult handleMove(int direction);
+   nsresult getContentInDirection(int direction, nsPresContext* presContext, nsRect& focusedRect, nsIFrame* focusedFrame, PRBool aFocusDocuments, PRBool isAREA, nsIContent** aContent);
+ 
+   nsCOMPtr<nsIDOMWindow> mTopWindow;
+ 
+   nsSpatialNavigationService* mService;
+ 
+   PRBool mNavigationFramesState;
+   PRUint32 mKeyPressedCount;
+   PRUint16 mKeyPressedState;
++  PRBool mKeyWasDown;
+ };
+ 
+ 
+ 
+ class nsSpatialNavigationService: public nsIObserver 
+ {
+ public:  
+   nsSpatialNavigationService();  
+   virtual ~nsSpatialNavigationService();  
+   
