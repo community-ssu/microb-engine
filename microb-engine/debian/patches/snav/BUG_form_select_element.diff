@@ -1,9 +1,9 @@
 # 71068 Select element looses focus while spatial navigation
---- src/nsSpatialNavigation.cpp.orig	2007-09-26 18:34:36.000000000 +0300
-+++ src/nsSpatialNavigation.cpp	2007-09-26 19:47:46.000000000 +0300
-@@ -53,20 +53,21 @@ NS_IMPL_RELEASE(nsSpatialNavigation)
- 
- 
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+@@ -55,16 +55,17 @@
  nsSpatialNavigation::nsSpatialNavigation(nsSpatialNavigationService* aService)
  {
    NS_ASSERTION(aService, "Should not create this object without a valid service");
@@ -21,11 +21,7 @@
    nsresult rv;
    nsCOMPtr<nsIDOMNode> node;
    node = do_QueryInterface(content, &rv);
-   NS_ENSURE_SUCCESS(rv, rv);
-   nsRect rect = makeRectRelativeToGlobalView(node);
-@@ -117,20 +118,21 @@ nsSpatialNavigation::Left()
- 
- NS_IMETHODIMP 
+@@ -119,16 +120,17 @@
  nsSpatialNavigation::Right()
  {
    return handleMove(eNavRight);
@@ -35,19 +31,15 @@
  nsSpatialNavigation::KeyDown(nsIDOMEvent* aEvent)
  {
 +  mKeyWasDown = PR_TRUE;
+   mKeyPressedCount = 0;
    if (!mService->mEnabled)
      return NS_OK;
  
-   mKeyPressedCount = 0;
  /*if (!mKeyPressedState) {
      aEvent->StopPropagation();
      aEvent->PreventDefault();
    }*/
-   return HandleKey(aEvent, PR_FALSE);
- }
-@@ -140,33 +142,38 @@ nsSpatialNavigation::KeyPress(nsIDOMEven
- {
-   if (!mService->mEnabled)
+@@ -142,29 +144,34 @@
      return NS_OK;
    mKeyPressedCount++;
    return NS_OK;
@@ -84,11 +76,7 @@
    return NS_OK;
  }
  
- nsresult 
- nsSpatialNavigation::HandleKey(nsIDOMEvent* aEvent, PRBool aReal)
-@@ -222,20 +229,22 @@ nsSpatialNavigation::HandleKey(nsIDOMEve
-       if (mService->mIgnoreTextFields)
-       {
+@@ -224,16 +231,18 @@
          if (formControlType == NS_FORM_TEXTAREA ||
              formControlType == NS_FORM_INPUT_TEXT ||
              formControlType == NS_FORM_INPUT_PASSWORD ||
@@ -107,13 +95,11 @@
      // not support nsIFormControl or eHTML_FORM_CONTROL, and it's not worth 
      // having a table of atoms just for it. 
      
-       if (isContentOfType(targetContent, "isindex"))
-         return NS_OK;
---- src/nsSpatialNavigationPrivate.h.orig	2007-09-25 18:03:53.000000000 +0300
-+++ src/nsSpatialNavigationPrivate.h	2007-09-26 19:45:13.000000000 +0300
-@@ -165,20 +165,21 @@ private:
-   nsresult handleMove(int direction);
-   nsresult getContentInDirection(int direction, nsPresContext* presContext, nsRect& focusedRect, nsIFrame* focusedFrame, PRBool aFocusDocuments, PRBool isAREA, nsIContent** aContent);
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+@@ -162,16 +162,17 @@
  
    nsCOMPtr<nsIDOMWindow> mTopWindow;
  
@@ -131,5 +117,3 @@
  {
  public:  
    nsSpatialNavigationService();  
-   virtual ~nsSpatialNavigationService();  
-   
