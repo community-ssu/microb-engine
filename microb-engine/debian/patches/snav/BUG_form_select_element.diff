@@ -96,7 +96,7 @@
            return NS_OK;
          }
        }
-+      if (formControlType == NS_FORM_SELECT && !mKeyWasDown)
++      if (formControlType == NS_FORM_SELECT && !mKeyWasDown && aReal)
 +        return NS_OK;
    }
    else if (mService->mIgnoreTextFields && targetContent->IsNodeOfType(nsINode::eHTML)) 
