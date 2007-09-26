@@ -147,6 +147,7 @@ perf_addon/605_css_erros_parsing_disable.diff
 crash/415_BUG371882_Editor_Crash.diff
 #crash/455_thebes_images_surface_crashes.diff
 crash/460_stylecontext_random_crash.diff
+crash/JSopcode_null_check1.diff
 #CRASHES
 
 465_BUG371253_enable_flat_install.diff

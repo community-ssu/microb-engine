@@ -1,0 +1,30 @@
+# Added check for string to avoid crash situation
+--- mozilla/js/src/jsobj.c.orig	2007-09-24 11:52:09.000000000 +0300
++++ mozilla/js/src/jsobj.c	2007-09-24 18:23:35.000000000 +0300
+@@ -3347,23 +3347,23 @@ js_LookupPropertyWithFlags(JSContext *cx
+ out:
+     *objp = NULL;
+     *propp = NULL;
+     return JS_TRUE;
+ }
+ 
+ JS_FRIEND_API(JSBool)
+ js_FindProperty(JSContext *cx, jsid id, JSObject **objp, JSObject **pobjp,
+                 JSProperty **propp)
+ {
+-    JSRuntime *rt;
+-    JSObject *obj, *pobj, *lastobj;
+-    JSProperty *prop;
++    JSRuntime *rt = NULL;
++    JSObject *obj = NULL, *pobj = NULL, *lastobj = NULL;
++    JSProperty *prop = NULL;
+ 
+     rt = cx->runtime;
+     obj = cx->fp->scopeChain;
+     do {
+         if (!OBJ_LOOKUP_PROPERTY(cx, obj, id, &pobj, &prop))
+             return JS_FALSE;
+         if (prop) {
+             *objp = obj;
+             *pobjp = pobj;
+             *propp = prop;
