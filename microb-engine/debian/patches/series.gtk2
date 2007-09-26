@@ -60,6 +60,7 @@ snav/BUG_FixBrokenDirection.diff
 snav/BUG_zero_size_links.diff
 snav/SNAV_rich_edit.diff
 snav/BUG50934.spatial_scrolling.diff
+snav/DISABLE_Selecting_offscreen_element.diff
 # SNAV
 
 055_MozmicrobComp_lp0.diff -p0
