@@ -286,6 +286,7 @@ trunk_updates/attachment.cgi?id=280009.diff
 690_BUG65694.error_page.true.zoom.diff
 700_BUG65700.theeming.diff
 710_disable_F6_focus.diff
+720_Bug70843.RestoreZoomState.diff
 
 valgrind/bug66825.diff
 
