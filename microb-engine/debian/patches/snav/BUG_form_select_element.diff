@@ -1,3 +1,4 @@
+# 71068 Select element looses focus while spatial navigation
 --- src/nsSpatialNavigation.cpp.orig	2007-09-26 18:34:36.000000000 +0300
 +++ src/nsSpatialNavigation.cpp	2007-09-26 19:47:46.000000000 +0300
 @@ -53,20 +53,21 @@ NS_IMPL_RELEASE(nsSpatialNavigation)
