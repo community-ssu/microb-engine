@@ -290,6 +290,7 @@ trunk_updates/attachment.cgi?id=280009.diff
 700_BUG65700.theeming.diff
 710_disable_F6_focus.diff
 720_Bug70843.RestoreZoomState.diff
+730_ftv_improvements.diff
 
 valgrind/bug66825.diff
 

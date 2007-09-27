@@ -1,0 +1,66 @@
+diff -ruN mozilla.orig/extensions/ftv/src/nsFitToView.cpp mozilla/extensions/ftv/src/nsFitToView.cpp
+--- mozilla.orig/extensions/ftv/src/nsFitToView.cpp	2007-09-27 13:02:31.000000000 +0300
++++ mozilla/extensions/ftv/src/nsFitToView.cpp	2007-09-27 13:02:54.000000000 +0300
+@@ -379,6 +379,7 @@
+ nsresult
+ nsFitToView::SetOptimize(nsISupports *aObject, const void * data)
+ {
++  nsresult rv;
+   nsCOMPtr<nsIStyleSheetService> styleSheetService = do_GetService("@mozilla.org/content/style-sheet-service;1");
+   NS_ENSURE_TRUE(styleSheetService, NS_OK);
+   nsCOMPtr<nsIURI> uri;
+@@ -392,6 +393,54 @@
+     if (mStyleSheetRegistered)
+       styleSheetService->UnregisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
+     mStyleSheetRegistered = PR_FALSE;
++
++    nsCOMPtr<nsIDOMWindow> parent = nsnull;
++    if (aObject)
++    {
++      nsCOMPtr <nsIWebBrowser> browser = do_QueryInterface(aObject, &rv);
++      if (NS_SUCCEEDED(rv) && browser)
++        browser->GetContentDOMWindow(getter_AddRefs(parent));
++      if (!parent) {
++        parent = do_QueryInterface(aObject, &rv);
++        if (NS_FAILED(rv) || !parent)
++        {
++          nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aObject, &rv);
++          if (NS_SUCCEEDED(rv) && node)
++          {
++            nsCOMPtr <nsIDOMDocument> nodeDoc;
++            rv = node->GetOwnerDocument(getter_AddRefs(nodeDoc));
++            NS_ENSURE_SUCCESS(rv, rv);
++            nsCOMPtr <nsIDOMDocumentView> docView = do_QueryInterface(nodeDoc, &rv);
++            NS_ENSURE_SUCCESS(rv, rv);
++            nsCOMPtr <nsIDOMAbstractView> absView;
++            NS_ENSURE_SUCCESS(rv, rv);
++            rv = docView->GetDefaultView(getter_AddRefs(absView));
++
++            NS_ENSURE_SUCCESS(rv, rv);
++            parent = do_QueryInterface(absView, &rv);
++            NS_ENSURE_SUCCESS(rv, rv);
++          }
++        }
++      }
++    }
++    if (!parent)
++    {
++      nsCOMPtr<nsIWindowWatcher> wwatcher = do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
++      NS_ENSURE_SUCCESS(rv, rv);
++      rv = wwatcher->GetActiveWindow(getter_AddRefs(parent));
++      NS_ENSURE_SUCCESS(rv, rv);
++    }
++
++    nsCOMPtr<nsIDOMDocument> doc;
++    rv = parent->GetDocument(getter_AddRefs(doc));
++    NS_ENSURE_SUCCESS(rv, rv);
++    nsCOMPtr<nsIPresShell> ps;
++    GetDocumentPresShell(doc, getter_AddRefs(ps));
++    
++    if(ps)
++    {        
++      ps->StyleChangeReflow();
++    }
+   }
+   return NS_OK;
+ }
