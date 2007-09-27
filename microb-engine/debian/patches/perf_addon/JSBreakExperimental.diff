@@ -83,21 +83,21 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
    if (callbackCount & MAYBE_GC_BRANCH_COUNT_MASK) {
 +    nsCOMPtr<nsIAppShell> appShell = do_GetService(kAppShellCID);
 +    if (appShell) {
-+    //  nsCOMPtr<nsPIDOMWindow> win(do_QueryInterface(ctx->GetGlobalObject()));
-+    //  if (win) {
-+    //    nsIDocShell *docShell = win->GetDocShell();
-+    //    if (docShell) {
-+    //      nsCOMPtr<nsIBaseWindow> baseWin(do_QueryInterface(docShell));
-+    //      if (baseWin) {
-+    //        baseWin->SetEnabled(PR_FALSE);
-+    //        ctx->SetScriptsEnabled(PR_FALSE, PR_FALSE);
++      nsCOMPtr<nsPIDOMWindow> win(do_QueryInterface(ctx->GetGlobalObject()));
++      if (win) {
++        nsIDocShell *docShell = win->GetDocShell();
++        if (docShell) {
++          nsCOMPtr<nsIBaseWindow> baseWin(do_QueryInterface(docShell));
++          if (baseWin) {
++            baseWin->SetEnabled(PR_FALSE);
++            ctx->SetScriptsEnabled(PR_FALSE, PR_FALSE);
 +            appShell->WakeupNative(PR_FALSE);
-+    //        baseWin->SetEnabled(PR_TRUE);
-+    //        ctx->SetScriptsEnabled(PR_TRUE, PR_FALSE);
-+    //        return JS_TRUE;
-+    //      }
-+    //    }
-+    //  }
++            baseWin->SetEnabled(PR_TRUE);
++            ctx->SetScriptsEnabled(PR_TRUE, PR_FALSE);
++            return JS_TRUE;
++          }
++        }
++      }
 +    }
      return JS_TRUE;
    }
