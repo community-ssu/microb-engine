@@ -1,0 +1,25 @@
+# Fix for linkage libxul.so library with pangoft in old GTK/PANGO configuration
+#
+Index: mozilla/toolkit/library/libxul-rules.mk
+===================================================================
+--- mozilla.orig/toolkit/library/libxul-rules.mk
++++ mozilla/toolkit/library/libxul-rules.mk
+@@ -83,17 +83,17 @@
+ EXTRA_DSO_LDOPTS += -lcups
+ ifdef MOZ_ENABLE_GLITZ
+ EXTRA_DSO_LDOPTS += -lmozglitzagl -framework OpenGL -framework AGL
+ endif
+ endif
+ endif # MOZ_ENABLE_CAIRO_GFX
+ 
+ ifdef MOZ_ENABLE_PANGO
+-EXTRA_DSO_LDOPTS += $(MOZ_PANGO_LIBS)
++EXTRA_DSO_LDOPTS += $(MOZ_PANGO_LIBS) -lpangoft2-1.0
+ endif
+ 
+ EXTRA_DSO_LDOPTS += $(MOZ_CAIRO_LIBS)
+ 
+ export:: dlldeps.cpp
+ 
+ dlldeps.cpp: $(topsrcdir)/xpcom/build/dlldeps.cpp
+ 	$(INSTALL) $^ .

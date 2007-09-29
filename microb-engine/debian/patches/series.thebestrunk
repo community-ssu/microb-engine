@@ -2,14 +2,14 @@
 
 # BUILD BUSTAGE
 last_trunk/buildcfg/050_BUG347854_Building_XULRunner.trunk.diff
+last_trunk/buildcfg/045_BUG323928_bustage_fix_rev2_lp0.trunk.diff
 # BUILD BUSTAGE
 
 # SNAV
-#snav/045_getClientRects.diff -p0
-snav/395_SNAV_BUGS.diff
+snav/045_getClientRects.diff -p0
+last_trunk/snav/395_SNAV_BUGS.trunk.diff
 snav/445_snav_crash.diff
 snav/962_snav_improvements.diff
-#snav/990_spatial_stylus_navigation.diff
 snav/555_BUG_52019.diff
 snav/BUG_55568_invalid_read.vl.diff
 last_trunk/snav/BUG_FirstElSkip.trunk.diff
@@ -18,11 +18,13 @@ snav/BUG_NewUnitsForSnav.diff
 snav/BUG_FixBrokenDirection.diff
 snav/BUG_zero_size_links.diff
 snav/SNAV_rich_edit.diff
+last_trunk/snav/BUG50934.spatial_scrolling.trunk.diff
+snav/DISABLE_Selecting_offscreen_element.diff
+last_trunk/snav/BUG_form_select_element.trunk.diff
 # SNAV
 
 055_MozmicrobComp_lp0.diff -p0
 060_BUG349921_toolkit_branding.diff
-065_PREF_METRICS_TOOLKIT_lp0.diff -p0
 070_BUILDFIX_embedding_tests.diff
 095_OUTSIDE_entropy.diff
 100_OUTSIDE_zip.diff
@@ -31,9 +33,8 @@ last_trunk/115_MICROB_moz_mork_disable.trunk.diff
 120_MICROB_moz_xremote_disable.diff
 125_MICROB_autoset_grehome_display.diff
 last_trunk/130_BUG_security.trunk.diff
-135_MICROB_microb_defines.diff
+last_trunk/135_MICROB_microb_defines.trunk.diff
 last_trunk/140_BUG340510_nsBoxObject.trunk.diff
-150_BUG_testgtkembed-pushpopembed.diff
 last_trunk/155_BUG_mainthreadalreadydead.trunk.diff
 #160_MICROB_about_fixes_lp0.diff -p0
 last_trunk/165_BUILDFIX_libxul_no_nss.trunk.diff
@@ -61,14 +62,14 @@ last_trunk/250_BUG347731_SpatialNavigationFIXED_LIBXUL.trunk.diff
 295_Native_theme_gtk_pref.diff
 300_BUG372081_disable_profile_sighandler.diff
 315_XMLPRETTY_PRINT.diff
-320_BUG_toolkit_cairo_linkage.diff
+last_trunk/320_BUG_toolkit_cairo_linkage.trunk.diff
 #325_BUG345517_firefox.libxul.diff
 330_MBUG_42865_zoom_navigation_fix.diff
 335_DISABLE_DEFAULT_DOWNLOAD_SUFFIX.diff
 340_Fix_NativeGtkButtonsWidgets.diff
 345_BUG382486_EngineOutputProtocolSupport.diff
 350_GnomeVfsWriteSupport.diff
-355_MICROB_PANGO_LINKING.diff
+last_trunk/355_MICROB_PANGO_LINKING.trunk.diff
 #370_Suspend_Plugin_At_Start.diff
 
 390_DONT_CHECKIN_adding_get_content_length_method.diff
@@ -160,7 +161,7 @@ last_trunk/275_BUG_353882_lp0.trunk.diff -p0
 #280_BUG_339358_lp0.diff -p0
 #285_BUG_311566.diff
 #305_HACK_BOLDER_WEIGHT.diff
-310_BUG_915.diff
+last_trunk/310_BUG_915.trunk.diff
 360_BUG368182_xft_engine.diff
 365_BUG367177_thebes_text_Frame.diff
 
@@ -176,10 +177,9 @@ last_trunk/380_XFT_ALWAYS_FIX.trunk.diff
 385_system_cairo_build.diff
 430_bug372703_bustage_fix.diff
 
-crash/395_TrimSpaceFixCrash.diff
+last_trunk/crash/395_TrimSpaceFixCrash.trunk.diff
 #crash/465_NB53478_cache_session_crash.diff
 crash/FitToViewRandomCrashes.diff
-crash/JS_Destroy.Crash.diff
 
 440_BUG376279_security_cross_compile.diff
 445_nspr_dpkg_cross.diff
@@ -187,9 +187,22 @@ crash/JS_Destroy.Crash.diff
 455_xpcom_uclibc.diff
 460_uclibc_strings_index.diff
 
-480_BUG377077_probably_workaround_fix.diff
 485_netwerk_buffer_count.diff
 
 640_mouse_event_order.diff
 last_trunk/630_BUG204011_theme_change.trunk.diff
 buildcfg/BUG393707.fast.build.fix.diff
+655_unblock_mouseevents_ontoolbar.diff
+
+last_trunk/660_BUG65511.imgdoc_zoom.trunk.diff
+665_malformedURI_message_rephrased.diff -p0
+
+670_obex_error_handling.diff
+675_unknown_protocol_handling.diff
+last_trunk/680_bug54733.diff.trunk.diff
+700_BUG65700.theeming.diff
+710_disable_F6_focus.diff
+720_Bug70843.RestoreZoomState.diff
+730_ftv_improvements.diff
+
+valgrind/bug66825.diff

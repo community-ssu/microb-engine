@@ -1,0 +1,686 @@
+# Maemo Bugzilla Bug 1791 link navigation should be triggered by key-up not key-down and only if scrolling isn't triggered
+# bug 50934 [SNAV] Incorrect focus behaviour when scrolling page with HW keys
+
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+@@ -54,50 +54,128 @@
+ 
+ nsSpatialNavigation::nsSpatialNavigation(nsSpatialNavigationService* aService)
+ {
+   NS_ASSERTION(aService, "Should not create this object without a valid service");
+ 
+   mService = aService; // back pointer -- no reference
+ 
+   mNavigationFramesState = PR_FALSE;
++  mKeyPressedState = 0;
+ }
+ 
++#ifdef DEBUG_romaxa
++nsresult debug_content(nsISupports *content)
++{
++  nsresult rv;
++  nsCOMPtr<nsIDOMNode> node;
++  node = do_QueryInterface(content, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
++  nsRect rect = makeRectRelativeToGlobalView(node);
++  nsString str;
++  node->GetNodeName(str);
++  printf("DBG:N:'%s', rect[%i,%i,%i,%i]",
++          NS_ConvertUTF16toUTF8(str).get(),
++          rect.x,rect.y,rect.width,rect.height);
++/*
++  nsCOMPtr<nsIDOMNSHTMLElement> nselem;
++  nselem = do_QueryInterface(content, &rv);
++  if (nselem) {
++    PRInt32 st,sl,ct,cl,ot,ol;
++    nselem->GetScrollTop(&st);
++    nselem->GetScrollLeft(&sl);
++    nselem->GetClientTop(&ct);
++    nselem->GetClientLeft(&cl);
++    nselem->GetOffsetTop(&ot);
++    nselem->GetOffsetLeft(&ol);
++    printf(" st:%i,sl:%i,ct:%i,cl:%i,ot:%i,ol%i ", st,sl,ct,cl,ot,ol);
++  }
++*/
++  printf("\n");
++}
++#endif
++
+ nsSpatialNavigation::~nsSpatialNavigation()
+ {
+ }
+ 
+-NS_IMETHODIMP
+-nsSpatialNavigation::HandleEvent(nsIDOMEvent* aEvent)
++NS_IMETHODIMP
++nsSpatialNavigation::Up()
+ {
+-  return NS_OK;
++  return handleMove(eNavUp);
++}
++
++NS_IMETHODIMP
++nsSpatialNavigation::Down()
++{
++  return handleMove(eNavDown);
++}
++
++NS_IMETHODIMP
++nsSpatialNavigation::Left()
++{
++  return handleMove(eNavLeft);
++}
++
++NS_IMETHODIMP
++nsSpatialNavigation::Right()
++{
++  return handleMove(eNavRight);
+ }
+ 
+ NS_IMETHODIMP
+-nsSpatialNavigation::KeyUp(nsIDOMEvent* aEvent)
++nsSpatialNavigation::KeyDown(nsIDOMEvent* aEvent)
+ {
+-  return NS_OK;
++  mKeyPressedCount = 0;
++  if (!mService->mEnabled)
++    return NS_OK;
++
++/*if (!mKeyPressedState) {
++    aEvent->StopPropagation();
++    aEvent->PreventDefault();
++  }*/
++  return HandleKey(aEvent, PR_FALSE);
+ }
+ 
+ NS_IMETHODIMP
+ nsSpatialNavigation::KeyPress(nsIDOMEvent* aEvent)
+ {
++  if (!mService->mEnabled)
++    return NS_OK;
++  mKeyPressedCount++;
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+-nsSpatialNavigation::KeyDown(nsIDOMEvent* aEvent)
++nsSpatialNavigation::KeyUp(nsIDOMEvent* aEvent)
+ {
+-  nsCOMPtr<nsIPrefBranch> prefBranch = do_GetService(NS_PREFSERVICE_CONTRACTID);
+-  PRBool enabled;
+-  prefBranch->GetBoolPref("snav.enabled", &enabled);
+-  if (!enabled) //  this doesn't work.  wtf? if (!mService->mEnabled)
++  if (!mService->mEnabled)
+     return NS_OK;
+- 
+ 
++  if (mKeyPressedCount > 1) {
++    if (mKeyPressedState == 0) {
++      mKeyPressedState = 1;
++    }
++
++    mKeyPressedCount = 0;
++    return NS_OK;
++  }
++  mKeyPressedCount = 0;
++  return HandleKey(aEvent, PR_TRUE);
++}
++
++NS_IMETHODIMP
++nsSpatialNavigation::HandleEvent(nsIDOMEvent* aEvent)
++{
++  return NS_OK;
++}
++
++nsresult
++nsSpatialNavigation::HandleKey(nsIDOMEvent* aEvent, PRBool aReal)
++{
+   nsCOMPtr<nsIDOMNSUIEvent> uiEvent(do_QueryInterface(aEvent));
+   if (uiEvent)
+   {
+     // If a web page wants to use the keys mapped to our
+     // move, they have to use evt.preventDefault() after
+     // they get the key
+ 
+     PRBool preventDefault;
+@@ -233,17 +311,17 @@
+     }
+ 
+     if (textLength != 0 && selectionStart != 0)
+       return NS_OK;
+ 
+     // We're using this key, no one else should
+     aEvent->StopPropagation();
+     aEvent->PreventDefault();
+-    return Left();
++    return aReal?Left():NS_OK;
+   }
+ 
+   if (keyCode == mService->mKeyCodeRight)
+   {
+     //************************************************************************************
+     // NS_FORM_TEXTAREA & (NS_FORM_INPUT_TEXT | NS_FORM_INPUT_PASSWORD | NS_FORM_INPUT_FILE) cases
+ 
+     PRInt32 selectionEnd = 0, textLength = 0;
+@@ -266,17 +344,17 @@
+       }
+     }
+ 
+     if (textLength  != selectionEnd)
+       return NS_OK;
+ 
+     aEvent->StopPropagation();
+     aEvent->PreventDefault();
+-    return Right();
++    return aReal?Right():NS_OK;
+   }
+ 
+   if (keyCode == mService->mKeyCodeUp)
+   {
+ 
+     // If we are going up or down, in a select, lets not
+     // navigate.
+     //
+@@ -307,17 +385,17 @@
+ 
+       if (textLength != 0 && selectionStart != 0)
+         return NS_OK;
+     }
+ 
+     // We're using this key, no one else should
+     aEvent->StopPropagation();
+     aEvent->PreventDefault();
+-    return Up();
++    return aReal?Up():NS_OK;
+   }
+ 
+   if (keyCode == mService->mKeyCodeDown)
+   {
+     // If we are going up or down, in a select, lets not
+     // navigate.
+     //
+     // FIX: What we really want to do is determine if we are
+@@ -343,19 +421,18 @@
+       }
+ 
+       if (textLength  != selectionEnd)
+         return NS_OK;
+     }
+ 
+     aEvent->StopPropagation();  // We're using this key, no one else should
+     aEvent->PreventDefault();
+-    return Down();
++    return aReal?Down():NS_OK;
+   }
+-  
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP 
+ nsSpatialNavigation::Init(nsIDOMWindow *aWindow)
+ {
+   mTopWindow = aWindow;
+ 
+@@ -387,40 +464,16 @@
+                                      PR_FALSE, 
+                                      systemGroup);
+   mTopWindow = nsnull;
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP 
+-nsSpatialNavigation::Up()
+-{
+-  return handleMove(eNavUp);
+-}
+-
+-NS_IMETHODIMP 
+-nsSpatialNavigation::Down()
+-{
+-  return handleMove(eNavDown);
+-}
+-
+-NS_IMETHODIMP 
+-nsSpatialNavigation::Left()
+-{
+-  return handleMove(eNavLeft);
+-}
+-
+-NS_IMETHODIMP 
+-nsSpatialNavigation::Right()
+-{
+-  return handleMove(eNavRight);
+-}
+-
+-NS_IMETHODIMP 
+ nsSpatialNavigation::GetAttachedWindow(nsIDOMWindow * *aAttachedWindow)
+ {
+   NS_IF_ADDREF(*aAttachedWindow = mTopWindow);
+   return NS_OK;
+ }
+ 
+ void DoTraversal(int aDirection,
+                  nsIBidirectionalEnumerator* aFrameTraversal, 
+@@ -653,40 +706,140 @@
+ 
+   if ( (hhElement || iFrameElement) && mNavigationFramesState)
+   {
+     mNavigationFramesState = PR_FALSE;
+   }
+ 
+   return NS_OK;
+ }
++
++static nsresult
++PutFakeSelectionTo(nsPresContext* aPresContext, PRInt32 aY = 0, PRBool aForward = PR_TRUE, PRInt32 aX = 0)
++{
++  NS_ENSURE_ARG_POINTER(aPresContext);
++  nsCOMPtr<nsIPresShell> presShell = aPresContext->PresShell();
++  NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
++  nsIViewManager* viewManager = presShell->GetViewManager();
++  NS_ENSURE_TRUE(viewManager, NS_ERROR_FAILURE);
++  nsIView* rootView = nsnull;
++  viewManager->GetRootView(rootView);
++  NS_ENSURE_TRUE(rootView, NS_ERROR_FAILURE);
++  nsEventStatus status;
++  nsMouseEvent event(PR_FALSE, NS_MOUSE_BUTTON_DOWN, rootView->GetWidget(), nsMouseEvent::eReal);
++  event.refPoint.x = aX;
++  event.refPoint.y = aY;
++  event.isAlt = PR_TRUE;
++  event.time = PR_IntervalNow();
++  viewManager->DispatchEvent(&event, &status);
++  event.message = NS_MOUSE_BUTTON_UP;
++  event.time = PR_IntervalNow();
++  viewManager->DispatchEvent(&event, &status);
++  return aPresContext->EventStateManager()->ShiftFocus(aForward, nsnull);
++}
++
++static nsPoint
++getPointByDirection(nsIDOMWindow *aWin, PRInt32 aDirection, PRBool *aDoForward = nsnull)
++{
++  nsPoint pt(0,0);
++  NS_ENSURE_TRUE(aWin, pt);
++  nsCOMPtr<nsIDOMWindowInternal> dwinint = do_QueryInterface(aWin);
++  PRInt32 oh,sy,yo,smy;
++  if (aDirection == eNavDown)
++    pt.y = 0;
++  else if (aDirection == eNavUp) {
++    dwinint->GetOuterHeight(&oh);
++    dwinint->GetScreenY(&sy);
++    pt.y = oh - sy;
++  }
++  else {
++    dwinint->GetOuterHeight(&oh);
++    dwinint->GetScreenY(&sy);
++    pt.y = (oh - sy) / 2;
++    if (aDoForward)
++      *aDoForward = eNavLeft?PR_TRUE:PR_FALSE;
++  }
++  return pt;
++}
+ 
++PRBool
++nsSpatialNavigation::isContentInsideWindow(nsIContent* aContent, nsIDOMWindow* aWin, PRInt32 *xpos, PRInt32 *ypos)
++{
++  PRBool inside = PR_TRUE;
++  NS_ENSURE_TRUE(aWin, PR_FALSE);
++  NS_ENSURE_TRUE(aContent, PR_FALSE);
++  nsCOMPtr<nsIDOMWindowInternal> dwinint = do_QueryInterface(aWin);
++  NS_ENSURE_TRUE(dwinint, PR_FALSE);
++  nsCOMPtr<nsIDOMNode> node;
++  node = do_QueryInterface(aContent);
++  nsRect rect = makeRectRelativeToGlobalView(node);
++  PRInt32 xo,yo,ow,oh;
++  dwinint->GetOuterHeight(&oh);
++  dwinint->GetOuterWidth(&ow);
++  dwinint->GetPageYOffset(&yo);
++  dwinint->GetPageXOffset(&xo);
++  if (rect.y + rect.height < yo) {
++    inside = PR_FALSE;
++    if (ypos)
++      *ypos = -1;
++  }
++  if (yo + oh < rect.y) {
++    inside = PR_FALSE;
++    if (ypos)
++      *ypos = 1;
++  }
++  if (rect.x + rect.width < xo) {
++    inside = PR_FALSE;
++    if (xpos)
++      *xpos = -1;
++  }
++  if (xo + ow < rect.x) {
++    inside = PR_FALSE;
++    if (xpos)
++      *xpos = 1;
++  }
++  return inside;
++}
+ 
+ nsresult
+ nsSpatialNavigation::handleMove(int direction)
+ {
+   nsCOMPtr<nsIContent> focusedContent;
+-  PRBool doScroll = getFocusedContent(direction, getter_AddRefs(focusedContent));
++  getFocusedContent(direction, getter_AddRefs(focusedContent));
+ 
+   // there are some websites which have no focusable elements,
+   // only text, for example. In these cases, scrolling have to be
+   // performed by snav.
+   if (!focusedContent) {
+-     if (doScroll)
+-       ScrollWindow(direction, getContentWindow());
+-     return NS_OK;
++    PRBool forward = PR_TRUE;
++    nsPoint pt = getPointByDirection(getContentWindow(), direction, &forward);
++    if (NS_SUCCEEDED(PutFakeSelectionTo(getPresContext(nsnull), pt.y, forward)))
++      return NS_OK;
++    ScrollWindow(direction, getContentWindow());
++    return NS_OK;
+   }
+ 
+   nsPresContext* presContext = getPresContext(focusedContent);
+   if(!presContext)
+     return NS_ERROR_NULL_POINTER;
+ 
+   nsIFrame* focusedFrame;
+   getFrameForContent(focusedContent, &focusedFrame);
+ 
++  if (mKeyPressedState) {
++    if (!isContentInsideWindow(focusedContent, mTopWindow)) {
++      mKeyPressedState = 0;
++      PRBool forward = PR_TRUE;
++      nsPoint pt = getPointByDirection(getContentWindow(), direction, &forward);
++      PutFakeSelectionTo(getPresContext(nsnull), pt.y, forward);
++      return NS_OK;
++    }
++  }
++  mKeyPressedState = 0;
++
+   nsRect focusedRect;
+   PRBool isAREA = isArea(focusedContent);
+   if (!isAREA) 
+   {
+     // RECT !!
+ 		if (focusedFrame)
+ 	 		focusedRect = makeRectRelativeToGlobalView(focusedFrame);
+ 
+@@ -783,18 +936,16 @@
+   }
+ 
+   if (c) {
+     nsCOMPtr<nsIContent> subdocContent;
+     getContentFromFrame(c, getter_AddRefs(subdocContent));
+ 
+     if (subdocContent) {
+       mNavigationFramesState = PR_TRUE;
+-      setFocusedContent(c);
+-      return NS_OK;
+     }
+ 
+     setFocusedContent(c);
+     return NS_OK;
+   }
+   
+   // if everything fails, default is to move the focus just as if the user hit tab.
+   //  presContext->EventStateManager()->ShiftFocus(PR_TRUE, focusedContent);
+@@ -804,60 +955,40 @@
+   ScrollWindow(direction, getContentWindow());
+ 
+   ///////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+   return NS_OK;
+ 
+ }
+ 
+-PRBool
++void
+ nsSpatialNavigation::getFocusedContent(int direction, nsIContent** aContent)
+ {
+   *aContent = nsnull;
+   
+   nsCOMPtr<nsIDOMWindow> contentWindow = getContentWindow();
+   if (!contentWindow)
+-    return PR_TRUE;
++    return;
+   
+   nsCOMPtr<nsPIDOMWindow> privateWindow = do_QueryInterface(contentWindow);
+   nsIFocusController *focusController = privateWindow->GetRootFocusController();
+   
+   if (!focusController)
+-    return PR_TRUE;
++    return;
+   
+   nsCOMPtr<nsIDOMElement> element;
+   focusController->GetFocusedElement(getter_AddRefs(element));
+   
+   if (element)
+   {
+     nsCOMPtr<nsIContent> content = do_QueryInterface(element);
+     NS_IF_ADDREF(*aContent = content);
+-    return PR_TRUE;
++    return;
+   }
+-
+-  contentWindow = getContentWindow();
+-  DisableJSScope foopy (contentWindow);
+-
+-  //xxxx should/can we prevent it from going into chrome???
+-//  if (direction == eNavLeft || direction == eNavUp)
+-   focusController->MoveFocus(PR_TRUE, nsnull);
+-   nsresult rv = focusController->GetFocusedElement(getter_AddRefs(element));
+-   if (element) {
+-     nsCOMPtr<nsIContent> c = do_QueryInterface(element);
+-     foopy.~DisableJSScope();
+-     setFocusedContent(c);
+-     return PR_FALSE;
+-   }
+-//  else
+-//    focusController->MoveFocus(PR_FALSE, nsnull);
+-  
+-  // so there is no focused content -- lets make some up, hightlight it and return.  
+-//  focusController->GetFocusedElement(getter_AddRefs(element));
+-  return PR_TRUE;
+ }
+ 
+ void 
+ nsSpatialNavigation::setFocusedContent(nsIContent* c)
+ {
+   if (!c)
+     return;
+ 
+@@ -873,25 +1004,27 @@
+   nsCOMPtr<nsIDOMNode> node(do_QueryInterface(element));
+ 
+   nsCOMPtr<nsIDOMWindow> contentWindow;
+   if (mService->mDisableJSWhenFocusing)
+     contentWindow = getContentWindow();
+ 
+   DisableJSScope foopy (contentWindow);
+ 
+-  //#ifdef OLDER_LAYOUT  
+   nsPresContext* presContext = getPresContext(c);
+   nsCOMPtr<nsIPresShell> presShell = presContext->PresShell();
+-  presContext->EventStateManager()->SetContentState(c, NS_EVENT_STATE_FOCUS);
+-  presShell->ScrollContentIntoView(c, 
+-                                   NS_PRESSHELL_SCROLL_IF_NOT_VISIBLE,
+-                                   NS_PRESSHELL_SCROLL_IF_NOT_VISIBLE);
+-  presContext->EventStateManager()->MoveCaretToFocus();
+-
++  //#ifdef OLDER_LAYOUT
++  if (mService->mOrderLayout) {
++    // Google Spreadsheets works ugly with this call
++    presContext->EventStateManager()->SetContentState(c, NS_EVENT_STATE_FOCUS);
++    presShell->ScrollContentIntoView(c,
++                                     NS_PRESSHELL_SCROLL_IF_NOT_VISIBLE,
++                                     NS_PRESSHELL_SCROLL_IF_NOT_VISIBLE);
++    presContext->EventStateManager()->MoveCaretToFocus();
++  }
+   //#else
+   nsCOMPtr<nsIDOMNSHTMLElement> nsElement = do_QueryInterface(element);
+   if (nsElement) 
+     nsElement->Focus();
+   //#endif
+ 
+   nsIFrame* focusedFrame;
+   getFrameForContent(c, &focusedFrame);
+@@ -931,21 +1064,26 @@
+   NS_ADDREF(resultWindow = windowContent);
+   return resultWindow;
+ }
+ 
+ 
+ nsPresContext* 
+ nsSpatialNavigation::getPresContext(nsIContent* content)
+ {
+-  if (!content) return nsnull;
+-  
+-  nsCOMPtr<nsIDocument> doc = content->GetDocument();
+-  if (!doc) return nsnull;
+-  
++  nsCOMPtr<nsIDocument> doc;
++  if (!content) {
++    nsCOMPtr<nsIDOMDocument> domDoc;
++    if (mTopWindow)
++      mTopWindow->GetDocument(getter_AddRefs(domDoc));
++    doc = do_QueryInterface(domDoc);
++  } else
++    doc = content->GetDocument();
++
++  if (!doc) return nsnull;
+   // the only case where there could be more shells in printpreview
+   nsIPresShell *shell = doc->GetPrimaryShell();
+   if (!shell) return nsnull;
+   
+   nsPresContext *presContext = shell->GetPresContext();
+   return presContext;
+ }
+ 
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+@@ -141,33 +141,37 @@
+   NS_IMETHOD KeyUp(nsIDOMEvent* aKeyEvent);
+   NS_IMETHOD KeyPress(nsIDOMEvent* aKeyEvent);
+   
+   nsSpatialNavigation(nsSpatialNavigationService* aService);
+   
+ private:
+   ~nsSpatialNavigation();
+   
++  nsresult HandleKey(nsIDOMEvent* aKeyEvent, PRBool aReal);
+   nsPresContext* getPresContext(nsIContent* aContent);
+   
+   PRInt64 spatialDistance(int direction, nsRect& a, nsRect& b);
+   
+   nsIDOMWindow* getContentWindow();
+   
+   void setFocusedContent(nsIContent* aContent);
+-  PRBool getFocusedContent(int direction, nsIContent** aContent);
++  void getFocusedContent(int direction, nsIContent** aContent);
++  PRBool isContentInsideWindow(nsIContent* aContent, nsIDOMWindow* aWin, PRInt32 *xpos = nsnull, PRInt32 *ypos = nsnull);
+   
+   nsresult handleMove(int direction);
+   nsresult getContentInDirection(int direction, nsPresContext* presContext, nsRect& focusedRect, nsIFrame* focusedFrame, PRBool aFocusDocuments, PRBool isAREA, nsIContent** aContent);
+ 
+   nsCOMPtr<nsIDOMWindow> mTopWindow;
+ 
+   nsSpatialNavigationService* mService;
+ 
+   PRBool mNavigationFramesState;
++  PRUint32 mKeyPressedCount;
++  PRUint16 mKeyPressedState;
+ };
+ 
+ 
+ 
+ class nsSpatialNavigationService: public nsIObserver 
+ {
+ public:  
+   nsSpatialNavigationService();  
+@@ -175,16 +179,17 @@
+   
+   NS_DECL_ISUPPORTS
+   NS_DECL_NSIOBSERVER
+ 
+   nsCOMArray<nsISpatialNavigation> mObjects;
+ 
+   PRBool  mEnabled;
+   PRBool  mIgnoreTextFields;
++  PRBool  mOrderLayout;
+   PRBool  mDisableJSWhenFocusing;
+ 
+   PRInt32 mKeyCodeLeft;
+   PRInt32 mKeyCodeRight;
+   PRInt32 mKeyCodeUp;
+   PRInt32 mKeyCodeDown;
+   PRInt32 mKeyCodeModifier;
+ 
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp
+@@ -36,16 +36,17 @@
+ 
+ #include "nsSpatialNavigationPrivate.h"
+ #include "nsIObserverService.h"
+ 
+ nsSpatialNavigationService::nsSpatialNavigationService()  
+ {
+   mEnabled             = PR_TRUE;
+   mIgnoreTextFields    = PR_FALSE;
++  mOrderLayout         = PR_TRUE;
+   mDisableJSWhenFocusing = PR_TRUE;
+ 
+   mKeyCodeLeft         = nsIDOMKeyEvent::DOM_VK_LEFT;
+   mKeyCodeRight        = nsIDOMKeyEvent::DOM_VK_RIGHT;
+   mKeyCodeUp           = nsIDOMKeyEvent::DOM_VK_UP;
+   mKeyCodeDown         = nsIDOMKeyEvent::DOM_VK_DOWN;
+ 
+   mKeyCodeModifier     = 0x00000012 | 0x00100000; // By default ALT and SHIFT
+@@ -134,16 +135,19 @@
+     // the defaults as defined in the constructor
+     
+     rv = prefBranch->GetBoolPref("snav.enabled", &tempBool);
+     if (NS_SUCCEEDED(rv))
+       mEnabled = tempBool;
+     rv = prefBranch->GetBoolPref("snav.ignoreTextFields", &tempBool);
+     if (NS_SUCCEEDED(rv))
+       mIgnoreTextFields = tempBool;
++    rv = prefBranch->GetBoolPref("snav.orderLayout", &tempBool);
++    if (NS_SUCCEEDED(rv))
++      mOrderLayout = tempBool;
+     rv = prefBranch->GetIntPref("snav.directionalBias", &tempInt32);
+     if (NS_SUCCEEDED(rv))
+     {
+       gDirectionalBias = tempInt32;
+       if (gDirectionalBias == 0)
+         gDirectionalBias = 1;
+     }
+     rv = prefBranch->GetBoolPref("snav.disableJS", &tempBool);
+@@ -181,16 +185,20 @@
+     if (prefs.EqualsLiteral("snav.enabled"))
+     {
+       prefBranch->GetBoolPref(prefc.get(), &mEnabled);
+     }
+     else if (prefs.EqualsLiteral("snav.ignoreTextFields"))
+     {
+       prefBranch->GetBoolPref(prefc.get(), &mIgnoreTextFields);
+     }
++    else if (prefs.EqualsLiteral("snav.orderLayout"))
++    {
++      prefBranch->GetBoolPref(prefc.get(), &mOrderLayout);
++    }
+     else if (prefs.EqualsLiteral("snav.directionalBias"))
+     {
+       prefBranch->GetIntPref(prefc.get(), &gDirectionalBias);
+       if (gDirectionalBias == 0)
+         gDirectionalBias = 1;
+     }
+     else if (prefs.EqualsLiteral("snav.disableJS"))
+     {

@@ -70,7 +70,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -7336,28 +7336,34 @@
+@@ -7366,28 +7366,34 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -115,7 +115,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-config.mk
 +++ mozilla/toolkit/library/libxul-config.mk
-@@ -223,38 +223,44 @@
+@@ -222,38 +222,44 @@
  endif
  
  ifdef MOZ_STORAGE
@@ -161,60 +161,11 @@ Index: mozilla/toolkit/library/libxul-config.mk
  
  ifdef MOZ_ENABLE_GTK2
  COMPONENT_LIBS += widget_gtk2
-Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
-===================================================================
---- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
-+++ mozilla/toolkit/library/nsStaticXULComponents.cpp
-@@ -225,34 +225,44 @@
- 
- #ifdef MOZ_STORAGE
- #define STORAGE_MODULE MODULE(mozStorageModule)
- #else
- #define STORAGE_MODULE
- #endif
- 
- #ifdef MOZ_PLACES
-+#ifdef MOZ_STORAGE
- #define PLACES_MODULES \
-     MODULE(nsPlacesModule)
- #else
-+#define PLACES_MODULES
-+#endif
-+#else
- #if (defined(MOZ_MORK) && defined(MOZ_XUL))
- #define PLACES_MODULES \
-     MODULE(nsMorkModule)                     \
-     MODULE(nsToolkitHistory)
- #else
- #define PLACES_MODULES
- #endif
- #endif    
- 
- #ifdef MOZ_XUL
-+#ifdef MOZ_STORAGE
- #define XULENABLED_MODULES                   \
-     MODULE(tkAutoCompleteModule)             \
-     MODULE(satchel)                          \
-     MODULE(PKI)
- #else
-+#define XULENABLED_MODULES                   \
-+    MODULE(tkAutoCompleteModule)             \
-+    MODULE(PKI)
-+#endif
-+#else
- #define XULENABLED_MODULES
- #endif
- 
- #ifdef MOZ_SPELLCHECK
- #define SPELLCHECK_MODULE MODULE(mozSpellCheckerModule)
- #else
- #define SPELLCHECK_MODULE
- #endif
 Index: mozilla/toolkit/components/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/Makefile.in
 +++ mozilla/toolkit/components/Makefile.in
-@@ -69,18 +69,20 @@
+@@ -70,18 +70,20 @@
  DIRS += alerts
  endif
  

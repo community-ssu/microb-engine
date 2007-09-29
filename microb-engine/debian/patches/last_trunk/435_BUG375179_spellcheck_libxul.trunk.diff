@@ -4,7 +4,7 @@ Index: mozilla/extensions/spellcheck/src/Makefile.in
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/Makefile.in
 +++ mozilla/extensions/spellcheck/src/Makefile.in
-@@ -43,17 +43,24 @@
+@@ -43,17 +43,23 @@
  include $(DEPTH)/config/autoconf.mk
  
  MODULE		= spellchecker
@@ -20,16 +20,15 @@ Index: mozilla/extensions/spellcheck/src/Makefile.in
  LIBXUL_LIBRARY  = 1
 +FORCE_STATIC_LIB = 1
 +endif
-+
  
  REQUIRES	= xpcom \
  		  string \
  		  editor \
  		  content \
+ 		  gfx \
  		  layout \
  		  dom \
- 		  necko \
-@@ -78,21 +85,28 @@
+@@ -79,21 +85,28 @@
  ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
  SHARED_LIBRARY_LIBS += ../osxspell/src/$(LIB_PREFIX)osxspell_s.$(LIB_SUFFIX)
  LOCAL_INCLUDES += -I$(srcdir)/../osxspell/src
@@ -79,11 +78,11 @@ Index: mozilla/extensions/spellcheck/src/mozSpellChecker.h
  #include "nsITextServicesDocument.h"
  #include "mozIPersonalDictionary.h"
  #include "mozISpellCheckingEngine.h"
+ #include "nsClassHashtable.h"
  #include "nsVoidArray.h"
  #include "mozISpellI18NUtil.h"
  
  class mozSpellChecker : public nsISpellChecker
- {
 Index: mozilla/extensions/spellcheck/src/mozPersonalDictionary.h
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/mozPersonalDictionary.h
@@ -111,27 +110,27 @@ Index: mozilla/extensions/spellcheck/src/mozSpellChecker.cpp
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/mozSpellChecker.cpp
 +++ mozilla/extensions/spellcheck/src/mozSpellChecker.cpp
-@@ -35,16 +35,18 @@
-  *
-  * ***** END LICENSE BLOCK ***** */
+@@ -37,16 +37,18 @@
  
  
  #include "mozSpellChecker.h"
  #include "nsIServiceManager.h"
  #include "mozISpellI18NManager.h"
  #include "nsIStringEnumerator.h"
+ #include "nsICategoryManager.h"
+ #include "nsISupportsPrimitives.h"
 +#include "nsServiceManagerUtils.h"
 +#include "nsMemory.h"
  
  #define UNREASONABLE_WORD_LENGTH 64
  
+ #define DEFAULT_SPELL_CHECKER "@mozilla.org/spellchecker/hunspell;1"
+ 
  NS_IMPL_ISUPPORTS1(mozSpellChecker, nsISpellChecker)
  
  mozSpellChecker::mozSpellChecker()
- {
- }
-@@ -317,17 +319,17 @@
-   NS_FREE_XPCOM_ALLOCATED_POINTER_ARRAY(count, words);
+@@ -334,17 +336,17 @@
+     return NS_ERROR_OUT_OF_MEMORY;
  
    return NS_OK;
  }
@@ -141,23 +140,23 @@ Index: mozilla/extensions/spellcheck/src/mozSpellChecker.cpp
  {
 -  nsXPIDLString dictname;
 +  nsString dictname;
+ 
+   if (!mSpellCheckingEngine)
+     return NS_ERROR_NOT_INITIALIZED;
+ 
    mSpellCheckingEngine->GetDictionary(getter_Copies(dictname));
    aDictionary = dictname;
    return NS_OK;
  }
- 
- NS_IMETHODIMP 
- mozSpellChecker::SetCurrentDictionary(const nsAString &aDictionary)
- {
-@@ -335,17 +337,17 @@
-     return NS_ERROR_NULL_POINTER;
-  
-   nsresult res;
+@@ -372,17 +374,17 @@
    res = mSpellCheckingEngine->SetDictionary(PromiseFlatString(aDictionary).get());
    if(NS_FAILED(res)){
      NS_WARNING("Dictionary load failed");
      return res;
    }
+ 
+   mSpellCheckingEngine->SetPersonalDictionary(mPersonalDictionary);
+ 
 -  nsXPIDLString language;
 +  nsString language;
    
@@ -222,13 +221,13 @@ Index: mozilla/extensions/spellcheck/src/mozEnglishWordUtils.h
 -#include "nsString.h"
 +#include "nsStringGlue.h"
  #include "nsICaseConversion.h"
+ #include "nsIUGenCategory.h"
  
  #include "mozITXTToHTMLConv.h" 
  
  class mozEnglishWordUtils : public mozISpellI18NUtil
  {
  public:
-   NS_DECL_ISUPPORTS
 Index: mozilla/extensions/spellcheck/src/mozSpellI18NManager.cpp
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/mozSpellI18NManager.cpp
@@ -256,7 +255,7 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/mozInlineSpellChecker.cpp
 +++ mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp
-@@ -85,21 +85,23 @@
+@@ -86,23 +86,25 @@
  #include "nsIPrefBranch.h"
  #include "nsIPrefService.h"
  #include "nsIRunnable.h"
@@ -271,6 +270,8 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp
  #include "nsUnicharUtils.h"
  #include "nsIContent.h"
  #include "nsIEventStateManager.h"
+ #include "nsIEventListenerManager.h"
+ #include "nsGUIEvent.h"
 +#include "nsServiceManagerUtils.h"
 +#include "nsComponentManagerUtils.h"
  
@@ -281,7 +282,7 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp
  #define INLINESPELL_CHECK_TIMEOUT 50
  
  // The number of words to check before we look at the time to see if
-@@ -1084,25 +1086,25 @@
+@@ -1106,25 +1108,25 @@
      aNode->GetParentNode(getter_AddRefs(parent));
  
      while (parent)
@@ -326,14 +327,14 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.h
 -#include "nsString.h"
 +#include "nsStringGlue.h"
  #include "nsTArray.h"
+ #include "nsIUGenCategory.h"
  
  //#define DEBUG_SPELLCHECK
  
  class nsIDOMRange;
  class nsIDOMNode;
  
- /**
-@@ -108,17 +108,17 @@
+@@ -109,17 +109,17 @@
    // An empty word and a NULL range are returned when we are done checking.
    // aSkipChecking will be set if the word is "special" and shouldn't be
    // checked (e.g., an email address).
@@ -348,15 +349,15 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.h
    nsIDOMDocumentRange* GetDocumentRange() const { return mDOMDocumentRange; }
    nsIDocument* GetDocument() const { return mDocument; }
    nsIDOMNode* GetRootNode() { return mRootNode; }
- 
+   nsIUGenCategory* GetCategories() { return mCategories; }
+   
  private:
  
-   // cached stuff for the editor, set by Init
 Index: mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp
 +++ mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp
-@@ -303,17 +303,17 @@
+@@ -300,17 +300,17 @@
    PRInt32 wordIndex = FindRealWordContaining(offset, HINT_BEGIN, PR_FALSE);
    if (wordIndex < 0)
      return MakeRange(pt, pt, aRange);
@@ -375,7 +376,7 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp
      // remove ignorable characters from the word
      if (IsIgnorableCharacter(ch))
        continue;
-@@ -538,17 +538,17 @@
+@@ -535,17 +535,17 @@
    CheckLeavingBreakElementClosure* cl =
      static_cast<CheckLeavingBreakElementClosure*>(aClosure);
    if (!cl->mLeftBreakElement && IsBreakElement(cl->mDocView, aNode)) {
@@ -394,7 +395,7 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellWordUtil.cpp
  
  void
  mozInlineSpellWordUtil::BuildSoftText()
-@@ -968,23 +968,23 @@
+@@ -966,23 +966,23 @@
  
    // Check the text before the first colon against some known protocols. It
    // is impossible to check against all protocols, especially since you can
@@ -429,7 +430,7 @@ Index: mozilla/extensions/spellcheck/src/mozEnglishWordUtils.cpp
 ===================================================================
 --- mozilla.orig/extensions/spellcheck/src/mozEnglishWordUtils.cpp
 +++ mozilla/extensions/spellcheck/src/mozEnglishWordUtils.cpp
-@@ -32,21 +32,25 @@
+@@ -32,20 +32,24 @@
   * and other provisions required by the GPL or the LGPL. If you do not delete
   * the provisions above, a recipient may use your version of this file under
   * the terms of any one of the MPL, the GPL or the LGPL.
@@ -444,7 +445,6 @@ Index: mozilla/extensions/spellcheck/src/mozEnglishWordUtils.cpp
  #include "nsIServiceManager.h"
  #include "nsUnicharUtilCIID.h"
  #include "nsCRT.h"
- #include "cattable.h"
 +#include "nsServiceManagerUtils.h"
 +#include "nsComponentManagerUtils.h"
  
@@ -459,7 +459,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -5464,21 +5464,16 @@
+@@ -5477,21 +5477,16 @@
      MOZ_EXTENSIONS=`echo $MOZ_EXTENSIONS | sed -e 's|universalchardet||g'`
  fi
  

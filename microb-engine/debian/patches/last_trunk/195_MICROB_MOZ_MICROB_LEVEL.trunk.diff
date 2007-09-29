@@ -32,7 +32,7 @@ Index: mozilla/toolkit/components/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/Makefile.in
 +++ mozilla/toolkit/components/Makefile.in
-@@ -89,16 +89,22 @@
+@@ -90,16 +90,22 @@
  
  ifdef MOZ_THUNDERBIRD
  DIRS += autocomplete/public
@@ -296,7 +296,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
 ===================================================================
 --- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
 +++ mozilla/toolkit/library/nsStaticXULComponents.cpp
-@@ -194,19 +194,24 @@
+@@ -187,19 +187,24 @@
      MODULE(nsWindowDataSourceModule)
  #else
  #define RDFAPP_MODULES
@@ -321,11 +321,11 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  #define XPINSTALL_MODULES
  #endif
  
-@@ -256,16 +261,25 @@
+@@ -245,16 +250,25 @@
  #define XULENABLED_MODULES                   \
      MODULE(tkAutoCompleteModule)             \
+     MODULE(satchel)                          \
      MODULE(PKI)
- #endif
  #else
  #define XULENABLED_MODULES
  #endif
@@ -347,7 +347,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  
  #ifdef MOZ_XMLEXTRAS
  #define XMLEXTRAS_MODULE MODULE(nsXMLExtrasModule)
-@@ -279,17 +293,16 @@
+@@ -268,17 +282,16 @@
      MODULE(nsUConvModule)                    \
      MODULE(nsI18nModule)                     \
      MODULE(nsChardetModule)                  \
@@ -357,6 +357,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      AUTH_MODULE                              \
      IPC_MODULE                               \
 -    MODULE(nsJarModule)                      \
+     ZIPWRITER_MODULE                         \
      MODULE(nsPrefModule)                     \
      MODULE(nsSecurityManagerModule)          \
      RDF_MODULE                               \
@@ -364,8 +365,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      MODULE(nsParserModule)                   \
      GFX_MODULES                              \
      WIDGET_MODULES                           \
-     MODULE(nsImageLib2Module)                \
-@@ -303,22 +316,21 @@
+@@ -293,22 +306,21 @@
      OJI_MODULES                              \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \

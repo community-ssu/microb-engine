@@ -1,0 +1,80 @@
+# Patches for microb-engine
+# Oleg Romashin <oleg.romashin@nokia.com>
+# DP: MOZ_MICROB configure option
+
+Index: mozilla/config/autoconf.mk.in
+===================================================================
+--- mozilla.orig/config/autoconf.mk.in
++++ mozilla/config/autoconf.mk.in
+@@ -100,16 +100,17 @@
+ MOZ_LEAKY	= @MOZ_LEAKY@
+ MOZ_JPROF       = @MOZ_JPROF@
+ MOZ_XPCTOOLS    = @MOZ_XPCTOOLS@
+ ENABLE_EAZEL_PROFILER=@ENABLE_EAZEL_PROFILER@
+ EAZEL_PROFILER_CFLAGS=@EAZEL_PROFILER_CFLAGS@
+ EAZEL_PROFILER_LIBS=@EAZEL_PROFILER_LIBS@
+ GC_LEAK_DETECTOR = @GC_LEAK_DETECTOR@
+ NS_TRACE_MALLOC = @NS_TRACE_MALLOC@
++MOZ_MICROB	= @MOZ_MICROB@
+ USE_ELF_DYNSTR_GC = @USE_ELF_DYNSTR_GC@
+ USE_PREBINDING = @USE_PREBINDING@
+ INCREMENTAL_LINKER = @INCREMENTAL_LINKER@
+ MACOSX_DEPLOYMENT_TARGET = @MACOSX_DEPLOYMENT_TARGET@
+ MOZ_MAIL_NEWS	= @MOZ_MAIL_NEWS@
+ MOZ_CALENDAR	= @MOZ_CALENDAR@
+ MOZ_PLAINTEXT_EDITOR_ONLY = @MOZ_PLAINTEXT_EDITOR_ONLY@
+ MOZ_COMPOSER = @MOZ_COMPOSER@
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -4102,16 +4102,17 @@
+ MOZ_BRANDING_DIRECTORY=
+ MOZ_CALENDAR=
+ MOZ_DBGRINFO_MODULES=
+ MOZ_ENABLE_CANVAS=1
+ MOZ_EXTENSIONS_ALL=" wallet xml-rpc venkman inspector irc typeaheadfind gnomevfs sroaming datetime finger cview layout-debug tasks sql xforms schema-validation reporter"
+ MOZ_FEEDS=1
+ MOZ_IMG_DECODERS_DEFAULT="png gif jpeg bmp xbm icon"
+ MOZ_IMG_ENCODERS_DEFAULT="png jpeg"
++MOZ_MICROB=
+ MOZ_IPCD=
+ MOZ_JAVAXPCOM=
+ MOZ_JSDEBUGGER=1
+ MOZ_JSLOADER=1
+ MOZ_LDAP_XPCOM=
+ MOZ_LIBART_CFLAGS=
+ MOZ_LIBART_LIBS=
+ MOZ_MAIL_NEWS=
+@@ -5814,16 +5815,31 @@
+ MOZ_ARG_ENABLE_BOOL(xpcom-lea,
+ [  --enable-xpcom-lea      Use Lea malloc in xpcom ],
+     XPCOM_USE_LEA=1,
+     XPCOM_USE_LEA= )
+ if test -n "$XPCOM_USE_LEA"; then
+     AC_DEFINE(XPCOM_USE_LEA)
+ fi
+ 
++dnl =========================================================
++dnl = MicroB embedding level
++dnl =========================================================
++MOZ_ARG_ENABLE_BOOL(microb,
++[  --enable-microb       Enable MicroB embedding level],
++    MOZ_MICROB=1,
++    MOZ_MICROB= )
++if test "$MOZ_MICROB"; then
++  AC_DEFINE(MOZ_MICROB)
++  MOZ_PLACES=
++  MOZ_STORAGE=
++fi
++AC_SUBST(MOZ_MICROB)
++
++
+ dnl ========================================================
+ dnl = Enable places (new history/bookmarks)
+ dnl ========================================================
+ MOZ_ARG_ENABLE_BOOL(places,
+ [  --enable-places        Enable 'places' bookmark/history implementation],
+     MOZ_PLACES=1,
+     MOZ_PLACES= )
+ if test -n "$MOZ_PLACES"; then

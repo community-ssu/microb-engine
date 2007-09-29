@@ -5,7 +5,7 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.h
 ===================================================================
 --- mozilla.orig/uriloader/exthandler/nsExternalHelperAppService.h
 +++ mozilla/uriloader/exthandler/nsExternalHelperAppService.h
-@@ -472,16 +472,25 @@
+@@ -331,16 +331,25 @@
     */
    nsCOMPtr<nsIFile> mFinalFileDestination;
  
@@ -35,7 +35,7 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
 ===================================================================
 --- mozilla.orig/uriloader/exthandler/nsExternalHelperAppService.cpp
 +++ mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
-@@ -117,16 +117,18 @@
+@@ -111,16 +111,18 @@
  
  #include "nsIGlobalHistory.h" // to mark downloads as visited
  #include "nsIGlobalHistory2.h" // to mark downloads as visited
@@ -48,13 +48,13 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
 +
  #include "nsCRT.h"
  
- #include "nsMIMEInfoImpl.h"
  #include "nsLocalHandlerApp.h"
  
  #ifdef PR_LOGGING
  PRLogModuleInfo* nsExternalHelperAppService::mLog = nsnull;
  #endif
-@@ -1486,16 +1488,18 @@
+ 
+@@ -963,16 +965,18 @@
  , mShouldCloseWindow(PR_FALSE)
  , mReceivedDispositionInfo(PR_FALSE)
  , mStopRequestIssued(PR_FALSE)
@@ -73,7 +73,7 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
    AppendUTF8toUTF16(aTempFileExtension, mTempFileExtension);
  
    // replace platform specific path separator and illegal characters to avoid any confusion
-@@ -2076,59 +2080,134 @@
+@@ -1562,59 +1566,134 @@
          }
      }
  }
@@ -211,7 +211,7 @@ Index: mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp
        // Send progress notification.
        if (mWebProgressListener)
        {
-@@ -2138,20 +2217,25 @@
+@@ -1624,20 +1703,25 @@
      else
      {
        // An error occurred, notify listener.

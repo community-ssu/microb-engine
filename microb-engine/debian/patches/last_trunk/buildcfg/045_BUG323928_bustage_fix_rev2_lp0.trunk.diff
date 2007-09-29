@@ -3,7 +3,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/Makefile.in
 +++ mozilla/widget/src/gtk2/Makefile.in
-@@ -103,20 +103,25 @@
+@@ -103,21 +103,26 @@
  		nsSound.cpp \
  		nsNativeKeyBindings.cpp \
  		nsScreenGtk.cpp \
@@ -15,16 +15,15 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 -		nsPrintJobFactoryGTK.cpp \
 -		nsPrintJobGTK.cpp \
  		nsIdleServiceGTK.cpp \
--		$(NULL)
-+	  $(NULL)
-+
+ 		$(NULL)
+ 
 +ifdef MOZ_ENABLE_POSTSCRIPT
 +CPPSRCS		+= \
 +	  nsPrintJobFactoryGTK.cpp \
 +	  nsPrintJobGTK.cpp \
-+	  $(NULL)
++		$(NULL)
 +endif
- 
++
  # build our subdirs, too
  ifdef ACCESSIBILITY
  REQUIRES	+= accessibility
@@ -32,11 +31,12 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  
  SHARED_LIBRARY_LIBS = ../xpwidgets/libxpwidgets_s.a
  
+ EXTRA_DSO_LDOPTS += \
 Index: mozilla/widget/src/gtk2/nsDeviceContextSpecG.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsDeviceContextSpecG.cpp
 +++ mozilla/widget/src/gtk2/nsDeviceContextSpecG.cpp
-@@ -407,18 +407,21 @@
+@@ -407,17 +407,20 @@
    double width, height;
    mPrintSettings->GetEffectivePageSize(&width, &height);
    // convert twips to points
@@ -46,11 +46,11 @@ Index: mozilla/widget/src/gtk2/nsDeviceContextSpecG.cpp
    DO_PR_DEBUG_LOG(("\"%s\", %f, %f\n", path, width, height));
  
 -  nsresult rv = nsPrintJobFactoryGTK::CreatePrintJob(this, mPrintJob);
-+  nsresult rv;
-+#ifdef MOZ_ENABLE_POSTSCRIPT
-+	rv = nsPrintJobFactoryGTK::CreatePrintJob(this, mPrintJob);
-   if (NS_FAILED(rv))
++  nsresult rv = NS_ERROR_UNEXPECTED;
++#if defined(USE_POSTSCRIPT)
++  rv = nsPrintJobFactoryGTK::CreatePrintJob(this, mPrintJob);
 +#endif
+   if (NS_FAILED(rv))
      return rv;
  
    nsCOMPtr<nsILocalFile> file;
@@ -58,4 +58,25 @@ Index: mozilla/widget/src/gtk2/nsDeviceContextSpecG.cpp
    if (NS_FAILED(rv))
      return rv;
  
-   nsCOMPtr<nsIFileOutputStream> stream = do_CreateInstance("@mozilla.org/network/file-output-stream;1");
+@@ -691,17 +694,21 @@
+ 
+ NS_IMETHODIMP nsDeviceContextSpecGTK::BeginDocument(PRUnichar * aTitle, PRUnichar * aPrintToFileName, PRInt32 aStartPage, PRInt32 aEndPage)
+ {
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP nsDeviceContextSpecGTK::EndDocument()
+ {
++#if defined(USE_POSTSCRIPT)
+   return mPrintJob->Submit();
++#else
++  return NS_ERROR_UNEXPECTED;
++#endif
+ }
+ 
+ /* Get prefs for printer
+  * Search order:
+  * - Get prefs per printer name and module name
+  * - Get prefs per printer name
+  * - Get prefs per module name
+  * - Get prefs

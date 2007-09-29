@@ -1,0 +1,460 @@
+# 915 implement inheritance of alignment attributes from columns (align, valign, char, charoff, (lang, dir)?)
+# + some improvement from me
+# N#36653 N#36659
+Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
+===================================================================
+--- mozilla.orig/content/html/content/src/nsHTMLTableCellElement.cpp
++++ mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
+@@ -39,17 +39,21 @@
+ #include "nsIDOMHTMLCollection.h"
+ #include "nsIDOMEventReceiver.h"
+ #include "nsMappedAttributes.h"
+ #include "nsGenericHTMLElement.h"
+ #include "nsGkAtoms.h"
+ #include "nsStyleConsts.h"
+ #include "nsPresContext.h"
+ #include "nsRuleData.h"
++#include "nsRuleWalker.h"
+ #include "nsIDocument.h"
++#include "nsHTMLStyleSheet.h"
++
++#define TABLE_ATTRS_DIRTY ((nsMappedAttributes*)0x1)
+ 
+ class nsHTMLTableCellElement : public nsGenericHTMLElement,
+                                public nsIDOMHTMLTableCellElement
+ {
+ public:
+   nsHTMLTableCellElement(nsINodeInfo *aNodeInfo);
+   virtual ~nsHTMLTableCellElement();
+ 
+@@ -78,29 +82,42 @@
+ 
+   virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const;
+ 
+ protected:
+   // This does not return a nsresult since all we care about is if we
+   // found the row element that this cell is in or not.
+   void GetRow(nsIDOMHTMLTableRowElement** aRow);
+   nsIContent * GetTable();
++  nsIContent * GetRow();
++  nsIContent * GetRowGroup();
++
++  // Sentinel value of 0x1 indicates that this is dirty and needs to be
++  // recalculated.
++  nsMappedAttributes *mTableInheritedAttributes;
++  void BuildInheritedAttributes();
++  static const nsAttrValue* FindInheritedAttr(nsIAtom *aAttribute,
++                                              nsIContent **aElements);
+ };
+ 
+ 
+ NS_IMPL_NS_NEW_HTML_ELEMENT(TableCell)
+ 
+ 
+ nsHTMLTableCellElement::nsHTMLTableCellElement(nsINodeInfo *aNodeInfo)
+   : nsGenericHTMLElement(aNodeInfo)
++  , mTableInheritedAttributes(TABLE_ATTRS_DIRTY)
+ {
+ }
+ 
+ nsHTMLTableCellElement::~nsHTMLTableCellElement()
+ {
++  if (mTableInheritedAttributes &&
++      mTableInheritedAttributes != TABLE_ATTRS_DIRTY)
++    NS_RELEASE(mTableInheritedAttributes);
+ }
+ 
+ 
+ NS_IMPL_ADDREF_INHERITED(nsHTMLTableCellElement, nsGenericElement) 
+ NS_IMPL_RELEASE_INHERITED(nsHTMLTableCellElement, nsGenericElement) 
+ 
+ 
+ // QueryInterface implementation for nsHTMLTableCellElement
+@@ -114,19 +131,17 @@
+ 
+ 
+ // protected method
+ void
+ nsHTMLTableCellElement::GetRow(nsIDOMHTMLTableRowElement** aRow)
+ {
+   *aRow = nsnull;
+ 
+-  nsCOMPtr<nsIDOMNode> rowNode;
+-  GetParentNode(getter_AddRefs(rowNode));
+-
++  nsIContent *rowNode = GetRow();
+   if (rowNode) {
+     CallQueryInterface(rowNode, aRow);
+   }
+ }
+ 
+ // protected method
+ nsIContent*
+ nsHTMLTableCellElement::GetTable()
+@@ -145,16 +160,43 @@
+         // we have a row group.
+         result = section->GetParent();
+       }
+     }
+   }
+   return result;
+ }
+ 
++nsIContent*
++nsHTMLTableCellElement::GetRow()
++{
++  nsIContent *row = GetParent();
++  if (!row ||
++      !row->IsNodeOfType(eHTML) ||
++      !row->NodeInfo()->Equals(nsGkAtoms::tr))
++    row = nsnull;
++  return row;
++}
++
++nsIContent*
++nsHTMLTableCellElement::GetRowGroup()
++{
++  nsIContent *row = GetRow();
++  if (!row)
++    return nsnull;
++  nsIContent *rowGroup = row->GetParent();
++  if (!rowGroup ||
++      !rowGroup->IsNodeOfType(eHTML) ||
++      !(rowGroup->NodeInfo()->Equals(nsGkAtoms::tbody) ||
++        rowGroup->NodeInfo()->Equals(nsGkAtoms::thead) ||
++        rowGroup->NodeInfo()->Equals(nsGkAtoms::tfoot)))
++    rowGroup = nsnull;
++  return rowGroup;
++}
++
+ NS_IMETHODIMP
+ nsHTMLTableCellElement::GetCellIndex(PRInt32* aCellIndex)
+ {
+   *aCellIndex = -1;
+ 
+   nsCOMPtr<nsIDOMHTMLTableRowElement> row;
+ 
+   GetRow(getter_AddRefs(row));
+@@ -202,19 +244,28 @@
+   // |MapAttributesIntoRule| in nsHTMLTableElement.cpp, which is
+   // technically incorrect since it's violating the nsIStyleRule
+   // contract.  However, things are OK (except for the incorrect
+   // dependence on display type rather than tag) since tables and cells
+   // match different, less specific, rules.
+   nsIContent* table = GetTable();
+   if (table) {
+     rv = table->WalkContentStyleRules(aRuleWalker);
++    NS_ENSURE_SUCCESS(rv, rv);
+   }
+ 
+-  return rv;
++  if (mTableInheritedAttributes) {
++    if (mTableInheritedAttributes == TABLE_ATTRS_DIRTY)
++      BuildInheritedAttributes();
++
++    if (mTableInheritedAttributes)
++      aRuleWalker->Forward(mTableInheritedAttributes);
++  }
++
++  return NS_OK;
+ }
+ 
+ 
+ NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, Abbr, abbr)
+ NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, Axis, axis)
+ NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, BgColor, bgcolor)
+ NS_IMPL_STRING_ATTR_DEFAULT_VALUE(nsHTMLTableCellElement, Ch, _char, ".")
+ NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, ChOff, charoff)
+@@ -226,16 +277,18 @@
+ NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, Scope, scope)
+ NS_IMPL_STRING_ATTR_DEFAULT_VALUE(nsHTMLTableCellElement, VAlign, valign, "middle")
+ NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, Width, width)
+ 
+ 
+ NS_IMETHODIMP
+ nsHTMLTableCellElement::GetAlign(nsAString& aValue)
+ {
++  // XXX What is this supposed to do!
++
+   if (!GetAttr(kNameSpaceID_None, nsGkAtoms::align, aValue)) {
+     // There's no align attribute, ask the row for the alignment.
+ 
+     nsCOMPtr<nsIDOMHTMLTableRowElement> row;
+     GetRow(getter_AddRefs(row));
+ 
+     if (row) {
+       return row->GetAlign(aValue);
+@@ -356,42 +409,27 @@
+       else if (value && value->Type() == nsAttrValue::ePercent) {
+         if (value->GetPercentValue() > 0.0f)
+           aData->mPositionData->mHeight.SetPercentValue(value->GetPercentValue());
+         // else 0 implies auto for compatibility
+       }
+     }
+   }
+   else if (aData->mSID == eStyleStruct_Text) {
+-    if (aData->mTextData->mTextAlign.GetUnit() == eCSSUnit_Null) {
+-      // align: enum
+-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::align);
+-      if (value && value->Type() == nsAttrValue::eEnum)
+-        aData->mTextData->mTextAlign.SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
+-    }
+-
+     if (aData->mTextData->mWhiteSpace.GetUnit() == eCSSUnit_Null) {
+       // nowrap: enum
+       if (aAttributes->GetAttr(nsGkAtoms::nowrap)) {
+         // See if our width is not a integer width.
+         const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::width);
+         nsCompatibility mode = aData->mPresContext->CompatibilityMode();
+         if (!value || value->Type() != nsAttrValue::eInteger || eCompatibility_NavQuirks != mode)
+           aData->mTextData->mWhiteSpace.SetIntValue(NS_STYLE_WHITESPACE_NOWRAP, eCSSUnit_Enumerated);
+       }
+     }
+   }
+-  else if (aData->mSID == eStyleStruct_TextReset) {
+-    if (aData->mTextData->mVerticalAlign.GetUnit() == eCSSUnit_Null) {
+-      // valign: enum
+-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::valign);
+-      if (value && value->Type() == nsAttrValue::eEnum)
+-        aData->mTextData->mVerticalAlign.SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
+-    }
+-  }
+   
+   nsGenericHTMLElement::MapBackgroundAttributesInto(aAttributes, aData);
+   nsGenericHTMLElement::MapCommonAttributesInto(aAttributes, aData);
+ }
+ 
+ NS_IMETHODIMP_(PRBool)
+ nsHTMLTableCellElement::IsAttributeMapped(const nsIAtom* aAttribute) const
+ {
+@@ -421,8 +459,230 @@
+   return FindAttributeDependence(aAttribute, map, NS_ARRAY_LENGTH(map));
+ }
+ 
+ nsMapRuleToAttributesFunc
+ nsHTMLTableCellElement::GetAttributeMappingFunction() const
+ {
+   return &MapAttributesIntoRule;
+ }
++
++static void
++MapInheritedTableAttributesIntoRule(const nsMappedAttributes* aAttributes,
++                                    nsRuleData* aData)
++{
++  if (aData->mSID == eStyleStruct_Text) {
++    if (aData->mTextData->mTextAlign.GetUnit() == eCSSUnit_Null) {
++      // align: enum
++      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::align);
++      if (value && value->Type() == nsAttrValue::eEnum)
++        aData->mTextData->mTextAlign.SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
++    }
++  }
++  else if (aData->mSID == eStyleStruct_TextReset) {
++    if (aData->mTextData->mVerticalAlign.GetUnit() == eCSSUnit_Null) {
++      // valign: enum
++      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::valign);
++      if (value && value->Type() == nsAttrValue::eEnum)
++        aData->mTextData->mVerticalAlign.SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
++    }
++  }
++}
++
++#define INHERIT_ELEMENTS (6)
++
++/* static */ const nsAttrValue*
++nsHTMLTableCellElement::FindInheritedAttr(nsIAtom *aAttribute,
++                                          nsIContent **aElements)
++{
++  bool hasParentTD = false;
++  for (nsIContent **elementp = aElements,
++              **elementp_end = aElements + INHERIT_ELEMENTS;
++       elementp < elementp_end; ++elementp) {
++    nsIContent *element = *elementp;
++    if (element) {
++      // XXX It's really just nsGenericHTMLElement, but we have to cast
++      // to nsHTMLTableCellElement to make it compile because C++ says
++      // so.
++      if (!hasParentTD && element->NodeInfo()->Equals(nsGkAtoms::td)) {
++        hasParentTD = true;
++      }
++      const nsAttrValue* value =
++        static_cast<nsHTMLTableCellElement*>(element)->
++          mAttrsAndChildren.GetAttr(aAttribute);
++      if (value) {
++        if (hasParentTD && element->NodeInfo()->Equals(nsGkAtoms::table))
++          return nsnull;
++        return value;
++      }
++    }
++  }
++  return nsnull;
++}
++
++void
++nsHTMLTableCellElement::BuildInheritedAttributes()
++{
++  NS_ASSERTION(mTableInheritedAttributes == TABLE_ATTRS_DIRTY,
++               "potential leak, plus waste of work");
++
++  // These attributes are all guaranteed to be mapped, but the attribute
++  // mapping functions don't actually do anything with them; we do.
++  // XXX Make this actually true by removing code!
++
++  nsIContent *row = GetRow();
++  nsIContent *rowGroup = GetRowGroup();
++  nsIContent *table = GetTable();
++
++  nsIContent *col = nsnull, *colGroup = nsnull;
++
++  // Find col and colGroup.
++  if (row && table) {
++    // XXX Only do this work if there are actually col or colgroup
++    // elements with style information!
++    PRInt32 colNumber = -1;
++    PRInt32 curCol = 0;
++    for (PRUint32 i = 0, i_end = row->GetChildCount();
++         i < i_end; ++i) {
++      nsIContent *child = row->GetChildAt(i);
++      if (child == this) {
++        colNumber = curCol;
++        break;
++      }
++
++      nsIAtom *tag = child->Tag();
++      if (child->IsNodeOfType(eHTML) &&
++          (tag == nsGkAtoms::td || tag == nsGkAtoms::th)) {
++        PRInt32 span = 1;
++        GetIntAttr(nsGkAtoms::colspan, 1, &span);
++        curCol += span;
++      }
++    }
++    NS_ASSERTION(colNumber != -1, "we're not a child of our parent");
++
++    // We have a column index, so look for a col or colGroup element.
++    curCol = 0;
++    for (PRUint32 i = 0, i_end = table->GetChildCount();
++         i < i_end; ++i) {
++      nsIContent *child = table->GetChildAt(i);
++      if (child->IsNodeOfType(eHTML)) {
++        nsIAtom *tag = child->Tag();
++        if (tag == nsGkAtoms::col) {
++          PRInt32 span = 1;
++          // XXX It's really just nsGenericHTMLElement, but we have
++          // to cast to nsHTMLTableCellElement to make it compile because
++          // C++ says so.
++          static_cast<nsHTMLTableCellElement*>(child)->
++            GetIntAttr(nsGkAtoms::span, 1, &span);
++          if (curCol + span > colNumber) {
++            col = child;
++            break;
++          }
++          curCol += span;
++        } else if (tag == nsGkAtoms::colgroup) {
++          // If the colgroup contains col elements, ignore the |span|
++          // and walk them!
++          PRBool haveCols = PR_FALSE;
++          for (PRUint32 j = 0, j_end = child->GetChildCount();
++               j < j_end; ++j) {
++            nsIContent *cgchild = child->GetChildAt(j);
++            if (cgchild->IsNodeOfType(eHTML) &&
++                cgchild->Tag() == nsGkAtoms::col) {
++              haveCols = PR_TRUE;
++
++              PRInt32 span = 1;
++              // XXX It's really just nsGenericHTMLElement, but we have
++              // to cast to nsHTMLTableCellElement to make it compile
++              // because C++ says so.
++              static_cast<nsHTMLTableCellElement*>(cgchild)->
++                GetIntAttr(nsGkAtoms::span, 1, &span);
++              if (curCol + span > colNumber) {
++                colGroup = child;
++                col = cgchild;
++                break;
++              }
++              curCol += span;
++            }
++          }
++          if (col)
++            break;
++
++          if (!haveCols) {
++            PRInt32 span = 1;
++            // XXX It's really just nsGenericHTMLElement, but we have to
++            // cast to nsHTMLTableCellElement to make it compile because
++            // C++ says so.
++            static_cast<nsHTMLTableCellElement*>(child)->
++              GetIntAttr(nsGkAtoms::span, 1, &span);
++            if (curCol + span > colNumber) {
++              colGroup = child;
++              break;
++            }
++            curCol += span;
++          }
++        } else if (tag == nsGkAtoms::tr ||
++                   tag == nsGkAtoms::tbody ||
++                   tag == nsGkAtoms::thead ||
++                   tag == nsGkAtoms::tfoot) {
++          // There shouldn't be any more columns after this point.
++          break;
++        }
++      }
++    }
++  }
++
++  // According to HTML 4.01, section 11.3.2, the priority for:
++  //   Attributes: align, char, charoff
++  //   Is:  cell, col, col group, row, row group, table
++  // and for
++  //   Attributes: valign  (we'll ignore what it says about lang, dir, style)
++  //   Is: cell, row, row group, col, col group, table
++  nsIContent *colPriority[INHERIT_ELEMENTS] =
++    { this, col, colGroup, row, rowGroup, table};
++  nsIContent *rowPriority[INHERIT_ELEMENTS] =
++    { this, row, rowGroup, col, colGroup, table};
++
++  nsIDocument *document = GetCurrentDoc();
++  nsHTMLStyleSheet* sheet = document ?
++                              document->GetAttributeStyleSheet() : nsnull;
++  nsRefPtr<nsMappedAttributes> newAttrs;
++  if (sheet) {
++    const nsAttrValue *align =
++      FindInheritedAttr(nsGkAtoms::align, colPriority);
++    const nsAttrValue *valign =
++      FindInheritedAttr(nsGkAtoms::valign, rowPriority);
++    // XXX Implement char and charoff here.
++
++    PRUint32 count = (align != nsnull) + (valign != nsnull);
++
++    if (count) {
++      nsRefPtr<nsMappedAttributes> modifiableMapped = new (count)
++        nsMappedAttributes(sheet, MapInheritedTableAttributesIntoRule);
++
++      if (modifiableMapped) {
++        if (align) {
++          nsAttrValue val(*align);
++          modifiableMapped->SetAndTakeAttr(nsGkAtoms::align, val);
++        }
++        if (valign) {
++          nsAttrValue val(*valign);
++          modifiableMapped->SetAndTakeAttr(nsGkAtoms::valign, val);
++        }
++
++        newAttrs = sheet->UniqueMappedAttributes(modifiableMapped);
++        NS_ASSERTION(newAttrs, "out of memory, but handling gracefully");
++
++        if (newAttrs != modifiableMapped) {
++          // Reset the stylesheet of modifiableMapped so that it doesn't
++          // spend time trying to remove itself from the hash. There is no
++          // risk that modifiableMapped is in the hash since it will
++          // always have come from GetModifiableMapped, which never
++          // returns maps that are in the hash (such hashes are by nature
++          // not modifiable).
++          modifiableMapped->DropStyleSheetReference();
++        }
++      }
++    }
++  }
++
++  mTableInheritedAttributes = newAttrs;
++  NS_IF_ADDREF(mTableInheritedAttributes);
++}

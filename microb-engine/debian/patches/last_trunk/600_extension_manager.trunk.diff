@@ -3,8 +3,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-config.mk
 +++ mozilla/toolkit/library/libxul-config.mk
-@@ -259,20 +259,23 @@
-   satchel \
+@@ -259,19 +259,22 @@
    $(NULL)
  endif
  endif
@@ -12,14 +11,14 @@ Index: mozilla/toolkit/library/libxul-config.mk
  COMPONENT_LIBS += \
  	jar$(VERSION_NUMBER) \
  	$(NULL)
-+
-+COMPONENT_LIBS += \
-+ 	commandlines \
-+ 	$(NULL)
  
- ifndef MOZ_MICROB
+-ifndef MOZ_MICROB
  COMPONENT_LIBS += \
-- 	commandlines \
+  	commandlines \
++ 	$(NULL)
++
++ifndef MOZ_MICROB
++COMPONENT_LIBS += \
   	toolkitcomps \
   	$(NULL)
  endif
@@ -32,9 +31,9 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
 ===================================================================
 --- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
 +++ mozilla/toolkit/library/nsStaticXULComponents.cpp
-@@ -263,17 +263,16 @@
+@@ -252,17 +252,16 @@
+     MODULE(satchel)                          \
      MODULE(PKI)
- #endif
  #else
  #define XULENABLED_MODULES
  #endif
@@ -50,7 +49,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  
  #ifdef MOZ_SPELLCHECK
  #define SPELLCHECK_MODULE MODULE(mozSpellCheckerModule)
-@@ -311,16 +310,17 @@
+@@ -306,16 +305,17 @@
      OJI_MODULES                              \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \
@@ -72,27 +71,8 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 ===================================================================
 --- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 +++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
-@@ -354,16 +354,18 @@
-  *          true if the directory hierarchy specified in |pathArray|
-  *          should be created if it does not exist,
-  *          false otherwise.
-  * @return  nsIFile object for the location specified. 
-  */
- function getDirInternal(key, pathArray, shouldCreate) {
-   var fileLocator = Components.classes["@mozilla.org/file/directory_service;1"]
-                               .getService(Components.interfaces.nsIProperties);
-+  if (key == "ProfDS")
-+    key = "ProfD";
-   var dir = fileLocator.get(key, nsILocalFile);
-   for (var i = 0; i < pathArray.length; ++i) {
-     dir.append(pathArray[i]);
-     if (shouldCreate && !dir.exists())
-       dir.create(nsILocalFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
-   }
-   dir.followLinks = false;
-   return dir;
-@@ -612,17 +614,18 @@
-                          .getService(Components.interfaces.nsIIOService);
+@@ -608,17 +609,18 @@
+                getService(Ci.nsIIOService);
    return ioServ.newFileURI(file);
  }
  
@@ -111,7 +91,7 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
   *          RDF String Literal or Resource
   * @returns String value of the literal or resource, or undefined if the object
   *          supplied is not a RDF string literal or resource.
-@@ -2614,28 +2617,33 @@
+@@ -2245,27 +2247,33 @@
  };
  
  /**
@@ -119,11 +99,11 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
   * @constructor
   */
  function ExtensionManager() {
-   gApp = Components.classes["@mozilla.org/xre/app-info;1"]
--                   .getService(Components.interfaces.nsIXULAppInfo)
-+                   .getService(Components.interfaces.nsIXULAppInfo);
+   gApp = Cc["@mozilla.org/xre/app-info;1"].
+-         getService(Ci.nsIXULAppInfo).QueryInterface(Ci.nsIXULRuntime);
++                   .getService(Ci.nsIXULAppInfo);
 +/*
-                    .QueryInterface(Components.interfaces.nsIXULRuntime);
++				 .QueryInterface(Ci.nsIXULRuntime);
    gOSTarget = gApp.OS;
    try {
      gXPCOMABI = gApp.XPCOMABI;
@@ -139,15 +119,15 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 +  gXPCOMABI = UNKNOWN_XPCOM_ABI;
 +  gOSTarget = "_UNKNOWN";
 +
-   gPref = Components.classes["@mozilla.org/preferences-service;1"]
-                     .getService(Components.interfaces.nsIPrefBranch2);
+   gPref = Cc["@mozilla.org/preferences-service;1"].
+           getService(Ci.nsIPrefBranch2);
  
-   gOS = Components.classes["@mozilla.org/observer-service;1"]
-                   .getService(Components.interfaces.nsIObserverService);
+   gOS = Cc["@mozilla.org/observer-service;1"].
+         getService(Ci.nsIObserverService);
    gOS.addObserver(this, "xpcom-shutdown", false);
  
-   gConsole = Components.classes["@mozilla.org/consoleservice;1"]
-@@ -4216,20 +4224,21 @@
+   gConsole = Cc["@mozilla.org/consoleservice;1"].
+@@ -3880,20 +3888,21 @@
              // If we don't know our ABI, we can't be compatible
              if (abi == gXPCOMABI && abi != UNKNOWN_XPCOM_ABI) {
                foundMatchingOSAndABI = true;
@@ -169,12 +149,12 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
        installData.error = INSTALLERROR_INVALID_GUID;
        return installData;
      }
-      
+     
 Index: mozilla/toolkit/xre/nsAppRunner.cpp
 ===================================================================
 --- mozilla.orig/toolkit/xre/nsAppRunner.cpp
 +++ mozilla/toolkit/xre/nsAppRunner.cpp
-@@ -824,31 +824,33 @@
+@@ -875,31 +875,33 @@
  }
  
  // {95d89e3e-a169-41a3-8e56-719978e15b12}

@@ -27,7 +27,7 @@ Index: mozilla/docshell/base/nsDocShell.cpp
 ===================================================================
 --- mozilla.orig/docshell/base/nsDocShell.cpp
 +++ mozilla/docshell/base/nsDocShell.cpp
-@@ -8963,8 +8963,18 @@
+@@ -9070,16 +9070,26 @@
          return PR_FALSE;
      }
      
@@ -35,7 +35,7 @@ Index: mozilla/docshell/base/nsDocShell.cpp
      aURI->GetSpec(str);
      return str.EqualsLiteral("about:blank");
  }
-                                      
+ 
 +/* void fireOnLayoutStateChange (in unsigned long aStateFlags); */
 +NS_IMETHODIMP
 +nsDocShell::FireOnLayoutStateChange(PRUint32 aStateFlags)
@@ -46,11 +46,19 @@ Index: mozilla/docshell/base/nsDocShell.cpp
 +                      aStateFlags);
 +    return NS_OK;
 +}
+ //*****************************************************************************
+ // nsClassifierCallback
+ //*****************************************************************************
+ 
+ NS_IMPL_THREADSAFE_ISUPPORTS2(nsClassifierCallback,
+                               nsIURIClassifierCallback,
+                               nsIRunnable)
+ 
 Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -4165,16 +4165,20 @@
+@@ -4226,16 +4226,20 @@
    }
    
    mPaintingSuppressed = PR_FALSE;
@@ -75,7 +83,7 @@ Index: mozilla/layout/base/nsCSSFrameConstructor.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsCSSFrameConstructor.cpp
 +++ mozilla/layout/base/nsCSSFrameConstructor.cpp
-@@ -1759,24 +1759,28 @@
+@@ -1781,24 +1781,28 @@
    , mDocElementContainingBlock(nsnull)
    , mGfxScrollFrame(nsnull)
    , mPageSequenceFrame(nsnull)
@@ -104,15 +112,18 @@ Index: mozilla/layout/base/nsCSSFrameConstructor.cpp
  #ifdef DEBUG
    static PRBool gFirstTime = PR_TRUE;
    if (gFirstTime) {
-@@ -13016,16 +13020,28 @@
-   mConstructor->mPresShell->GetDocument()->
-     FlushPendingNotifications(Flush_ContentAndNotify);
+@@ -13060,17 +13064,30 @@
+ 
+ NS_IMETHODIMP nsCSSFrameConstructor::RestyleEvent::Run()
+ {
+   if (!mConstructor)
+     return NS_OK;  // event was revoked
  
    // Make sure that any restyles that happen from now on will go into
    // a new event.
-   mConstructor->mRestyleEvent.Forget();
- 
-   mConstructor->ProcessPendingRestyles();
+-  mConstructor->mRestyleEvent.Forget();  
++  mConstructor->mRestyleEvent.Forget();
++  // ROMAXA Wee have to know about first layout paint
 +  if (mConstructor->mIsPaintSignalsCount > 0) {
 +    nsPresContext *context = mConstructor->mPresShell->GetPresContext();
 +    nsCOMPtr<nsISupports> container = context->GetContainer();
@@ -125,19 +136,19 @@ Index: mozilla/layout/base/nsCSSFrameConstructor.cpp
 +    }
 +    mConstructor->mIsPaintSignalsCount--;
 +  }
-   viewManager->EndUpdateViewBatch(NS_VMREFRESH_NO_SYNC);
- 
-   return NS_OK;
+   
+   return mConstructor->mPresShell->FlushPendingNotifications(Flush_Style);
  }
  
  NS_IMETHODIMP
  nsCSSFrameConstructor::LazyGenerateChildrenEvent::Run()
  {
+   mPresShell->GetDocument()->FlushPendingNotifications(Flush_Layout);
 Index: mozilla/layout/base/nsCSSFrameConstructor.h
 ===================================================================
 --- mozilla.orig/layout/base/nsCSSFrameConstructor.h
 +++ mozilla/layout/base/nsCSSFrameConstructor.h
-@@ -1049,16 +1049,18 @@
+@@ -1099,16 +1099,18 @@
    nsIFrame*           mPageSequenceFrame;
    nsQuoteList         mQuoteList;
    nsCounterManager    mCounterManager;

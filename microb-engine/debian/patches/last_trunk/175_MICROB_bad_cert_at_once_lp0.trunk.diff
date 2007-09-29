@@ -8,26 +8,7 @@ Index: security/manager/pki/src/nsNSSDialogs.cpp
 ===================================================================
 --- security/manager/pki/src/nsNSSDialogs.cpp.orig
 +++ security/manager/pki/src/nsNSSDialogs.cpp
-@@ -370,17 +370,17 @@
-     return rv;
- 
-   rv = nsNSSDialogHelper::openDialog(nsnull,
-                              "chrome://pippki/content/serverCrlNextupdate.xul",
-                              block);
-   return NS_OK;
- }
- 
--NS_IMETHODIMP 
-+NS_IMETHODIMP
- nsNSSDialogs::CrlImportStatusDialog(nsIInterfaceRequestor *ctx, nsICRLInfo *crl)
- {
-   nsresult rv;
- 
-   nsCOMPtr<nsIPKIParamBlock> block = do_CreateInstance(kPKIParamBlockCID,&rv);
-   if (NS_FAILED(rv))
-     return rv;
-   
-@@ -751,9 +751,19 @@
+@@ -765,9 +765,19 @@
    rv = dlgParamBlock->GetInt(1, &status);
   
    if (status) {
@@ -92,7 +73,7 @@ Index: security/manager/ssl/src/nsNSSIOLayer.cpp
  #include "nsIClientAuthDialogs.h"
  
  #include "nsXPIDLString.h"
-@@ -1409,73 +1410,60 @@
+@@ -1408,73 +1409,60 @@
    }
    return retVal;
  }
@@ -174,7 +155,7 @@ Index: security/manager/ssl/src/nsNSSIOLayer.cpp
            rv = NS_ERROR_NOT_AVAILABLE;
          }
          else {
-@@ -1485,55 +1473,57 @@
+@@ -1484,55 +1472,57 @@
        }
        if (NS_SUCCEEDED(rv) && retVal) {
          rv = CERT_AddOKDomainName(peerCert, url);
@@ -233,7 +214,7 @@ Index: security/manager/ssl/src/nsNSSIOLayer.cpp
  verifyCertAgain(CERTCertificate *cert, 
                  PRFileDesc      *sslSocket,
                  nsNSSSocketInfo *infoObject)
-@@ -2389,42 +2379,93 @@
+@@ -2388,42 +2378,93 @@
    return ret;
  }
  
@@ -308,9 +289,9 @@ Index: security/manager/ssl/src/nsNSSIOLayer.cpp
 +      rv = verifyCertAgain(peerCert, sslSocket, infoObject);
 +      error = PR_GetError();
 +    }
-+    nsIX509Cert *confirmedCert = NS_STATIC_CAST(nsIX509Cert*, nssCert);
-+    nsIInterfaceRequestor *ccsi = NS_STATIC_CAST(nsIInterfaceRequestor*,
-+                                                 infoObject);
++    nsIX509Cert *confirmedCert = static_cast<nsIX509Cert*>(nssCert);
++    nsIInterfaceRequestor *ccsi = static_cast<nsIInterfaceRequestor*>
++                                                 (infoObject);
 +
 +    if (!NS_FAILED(rv_dlg2) && badCertHandler2) {
 +      PRBool confirmVal = PR_TRUE;
@@ -337,7 +318,7 @@ Index: security/manager/ssl/src/nsNSSIOLayer.cpp
  }
  
  static PRFileDesc*
-@@ -2584,8 +2625,9 @@
+@@ -2583,8 +2624,9 @@
    return NS_OK;
   loser:
    NS_IF_RELEASE(infoObject);

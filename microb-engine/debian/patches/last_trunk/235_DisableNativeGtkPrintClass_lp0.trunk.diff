@@ -48,18 +48,18 @@ Index: widget/src/gtk2/Makefile.in
  		$(NULL)
  
  ifdef MOZ_ENABLE_POSTSCRIPT
- CPPSRCS        += \
- 		nsPrintJobFactoryGTK.cpp \
- 		nsPrintJobGTK.cpp \
- 	  $(NULL)
+ CPPSRCS		+= \
+ 	  nsPrintJobFactoryGTK.cpp \
+ 	  nsPrintJobGTK.cpp \
+ 		$(NULL)
  endif
  
  ifndef MOZ_MICROB
  CPPSRCS		+= \
  	  nsFilePicker.cpp \
-+		nsDeviceContextSpecG.cpp \
-+		nsPrintOptionsGTK.cpp \
- 	  $(NULL)
++	  nsDeviceContextSpecG.cpp \
++	  nsPrintOptionsGTK.cpp \
+ 		$(NULL)
  endif
  
  # build our subdirs, too
