@@ -191,7 +191,7 @@ crash/FitToViewRandomCrashes.diff
 
 640_mouse_event_order.diff
 last_trunk/630_BUG204011_theme_change.trunk.diff
-last_trunk/buildcfg/BUG393707.fast.build.fix.diff
+last_trunk/buildcfg/BUG393707.fast.build.fix.trunk.diff
 655_unblock_mouseevents_ontoolbar.diff
 
 last_trunk/660_BUG65511.imgdoc_zoom.trunk.diff
