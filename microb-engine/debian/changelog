@@ -1,3 +1,38 @@
+microb-engine (1.0.3-24) unstable; urgency=low
+
+  * Updated for building with trunk engine. 
+    Version 2007-09-29
+    Bonsai Date: 2007-09-28 23:12
+  * Adding patch for ftv improvements. Fixes: NB#71266
+  * Enabled back JS suspending while Native events handling<F2>
+  * Minor fix for select element handling
+  * Fixed bug:[SNAV] Select element looses focus while spatial navigation.
+    Fixes: NB#71068
+  * Disabled activation offscreen element
+  * Enabled variables initialize for js_LookupPropertyWithFlags crash
+  * Fixed bug:Zoom level not preserved for next page. Fixes: NB#70843
+  * Fixed Bug 381074 Hang with display: table-caption, large padding and left
+    float inside it
+  * Fixed mType initialization for both constructors
+  * Fixed glib criticals on create backbuffer
+  * Fixed bug:Graphics error when switching to full screen - TRUE. 
+    Fixes: NB#69433
+  * Fixed disabled state for buttons widgets
+  * Fixed bug:Dropmenu widget looks bad. Fixes: NB#70572
+  * Added NULL check for some random crash
+  * Fixed bug: Browser crash on opening page after invoking WLAN connection
+    through browser. Fixes: NB#70633
+  * Fixed bug:Internet keywords feature does not call "Google.. Lucky". 
+    Fixes: NB#70218
+  * Fixed bug:Valgrind reported unconditional jumps in Browser. 
+    Fixes: NB#66825
+  * Fixed bug: Page www.4players.de is not rendered correctly after zooming
+    its content. Fixes: NB#57072
+  * Fixed bug:Incorrect focus behaviour when scrolling page with HW keys.
+    Fixes: NB#50934
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 30 Sep 2007 15:02:19 +0300
+
 microb-engine (1.0.3-22) unstable; urgency=low
 
   * Fixed bug:Authentication : Server and Message fields are incorrect..
