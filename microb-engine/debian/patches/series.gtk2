@@ -27,10 +27,9 @@ crash/attachment.cgi?id=205126.diff
 #GTK2
 
 #020_BUG4821_full_page_zoom.gtk2.diff
-
 020_BUG4821_full_page_zoom.gtk2_1.diff
 666_fixForPixelBug.diff
-
+701_FixForTiledBGScaling.diff
 030_windowless_support_lp0.diff -p0
 
 # BUILD BUSTAGE
@@ -178,8 +177,6 @@ gtkmozembed/gtkmozembed.diff
 560_NativeSuspendImplementation.diff
 565_svg_compiler_helper.diff
 570_thumb_supporting_stuff.diff
-#575_js_handler_events_info.diff
-575_js_handler_events_info_1.diff
 crash/625_BUG56960_layout_indexof_crash.diff 
 580_focus_for_visible_area.diff
 #585_disable_broken_gtk2_opacity.diff
@@ -270,29 +267,32 @@ crash/JS_Destroy.Crash.diff
 550_onchange_text_input_fix.diff
 trunk_updates/BUG_370525_gmail_chats.diff
 640_mouse_event_order.diff
-650_BUG204011_theme_change.diff
-655_unblock_mouseevents_ontoolbar.diff
-701_FixForTiledBGScaling.diff
+730_ftv_improvements.diff
 
-trunk_updates/new/14.BUG389663.diff
-trunk_updates/BUG389694.secure.diff
-trunk_updates/1.bug380659.diff -p0
-trunk_updates/2.bug380668.diff -p0
-trunk_updates/attachment.cgi?id=280009.diff
+575_js_handler_events_info.diff
+#575_js_handler_events_info_1.diff
 
-660_BUG65511.imgdoc_zoom.diff
+710_disable_F6_focus.diff
 665_malformedURI_message_rephrased.diff -p0
-
 670_obex_error_handling.diff
 675_unknown_protocol_handling.diff
 680_bug54733.diff.diff
 690_BUG65694.error_page.true.zoom.diff
 700_BUG65700.theeming.diff
-710_disable_F6_focus.diff
-720_Bug70843.RestoreZoomState.diff
-730_ftv_improvements.diff
+trunk_updates/1.bug380659.diff -p0
+trunk_updates/2.bug380668.diff -p0
+
+650_BUG204011_theme_change.diff
+655_unblock_mouseevents_ontoolbar.diff
+trunk_updates/new/14.BUG389663.diff
+trunk_updates/BUG389694.secure.diff
+
+trunk_updates/attachment.cgi?id=280009.diff
+660_BUG65511.imgdoc_zoom.diff
 
 valgrind/bug66825.diff
+
+720_Bug70843.RestoreZoomState.diff
 
 # Crash, plugins, updates, not tested!!!
 trunk_updates/new/1.BUG386387.diff
@@ -303,7 +303,6 @@ trunk_updates/new/6.BUG386820.diff
 trunk_updates/new/7.BUG386614.diff
 trunk_updates/new/10.bug374810.diff
 trunk_updates/new/13.BUG386799.diff
-
 trunk_updates/new/15.BUG386266.diff
 trunk_updates/new/17.BUG383553.diff
 trunk_updates/new/19.BUG390762.diff
