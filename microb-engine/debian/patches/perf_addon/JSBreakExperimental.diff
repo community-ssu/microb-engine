@@ -49,7 +49,7 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
 ===================================================================
 --- mozilla.orig/dom/src/base/nsJSEnvironment.cpp
 +++ mozilla/dom/src/base/nsJSEnvironment.cpp
-@@ -121,16 +121,22 @@
+@@ -121,16 +121,20 @@
  #include "prlog.h"
  #include "prthread.h"
  
@@ -60,8 +60,6 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
  
 +#include "nsWidgetsCID.h"
 +#include "nsIAppShell.h"
-+#include "nsIBaseWindow.h"
-+
 +static NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
 +
  const size_t gStackSize = 8192;
@@ -72,7 +70,7 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
  
  // Thank you Microsoft!
  #ifndef WINCE
-@@ -707,16 +713,34 @@
+@@ -707,16 +711,22 @@
  
      ctx->mIsTrackingChromeCodeTime =
        ::JS_IsSystemObject(cx, ::JS_GetGlobalObject(cx));
@@ -83,21 +81,9 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
    if (callbackCount & MAYBE_GC_BRANCH_COUNT_MASK) {
 +    nsCOMPtr<nsIAppShell> appShell = do_GetService(kAppShellCID);
 +    if (appShell) {
-+      nsCOMPtr<nsPIDOMWindow> win(do_QueryInterface(ctx->GetGlobalObject()));
-+      if (win) {
-+        nsIDocShell *docShell = win->GetDocShell();
-+        if (docShell) {
-+          nsCOMPtr<nsIBaseWindow> baseWin(do_QueryInterface(docShell));
-+          if (baseWin) {
-+            baseWin->SetEnabled(PR_FALSE);
-+            ctx->SetScriptsEnabled(PR_FALSE, PR_FALSE);
-+            appShell->WakeupNative(PR_FALSE);
-+            baseWin->SetEnabled(PR_TRUE);
-+            ctx->SetScriptsEnabled(PR_TRUE, PR_FALSE);
-+            return JS_TRUE;
-+          }
-+        }
-+      }
++      ctx->SetScriptsEnabled(PR_FALSE, PR_FALSE);
++      appShell->WakeupNative(PR_FALSE);
++      ctx->SetScriptsEnabled(PR_TRUE, PR_FALSE);
 +    }
      return JS_TRUE;
    }
