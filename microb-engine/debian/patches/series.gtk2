@@ -29,7 +29,7 @@ crash/attachment.cgi?id=205126.diff
 #020_BUG4821_full_page_zoom.gtk2.diff
 020_BUG4821_full_page_zoom.gtk2_1.diff
 666_fixForPixelBug.diff
-701_FixForTiledBGScaling.diff
+#701_FixForTiledBGScaling.diff
 030_windowless_support_lp0.diff -p0
 
 # BUILD BUSTAGE
