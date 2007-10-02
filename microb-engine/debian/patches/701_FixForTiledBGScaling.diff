@@ -1,5 +1,5 @@
---- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-09-24 15:23:04.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-09-24 14:53:02.000000000 +0300
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-10-02 11:28:03.000000000 +0300
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-10-01 15:31:36.000000000 +0300
 @@ -1670,37 +1670,62 @@ NS_IMETHODIMP nsRenderingContextGTK::Rel
  }
  
@@ -78,9 +78,9 @@
 -
  }
  
---- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-09-24 15:23:04.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-09-24 15:20:39.000000000 +0300
-@@ -1989,20 +1989,69 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+--- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-10-02 11:28:03.000000000 +0300
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-10-02 11:34:18.000000000 +0300
+@@ -1989,20 +1989,76 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
      validWidth -= mDecodedX1;
      validX = mDecodedX1; 
      partial = PR_TRUE;
@@ -98,8 +98,8 @@
 +  if (theDeviceContext)
 +    scale = theDeviceContext->GetPixelScale();
 +
-+  // If the page is scaled do tiling by hand. This
-+  // is not the most optimal way but it works.
++  PRInt32 dWidth = 0, dHeight = 0;
++
 +  if (scale != 1.0) {
 +    PRInt32 appUnitsPerDevPixel = 60;
 +    if (theDeviceContext)
@@ -108,9 +108,20 @@
 +    float p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
 +
 +    // Calculate scaled image width and height
-+    PRInt32 dWidth = NSToIntRound(((float)(mWidth) * p2a)/appUnitsPerDevPixel);
-+    PRInt32 dHeight = NSToIntRound(((float)(mHeight) * p2a )/ appUnitsPerDevPixel);
++    dWidth = NSToIntRound(((float)(mWidth) * p2a)/appUnitsPerDevPixel);
++    dHeight = NSToIntRound(((float)(mHeight) * p2a)/appUnitsPerDevPixel);
++#ifdef DEBUG_TILING
++    fprintf( stderr, "scaled tile dWxdH (%4dx%4d)\n", dWidth, dHeight );
++#endif
++  }
 +
++  // If the page is scaled and alpha depth is not 0 do tiling by hand. This
++  // is not the most optimal way but it works.
++  // Alpha depth 0 case is handled by gdk tiling functions.
++  if (scale != 1.0 && mAlphaDepth != 0) {
++#ifdef DEBUG_TILING
++      printf("Warning: using slow tiling\n");
++#endif
 +    // Get starting and ending coordinates
 +    PRInt32 aY0 = aTileRect.y - aSYOffset,
 +            aX0 = aTileRect.x - aSXOffset,
@@ -123,18 +134,14 @@
 +      aTileRect, nsClipCombine_kIntersect);
 +    ((nsRenderingContextGTK&)aContext).UpdateGC();
 +
-+#ifdef DEBUG_TILING
-+      printf("Warning: using slow tiling\n");
-+#endif
-+
-+      for (PRInt32 y = aY0; y < aY1; y += dHeight + aPadY) {
-+        for (PRInt32 x = aX0; x < aX1; x += dWidth + aPadX) {
-+            // Use Draw method, the method draws the image
-+            // in scaled mode
-+            Draw( aContext, aSurface, 0, 0, mWidth, mHeight,
-+              x, y, dWidth, dHeight );
-+          }
-+        }
++    for (PRInt32 y = aY0; y < aY1; y += dHeight + aPadY) {
++      for (PRInt32 x = aX0; x < aX1; x += dWidth + aPadX) {
++          // Use Draw method, the method draws the image
++          // in scaled mode
++          Draw(aContext, aSurface, 0, 0, mWidth, mHeight,
++            x, y, dWidth, dHeight);
++      }
++    }
 +    aContext.PopState();
 +
 +    return NS_OK;
@@ -150,3 +157,95 @@
      aContext.PushState();
      ((nsRenderingContextGTK&)aContext).SetClipRectInPixels(
        aTileRect, nsClipCombine_kIntersect);
+@@ -2028,21 +2084,21 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+ 
+     return NS_OK;
+   }
+ 
+   nsRect clipRect;
+   PRBool isNonEmpty;
+   PRBool haveClip = NS_SUCCEEDED(aContext.GetClipRect(clipRect, isNonEmpty));
+   if (haveClip && !isNonEmpty) {
+     return NS_OK;
+   }
+-    
++
+   if (mAlphaDepth == 1) {
+     if (sNeedSlowTile) {
+       SlowTile(drawing, aTileRect, aSXOffset, aSYOffset, clipRect, haveClip);
+       return NS_OK;
+     }
+ 
+     GdkGC *tileGC;
+     GdkGCValues values;
+     GdkGCValuesMask valuesMask;
+ 
+@@ -2070,23 +2126,66 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+     gdk_gc_set_fill(tileGC, GDK_TILED);
+     gdk_gc_set_function(tileGC, GDK_OR);
+     gdk_gc_set_tile(tileGC, mImagePixmap);
+ 
+     gdk_draw_rectangle(drawing->GetDrawable(), tileGC, PR_TRUE,
+                        aTileRect.x, aTileRect.y,
+                        aTileRect.width, aTileRect.height);
+ 
+     gdk_gc_unref(tileGC);
+   } else {
++    // If the page is not scaled use mImagePixmap directly
++    GdkPixmap *tilePixmap = mImagePixmap, *pixmap = 0;
++
++    if (scale != 1.0) {
++#ifdef DEBUG_TILING
++      fprintf( stderr, "nsImage::DrawTile() Scaling - %d\n", mAlphaDepth );
++#endif
++      // When the page is scaled, scale the mImagePixmap
++      // first and the give the scaled pixmap to TilePixmap
++      gint err = 0;
++      gdk_error_trap_push();
++      pixmap = gdk_pixmap_new(nsnull, dWidth, dHeight,
++        gdk_drawable_get_depth(mImagePixmap));
++      gdk_flush();
++      if ((err=gdk_error_trap_pop()) || !pixmap) {
++        xerrmessage(err);
++        return NS_ERROR_OUT_OF_MEMORY;
++      }
++
++      if (pixmap) {
++        GdkGC *gc = ((nsRenderingContextGTK&)aContext).GetGC();
++
++        PRBool mem =
++          XlibRectStretch(mWidth, mHeight,
++                          dWidth, dHeight,
++                          0, 0,
++                          0, 0,
++                          dWidth, dHeight,
++                          mImagePixmap, pixmap,
++                          gc, sXbitGC, gdk_drawable_get_depth(mImagePixmap));
++        if (!mem) {
++          if (pixmap)
++            gdk_pixmap_unref(pixmap);
++          return NS_ERROR_OUT_OF_MEMORY;
++          }
++
++        tilePixmap = pixmap;
++      }
++    }
++   
+     // In the non-alpha case, gdk can tile for us
+-    TilePixmap(mImagePixmap, drawing->GetDrawable(), aSXOffset, aSYOffset,
+-               aTileRect, clipRect, haveClip);
++    TilePixmap(tilePixmap, drawing->GetDrawable(), aSXOffset, aSYOffset,
++      aTileRect, clipRect, haveClip);
++
++    if (pixmap)
++      gdk_pixmap_unref(pixmap);
+   }
+ 
+   mFlags = 0;
+   return NS_OK;
+ }
+ 
+ 
+ 
+ //------------------------------------------------------------
+ 
