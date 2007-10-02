@@ -1,5 +1,5 @@
---- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-10-02 11:28:03.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-10-01 15:31:36.000000000 +0300
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-10-02 17:22:48.000000000 +0300
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-10-02 17:34:59.000000000 +0300
 @@ -1670,37 +1670,62 @@ NS_IMETHODIMP nsRenderingContextGTK::Rel
  }
  
@@ -78,9 +78,166 @@
 -
  }
  
---- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-10-02 11:28:03.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-10-02 11:34:18.000000000 +0300
-@@ -1989,20 +1989,76 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+--- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-10-02 17:22:48.000000000 +0300
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-10-02 17:44:46.000000000 +0300
+@@ -1642,49 +1642,129 @@ nsImageGTK::DrawCompositeTile(nsIRenderi
+ 
+   PRBool flipBytes = 
+     ( isLSB && ximage->byte_order != LSBFirst) ||
+     (!isLSB && ximage->byte_order == LSBFirst);
+ 
+ 
+   PRUint8 *imageOrigin, *alphaOrigin;
+   PRUint32 imageStride, alphaStride;
+   PRUint32 compX, compY;
+   PRUint8 *compTarget, *compSource;
++  PRUint8 *scaledImage = 0;
++  PRUint8 *scaledAlpha = 0;
+ 
+-  imageStride = mRowBytes;
+-  alphaStride = mAlphaRowBytes;
++  float scale = 1.0f;
++  nsCOMPtr<nsIDeviceContext> theDeviceContext;
++  aContext.GetDeviceContext(*getter_AddRefs(theDeviceContext));
++  PRInt32 appUnitsPerDevPixel = 60;
++  if (theDeviceContext){
++    scale = theDeviceContext->GetPixelScale();
++    appUnitsPerDevPixel = theDeviceContext->AppUnitsPerDevPixel();
++  }
++  float p2a = nsIDeviceContext::AppUnitsPerCSSPixel();
++
++  if (scale != 1.0f) {
++    PRUint32 x1, y1, x2, y2;
++    x1 = 0;
++    y1 = 0;
++    x2 = mWidth;
++    y2 = mHeight;
++
++    PRInt32 scaledImageWidth = NSToIntRound(((float)(mWidth) * p2a)/appUnitsPerDevPixel);
++    PRInt32 scaledImageHeight = NSToIntRound(((float)(mHeight) * p2a)/appUnitsPerDevPixel);
++
++    scaledImage = (PRUint8 *)nsMemory::Alloc(3*scaledImageWidth*scaledImageHeight);
++    scaledAlpha = (PRUint8 *)nsMemory::Alloc(scaledImageWidth*scaledImageHeight);
++    if (!scaledImage || !scaledAlpha) {
++
++      XDestroyImage(ximage);
++      nsMemory::Free(readData);
++      if (scaledImage)
++        nsMemory::Free(scaledImage);
++      if (scaledAlpha)
++        nsMemory::Free(scaledAlpha);
++      return;
++    }
++
++    RectStretch(mWidth, mHeight,
++                scaledImageWidth, scaledImageHeight,
++                0, 0,
++                scaledImageWidth-1, scaledImageHeight-1,
++                mImageBits, mRowBytes, scaledImage, 3*scaledImageWidth, 24);
++
++    RectStretch(mWidth, mHeight,
++                scaledImageWidth, scaledImageHeight,
++                0, 0,
++                scaledImageWidth-1, scaledImageHeight-1,
++                mAlphaBits, mAlphaRowBytes, scaledAlpha, scaledImageWidth, 8);
++
++    imageOrigin = scaledImage;
++    imageStride = 3*scaledImageWidth;
++    alphaOrigin = scaledAlpha;
++    alphaStride = scaledImageWidth;
++  } else {
++    imageOrigin = mImageBits + destY*mRowBytes + 3*destX;
++    imageStride = mRowBytes;
++    alphaOrigin = mAlphaBits + destY*mAlphaRowBytes + destX;
++    alphaStride = mAlphaRowBytes;
++  }
+ 
+   if (destX==mWidth)
+     destX = 0;
+   if (destY==mHeight)
+     destY = 0;
+ 
+   for (unsigned y=0; y<readHeight; y+=compY) {
+     if (y==0) {
++      if (scale != 1.0f) {
++        PRInt32 scaledImageHeight = NSToIntRound(((float)(mHeight) * p2a)/appUnitsPerDevPixel);
++        compY = PR_MIN(scaledImageHeight-destY, readHeight-y);
++      } else {
+       compY = PR_MIN(mHeight-destY, readHeight-y);
++      }
+     } else {
+       destY = 0;
++
++      if (scale != 1.0f) {
++        PRInt32 scaledImageHeight = NSToIntRound(((float)(mHeight) * p2a)/appUnitsPerDevPixel);
++        compY = PR_MIN(scaledImageHeight, readHeight-y);
++      } else {
+       compY = PR_MIN(mHeight, readHeight-y);
++      }
+     }
+ 
+     compTarget = readData + 3*y*ximage->width;
+     compSource = (unsigned char *)ximage->data + y*ximage->bytes_per_line;
+ 
+     for (unsigned x=0; x<readWidth; x+=compX) {
+       if (x==0) {
++        if (scale != 1.0f) {
++          PRInt32 scaledImageWidth = NSToIntRound(((float)(mWidth) * p2a)/appUnitsPerDevPixel);
++          compX = PR_MIN(scaledImageWidth-destX, readWidth-x);
++          imageOrigin = scaledImage + destY*3*scaledImageWidth + 3*destX;
++          alphaOrigin = scaledAlpha + destY*scaledImageWidth + destX;
++        } else {
+         compX = PR_MIN(mWidth-destX, readWidth-x);
+         imageOrigin = mImageBits + destY*mRowBytes + 3*destX;
+         alphaOrigin = mAlphaBits + destY*mAlphaRowBytes + destX;
++        }
+       } else {
++        if (scale != 1.0f) {
++          PRInt32 scaledImageWidth = NSToIntRound(((float)(mWidth) * p2a)/appUnitsPerDevPixel);
++          compX = PR_MIN(scaledImageWidth, readWidth-x);
++          imageOrigin = scaledImage + destY*3*scaledImageWidth;
++          alphaOrigin = scaledAlpha + destY*scaledImageWidth;
++        } else {
+         compX = PR_MIN(mWidth, readWidth-x);
+         imageOrigin = mImageBits + destY*mRowBytes;
+         alphaOrigin = mAlphaBits + destY*mAlphaRowBytes;
++        }
+       }
+ 
+       if ((ximage->bits_per_pixel==32) &&
+           (visual->red_prec == 8) &&
+           (visual->green_prec == 8) &&
+           (visual->blue_prec == 8))
+         DrawComposited32(isLSB, flipBytes, 
+                          imageOrigin, imageStride,
+                          alphaOrigin, alphaStride, 
+                          compX, compY, ximage, compTarget, compSource);
+@@ -1717,20 +1797,24 @@ nsImageGTK::DrawCompositeTile(nsIRenderi
+ 
+   GdkGC *imageGC = ((nsRenderingContextGTK&)aContext).GetGC();
+   gdk_draw_rgb_image(drawing->GetDrawable(), imageGC,
+                      readX, readY, readWidth, readHeight,
+                      GDK_RGB_DITHER_MAX,
+                      readData, 3*readWidth);
+   gdk_gc_unref(imageGC);
+ 
+   XDestroyImage(ximage);
+   nsMemory::Free(readData);
++  if (scaledImage)
++    nsMemory::Free(scaledImage);
++  if (scaledAlpha)
++    nsMemory::Free(scaledAlpha);
+   mFlags = 0;
+ }
+ 
+ 
+ PRBool nsImageGTK::CreateOffscreenPixmap(PRInt32 aWidth, PRInt32 aHeight)
+ {
+   gint err;
+   // Render unique image bits onto an off screen pixmap only once
+   // The image bits can change as a result of ImageUpdated() - for
+   // example: animated GIFs.
+@@ -1989,20 +2073,77 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
      validWidth -= mDecodedX1;
      validX = mDecodedX1; 
      partial = PR_TRUE;
@@ -118,7 +275,8 @@
 +  // If the page is scaled and alpha depth is not 0 do tiling by hand. This
 +  // is not the most optimal way but it works.
 +  // Alpha depth 0 case is handled by gdk tiling functions.
-+  if (scale != 1.0 && mAlphaDepth != 0) {
++  // Alpha depth 8 csae is handled by DrawCompositeTile function
++  if (scale != 1.0 && mAlphaDepth != 0 && mAlphaDepth != 8) {
 +#ifdef DEBUG_TILING
 +      printf("Warning: using slow tiling\n");
 +#endif
@@ -157,7 +315,7 @@
      aContext.PushState();
      ((nsRenderingContextGTK&)aContext).SetClipRectInPixels(
        aTileRect, nsClipCombine_kIntersect);
-@@ -2028,21 +2084,21 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+@@ -2028,21 +2169,21 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
  
      return NS_OK;
    }
@@ -180,7 +338,7 @@
      GdkGCValues values;
      GdkGCValuesMask valuesMask;
  
-@@ -2070,23 +2126,66 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+@@ -2070,23 +2211,66 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
      gdk_gc_set_fill(tileGC, GDK_TILED);
      gdk_gc_set_function(tileGC, GDK_OR);
      gdk_gc_set_tile(tileGC, mImagePixmap);
