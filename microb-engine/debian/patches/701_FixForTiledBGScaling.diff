@@ -1,5 +1,5 @@
---- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-10-02 17:22:48.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-10-02 17:34:59.000000000 +0300
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-10-03 11:22:39.000000000 +0300
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-10-03 11:25:46.000000000 +0300
 @@ -1670,37 +1670,62 @@ NS_IMETHODIMP nsRenderingContextGTK::Rel
  }
  
@@ -78,8 +78,8 @@
 -
  }
  
---- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-10-02 17:22:48.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-10-02 17:44:46.000000000 +0300
+--- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-10-03 11:22:50.000000000 +0300
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-10-03 11:26:34.000000000 +0300
 @@ -1642,49 +1642,129 @@ nsImageGTK::DrawCompositeTile(nsIRenderi
  
    PRBool flipBytes = 
@@ -338,7 +338,7 @@
      GdkGCValues values;
      GdkGCValuesMask valuesMask;
  
-@@ -2070,23 +2211,66 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+@@ -2070,23 +2211,68 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
      gdk_gc_set_fill(tileGC, GDK_TILED);
      gdk_gc_set_function(tileGC, GDK_OR);
      gdk_gc_set_tile(tileGC, mImagePixmap);
@@ -369,7 +369,7 @@
 +      }
 +
 +      if (pixmap) {
-+        GdkGC *gc = ((nsRenderingContextGTK&)aContext).GetGC();
++        GdkGC *gc = gdk_gc_new(drawing->GetDrawable());
 +
 +        PRBool mem =
 +          XlibRectStretch(mWidth, mHeight,
@@ -384,6 +384,8 @@
 +            gdk_pixmap_unref(pixmap);
 +          return NS_ERROR_OUT_OF_MEMORY;
 +          }
++
++        gdk_gc_unref(gc);
 +
 +        tilePixmap = pixmap;
 +      }
