@@ -1,5 +1,5 @@
 --- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2007-10-03 11:22:39.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-10-03 11:25:46.000000000 +0300
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2007-10-03 14:42:49.000000000 +0300
 @@ -1670,37 +1670,62 @@ NS_IMETHODIMP nsRenderingContextGTK::Rel
  }
  
@@ -31,7 +31,7 @@
 +  scale = mContext->GetPixelScale();
 +
 +  // If the page is scaled calculate the offset values
-+  // from scales image width and height
++  // from scaled image width and height
 +  if (scale != 1.0) {
 +    PRInt32 appUnitsPerDevPixel = 60;
 +    //if (theDeviceContext)
@@ -79,7 +79,7 @@
  }
  
 --- mozilla/gfx/src/gtk/nsImageGTK.cpp.orig	2007-10-03 11:22:50.000000000 +0300
-+++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-10-03 11:26:34.000000000 +0300
++++ mozilla/gfx/src/gtk/nsImageGTK.cpp	2007-10-03 14:50:35.000000000 +0300
 @@ -1642,49 +1642,129 @@ nsImageGTK::DrawCompositeTile(nsIRenderi
  
    PRBool flipBytes = 
@@ -237,7 +237,7 @@
    // Render unique image bits onto an off screen pixmap only once
    // The image bits can change as a result of ImageUpdated() - for
    // example: animated GIFs.
-@@ -1989,20 +2073,77 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+@@ -1989,20 +2073,44 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
      validWidth -= mDecodedX1;
      validX = mDecodedX1; 
      partial = PR_TRUE;
@@ -272,39 +272,6 @@
 +#endif
 +  }
 +
-+  // If the page is scaled and alpha depth is not 0 do tiling by hand. This
-+  // is not the most optimal way but it works.
-+  // Alpha depth 0 case is handled by gdk tiling functions.
-+  // Alpha depth 8 csae is handled by DrawCompositeTile function
-+  if (scale != 1.0 && mAlphaDepth != 0 && mAlphaDepth != 8) {
-+#ifdef DEBUG_TILING
-+      printf("Warning: using slow tiling\n");
-+#endif
-+    // Get starting and ending coordinates
-+    PRInt32 aY0 = aTileRect.y - aSYOffset,
-+            aX0 = aTileRect.x - aSXOffset,
-+            aY1 = aTileRect.y + aTileRect.height,
-+            aX1 = aTileRect.x + aTileRect.width;
-+
-+    // Set up clipping and call Draw().
-+    aContext.PushState();
-+    ((nsRenderingContextGTK&)aContext).SetClipRectInPixels(
-+      aTileRect, nsClipCombine_kIntersect);
-+    ((nsRenderingContextGTK&)aContext).UpdateGC();
-+
-+    for (PRInt32 y = aY0; y < aY1; y += dHeight + aPadY) {
-+      for (PRInt32 x = aX0; x < aX1; x += dWidth + aPadX) {
-+          // Use Draw method, the method draws the image
-+          // in scaled mode
-+          Draw(aContext, aSurface, 0, 0, mWidth, mHeight,
-+            x, y, dWidth, dHeight);
-+      }
-+    }
-+    aContext.PopState();
-+
-+    return NS_OK;
-+  }
-+
    if (partial || (mAlphaDepth == 8) || (aPadX || aPadY)) {
      PRInt32 aY0 = aTileRect.y - aSYOffset,
              aX0 = aTileRect.x - aSXOffset,
@@ -315,7 +282,7 @@
      aContext.PushState();
      ((nsRenderingContextGTK&)aContext).SetClipRectInPixels(
        aTileRect, nsClipCombine_kIntersect);
-@@ -2028,21 +2169,21 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
+@@ -2028,65 +2136,181 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
  
      return NS_OK;
    }
@@ -338,16 +305,109 @@
      GdkGCValues values;
      GdkGCValuesMask valuesMask;
  
-@@ -2070,23 +2211,68 @@ NS_IMETHODIMP nsImageGTK::DrawTile(nsIRe
++    GdkPixmap *alphaPixmap = mAlphaPixmap, *imagePixmap = mImagePixmap,
++      *scaledAlpha = 0, *scaledImage = 0;
++    gint err;
++
++    if (scale != 1.0) {
++#ifdef DEBUG_TILING
++      fprintf(stderr, "nsImage::DrawTile() Scaling - %d\n", mAlphaDepth);
++#endif
++      GdkGC *gc;
++
++      gdk_error_trap_push();
++      // Create new pixmaps for scaled images
++      scaledAlpha = gdk_pixmap_new(nsnull, dWidth, dHeight, 1);
++      scaledImage = gdk_pixmap_new(nsnull, dWidth, dHeight,
++        gdk_drawable_get_depth(mImagePixmap));
++      gdk_flush();
++      if ((err=gdk_error_trap_pop()) || !scaledImage || !scaledAlpha) {
++        xerrmessage(err);
++        return NS_ERROR_OUT_OF_MEMORY;
++      }
++
++      // Stretch alpha pixmap
++      PRBool mem = XlibRectStretch(mWidth, mHeight,
++                                   dWidth, dHeight,
++                                   0, 0,
++                                   0, 0,
++                                   dWidth, dHeight,
++                                   mAlphaPixmap, scaledAlpha,
++                                   s1bitGC, s1bitGC, 1);
++
++      if (!mem) {
++        gdk_pixmap_unref(scaledAlpha);
++        gdk_pixmap_unref(scaledImage);
++        return NS_ERROR_OUT_OF_MEMORY;
++      }
++
++      // Get new GC
++      gc = gdk_gc_new(drawing->GetDrawable());
++
++      // Set clip origin and mask from scaled alpha pixmap
++      gdk_gc_set_clip_origin(gc, 0, 0);
++      gdk_gc_set_clip_mask(gc, scaledAlpha);
++
++      // Stretch image pixmap
++      mem = XlibRectStretch(mWidth, mHeight,
++                            dWidth, dHeight,
++                            0, 0,
++                            0, 0,
++                            dWidth, dHeight,
++                            mImagePixmap, scaledImage,
++                            gc, sXbitGC, gdk_rgb_get_visual()->depth);
++
++      if (!mem) {
++        gdk_pixmap_unref(scaledAlpha);
++        gdk_pixmap_unref(scaledImage);
++        gdk_gc_unref(gc);
++        return NS_ERROR_OUT_OF_MEMORY;
++      }
++
++      // Use scaled images in tiling
++      alphaPixmap = scaledAlpha;
++      imagePixmap = scaledImage;
++
++      // GC is not needed anymore
++      gdk_gc_unref(gc);
++    }
++
+     memset(&values, 0, sizeof(GdkGCValues));
+     values.fill = GDK_STIPPLED;
+     values.function = GDK_AND;
+-    values.stipple = mAlphaPixmap;
++    values.stipple = alphaPixmap;
+     values.ts_x_origin = aTileRect.x - aSXOffset;
+     values.ts_y_origin = aTileRect.y - aSYOffset;
+     valuesMask = GdkGCValuesMask(GDK_GC_FOREGROUND | GDK_GC_FUNCTION | 
+                                  GDK_GC_FILL | GDK_GC_STIPPLE | 
+                                  GDK_GC_TS_X_ORIGIN | GDK_GC_TS_Y_ORIGIN);
+     tileGC = gdk_gc_new_with_values(drawing->GetDrawable(), &values, valuesMask);
+     
+     if (haveClip) {
+       GdkRectangle gdkrect = {clipRect.x, clipRect.y,
+                               clipRect.width, clipRect.height};
+       gdk_gc_set_clip_rectangle(tileGC, &gdkrect);
+     }
+ 
+     gdk_draw_rectangle(drawing->GetDrawable(), tileGC, PR_TRUE,
+                        aTileRect.x, aTileRect.y,
+                        aTileRect.width, aTileRect.height);
+ 
      gdk_gc_set_fill(tileGC, GDK_TILED);
      gdk_gc_set_function(tileGC, GDK_OR);
-     gdk_gc_set_tile(tileGC, mImagePixmap);
+-    gdk_gc_set_tile(tileGC, mImagePixmap);
++    gdk_gc_set_tile(tileGC, imagePixmap);
  
      gdk_draw_rectangle(drawing->GetDrawable(), tileGC, PR_TRUE,
                         aTileRect.x, aTileRect.y,
                         aTileRect.width, aTileRect.height);
  
      gdk_gc_unref(tileGC);
++
++    // Unref scaled images if needed
++    if (scaledAlpha) gdk_pixmap_unref(scaledAlpha);
++    if (scaledImage) gdk_pixmap_unref(scaledImage);
    } else {
 +    // If the page is not scaled use mImagePixmap directly
 +    GdkPixmap *tilePixmap = mImagePixmap, *pixmap = 0;
