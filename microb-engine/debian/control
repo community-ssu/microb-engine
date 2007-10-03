@@ -58,6 +58,18 @@ Depends: ${shlibs:Depends}, microb-engine, libgtkmozembed
 Description: TestGtkEmbed refui for MicroB
  This package provides a simple GUI for testing the browser engine
 
+Package: microb-gtkmozembed
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, microb-engine
+Conflicts: libgtkmozembed
+Replaces: libgtkmozembed
+Description: Package of MicroB gtkmozembed library.
+ MicroB can be used by other external applications.
+ Note that using libgtkmozembed or browser-eal is encouraged
+ instead of using this directly.
+ It is based on Mozilla.
+
 Package: microb-xulrunner
 Architecture: any
 Section: user/extras
@@ -101,6 +113,18 @@ Architecture: any
 Depends: microb-refui (= ${Source-Version})
 Description: Debug package for MicroB refui
  Debug symbols file for the microb refui
+
+Package: microb-gtkmozembed-dbg
+Section: libs
+Architecture: any
+Depends: microb-gtkmozembed (= ${Source-Version})
+Conflicts: libgtkmozembed-dbg
+Replaces: libgtkmozembed-dbg
+Description: Debug Package of MicroB gtkmozembed library.
+ MicroB can be used by other external applications.
+ Note that using libgtkmozembed or browser-eal is encouraged
+ instead of using this directly.
+ It is based on Mozilla.
 
 Package: microb-xulrunner-dbg
 Section: libdevel
