@@ -89,30 +89,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
  DEFINES += -DMOZ_PLUGINS
  COMPONENT_LIBS += \
  	gkplugin \
-@@ -128,16 +125,22 @@
- endif
- 
- ifdef MOZ_XPFE_COMPONENTS
- DEFINES += -DMOZ_XPFE_COMPONENTS
- COMPONENT_LIBS += \
- 	mozfind \
- 	appcomps \
- 	$(NULL)
-+else
-+ifdef MOZ_MICROB
-+COMPONENT_LIBS += \
-+	appcomps \
-+	$(NULL)
-+endif
- endif
- 
- ifdef MOZ_PERF_METRICS
- EXTRA_DSO_LIBS  += mozutil_s
- endif
- 
- ifdef MOZ_XPINSTALL
- DEFINES += -DMOZ_XPINSTALL
-@@ -246,16 +249,24 @@
+@@ -246,16 +243,24 @@
  	$(NULL)
  ifdef MOZ_STORAGE
  COMPONENT_LIBS += \
@@ -289,32 +266,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
 ===================================================================
 --- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
 +++ mozilla/toolkit/library/nsStaticXULComponents.cpp
-@@ -190,19 +190,24 @@
-     MODULE(nsWindowDataSourceModule)
- #else
- #define RDFAPP_MODULES
- #endif
- #define APPLICATION_MODULES \
-     MODULE(application) \
-     MODULE(nsFindComponent)
- #else
-+#ifdef MOZ_MICROB
-+#define APPLICATION_MODULES \
-+    MODULE(application)
-+#else
- #define APPLICATION_MODULES
- #define RDFAPP_MODULES
- #endif
-+#endif
- 
- #ifdef MOZ_XPINSTALL
- #define XPINSTALL_MODULES \
-     MODULE(nsSoftwareUpdate)
- #else
- #define XPINSTALL_MODULES
- #endif
- 
-@@ -252,16 +257,25 @@
+@@ -252,16 +252,25 @@
  #define XULENABLED_MODULES                   \
      MODULE(tkAutoCompleteModule)             \
      MODULE(PKI)
@@ -340,7 +292,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  
  #define XUL_MODULES                          \
      MODULE(xpconnect)                        \
-@@ -269,17 +283,16 @@
+@@ -269,17 +278,16 @@
      MODULE(nsUConvModule)                    \
      MODULE(nsI18nModule)                     \
      MODULE(nsChardetModule)                  \
@@ -358,7 +310,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      GFX_MODULES                              \
      WIDGET_MODULES                           \
      MODULE(nsImageLib2Module)                \
-@@ -294,22 +307,21 @@
+@@ -294,22 +302,21 @@
      OJI_MODULES                              \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \
