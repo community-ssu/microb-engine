@@ -54,7 +54,7 @@ Description: Package of MicroB libraries based on Mozilla
 Package: microb-refui
 Architecture: any
 Section: user/extras
-Depends: ${shlibs:Depends}, microb-engine, libgtkmozembed
+Depends: ${shlibs:Depends}, microb-engine, libgtkmozembed | microb-gtkmozembed
 Description: TestGtkEmbed refui for MicroB
  This package provides a simple GUI for testing the browser engine
 
