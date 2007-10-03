@@ -8782,7 +8782,7 @@ diff -ruN -p -u10 mozilla/embedding/browser/gtk/src.orig/gtkmozembed_glue.cpp mo
 -  GTKF(gtk_moz_embed_get_nsIWebBrowser)
 +  GTKF(gtk_moz_embed_get_nsIWebBrowser) \
 +  GTKF(gtk_moz_embed_get_text) \
-+  GTKF(gtk_moz_embed_docommand)
++  GTKF(gtk_moz_embed_do_command)
  
  #define GTKMOZEMBED_FUNCTIONS \
    GTKF(gtk_moz_embed_get_type) \
