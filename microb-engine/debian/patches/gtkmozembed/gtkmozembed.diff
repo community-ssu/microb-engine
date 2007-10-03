@@ -38,7 +38,7 @@ diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/Makefile.in mozilla/emb
  		  dom \
  		  gfx \
  		  intl \
-@@ -106,20 +106,25 @@ REQUIRES	= xpcom \
+@@ -106,20 +106,26 @@ REQUIRES	= xpcom \
  		  nspr \
  		  xulapp \
  		  exthandler \
@@ -54,6 +54,7 @@ diff -ruN -p -U10 mozilla/embedding/browser/gtk/src.orig/Makefile.in mozilla/emb
 +		  rdf \
 +		  toolkitcomps \
 +		  view \
++		  commandhandler \
  		  $(NULL)
  
  ifdef ACCESSIBILITY
