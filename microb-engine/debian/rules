@@ -174,7 +174,7 @@ optimize_add = $(CFLAGS)
 endif
 
 ifneq (,$(findstring vfp,$(DEB_BUILD_OPTIONS)))
-vfp:=y
+vfp:=n
 else
 vfp:=$(vfp)
 endif
