@@ -223,7 +223,7 @@ buildobjdir = "@TOPSRCDIR@/../obj-"$(bldstr)build$(MOZCONFIG_LEV)
 
 ifneq (,$(findstring $(DEB_HOST_ARCH),arm armel))
 	configopts += --disable-elf-dynstr-gc
-	optimize_add += -march=armv5t
+	optimize_add += -march=armv5t -DJS_THREADED_INTERP=0
 #	envflags += CFLAGS="-march=armv6 " CXXFLAGS=$$CFLAGS HOST_CFLAGS="-march=armv5t" HOST_CXXFLAGS=$$HOST_CFLAGS
 bldstr:=$(bldstr)arm-
 else
