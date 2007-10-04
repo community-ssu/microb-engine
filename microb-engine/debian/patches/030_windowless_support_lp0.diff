@@ -342,7 +342,7 @@ Index: layout/generic/nsObjectFrame.cpp
 +      nsPluginWindow * window;
 +      mInstanceOwner->GetWindow(window);
 +
-+      if (window->type == nsPluginWindowType_Drawable)
++      if (window && window->type == nsPluginWindowType_Drawable)
 +        mInstanceOwner->Paint(aRenderingContext, aDirtyRect);
 +    }
  #elif defined (XP_WIN) // || defined(XP_OS2)
