@@ -1,25 +1,43 @@
---- mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp.orig	2007-10-01 18:58:31.000000000 -0400
-+++ mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp	2007-10-03 15:26:02.000000000 -0400
-@@ -63,6 +63,10 @@
+--- mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp.orig	2007-10-05 15:10:29.000000000 -0400
++++ mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp	2007-10-05 15:03:13.000000000 -0400
+@@ -59,16 +59,20 @@
+  * true when we get any change, and false once there is no possibility
+  * something changed that we need to check on navigation. Navigation events
+  * tend to be a little tricky because we want to check the current word on
+  * exit if something has changed. If we navigate inside the word, we don't want
   * to do anything. As a result, this flag is cleared in FinishNavigationEvent
   * when we know that we are checking as a result of navigation.
   */
+ 
 +#include "nsIPrompt.h"
-+#include "nsIWindowWatcher.h"
 +#include "nsIDOMWindow.h"
 +#include "nsIDOMWindowInternal.h"
- 
++#include "nsIWindowWatcher.h"
  #include "mozInlineSpellChecker.h"
  #include "mozInlineSpellWordUtil.h"
-@@ -115,12 +119,28 @@
+ #include "mozISpellI18NManager.h"
+ #include "nsCOMPtr.h"
+ #include "nsCRT.h"
+ #include "nsIDocument.h"
+ #include "nsIDOMDocument.h"
+ #include "nsIDOMDocumentRange.h"
+@@ -110,22 +114,41 @@
+ 
+ // This number is the number of checked words a misspelled word counts for
+ // when we're checking the time to see if the alloted time is up for
+ // spellchecking. Misspelled words take longer to process since we have to
+ // create a range, so they count more. The exact number isn't very important
  // since this just controls how often we check the current time.
  #define MISSPELLED_WORD_COUNT_PENALTY 4
  
 +// This is the max number of correct words to be suggested to the user
 +#define MAX_SUGGESTIONS 15
++
 +// This is the max number of dictionaries to be suggested to the user
 +#define MAX_DICTIONARIES 50
 +
++// The preferences strin for spellchecker dictionary
++#define PREF_SPELLCHECKER_DICTIONARY "spellchecker.dictionary"
  
  static PRBool ContentIsDescendantOf(nsINode* aPossibleDescendant,
                                      nsINode* aPossibleAncestor);
@@ -32,15 +50,25 @@
 +{
 +  DIALOG_NONE = -1,
 +  DIALOG_ADD,
++  DIALOG_IGNORE,
 +  DIALOG_DICTIONARY,
 +  DIALOG_OTHER
 +};
 +
-+
  mozInlineSpellStatus::mozInlineSpellStatus(mozInlineSpellChecker* aSpellChecker)
      : mSpellChecker(aSpellChecker), mWordCount(0)
  {
-@@ -1639,6 +1659,157 @@
+ }
+ 
+ // mozInlineSpellStatus::InitForEditorChange
+ //
+ //    This is the most complicated case. For changes, we need to compute the
+@@ -1634,16 +1657,264 @@ mozInlineSpellChecker::HandleNavigationE
+   if (shouldPost) {
+     rv = ScheduleSpellCheck(status);
+     NS_ENSURE_SUCCESS(rv, rv);
+   }
+ 
    return NS_OK;
  }
  
@@ -72,9 +100,28 @@
 +  if (!prompt)
 +    return NS_ERROR_FAILURE;
 +
-+  prompt->Select(NS_LITERAL_STRING("Spellcheck suggestions").get(), 
++  prompt->Select(NS_LITERAL_STRING("Spellcheck suggestions").get(),
 +                 nsnull, suggestionsCount, selectList, outSelection, retval);
 +  return NS_OK;
++}
++
++nsresult
++SetDictionaryPreference(const PRUnichar *aDictionaryString)
++{
++    nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
++    NS_ENSURE_STATE(prefs);
++
++    nsresult rv = prefs->SetCharPref(PREF_SPELLCHECKER_DICTIONARY,
++                            NS_ConvertUTF16toUTF8(aDictionaryString).get());
++    NS_ENSURE_SUCCESS(rv, rv);
++
++    nsCOMPtr<nsIPrefService> prefService = do_QueryInterface(prefs);
++    NS_ENSURE_STATE(prefService);
++
++    rv = prefService->SavePrefFile(nsnull);
++    NS_ENSURE_SUCCESS(rv, rv);
++
++    return NS_OK;
 +}
 +
 +nsresult
@@ -100,9 +147,9 @@
 +  PRUnichar **selectList;
 +
 +  aSpellCheck->GetDictionaryList(&selectList, &count);
-+  prompt->Select(NS_LITERAL_STRING("Dictionary chooser").get(), 
-+                 NS_LITERAL_STRING("Choose the default dictionary:").get(), 
-+		 count, (const PRUnichar **)selectList, &outSelection, retval);
++  prompt->Select(NS_LITERAL_STRING("Dictionary chooser").get(),
++                 NS_LITERAL_STRING("Choose the default dictionary:").get(),
++                count, (const PRUnichar**)selectList, &outSelection, retval);
 +
 +  if (*retval == PR_TRUE) {
 +    // user pressed the ok button
@@ -116,56 +163,135 @@
 +      NS_Free(currentDict);
 +    aSpellCheck->SetCurrentDictionary(selectList[outSelection]);
 +    aSpellCheck->SaveDefaultDictionary();
++
++    SetDictionaryPreference(selectList[outSelection]);
 +  }
 +  NS_FREE_XPCOM_ALLOCATED_POINTER_ARRAY(count, selectList);
 +  return NS_OK;
 +}
 +
-+nsresult
-+HandleMisspelledWord(nsIEditor *aEditor, nsIEditorSpellCheck *aSpellCheck, nsIPlaintextEditor* aTextEditor, PRBool *isChanged)
++PRBool
++IsValidAlpha(PRUnichar alpha)
 +{
-+  nsCOMPtr<nsISelectionController> selectionController;
++    /* FIXME */
++    return ((alpha >= 128 && alpha <= 165)
++            || (alpha >= 181 && alpha <= 183)
++            || (alpha >= 189 && alpha <= 190)
++            || (alpha >= 198 && alpha <= 199)
++            || (alpha >= 207 && alpha <= 216)
++            || (alpha == 222)
++            || (alpha >= 224 && alpha <= 237)
++            || (alpha >= 244 && alpha <= 245));
++}
++
++// verify if the current word contents non-alphanumeric characters
++// and ignores any trailing character different than alphanumeric characters
++PRBool
++FixCurrentSelection(PRUnichar **currentWord, nsISelectionController *aSelectionController)
++{
++  nsString aTempString(*currentWord);
++  PRInt32 stringLength = aTempString.Length();
++  PRInt32 i = stringLength-1;
++  PRBool foundWord = PR_FALSE;
++  while (i >= 0) {
++    // a word containing numbers is not valid a word
++    if (nsCRT::IsAsciiDigit((*currentWord)[i])) return PR_FALSE;
++    if (nsCRT::IsAsciiAlpha((*currentWord)[i])
++        || IsValidAlpha((*currentWord)[i]))
++        foundWord = PR_TRUE;
++    // ignore any trailing character different than alphanumeric characters
++    if (!foundWord) {
++      aSelectionController->CharacterMove(PR_FALSE, PR_TRUE);
++      stringLength--;
++    }
++    i--;
++  }
++  i = aTempString.Length();
++  // remove trailing invalid characters
++  if(stringLength != i) {
++    aTempString.Replace(stringLength, i-1, (PRUnichar)'\0');
++    // update the current word
++    NS_Free(*currentWord);
++    *currentWord = ToNewUnicode(aTempString);
++  }
++  return PR_TRUE;
++}
++
++nsresult
++HandleMisspelledWord(nsIEditor *aEditor, PRBool *isChanged)
++{
 +  if (!aEditor)
 +    return NS_ERROR_FAILURE;
-+  aEditor->GetSelectionController(getter_AddRefs(selectionController));
++  nsresult rv = NS_OK;
++
++  nsCOMPtr<nsIPlaintextEditor> aTextEditor(do_QueryInterface(aEditor, &rv));
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  // get the current spell checker
++  nsCOMPtr<nsIInlineSpellChecker> aInlineSpellChecker;
++  PRBool retval = PR_TRUE;
++  aEditor->GetInlineSpellChecker(retval, getter_AddRefs(aInlineSpellChecker));
++  nsCOMPtr<nsIEditorSpellCheck> aSpellCheck;
++  aInlineSpellChecker->GetSpellChecker(getter_AddRefs(aSpellCheck));
++
++  // get the selection controller
++  nsCOMPtr<nsISelectionController> aSelectionController;
++  aEditor->GetSelectionController(getter_AddRefs(aSelectionController));
 +
 +  // get the text selected
-+  nsISelection *aSpellCheckSelection;
-+  selectionController->GetSelection(nsISelectionController::SELECTION_NORMAL, &aSpellCheckSelection);
++  PRUnichar *currentWord;
++  nsCOMPtr<nsISelection> aSpellCheckSelection;
++  aSelectionController->GetSelection(nsISelectionController::SELECTION_NORMAL,
++                                     getter_AddRefs(aSpellCheckSelection));
++  aSpellCheckSelection->ToString(&currentWord);
++
++  // remove invalid trailing characters and verify is the word is valid
++  PRBool isWord = FixCurrentSelection(&currentWord, aSelectionController);
 +
 +  // verify the current word
-+  PRBool retval = PR_TRUE;
-+  PRUnichar *currentWord;
-+  aSpellCheckSelection->ToString(&currentWord);
-+  aSpellCheck->CheckCurrentWord(currentWord, &retval);
-+  if (retval == PR_TRUE) {
-+    // the works is misspelled: give some options to the user
++  PRBool isMisspelled = PR_TRUE;
++  aSpellCheck->CheckCurrentWord(currentWord, &isMisspelled);
++
++  if (isWord && isMisspelled) {
++    // the word is misspelled: give some options to the user
 +    PRUnichar *aSuggestionList[MAX_SUGGESTIONS+DIALOG_OTHER];
 +    aSuggestionList[DIALOG_ADD] = ToNewUnicode(NS_ConvertUTF8toUTF16("Add to dictionary"));
++    aSuggestionList[DIALOG_IGNORE] = ToNewUnicode(NS_ConvertUTF8toUTF16("Ignore this word"));
 +    aSuggestionList[DIALOG_DICTIONARY] = ToNewUnicode(NS_ConvertUTF8toUTF16("Change dictionary..."));
 +
 +    PRUint32 aSuggestionCount = DIALOG_OTHER;
 +    do {
 +      // get some suggestions
 +      aSpellCheck->GetSuggestedWord(&aSuggestionList[aSuggestionCount]);
-+      if (!NS_strcmp(aSuggestionList[aSuggestionCount], NS_LITERAL_STRING("").get())) break;
++      if (!NS_strcmp(aSuggestionList[aSuggestionCount], NS_LITERAL_STRING("").get()))
++        break;
 +      aSuggestionCount++;
 +    } while(aSuggestionCount < MAX_SUGGESTIONS+DIALOG_OTHER);
 +
 +    // show a dialog containing the options
-+    PRInt32 outSelection = DIALOG_NONE;
-+    ShowSuggestionsDialog(currentWord, aSuggestionCount, (const PRUnichar**) aSuggestionList, &outSelection, &retval);
++    PRBool retval = PR_TRUE;
++    PRInt32 outSelection = DIALOG_IGNORE;
++    ShowSuggestionsDialog(currentWord, aSuggestionCount,
++                          (const PRUnichar**) aSuggestionList, &outSelection,
++                           &retval);
 +
 +    if (retval == PR_FALSE) {
 +      // user pressed the cancel button
 +      *isChanged = PR_FALSE;
 +      return NS_OK;
 +    }
++    nsString aTempString(currentWord);
 +    switch(outSelection) {
 +    case DIALOG_ADD:
 +      // add the current word to the dictionary
-+      aSpellCheck->AddWordToDictionary(currentWord);
++      aInlineSpellChecker->AddWordToDictionary(aTempString);
 +      // word added to dictionary
++      *isChanged = PR_TRUE;
++      break;
++    case DIALOG_IGNORE:
++      // ignore the current word
++      aInlineSpellChecker->IgnoreWord(aTempString);
++      // word ignored by user
 +      *isChanged = PR_TRUE;
 +      break;
 +    case DIALOG_DICTIONARY:
@@ -194,24 +320,31 @@
 +  return NS_OK;
 +}
 +
-+
  NS_IMETHODIMP mozInlineSpellChecker::HandleEvent(nsIDOMEvent* aEvent)
  {
    return NS_OK;
-@@ -1664,6 +1835,31 @@
+ }
+ 
+ NS_IMETHODIMP mozInlineSpellChecker::MouseClick(nsIDOMEvent *aMouseEvent)
+ {
+   // ignore any errors from HandleNavigationEvent as we don't want to prevent 
+@@ -1659,16 +1930,36 @@ NS_IMETHODIMP mozInlineSpellChecker::Mou
+ 
+ NS_IMETHODIMP mozInlineSpellChecker::MouseUp(nsIDOMEvent* aMouseEvent)
+ {
+   return NS_OK;
+ }
  
  NS_IMETHODIMP mozInlineSpellChecker::MouseDblClick(nsIDOMEvent* aMouseEvent)
  {
 +  nsresult rv = NS_OK;
 +  PRBool checkAgain = PR_FALSE;
-+  // get the current editor and its selection controller
-+  nsCOMPtr<nsIEditor> editor = do_QueryReferent(mEditor, &rv);
-+  NS_ENSURE_TRUE(editor, NS_ERROR_NULL_POINTER);
 +
-+  nsCOMPtr<nsIPlaintextEditor> textEditor(do_QueryReferent(mEditor, &rv));
-+  NS_ENSURE_SUCCESS(rv, rv);
++  // get the current editor
++  nsCOMPtr<nsIEditor> aEditor = do_QueryReferent(mEditor, &rv);
++  NS_ENSURE_TRUE(aEditor, NS_ERROR_NULL_POINTER);
 +
-+  rv = HandleMisspelledWord(editor, mSpellCheck, textEditor, &checkAgain);
++  rv = HandleMisspelledWord(aEditor, &checkAgain);
 +  NS_ENSURE_SUCCESS(rv, rv);
 +
 +  // the user changed the default dictionary
@@ -222,11 +355,13 @@
 +    rv = status.InitForSelection();
 +    NS_ENSURE_SUCCESS(rv, rv);
 +
-+    rv = ScheduleSpellCheck(status);
-+
-+    return rv;
++    return ScheduleSpellCheck(status);
 +  }
-+
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP mozInlineSpellChecker::MouseOver(nsIDOMEvent* aMouseEvent)
+ {
    return NS_OK;
  }
  
