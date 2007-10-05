@@ -296,6 +296,7 @@ valgrind/bug66825.diff
 720_Bug70843.RestoreZoomState.diff
 
 740_spellchecker_select_enabling.diff
+750_MotionEventsRequests.diff
 
 # Crash, plugins, updates, not tested!!!
 trunk_updates/new/1.BUG386387.diff
