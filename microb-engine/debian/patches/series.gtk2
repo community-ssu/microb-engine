@@ -297,6 +297,7 @@ valgrind/bug66825.diff
 
 740_spellchecker_select_enabling.diff
 750_MotionEventsRequests.diff
+760_localization_updates.diff
 
 # Crash, plugins, updates, not tested!!!
 trunk_updates/new/1.BUG386387.diff
