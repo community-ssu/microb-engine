@@ -831,21 +831,21 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  {
 +    mDoOnloadOptimizing = PR_TRUE;
 +    mSetOptimizing = PR_TRUE;
-+    nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
-+    if(pref)
-+    {
-+      rv = pref->SetBoolPref("layout.full.true.zoom.mode", PR_FALSE);
-+    }
++    //nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
++    //if(pref)
++    //{
++      //rv = pref->SetBoolPref("layout.full.true.zoom.mode", PR_FALSE);
++    //}
 +    return SetOptimize(aSubject);
 +  }
 +  if (strcmp(aTopic, "unset_optimized_view") == 0)
 +  {
 +    mSetOptimizing = PR_FALSE;
-+    nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
-+    if(pref)
-+    {
-+      rv = pref->SetBoolPref("layout.full.true.zoom.mode", PR_TRUE);
-+    }
++    //nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
++    //if(pref)
++    //{
++      //rv = pref->SetBoolPref("layout.full.true.zoom.mode", PR_TRUE);
++    //}
 +    return SetOptimize(aSubject);
 +  }
 +  if (strcmp(aTopic, "optimized_view") == 0)
