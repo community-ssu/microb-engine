@@ -1169,7 +1169,7 @@ diff -ruN mozilla.orig/dom/locales/en-US/chrome/netError.dtd mozilla/dom/locales
 -<!ENTITY redirectLoop.title "Redirect Loop">
 -<!ENTITY redirectLoop.longDesc "<p>The browser has stopped trying to retrieve the requested item. The site is redirecting the request in a way that will never complete.</p><ul><li>Have you disabled or blocked cookies required by this site?</li><li><em>NOTE</em>: If accepting the site's cookies does not resolve the problem, it is likely a server configuration issue and not your computer.</li></ul>">
 +<!ENTITY redirectLoop.title "Redirect loop">
-+<!ENTITY redirectLoop.longDesc "<p>Endless redirection of request for this address. Potential causes:</p><p><ul><li>Blocking cookies</li><li>Misconfigured server</li></ul>">
++<!ENTITY redirectLoop.longDesc "<p>Endless redirection of request for this address. Potential causes:</p><ul><li>Blocking cookies</li><li>Misconfigured server</li></ul>">
  
 -<!ENTITY unknownSocketType.title "Incorrect Response">
 -<!ENTITY unknownSocketType.longDesc "<p>The site responded to the network request in an unexpected way and the browser cannot continue.</p>">
