@@ -337,7 +337,7 @@ unpack-stamp:
             uudecode -o $$(echo $$str | sed 's/\.uu//g') $$str; rm $$str;\
       fi ;\
 	done
-	if [ -d $(CURDIR)/tarballs ]; then echo 'Tarballs is here ;)';else tar -xvvzf ../microb-engine*.tar.gz -C ./; mv $$(find -name "tarballs" -type d) ./; rmdir microb-engine_*; fi
+	if [ -d $(CURDIR)/tarballs ]; then echo 'Tarballs is here ;)';else tar -xvvzf ../microb-engine_$(version)*.tar.gz -C ./; mv $$(find -name "tarballs" -type d) ./; rmdir microb-engine_*; fi
 	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(config)
 	tar -zxvf $(CURDIR)/tarballs/$(srcdir).tar.gz -C $(btree) > /dev/null
 	cp -rf  $(CURDIR)/debian/resources/branding $(builddir)/
