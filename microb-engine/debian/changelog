@@ -1,3 +1,37 @@
+microb-engine (1.0.4-1) unstable; urgency=low
+ 
+  * Increased main version number, for stable release
+  * 
+  * Fixed getting of proper tarball if it not exists
+  * Added patch from bug 339782, Need to be checked and tested in default build
+  * Disabled layout.full.true.zoom.mode
+  * Fixed XML parsing error
+  * Added localization updates
+  * Changed how to create the dictionary link when the microb-spellcheck is installed, allowing it to be installed in scratchbox.
+  * Functionalities added: Ignore misspelled word. Ignore trailing non-alphanumeric characteres. Ignore words that contains numbers.
+  * Added MotionEventsRequested type
+  * Temporary disabled JS_THREADED_INTERP for ARM environment
+  * Fixed possible crash
+  * Disabled X/Y THICKNESS for dropdown paint arrow
+  * Enabled back TiledBG scaling patch (need to be tested)
+  * Fixed gtkmozembed dependencies
+  * Fixed docomand typo bug
+  * Fixed building with command manager
+  * Added SELECT functionality
+  * Updated GTK mozembed patch according latest changes in libgtkmozembed package
+  * Added GtkMozEmbed package from engine building
+  * Update 701_FixForTiledBGScaling.diff
+  * Added mini config with disabled almost everething what possible to disable
+  * Some fixes for building and working in mini configuration
+  * Added very minimal configuration of microb engine 
+  * Added experimental patch for gmail initial loading performance.
+  * Fixed bug  71445 zooming to 120% is very slow and after zooming pannings barely works
+  * Update 701_FixForTiledBGScaling patch, faster bg tile for alpha 8 images
+  * Reverted back to old version for JS handler event info
+  * Make JS Break patch more simple, because window->setenabled is not implemented
+
+ -- Oleg Romashin <romaxa@gmail.com>  Wed, 10 Oct 2007 18:12:18 +0300
+
 microb-engine (1.0.3-24) unstable; urgency=low
 
   * Updated for building with trunk engine. 
