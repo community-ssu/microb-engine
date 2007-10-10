@@ -40,7 +40,7 @@ for str in `find $TMP/ -name "*.uu"`;do
   fi
 done
 
-tar -zxvf microb-engine_*.orig.tar.gz -C $TMP
+tar -zxvf microb-engine_$VER*.orig.tar.gz -C $TMP
 for str in `find $TMP/ -name tarballs`; do
   mv $str $TMP
   rm -rf $TMP/$NAME*
