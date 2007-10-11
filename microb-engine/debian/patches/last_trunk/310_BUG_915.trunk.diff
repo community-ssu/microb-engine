@@ -7,7 +7,7 @@ Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
 +++ mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
 @@ -39,17 +39,21 @@
  #include "nsIDOMHTMLCollection.h"
- #include "nsIDOMEventReceiver.h"
+ #include "nsIDOMEventTarget.h"
  #include "nsMappedAttributes.h"
  #include "nsGenericHTMLElement.h"
  #include "nsGkAtoms.h"
@@ -70,7 +70,7 @@ Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
  
  
  // QueryInterface implementation for nsHTMLTableCellElement
-@@ -114,19 +131,17 @@
+@@ -115,19 +132,17 @@
  
  
  // protected method
@@ -91,7 +91,7 @@ Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
  // protected method
  nsIContent*
  nsHTMLTableCellElement::GetTable()
-@@ -145,16 +160,43 @@
+@@ -146,16 +161,43 @@
          // we have a row group.
          result = section->GetParent();
        }
@@ -135,7 +135,7 @@ Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
    nsCOMPtr<nsIDOMHTMLTableRowElement> row;
  
    GetRow(getter_AddRefs(row));
-@@ -202,19 +244,28 @@
+@@ -203,19 +245,28 @@
    // |MapAttributesIntoRule| in nsHTMLTableElement.cpp, which is
    // technically incorrect since it's violating the nsIStyleRule
    // contract.  However, things are OK (except for the incorrect
@@ -145,17 +145,17 @@ Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
    if (table) {
      rv = table->WalkContentStyleRules(aRuleWalker);
 +    NS_ENSURE_SUCCESS(rv, rv);
-   }
- 
--  return rv;
++  }
++
 +  if (mTableInheritedAttributes) {
 +    if (mTableInheritedAttributes == TABLE_ATTRS_DIRTY)
 +      BuildInheritedAttributes();
 +
 +    if (mTableInheritedAttributes)
 +      aRuleWalker->Forward(mTableInheritedAttributes);
-+  }
-+
+   }
+ 
+-  return rv;
 +  return NS_OK;
  }
  
@@ -165,7 +165,7 @@ Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
  NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, BgColor, bgcolor)
  NS_IMPL_STRING_ATTR_DEFAULT_VALUE(nsHTMLTableCellElement, Ch, _char, ".")
  NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, ChOff, charoff)
-@@ -226,16 +277,18 @@
+@@ -227,16 +278,18 @@
  NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, Scope, scope)
  NS_IMPL_STRING_ATTR_DEFAULT_VALUE(nsHTMLTableCellElement, VAlign, valign, "middle")
  NS_IMPL_STRING_ATTR(nsHTMLTableCellElement, Width, width)
@@ -184,50 +184,7 @@ Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
  
      if (row) {
        return row->GetAlign(aValue);
-@@ -356,42 +409,27 @@
-       else if (value && value->Type() == nsAttrValue::ePercent) {
-         if (value->GetPercentValue() > 0.0f)
-           aData->mPositionData->mHeight.SetPercentValue(value->GetPercentValue());
-         // else 0 implies auto for compatibility
-       }
-     }
-   }
-   else if (aData->mSID == eStyleStruct_Text) {
--    if (aData->mTextData->mTextAlign.GetUnit() == eCSSUnit_Null) {
--      // align: enum
--      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::align);
--      if (value && value->Type() == nsAttrValue::eEnum)
--        aData->mTextData->mTextAlign.SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
--    }
--
-     if (aData->mTextData->mWhiteSpace.GetUnit() == eCSSUnit_Null) {
-       // nowrap: enum
-       if (aAttributes->GetAttr(nsGkAtoms::nowrap)) {
-         // See if our width is not a integer width.
-         const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::width);
-         nsCompatibility mode = aData->mPresContext->CompatibilityMode();
-         if (!value || value->Type() != nsAttrValue::eInteger || eCompatibility_NavQuirks != mode)
-           aData->mTextData->mWhiteSpace.SetIntValue(NS_STYLE_WHITESPACE_NOWRAP, eCSSUnit_Enumerated);
-       }
-     }
-   }
--  else if (aData->mSID == eStyleStruct_TextReset) {
--    if (aData->mTextData->mVerticalAlign.GetUnit() == eCSSUnit_Null) {
--      // valign: enum
--      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::valign);
--      if (value && value->Type() == nsAttrValue::eEnum)
--        aData->mTextData->mVerticalAlign.SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
--    }
--  }
-   
-   nsGenericHTMLElement::MapBackgroundAttributesInto(aAttributes, aData);
-   nsGenericHTMLElement::MapCommonAttributesInto(aAttributes, aData);
- }
- 
- NS_IMETHODIMP_(PRBool)
- nsHTMLTableCellElement::IsAttributeMapped(const nsIAtom* aAttribute) const
- {
-@@ -421,8 +459,230 @@
+@@ -422,8 +475,231 @@
    return FindAttributeDependence(aAttribute, map, NS_ARRAY_LENGTH(map));
  }
  
@@ -241,6 +198,7 @@ Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
 +MapInheritedTableAttributesIntoRule(const nsMappedAttributes* aAttributes,
 +                                    nsRuleData* aData)
 +{
++  // return; // 310_BUG_915.trunk.diff
 +  if (aData->mSID == eStyleStruct_Text) {
 +    if (aData->mTextData->mTextAlign.GetUnit() == eCSSUnit_Null) {
 +      // align: enum

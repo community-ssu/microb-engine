@@ -49,27 +49,27 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
 ===================================================================
 --- mozilla.orig/dom/src/base/nsJSEnvironment.cpp
 +++ mozilla/dom/src/base/nsJSEnvironment.cpp
-@@ -121,16 +121,20 @@
- #include "prlog.h"
- #include "prthread.h"
+@@ -195,16 +195,20 @@
+ static PRTime sMaxChromeScriptRunTime;
  
- #ifdef OJI
- #include "nsIJVMManager.h"
- #include "nsILiveConnectManager.h"
- #endif
+ static nsIScriptSecurityManager *sSecurityManager;
+ 
+ static nsICollation *gCollation;
+ 
+ static nsIUnicodeDecoder *gDecoder;
  
 +#include "nsWidgetsCID.h"
 +#include "nsIAppShell.h"
 +static NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
 +
- const size_t gStackSize = 8192;
+ /****************************************************************
+  ************************** AutoFree ****************************
+  ****************************************************************/
  
- #ifdef PR_LOGGING
- static PRLogModuleInfo* gJSDiagnostics;
- #endif
- 
- // Thank you Microsoft!
- #ifndef WINCE
+ class AutoFree {
+ public:
+   AutoFree(void *aPtr) : mPtr(aPtr) {
+   }
 @@ -707,16 +711,22 @@
  
      ctx->mIsTrackingChromeCodeTime =

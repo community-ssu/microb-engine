@@ -39,7 +39,6 @@ last_trunk/155_BUG_mainthreadalreadydead.trunk.diff
 #160_MICROB_about_fixes_lp0.diff -p0
 last_trunk/165_BUILDFIX_libxul_no_nss.trunk.diff
 last_trunk/170_MICROB_xslt_xpath_disable_lp0.trunk.diff -p0
-last_trunk/175_MICROB_bad_cert_at_once_lp0.trunk.diff -p0
 180_MICROB_fittoview_extension.diff
 #185_MICROB_imagezoom_extension.diff
 last_trunk/190_MICROB_paths_and_names_lp0.trunk.diff -p0
@@ -162,7 +161,6 @@ last_trunk/275_BUG_353882_lp0.trunk.diff -p0
 #285_BUG_311566.diff
 #305_HACK_BOLDER_WEIGHT.diff
 last_trunk/310_BUG_915.trunk.diff
-360_BUG368182_xft_engine.diff
 365_BUG367177_thebes_text_Frame.diff
 
 #Place for Reflow Branch related patches
@@ -173,7 +171,6 @@ last_trunk/reflow/attachment.cgi?id=248061.trunk.diff
 #reflow/attachment.cgi?id=248241.diff
 #reflow/attachment.cgi?id=251149.diff
 
-last_trunk/380_XFT_ALWAYS_FIX.trunk.diff
 385_system_cairo_build.diff
 430_bug372703_bustage_fix.diff
 

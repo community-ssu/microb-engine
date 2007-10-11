@@ -9,7 +9,7 @@ Index: configure.in
 ===================================================================
 --- configure.in.orig
 +++ configure.in
-@@ -4106,16 +4106,18 @@
+@@ -4126,16 +4126,18 @@
  MOZ_JAVAXPCOM=
  MOZ_JSDEBUGGER=1
  MOZ_JSLOADER=1
@@ -28,7 +28,7 @@ Index: configure.in
  MOZ_NO_INSPECTOR_APIS=
  MOZ_NO_XPCOM_OBSOLETE=
  MOZ_NO_FAST_LOAD=
-@@ -7154,16 +7156,42 @@
+@@ -7147,16 +7149,42 @@
      PKG_CHECK_MODULES(LCMS, lcms >= $LCMS_VERSION)
  fi
  
@@ -75,7 +75,7 @@ Index: config/autoconf.mk.in
 ===================================================================
 --- config/autoconf.mk.in.orig
 +++ config/autoconf.mk.in
-@@ -184,16 +184,18 @@
+@@ -185,16 +185,18 @@
  PKG_SKIP_STRIP	= @PKG_SKIP_STRIP@
  
  ClientWallet=1
@@ -303,12 +303,12 @@ Index: layout/build/nsLayoutModule.cpp
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsDOMSerializer)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsXMLHttpRequest)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsDOMParser)
+ NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsDOMStorageManager,
+                                          nsDOMStorageManager::GetInstance)
  
  //-----------------------------------------------------------------------------
  
- // Per bug 209804, it is necessary to observe the "xpcom-shutdown" event and
- // perform shutdown of the layout modules at that time instead of waiting for
-@@ -1262,37 +1273,40 @@
+@@ -1264,37 +1275,40 @@
      nsnull,
      CreatePluginDocument },
  
