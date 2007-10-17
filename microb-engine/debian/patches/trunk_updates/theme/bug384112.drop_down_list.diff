@@ -90,7 +90,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
 -    moz_gtk_button_paint(drawable, rect, cliprect, state, GTK_RELIEF_NORMAL,
 -                         gDropdownButtonWidget);
 +    style = gDropdownButtonWidget->style;
-+    gtk_paint_box(style, drawable, state_type, shadow_type, cliprect, gDropdownButtonWidget,
++    gtk_paint_box(style, drawable, state_type, GTK_SHADOW_NONE, cliprect, gDropdownButtonWidget,
 +                  "combo_entry_button", rect->x, rect->y, rect->width, rect->height);
  
      /* This mirrors gtkbutton's child positioning */
