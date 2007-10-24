@@ -80,7 +80,7 @@ Description: Xulrunner files for MicroB engine
 Package: microb-engine-dev
 Section: libdevel
 Architecture: any
-Depends: microb-engine (>= ${Source-Version}), libnspr4-dev (>= ${Source-Version}), libnss3-dev (>= ${Source-Version})
+Depends: microb-engine (>= ${Source-Version}), libnspr4-dev (>= ${Source-Version}), libnss3-dev (>= ${Source-Version}), libidl0
 Description: Development package for MicroB
  This package can be used to build other applications and libraries
  based on MicroB.
