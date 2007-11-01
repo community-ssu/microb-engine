@@ -299,9 +299,6 @@ valgrind/bug66825.diff
 #750_MotionEventsRequests.diff
 760_localization_updates.diff
 
-#js_DelteProperty crash
-770_BUG3431_js_DeleteProperty_crash.diff
-
 # Crash, plugins, updates, not tested!!!
 trunk_updates/new/1.BUG386387.diff
 trunk_updates/new/2.bug326337.diff
