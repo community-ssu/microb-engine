@@ -135,7 +135,7 @@ Description: Debug Xulrunner files for MicroB engine
 
 Package: microb-spellcheck
 Architecture: any
-Section: libs
+Section: user/extras
 Depends: ${shlibs:Depends}
 Description: Spellcheck extension for Mozilla
  This package provides a Mozilla extension for checking spelling
