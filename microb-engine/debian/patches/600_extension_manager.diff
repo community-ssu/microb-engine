@@ -307,11 +307,12 @@ diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/Makefile.in mozil
 diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/xulappinfo.js mozilla/embedding/components/xulappinfo/xulappinfo.js
 --- mozilla/embedding/components/xulappinfo.orig/xulappinfo.js	1970-01-01 02:00:00.000000000 +0200
 +++ mozilla/embedding/components/xulappinfo/xulappinfo.js	2006-04-19 13:35:05.000000000 +0300
-@@ -0,0 +1,88 @@
+@@ -0,0 +1,94 @@
 +const XULAPPINFO_CONTRACTID = "@mozilla.org/xre/app-info;1";
 +const XULAPPINFO_CID = Components.ID("{f8b59582-5808-4e6e-a467-339e9c82756f}");
 +
 +const nsIXULAppInfo = Components.interfaces.nsIXULAppInfo;
++const nsIXULRuntime = Components.interfaces.nsIXULRuntime;
 +const nsIComponentRegistrar = Components.interfaces.nsIComponentRegistrar;
 +const nsIFactory = Components.interfaces.nsIFactory;
 +const nsISupports = Components.interfaces.nsISupports;
@@ -322,6 +323,10 @@ diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/xulappinfo.js moz
 +
 +XULAppInfoService.prototype.vendor = "mozilla.org";
 +XULAppInfoService.prototype.ID = "{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}";
++XULAppInfoService.prototype.OS = "_UNKNOWN";
++XULAppInfoService.prototype.inSafeMode = false;
++XULAppInfoService.prototype.logConsoleErrors = false;
++XULAppInfoService.prototype.XPCOMABI = "UNKNOWN_XPCOM_ABI";
 +#expand XULAppInfoService.prototype.name = "__MOZ_APP_DISPLAYNAME__";
 +#expand XULAppInfoService.prototype.version = "__MOZ_APP_VERSION__";
 +#expand XULAppInfoService.prototype.appBuildID = "__BUILD_ID__";
@@ -332,6 +337,7 @@ diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/xulappinfo.js moz
 +function appinfo_QueryInterface(iid)
 +{
 +    if (!iid.equals(nsIXULAppInfo) &&
++        !iid.equals(nsIXULRuntime) &&
 +        !iid.equals(nsISupports))
 +    {
 +        throw Components.results.NS_ERROR_NO_INTERFACE;
