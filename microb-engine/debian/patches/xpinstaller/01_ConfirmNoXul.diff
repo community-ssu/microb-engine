@@ -1,0 +1,66 @@
+--- mozilla/xpinstall/src/nsXPInstallManager.cpp.orig	2007-10-19 17:00:49.000000000 +0300
++++ mozilla/xpinstall/src/nsXPInstallManager.cpp	2007-11-20 07:19:51.000000000 +0200
+@@ -82,16 +82,17 @@
+ #include "nsIObserverService.h"
+ 
+ #include "nsISSLStatusProvider.h"
+ #include "nsISSLStatus.h"
+ #include "nsIX509Cert.h"
+ 
+ #include "nsIPrefService.h"
+ #include "nsIPrefBranch.h"
++#include "nsIPrompt.h"
+ 
+ #include "CertReader.h"
+ 
+ #include "nsEmbedCID.h"
+ 
+ #define PREF_XPINSTALL_ENABLED                "xpinstall.enabled"
+ #define PREF_XPINSTALL_CONFIRM_DLG            "xpinstall.dialog.confirm"
+ #define PREF_XPINSTALL_STATUS_DLG_SKIN        "xpinstall.dialog.progress.skin"
+@@ -414,16 +415,39 @@ nsXPInstallManager::ConfirmInstall(nsIDO
+         if (NS_SUCCEEDED(rv))
+         {
+             //Now get which button was pressed from the ParamBlock
+             PRInt32 buttonPressed = 0;
+             params->GetInt( 0, &buttonPressed );
+             *aRetval = buttonPressed ? PR_FALSE : PR_TRUE;
+         }
+     }
++    if (NS_FAILED(rv) && parentWindow)
++    {
++        PRInt32 selection;
++        nsCOMPtr<nsIPrompt> prompt;
++        rv = parentWindow->GetPrompter(getter_AddRefs(prompt));
++        if (NS_SUCCEEDED(rv)) {
++            nsString str;
++            for (PRUint32 i = 0; i < aCount; i++)
++            {
++                str.Append(aPackageList[i]);
++                str.Append(NS_LITERAL_STRING("\n"));
++            }
++            rv = prompt->ConfirmEx(NS_LITERAL_STRING("_blank").get(), str.get(),
++                                   nsIPrompt::STD_YES_NO_BUTTONS,
++                                   nsnull, nsnull, nsnull, nsnull, nsnull,
++                                   &selection);
++            if (NS_SUCCEEDED(rv))
++            {
++                //Now get which button was pressed from the ParamBlock
++                *aRetval = selection ? PR_FALSE : PR_TRUE;
++            }
++        }
++    }
+ 
+     return rv;
+ }
+ 
+ #ifdef ENABLE_SKIN_SIMPLE_INSTALLATION_UI
+ PRBool nsXPInstallManager::ConfirmChromeInstall(nsIDOMWindowInternal* aParentWindow, const PRUnichar **aPackage)
+ {
+     // get the dialog strings
+--- mozilla/xpinstall/public/xpinstall.js.orig	2004-06-07 17:46:15.000000000 +0300
++++ mozilla/xpinstall/public/xpinstall.js	2007-11-20 07:12:05.000000000 +0200
+@@ -1,2 +1,2 @@
+ pref("xpinstall.enabled",       true);
+-pref("xpinstall.whitelist.required", true);
++pref("xpinstall.whitelist.required", false);
