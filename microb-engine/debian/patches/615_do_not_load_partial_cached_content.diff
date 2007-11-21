@@ -1,5 +1,5 @@
 # Preventing microb to read partial cached content. It causes some problems on download stuff.
-# Solved bug: 43765
+# Solved bug: 43765, broken xpinstaller functionality
 --- mozilla/netwerk/protocol/http/src/nsHttpChannel.cpp.orig	2007-06-20 11:35:55.000000000 -0400
 +++ mozilla/netwerk/protocol/http/src/nsHttpChannel.cpp	2007-06-20 11:37:02.000000000 -0400
 @@ -765,20 +765,21 @@ nsHttpChannel::ProcessResponse()

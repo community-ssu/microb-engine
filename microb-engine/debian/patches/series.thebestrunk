@@ -113,7 +113,7 @@ last_trunk/500_content_rocket_parsing.trunk.diff
 520_drag_remove_at_all.diff
 525_BUG_52028_fast_fix_without_storage_enabling.diff
 530_BUG54742rss_add_support.diff
-615_do_not_load_partial_cached_content.diff
+#615_do_not_load_partial_cached_content.diff
 
 #GTKMOZEMBED_TRUNK BUSTAGE PATCHES
 gtkmozembed/001_gnomevfs_downloads.diff
