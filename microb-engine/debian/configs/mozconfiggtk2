@@ -26,7 +26,7 @@ ac_add_options --enable-crypto
 ac_add_options --enable-necko-protocols="about data http file res ftp"
 ac_add_options --enable-chrome-format=flat
 ac_add_options --enable-plugins
-ac_add_options --enable-extensions="xml-rpc spatialnavigation gnomevfs ftv spellcheck"
+ac_add_options --enable-extensions="xml-rpc spatialnavigation gnomevfs ftv spellcheck xpidlg"
 ac_add_options --disable-xinerama
 ac_add_options --enable-xpfe-components # Will add only directory+ftp viewer with profile minimal
 ac_add_options --enable-image-decoders="png gif jpeg bmp xbm"
@@ -106,6 +106,12 @@ ac_add_options --disable-svg
 #ac_add_options --with-branding=other-licenses/branding/firefox
 #ac_add_options --enable-application=browser
 #ac_add_options --enable-xpinstall
+
+#XPinstaller
+#ac_add_options --enable-xul
+ac_add_options --enable-xpinstall
+ac_add_options --enable-necko-disk-cache
+#ac_add_options --enable-storage
 
 #Temporary fixed bugs related 33235 29319 29676 29681, Native uconv broken :(
 #Can be enabled with 325_BUG_native_uconv_XML.dpatch 330_BUG_native_iconv.fix.dpatch (small native converter base) patches
