@@ -1,0 +1,47 @@
+#Bug 381812  Extension download fails with error -228 when xpi is ssl hosted and can be cached 
+# Fixed using xpinstaller in our microb environment
+Index: xpcom/io/nsStorageStream.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/xpcom/io/nsStorageStream.cpp,v
+retrieving revision 1.34
+diff -p -u -8 -r1.34 nsStorageStream.cpp
+--- mozilla/xpcom/io/nsStorageStream.cpp	8 Jul 2007 07:08:51 -0000	1.34
++++ mozilla/xpcom/io/nsStorageStream.cpp	7 Aug 2007 00:13:06 -0000
+@@ -379,17 +380,16 @@ private:
+ NS_IMPL_THREADSAFE_ISUPPORTS2(nsStorageInputStream,
+                               nsIInputStream,
+                               nsISeekableStream)
+ 
+ NS_IMETHODIMP
+ nsStorageStream::NewInputStream(PRInt32 aStartingOffset, nsIInputStream* *aInputStream)
+ {
+     NS_ENSURE_TRUE(mSegmentedBuffer, NS_ERROR_NOT_INITIALIZED);
+-    NS_ENSURE_TRUE(mSegmentedBuffer->GetSegmentCount(), NS_ERROR_NOT_INITIALIZED);
+ 
+     nsStorageInputStream *inputStream = new nsStorageInputStream(this, mSegmentSize);
+     if (!inputStream)
+         return NS_ERROR_OUT_OF_MEMORY;
+ 
+     NS_ADDREF(inputStream);
+ 
+     nsresult rv = inputStream->Seek(aStartingOffset);
+@@ -529,16 +529,19 @@ nsStorageInputStream::SetEOF()
+ 
+ NS_METHOD
+ nsStorageInputStream::Seek(PRUint32 aPosition)
+ {
+     PRUint32 length = mStorageStream->mLogicalLength;
+     if (aPosition > length)
+         return NS_ERROR_INVALID_ARG;
+ 
++    if (length == 0)
++        return NS_OK;
++
+     mSegmentNum = SegNum(aPosition);
+     PRUint32 segmentOffset = SegOffset(aPosition);
+     mReadCursor = mStorageStream->mSegmentedBuffer->GetSegment(mSegmentNum) +
+         segmentOffset;
+     PRUint32 available = length - aPosition;
+     mSegmentEnd = mReadCursor + PR_MIN(mSegmentSize - segmentOffset, available);
+     mLogicalCursor = aPosition;
+     return NS_OK;

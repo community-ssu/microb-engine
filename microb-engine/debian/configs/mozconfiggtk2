@@ -110,7 +110,7 @@ ac_add_options --disable-svg
 #XPinstaller
 #ac_add_options --enable-xul
 ac_add_options --enable-xpinstall
-ac_add_options --enable-necko-disk-cache
+#ac_add_options --enable-necko-disk-cache
 #ac_add_options --enable-storage
 
 #Temporary fixed bugs related 33235 29319 29676 29681, Native uconv broken :(
