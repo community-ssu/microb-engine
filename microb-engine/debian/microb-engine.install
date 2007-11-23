@@ -1,3 +1,4 @@
+usr/lib/microb-engine/greprefs/*.js
 ../prefs/*.js usr/lib/microb-engine/greprefs
 usr/lib/microb-engine/libxpcom.so
 usr/lib/microb-engine/libmozjs.so
