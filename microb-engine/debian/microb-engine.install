@@ -222,6 +222,7 @@ usr/lib/microb-engine/components/*.xpt
 usr/lib/microb-engine/components/*snav*.so
 usr/lib/microb-engine/components/*ssr*.so
 usr/lib/microb-engine/components/*ftv*.so
+usr/lib/microb-engine/components/*xpidlg*.so
 usr/lib/microb-engine/components/*fmerge*.so
 usr/lib/microb-engine/components/*gnomevfs*.so
 usr/lib/microb-engine/components/nsExtensionManager.js
