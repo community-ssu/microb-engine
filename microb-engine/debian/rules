@@ -244,7 +244,7 @@ ifeq ($(debug),y)
 ifeq ($(TABLET),.tablet)
 	configopts += --disable-strip --disable-debug  --enable-optimize=\"-O1 -fno-unit-at-a-time  -finline-functions\"
 else
-	configopts += --disable-strip --enable-debug --enable-debugger-info-modules 
+	configopts += --disable-strip --enable-debug --enable-debugger-info-modules --disable-libxul
 endif
 else
 	configopts += --disable-strip
