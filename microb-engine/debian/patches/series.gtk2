@@ -26,6 +26,12 @@ crash/attachment.cgi?id=205126.diff
 085_BUG252033_xrender_bug.diff
 #GTK2
 
+#GTKMOZEMBED_TRUNK BUSTAGE PATCHES
+gtkmozembed/001_gnomevfs_downloads.diff
+gtkmozembed/gtkmozembed.diff
+#GTKMOZEMBED_TRUNK BUSTAGE PATCHES
+
+
 #020_BUG4821_full_page_zoom.gtk2.diff
 020_BUG4821_full_page_zoom.gtk2_1.diff
 666_fixForPixelBug.diff
@@ -166,10 +172,6 @@ crash/chrome_resources_fail.diff
 530_BUG54742rss_add_support.diff
 #615_do_not_load_partial_cached_content.diff
 
-#GTKMOZEMBED_TRUNK BUSTAGE PATCHES
-gtkmozembed/001_gnomevfs_downloads.diff
-gtkmozembed/gtkmozembed.diff
-#GTKMOZEMBED_TRUNK BUSTAGE PATCHES
 
 540_BUG_50743_js_alert_title_fix.diff
 545_jsevent.policy.renamer.diff
@@ -300,6 +302,8 @@ valgrind/bug66825.diff
 760_localization_updates.diff
 
 xpinstaller/01_ConfirmNoXul.diff
+xpinstaller/02_DownloadManagerMOZStorage.diff
+xpinstaller/03_XPIDialogSrv.diff
 
 # Crash, plugins, updates, not tested!!!
 trunk_updates/new/1.BUG386387.diff

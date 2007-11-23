@@ -1,0 +1,503 @@
+diff -ruN -p -U8 mozilla/extensions/xpidlg.orig/Makefile.in mozilla/extensions/xpidlg/Makefile.in
+--- mozilla/extensions/xpidlg.orig/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/xpidlg/Makefile.in	2007-11-23 00:13:48.000000000 +0200
+@@ -0,0 +1,36 @@
++
++DEPTH=../..
++topsrcdir=@top_srcdir@
++srcdir=@srcdir@
++VPATH=@srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++MODULE	= xpidlg
++XPI_NAME = xpidlg
++
++ifdef MOZ_XUL_APP
++INSTALL_EXTENSION_ID = xpidlg@extensions.mozilla.org
++DIST_FILES = install.rdf
++NO_JAR_AUTO_REG        = 1
++USE_EXTENSION_MANIFEST = 1
++XPI_PKGNAME            = xpidlg-$(MOZ_APP_VERSION)
++
++# We should really pull FIREFOX_VERSION and THUNDERBIRD_VERSION from
++# browser/config/version.txt mail/config/version.txt but we can't be assured
++# that we've even pulled those files. So we hardcode them.
++
++XULAPP_DEFINES = \
++	-DFIREFOX_VERSION=$(FIREFOX_VERSION) \
++	-DTHUNDERBIRD_VERSION=$(THUNDERBIRD_VERSION) \
++	-DEXTENSION_VERSION=$(MOZILLA_VERSION) \
++	$(NULL)
++
++ifdef TARGET_XPCOM_ABI
++XULAPP_DEFINES += -DEM_ABI=$(OS_TARGET)_$(TARGET_XPCOM_ABI)
++endif
++endif
++
++DIRS    = src
++
++include $(topsrcdir)/config/rules.mk
+diff -ruN -p -U8 mozilla/extensions/xpidlg.orig/install.rdf mozilla/extensions/xpidlg/install.rdf
+--- mozilla/extensions/xpidlg.orig/install.rdf	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/xpidlg/install.rdf	2007-11-23 00:14:21.000000000 +0200
+@@ -0,0 +1,40 @@
++<?xml version="1.0"?>
++
++#filter substitution
++
++<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
++     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
++  <Description about="urn:mozilla:install-manifest">
++    <em:id>xpidlg@extensions.mozilla.org</em:id>
++    <em:version>@EXTENSION_VERSION@</em:version>
++
++#ifdef EM_ABI
++    <em:targetPlatform>@EM_ABI@</em:targetPlatform>
++#endif
++
++    <em:targetApplication>
++      <!-- Firefox -->
++      <Description>
++        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
++        <em:minVersion>@FIREFOX_VERSION@</em:minVersion>
++        <em:maxVersion>@FIREFOX_VERSION@</em:maxVersion>
++      </Description>
++    </em:targetApplication>
++
++    <em:targetApplication>
++      <!-- Thunderbird -->
++      <Description>
++        <em:id>{3550f703-e582-4d05-9a08-453d09bdfdc6}</em:id>
++        <em:minVersion>@THUNDERBIRD_VERSION@</em:minVersion>
++        <em:maxVersion>@THUNDERBIRD_VERSION@</em:maxVersion>
++      </Description>
++    </em:targetApplication>
++
++    <!-- front-end metadata -->
++    <em:name>Spatial Navigation</em:name>
++    <em:description>Navigate between links using the arrow keys in addition to the tab key.</em:description>
++    <em:creator>mozilla.org</em:creator>
++    <em:contributor>Doug Turner &lt;dougt@meer.net&gt;</em:contributor>
++    <em:homepageURL>http://www.mozilla.org/access/keyboard/snav/</em:homepageURL>
++  </Description>
++</RDF>
+diff -ruN -p -U8 mozilla/extensions/xpidlg.orig/src/Makefile.in mozilla/extensions/xpidlg/src/Makefile.in
+--- mozilla/extensions/xpidlg.orig/src/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/xpidlg/src/Makefile.in	2007-11-23 08:32:43.000000000 +0200
+@@ -0,0 +1,100 @@
++# vim:set ts=8 sw=8 sts=8 noet:
++# ***** BEGIN LICENSE BLOCK *****
++# Version: MPL 1.1/GPL 2.0/LGPL 2.1
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License. You may obtain a copy of the License at
++# http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Original Code is the Mozilla Browser code.
++#
++# The Initial Developer of the Original Code is Google Inc.
++# Portions created by the Initial Developer are Copyright (C) 2005
++# the Initial Developer. All Rights Reserved.
++#
++# Contributor(s):
++#  Darin Fisher <darin@meer.net>
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 2 or later (the "GPL"), or
++# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++# in which case the provisions of the GPL or the LGPL are applicable instead
++# of those above. If you wish to allow use of your version of this file only
++# under the terms of either the GPL or the LGPL, and not to allow others to
++# use your version of this file under the terms of the MPL, indicate your
++# decision by deleting the provisions above and replace them with the notice
++# and other provisions required by the GPL or the LGPL. If you do not delete
++# the provisions above, a recipient may use your version of this file under
++# the terms of any one of the MPL, the GPL or the LGPL.
++#
++# ***** END LICENSE BLOCK *****
++
++DEPTH		= ../../..
++topsrcdir	= @top_srcdir@
++srcdir		= @srcdir@
++VPATH		= @srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++MODULE		= xpidlg
++XPI_NAME	= xpidlg
++LIBRARY_NAME    = xpidlg
++ifneq ($(OS_ARCH),WINNT)
++SHORT_LIBNAME = xpidlg
++endif
++FORCE_SHARED_LIB = 1
++IS_COMPONENT = 1
++
++REQUIRES = \
++	dom \
++	layout \
++	content \
++	widget \
++	necko \
++	windowwatcher \
++	xpcom \
++	string \
++	pref \
++	gfx \
++	locale \
++	docshell \
++	uriloader \
++	webbrwsr \
++	imglib2 \
++	xpinstall \
++	extensions \
++	$(NULL)
++
++CPPSRCS		= nsXpiDlg.cpp
++
++EXTRA_DSO_LDOPTS = \
++	$(XPCOM_GLUE_LDOPTS) \
++	$(NSPR_LIBS) \
++	$(NULL)
++
++EXTRA_DSO_LDOPTS += $(MOZ_COMPONENT_LIBS)
++
++EXPORT_RESOURCE = \
++	$(NULL)
++
++
++ifdef MOZ_XUL_APP
++ifdef TARGET_XPCOM_ABI
++FINAL_TARGET=$(DIST)/xpi-stage/$(XPI_NAME)/platform/$(OS_TARGET)_$(TARGET_XPCOM_ABI)
++endif
++endif
++
++
++include $(topsrcdir)/config/rules.mk
++
++ifdef GNU_CC
++CFLAGS   += -fno-unit-at-a-time
++CXXFLAGS += -fno-unit-at-a-time
++endif
++
+diff -ruN -p -U8 mozilla/extensions/xpidlg.orig/src/nsXpiDlg.cpp mozilla/extensions/xpidlg/src/nsXpiDlg.cpp
+--- mozilla/extensions/xpidlg.orig/src/nsXpiDlg.cpp	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/xpidlg/src/nsXpiDlg.cpp	2007-11-23 11:30:55.000000000 +0200
+@@ -0,0 +1,311 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* vim:set ts=2 sw=2 sts=2 tw=80 et cindent: */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is Mozilla's Element Optimizeing extension.
++ *
++ * The Initial Developer of the Original Code is the Mozilla Foundation.
++ * Portions created by the Initial Developer are Copyright (C) 2006
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Oleg Romashi <romaxa@gmail.com> (original author)
++ *   Anton Rogaynis <rogainis@gmail.com>
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either the GNU General Public License Version 2 or later (the "GPL"), or
++ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include "nsNetUtil.h"
++#include "nsICategoryManager.h"
++#include "nsIGenericFactory.h"
++#include "nsIObserver.h"
++#include "nsStringGlue.h"
++#include "nsWeakReference.h"
++#include "nsIXPIDialogService.h"
++#include "nsIPrompt.h"
++#include "nsIDOMWindowInternal.h"
++#include "nsIXPIProgressDialog.h"
++#include "nsIExtensionManager.h"
++#include "nsIURL.h"
++#ifdef MOZ_XUL
++#include "nsIPref.h"
++#include "nsIDialogParamBlock.h"
++#include "nsISupportsPrimitives.h"
++#endif
++
++#define PREF_XPINSTALL_ENABLED                "xpinstall.enabled"
++#define PREF_XPINSTALL_CONFIRM_DLG            "xpinstall.dialog.confirm"
++#define XPI_TOPIC                             "xpinstall-progress"
++
++// TODO auto reload nsXpiDlg in C.
++class nsXpiDlg : public nsIObserver,
++                 public nsIXPIDialogService,
++                 public nsIXPIProgressDialog,
++                 public nsIAddonUpdateListener,
++                 public nsSupportsWeakReference
++{
++public:
++  nsXpiDlg();
++  virtual ~nsXpiDlg();
++
++  NS_DECL_ISUPPORTS
++  NS_DECL_NSIOBSERVER
++  NS_DECL_NSIXPIDIALOGSERVICE
++  NS_DECL_NSIXPIPROGRESSDIALOG
++  NS_DECL_NSIADDONUPDATELISTENER
++  
++private:
++  nsCOMPtr<nsIDOMWindow> mParentWindow;
++  PRInt32                mObserveIndex;
++};
++
++nsXpiDlg::nsXpiDlg()
++ : mParentWindow(nsnull), mObserveIndex(0)
++{
++}
++
++nsXpiDlg::~nsXpiDlg()
++{
++    nsCOMPtr<nsIExtensionManager>
++    extensionManager(do_GetService("@mozilla.org/extensions/manager;1"));
++    if (extensionManager)
++      extensionManager->RemoveUpdateListenerAt(mObserveIndex);
++}
++
++#ifdef MOZ_XUL
++static NS_IMETHODIMP
++LoadParams(PRUint32 aCount, const PRUnichar** aPackageList, nsIDialogParamBlock** aParams)
++{
++    nsresult rv;
++    nsCOMPtr<nsIDialogParamBlock> paramBlock = do_CreateInstance(NS_DIALOGPARAMBLOCK_CONTRACTID, &rv);
++    if (NS_SUCCEEDED(rv))
++    {
++        // set OK and Cancel buttons
++        paramBlock->SetInt( 0, 2 );
++        // pass in number of strings
++        paramBlock->SetInt( 1, aCount );
++        // add strings
++        paramBlock->SetNumberStrings( aCount );
++        for (PRUint32 i = 0; i < aCount; i++)
++            paramBlock->SetString( i, aPackageList[i] );
++    }
++
++    NS_IF_ADDREF(*aParams = paramBlock);
++    return rv;
++}
++#endif
++
++// nsIXPIDialogService.idl
++NS_IMETHODIMP
++nsXpiDlg::ConfirmInstall(nsIDOMWindow *aParent, const PRUnichar **aPackageList, PRUint32 aCount, PRBool *aRetval)
++{
++    *aRetval = PR_FALSE;
++    nsresult rv = NS_ERROR_FAILURE;
++    nsCOMPtr<nsIDOMWindowInternal> mParentWindow( do_QueryInterface(aParent) );
++#ifdef MOZ_XUL1
++    nsCOMPtr<nsIDialogParamBlock> params;
++    rv = LoadParams( aCount, aPackageList, getter_AddRefs(params) );
++
++    if ( NS_SUCCEEDED(rv) && mParentWindow && params)
++    {
++        nsCOMPtr<nsIDOMWindow> newWindow;
++
++        nsCOMPtr<nsISupportsInterfacePointer> ifptr =
++            do_CreateInstance(NS_SUPPORTS_INTERFACE_POINTER_CONTRACTID, &rv);
++        NS_ENSURE_SUCCESS(rv, rv);
++
++        ifptr->SetData(params);
++        ifptr->SetDataIID(&NS_GET_IID(nsIDialogParamBlock));
++
++        char* confirmDialogURL;
++        nsCOMPtr<nsIPrefBranch> pref(do_GetService(NS_PREFSERVICE_CONTRACTID, &rv));
++        if (!pref)
++            return rv;
++
++        rv = pref->GetCharPref(PREF_XPINSTALL_CONFIRM_DLG, &confirmDialogURL);
++        NS_ASSERTION(NS_SUCCEEDED(rv), "Can't invoke XPInstall FE without a FE URL! Set xpinstall.dialog.confirm");
++        if (NS_SUCCEEDED(rv))
++        {
++            rv = mParentWindow->OpenDialog(NS_ConvertASCIItoUTF16(confirmDialogURL),
++                                          NS_LITERAL_STRING("_blank"),
++                                          NS_LITERAL_STRING("chrome,centerscreen,modal,titlebar"),
++                                          ifptr,
++                                          getter_AddRefs(newWindow));
++
++            if (NS_SUCCEEDED(rv))
++            {
++                //Now get which button was pressed from the ParamBlock
++                PRInt32 buttonPressed = 0;
++                params->GetInt( 0, &buttonPressed );
++                *aRetval = buttonPressed ? PR_FALSE : PR_TRUE;
++            }
++        }
++    }
++#endif
++    if (NS_FAILED(rv) && mParentWindow)
++    {
++        PRInt32 selection;
++        nsCOMPtr<nsIPrompt> prompt;
++        rv = mParentWindow->GetPrompter(getter_AddRefs(prompt));
++        if (NS_SUCCEEDED(rv)) {
++            nsString str;
++            str.Append(NS_LITERAL_STRING("Do you want to install:\n"));
++            for (PRUint32 i = 0; i < aCount; i++)
++            {
++                str.Append(aPackageList[i]);
++                str.Append(NS_LITERAL_STRING("\n"));
++            }
++            rv = prompt->Confirm(NS_LITERAL_STRING("Installation confirm").get(), str.get(),
++                                   &selection);
++            if (NS_SUCCEEDED(rv))
++            {
++                //Now get which button was pressed from the ParamBlock
++                *aRetval = selection ? PR_TRUE : PR_FALSE;
++            }
++        }
++    }
++    return rv;
++}
++
++NS_IMETHODIMP
++nsXpiDlg::OpenProgressDialog(const PRUnichar **aPackageList, PRUint32 aCount, nsIObserver *aObserver)
++{
++    nsresult rv;
++#if 0
++    rv = aObserver->Observe(NS_STATIC_CAST(nsIXPIDialogService*, this), XPI_TOPIC, NS_LITERAL_STRING("open").get());
++#else
++    nsCOMPtr<nsIExtensionManager>
++    extensionManager(do_GetService("@mozilla.org/extensions/manager;1", &rv));
++    NS_ENSURE_SUCCESS(rv, rv);
++    
++    extensionManager->AddUpdateListener(NS_STATIC_CAST(nsIAddonUpdateListener*, this), &mObserveIndex);
++    nsCOMPtr<nsIIOService> ios(do_GetService(NS_IOSERVICE_CONTRACTID));
++
++    PRUint32 itemscount = aCount/4;
++    nsIUpdateItem **items = new nsIUpdateItem*[itemscount];
++    memset(items, 0, sizeof(nsIUpdateItem *) * itemscount);
++    PRUint32 j = 0;
++
++    for (PRUint32 i = 0; i < aCount; i++) {
++        nsString displayName(aPackageList[i++]);
++        nsString url(aPackageList[i++]);
++        nsString iconURL(aPackageList[i++]);
++        PRBool isTheme = PR_FALSE;
++
++        if (ios) {
++            nsCOMPtr<nsIURI> uri;
++            ios->NewURI(NS_ConvertUTF16toUTF8(url), "", nsnull, getter_AddRefs(uri));
++            nsCOMPtr<nsIURL> nsURL(do_QueryInterface(uri));
++            if (nsURL) {
++                nsCString extension;
++                nsURL->GetFileExtension(extension);
++                isTheme = extension.Equals("jar");
++            }
++        }
++        if (iconURL.IsEmpty())
++            iconURL = isTheme ? NS_LITERAL_STRING("chrome://mozapps/skin/extensions/themeGeneric.png") :
++                      NS_LITERAL_STRING("chrome://mozapps/skin/xpinstall/xpinstallItemGeneric.png");
++
++        nsCOMPtr<nsIUpdateItem> item = do_CreateInstance("@mozilla.org/updates/item;1", &rv);
++        NS_ENSURE_SUCCESS(rv, rv);
++        rv = item->Init(url, NS_LITERAL_STRING(" "), NS_LITERAL_STRING("app-profile"), NS_LITERAL_STRING(""), NS_LITERAL_STRING(""),
++                        displayName, url, NS_LITERAL_STRING(""), iconURL, NS_LITERAL_STRING(""),
++                        isTheme?nsIUpdateItem::TYPE_THEME:nsIUpdateItem::TYPE_EXTENSION);
++
++        if (NS_SUCCEEDED(rv))
++            NS_ADDREF(items[j++] = item);
++    }
++    rv = extensionManager->AddDownloads(items, j, PR_FALSE);
++#endif
++    return rv;
++}
++
++// nsIXPIProgressDialog
++NS_IMETHODIMP
++nsXpiDlg::OnStateChange(PRUint32 index, PRInt16 state, PRInt32 value)
++{
++    printf("nsIXPIProgressDialog:OnStateChange: idx:%i, state:%x, val:%i\n", index, state, value);
++    return NS_OK;
++}
++
++NS_IMETHODIMP
++nsXpiDlg::OnProgress(PRUint32 index, PRUint64 value, PRUint64 maxValue)
++{
++    printf("nsIXPIProgressDialog:OnProgress idx:%i, val:%i, maxval:%i\n", index, value, maxValue);
++    return NS_OK;
++}
++
++// nsIAddonUpdateListener
++NS_IMETHODIMP
++nsXpiDlg::OnStateChange(nsIUpdateItem *addon, PRInt16 state, PRInt32 value)
++{
++    printf("nsIAddonUpdateListener:OnStateChange idx:%p, state:%x, val:%i\n", addon, state, value);
++    return NS_OK;
++}
++
++NS_IMETHODIMP
++nsXpiDlg::OnProgress(nsIUpdateItem *addon, PRUint32 value, PRUint32 maxValue)
++{
++    printf("nsIAddonUpdateListener:OnProgress idx:%p, val:%i, maxval:%i\n", addon, value, maxValue);
++    return NS_OK;
++}
++
++// nsIObserver
++NS_IMETHODIMP
++nsXpiDlg::Observe(nsISupports *aSubject, const char *aTopic, const PRUnichar *aData)
++{
++  nsresult rv;
++  printf("nsXpiDlg::Observe: aSubject:%p, aTopic:%s, aData:%s\n", aSubject, aTopic, aData);
++  return NS_OK;
++}
++
++NS_IMPL_ISUPPORTS5(nsXpiDlg, nsIObserver, nsIXPIDialogService, nsIXPIProgressDialog, nsIAddonUpdateListener, nsISupportsWeakReference)
++
++//------------------------------------------------------------------------------
++//  XPCOM REGISTRATION BELOW
++//------------------------------------------------------------------------------
++
++#define XpiDlg_CID \
++{  0xb874a9f8, \
++   0xa6da, \
++   0x4551, \
++{0xde, 0x3c, 0xc7, 0x8a, 0x72, 0xe5} }
++
++
++#define XpiDlg_ContractID "@mozilla.org/embedui/xpinstall-dialog-service;1"
++
++NS_GENERIC_FACTORY_CONSTRUCTOR(nsXpiDlg)
++
++static const nsModuleComponentInfo components[] =
++{
++  { "nsXpiDlgService",
++    XpiDlg_CID,
++    XpiDlg_ContractID,
++    nsXpiDlgConstructor
++  }
++};
++
++NS_IMPL_NSGETMODULE(nsXpiDlgModule, components)
++

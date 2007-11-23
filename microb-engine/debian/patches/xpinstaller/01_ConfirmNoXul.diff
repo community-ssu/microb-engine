@@ -2,25 +2,27 @@ Index: mozilla/xpinstall/src/nsXPInstallManager.cpp
 ===================================================================
 --- mozilla.orig/xpinstall/src/nsXPInstallManager.cpp
 +++ mozilla/xpinstall/src/nsXPInstallManager.cpp
-@@ -77,16 +77,17 @@
- #include "nsIPromptService.h"
- #include "nsIScriptGlobalObject.h"
- #include "nsXPCOM.h"
- #include "nsISupportsPrimitives.h"
- #include "nsIObserverService.h"
+@@ -347,17 +347,19 @@
+     return rv;
+ }
  
- #include "nsIPrefService.h"
- #include "nsIPrefBranch.h"
-+#include "nsIPrompt.h"
  
- #include "CertReader.h"
+ NS_IMETHODIMP
+ nsXPInstallManager::ConfirmInstall(nsIDOMWindow *aParent, const PRUnichar **aPackageList, PRUint32 aCount, PRBool *aRetval)
+ {
+     *aRetval = PR_FALSE;
++		nsresult rv = NS_ERROR_NOT_IMPLEMENTED;
  
- #include "nsEmbedCID.h"
++#ifdef MOZ_XUL
+     nsCOMPtr<nsIDOMWindowInternal> parentWindow( do_QueryInterface(aParent) );
+     nsCOMPtr<nsIDialogParamBlock> params;
+     nsresult rv = LoadParams( aCount, aPackageList, getter_AddRefs(params) );
  
- static NS_DEFINE_IID(kStringBundleServiceCID, NS_STRINGBUNDLESERVICE_CID);
+     if ( NS_SUCCEEDED(rv) && parentWindow && params)
+     {
+         nsCOMPtr<nsIDOMWindow> newWindow;
  
- #define PREF_XPINSTALL_ENABLED                "xpinstall.enabled"
-@@ -387,16 +388,39 @@
+@@ -387,16 +389,17 @@
          if (NS_SUCCEEDED(rv))
          {
              //Now get which button was pressed from the ParamBlock
@@ -29,29 +31,7 @@ Index: mozilla/xpinstall/src/nsXPInstallManager.cpp
              *aRetval = buttonPressed ? PR_FALSE : PR_TRUE;
          }
      }
-+    if (NS_FAILED(rv) && parentWindow)
-+    {
-+        PRInt32 selection;
-+        nsCOMPtr<nsIPrompt> prompt;
-+        rv = parentWindow->GetPrompter(getter_AddRefs(prompt));
-+        if (NS_SUCCEEDED(rv)) {
-+            nsString str;
-+            for (PRUint32 i = 0; i < aCount; i++)
-+            {
-+                str.Append(aPackageList[i]);
-+                str.Append(NS_LITERAL_STRING("\n"));
-+            }
-+            rv = prompt->ConfirmEx(NS_LITERAL_STRING("_blank").get(), str.get(),
-+                                   nsIPrompt::STD_YES_NO_BUTTONS,
-+                                   nsnull, nsnull, nsnull, nsnull, nsnull,
-+                                   &selection);
-+            if (NS_SUCCEEDED(rv))
-+            {
-+                //Now get which button was pressed from the ParamBlock
-+                *aRetval = selection ? PR_FALSE : PR_TRUE;
-+            }
-+        }
-+    }
++#endif
  
      return rv;
  }
@@ -60,6 +40,47 @@ Index: mozilla/xpinstall/src/nsXPInstallManager.cpp
  PRBool nsXPInstallManager::ConfirmChromeInstall(nsIDOMWindowInternal* aParentWindow, const PRUnichar **aPackage)
  {
      // get the dialog strings
+@@ -454,19 +457,21 @@
+ 
+     return bInstall;
+ }
+ #endif
+ 
+ NS_IMETHODIMP
+ nsXPInstallManager::OpenProgressDialog(const PRUnichar **aPackageList, PRUint32 aCount, nsIObserver *aObserver)
+ {
++    nsresult rv = NS_ERROR_NOT_IMPLEMENTED;
++#ifdef MOZ_XUL
+     // --- convert parameters into nsISupportArray members
+     nsCOMPtr<nsIDialogParamBlock> list;
+-    nsresult rv = LoadParams( aCount, aPackageList, getter_AddRefs(list) );
++    rv = LoadParams( aCount, aPackageList, getter_AddRefs(list) );
+     if (NS_FAILED(rv))
+         return rv;
+ 
+     nsCOMPtr<nsISupportsInterfacePointer> listwrap(do_CreateInstance(NS_SUPPORTS_INTERFACE_POINTER_CONTRACTID));
+     if (listwrap) {
+         listwrap->SetData(list);
+         listwrap->SetDataIID(&NS_GET_IID(nsIDialogParamBlock));
+     }
+@@ -522,16 +527,17 @@
+ 
+     nsCOMPtr<nsIDOMWindow> newWindow;
+     rv = wwatch->OpenWindow(0, 
+                             statusDialogURL,
+                             "_blank", 
+                             "chrome,centerscreen,titlebar,dialog=no,resizable",
+                             params, 
+                             getter_AddRefs(newWindow));
++#endif
+ 
+     return rv;
+ }
+ 
+ 
+ NS_IMETHODIMP nsXPInstallManager::Observe( nsISupports *aSubject,
+                                            const char *aTopic,
+                                            const PRUnichar *aData )
 Index: mozilla/xpinstall/public/xpinstall.js
 ===================================================================
 --- mozilla.orig/xpinstall/public/xpinstall.js
@@ -68,53 +89,3 @@ Index: mozilla/xpinstall/public/xpinstall.js
  pref("xpinstall.enabled",       true);
 -pref("xpinstall.whitelist.required", true);
 +pref("xpinstall.whitelist.required", false);
---- mozilla/xpinstall/src/nsXPInstallManager.cpp.orig	2007-11-20 08:40:47.000000000 +0200
-+++ mozilla/xpinstall/src/nsXPInstallManager.cpp	2007-11-20 14:41:13.000000000 +0200
-@@ -371,32 +371,32 @@ nsXPInstallManager::ConfirmInstall(nsIDO
- 
-         char* confirmDialogURL;
-         nsCOMPtr<nsIPrefBranch> pref(do_GetService(NS_PREFSERVICE_CONTRACTID, &rv));
-         if (!pref)
-           return rv;
-           
-         rv = pref->GetCharPref(PREF_XPINSTALL_CONFIRM_DLG, &confirmDialogURL);
-         NS_ASSERTION(NS_SUCCEEDED(rv), "Can't invoke XPInstall FE without a FE URL! Set xpinstall.dialog.confirm");
--        if (NS_FAILED(rv))
--          return rv;
--
--        rv = parentWindow->OpenDialog(NS_ConvertASCIItoUTF16(confirmDialogURL),
--                                      NS_LITERAL_STRING("_blank"),
--                                      NS_LITERAL_STRING("chrome,centerscreen,modal,titlebar"),
--                                      ifptr,
--                                      getter_AddRefs(newWindow));
--
-         if (NS_SUCCEEDED(rv))
--        {
--            //Now get which button was pressed from the ParamBlock
--            PRInt32 buttonPressed = 0;
--            params->GetInt( 0, &buttonPressed );
--            *aRetval = buttonPressed ? PR_FALSE : PR_TRUE;
--        }
-+		 {
-+           rv = parentWindow->OpenDialog(NS_ConvertASCIItoUTF16(confirmDialogURL),
-+                                         NS_LITERAL_STRING("_blank"),
-+                                         NS_LITERAL_STRING("chrome,centerscreen,modal,titlebar"),
-+                                         ifptr,
-+                                         getter_AddRefs(newWindow));
-+
-+           if (NS_SUCCEEDED(rv))
-+           {
-+              //Now get which button was pressed from the ParamBlock
-+              PRInt32 buttonPressed = 0;
-+              params->GetInt( 0, &buttonPressed );
-+              *aRetval = buttonPressed ? PR_FALSE : PR_TRUE;
-+           }
-+		 }
-     }
-     if (NS_FAILED(rv) && parentWindow)
-     {
-         PRInt32 selection;
-         nsCOMPtr<nsIPrompt> prompt;
-         rv = parentWindow->GetPrompter(getter_AddRefs(prompt));
-         if (NS_SUCCEEDED(rv)) {
-             nsString str;
