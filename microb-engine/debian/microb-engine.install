@@ -58,6 +58,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/global-platform/unix/accessible.
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global-platform/unix/platformKeys.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global-platform/unix/intl.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global-region/region.properties
+usr/lib/microb-engine/chrome/en-US/locale/en-US/mozapps/extensions*
 usr/lib/microb-engine/chrome/en-US/locale/en-US/pipnss/pipnss.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/pipnss/security.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/pippki/pippki.dtd
