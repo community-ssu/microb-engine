@@ -58,8 +58,8 @@ pref("general.config.obscure_value", 13); // for MCD .cfg files
 // maximum number of dated backups to keep at any time
 pref("browser.bookmarks.max_backups",       5);
 
-pref("browser.cache.disk.enable",           true);
-pref("browser.cache.disk.capacity",         1);
+pref("browser.cache.disk.enable",           false);
+pref("browser.cache.disk.capacity",         51200);
 pref("browser.cache.memory.enable",         true);
 //pref("browser.cache.memory.capacity",     -1);
 // -1 = determine dynamically, 0 = none, n = memory capacity in kilobytes
