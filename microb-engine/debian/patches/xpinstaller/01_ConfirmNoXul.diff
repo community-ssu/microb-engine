@@ -2,7 +2,7 @@ Index: mozilla/xpinstall/src/nsXPInstallManager.cpp
 ===================================================================
 --- mozilla.orig/xpinstall/src/nsXPInstallManager.cpp
 +++ mozilla/xpinstall/src/nsXPInstallManager.cpp
-@@ -347,17 +347,19 @@
+@@ -347,20 +347,22 @@
      return rv;
  }
  
@@ -11,17 +11,21 @@ Index: mozilla/xpinstall/src/nsXPInstallManager.cpp
  nsXPInstallManager::ConfirmInstall(nsIDOMWindow *aParent, const PRUnichar **aPackageList, PRUint32 aCount, PRBool *aRetval)
  {
      *aRetval = PR_FALSE;
-+		nsresult rv = NS_ERROR_NOT_IMPLEMENTED;
++    nsresult rv = NS_ERROR_NOT_IMPLEMENTED;
  
 +#ifdef MOZ_XUL
      nsCOMPtr<nsIDOMWindowInternal> parentWindow( do_QueryInterface(aParent) );
      nsCOMPtr<nsIDialogParamBlock> params;
-     nsresult rv = LoadParams( aCount, aPackageList, getter_AddRefs(params) );
+-    nsresult rv = LoadParams( aCount, aPackageList, getter_AddRefs(params) );
++    rv = LoadParams( aCount, aPackageList, getter_AddRefs(params) );
  
      if ( NS_SUCCEEDED(rv) && parentWindow && params)
      {
          nsCOMPtr<nsIDOMWindow> newWindow;
  
+         nsCOMPtr<nsISupportsInterfacePointer> ifptr =
+             do_CreateInstance(NS_SUPPORTS_INTERFACE_POINTER_CONTRACTID, &rv);
+         NS_ENSURE_SUCCESS(rv, rv);
 @@ -387,16 +389,17 @@
          if (NS_SUCCEEDED(rv))
          {
