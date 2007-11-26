@@ -58,7 +58,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-config.mk
 +++ mozilla/toolkit/library/libxul-config.mk
-@@ -97,30 +97,27 @@
+@@ -97,47 +97,50 @@
  
  # component libraries
  COMPONENT_LIBS += \
@@ -89,7 +89,55 @@ Index: mozilla/toolkit/library/libxul-config.mk
  DEFINES += -DMOZ_PLUGINS
  COMPONENT_LIBS += \
  	gkplugin \
-@@ -246,16 +243,24 @@
+ 	$(NULL)
+ endif
+ 
+ ifdef MOZ_XPFE_COMPONENTS
+ DEFINES += -DMOZ_XPFE_COMPONENTS
++ifndef MOZ_MICROB
+ COMPONENT_LIBS += \
+ 	mozfind \
+ 	appcomps \
+ 	$(NULL)
++else
++COMPONENT_LIBS += \
++	appcomps \
++	$(NULL)
++endif
+ endif
+ 
+ ifdef MOZ_PERF_METRICS
+ EXTRA_DSO_LIBS  += mozutil_s
+ endif
+ 
+ ifdef MOZ_XPINSTALL
+ DEFINES += -DMOZ_XPINSTALL
+@@ -195,22 +198,24 @@
+ DEFINES += -DMOZ_PLAINTEXT_EDITOR_ONLY
+ endif
+ 
+ ifdef MOZ_RDF
+ COMPONENT_LIBS += \
+ 	rdf \
+ 	$(NULL)
+ ifdef MOZ_XPFE_COMPONENTS
++ifndef MOZ_MICROB
+ COMPONENT_LIBS += \
+ 	windowds \
+ 	intlapp \
+ 	$(NULL)
+ endif
+ endif
++endif
+ 
+ ifeq (,$(filter beos os2 mac photon cocoa windows,$(MOZ_WIDGET_TOOLKIT)))
+ ifdef MOZ_XUL
+ ifdef MOZ_XPFE_COMPONENTS
+ COMPONENT_LIBS += fileview
+ DEFINES += -DMOZ_FILEVIEW
+ endif
+ endif
+@@ -246,16 +251,24 @@
  	$(NULL)
  ifdef MOZ_STORAGE
  COMPONENT_LIBS += \
@@ -266,7 +314,47 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
 ===================================================================
 --- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
 +++ mozilla/toolkit/library/nsStaticXULComponents.cpp
-@@ -252,16 +252,25 @@
+@@ -178,30 +178,36 @@
+ 
+ #ifdef MOZ_XMLEXTRAS
+ #define XMLEXTRAS_MODULES \
+     MODULE(nsXMLExtrasModule)
+ #else
+ #define XMLEXTRAS_MODULES
+ #endif
+ 
++#ifdef MOZ_MICROB
++#define APPLICATION_MODULES \
++    MODULE(application)
++#define RDFAPP_MODULES
++#else
+ #ifdef MOZ_XPFE_COMPONENTS
+ #ifdef MOZ_RDF
+ #define RDFAPP_MODULES \
+     MODULE(nsXPIntlModule) \
+     MODULE(nsWindowDataSourceModule)
+-#else
++#else // MOZ_RDF
+ #define RDFAPP_MODULES
+-#endif
++#endif // MOZ_RDF
+ #define APPLICATION_MODULES \
+     MODULE(application) \
+     MODULE(nsFindComponent)
+-#else
++#else // MOZ_XPFE_COMPONENTS
+ #define APPLICATION_MODULES
+ #define RDFAPP_MODULES
++#endif // MOZ_XPFE_COMPONENTS
+ #endif
+ 
+ #ifdef MOZ_XPINSTALL
+ #define XPINSTALL_MODULES \
+     MODULE(nsSoftwareUpdate)
+ #else
+ #define XPINSTALL_MODULES
+ #endif
+@@ -252,16 +258,25 @@
  #define XULENABLED_MODULES                   \
      MODULE(tkAutoCompleteModule)             \
      MODULE(PKI)
@@ -292,7 +380,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  
  #define XUL_MODULES                          \
      MODULE(xpconnect)                        \
-@@ -269,17 +278,16 @@
+@@ -269,17 +284,16 @@
      MODULE(nsUConvModule)                    \
      MODULE(nsI18nModule)                     \
      MODULE(nsChardetModule)                  \
@@ -310,7 +398,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      GFX_MODULES                              \
      WIDGET_MODULES                           \
      MODULE(nsImageLib2Module)                \
-@@ -294,22 +302,21 @@
+@@ -294,22 +308,21 @@
      OJI_MODULES                              \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \
