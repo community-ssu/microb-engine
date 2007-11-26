@@ -304,6 +304,7 @@ valgrind/bug66825.diff
 xpinstaller/01_ConfirmNoXul.diff
 xpinstaller/02_DownloadManagerMOZStorage.diff
 xpinstaller/03_XPIDialogSrv.diff
+xpinstaller/04_ChromeRegistrationWithRDFwithoutXUL.diff
 
 # Crash, plugins, updates, not tested!!!
 trunk_updates/new/1.BUG386387.diff
