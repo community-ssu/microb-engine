@@ -42,13 +42,13 @@ diff -ruN mozilla.orig/dom/locales/en-US/chrome/appstrings.properties mozilla/do
 -netTimeout=The operation timed out when attempting to contact %S.
 -redirectLoop=Redirection limit for this URL exceeded.  Unable to load the requested page.  This may be caused by cookies that are blocked.
 +malformedURI=Invalid URL Unable to load.
-+fileNotFound=Unable to find file %S. Check location and try again.
-+dnsNotFound=Unable to find %S. Check name and try again.
++fileNotFound=%S
++dnsNotFound=%S
 +protocolNotFound=%S is not a registered protocol
-+connectionFailure=Connection refused when attempting to contact %S
++connectionFailure=%S
 +netInterrupt=Connection to %S terminated unexpectedly. Some data may have been transferred.
-+netTimeout=Operation timed out when attempting to contact %S
-+redirectLoop=Redirection limit for this URL exceeded. Unable to load requested page. This may be caused by cookies that are blocked.
++netTimeout=%S
++redirectLoop=Endless redirection of request for this address.
  ## LOCALIZATION NOTE (confirmRepost): In this item, don't translate "%S"
 -confirmRepost=To display this page, the information previously sent by %S must be resent. This will repeat any action (such as a search or order submission) that had been performed earlier.
 +confirmRepost=The information previously sent by %S must be resent to display this page. This will repeat any action (such as a search or order submission) that had been performed earlier.
@@ -68,8 +68,8 @@ diff -ruN mozilla.orig/dom/locales/en-US/chrome/appstrings.properties mozilla/do
 +netOffline=Unable to display document while offline. To go online, uncheck Work Offline from the File menu.
 +isprinting=Document cannot change while printing or in print preview.
 +deniedPortAccess=Access to the port number given has been disabled for security reasons
-+proxyResolveFailure=Unable to find configured proxy server. Check proxy settings and try again.
-+proxyConnectFailure=Connection was refused when attempting to contact configured proxy server. Check proxy settings and try again.
++proxyResolveFailure=Connection is configured to use proxy server
++proxyConnectFailure=Connection is configured to use proxy server
 +contentEncodingError=Unable to display page. Invalid or unsupported form of compression. Contact the web site owners to inform them of this problem.
 +externalProtocolTitle=External protocol request
 +externalProtocolPrompt=An external application must be launched to handle %1$S: links.\n\n\nRequested link:\n\n%2$S\n\nApplication: %3$S\n\n\nIf you were not expecting this request it may be an attempt to exploit a weakness in the other program. Cancel this request unless you are sure it is not malicious.\n
@@ -776,7 +776,7 @@ diff -ruN mozilla.orig/dom/locales/en-US/chrome/netError.dtd mozilla/dom/locales
 -<!ENTITY redirectLoop.title "Redirect Loop">
 -<!ENTITY redirectLoop.longDesc "<p>The browser has stopped trying to retrieve the requested item. The site is redirecting the request in a way that will never complete.</p><ul><li>Have you disabled or blocked cookies required by this site?</li><li><em>NOTE</em>: If accepting the site's cookies does not resolve the problem, it is likely a server configuration issue and not your computer.</li></ul>">
 +<!ENTITY redirectLoop.title "Redirect loop">
-+<!ENTITY redirectLoop.longDesc "<p>Endless redirection of request for this address. Potential causes:</p><ul><li>Blocking cookies</li><li>Misconfigured server</li></ul>">
++<!ENTITY redirectLoop.longDesc "<p>Potential causes:</p><ul><li>Blocking cookies</li><li>Misconfigured server</li></ul>">
  
 -<!ENTITY unknownSocketType.title "Incorrect Response">
 -<!ENTITY unknownSocketType.longDesc "<p>The site responded to the network request in an unexpected way and the browser cannot continue.</p>">
@@ -869,21 +869,6 @@ diff -ruN mozilla.orig/dom/locales/en-US/chrome/plugins.properties mozilla/dom/l
  description_label=Description
  suffixes_label=Suffixes
  enabled_label=Enabled
-diff -ruN mozilla.orig/dom/locales/en-US/chrome/prompts.properties mozilla/dom/locales/en-US/chrome/prompts.properties
---- mozilla.orig/dom/locales/en-US/chrome/prompts.properties	2007-10-08 11:49:03.000000000 +0300
-+++ mozilla/dom/locales/en-US/chrome/prompts.properties	2007-10-03 14:55:42.000000000 +0300
-@@ -34,8 +34,7 @@
- #
- # ***** END LICENSE BLOCK *****
- 
--EnterUserPasswordForRealm=Enter username and password for "%1$S" at %2$S
--EnterUserPasswordForProxy=Enter username and password for proxy "%1$S" at %2$S
--EnterUserPasswordFor=Enter username and password for %1$S
-+EnterUserPasswordForRealm=Enter user name and password for "%1$S" at %2$S
-+EnterUserPasswordForProxy=Enter user name and password for proxy "%1$S" at %2$S
-+EnterUserPasswordFor=Enter user name and password for %1$S
- EnterPasswordFor=Enter password for %1$S on %2$S
--
 diff -ruN mozilla.orig/dom/locales/en-US/chrome/security/caps.properties mozilla/dom/locales/en-US/chrome/security/caps.properties
 --- mozilla.orig/dom/locales/en-US/chrome/security/caps.properties	2007-10-08 11:49:03.000000000 +0300
 +++ mozilla/dom/locales/en-US/chrome/security/caps.properties	2007-10-03 14:55:42.000000000 +0300
@@ -3468,3 +3453,18 @@ diff -ruN mozilla.orig/toolkit/locales/en-US/chrome/global-platform/unix/platfor
 -
  #the separator character used between modifiers 
  MODIFIER_SEPARATOR=+
+--- mozilla.orig/dom/locales/en-US/chrome/prompts.properties.orig 2007-11-23 17:40:56.000000000 +0200
++++ mozilla/dom/locales/en-US/chrome/prompts.properties      2007-11-23 17:41:16.000000000 +0200
+@@ -34,8 +34,7 @@
+ #
+ # ***** END LICENSE BLOCK *****
+
+-EnterUserPasswordForRealm=Enter username and password for "%1$S" at %2$S
+-EnterUserPasswordForProxy=Enter username and password for proxy "%1$S" at %2$S
+-EnterUserPasswordFor=Enter username and password for %1$S
+-EnterPasswordFor=Enter password for %1$S on %2$S
+-
++EnterUserPasswordForRealm=Realm: %1$S
++EnterUserPasswordForProxy=Proxy: %1$S
++EnterUserPasswordFor=%1$S
++EnterPasswordFor=%1$S on %2$S
