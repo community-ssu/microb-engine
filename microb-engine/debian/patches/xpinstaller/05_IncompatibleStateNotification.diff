@@ -1,0 +1,40 @@
+--- mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in.orig	2007-11-26 16:26:40.000000000 +0200
++++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	2007-11-26 16:40:38.000000000 +0200
+@@ -4533,16 +4533,18 @@ ExtensionManager.prototype = {
+           // Prevent the datasource file from being lazily recreated after
+           // it is deleted by calling Flush.
+           this._installManifest.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource);
+           this._installManifest.Flush();
+         }
+         else {
+           em.datasource.removeDownload(this._xpi.path);
+           showIncompatibleError(installData);
++          for (var i = 0; i < this._updateListeners.length; ++i)
++            this._updateListeners[i].onStateChange(null, Components.interfaces.nsIXPIProgressDialog.INSTALL_DONE, 30);
+           // We are responsible for cleaning up this file!
+           InstallLocations.get(aInstallLocationKey).removeFile(this._xpi);
+         }
+         em.datasource.onAddonUpdateEnded(addon, status);
+       },
+ 
+       /**
+        * See nsISupports.idl
+@@ -4593,16 +4595,18 @@ ExtensionManager.prototype = {
+         // Return early to prevent deletion of the install manifest file.
+         return;
+       }
+       else {
+         // XXXben Look up XULRunnerSettingsThingy to see if there is a registered
+         //        app that can handle this item, if so just stage and don't show
+         //        this error!
+         showIncompatibleError(installData);
++        for (var i = 0; i < this._updateListeners.length; ++i)
++          this._updateListeners[i].onStateChange(null, Components.interfaces.nsIXPIProgressDialog.INSTALL_DONE, 30);
+       }
+       break;
+     case INSTALLERROR_SUCCESS:
+       // Installation of multiple extensions / themes contained within a single xpi.
+       if (installData.type == nsIUpdateItem.TYPE_MULTI_XPI) {
+         installMultiXPI(aXPIFile, installData);
+         break;
+       }
