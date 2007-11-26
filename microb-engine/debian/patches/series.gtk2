@@ -48,6 +48,7 @@ buildcfg/050_BUG347854_Building_XULRunner.diff
 buildcfg/BUG_384868_moz_noxul_rdf_building.diff
 buildcfg/BUG_384873_moz_noxul_rdf_building2.diff
 buildcfg/NSSDEBUG.diff
+buildcfg/BuildWithGCC3.4.4.diff
 # BUILD BUSTAGE
 
 # SNAV
