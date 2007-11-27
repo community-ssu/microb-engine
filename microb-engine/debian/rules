@@ -51,6 +51,7 @@ endif
 ifneq (,$(findstring CodeSourcery,$(shell gcc --version)))
 GCCENV:=.cs
 export CSGCC=1
+	optimize_add += -DCSGCC=1
 else
 export CSGCC=0
 endif
@@ -242,7 +243,7 @@ ifeq ($(debug),y)
 	configopts += --disable-strip 
 #Hack for tablet compiler
 ifeq ($(TABLET),.tablet)
-	configopts += --disable-strip --disable-debug  --enable-optimize=\"-O1 -fno-unit-at-a-time  -finline-functions\"
+	configopts += --disable-strip --disable-debug  --enable-optimize=\"-O1 -fno-unit-at-a-time  -finline-functions\" --disable-libxul
 else
 	configopts += --disable-strip --enable-debug --enable-debugger-info-modules --disable-libxul
 endif

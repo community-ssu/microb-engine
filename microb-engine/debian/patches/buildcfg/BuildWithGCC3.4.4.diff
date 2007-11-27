@@ -11,7 +11,7 @@
  
  // nsIDOMCSSValue
  
-+#ifdef DEBUG
++#if !defined(__arm__) && defined(CSGCC)
 +void
 +nsROCSSPrimitiveValue::Reset(void)
 +{
@@ -58,7 +58,7 @@
      }
    }
  
-+#ifdef DEBUG
++#if !defined(__arm__) && defined(CSGCC)
 +  inline void Reset(void);
 +#else
    void Reset(void)
