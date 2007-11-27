@@ -243,13 +243,18 @@ ifeq ($(debug),y)
 	configopts += --disable-strip 
 #Hack for tablet compiler
 ifeq ($(TABLET),.tablet)
-	configopts += --disable-strip --enable-debug  --enable-optimize=\"-O1 -fno-unit-at-a-time  -finline-functions\" --disable-libxul
+ifeq ($(GCCENV),.cs)
+	optimize_add += -O1
+endif
+	configopts += --disable-strip --enable-debug --disable-libxul
 else
 	configopts += --disable-strip --enable-debug --enable-debugger-info-modules --disable-libxul
 endif
 else
 	configopts += --disable-strip
 endif
+#ifeq (,$(findstring $(DEB_HOST_ARCH),arm armel))
+#endif
 
 ifeq ($(logging),y)
 	configopts += --enable-logging  --enable-logrefcnt
@@ -258,18 +263,7 @@ else
 endif
 
 ifeq ($(GCCENV),.cs)
-	optimize_add +=  -finline-functions
-endif
-
-ifeq ($(debug),y)
-	configopts += --disable-optimize
-ifeq ($(TABLET),.tablet)
-ifeq (,$(findstring $(DEB_HOST_ARCH),arm armel))
-	configopts += --enable-optimize=\"-O1 -g -fno-unit-at-a-time  -finline-functions\"
-endif
-endif
-else
-	configopts += --enable-optimize=\"$(optimize_add) $(CFLAGS)\"
+	optimize_add +=  -finline-functions -fno-unit-at-a-time
 endif
 
 ifeq ($(jprof),y)
@@ -306,6 +300,8 @@ endif
 ifeq ($(canvas),y)
 	configopts += --enable-canvas
 endif
+
+	configopts += --enable-optimize=\"$(CFLAGS) $(optimize_add) \"
 
 # shared library versions, option 1
 version=$(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2 | cut -d ':' -f 2 | cut -d '-' -f 1)
