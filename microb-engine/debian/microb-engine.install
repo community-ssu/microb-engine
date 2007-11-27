@@ -226,7 +226,6 @@ usr/lib/microb-engine/components/*xpidlg*.so
 usr/lib/microb-engine/components/*fmerge*.so
 usr/lib/microb-engine/components/*gnomevfs*.so
 usr/lib/microb-engine/components/nsExtensionManager.js
-usr/lib/microb-engine/components/nsUpdateService.js
 usr/lib/microb-engine/components/nsProxyAutoConfig*.js
 usr/lib/microb-engine/components/*xulappinfo*
 usr/lib/microb-engine/*jprof*
