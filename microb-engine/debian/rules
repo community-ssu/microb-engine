@@ -18,6 +18,7 @@ vfp:=n
 oprof:=n
 microbembed:=y
 microbembedlibxul:=n
+nolibxul:=n
 MOZCONFIG_NAME:=configs/mozconfig
 MOZCONFIG_LEV:=b3
 syscairo:=y
@@ -170,6 +171,12 @@ else
 microbembedlibxul:=$(microbembedlibxul)
 endif
 
+ifneq (,$(findstring nolibxul,$(DEB_BUILD_OPTIONS)))
+nolibxul:=y
+else
+nolibxul:=$(nolibxul)
+endif
+
 ifneq (,$(findstring cflagsopt,$(DEB_BUILD_OPTIONS)))
 optimize_add = $(CFLAGS)
 endif
@@ -240,18 +247,17 @@ bldstr:=$(bldstr)sb-
 endif
 
 ifeq ($(debug),y)
-	configopts += --disable-strip 
 #Hack for tablet compiler
 ifeq ($(TABLET),.tablet)
 ifeq ($(GCCENV),.cs)
 	optimize_add += -O1
 endif
-	configopts += --disable-strip --enable-debug --disable-libxul
-else
-	configopts += --disable-strip --enable-debug --enable-debugger-info-modules --disable-libxul
 endif
-else
-	configopts += --disable-strip
+	configopts += --disable-strip --enable-debug --enable-debugger-info-modules
+ifeq ($(nolibxul),y)
+bldstr:=$(bldstr)nolibxul-
+	configopts += --disable-libxul
+endif
 endif
 #ifeq (,$(findstring $(DEB_HOST_ARCH),arm armel))
 #endif
