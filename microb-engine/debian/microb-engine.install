@@ -76,6 +76,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/pippki/pref-validation.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/pippki/pref-masterpass.dtd
 usr/lib/microb-engine/chrome/en-US/locale/branding/brand.dtd
 usr/lib/microb-engine/chrome/en-US/locale/branding/brand.properties
+usr/lib/microb-engine/chrome/en-US/locale/branding/poweredby.png
 usr/lib/microb-engine/chrome/en-US.manifest
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLPrettyPrint.css
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLMonoPrint.css
