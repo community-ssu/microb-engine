@@ -1377,3 +1377,7 @@ pref("capability.policy.mousedown.HTMLDocument.mousedown", "noAccess");
 pref("dom.jsevent.renamer", 1);
 pref("dom.window.jsevents.policy", true);
 pref("jsevent.renamer.mousedown", "click");
+
+pref("extensions.update.enabled", false);
+pref("extensions.checkCompatibility", false);
+
