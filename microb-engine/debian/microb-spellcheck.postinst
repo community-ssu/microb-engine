@@ -31,7 +31,7 @@ esac
 
 if [ "$1" = "configure" ]; then
     origdir=/usr/lib/microb-engine/dictionaries/
-    if [-f /targets/links/scratchbox.config ]; then
+    if [ -f /targets/links/scratchbox.config ]; then
         destdir=/home/$USER/.mozilla/dictionaries
     else
         destdir=/home/user/.mozilla/dictionaries
