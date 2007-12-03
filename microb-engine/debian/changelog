@@ -1,3 +1,29 @@
+microb-engine (1.0.4-2) unstable; urgency=low
+
+  * Fixed bug:gtkmozembed crash if you try create new instance of embed
+    browser after previous one was deleted. Fixes: NB#78066
+  * Fixed Extension manager initialisation error, because nsUpdateService
+    component was missing
+  * Disabled building of xpidlg extension, because it was moved into
+    gtkmozembed
+  * Added xpidlg testing extension
+  * Disabled disk cache back from preferences
+  * Fixed using xpinstaller without disk cache
+  * Enabled xpidl extension for xpinstaller
+  * Disabled libxul for debug builds
+  * Fixed XPI installer patchset
+  * Created new extension for handling XPI dialogs
+  * Fixed downloading partial content ;)
+  * Fixed working of extension manager
+  * Fixed proper handling of not existing xul preference
+  * Fixed some interfaces in xulappinfo component
+  * Allow to use properly some special components
+  * Fixed installation by application manager in device.
+  * Added xpt_link to development package
+  * Added dependecies from libidl0 for proper working of xpidl binary
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon,  3 Dec 2007 12:14:59 +0200
+
 microb-engine (1.0.4-1) unstable; urgency=low
  
   * Increased main version number, for stable release
@@ -30,7 +56,103 @@ microb-engine (1.0.4-1) unstable; urgency=low
   * Reverted back to old version for JS handler event info
   * Make JS Break patch more simple, because window->setenabled is not implemented
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 10 Oct 2007 18:12:18 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon,  3 Dec 2007 12:12:59 +0200
+
+microb-engine (1.0.3-36) unstable; urgency=low
+
+  * Fixed Bug:Modify error description for fileNotFound. Fixes: NB#73881
+  * Fixed Bug:Modify error description for dnsNotFound. Fixes: NB#73882
+  * Fixed Bug:Modify error description for connectionFailure. Fixes: NB#73883
+  * Fixed Bug:Modify error description for netTimeOut. Fixes: NB#73884
+  * Fixed Bug:Modify error description for proxyResolveFailure. Fixes:
+    NB#73885
+  * Fixed Bug:Modify error description for proxyConnectFailure. Fixes:
+    NB#73886
+  * Fixed Bug:Modify error description for redirectLoop. Fixes: NB#73887
+  * Fixed Bug:Missing comma in the last line of fileNotFound network error
+    page. Fixes: NB#76702
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 Nov 2007 12:45:18 +0200
+
+microb-engine (1.0.3-35) unstable; urgency=low
+
+  * Changed browser.sessionhistory.max_entries to 11. Fixes: NB#74318
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 12 Nov 2007 11:19:49 +0200
+
+microb-engine (1.0.3-34) unstable; urgency=low
+
+  * Fixed bug: when zooming, text is lost from the right side of columns.
+    Fixes: NB#71447
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon,  5 Nov 2007 10:38:54 +0200
+
+microb-engine (1.0.3-33) unstable; urgency=low
+
+  * Fixed bug#74318:browser endurance test under i386-valgrind: massive
+    leaking
+    reported.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 29 Oct 2007 20:26:56 +0200
+
+microb-engine (1.0.3-32) unstable; urgency=low
+
+  * Fixed bug:Additional problem page icon not displayed in the Task navigator
+    Application switcher. Fixes: NB#61877
+  * Fixed bug:Dropmenu widget looks bad. Fixes: NB#70572
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 23 Oct 2007 14:05:48 +0300
+
+microb-engine (1.0.3-31) unstable; urgency=low
+
+  * Reverted patch 690_BUG65694.error_page.true.zoom.diff.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 17 Oct 2007 15:07:14 +0300
+
+microb-engine (1.0.3-30) unstable; urgency=low
+
+  * Fixed bug: when zooming, text is lost from the right side of
+    columns. Fixes: NB#71447
+  * Fixed bug: Unable to insert newline to GMail compose text area
+    using HW KBD. Fixes: NB#72801
+  * Enabled layout.full.true.zoom.mode.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 15 Oct 2007 12:21:18 +0300
+
+microb-engine (1.0.3-29) unstable; urgency=low
+
+  * Disabled layout.full.true.zoom.mode
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue,  9 Oct 2007 14:26:33 +0300
+
+microb-engine (1.0.3-28) unstable; urgency=low
+
+  * Fixed XML parsing error in netError.dtd.
+  * Fixed localization bugs.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon,  8 Oct 2007 18:08:18 +0300
+
+microb-engine (1.0.3-27) unstable; urgency=low
+
+  * Fixed bug:Dropmenu widget looks bad. Fixes: NB#70572
+  * Make JS Break patch more simple, because window->setenabled is not
+    implemented.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun,  7 Oct 2007 19:08:42 +0300
+
+microb-engine (1.0.3-26) unstable; urgency=low
+
+  * Fixed bug:Multiple reload of www.one.lv cause random Crash.
+    Fixes: NB#60962
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri,  5 Oct 2007 11:00:30 +0300
+
+microb-engine (1.0.3-25) unstable; urgency=low
+
+  * Fixed bug:Zooming to 120% is very slow and after zooming pannings
+    barely works. Fixes: NB#71445
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue,  2 Oct 2007 17:50:57 +0300
 
 microb-engine (1.0.3-24) unstable; urgency=low
 
