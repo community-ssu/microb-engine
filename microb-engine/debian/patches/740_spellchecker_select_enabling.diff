@@ -1,5 +1,5 @@
---- mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp.orig	2007-10-05 15:10:29.000000000 -0400
-+++ mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp	2007-10-05 15:03:13.000000000 -0400
+--- mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp.orig	2007-12-04 16:26:30.000000000 -0400
++++ mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp	2007-12-04 16:26:43.000000000 -0400
 @@ -59,16 +59,20 @@
   * true when we get any change, and false once there is no possibility
   * something changed that we need to check on navigation. Navigation events
@@ -21,7 +21,33 @@
  #include "nsIDocument.h"
  #include "nsIDOMDocument.h"
  #include "nsIDOMDocumentRange.h"
-@@ -110,22 +114,41 @@
+@@ -90,16 +94,25 @@
+ #include "nsISelectionController.h"
+ #include "nsIServiceManager.h"
+ #include "nsITextServicesFilter.h"
+ #include "nsStringGlue.h"
+ #include "nsThreadUtils.h"
+ #include "nsUnicharUtils.h"
+ #include "nsServiceManagerUtils.h"
+ #include "nsComponentManagerUtils.h"
++#include "cattable.h"
++
++// some character categories we care about from GetCat()
++#define CHAR_CAT_NUMBER 2
++#define CHAR_CAT_SPACE 3
++#define CHAR_CAT_CONTROL 4
++#define CHAR_CAT_WORD 5
++#define CHAR_CAT_PUNCTUATION1 6
++#define CHAR_CAT_PUNCTUATION2 7
+ 
+ // Set to spew messages to the console about what is happening.
+ //#define DEBUG_INLINESPELL
+ 
+ // the number of milliseconds that we will take at once to do spellchecking
+ #define INLINESPELL_CHECK_TIMEOUT 50
+ 
+ // The number of words to check before we look at the time to see if
+@@ -110,22 +123,41 @@
  
  // This number is the number of checked words a misspelled word counts for
  // when we're checking the time to see if the alloted time is up for
@@ -63,7 +89,7 @@
  // mozInlineSpellStatus::InitForEditorChange
  //
  //    This is the most complicated case. For changes, we need to compute the
-@@ -1634,16 +1657,264 @@ mozInlineSpellChecker::HandleNavigationE
+@@ -1634,16 +1666,265 @@ mozInlineSpellChecker::HandleNavigationE
    if (shouldPost) {
      rv = ScheduleSpellCheck(status);
      NS_ENSURE_SUCCESS(rv, rv);
@@ -100,7 +126,7 @@
 +  if (!prompt)
 +    return NS_ERROR_FAILURE;
 +
-+  prompt->Select(NS_LITERAL_STRING("Spellcheck suggestions").get(),
++  prompt->Select(NS_LITERAL_STRING("Suggestions").get(),
 +                 nsnull, suggestionsCount, selectList, outSelection, retval);
 +  return NS_OK;
 +}
@@ -147,9 +173,9 @@
 +  PRUnichar **selectList;
 +
 +  aSpellCheck->GetDictionaryList(&selectList, &count);
-+  prompt->Select(NS_LITERAL_STRING("Dictionary chooser").get(),
-+                 NS_LITERAL_STRING("Choose the default dictionary:").get(),
-+                count, (const PRUnichar**)selectList, &outSelection, retval);
++  prompt->Select(NS_LITERAL_STRING("Select dictionary").get(),
++                 nsnull, count,
++                 (const PRUnichar**)selectList, &outSelection, retval);
 +
 +  if (*retval == PR_TRUE) {
 +    // user pressed the ok button
@@ -171,17 +197,18 @@
 +}
 +
 +PRBool
-+IsValidAlpha(PRUnichar alpha)
++IsPonctuation(PRUnichar ch)
 +{
-+    /* FIXME */
-+    return ((alpha >= 128 && alpha <= 165)
-+            || (alpha >= 181 && alpha <= 183)
-+            || (alpha >= 189 && alpha <= 190)
-+            || (alpha >= 198 && alpha <= 199)
-+            || (alpha >= 207 && alpha <= 216)
-+            || (alpha == 222)
-+            || (alpha >= 224 && alpha <= 237)
-+            || (alpha >= 244 && alpha <= 245));
++  PRInt32 charCategory = GetCat(ch);
++  return (ch == '\''
++          || ch == 0x2019 // RIGHT SINGLE QUOTATION MARK
++          || ch == 0x200D  // ZERO-WIDTH JOINER
++          || ch == 0xAD    // SOFT HYPHEN
++          || ch == 0x1806  // MONGOLIAN TODO SOFT HYPHEN
++          || charCategory == CHAR_CAT_SPACE
++          || charCategory == CHAR_CAT_CONTROL
++          || charCategory == CHAR_CAT_PUNCTUATION1
++          || charCategory == CHAR_CAT_PUNCTUATION2);
 +}
 +
 +// verify if the current word contents non-alphanumeric characters
@@ -192,20 +219,20 @@
 +  nsString aTempString(*currentWord);
 +  PRInt32 stringLength = aTempString.Length();
 +  PRInt32 i = stringLength-1;
-+  PRBool foundWord = PR_FALSE;
 +  while (i >= 0) {
++
 +    // a word containing numbers is not valid a word
 +    if (nsCRT::IsAsciiDigit((*currentWord)[i])) return PR_FALSE;
-+    if (nsCRT::IsAsciiAlpha((*currentWord)[i])
-+        || IsValidAlpha((*currentWord)[i]))
-+        foundWord = PR_TRUE;
-+    // ignore any trailing character different than alphanumeric characters
-+    if (!foundWord) {
++
++    // ignoring puctuation characters
++    if (IsPonctuation ((*currentWord)[i])) {
 +      aSelectionController->CharacterMove(PR_FALSE, PR_TRUE);
 +      stringLength--;
++      //break
 +    }
 +    i--;
 +  }
++
 +  i = aTempString.Length();
 +  // remove trailing invalid characters
 +  if(stringLength != i) {
@@ -257,7 +284,7 @@
 +    PRUnichar *aSuggestionList[MAX_SUGGESTIONS+DIALOG_OTHER];
 +    aSuggestionList[DIALOG_ADD] = ToNewUnicode(NS_ConvertUTF8toUTF16("Add to dictionary"));
 +    aSuggestionList[DIALOG_IGNORE] = ToNewUnicode(NS_ConvertUTF8toUTF16("Ignore this word"));
-+    aSuggestionList[DIALOG_DICTIONARY] = ToNewUnicode(NS_ConvertUTF8toUTF16("Change dictionary..."));
++    aSuggestionList[DIALOG_DICTIONARY] = ToNewUnicode(NS_ConvertUTF8toUTF16("Change dictionary"));
 +
 +    PRUint32 aSuggestionCount = DIALOG_OTHER;
 +    do {
@@ -328,7 +355,7 @@
  NS_IMETHODIMP mozInlineSpellChecker::MouseClick(nsIDOMEvent *aMouseEvent)
  {
    // ignore any errors from HandleNavigationEvent as we don't want to prevent 
-@@ -1659,16 +1930,36 @@ NS_IMETHODIMP mozInlineSpellChecker::Mou
+@@ -1659,16 +1940,36 @@ NS_IMETHODIMP mozInlineSpellChecker::Mou
  
  NS_IMETHODIMP mozInlineSpellChecker::MouseUp(nsIDOMEvent* aMouseEvent)
  {
