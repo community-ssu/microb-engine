@@ -1,6 +1,30 @@
---- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-11-27 09:41:08.000000000 +0200
-+++ mozilla/widget/src/gtk2/nsWindow.cpp	2007-11-27 08:13:09.000000000 +0200
-@@ -3402,39 +3402,43 @@ nsWindow::SetWindowTranslucency(PRBool a
+--- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-12-05 12:51:39.000000000 +0200
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2007-12-06 15:39:57.000000000 +0200
+@@ -351,20 +351,23 @@ nsWindow::nsWindow()
+ 
+ #ifdef ACCESSIBILITY
+     mRootAccessible  = nsnull;
+ #endif
+ 
+     mIsTranslucent = PR_FALSE;
+     mTransparencyBitmap = nsnull;
+ 
+     mTransparencyBitmapWidth  = 0;
+     mTransparencyBitmapHeight = 0;
++
++    mWebruntimeWidgetContextChecked = PR_FALSE;
++    mWebruntimeWidgetContext = PR_FALSE;
+ }
+ 
+ nsWindow::~nsWindow()
+ {
+     LOG(("nsWindow::~nsWindow() [%p]\n", (void *)this));
+     if (mLastDragMotionWindow == this) {
+         mLastDragMotionWindow = NULL;
+     }
+ 
+     delete[] mTransparencyBitmap;
+@@ -3402,39 +3405,70 @@ nsWindow::SetWindowTranslucency(PRBool a
      } // else the new default alpha values are "all 1", so we don't
      // need to change anything yet
  
@@ -11,29 +35,70 @@
  NS_IMETHODIMP
  nsWindow::GetWindowTranslucency(PRBool& aTranslucent)
  {
-+/*
-     if (!mShell) {
-         // Pass the request to the toplevel window
-         GtkWidget *topWidget = nsnull;
-         GetToplevelWidget(&topWidget);
-         if (!topWidget) {
-             aTranslucent = PR_FALSE;
-             return NS_ERROR_FAILURE;
+-    if (!mShell) {
+-        // Pass the request to the toplevel window
+-        GtkWidget *topWidget = nsnull;
+-        GetToplevelWidget(&topWidget);
+-        if (!topWidget) {
+-            aTranslucent = PR_FALSE;
+-            return NS_ERROR_FAILURE;
++    if (!mWebruntimeWidgetContextChecked) {
++        nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
++        if (prefs) {
++          PRBool val = PR_FALSE;
++          nsresult rv = prefs->GetBoolPref("webruntime.widget.context", &val);
++          if (NS_SUCCEEDED(rv))
++              mWebruntimeWidgetContext = val;
++        }
++        mWebruntimeWidgetContextChecked = PR_TRUE;
++    }
++
++    // If we are not in webruntime context use normal behavior
++    if (!mWebruntimeWidgetContext) {
++        if (!mShell) {
++            // Pass the request to the toplevel window
++            GtkWidget *topWidget = nsnull;
++            GetToplevelWidget(&topWidget);
++            if (!topWidget) {
++                aTranslucent = PR_FALSE;
++                return NS_ERROR_FAILURE;
++            }
++    
++            nsWindow *topWindow = get_window_for_gtk_widget(topWidget);
++            if (!topWindow) {
++                aTranslucent = PR_FALSE;
++                return NS_ERROR_FAILURE;
++            }
++    
++            return topWindow->GetWindowTranslucency(aTranslucent);
          }
- 
-         nsWindow *topWindow = get_window_for_gtk_widget(topWidget);
-         if (!topWindow) {
+-
+-        nsWindow *topWindow = get_window_for_gtk_widget(topWidget);
+-        if (!topWindow) {
++    
++        aTranslucent = mIsTranslucent;
++    } else {
++        // In webruntime context check if background has been set
++        // transparent, see nsContainerFrame::SyncFrameViewGeometryDependentProperties
++        nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
++        PRBool val = PR_FALSE;
++        nsresult rv;
++
++        if (prefs)
++            rv = prefs->GetBoolPref("webruntime.background.transparency", &val);
++
++        if (NS_SUCCEEDED(rv)) {
++            aTranslucent = val;
++            mIsTranslucent = val;
++        } else {
              aTranslucent = PR_FALSE;
-             return NS_ERROR_FAILURE;
+-            return NS_ERROR_FAILURE;
          }
- 
-         return topWindow->GetWindowTranslucency(aTranslucent);
+-
+-        return topWindow->GetWindowTranslucency(aTranslucent);
      }
  
-     aTranslucent = mIsTranslucent;
-+*/
-+	  aTranslucent = PR_TRUE;
-+
+-    aTranslucent = mIsTranslucent;
      return NS_OK;
  }
  
@@ -44,7 +109,7 @@
          return;
  
      if (aNewWidth == mTransparencyBitmapWidth &&
-@@ -3519,51 +3523,79 @@ void UpdateMaskBits(gchar* aMaskBits, PR
+@@ -3519,47 +3553,75 @@ void UpdateMaskBits(gchar* aMaskBits, PR
              // Note: '-newBit' turns 0 into 00...00 and 1 into 11...11
              maskBytes[x >> 3] = (maskByte & ~mask) | (-newBit & mask);
          }
@@ -66,77 +131,111 @@
 -    gdk_bitmap_unref(maskBitmap);
 +    GtkWidget* widget = nsnull;
 +  
-+    if (!mDrawingarea) {
-+      LOG(("!mDrawingarea\n"));
-+      return;
-+      }
-+  
-+    gpointer user_data = nsnull;
-+    gdk_window_get_user_data(mDrawingarea->inner_window, &user_data);
-+    if (!user_data) {
-+        LOG(("!user_data\n"));
-+        return;
-+        }
-+  
-+    // Get parent moz container
-+    MozContainer *mozContainer = MOZ_CONTAINER(user_data);
-+    widget = gtk_widget_get_parent(GTK_WIDGET(mozContainer));
-+  
-+    LOG(("widget = %p\n", widget));
++    // If we are not in webruntime context use normal behavior
++    if (!mWebruntimeWidgetContext)
++        widget = mShell;
++    else {
++        // In webruntime context get widget from parent
++        // moz container
++        if (!mDrawingarea)
++            return;
++      
++        gpointer user_data = nsnull;
++        gdk_window_get_user_data(mDrawingarea->inner_window, &user_data);
++        if (!user_data)
++            return;
++      
++        // Get parent moz container
++        MozContainer *mozContainer = MOZ_CONTAINER(user_data);
++        widget = gtk_widget_get_parent(GTK_WIDGET(mozContainer));
++    }
 +  
 +    if (widget) {
-+      gtk_widget_reset_shapes(/*mShell*/widget);
-+      GdkBitmap* maskBitmap = gdk_bitmap_create_from_data(
-+              /*mShell*/widget->window,
-+              mTransparencyBitmap,
-+              mTransparencyBitmapWidth,
-+              mTransparencyBitmapHeight);
-+      if (!maskBitmap)
-+          return;
-+    
-+      gtk_widget_shape_combine_mask(/*mShell*/widget, maskBitmap, 0, 0);
-+      gdk_bitmap_unref(maskBitmap);
++        gtk_widget_reset_shapes(widget);
++        GdkBitmap* maskBitmap = gdk_bitmap_create_from_data(
++                widget->window,
++                mTransparencyBitmap,
++                mTransparencyBitmapWidth,
++                mTransparencyBitmapHeight);
++        if (!maskBitmap)
++            return;
++      
++        gtk_widget_shape_combine_mask(widget, maskBitmap, 0, 0);
++        gdk_bitmap_unref(maskBitmap);
 +    }
-+  else {
-+    LOG(("!widget\n"));
-+  }
  }
  
  nsresult
  nsWindow::UpdateTranslucentWindowAlphaInternal(const nsRect& aRect,
                                                 PRUint8* aAlphas, PRInt32 aStride)
  {
-+/*
-     if (!mShell) {
-         // Pass the request to the toplevel window
-         GtkWidget *topWidget = nsnull;
-         GetToplevelWidget(&topWidget);
-         if (!topWidget)
-             return NS_ERROR_FAILURE;
- 
-         nsWindow *topWindow = get_window_for_gtk_widget(topWidget);
-         if (!topWindow)
-             return NS_ERROR_FAILURE;
- 
-         return topWindow->UpdateTranslucentWindowAlphaInternal(aRect, aAlphas, aStride);
+-    if (!mShell) {
+-        // Pass the request to the toplevel window
+-        GtkWidget *topWidget = nsnull;
+-        GetToplevelWidget(&topWidget);
+-        if (!topWidget)
+-            return NS_ERROR_FAILURE;
+-
+-        nsWindow *topWindow = get_window_for_gtk_widget(topWidget);
+-        if (!topWindow)
+-            return NS_ERROR_FAILURE;
+-
+-        return topWindow->UpdateTranslucentWindowAlphaInternal(aRect, aAlphas, aStride);
++    // If we are not in webruntime context use normal behavior
++    if (!mWebruntimeWidgetContext) {
++        if (!mShell) {
++            // Pass the request to the toplevel window
++            GtkWidget *topWidget = nsnull;
++            GetToplevelWidget(&topWidget);
++            if (!topWidget)
++                return NS_ERROR_FAILURE;
++    
++            nsWindow *topWindow = get_window_for_gtk_widget(topWidget);
++            if (!topWindow)
++                return NS_ERROR_FAILURE;
++    
++            return topWindow->UpdateTranslucentWindowAlphaInternal(aRect, aAlphas, aStride);
++        }
      }
  
      NS_ASSERTION(mIsTranslucent, "Window is not transparent");
--
-+*/
+ 
      if (mTransparencyBitmap == nsnull) {
          PRInt32 size = ((mBounds.width+7)/8)*mBounds.height;
          mTransparencyBitmap = new gchar[size];
          if (mTransparencyBitmap == nsnull)
              return NS_ERROR_FAILURE;
          memset(mTransparencyBitmap, 255, size);
-         mTransparencyBitmapWidth = mBounds.width;
-         mTransparencyBitmapHeight = mBounds.height;
-     }
+@@ -4794,20 +4856,26 @@ initialize_prefs(void)
+     // check to see if we should set our raise pref
+     nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+     if (!prefs)
+         return NS_OK;
  
---- mozilla/widget/src/gtk2/nsWindow.h.orig	2007-11-27 09:41:08.000000000 +0200
-+++ mozilla/widget/src/gtk2/nsWindow.h	2007-11-26 15:53:08.000000000 +0200
-@@ -33,20 +33,22 @@
+     PRBool val = PR_TRUE;
+     nsresult rv;
+     rv = prefs->GetBoolPref("mozilla.widget.raise-on-setfocus", &val);
+     if (NS_SUCCEEDED(rv))
+         gRaiseWindows = val;
++/*
++    val = PR_FALSE;
++    rv = prefs->GetBoolPref("webruntime.widget.context", &val);
++    if (NS_SUCCEEDED(rv))
++        gWebruntimeWidgetContext = val;
++*/
+ 
+     return NS_OK;
+ }
+ 
+ void
+ nsWindow::ResetDragMotionTimer(GtkWidget *aWidget,
+                                GdkDragContext *aDragContext,
+                                gint aX, gint aY, guint aTime)
+ {
+ 
+--- mozilla/widget/src/gtk2/nsWindow.h.orig	2007-12-05 12:51:52.000000000 +0200
++++ mozilla/widget/src/gtk2/nsWindow.h	2007-12-05 14:23:08.000000000 +0200
+@@ -33,20 +33,23 @@
   * decision by deleting the provisions above and replace them with the notice
   * and other provisions required by the GPL or the LGPL. If you do not delete
   * the provisions above, a recipient may use your version of this file under
@@ -147,6 +246,7 @@
  #ifndef __nsWindow_h__
  #define __nsWindow_h__
  
++// Defined here temporarely for webruntime transparency
 +#define MOZ_XUL 1
 +
  #include "nsAutoPtr.h"
@@ -159,9 +259,54 @@
  
  #include "nsIDragService.h"
  #include "nsITimer.h"
---- mozilla/gfx/src/nsBlender.h.orig	2005-11-25 10:16:27.000000000 +0200
-+++ mozilla/gfx/src/nsBlender.h	2007-11-26 15:49:55.000000000 +0200
-@@ -33,20 +33,22 @@
+@@ -404,20 +407,23 @@ private:
+     // The cursor cache
+     static GdkCursor   *gsGtkCursorCache[eCursorCount];
+ 
+     // Transparency
+     PRBool       mIsTranslucent;
+     // This bitmap tracks which pixels are transparent. We don't support
+     // full translucency at this time; each pixel is either fully opaque
+     // or fully transparent.
+     gchar*       mTransparencyBitmap;
+  
++    PRBool       mWebruntimeWidgetContextChecked;
++    PRBool       mWebruntimeWidgetContext;
++
+     // all of our DND stuff
+     // this is the last window that had a drag event happen on it.
+     static nsWindow    *mLastDragMotionWindow;
+     void   InitDragEvent         (nsMouseEvent &aEvent);
+     void   UpdateDragStatus      (nsMouseEvent &aEvent,
+                                   GdkDragContext *aDragContext,
+                                   nsIDragService *aDragService);
+ 
+     // this is everything we need to be able to fire motion events
+     // repeatedly
+--- mozilla/gfx/public/nsIBlender.h.orig	2007-12-05 13:49:45.000000000 +0200
++++ mozilla/gfx/public/nsIBlender.h	2007-12-05 13:50:43.000000000 +0200
+@@ -95,16 +95,17 @@ public:
+                    nsIRenderingContext *aSecondSrc = nsnull, nscolor aSrcBackColor = NS_RGB(0, 0, 0),
+                    nscolor aSecondSrcBackColor = NS_RGB(0, 0, 0)) = 0;
+ 
+   /**
+    GetAlphas computes an array of alpha values for a rectangle of pixels, using
+    the drawn-onto-black and the drawn-onto-white images. The pixels are
+    returned in a new'ed array of aRect.width*aRect.height elements, in row-major
+    order. This array must be freed by the caller.
+   */
+   NS_IMETHOD GetAlphas(const nsRect& aRect, nsIDrawingSurface* aBlack,
+-                       nsIDrawingSurface* aWhite, PRUint8** aAlphas) = 0;
++                       nsIDrawingSurface* aWhite, PRUint8** aAlphas,
++                       PRBool aWebruntimeWidgetContext = PR_FALSE) = 0;
+ };
+ 
+ NS_DEFINE_STATIC_IID_ACCESSOR(nsIBlender, NS_IBLENDER_IID)
+ 
+ #endif
+--- mozilla/gfx/src/nsBlender.h.orig	2007-12-05 12:52:03.000000000 +0200
++++ mozilla/gfx/src/nsBlender.h	2007-12-05 13:47:45.000000000 +0200
+@@ -33,20 +33,23 @@
   * decision by deleting the provisions above and replace them with the notice
   * and other provisions required by the GPL or the LGPL. If you do not delete
   * the provisions above, a recipient may use your version of this file under
@@ -172,6 +317,7 @@
  #ifndef nsBlender_h___
  #define nsBlender_h___
  
++// Defined temporarely here for webruntime transparency support
 +#define MOZ_XUL 1
 +
  #include "nsCOMPtr.h"
@@ -184,9 +330,126 @@
    nsLowMedQual,
    nsMedQual,
    nsHighMedQual,
---- mozilla/gfx/src/nsBlender.cpp.orig	2005-08-02 22:48:39.000000000 +0300
-+++ mozilla/gfx/src/nsBlender.cpp	2007-11-27 09:34:22.000000000 +0200
-@@ -307,38 +307,44 @@ static void ComputeAlphas16(PRInt32 aNum
+@@ -70,21 +73,22 @@ public:
+   NS_IMETHOD Blend(PRInt32 aSX, PRInt32 aSY, PRInt32 aWidth, PRInt32 aHeight,nsIDrawingSurface* aSrc,
+                    nsIDrawingSurface* aDest, PRInt32 aDX, PRInt32 aDY, float aSrcOpacity,
+                    nsIDrawingSurface* aSecondSrc = nsnull, nscolor aSrcBackColor = NS_RGB(0, 0, 0),
+                    nscolor aSecondSrcBackColor = NS_RGB(0, 0, 0));
+   NS_IMETHOD Blend(PRInt32 aSX, PRInt32 aSY, PRInt32 aWidth, PRInt32 aHeight, nsIRenderingContext *aSrc,
+                    nsIRenderingContext *aDest, PRInt32 aDX, PRInt32 aDY, float aSrcOpacity,
+                    nsIRenderingContext *aSecondSrc = nsnull, nscolor aSrcBackColor = NS_RGB(0, 0, 0),
+                    nscolor aSecondSrcBackColor = NS_RGB(0, 0, 0));
+ 
+   NS_IMETHOD GetAlphas(const nsRect& aRect, nsIDrawingSurface* aBlack,
+-                       nsIDrawingSurface* aWhite, PRUint8** aAlphas);
++                       nsIDrawingSurface* aWhite, PRUint8** aAlphas,
++                       PRBool aWebruntimeWidgetContext = PR_FALSE);
+ 
+ protected:
+ 
+  /** --------------------------------------------------------------------------
+   * Destructor for a nsBlender object
+   */
+   virtual ~nsBlender();
+ 
+   //called by nsIBlender Blend() functions
+   nsresult Blend(PRUint8 *aSrcBits, PRInt32 aSrcStride,
+--- mozilla/gfx/src/nsBlender.cpp.orig	2007-12-05 12:52:23.000000000 +0200
++++ mozilla/gfx/src/nsBlender.cpp	2007-12-06 14:26:02.000000000 +0200
+@@ -32,20 +32,23 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsBlender.h"
+ #include "nsCRT.h"
+ 
++
++const PRUint8 WEBRUNTIME_ALPHA_TRESHOLD = (PRUint8)180;
++
+ /** ---------------------------------------------------
+  *  See documentation in nsBlender.h
+  *	@update 2/25/00 dwc
+  */
+ nsBlender :: nsBlender()
+ {
+ }
+ 
+ /** ---------------------------------------------------
+  *  See documentation in nsBlender.h
+@@ -246,36 +249,43 @@ NS_IMETHODIMP nsBlender::GetAlphas(const
+  * Let A be the unknown source pixel's alpha value and let C be its (unknown) color.
+  * Let S be the value painted onto black and T be the value painted onto white.
+  * Then S = C*(A/255) and T = 255*(1 - A/255) + C*(A/255).
+  * Therefore A = 255 - (T - S)
+  * This is true no matter what color component we look at.
+  */
+ static void ComputeAlphasByByte(PRInt32 aNumLines, PRInt32 aBytesPerLine,
+                                 PRInt32 aBytesPerPixel,
+                                 PRUint8 *aOnBlackImage, PRUint8 *aOnWhiteImage,
+                                 PRInt32 aBytesLineSpan, PRUint8 *aAlphas,
+-                                PRUint32 aAlphasSize)
++                                PRUint32 aAlphasSize, PRBool aWebruntimeWidgetContext)
+ {
+   NS_ASSERTION(aBytesPerPixel == 3 || aBytesPerPixel == 4,
+                "Only 24 or 32 bits per pixel supported here");
+ 
+   PRIntn y;
+   PRUint8* alphas = aAlphas;
+   for (y = 0; y < aNumLines; y++) {
+     // Look at component #1. It must be a real color no matter what
+     // RGBA ordering is used.
+     PRUint8 *s1 = aOnBlackImage + 1;
+     PRUint8 *s2 = aOnWhiteImage + 1;
+     
+     PRIntn i;
+     for (i = 1; i < aBytesPerLine; i += aBytesPerPixel) {
+-      *alphas++ = (PRUint8)(255 - (*s2 - *s1));
++      PRUint8 curAlpha = (PRUint8)(255 - (*s2 - *s1));
++
++      // In webruntime context use alpha treshold to make alphas exactly 1 or 0
++      if (aWebruntimeWidgetContext)
++        curAlpha > WEBRUNTIME_ALPHA_TRESHOLD ? curAlpha = (PRUint8)255 : curAlpha = (PRUint8)0;
++
++      *alphas++ = curAlpha;
++
+       s1 += aBytesPerPixel;
+       s2 += aBytesPerPixel;
+     }
+   
+     aOnBlackImage += aBytesLineSpan;
+     aOnWhiteImage += aBytesLineSpan;
+   }
+ 
+   NS_ASSERTION(alphas - aAlphas == aAlphasSize, "alpha24/32 calculation error");
+ }
+@@ -283,21 +293,21 @@ static void ComputeAlphasByByte(PRInt32 
+ /**  Use the green channel to work out the alpha value,
+      since green has the most bits in most divisions of 16-bit color.
+ 
+      The green values range from 0 to (1 << BLEND_GREEN_BITS) - 1.
+      Therefore we multiply a green value by 255/((1 << BLEND_GREEN_BITS) - 1)
+      to get a real alpha value.
+ */
+ static void ComputeAlphas16(PRInt32 aNumLines, PRInt32 aBytesPerLine,
+                             PRUint8 *aOnBlackImage, PRUint8 *aOnWhiteImage,
+                             PRInt32 aBytesLineSpan, PRUint8 *aAlphas,
+-                            PRUint32 aAlphasSize)
++                            PRUint32 aAlphasSize, PRBool aWebruntimeWidgetContext)
+ {
+   PRIntn y;
+   PRUint8* alphas = aAlphas;
+   for (y = 0; y < aNumLines; y++) {
+     PRUint16 *s1 = (PRUint16*)aOnBlackImage;
+     PRUint16 *s2 = (PRUint16*)aOnWhiteImage;
+     
+       // GREEN16 returns a value between 0 and 255 representing the
+       // green value of the pixel. It only has BLEND_GREEN_BITS of
+       // precision (so the values are typically 0, 8, 16, ..., 248). 
+@@ -307,60 +317,69 @@ static void ComputeAlphas16(PRInt32 aNum
        // have GREEN16(pix1) = 0, GREEN16(pix2) = 248, and the resulting 
        // alpha value would just be 248, but we need 255. So we need to
        // do some rescaling.
@@ -200,14 +463,17 @@
 -      *alphas++ = (PRUint8)(255 - ((pix2 - pix1)*255)/SCALE_DENOMINATOR);
 +
 +      PRUint8 curAlpha = (PRUint8)(255 - ((pix2 - pix1)*255)/SCALE_DENOMINATOR);
-+      curAlpha > (PRUint8)180 ? curAlpha = (PRUint8)255 : curAlpha = (PRUint8)0;
-+      *alphas++ = curAlpha; /*(PRUint8)(255 - ((pix2 - pix1)*255)/SCALE_DENOMINATOR);*/
++      
++      // In webruntime context use alpha treshold to make alphas exactly 1 or 0
++      if (aWebruntimeWidgetContext)
++        curAlpha > WEBRUNTIME_ALPHA_TRESHOLD ? curAlpha = (PRUint8)255 : curAlpha = (PRUint8)0;
++      
++      *alphas++ = curAlpha;
 +
        s1++;
        s2++;
      }
--    
-+
+     
      aOnBlackImage += aBytesLineSpan;
      aOnWhiteImage += aBytesLineSpan;
    }
@@ -219,17 +485,241 @@
                            PRInt32 aDepth,
                            PRUint8 *aOnBlackImage, PRUint8 *aOnWhiteImage,
                            PRInt32 aBytesLineSpan, PRUint8 *aAlphas,
-                           PRUint32 aAlphasSize)
+-                          PRUint32 aAlphasSize)
++                          PRUint32 aAlphasSize, PRBool aWebruntimeWidgetContext)
  {
-+//  printf("!!!! ComputeAlphas %d\n", aDepth);
-+
    switch (aDepth) {
      case 32:
      case 24:
        ComputeAlphasByByte(aNumLines, aBytesPerLine, aDepth/8,
                            aOnBlackImage, aOnWhiteImage,
-                           aBytesLineSpan, aAlphas, aAlphasSize);
+-                          aBytesLineSpan, aAlphas, aAlphasSize);
++                          aBytesLineSpan, aAlphas, aAlphasSize, aWebruntimeWidgetContext);
        break;
  
      case 16:
        ComputeAlphas16(aNumLines, aBytesPerLine, aOnBlackImage, aOnWhiteImage,
+-                      aBytesLineSpan, aAlphas, aAlphasSize);
++                      aBytesLineSpan, aAlphas, aAlphasSize, aWebruntimeWidgetContext);
+       break;
+     
+     default:
+       NS_ERROR("Unknown depth for alpha calculation");
+       // make them all opaque
+       memset(aAlphas, 255, aAlphasSize);
+   }
+ }
+ 
+ NS_IMETHODIMP nsBlender::GetAlphas(const nsRect& aRect, nsIDrawingSurface* aBlack,
+-                                   nsIDrawingSurface* aWhite, PRUint8** aAlphas) {
++                                   nsIDrawingSurface* aWhite, PRUint8** aAlphas,
++                                   PRBool aWebruntimeWidgetContext /*= PR_FALSE*/) {
+   nsresult result;
+ 
+   nsIDrawingSurface* blackSurface = (nsIDrawingSurface *)aBlack;
+   nsIDrawingSurface* whiteSurface = (nsIDrawingSurface *)aWhite;
+ 
+   nsRect r = aRect;
+ 
+   rangeCheck(blackSurface, r.x, r.y, r.width, r.height);
+   rangeCheck(whiteSurface, r.x, r.y, r.width, r.height);
+ 
+@@ -376,27 +395,28 @@ NS_IMETHODIMP nsBlender::GetAlphas(const
+     result = whiteSurface->Lock(r.x, r.y, r.width, r.height,
+                                 (void**)&whiteBytes, &whiteSpan,
+                                 &whiteBytesPerLine, NS_LOCK_SURFACE_READ_ONLY);
+     if (NS_SUCCEEDED(result)) {
+       NS_ASSERTION(blackSpan == whiteSpan &&
+                    blackBytesPerLine == whiteBytesPerLine,
+                    "Mismatched bitmap formats (black/white) in Blender");
+       if (blackSpan == whiteSpan && blackBytesPerLine == whiteBytesPerLine) {
+         *aAlphas = new PRUint8[r.width*r.height];
+         if (*aAlphas) {
++
+           // compute depth like this to make sure it's consistent with the memory layout
+           // and work around some GTK bugs. If there are no gfx bugs, then this is correct,
+           // if there are gfx bugs, this will prevent a crash.
+           PRUint32 depth = (blackBytesPerLine/r.width)*8;
+           ComputeAlphas(r.height, blackBytesPerLine, depth,
+                         blackBytes, whiteBytes, blackSpan, 
+-                        *aAlphas, r.width*r.height);
++                        *aAlphas, r.width*r.height, aWebruntimeWidgetContext);
+         } else {
+           result = NS_ERROR_FAILURE;
+         }
+       } else {
+         result = NS_ERROR_FAILURE;
+       }
+ 
+       whiteSurface->Unlock();
+     }
+ 
+--- mozilla/layout/generic/nsContainerFrame.cpp.orig	2007-12-06 15:51:45.000000000 +0200
++++ mozilla/layout/generic/nsContainerFrame.cpp	2007-12-06 15:37:48.000000000 +0200
+@@ -59,21 +59,22 @@
+ #include "nsIWidget.h"
+ #include "nsGfxCIID.h"
+ #include "nsIServiceManager.h"
+ #include "nsCSSRendering.h"
+ #include "nsTransform2D.h"
+ #include "nsRegion.h"
+ #include "nsLayoutErrors.h"
+ #include "nsDisplayList.h"
+ #include "nsContentErrors.h"
+ #include "nsIEventStateManager.h"
+-
++#include "nsIPrefService.h"
++#include "nsIPrefBranch.h"
+ #ifdef NS_DEBUG
+ #undef NOISY
+ #else
+ #undef NOISY
+ #endif
+ 
+ nsContainerFrame::~nsContainerFrame()
+ {
+ }
+ 
+@@ -409,29 +410,46 @@ SyncFrameViewGeometryDependentProperties
+     nsCSSRendering::FindBackground(aPresContext, aFrame, &bg, &isCanvas);
+ 
+   if (isCanvas) {
+     nsIView* rootView;
+     vm->GetRootView(rootView);
+     nsIView* rootParent = rootView->GetParent();
+ 
+     nsIDocument *doc = aPresContext->PresShell()->GetDocument();
+     if (doc) {
+       nsIContent *rootElem = doc->GetRootContent();
+-      if (!doc->GetParentDocument() &&
++
++      // Check for webruntime context
++      PRBool webruntimeContext = PR_FALSE;
++      nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
++
++      if (prefs) {
++        PRBool val = PR_FALSE;
++        nsresult rv = prefs->GetBoolPref("webruntime.widget.context", &val);
++        if (NS_SUCCEEDED(rv))
++          webruntimeContext = val;
++      }
++
++      if ((!doc->GetParentDocument() &&
+           (nsCOMPtr<nsISupports>(doc->GetContainer())) &&
+-          rootElem && rootElem->IsNodeOfType(nsINode::eXUL)) {
+-        // we're XUL at the root of the document hierarchy. Try to make our
++          rootElem && rootElem->IsNodeOfType(nsINode::eXUL)) ||
++          (!doc->GetParentDocument() &&
++          (nsCOMPtr<nsISupports>(doc->GetContainer())) && rootElem && webruntimeContext)) {
++        // we're XUL at the root of the document hierarchy or we are on webruntime
++        // context. Try to make our
+         // window translucent.
+         // don't proceed unless this is the root view
+         // (sometimes the non-root-view is a canvas)
+-        if (aView->HasWidget() && aView == rootView) {
++        if (aView->HasWidget() && aView == rootView && !webruntimeContext)
+           aView->GetWidget()->SetWindowTranslucency(nsLayoutUtils::FrameHasTransparency(aFrame));
++        else if (webruntimeContext) {
++          prefs->SetBoolPref("webruntime.background.transparency", nsLayoutUtils::FrameHasTransparency(aFrame));
+         }
+       }
+     }
+   }
+ }
+ 
+ void
+ nsContainerFrame::SyncFrameViewAfterReflow(nsPresContext* aPresContext,
+                                            nsIFrame*       aFrame,
+                                            nsIView*        aView,
+--- mozilla/view/src/nsViewManager.h.orig	2007-12-05 12:56:14.000000000 +0200
++++ mozilla/view/src/nsViewManager.h	2007-12-06 14:01:38.000000000 +0200
+@@ -515,19 +515,22 @@ private:
+   static PRInt32           mVMCount;        //number of viewmanagers
+ 
+   //Rendering context used to cleanup the blending buffers
+   static nsIRenderingContext* gCleanupContext;
+ 
+   //list of view managers
+   static nsVoidArray       *gViewManagers;
+ 
+   void PostInvalidateEvent();
+ 
++  PRBool mWebruntimeWidgetContextChecked;
++  PRBool mWebruntimeWidgetContext;
++
+ #ifdef NS_VM_PERF_METRICS
+   MOZ_TIMER_DECLARE(mWatch) //  Measures compositing+paint time for current document
+ #endif
+ };
+ 
+ //when the refresh happens, should it be double buffered?
+ #define NS_VMREFRESH_DOUBLE_BUFFER      0x0001
+ 
+ #endif /* nsViewManager_h___ */
+--- mozilla/view/src/nsViewManager.cpp.orig	2007-12-05 12:56:18.000000000 +0200
++++ mozilla/view/src/nsViewManager.cpp	2007-12-06 15:40:15.000000000 +0200
+@@ -173,20 +173,22 @@ nsViewManager::nsViewManager()
+   gViewManagers->AppendElement(this);
+ 
+   mVMCount++;
+   // NOTE:  we use a zeroing operator new, so all data members are
+   // assumed to be cleared here.
+   mDefaultBackgroundColor = NS_RGBA(0, 0, 0, 0);
+   mAllowDoubleBuffering = PR_TRUE; 
+   mHasPendingUpdates = PR_FALSE;
+   mRecursiveRefreshPending = PR_FALSE;
+   mUpdateBatchFlags = 0;
++  mWebruntimeWidgetContextChecked = PR_FALSE;
++  mWebruntimeWidgetContext = PR_FALSE;
+ }
+ 
+ nsViewManager::~nsViewManager()
+ {
+   if (mRootView) {
+     // Destroy any remaining views
+     mRootView->Destroy();
+     mRootView = nsnull;
+   }
+ 
+@@ -815,27 +817,40 @@ void nsViewManager::RenderViews(nsView *
+     mObserver->Paint(displayRoot, &aRC, damageRegion);
+     aRC.PopState();
+ #ifndef MOZ_CAIRO_GFX
+     if (translucentWindow)
+       mObserver->Paint(displayRoot, buffers->mWhiteCX, aRegion);
+ #endif
+   }
+ 
+ #ifndef MOZ_CAIRO_GFX
+   if (translucentWindow) {
++    // Check for webruntime context
++    if (!mWebruntimeWidgetContextChecked) {
++      nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
++      if (prefs) {
++        PRBool val = PR_FALSE;
++        nsresult rv = prefs->GetBoolPref("webruntime.widget.context", &val);
++        if (NS_SUCCEEDED(rv))
++          mWebruntimeWidgetContext = val;
++      }
++      mWebruntimeWidgetContextChecked = PR_TRUE;
++    }
++
+     // Get the alpha channel into an array so we can send it to the widget
+     nsRect r = aRegion.GetBounds();
+     r *= (1.0f / mContext->AppUnitsPerDevPixel());
+     nsRect bufferRect(0, 0, r.width, r.height);
+     PRUint8* alphas = nsnull;
+     nsresult rv = mBlender->GetAlphas(bufferRect, buffers->mBlack,
+-                                      buffers->mWhite, &alphas);
++                                      buffers->mWhite, &alphas,
++                                      mWebruntimeWidgetContext);
+     
+     if (NS_SUCCEEDED(rv)) {
+       widget->UpdateTranslucentWindowAlpha(r, alphas);
+     }
+     delete[] alphas;
+     delete buffers;
+   }
+ #endif
+ }
+ 
