@@ -1,3 +1,16 @@
+microb-engine (1.0.4-4) unstable; urgency=low
+
+  * Correct inspection findings on TransparencySupport patch
+  * Update transparency support patch
+  * fixed no-ascii char support on spellcheck extension (e.g. russian) .
+  * improved the way the spellcheck extension excludes puctuation chars when a
+    text is selected to be replaced by the extensio
+  * Desabled compatibility check for extension manager, disabled update service
+  * Fixed extension installation. It must remove xpti.dat and compreg.dat after
+    package installation.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 10 Dec 2007 10:47:12 +0200
+
 microb-engine (1.0.4-2) unstable; urgency=low
 
   * Fixed bug:gtkmozembed crash if you try create new instance of embed
