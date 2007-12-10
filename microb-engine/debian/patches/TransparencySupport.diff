@@ -12,8 +12,8 @@
      mTransparencyBitmapWidth  = 0;
      mTransparencyBitmapHeight = 0;
 +
-+    mWebruntimeWidgetContextChecked = PR_FALSE;
-+    mWebruntimeWidgetContext = PR_FALSE;
++    mMozEmbedTransparencyContextChecked = PR_FALSE;
++    mMozEmbedTransparencyContext = PR_FALSE;
  }
  
  nsWindow::~nsWindow()
@@ -42,19 +42,19 @@
 -        if (!topWidget) {
 -            aTranslucent = PR_FALSE;
 -            return NS_ERROR_FAILURE;
-+    if (!mWebruntimeWidgetContextChecked) {
++    if (!mMozEmbedTransparencyContextChecked) {
 +        nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
 +        if (prefs) {
 +          PRBool val = PR_FALSE;
-+          nsresult rv = prefs->GetBoolPref("webruntime.widget.context", &val);
++          nsresult rv = prefs->GetBoolPref("gtkmozembed.transparency.context", &val);
 +          if (NS_SUCCEEDED(rv))
-+              mWebruntimeWidgetContext = val;
++              mMozEmbedTransparencyContext = val;
 +        }
-+        mWebruntimeWidgetContextChecked = PR_TRUE;
++        mMozEmbedTransparencyContextChecked = PR_TRUE;
 +    }
 +
 +    // If we are not in webruntime context use normal behavior
-+    if (!mWebruntimeWidgetContext) {
++    if (!mMozEmbedTransparencyContext) {
 +        if (!mShell) {
 +            // Pass the request to the toplevel window
 +            GtkWidget *topWidget = nsnull;
@@ -85,7 +85,7 @@
 +        nsresult rv;
 +
 +        if (prefs)
-+            rv = prefs->GetBoolPref("webruntime.background.transparency", &val);
++            rv = prefs->GetBoolPref("gtkmozembed.background.transparency", &val);
 +
 +        if (NS_SUCCEEDED(rv)) {
 +            aTranslucent = val;
@@ -132,7 +132,7 @@
 +    GtkWidget* widget = nsnull;
 +  
 +    // If we are not in webruntime context use normal behavior
-+    if (!mWebruntimeWidgetContext)
++    if (!mMozEmbedTransparencyContext)
 +        widget = mShell;
 +    else {
 +        // In webruntime context get widget from parent
@@ -182,7 +182,7 @@
 -
 -        return topWindow->UpdateTranslucentWindowAlphaInternal(aRect, aAlphas, aStride);
 +    // If we are not in webruntime context use normal behavior
-+    if (!mWebruntimeWidgetContext) {
++    if (!mMozEmbedTransparencyContext) {
 +        if (!mShell) {
 +            // Pass the request to the toplevel window
 +            GtkWidget *topWidget = nsnull;
@@ -219,7 +219,7 @@
          gRaiseWindows = val;
 +/*
 +    val = PR_FALSE;
-+    rv = prefs->GetBoolPref("webruntime.widget.context", &val);
++    rv = prefs->GetBoolPref("gtkmozembed.transparency.context", &val);
 +    if (NS_SUCCEEDED(rv))
 +        gWebruntimeWidgetContext = val;
 +*/
@@ -270,8 +270,8 @@
      // or fully transparent.
      gchar*       mTransparencyBitmap;
   
-+    PRBool       mWebruntimeWidgetContextChecked;
-+    PRBool       mWebruntimeWidgetContext;
++    PRBool       mMozEmbedTransparencyContextChecked;
++    PRBool       mMozEmbedTransparencyContext;
 +
      // all of our DND stuff
      // this is the last window that had a drag event happen on it.
@@ -298,7 +298,7 @@
    NS_IMETHOD GetAlphas(const nsRect& aRect, nsIDrawingSurface* aBlack,
 -                       nsIDrawingSurface* aWhite, PRUint8** aAlphas) = 0;
 +                       nsIDrawingSurface* aWhite, PRUint8** aAlphas,
-+                       PRBool aWebruntimeWidgetContext = PR_FALSE) = 0;
++                       PRBool aMozEmbedTransparencyContext = PR_FALSE) = 0;
  };
  
  NS_DEFINE_STATIC_IID_ACCESSOR(nsIBlender, NS_IBLENDER_IID)
@@ -343,7 +343,7 @@
    NS_IMETHOD GetAlphas(const nsRect& aRect, nsIDrawingSurface* aBlack,
 -                       nsIDrawingSurface* aWhite, PRUint8** aAlphas);
 +                       nsIDrawingSurface* aWhite, PRUint8** aAlphas,
-+                       PRBool aWebruntimeWidgetContext = PR_FALSE);
++                       PRBool aMozEmbedTransparencyContext = PR_FALSE);
  
  protected:
  
@@ -392,7 +392,7 @@
                                  PRUint8 *aOnBlackImage, PRUint8 *aOnWhiteImage,
                                  PRInt32 aBytesLineSpan, PRUint8 *aAlphas,
 -                                PRUint32 aAlphasSize)
-+                                PRUint32 aAlphasSize, PRBool aWebruntimeWidgetContext)
++                                PRUint32 aAlphasSize, PRBool aMozEmbedTransparencyContext)
  {
    NS_ASSERTION(aBytesPerPixel == 3 || aBytesPerPixel == 4,
                 "Only 24 or 32 bits per pixel supported here");
@@ -411,7 +411,7 @@
 +      PRUint8 curAlpha = (PRUint8)(255 - (*s2 - *s1));
 +
 +      // In webruntime context use alpha treshold to make alphas exactly 1 or 0
-+      if (aWebruntimeWidgetContext)
++      if (aMozEmbedTransparencyContext)
 +        curAlpha > WEBRUNTIME_ALPHA_TRESHOLD ? curAlpha = (PRUint8)255 : curAlpha = (PRUint8)0;
 +
 +      *alphas++ = curAlpha;
@@ -438,7 +438,7 @@
                              PRUint8 *aOnBlackImage, PRUint8 *aOnWhiteImage,
                              PRInt32 aBytesLineSpan, PRUint8 *aAlphas,
 -                            PRUint32 aAlphasSize)
-+                            PRUint32 aAlphasSize, PRBool aWebruntimeWidgetContext)
++                            PRUint32 aAlphasSize, PRBool aMozEmbedTransparencyContext)
  {
    PRIntn y;
    PRUint8* alphas = aAlphas;
@@ -465,7 +465,7 @@
 +      PRUint8 curAlpha = (PRUint8)(255 - ((pix2 - pix1)*255)/SCALE_DENOMINATOR);
 +      
 +      // In webruntime context use alpha treshold to make alphas exactly 1 or 0
-+      if (aWebruntimeWidgetContext)
++      if (aMozEmbedTransparencyContext)
 +        curAlpha > WEBRUNTIME_ALPHA_TRESHOLD ? curAlpha = (PRUint8)255 : curAlpha = (PRUint8)0;
 +      
 +      *alphas++ = curAlpha;
@@ -486,7 +486,7 @@
                            PRUint8 *aOnBlackImage, PRUint8 *aOnWhiteImage,
                            PRInt32 aBytesLineSpan, PRUint8 *aAlphas,
 -                          PRUint32 aAlphasSize)
-+                          PRUint32 aAlphasSize, PRBool aWebruntimeWidgetContext)
++                          PRUint32 aAlphasSize, PRBool aMozEmbedTransparencyContext)
  {
    switch (aDepth) {
      case 32:
@@ -494,13 +494,13 @@
        ComputeAlphasByByte(aNumLines, aBytesPerLine, aDepth/8,
                            aOnBlackImage, aOnWhiteImage,
 -                          aBytesLineSpan, aAlphas, aAlphasSize);
-+                          aBytesLineSpan, aAlphas, aAlphasSize, aWebruntimeWidgetContext);
++                          aBytesLineSpan, aAlphas, aAlphasSize, aMozEmbedTransparencyContext);
        break;
  
      case 16:
        ComputeAlphas16(aNumLines, aBytesPerLine, aOnBlackImage, aOnWhiteImage,
 -                      aBytesLineSpan, aAlphas, aAlphasSize);
-+                      aBytesLineSpan, aAlphas, aAlphasSize, aWebruntimeWidgetContext);
++                      aBytesLineSpan, aAlphas, aAlphasSize, aMozEmbedTransparencyContext);
        break;
      
      default:
@@ -513,7 +513,7 @@
  NS_IMETHODIMP nsBlender::GetAlphas(const nsRect& aRect, nsIDrawingSurface* aBlack,
 -                                   nsIDrawingSurface* aWhite, PRUint8** aAlphas) {
 +                                   nsIDrawingSurface* aWhite, PRUint8** aAlphas,
-+                                   PRBool aWebruntimeWidgetContext /*= PR_FALSE*/) {
++                                   PRBool aMozEmbedTransparencyContext /*= PR_FALSE*/) {
    nsresult result;
  
    nsIDrawingSurface* blackSurface = (nsIDrawingSurface *)aBlack;
@@ -543,7 +543,7 @@
            ComputeAlphas(r.height, blackBytesPerLine, depth,
                          blackBytes, whiteBytes, blackSpan, 
 -                        *aAlphas, r.width*r.height);
-+                        *aAlphas, r.width*r.height, aWebruntimeWidgetContext);
++                        *aAlphas, r.width*r.height, aMozEmbedTransparencyContext);
          } else {
            result = NS_ERROR_FAILURE;
          }
@@ -599,7 +599,7 @@
 +
 +      if (prefs) {
 +        PRBool val = PR_FALSE;
-+        nsresult rv = prefs->GetBoolPref("webruntime.widget.context", &val);
++        nsresult rv = prefs->GetBoolPref("gtkmozembed.transparency.context", &val);
 +        if (NS_SUCCEEDED(rv))
 +          webruntimeContext = val;
 +      }
@@ -620,7 +620,7 @@
 +        if (aView->HasWidget() && aView == rootView && !webruntimeContext)
            aView->GetWidget()->SetWindowTranslucency(nsLayoutUtils::FrameHasTransparency(aFrame));
 +        else if (webruntimeContext) {
-+          prefs->SetBoolPref("webruntime.background.transparency", nsLayoutUtils::FrameHasTransparency(aFrame));
++          prefs->SetBoolPref("gtkmozembed.background.transparency", nsLayoutUtils::FrameHasTransparency(aFrame));
          }
        }
      }
@@ -644,8 +644,8 @@
  
    void PostInvalidateEvent();
  
-+  PRBool mWebruntimeWidgetContextChecked;
-+  PRBool mWebruntimeWidgetContext;
++  PRBool mMozEmbedTransparencyContextChecked;
++  PRBool mMozEmbedTransparencyContext;
 +
  #ifdef NS_VM_PERF_METRICS
    MOZ_TIMER_DECLARE(mWatch) //  Measures compositing+paint time for current document
@@ -669,8 +669,8 @@
    mHasPendingUpdates = PR_FALSE;
    mRecursiveRefreshPending = PR_FALSE;
    mUpdateBatchFlags = 0;
-+  mWebruntimeWidgetContextChecked = PR_FALSE;
-+  mWebruntimeWidgetContext = PR_FALSE;
++  mMozEmbedTransparencyContextChecked = PR_FALSE;
++  mMozEmbedTransparencyContext = PR_FALSE;
  }
  
  nsViewManager::~nsViewManager()
@@ -693,15 +693,15 @@
  #ifndef MOZ_CAIRO_GFX
    if (translucentWindow) {
 +    // Check for webruntime context
-+    if (!mWebruntimeWidgetContextChecked) {
++    if (!mMozEmbedTransparencyContextChecked) {
 +      nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
 +      if (prefs) {
 +        PRBool val = PR_FALSE;
-+        nsresult rv = prefs->GetBoolPref("webruntime.widget.context", &val);
++        nsresult rv = prefs->GetBoolPref("gtkmozembed.transparency.context", &val);
 +        if (NS_SUCCEEDED(rv))
-+          mWebruntimeWidgetContext = val;
++          mMozEmbedTransparencyContext = val;
 +      }
-+      mWebruntimeWidgetContextChecked = PR_TRUE;
++      mMozEmbedTransparencyContextChecked = PR_TRUE;
 +    }
 +
      // Get the alpha channel into an array so we can send it to the widget
@@ -712,7 +712,7 @@
      nsresult rv = mBlender->GetAlphas(bufferRect, buffers->mBlack,
 -                                      buffers->mWhite, &alphas);
 +                                      buffers->mWhite, &alphas,
-+                                      mWebruntimeWidgetContext);
++                                      mMozEmbedTransparencyContext);
      
      if (NS_SUCCEEDED(rv)) {
        widget->UpdateTranslucentWindowAlpha(r, alphas);
