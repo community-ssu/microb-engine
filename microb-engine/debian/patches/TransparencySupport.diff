@@ -235,30 +235,6 @@
  
 --- mozilla/widget/src/gtk2/nsWindow.h.orig	2007-12-05 12:51:52.000000000 +0200
 +++ mozilla/widget/src/gtk2/nsWindow.h	2007-12-05 14:23:08.000000000 +0200
-@@ -33,20 +33,23 @@
-  * decision by deleting the provisions above and replace them with the notice
-  * and other provisions required by the GPL or the LGPL. If you do not delete
-  * the provisions above, a recipient may use your version of this file under
-  * the terms of any one of the MPL, the GPL or the LGPL.
-  *
-  * ***** END LICENSE BLOCK ***** */
- 
- #ifndef __nsWindow_h__
- #define __nsWindow_h__
- 
-+// Defined here temporarely for webruntime transparency
-+#define MOZ_XUL 1
-+
- #include "nsAutoPtr.h"
- 
- #include "nsCommonWidget.h"
- 
- #include "mozcontainer.h"
- #include "mozdrawingarea.h"
- #include "nsWeakReference.h"
- 
- #include "nsIDragService.h"
- #include "nsITimer.h"
 @@ -404,20 +407,23 @@ private:
      // The cursor cache
      static GdkCursor   *gsGtkCursorCache[eCursorCount];
@@ -306,30 +282,6 @@
  #endif
 --- mozilla/gfx/src/nsBlender.h.orig	2007-12-05 12:52:03.000000000 +0200
 +++ mozilla/gfx/src/nsBlender.h	2007-12-05 13:47:45.000000000 +0200
-@@ -33,20 +33,23 @@
-  * decision by deleting the provisions above and replace them with the notice
-  * and other provisions required by the GPL or the LGPL. If you do not delete
-  * the provisions above, a recipient may use your version of this file under
-  * the terms of any one of the MPL, the GPL or the LGPL.
-  *
-  * ***** END LICENSE BLOCK ***** */
- 
- #ifndef nsBlender_h___
- #define nsBlender_h___
- 
-+// Defined temporarely here for webruntime transparency support
-+#define MOZ_XUL 1
-+
- #include "nsCOMPtr.h"
- #include "nsIBlender.h"
- #include "nsIDeviceContext.h"
- 
- typedef enum
- {
-   nsLowQual = 0,
-   nsLowMedQual,
-   nsMedQual,
-   nsHighMedQual,
 @@ -70,21 +73,22 @@ public:
    NS_IMETHOD Blend(PRInt32 aSX, PRInt32 aSY, PRInt32 aWidth, PRInt32 aHeight,nsIDrawingSurface* aSrc,
                     nsIDrawingSurface* aDest, PRInt32 aDX, PRInt32 aDY, float aSrcOpacity,
