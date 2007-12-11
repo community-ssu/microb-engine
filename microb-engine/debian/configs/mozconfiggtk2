@@ -118,3 +118,5 @@ ac_add_options --enable-xpinstall
 ac_add_options --disable-native-uconv
 #ac_add_options --enable-native-uconv  # in Microb env it fixed
 
+# Transparency support for gtkmozembed context
+#ac_add_options --enable-mozembedtransparency
