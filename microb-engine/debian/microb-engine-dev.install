@@ -7,7 +7,8 @@ usr/lib/pkgconfig/libxul-embedding.*pc
 usr/lib/pkgconfig/libxul.*pc
 usr/lib/*.la
 usr/share/idl/*
-usr/lib/microb-engine/libxpcomglue_s.a
+usr/lib/microb-engine/libxpcomglue*.a
+usr/lib/microb-engine/libembed_base*.a
 usr/lib/microb-engine/xpidl
 usr/lib/microb-engine/xpt_link
 usr/lib/microb-engine-dev*

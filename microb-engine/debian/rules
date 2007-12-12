@@ -473,6 +473,9 @@ ifeq ($(cross_compile),y)
 endif
 	find ./debian/tmp/usr/lib
 	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libembed_base_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libembed_base_standalone.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
 	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CURDIR)/debian/tmp/usr/include/microb-engine/
 	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/include/nspr $(CURDIR)/debian/tmp/usr/include/microb-engine/
 	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/TestGtkEmbed $(CURDIR)/debian/tmp/usr/lib/microb-engine/
