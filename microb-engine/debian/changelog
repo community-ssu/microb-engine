@@ -1,3 +1,13 @@
+microb-engine (1.0.4-5) unstable; urgency=low
+
+  * Resolve conflicts between the patch and other patches
+  * New version of transparency support patch
+  * Added additional libraries from Gecko SDK distribution
+  * Add transparency support build option
+  * Updated TranslucentWindow patch according bug 347854
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 17 Dec 2007 11:27:25 +0200
+
 microb-engine (1.0.4-4) unstable; urgency=low
 
   * Correct inspection findings on TransparencySupport patch
