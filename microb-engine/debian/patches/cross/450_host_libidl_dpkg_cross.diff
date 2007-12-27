@@ -1,9 +1,9 @@
 # Build configuration for HOST libidl libraries
---- mozilla/configure.in.orig	2007-04-03 09:51:29.000000000 +0300
-+++ mozilla/configure.in	2007-04-03 11:06:19.871374500 +0300
-@@ -7230,22 +7230,22 @@ int main() {
-         export NEXT_ROOT="$_MACSAVE_NEXT_ROOT"
-       fi
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -7054,18 +7054,19 @@
      fi
  fi
  
@@ -16,6 +16,7 @@
 -        HOST_LIBIDL_LIBS=`${HOST_LIBIDL_CONFIG} --libs`
 +        HOST_LIBIDL_CFLAGS=`PKG_CONFIG_PATH="${prefix}/lib/pkgconfig" ${HOST_LIBIDL_CONFIG} --cflags`
 +        HOST_LIBIDL_LIBS=`PKG_CONFIG_PATH="${prefix}/lib/pkgconfig" ${HOST_LIBIDL_CONFIG} --libs`
++        HOST_LIBIDL_LIBS="$HOST_LIBIDL_LIBS -lpthread -lrt"
      else
          HOST_LIBIDL_CFLAGS="$LIBIDL_CFLAGS"
          HOST_LIBIDL_LIBS="$LIBIDL_LIBS"
@@ -24,5 +25,3 @@
  
  if test -z "$SKIP_PATH_CHECKS"; then
  if test -z "${GLIB_CFLAGS}" || test -z "${GLIB_LIBS}" ; then
-     if test "$MOZ_ENABLE_GTK2"; then
-         PKG_CHECK_MODULES(GLIB, glib-2.0 >= 1.3.7 gobject-2.0)
