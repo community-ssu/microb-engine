@@ -1,5 +1,4 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
 function microbAboutRedirector() { }
 
 function NS_GetAboutModuleName(aAboutURI) {
@@ -35,7 +34,7 @@ microbAboutRedirector.prototype = {
     var mapped = this.whats[path];
 
     var tempChannel = ioService.newChannel(mapped.url, null, null);
-    tempChannel.setOriginalURI(aURI);
+    tempChannel.originalURI = aURI;
 
     // Keep the page from getting unnecessary privileges unless it needs them
     if (mapped.flags &
@@ -62,8 +61,7 @@ var myModule = {
   registerSelf: function (compMgr, fileSpec, location, type) {
     compMgr = compMgr.QueryInterface(Components.interfaces.nsIComponentRegistrar);
     var whats = microbAboutRedirector.prototype.whats;
-    for (var i in whats) {
-      var what = whats[i];
+    for (var what in whats) {
       compMgr.registerFactoryLocation(this.myCID,
                                       this.myDescription + '-' + what,
                                       this.myProgIDprefix + what,
