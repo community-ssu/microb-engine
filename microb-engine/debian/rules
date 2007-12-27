@@ -82,11 +82,7 @@ CFLAGS += -g
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -O0
 else
-ifneq (,$(findstring $(DEB_HOST_ARCH),arm armel))
 	CFLAGS += -O2
-else
-	CFLAGS += -O2
-endif
 endif
 
 ifneq (,$(findstring static,$(DEB_BUILD_OPTIONS)))
@@ -233,13 +229,12 @@ ifneq (,$(findstring $(DEB_HOST_ARCH),arm armel))
 	configopts += --disable-elf-dynstr-gc
 	optimize_add += -march=armv5t -DJS_THREADED_INTERP=0
 #	envflags += CFLAGS="-march=armv6 " CXXFLAGS=$$CFLAGS HOST_CFLAGS="-march=armv5t" HOST_CXXFLAGS=$$HOST_CFLAGS
-bldstr:=$(bldstr)arm-
 else
-bldstr:=$(bldstr)x86-
 ifneq ($(TABLET),.tablet)
 	configopts += --enable-elf-dynstr-gc
 endif
 endif
+bldstr:=$(bldstr)$(DEB_HOST_ARCH)-
 
 ifeq ($(TABLET),.tablet)
 bldstr:=$(bldstr)sb-
