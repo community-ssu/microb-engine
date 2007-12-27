@@ -30,7 +30,7 @@ Index: toolkit/content/about.xhtml
 ===================================================================
 --- toolkit/content/about.xhtml.orig
 +++ toolkit/content/about.xhtml
-@@ -55,27 +55,29 @@
+@@ -55,27 +55,30 @@
  <head>
    <title>About:</title>
    <link rel="stylesheet" href="chrome://global/skin/about.css" type="text/css"/>
@@ -55,6 +55,7 @@ Index: toolkit/content/about.xhtml
      <li>&about.relnotes.beforeLink; <a id="releaseNotesURL" href="">&about.relnotes.linkTitle;</a> &about.relnotes.afterLink;</li>
      <li>&about.buildconfig.beforeLink; <a href="about:buildconfig">&about.buildconfig.linkTitle;</a> &about.buildconfig.afterLink;</li>
 +    <li>&about.config.beforeLink; <a href="about:config">&about.config.linkTitle;</a>&about.config.afterLink;</li>
++    <li>&about.system.beforeLink; <a href="about:system">&about.system.linkTitle;</a>&about.system.afterLink;</li>
      <script type="application/javascript">
        // get release notes URL from prefs
        try {
@@ -343,13 +344,17 @@ Index: themes/classic/global/netError.css
    opacity: .4;
 --- toolkit/locales/en-US/chrome/global/about.dtd.orig	2007-08-29 13:59:24.000000000 +0300
 +++ toolkit/locales/en-US/chrome/global/about.dtd	2007-08-29 13:59:35.000000000 +0300
-@@ -12,6 +12,10 @@
+@@ -12,6 +12,14 @@
  <!ENTITY about.relnotes.linkTitle     "release notes">
  <!ENTITY about.relnotes.afterLink     "for this version.">
  
 +<!ENTITY about.config.beforeLink "Change this application's">
 +<!ENTITY about.config.linkTitle "internal settings">
 +<!ENTITY about.config.afterLink " (unsupported).">
++
++<!ENTITY about.system.beforeLink "Baseline">
++<!ENTITY about.system.linkTitle "version information">
++<!ENTITY about.system.afterLink "for this product.">
 +
  <!ENTITY about.buildconfig.beforeLink "See the">
  <!ENTITY about.buildconfig.linkTitle  "build configuration">
