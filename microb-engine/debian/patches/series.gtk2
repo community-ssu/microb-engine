@@ -259,7 +259,7 @@ crash/FitToViewRandomCrashes.diff
 crash/JS_Destroy.Crash.diff
 #crash/nsRuleNodeWalkTree.crash.debug.diff
 
-cross/060_cookie_gcc4.1.2slind.diff
+#cross/060_cookie_gcc4.1.2slind.diff
 cross/070_Cross_freetype_config.diff
 cross/440_BUG376279_security_cross_compile.diff
 cross/445_nspr_dpkg_cross.diff
