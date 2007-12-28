@@ -1,3 +1,13 @@
+microb-engine (1.0.4-6) unstable; urgency=low
+
+  * Fixed ARCH string detection
+  * Cross patches moved into cross folder
+  * Adding about:system (and support for other about modules).
+    To add a module, simply add it to the microbAboutRedirector.prototype.whats
+    object following the pattern for system.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 28 Dec 2007 16:17:40 +0200
+
 microb-engine (1.0.4-5) unstable; urgency=low
 
   * Resolve conflicts between the patch and other patches
