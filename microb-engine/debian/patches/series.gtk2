@@ -259,14 +259,6 @@ crash/FitToViewRandomCrashes.diff
 crash/JS_Destroy.Crash.diff
 #crash/nsRuleNodeWalkTree.crash.debug.diff
 
-#cross/060_cookie_gcc4.1.2slind.diff
-cross/070_Cross_freetype_config.diff
-cross/440_BUG376279_security_cross_compile.diff
-cross/445_nspr_dpkg_cross.diff
-cross/450_host_libidl_dpkg_cross.diff
-cross/455_xpcom_uclibc.diff
-cross/460_uclibc_strings_index.diff
-
 480_BUG377077_probably_workaround_fix.diff
 485_netwerk_buffer_count.diff
 
@@ -342,3 +334,15 @@ trunk_updates/attachment.cgi?id=275513.diff
 #trunk_updates/new/24.BUG390385.diff
 ##trunk_updates/new/25.BUG391261.diff
 #plugin end
+
+cross/010_BUG376279_security_cross_compile.diff
+cross/020_nspr_dpkg_cross.diff
+cross/030_host_libidl_dpkg_cross.diff
+cross/040_xpcom_uclibc.diff
+cross/050_uclibc_strings_index.diff
+#cross/060_cookie_gcc4.1.2slind.diff
+cross/070_Cross_freetype_config.diff
+cross/080_ppc_mpicache.diff
+cross/090_as_defined_wrong.diff
+cross/100_mips_build_error.diff
+cross/110_ppc_asm_comments.diff

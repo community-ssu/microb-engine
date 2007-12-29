@@ -34,6 +34,7 @@ QUILT_PATCHES:=$(CURDIR)/debian/patches
 STAMP_DIR:=$(CURDIR)/stampdir
 STAMPDIR_LOG:=$(CURDIR)/stampdir/log
 STAMPDIR_PATCH:=$(CURDIR)/stampdir/log/patch
+CUR_DEB_DIR:=$(CURDIR)/debian
 series_file:=series.$(config)
 
 GCCVER=.gcc$(shell gcc --version | grep gcc | cut -d ' ' -f 3)
@@ -312,15 +313,24 @@ MOZ_VERSION=1.0.1
 
 major=2
 
-cross_compile:=n
+cross_compiling:=no
 CROSS_HOST_PREFIX=
-ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+ifneq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+cross_compiling:=yes
+endif
+ifneq (,$(findstring cross_compiling,$(DEB_BUILD_OPTIONS)))
+cross_compiling:=yes
+endif
+ifneq (,$(findstring Slind,$(shell gcc --version)))
+cross_compiling:=yes
+endif
+
+ifneq ($(cross_compiling),yes)
 	HBT_OPT = --build=$(DEB_HOST_GNU_TYPE)
-XPT_LINK:=$(CURDIR)/debian/tmp/usr/lib/microb-engine/xpt_link
+XPT_LINK:=$(CUR_DEB_DIR)/tmp/usr/lib/microb-engine/xpt_link
 else
 	HBT_OPT = --target=$(DEB_HOST_GNU_TYPE)
 	CROSS_FLAGS = 
-cross_compile:=y
 bldstr:=$(bldstr)cross-
 XPT_LINK:=$(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/host/bin/host_xpt_link
 endif
@@ -339,7 +349,7 @@ unpack-stamp:
 	if [ -d $(CURDIR)/tarballs ]; then echo 'Tarballs is here ;)';else tar -xvvzf ../microb-engine_$(version)*.tar.gz -C ./; mv $$(find -name "tarballs" -type d) ./; rmdir microb-engine_*; fi
 	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(config)
 	tar -zxvf $(CURDIR)/tarballs/$(srcdir).tar.gz -C $(btree) > /dev/null
-	cp -rf  $(CURDIR)/debian/resources/branding $(builddir)/
+	cp -rf  $(CUR_DEB_DIR)/resources/branding $(builddir)/
 	cd $(builddir) && for str in `cat $(CURDIR)/tarballs/trunkupdates/series`;do echo; echo Applying trunk update: $$str...; echo; patch -p1 < $(CURDIR)/tarballs/trunkupdates/$$str; done 
 ifeq ($(svgport),y)
 	cd $(builddir) && cd layout && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/layout/svg ./
@@ -355,12 +365,13 @@ configure-stamp:
 		sed -e "s/@PACKAGEVERSION@/${PKGVERSION}/g" -e "s/@PACKAGENAME@/${packagename}/g"  $$f > `echo $$f | sed -e "s/\.in//"`; \
 	done
 	
-	if ! test -e /usr/include/X11; then cd /usr/include && ln -s ../X11R6/include/X11; fi
-	cd $(builddir) && $(PRE_CONF_SCRIPT) rm -f ./.mozconfig && cp $(CURDIR)/debian/$(MOZCONFIG_NAME)$(MOZCONFIG_LEV) ./mozconfig
+	#if ! test -e /usr/include/X11; then cd /usr/include && ln -s ../X11R6/include/X11; fi
+	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(config), cross_compiling=$(cross_compiling)
+	cd $(builddir) && $(PRE_CONF_SCRIPT) rm -f ./.mozconfig && cp $(CUR_DEB_DIR)/$(MOZCONFIG_NAME)$(MOZCONFIG_LEV) ./mozconfig
 	echo "ac_add_options $(configopts) --prefix=$(prefix) $(HBT_OPT)" >> $(builddir)/mozconfig
 	echo "mk_add_options MOZ_OBJDIR=$(buildobjdir)" >> $(builddir)/mozconfig
 	echo "mk_add_options MOZ_MAKE_FLAGS=$(NJOBS)" >> $(builddir)/mozconfig
-ifeq ($(cross_compile),y)
+ifeq ($(cross_compiling),yes)
 	echo "CROSS_COMPILE=1" >> $(builddir)/mozconfig
 	echo "LIBIDL_CONFIG=$(prefix)/$(DEB_HOST_GNU_TYPE)/include/cross-scripts/libIDL-config-2" >> $(builddir)/mozconfig
 	echo "HOST_LIBIDL_CONFIG=$(prefix)/bin/libIDL-config-2" >> $(builddir)/mozconfig
@@ -467,27 +478,27 @@ install: build
 	# Add here commands to install the package into debian/tmp
 	#Small hack touch $(builddir)/toolkit/empty-file
 	touch $(builddir)/toolkit/empty-file
-	cd $(builddir) && $(envflags) $(MAKE) -f client.mk install DESTDIR=$(CURDIR)/debian/tmp
+	cd $(builddir) && $(envflags) $(MAKE) -f client.mk install DESTDIR=$(CUR_DEB_DIR)/tmp
 	#Show all installed components
-ifeq ($(cross_compile),y)
-	cp -f $(XPT_LINK) $(CURDIR)/debian/tmp/usr/lib/microb-engine/
+ifeq ($(cross_compiling),yes)
+	cp -f $(XPT_LINK) $(CUR_DEB_DIR)/tmp/usr/lib/microb-engine/
 endif
 	find ./debian/tmp/usr/lib
-	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
-	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
-	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libembed_base_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
-	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libembed_base_standalone.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
-	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CURDIR)/debian/tmp/usr/include/microb-engine/
-	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/include/nspr $(CURDIR)/debian/tmp/usr/include/microb-engine/
-	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/TestGtkEmbed $(CURDIR)/debian/tmp/usr/lib/microb-engine/
-	dh_install --sourcedir=$(CURDIR)/debian/tmp --list-missing
-	$(XPT_LINK) only_ship_this.xpt $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/*.xpt
-	rm $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/*.xpt
-	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/nspr
-	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/nss
-	mv only_ship_this.xpt $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/tablet.xpt
-	perl $(CURDIR)/debian/resources/tools/remove.target.license.pl $(CURDIR)/debian/microb-engine/usr/lib/$(packagename)/chrome
-	perl $(CURDIR)/debian/resources/tools/remove.target.license.pl $(CURDIR)/debian/microb-engine/usr/lib/$(packagename)/res
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue_s.a $(CUR_DEB_DIR)/tmp/usr/lib/microb-engine/
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue.a $(CUR_DEB_DIR)/tmp/usr/lib/microb-engine/
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libembed_base_s.a $(CUR_DEB_DIR)/tmp/usr/lib/microb-engine/
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libembed_base_standalone.a $(CUR_DEB_DIR)/tmp/usr/lib/microb-engine/
+	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CUR_DEB_DIR)/tmp/usr/include/microb-engine/
+	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/include/nspr $(CUR_DEB_DIR)/tmp/usr/include/microb-engine/
+	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/TestGtkEmbed $(CUR_DEB_DIR)/tmp/usr/lib/microb-engine/
+	dh_install --sourcedir=$(CUR_DEB_DIR)/tmp --list-missing
+	$(XPT_LINK) only_ship_this.xpt $(CUR_DEB_DIR)/microb-engine/usr/lib/microb-engine/components/*.xpt
+	rm $(CUR_DEB_DIR)/microb-engine/usr/lib/microb-engine/components/*.xpt
+	rm -rf $(CUR_DEB_DIR)/microb-engine-dev/usr/include/microb-engine/nspr
+	rm -rf $(CUR_DEB_DIR)/microb-engine-dev/usr/include/microb-engine/nss
+	mv only_ship_this.xpt $(CUR_DEB_DIR)/microb-engine/usr/lib/microb-engine/components/tablet.xpt
+	perl $(CUR_DEB_DIR)/resources/tools/remove.target.license.pl $(CUR_DEB_DIR)/microb-engine/usr/lib/$(packagename)/chrome
+	perl $(CUR_DEB_DIR)/resources/tools/remove.target.license.pl $(CUR_DEB_DIR)/microb-engine/usr/lib/$(packagename)/res
 
 
 # Build architecture-independent files here.

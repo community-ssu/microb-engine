@@ -1,0 +1,25 @@
+--- mozilla/nsprpub/config/rules.mk.orig	2007-06-09 19:28:46.000000000 +0300
++++ mozilla/nsprpub/config/rules.mk	2007-12-28 03:43:21.000000000 +0200
+@@ -456,21 +456,21 @@ ifdef NEED_ABSOLUTE_PATH
+ 	$(CC) -o $@ -c $(CFLAGS) $(call abspath,$<)
+ else
+ 	$(CC) -o $@ -c $(CFLAGS) $<
+ endif
+ endif
+ endif
+ 
+ 
+ $(OBJDIR)/%.$(OBJ_SUFFIX): %.s
+ 	@$(MAKE_OBJDIR)
+-	$(AS) -o $@ $(ASFLAGS) -c $<
++	$(CC) -o $@ $(ASFLAGS) -c $<
+ 
+ ifeq ($(MOZ_OS2_TOOLS),VACPP)
+ $(OBJDIR)/%.$(OBJ_SUFFIX): %.asm
+ 	@$(MAKE_OBJDIR)
+ 	$(AS) -Fdo:./$(OBJDIR) $(ASFLAGS) $<
+ endif
+ 
+ %.i: %.c
+ 	$(CC) -C -E $(CFLAGS) $< > $*.i
+ 
