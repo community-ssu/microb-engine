@@ -24,7 +24,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout/xmlparser.properti
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout/HtmlForm.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/security/caps.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/about.dtd
-usr/lib/microb-engine/chrome/en-US/locale/en-US/global/brand.dtd
+usr/lib/microb-engine/chrome/en-US/locale/en-US/global/brand*.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/downloadProgress.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/filepicker.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/filepicker.properties
@@ -74,9 +74,9 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/pippki/certManager.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/pippki/deviceManager.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/pippki/pref-validation.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/pippki/pref-masterpass.dtd
-usr/lib/microb-engine/chrome/en-US/locale/branding/brand.dtd
-usr/lib/microb-engine/chrome/en-US/locale/branding/brand.properties
-usr/lib/microb-engine/chrome/en-US/locale/branding/poweredby.png
+usr/lib/microb-engine/chrome/en-US/locale/branding/brand*.dtd
+usr/lib/microb-engine/chrome/en-US/locale/branding/brand*.properties
+usr/lib/microb-engine/chrome/en-US/locale/branding/poweredby*.png
 usr/lib/microb-engine/chrome/en-US.manifest
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLPrettyPrint.css
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLMonoPrint.css
@@ -196,10 +196,10 @@ usr/lib/microb-engine/chrome/classic.manifest
 usr/lib/microb-engine/chrome/comm/content/xbl-marquee/xbl-marquee.xml
 usr/lib/microb-engine/chrome/comm/content/xbl-marquee/xbl-marquee.css
 usr/lib/microb-engine/chrome/comm.manifest
-usr/lib/microb-engine/chrome/browser/content/branding/about.png
-usr/lib/microb-engine/chrome/browser/content/branding/config.html
-usr/lib/microb-engine/chrome/browser/content/branding/feed.gif
-usr/lib/microb-engine/chrome/browser.manifest
+usr/lib/microb-engine/chrome/browser/content/branding/about*.png
+usr/lib/microb-engine/chrome/browser/content/branding/config*.html
+usr/lib/microb-engine/chrome/browser/content/branding/feed*.gif
+usr/lib/microb-engine/chrome/browser*.manifest
 usr/lib/microb-engine/res/fon*
 usr/lib/microb-engine/res/forms.css
 usr/lib/microb-engine/res/*.properties
