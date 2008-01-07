@@ -35,3 +35,18 @@
  EXTRA_DSO_LDOPTS += $(call EXPAND_LIBNAME,imagehlp)
  endif
  endif # WINNT
+--- mozilla/layout/build/Makefile.in.orig	2008-01-07 17:02:25.000000000 +0200
++++ mozilla/layout/build/Makefile.in	2008-01-07 17:21:14.000000000 +0200
+@@ -251,11 +251,11 @@ endif
+ endif
+ 
+ ifdef MOZ_ENABLE_GTK2
+ EXTRA_DSO_LDOPTS += $(MOZ_GTK2_LIBS) \
+ 		    $(NULL)
+-ifdef MOZ_ENABLE_CAIRO_GFX
++ifdef MOZ_ENABLE_CANVAS
+ EXTRA_DSO_LDOPTS += -lXrender \
+ 		    $(NULL)
+ endif
+ endif
+ 
