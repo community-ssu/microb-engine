@@ -682,3 +682,21 @@ Index: mozilla/configure.in
  dnl Remove dupes
  MOZ_EXTENSIONS=`${PERL} ${srcdir}/build/unix/uniq.pl ${MOZ_EXTENSIONS}`
  
+--- mozilla/extensions/spellcheck/src/Makefile.in.orig	2008-01-07 17:02:25.000000000 +0200
++++ mozilla/extensions/spellcheck/src/Makefile.in	2008-01-07 17:33:28.000000000 +0200
+@@ -96,13 +96,15 @@ EXTRA_DSO_LDOPTS += \
+ 		$(EXTRA_DSO_LIBS) \
+ 		$(MOZ_COMPONENT_LIBS) \
+ 		$(NULL)
+ 
+ # Some stuff still exists and it undefined, like NS_NewAdoptingStringEnumerator
++ifdef MOZ_ENABLE_LIBXUL
+ EXTRA_DSO_LDOPTS += \
+ 		../../../xpcom/build/$(LIB_PREFIX)xpcom_core.$(LIB_SUFFIX) \
+ 		$(NULL)
++endif
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+ ifdef GNU_CC
+ CFLAGS   += -fno-unit-at-a-time
