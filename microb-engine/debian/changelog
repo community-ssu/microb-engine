@@ -1,3 +1,13 @@
+microb-engine (1.0.4-7) unstable; urgency=low
+
+  * Updated gtkmozembed.
+  * Fixed bug:Duplicate charset parameter in POST HTTP Content-Type 
+    header. Fixes: MB#2101 
+  * Fixed crosscompilation of microb-engine in Slind environment
+  * Fixed small bugs in control file
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon,  7 Jan 2008 10:28:40 +0200
+
 microb-engine (1.0.4-6) unstable; urgency=low
 
   * Fixed ARCH string detection
