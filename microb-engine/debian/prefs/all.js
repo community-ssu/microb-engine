@@ -1366,7 +1366,7 @@ pref("dom.max_script_run_time", 40);
 pref("dom.disable_window_status_change", true);
 
 pref("layout.xml.prettyprint", true);
-pref("browser.sessionhistory.max_entries", 11);
+pref("browser.sessionhistory.max_entries", 31);
 
 pref("dom.window.useragent.policy", true);
 pref("ua.policy.mail.google.com", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.4.0) Gecko/20070423 Firefox/0.8");
