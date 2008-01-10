@@ -1,0 +1,101 @@
+--- mozilla/view/src/nsViewManager.cpp.orig	2008-01-10 11:20:31.000000000 +0200
++++ mozilla/view/src/nsViewManager.cpp	2008-01-10 13:02:11.000000000 +0200
+@@ -630,33 +630,69 @@ void nsViewManager::Refresh(nsView *aVie
+     // just use damageRegion because nsIRenderingContext::SetClipRegion doesn't
+     // translate/scale the coordinates (grrrrrrrrrr)
+     // So we have to translate the region before we use it. aRegion is in
+     // pixels-relative-to-widget-origin, so:
+     aRegion->Offset(-widgetDamageRectInPixels.x, -widgetDamageRectInPixels.y);
+   }
+   // RenderViews draws in view coordinates. We want (0,0)
+   // to be translated to (viewRect.x,viewRect.y) in the widget. So:
+   localcx->Translate(viewRect.x, viewRect.y);
+ 
++#ifdef MOZ_GTK_EMBED_TRANSPARENCY
++  PRInt32 regionX = 0, regionY = 0, regionW = 0, regionH = 0;
++  aRegion->GetBoundingBox(&regionX, &regionY, &regionW, &regionH);
++  
++  nsRect viewRectInPixels = NS_RECT_FROM_TWIPS_RECT(viewRect);
++  
++  PRBool mozEmbedTransparencyContext = PR_FALSE;
++
++  // Store original damage rect
++  nsRect origDamageRect = damageRect;
++
++  // In mozembed transparency context render the whole view rect always
++  // to avoid rendering problems in partial view rendering
++  if (aView->HasWidget()) {    
++    aView->GetWidget()->GetMozEmbedTransparencyContext(mozEmbedTransparencyContext);
++    if (mozEmbedTransparencyContext &&
++         (viewRectInPixels.x != regionX || viewRectInPixels.y != regionY ||
++         viewRectInPixels.width != regionW || viewRectInPixels.height != regionH)
++       ) {
++      aRegion->SetTo(viewRectInPixels.x, viewRectInPixels.y, viewRectInPixels.width, viewRectInPixels.height);
++      damageRect = viewRect;
++    }
++  }
++#endif
++
+   // Note that nsIRenderingContext::SetClipRegion always works in pixel coordinates,
+   // and nsIRenderingContext::SetClipRect always works in app coordinates. Stupid huh?
+   // Also, SetClipRegion doesn't subject its argument to the current transform, but
+   // SetClipRect does.
+   localcx->SetClipRegion(*aRegion, nsClipCombine_kReplace);
+   localcx->SetClipRect(damageRect, nsClipCombine_kIntersect);
+ 
+   nsRegion opaqueRegion;
+   AddCoveringWidgetsToOpaqueRegion(opaqueRegion, mContext, aView);
+   damageRegion.Sub(damageRegion, opaqueRegion);
+ 
+   RenderViews(aView, *localcx, damageRegion, ds);
+ 
++#ifdef MOZ_GTK_EMBED_TRANSPARENCY
++  if (mozEmbedTransparencyContext &&
++       (viewRectInPixels.x != regionX || viewRectInPixels.y != regionY ||
++       viewRectInPixels.width != regionW || viewRectInPixels.height != regionH)
++     ) {
++    // Restore original region and rect
++    aRegion->SetTo(regionX, regionY, regionW, regionH);
++    damageRect = origDamageRect;
++  }
++#endif
++
+   // undo earlier translation
+   localcx->Translate(-viewRect.x, -viewRect.y);
+   if (usingDoubleBuffer) {
+     // Flush bits back to the screen
+ 
+     // Restore aRegion to pixels-relative-to-widget-origin
+     aRegion->Offset(widgetDamageRectInPixels.x, widgetDamageRectInPixels.y);
+     // Restore translation to its previous state
+     localcx->PopTranslation(&trans);
+     // Make damageRect twips-relative-to-widget-origin
+@@ -917,23 +953,26 @@ nsViewManager::CreateBlendingBuffers(nsI
+       return nsnull;
+     }
+   }
+ 
+   BlendingBuffers* buffers = new BlendingBuffers(aRC);
+   if (!buffers)
+     return nsnull;
+ 
+   buffers->mOffset = nsPoint(aRect.x, aRect.y);
+ 
+-  nsRect offscreenBounds(0, 0, aRect.width, aRect.height);
+-  offscreenBounds.ScaleRoundOut(1.0f / mContext->AppUnitsPerDevPixel());
++  PRInt32 p2a = mContext->AppUnitsPerDevPixel();
+ 
++  nsRect offscreenBounds(0, 0,
++    NSAppUnitsToIntPixels(aRect.width, p2a),
++    NSAppUnitsToIntPixels(aRect.height, p2a));
++  
+   if (aBorrowContext) {
+     buffers->mBlackCX = aRC;
+     buffers->mBlack = aBorrowSurface;
+   } else {
+     rv = aRC->CreateDrawingSurface(offscreenBounds, NS_CREATEDRAWINGSURFACE_FOR_PIXEL_ACCESS, buffers->mBlack);
+     if (NS_FAILED(rv)) {
+       delete buffers;
+       return nsnull;
+     }
+     buffers->mOwnBlackSurface = PR_TRUE;
