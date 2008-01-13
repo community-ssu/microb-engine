@@ -1,3 +1,18 @@
+microb-engine (1.0.4-8) unstable; urgency=low
+
+  * Added commented #TransparencySupport.diff string to series file
+  * Added fix patch for transparency rendering errors
+  * Fixed bug:Windows specific history doesnt contain 30 sites. Fixes: NB#79029
+  * Fixed building of microb-engine package without branding directory
+  * Fixed building of spellchecker in nolibxul configuration
+  * Fixed building in nolibxul mode
+  * Additional components moved from patches directory
+  * Added directory for additional components
+  * Removed not used patch
+  * Removed wrong fix for extension manager
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 13 Jan 2008 19:32:17 +0200
+
 microb-engine (1.0.4-7) unstable; urgency=low
 
   * Updated gtkmozembed.
