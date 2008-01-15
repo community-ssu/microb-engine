@@ -4137,8 +4137,8 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +  const char *data = (const char *) s.get();
 +  const char *begin = strstr(data, substring);
 +
-+  if (!begin) { printf("ContainsTopLevelSubstring fuck\n");
-+    return PR_FALSE; } 
++  if (!begin)
++    return PR_FALSE;
 +
 +  PRInt32 offset = strlen(data) - strlen(begin);
 +
@@ -4253,8 +4253,8 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +// printf ("nsFeedSniffer::GetMIMETypeFromContent 2\n");
 +  char *tmp_str = strdup(testData);
 +  strncpy(tmp_str, testData, length);
-+  if (!tmp_str) { printf ("nsFeedSniffer::GetMIMETypeFromContent fuck\n");  
-+    return NS_OK; }
++  if (!tmp_str)  
++    return NS_OK; 
 +
 +// printf ("******************************************\n");
 +// printf ("'%s'\n", tmp_str);
