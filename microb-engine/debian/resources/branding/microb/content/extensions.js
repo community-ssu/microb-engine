@@ -36,12 +36,15 @@ function initialize() {
     var Cc=Components.classes;
     var Ci=Components.interfaces;
     var rdfs = Cc['@mozilla.org/rdf/rdf-service;1'].getService(Ci.nsIRDFService)
+    var ds = Cc["@mozilla.org/extensions/manager;1"].getService(Ci.nsIExtensionManager).datasource;
+/*
     try {
+      // Crashes here, fixed somewhere between /firefox-2006-08-04-04-trunk and /firefox-2006-08-05-04-trunk
       var ds=rdfs.GetDataSource('rdf:extensions');
     } catch (e) {
-      ds = Cc["@mozilla.org/extensions/manager;1"].getService(Ci.nsIExtensionManager).datasource;
+      var ds = Cc["@mozilla.org/extensions/manager;1"].getService(Ci.nsIExtensionManager).datasource;
     }
-  
+*/
     var ctr = Cc["@mozilla.org/rdf/container;1"].createInstance(Ci.nsIRDFContainer);
     ctr.Init(ds, rdfs.GetResource('urn:mozilla:item:root'));
   
