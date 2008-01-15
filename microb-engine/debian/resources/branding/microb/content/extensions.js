@@ -36,15 +36,13 @@ function initialize() {
     var Cc=Components.classes;
     var Ci=Components.interfaces;
     var rdfs = Cc['@mozilla.org/rdf/rdf-service;1'].getService(Ci.nsIRDFService)
-    var ds = Cc["@mozilla.org/extensions/manager;1"].getService(Ci.nsIExtensionManager).datasource;
-/*
     try {
-      // Crashes here, fixed somewhere between /firefox-2006-08-04-04-trunk and /firefox-2006-08-05-04-trunk
+      throw "this would crash, skipping...";
       var ds=rdfs.GetDataSource('rdf:extensions');
     } catch (e) {
-      var ds = Cc["@mozilla.org/extensions/manager;1"].getService(Ci.nsIExtensionManager).datasource;
+      ds = Cc["@mozilla.org/extensions/manager;1"].getService(Ci.nsIExtensionManager).datasource;
     }
-*/
+  
     var ctr = Cc["@mozilla.org/rdf/container;1"].createInstance(Ci.nsIRDFContainer);
     ctr.Init(ds, rdfs.GetResource('urn:mozilla:item:root'));
   
@@ -58,9 +56,13 @@ function initialize() {
         var key = arc.ValueUTF8.replace(/.*#/,'');
         if (/^(?:type|name|version|iconURL|targetApplication)$/.test(key))
           continue;
-        var target = ds.GetTarget(e, arc, true);
-        if (!target)
+        var values = [];
+try {
+        var targets = ds.GetTargets(e, arc, true);
+        if (!targets)
           continue;
+        var target;
+        while (targets.hasMoreElements() && (target = targets.getNext())) {
         if (target instanceof Components.interfaces.nsIRDFLiteral)
           var value = target.Value;
         else if (target instanceof Components.interfaces.nsIRDFResource)
@@ -69,11 +71,14 @@ function initialize() {
           value = '' + target.Value;
         else
           value = '';
-  
-        accum(module, key, value);
+        values.push(value);
+}
+} catch (e) {}  
+        accum(module, key, values.join('; '));
       }
     }
   }
+  var twib;
   
   var data = '';
   function append(text) {
@@ -100,13 +105,16 @@ function initialize() {
   append("<table border='1'><tr><th>Name</th><th>Version</th></tr><tr><th>More</th><th>Range</th></tr>");
   for (i = 0; i < list.length; ++i) {
     var item=list[i];
-    append("<tr><th>"+
+    append("<tr class='"+consts[item.type]+"'><th>"+
     "<i><img src='"+item.iconURL+"' alt=' (icon unavailable) '/></i>"
 +item.name+"</th><td>"+item.version+
 "</td></tr><tr><td align='center'>"+
     "<img class='"+consts[item.type]+"' alt='"+consts[item.type]+"'/> "+
     link(item.xpiURL, "origin")+
 " "+link(item.updateRDF, "update information")+
+"<button onclick='twiddle("+uneval(item.id)+", "+uneval(consts[item.type])+")'>"+
+"Twiddle"+
+"</button>"+
 "</td><td>"+item.minAppVersion+" ... "+item.maxAppVersion+
 "</td></tr><tr><td colspan='2'>"+twib(item.id)+"</td></tr>");
   }
