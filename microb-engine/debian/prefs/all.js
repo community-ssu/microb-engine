@@ -1381,3 +1381,16 @@ pref("jsevent.renamer.mousedown", "click");
 pref("extensions.update.enabled", false);
 pref("extensions.checkCompatibility", false);
 
+// Feeds content handler manager prefs
+pref("browser.contentHandlers.auto.application/vnd.mozilla.maybe.feed", "http://fusion.google.com/add?feedurl=%s");
+pref("browser.contentHandlers.types.0.title", "Google");
+pref("browser.contentHandlers.types.0.type", "application/vnd.mozilla.maybe.feed");
+pref("browser.contentHandlers.types.0.uri", "http://fusion.google.com/add?feedurl=%s");
+
+pref("browser.contentHandlers.types.1.title", "MyYahoo");
+pref("browser.contentHandlers.types.1.type", "application/vnd.mozilla.maybe.feed");
+pref("browser.contentHandlers.types.1.uri", "http://add.my.yahoo.com/rss?url=%s");
+
+pref("browser.contentHandlers.types.2.title", "Bloglines");
+pref("browser.contentHandlers.types.2.type", "application/vnd.mozilla.maybe.feed");
+pref("browser.contentHandlers.types.2.uri", "http://www.bloglines.com/login?r=/sub/%s");
