@@ -198,6 +198,7 @@ usr/lib/microb-engine/chrome/comm/content/xbl-marquee/xbl-marquee.css
 usr/lib/microb-engine/chrome/comm.manifest
 usr/lib/microb-engine/chrome/browser/content/branding/about*.png
 usr/lib/microb-engine/chrome/browser/content/branding/config*.html
+usr/lib/microb-engine/chrome/browser/content/branding/extensions*
 usr/lib/microb-engine/chrome/browser/content/branding/feed*.gif
 usr/lib/microb-engine/chrome/browser*.manifest
 usr/lib/microb-engine/res/fon*
