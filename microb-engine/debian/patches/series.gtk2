@@ -296,7 +296,7 @@ valgrind/bug66825.diff
 740_spellchecker_select_enabling.diff
 #750_MotionEventsRequests.diff
 760_localization_updates.diff
-770_Better_RSS_Support.diff
+#770_Better_RSS_Support.diff
 
 xpinstaller/01_ConfirmNoXul.diff
 xpinstaller/02_DownloadManagerMOZStorage.diff
