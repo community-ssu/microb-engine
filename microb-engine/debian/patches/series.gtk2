@@ -348,5 +348,5 @@ cross/090_as_defined_wrong.diff
 cross/100_mips_build_error.diff
 cross/110_ppc_asm_comments.diff
 
-#TransparencySupport.diff
+780_TransparencySupport.diff
 #FixForTransparencyRendering.diff
