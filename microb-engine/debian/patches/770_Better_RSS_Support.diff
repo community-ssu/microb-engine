@@ -369,7 +369,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/content/subscribe.xh
 +            </select>
 +            <br/>
 +            <br/>
-+            <input type="checkbox" name="alwaysUse" id="alwaysUse"/> Always use this options
++            <input type="checkbox" name="alwaysUse" id="alwaysUse"/> Always use this reader
 +            <br/>
 +            <br/>
 +            <input type="button" value="Subscribe" id="subscribeButton"/>
