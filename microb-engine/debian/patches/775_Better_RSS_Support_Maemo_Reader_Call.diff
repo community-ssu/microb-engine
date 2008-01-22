@@ -1,6 +1,9 @@
+# This patch adds the builtin maemo rss reader application to the list of rss readers available to users in patch 770, 
+# making possible to call /usr/bin/osso_rss_feed_reader from microb engine when needed. To archieve this, it adds 
+# /browser/components/shell component into microb's toolkit/components/shell and links it against libxul.so. 
 diff -U 8 -prN mozilla-orig/toolkit/components/Makefile.in mozilla/toolkit/components/Makefile.in
---- mozilla-orig/toolkit/components/Makefile.in	2008-01-21 14:41:16.000000000 -0400
-+++ mozilla/toolkit/components/Makefile.in	2008-01-21 14:55:45.000000000 -0400
+--- mozilla-orig/toolkit/components/Makefile.in	2008-01-22 10:29:39.000000000 -0400
++++ mozilla/toolkit/components/Makefile.in	2008-01-22 10:44:21.000000000 -0400
 @@ -62,17 +62,17 @@ DIRS += \
  
  ifneq (,$(filter cocoa, $(MOZ_WIDGET_TOOLKIT)))
@@ -21,8 +24,8 @@ diff -U 8 -prN mozilla-orig/toolkit/components/Makefile.in mozilla/toolkit/compo
  endif
  
 diff -U 8 -prN mozilla-orig/toolkit/components/browser-feeds/content/subscribe.xhtml mozilla/toolkit/components/browser-feeds/content/subscribe.xhtml
---- mozilla-orig/toolkit/components/browser-feeds/content/subscribe.xhtml	2008-01-21 14:41:16.000000000 -0400
-+++ mozilla/toolkit/components/browser-feeds/content/subscribe.xhtml	2008-01-21 15:01:50.000000000 -0400
+--- mozilla-orig/toolkit/components/browser-feeds/content/subscribe.xhtml	2008-01-22 10:29:39.000000000 -0400
++++ mozilla/toolkit/components/browser-feeds/content/subscribe.xhtml	2008-01-22 10:45:29.000000000 -0400
 @@ -39,26 +39,27 @@
          </div>
  
@@ -56,8 +59,8 @@ diff -U 8 -prN mozilla-orig/toolkit/components/browser-feeds/content/subscribe.x
  	  <xul:vbox>
              <xul:hbox align="center">
 diff -U 8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedConverter.js mozilla/toolkit/components/browser-feeds/src/FeedConverter.js
---- mozilla-orig/toolkit/components/browser-feeds/src/FeedConverter.js	2008-01-21 14:41:16.000000000 -0400
-+++ mozilla/toolkit/components/browser-feeds/src/FeedConverter.js	2008-01-21 14:54:29.000000000 -0400
+--- mozilla-orig/toolkit/components/browser-feeds/src/FeedConverter.js	2008-01-22 10:29:39.000000000 -0400
++++ mozilla/toolkit/components/browser-feeds/src/FeedConverter.js	2008-01-22 10:46:54.000000000 -0400
 @@ -348,17 +348,22 @@ var FeedResultService = {
          getService(Ci.nsIPrefBranch);
  
@@ -83,85 +86,9 @@ diff -U 8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedConverter.j
        // other urils: prepend feed: scheme, e.g.
        // https://foo.com/index.rdf -> feed:https://foo.com/index.rdf
 diff -U 8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js mozilla/toolkit/components/browser-feeds/src/FeedWriter.js
---- mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js	2008-01-21 14:41:16.000000000 -0400
-+++ mozilla/toolkit/components/browser-feeds/src/FeedWriter.js	2008-01-21 14:54:37.000000000 -0400
-@@ -192,17 +192,17 @@ FeedWriter.prototype = {
- 
-       node = node.nextSibling;
-     }
- 
-     return null;
-   },
- 
-   _setCheckboxCheckedState: function FW__setCheckboxCheckedState(aCheckbox, aValue) {
--dump ("_setCheckboxCheckedState\n");
-+    LOG ("_setCheckboxCheckedState");
-     // see checkbox.xml
-     var change = (aValue != (aCheckbox.getAttribute('checked') == 'true'));
-     if (aValue)
-       aCheckbox.setAttribute('checked', 'true');
-     else
-       aCheckbox.removeAttribute('checked');
- 
-     if (change) {
-@@ -523,17 +523,17 @@ dump ("_setCheckboxCheckedState\n");
-       }
-     }
-     catch(ex) { }
- 
-     return false;
-   },
- 
-   _setAlwaysUseCheckedState: function FW__setAlwaysUseCheckedState() {
--dump ("_setAlwaysUseCheckedState\n");
-+    LOG ("_setAlwaysUseCheckedState");
-     var checkbox = this._document.getElementById("alwaysUse");
-     if (checkbox) {
-       var alwaysUse = false;
-       try {
-         var prefs = Cc["@mozilla.org/preferences-service;1"].
-                     getService(Ci.nsIPrefBranch);
-         if (prefs.getCharPref(PREF_SELECTED_ACTION) != "ask")
-           alwaysUse = true;
-@@ -554,17 +554,17 @@ dump ("_setAlwaysUseCheckedState\n");
-       }
-     }
-   },
- 
-   /**
-    * See nsIDOMEventListener
-    */
-   handleEvent: function(event) {
--    dump ("handleEvent\n\n");
-+    LOG  ("handleEvent\n");
-     // see comments in the write method
-     event = new XPCNativeWrapper(event);
-     if (event.target.ownerDocument != this._document) {
-       LOG("FeedWriter.handleEvent: Someone passed the feed writer as a listener to the events of another document!");
-       return;
-     }
- 
-     if (event.type == "click") {
-@@ -671,17 +671,17 @@ dump ("_setAlwaysUseCheckedState\n");
-         if (liveBookmarksMenuItem)
-           liveBookmarksMenuItem.doCommand();
-       } 
-     }
-   },
- 
-   _initSubscriptionUI: function FW__initSubscriptionUI() {
- 
--    dump ("_initSubscriptionUI\n" );
-+    LOG ("_initSubscriptionUI\n" );
-     // Set up the "Subscribe Now" button
-     this._document
-         .getElementById("subscribeButton")
-         .addEventListener("click", this, false);
- 
-     this._document
-         .getElementById("alwaysUse")
-         .addEventListener("change", this, false);
-@@ -967,43 +967,45 @@ dump ("_setAlwaysUseCheckedState\n");
+--- mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js	2008-01-22 10:29:39.000000000 -0400
++++ mozilla/toolkit/components/browser-feeds/src/FeedWriter.js	2008-01-22 10:52:21.000000000 -0400
+@@ -967,43 +967,45 @@ FeedWriter.prototype = {
        if (handler) {
          if (useAsDefault)
            wccr.setAutoHandler(TYPE_MAYBE_FEED, handler);
@@ -223,28 +150,9 @@ diff -U 8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js m
      if (useAsDefault)
        prefs.setCharPref(PREF_SELECTED_ACTION, defaultHandler);
      else
-@@ -1020,17 +1022,17 @@ dump ("_setAlwaysUseCheckedState\n");
-       return;
-     }
- 
-     if (topic == "nsPref:changed") {
-       switch (data) {
-         case PREF_SELECTED_READER:
-         case PREF_SELECTED_WEB:
-         case PREF_SELECTED_APP:
--        dump ("**********observer*********\n\n");
-+          LOG ("**********observer*********");
-           this._setSelectedHandler();
-           break;
-         case PREF_SELECTED_ACTION:
-           this._setAlwaysUseCheckedState();
-       }
-     } 
-   },
- 
 diff -U 8 -prN mozilla-orig/toolkit/components/build/Makefile.in mozilla/toolkit/components/build/Makefile.in
---- mozilla-orig/toolkit/components/build/Makefile.in	2008-01-21 14:41:16.000000000 -0400
-+++ mozilla/toolkit/components/build/Makefile.in	2008-01-21 14:56:13.000000000 -0400
+--- mozilla-orig/toolkit/components/build/Makefile.in	2008-01-22 10:29:39.000000000 -0400
++++ mozilla/toolkit/components/build/Makefile.in	2008-01-22 10:55:19.000000000 -0400
 @@ -83,30 +83,32 @@ REQUIRES = 	\
  		gfx \
  		locale \
@@ -319,8 +227,8 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/Makefile.in mozilla/toolkit
 +
  include $(topsrcdir)/config/rules.mk
 diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsCID.h mozilla/toolkit/components/build/nsToolkitCompsCID.h
---- mozilla-orig/toolkit/components/build/nsToolkitCompsCID.h	2008-01-21 14:41:16.000000000 -0400
-+++ mozilla/toolkit/components/build/nsToolkitCompsCID.h	2008-01-21 14:56:31.000000000 -0400
+--- mozilla-orig/toolkit/components/build/nsToolkitCompsCID.h	2008-01-22 10:29:39.000000000 -0400
++++ mozilla/toolkit/components/build/nsToolkitCompsCID.h	2008-01-22 10:56:30.000000000 -0400
 @@ -182,8 +182,13 @@
  { 0x6893e69, 0x71d8, 0x4b23, { 0x81, 0xeb, 0x80, 0x31, 0x4d, 0xaf, 0x3e, 0x66 } }
  
@@ -334,11 +242,11 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsCID.h mozilla
 +{ 0x63c7b9f4, 0xcc8, 0x43f8, { 0xb6, 0x66, 0xa, 0x66, 0x16, 0x55, 0xcb, 0x73 } }
 +
 +#define NS_SHELLSERVICE_CONTRACTID \
-+  "@mozilla.org/browser/shell-service;1"
++"@mozilla.org/browser/shell-service;1"
 diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
---- mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp	2008-01-21 14:41:16.000000000 -0400
-+++ mozilla/toolkit/components/build/nsToolkitCompsModule.cpp	2008-01-21 14:56:40.000000000 -0400
-@@ -65,16 +65,20 @@
+--- mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp	2008-01-22 10:29:39.000000000 -0400
++++ mozilla/toolkit/components/build/nsToolkitCompsModule.cpp	2008-01-22 10:58:42.000000000 -0400
+@@ -65,16 +65,19 @@
  #endif
  
  #ifdef MOZ_FEEDS
@@ -350,7 +258,6 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mo
 +#ifdef MOZ_WIDGET_GTK2
 +#include "nsGNOMEShellService.h"
 +#endif
-+
  /////////////////////////////////////////////////////////////////////////////
  
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsAppStartup, Init)
@@ -359,7 +266,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mo
  #ifdef ALERTS_SERVICE
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsAlertsService)
  #endif
-@@ -100,16 +104,20 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsUrlClas
+@@ -100,16 +103,19 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsUrlClas
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsUrlClassifierUtils, Init)
  #endif
  
@@ -371,7 +278,6 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mo
 +#ifdef MOZ_WIDGET_GTK2
 +NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsGNOMEShellService, Init)
 +#endif
-+
  /////////////////////////////////////////////////////////////////////////////
  
  static const nsModuleComponentInfo components[] =
@@ -380,7 +286,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mo
      NS_TOOLKIT_APPSTARTUP_CID,
      NS_APPSTARTUP_CONTRACTID,
      nsAppStartupConstructor },
-@@ -171,11 +179,17 @@ static const nsModuleComponentInfo compo
+@@ -171,11 +177,18 @@ static const nsModuleComponentInfo compo
      nsFeedSnifferConstructor,
     nsFeedSniffer::Register },
    { "about:feeds Page",
@@ -393,14 +299,15 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mo
 +  { "Browser Shell Service",
 +    NS_SHELLSERVICE_CID,
 +    NS_SHELLSERVICE_CONTRACTID,
-+    nsGNOMEShellServiceConstructor },
++    nsGNOMEShellServiceConstructor 
++  },
 +#endif
  };
  
  NS_IMPL_NSGETMODULE(nsToolkitCompsModule, components)
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/Makefile.in mozilla/toolkit/components/shell/Makefile.in
 --- mozilla-orig/toolkit/components/shell/Makefile.in	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/Makefile.in	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/Makefile.in	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,47 @@
 +# ***** BEGIN LICENSE BLOCK *****
 +# Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -451,7 +358,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/Makefile.in mozilla/toolkit
 +include $(topsrcdir)/config/rules.mk
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/content/dummyWindow.xul mozilla/toolkit/components/shell/content/dummyWindow.xul
 --- mozilla-orig/toolkit/components/shell/content/dummyWindow.xul	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/content/dummyWindow.xul	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/content/dummyWindow.xul	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,46 @@
 +<?xml version="1.0"?>
 +
@@ -501,7 +408,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/content/dummyWindow.xul moz
 +</window>
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/content/setDesktopBackground.js mozilla/toolkit/components/shell/content/setDesktopBackground.js
 --- mozilla-orig/toolkit/components/shell/content/setDesktopBackground.js	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/content/setDesktopBackground.js	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/content/setDesktopBackground.js	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,253 @@
 +# ***** BEGIN LICENSE BLOCK *****
 +# Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -758,7 +665,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/content/setDesktopBackgroun
 +};
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/content/setDesktopBackground.xul mozilla/toolkit/components/shell/content/setDesktopBackground.xul
 --- mozilla-orig/toolkit/components/shell/content/setDesktopBackground.xul	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/content/setDesktopBackground.xul	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/content/setDesktopBackground.xul	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,119 @@
 +<?xml version="1.0"?> <!-- -*- Mode: HTML -*- --> 
 +
@@ -881,7 +788,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/content/setDesktopBackgroun
 +</dialog>
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/jar.mn mozilla/toolkit/components/shell/jar.mn
 --- mozilla-orig/toolkit/components/shell/jar.mn	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/jar.mn	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/jar.mn	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,7 @@
 +toolkit.jar:
 +    content/global/dummyWindow.xul (content/dummyWindow.xul)
@@ -892,7 +799,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/jar.mn mozilla/toolkit/comp
 +
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/public/Makefile.in mozilla/toolkit/components/shell/public/Makefile.in
 --- mozilla-orig/toolkit/components/shell/public/Makefile.in	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/public/Makefile.in	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/public/Makefile.in	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,58 @@
 +#
 +# ***** BEGIN LICENSE BLOCK *****
@@ -954,7 +861,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/public/Makefile.in mozilla/
 +include $(topsrcdir)/config/rules.mk
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/public/nsIMacShellService.idl mozilla/toolkit/components/shell/public/nsIMacShellService.idl
 --- mozilla-orig/toolkit/components/shell/public/nsIMacShellService.idl	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/public/nsIMacShellService.idl	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/public/nsIMacShellService.idl	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,47 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1005,7 +912,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/public/nsIMacShellService.i
 +
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/public/nsIShellService.idl mozilla/toolkit/components/shell/public/nsIShellService.idl
 --- mozilla-orig/toolkit/components/shell/public/nsIShellService.idl	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/public/nsIShellService.idl	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/public/nsIShellService.idl	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,130 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1139,7 +1046,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/public/nsIShellService.idl 
 +};
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/public/nsIWindowsShellService.idl mozilla/toolkit/components/shell/public/nsIWindowsShellService.idl
 --- mozilla-orig/toolkit/components/shell/public/nsIWindowsShellService.idl	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/public/nsIWindowsShellService.idl	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/public/nsIWindowsShellService.idl	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,50 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1193,7 +1100,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/public/nsIWindowsShellServi
 +
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/Makefile.in mozilla/toolkit/components/shell/src/Makefile.in
 --- mozilla-orig/toolkit/components/shell/src/Makefile.in	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/src/Makefile.in	2008-01-21 15:59:00.000000000 -0400
++++ mozilla/toolkit/components/shell/src/Makefile.in	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,102 @@
 +#
 +# ***** BEGIN LICENSE BLOCK *****
@@ -1299,7 +1206,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/Makefile.in mozilla/too
 +# 	rm -f $(DIST)/bin/components/$(JS_SET_BROWSER_COMPONENT)
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsGNOMEShellService.cpp mozilla/toolkit/components/shell/src/nsGNOMEShellService.cpp
 --- mozilla-orig/toolkit/components/shell/src/nsGNOMEShellService.cpp	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/src/nsGNOMEShellService.cpp	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/src/nsGNOMEShellService.cpp	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,633 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1936,7 +1843,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsGNOMEShellService.cpp
 +}
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsGNOMEShellService.h mozilla/toolkit/components/shell/src/nsGNOMEShellService.h
 --- mozilla-orig/toolkit/components/shell/src/nsGNOMEShellService.h	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/src/nsGNOMEShellService.h	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/src/nsGNOMEShellService.h	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,69 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -2009,7 +1916,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsGNOMEShellService.h m
 +#endif // nsgnomeshellservice_h____
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsMacShellService.cpp mozilla/toolkit/components/shell/src/nsMacShellService.cpp
 --- mozilla-orig/toolkit/components/shell/src/nsMacShellService.cpp	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/src/nsMacShellService.cpp	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/src/nsMacShellService.cpp	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,534 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -2547,7 +2454,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsMacShellService.cpp m
 +}
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsMacShellService.h mozilla/toolkit/components/shell/src/nsMacShellService.h
 --- mozilla-orig/toolkit/components/shell/src/nsMacShellService.h	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/src/nsMacShellService.h	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/src/nsMacShellService.h	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,66 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -2617,7 +2524,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsMacShellService.h moz
 +#endif // nsmacshellservice_h____
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsSetDefaultBrowser.js mozilla/toolkit/components/shell/src/nsSetDefaultBrowser.js
 --- mozilla-orig/toolkit/components/shell/src/nsSetDefaultBrowser.js	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/src/nsSetDefaultBrowser.js	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/src/nsSetDefaultBrowser.js	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,141 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -2762,7 +2669,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsSetDefaultBrowser.js 
 +}
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsShellService.h mozilla/toolkit/components/shell/src/nsShellService.h
 --- mozilla-orig/toolkit/components/shell/src/nsShellService.h	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/src/nsShellService.h	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/src/nsShellService.h	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,41 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -2807,7 +2714,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsShellService.h mozill
 +
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsWindowsShellService.cpp mozilla/toolkit/components/shell/src/nsWindowsShellService.cpp
 --- mozilla-orig/toolkit/components/shell/src/nsWindowsShellService.cpp	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/src/nsWindowsShellService.cpp	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/src/nsWindowsShellService.cpp	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,1236 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4047,7 +3954,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsWindowsShellService.c
 +}
 diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsWindowsShellService.h mozilla/toolkit/components/shell/src/nsWindowsShellService.h
 --- mozilla-orig/toolkit/components/shell/src/nsWindowsShellService.h	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/toolkit/components/shell/src/nsWindowsShellService.h	2008-01-21 14:52:25.000000000 -0400
++++ mozilla/toolkit/components/shell/src/nsWindowsShellService.h	2008-01-22 10:59:49.000000000 -0400
 @@ -0,0 +1,72 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4122,8 +4029,8 @@ diff -U 8 -prN mozilla-orig/toolkit/components/shell/src/nsWindowsShellService.h
 +
 +#endif // nswindowsshellservice_h____
 diff -U 8 -prN mozilla-orig/toolkit/system/gnome/nsGnomeVFSService.cpp mozilla/toolkit/system/gnome/nsGnomeVFSService.cpp
---- mozilla-orig/toolkit/system/gnome/nsGnomeVFSService.cpp	2008-01-21 14:41:18.000000000 -0400
-+++ mozilla/toolkit/system/gnome/nsGnomeVFSService.cpp	2008-01-21 14:57:17.000000000 -0400
+--- mozilla-orig/toolkit/system/gnome/nsGnomeVFSService.cpp	2008-01-22 10:29:41.000000000 -0400
++++ mozilla/toolkit/system/gnome/nsGnomeVFSService.cpp	2008-01-22 11:00:51.000000000 -0400
 @@ -45,17 +45,17 @@
  #include "nsAutoPtr.h"
  
@@ -4134,7 +4041,7 @@ diff -U 8 -prN mozilla-orig/toolkit/system/gnome/nsGnomeVFSService.cpp mozilla/t
  #include <libgnomevfs/gnome-vfs-mime-handlers.h>
  #include <libgnomevfs/gnome-vfs-mime-info.h>
 -#include <libgnome/gnome-url.h>
-+//#include <libgnome/gnome-url.h>
++////#include <libgnome/gnome-url.h>
  }
  
  class nsGnomeVFSMimeApp : public nsIGnomeVFSMimeApp
@@ -4165,8 +4072,8 @@ diff -U 8 -prN mozilla-orig/toolkit/system/gnome/nsGnomeVFSService.cpp mozilla/t
                                     PRInt32           aKey,
                                     const nsACString &aValue)
 diff -U 8 -prN mozilla-orig/toolkit/toolkit-tiers.mk mozilla/toolkit/toolkit-tiers.mk
---- mozilla-orig/toolkit/toolkit-tiers.mk	2008-01-21 14:41:18.000000000 -0400
-+++ mozilla/toolkit/toolkit-tiers.mk	2008-01-21 14:59:14.000000000 -0400
+--- mozilla-orig/toolkit/toolkit-tiers.mk	2008-01-22 10:29:41.000000000 -0400
++++ mozilla/toolkit/toolkit-tiers.mk	2008-01-22 11:01:49.000000000 -0400
 @@ -260,19 +260,19 @@ ifdef NS_TRACE_MALLOC
  tier_toolkit_dirs += tools/trace-malloc
  endif

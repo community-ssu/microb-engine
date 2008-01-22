@@ -1,3 +1,6 @@
+# This patch adds to microb the funcionatily of handling RSS/XML files in such way that user can choose what pre-defined 
+# web reader (google, yahoo, bloglines) he is going to use to read that feed/atom.
+# It adds browser/components/feeds into microb build (now it is toolkit/components/browser-feeds) and links it w/ libxul.so
 diff -U8 -prN mozilla-orig/toolkit/components/Makefile.in mozilla/toolkit/components/Makefile.in
 --- mozilla-orig/toolkit/components/Makefile.in	2008-01-15 10:22:25.000000000 -0400
 +++ mozilla/toolkit/components/Makefile.in	2008-01-15 10:41:12.000000000 -0400
@@ -1646,7 +1649,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js mo
 +  },
 +
 +  _setCheckboxCheckedState: function FW__setCheckboxCheckedState(aCheckbox, aValue) {
-+dump ("_setCheckboxCheckedState\n");
++    LOG ("_setCheckboxCheckedState");
 +    // see checkbox.xml
 +    var change = (aValue != (aCheckbox.getAttribute('checked') == 'true'));
 +    if (aValue)
@@ -1977,7 +1980,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js mo
 +  },
 +
 +  _setAlwaysUseCheckedState: function FW__setAlwaysUseCheckedState() {
-+dump ("_setAlwaysUseCheckedState\n");
++    LOG ("_setAlwaysUseCheckedState");
 +    var checkbox = this._document.getElementById("alwaysUse");
 +    if (checkbox) {
 +      var alwaysUse = false;
@@ -2008,7 +2011,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js mo
 +   * See nsIDOMEventListener
 +   */
 +  handleEvent: function(event) {
-+    dump ("handleEvent\n\n");
++    LOG ("handleEvent");
 +    // see comments in the write method
 +    event = new XPCNativeWrapper(event);
 +    if (event.target.ownerDocument != this._document) {
@@ -2125,7 +2128,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js mo
 +
 +  _initSubscriptionUI: function FW__initSubscriptionUI() {
 +
-+    dump ("_initSubscriptionUI\n" );
++    LOG ("_initSubscriptionUI");
 +    // Set up the "Subscribe Now" button
 +    this._document
 +        .getElementById("subscribeButton")
@@ -2474,7 +2477,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js mo
 +        case PREF_SELECTED_READER:
 +        case PREF_SELECTED_WEB:
 +        case PREF_SELECTED_APP:
-+        dump ("**********observer*********\n\n");
++          LOG ("observer");
 +          this._setSelectedHandler();
 +          break;
 +        case PREF_SELECTED_ACTION:
@@ -3752,7 +3755,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsAboutFeeds.cpp
 +NS_IMETHODIMP
 +nsAboutFeeds::NewChannel(nsIURI* uri, nsIChannel** result)
 +{
-+  printf ("nsAboutFeeds::NewChannel\n");
++  //printf ("nsAboutFeeds::NewChannel\n");
 +  nsresult rv;
 +  nsCOMPtr<nsIIOService> ios(do_GetIOService(&rv));
 +  if (NS_FAILED(rv))
@@ -3795,7 +3798,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsAboutFeeds.cpp
 +NS_METHOD
 +nsAboutFeeds::Create(nsISupports* outer, REFNSIID iid, void** result)
 +{
-+  printf ("nsAboutFeeds::Create\n");
++  //printf ("nsAboutFeeds::Create\n");
 +  nsAboutFeeds* aboutFeeds = new nsAboutFeeds();
 +  if (aboutFeeds == nsnull)
 +    return NS_ERROR_OUT_OF_MEMORY;
@@ -3951,7 +3954,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +                                  const PRUint8* data,
 +                                  PRUint32 length)
 +{
-+  printf ("nsFeedSniffer::ConvertEncodedData\n");
++  //printf ("nsFeedSniffer::ConvertEncodedData\n");
 +  nsresult rv = NS_OK;
 +
 +  mDecodedData = "";
@@ -4124,14 +4127,14 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +static PRBool
 +ContainsTopLevelSubstring(nsACString& dataString, const char *substring) 
 +{
-+  printf("ContainsTopLevelSubstring\n");
-+/*
++  //printf("ContainsTopLevelSubstring\n");
++  /*
 +  PRInt32 offset = dataString.Find(substring);
 +  if (offset == -1)
 +    return PR_FALSE;
 +
 +  const char *begin = dataString.BeginReading();
-+*/
++  */
 +
 +  nsCString s(dataString);
 +  const char *data = (const char *) s.get();
@@ -4144,10 +4147,10 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +
 +  begin = strdup (data);
 +
-+// printf ("\n\n\n******************************************\n");
-+// printf ("'%d\n'", offset);
-+// printf ("'%s'\n", begin);
-+// printf ("******************************************\n");
++  // printf ("\n\n\n******************************************\n");
++  // printf ("'%d\n'", offset);
++  // printf ("'%s'\n", begin);
++  // printf ("******************************************\n");
 +
 +  // Only do the validation when we find the substring.
 +  return IsDocumentElement(begin, begin + offset);
@@ -4159,7 +4162,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +                                      PRUint32 length, 
 +                                      nsACString& sniffedType)
 +{
-+  printf ("nsFeedSniffer::GetMIMETypeFromContent\n");
++  //printf ("nsFeedSniffer::GetMIMETypeFromContent\n");
 +  nsCOMPtr<nsIHttpChannel> channel(do_QueryInterface(request));
 +  if (!channel)
 +    return NS_ERROR_NO_INTERFACE;
@@ -4185,7 +4188,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +  nsCAutoString scheme;
 +  originalURI->GetScheme(scheme);
 +  if (scheme.EqualsLiteral("view-source")) {
-+    printf ("nsFeedSniffer::GetMIMETypeFromContent view-source\n");
++    //printf ("nsFeedSniffer::GetMIMETypeFromContent view-source\n");
 +    sniffedType.Truncate();
 +    return NS_OK;
 +  }
@@ -4203,7 +4206,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +  // the feed: protocol. This is also a reliable indication.
 +  // The value of the header doesn't matter.  
 +  if (!noSniff) {
-+    printf ("nsFeedSniffer::GetMIMETypeFromContent !noSniff\n");
++    //printf ("nsFeedSniffer::GetMIMETypeFromContent !noSniff\n");
 +    nsCAutoString sniffHeader;
 +    nsresult foundHeader =
 +      channel->GetRequestHeader(NS_LITERAL_CSTRING("X-Moz-Is-Feed"),
@@ -4212,10 +4215,10 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +  }
 +
 +  if (noSniff) {
-+    printf ("nsFeedSniffer::GetMIMETypeFromContent noSniff\n");
++    //printf ("nsFeedSniffer::GetMIMETypeFromContent noSniff\n");
 +    // check for an attachment after we have a likely feed.
 +    if(HasAttachmentDisposition(channel)) {
-+      printf ("nsFeedSniffer::GetMIMETypeFromContent !noSniff HasAttachmentDisposition\n");
++      //printf ("nsFeedSniffer::GetMIMETypeFromContent !noSniff HasAttachmentDisposition\n");
 +      sniffedType.Truncate();
 +      return NS_OK;
 +    }
@@ -4225,7 +4228,7 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +    channel->SetResponseHeader(NS_LITERAL_CSTRING("X-Moz-Is-Feed"),
 +                               NS_LITERAL_CSTRING("1"), PR_FALSE);
 +    sniffedType.AssignLiteral(TYPE_MAYBE_FEED);
-+    printf ("nsFeedSniffer::GetMIMETypeFromContent TYPE_MAYBE_FEED\n");
++    //printf ("nsFeedSniffer::GetMIMETypeFromContent TYPE_MAYBE_FEED\n");
 +    return NS_OK;
 +  }
 +
@@ -4249,16 +4252,16 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +    length = MAX_BYTES;
 +
 +  // Thus begins the actual sniffing.
-+//  nsDependentCSubstring dataString((const char*)testData, length);
-+// printf ("nsFeedSniffer::GetMIMETypeFromContent 2\n");
++  //  nsDependentCSubstring dataString((const char*)testData, length);
++  // printf ("nsFeedSniffer::GetMIMETypeFromContent 2\n");
 +  char *tmp_str = strdup(testData);
 +  strncpy(tmp_str, testData, length);
 +  if (!tmp_str)  
 +    return NS_OK; 
 +
-+// printf ("******************************************\n");
-+// printf ("'%s'\n", tmp_str);
-+// printf ("******************************************\n");
++  // printf ("******************************************\n");
++  // printf ("'%s'\n", tmp_str);
++  // printf ("******************************************\n");
 +
 +  nsCString dataString((const char *)tmp_str);
 +
@@ -4266,11 +4269,11 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +
 +  // RSS 0.91/0.92/2.0
 +  isFeed = ContainsTopLevelSubstring(dataString, "<rss");
-+//   if (!isFeed) printf ("nsFeedSniffer::GetMIMETypeFromContent !isFeed 1\n");
++
 +  // Atom 1.0
 +  if (!isFeed)
 +    isFeed = ContainsTopLevelSubstring(dataString, "<feed");
-+//   if (!isFeed) printf ("nsFeedSniffer::GetMIMETypeFromContent !isFeed 2\n");
++
 +  // RSS 1.0
 +  if (!isFeed) {
 +    isFeed = ContainsTopLevelSubstring(dataString, "<rdf:RDF") &&
@@ -4280,8 +4283,8 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/nsFeedSniffer.cp
 +
 +  // If we sniffed a feed, coerce our internal type
 +  if (isFeed && !HasAttachmentDisposition(channel)) {
-+    printf ("IS MAYBE FEED\n");
-+    sniffedType.AssignLiteral(TYPE_MAYBE_FEED); }
++    sniffedType.AssignLiteral(TYPE_MAYBE_FEED); 
++  }
 +  else
 +    sniffedType.Truncate();
 +  return NS_OK;
