@@ -110,7 +110,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedWriter.js m
 +          prefs.setCharPref(PREF_SELECTED_READER, "client");
 +          //prefs.setComplexValue(PREF_SELECTED_APP, Ci.nsILocalFile, 
 +                                //this.selectedApplicationItemWrapped.file);
-+          prefs.setCharPref(PREF_SELECTED_APP, "/usr/bin/osso_rss_feed_reader");
++          prefs.setCharPref(PREF_SELECTED_APP, "/usr/share/browser/scripts/osso_rss_feed_dbus_script_call.sh");
 +
 +          break;
      //    case "defaultHandlerMenuItem":
