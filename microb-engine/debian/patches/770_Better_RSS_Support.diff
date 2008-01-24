@@ -1200,9 +1200,9 @@ diff -U8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedConverter.js
 +        Cc["@mozilla.org/preferences-service;1"].
 +        getService(Ci.nsIPrefBranch);
 +
-+    var handler = safeGetCharPref(PREF_SELECTED_ACTION, "bookmarks");
++    var handler = safeGetCharPref(PREF_SELECTED_ACTION, "ask");
 +    if (handler == "ask" || handler == "reader")
-+      handler = safeGetCharPref(PREF_SELECTED_READER, "bookmarks");
++      handler = safeGetCharPref(PREF_SELECTED_READER, "ask");
 +
 +    switch (handler) {
 +    case "client":

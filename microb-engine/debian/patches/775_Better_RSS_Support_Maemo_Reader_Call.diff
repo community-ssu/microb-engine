@@ -64,9 +64,9 @@ diff -U 8 -prN mozilla-orig/toolkit/components/browser-feeds/src/FeedConverter.j
 @@ -348,17 +348,22 @@ var FeedResultService = {
          getService(Ci.nsIPrefBranch);
  
-     var handler = safeGetCharPref(PREF_SELECTED_ACTION, "bookmarks");
+     var handler = safeGetCharPref(PREF_SELECTED_ACTION, "ask");
      if (handler == "ask" || handler == "reader")
-       handler = safeGetCharPref(PREF_SELECTED_READER, "bookmarks");
+       handler = safeGetCharPref(PREF_SELECTED_READER, "ask");
  
      switch (handler) {
      case "client":
