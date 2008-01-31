@@ -14,7 +14,7 @@ Index: mozilla/toolkit/toolkit-tiers.mk
  endif
  
 +ifdef MOZ_BRANDING_DIRECTORY
-+tier_toolkit_dirs += $(MOZ_BRANDING_DIRECTORY)
++tier_gecko_dirs += $(MOZ_BRANDING_DIRECTORY)
 +endif
 +
  ifdef MOZ_XMLEXTRAS
