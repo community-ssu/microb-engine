@@ -1394,3 +1394,8 @@ pref("extensions.checkCompatibility", false);
 //pref("browser.contentHandlers.types.2.title", "Bloglines");
 //pref("browser.contentHandlers.types.2.type", "application/vnd.mozilla.maybe.feed");
 //pref("browser.contentHandlers.types.2.uri", "http://www.bloglines.com/login?r=/sub/%s");
+pref("extensions.update.url", "chrome://mozapps/locale/extensions/extensions.properties");
+pref("extensions.getMoreExtensionsURL", "https://%LOCALE%.add-ons.mozilla.com/%LOCALE%/%APP%/%VERSION%/extensions/");
+pref("extensions.getMoreThemesURL", "https://%LOCALE%.add-ons.mozilla.com/%LOCALE%/%APP%/%VERSION%/themes/");
+pref("extensions.getMorePluginsURL", "https://%LOCALE%.add-ons.mozilla.com/%LOCALE%/%APP%/%VERSION%/plugins/");
+   
