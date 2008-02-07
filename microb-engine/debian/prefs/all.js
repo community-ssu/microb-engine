@@ -1378,7 +1378,7 @@ pref("dom.jsevent.renamer", 1);
 pref("dom.window.jsevents.policy", true);
 pref("jsevent.renamer.mousedown", "click");
 
-pref("extensions.update.enabled", false);
+pref("extensions.update.enabled", true);
 pref("extensions.checkCompatibility", false);
 
 // Feeds content handler manager prefs
