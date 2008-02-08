@@ -298,6 +298,7 @@ valgrind/bug66825.diff
 760_localization_updates.diff
 #770_Better_RSS_Support.diff
 
+xpinstaller/01_ConfirmNoXul.diff
 xpinstaller/02_DownloadManagerMOZStorage.diff
 xpinstaller/04_ChromeRegistrationWithRDFwithoutXUL.diff
 #xpinstaller/05_IncompatibleStateNotification.diff
