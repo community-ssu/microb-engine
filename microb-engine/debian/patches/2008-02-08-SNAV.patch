@@ -1,0 +1,995 @@
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsCSSFrameConstructor.cpp	2008-02-08 11:21:06.000000000 -0700
++++ layout/base/nsCSSFrameConstructor.cpp	2008-02-05 12:35:40.000000000 -0700
+@@ -10058,7 +10058,8 @@
+     // based on content states, so if we already don't have a frame we don't
+     // need to force a reframe -- if it's needed, the HasStateDependentStyle
+     // call will handle things.
+-    nsIFrame* primaryFrame = mPresShell->GetPrimaryFrameFor(aContent);
++    nsIFrame* primaryFrame = mPresShell->GetRealPrimaryFrameFor(aContent);
++
+     if (primaryFrame) {
+       // If it's generated content, ignore LOADING/etc state changes on it.
+       if (!primaryFrame->IsGeneratedContentFrame() &&
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsCSSRendering.cpp	2008-02-08 11:21:00.000000000 -0700
++++ layout/base/nsCSSRendering.cpp	2008-02-08 11:15:27.000000000 -0700
+@@ -58,6 +58,7 @@
+ #include "nsIContent.h"
+ #include "nsIDocument.h"
+ #include "nsIScrollableFrame.h"
++#include "nsIScrollableView.h"
+ #include "imgIRequest.h"
+ #include "imgIContainer.h"
+ #include "gfxIImageFrame.h"
+@@ -68,6 +69,8 @@
+ #include "nsIServiceManager.h"
+ #include "nsIDOMHTMLBodyElement.h"
+ #include "nsIDOMHTMLDocument.h"
++#include "nsIDOMNSElement.h"
++#include "nsIDOMTextRectangle.h"
+ #include "nsLayoutUtils.h"
+ #include "nsINameSpaceManager.h"
+ 
+@@ -88,6 +91,134 @@
+ #define MAXPATHSIZE 12
+ #define MAXPOLYPATHSIZE 1000
+ 
++
++nsresult debug_content(nsISupports *content)
++{
++  nsresult rv;
++  nsCOMPtr<nsIDOMNode> node;
++  node = do_QueryInterface(content, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
++  nsString str;
++  node->GetNodeName(str);
++
++  printf("<%s>\n", NS_ConvertUTF16toUTF8(str).get());
++}
++ 
++nsRect makeRectRelativeToGlobalView (nsIDOMNode *aNode)
++{
++  nsRect result(0,0,0,0);
++
++  if (!aNode) return result; 
++
++  nsCOMPtr<nsIDOMNSElement> nsElem = do_QueryInterface(aNode);
++  NS_ENSURE_TRUE(nsElem, result);
++
++  nsCOMPtr<nsIDOMTextRectangle> domrect;
++  nsElem->GetBoundingClientRect(getter_AddRefs(domrect));
++
++  float pleft,pright,ptop,pbottom;
++
++  domrect->GetLeft(&pleft);
++  domrect->GetRight(&pright);
++  domrect->GetTop(&ptop);
++  domrect->GetBottom(&pbottom);
++
++  result = nsRect(pleft, ptop, abs(pright - pleft), abs(pbottom - ptop));
++
++  if (result.width && result.height) return result;
++
++  nsCOMPtr<nsIDOMNode> node = do_QueryInterface(nsElem);
++
++  if (!node) return result; nsCOMPtr<nsIDOMNode> child;
++
++  node->GetFirstChild(getter_AddRefs(child));
++
++  if (!child) return result;
++
++  return makeRectRelativeToGlobalView(child);
++}
++
++nsRect getOutOfFlowRect (nsIFrame *aFrame, nsPresContext* aPresContext)
++{
++  nsRect result(0,0,0,0);
++
++  NS_ENSURE_TRUE(aFrame, result);
++  NS_ENSURE_TRUE(aPresContext, result);
++
++  if (!aFrame->IsEmpty()) return result;
++
++  nsIFrame *fc = aFrame->GetFirstChild(nsnull);
++
++  nsIFrame *rf = nsnull;
++  nsIViewManager *vm = nsnull;
++
++  if (fc)
++  {
++    nsIDocument* doc = fc->GetContent()->GetDocument();
++
++    if (!doc) return result;
++
++    nsIPresShell *presShell = doc->GetPrimaryShell();
++
++    nsIFrame* rc = presShell->GetRealPrimaryFrameFor(fc->GetContent());
++    rf = rc;
++
++    nsRect ir = rc->GetRect();
++
++    result = ir;
++
++    vm = presShell->GetViewManager();
++
++  }
++    else
++  {
++    nsIFrame *ns = aFrame->GetNextSibling();
++
++    nsIDocument* doc = ns->GetContent()->GetDocument();
++
++    if (!doc) return result;
++
++    nsIPresShell *presShell = doc->GetPrimaryShell();
++
++    if (ns) ns = ns->GetFirstChild(nsnull);
++
++    if (ns)
++    {
++      nsIFrame* rc = presShell->GetRealPrimaryFrameFor(ns->GetContent());
++      rf = rc;
++
++      nsRect ir = rc->GetRect();
++
++      result = ir;
++
++    }
++    vm = presShell->GetViewManager();
++  }
++
++  nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aFrame->GetContent());
++  nsRect r = makeRectRelativeToGlobalView(node);
++
++  nsIntRect rect = rf->GetScreenRectExternal();
++
++  result.x = aPresContext->DevPixelsToAppUnits(r.x);
++  result.y = aPresContext->DevPixelsToAppUnits(r.y);
++
++  nsIScrollableView *sv = nsnull;
++
++  nscoord sX, sY;
++  if (vm)
++  {
++    vm->GetRootScrollableView(&sv);
++
++    if (sv) sv->GetScrollPosition(sX, sY);
++  }
++
++  result.x -= sX;
++  result.y -= sY;
++
++  return result;
++}
++
+ enum ePathTypes{
+   eOutside =0,
+   eInside,
+@@ -1761,12 +1892,14 @@
+           DrawCompositeSide(aRenderingContext, side, compositeColors, compositeOuterRect, 
+                             compositeInnerRect, borderRadii, twipsPerPixel, aGap);
+         else
++        {
+           DrawSide(aRenderingContext, side,
+                    forceSolid ? NS_STYLE_BORDER_STYLE_SOLID : aBorderStyle.GetBorderStyle(side),
+                    sideColor,
+                    bgColor->mBackgroundColor,
+                    outerRect,innerRect, aSkipSides,
+                    twipsPerPixel, aGap);
++        }
+       }
+     }
+   }
+@@ -2050,8 +2183,10 @@
+ 
+   // get the offset for our outline
+   aOutlineStyle.GetOutlineOffset(offset);
++
+   nsRect outside(overflowArea + aBorderArea.TopLeft());
+   nsRect inside(outside);
++
+   if (width + offset >= 0) {
+     // the overflow area is exactly the outside edge of the outline
+     inside.Deflate(width, width);
+@@ -2066,9 +2201,25 @@
+     outside.Inflate(width, width);
+   }
+ 
++  if (aForFrame->IsEmpty())
++  {
++
++    nsRect outOfFlowRect = getOutOfFlowRect(aForFrame, aPresContext);
++
++    if (outside.width < outOfFlowRect.width) outside.width = outOfFlowRect.width;
++
++    if (outside.height < outOfFlowRect.height) outside.height = outOfFlowRect.height;
++
++    outside.x = outOfFlowRect.x;
++    outside.y = outOfFlowRect.y;
++    
++  }
++
+   // rounded version of the border
+-  for(i=0;i<4;i++){
+-    if(borderRadii[i] > 0){
++  for(i=0;i<4;i++)
++  {
++    if(borderRadii[i] > 0)
++    {
+       PaintRoundedBorder(aPresContext, aRenderingContext, aForFrame, aDirtyRect,
+                          outside, nsnull, &aOutlineStyle, aStyleContext, 
+                          aSkipSides, borderRadii, aGap, PR_TRUE);
+@@ -2111,7 +2262,8 @@
+     canDraw = aOutlineStyle.GetOutlineColor(outlineColor);
+   }
+   
+-  if (PR_TRUE == canDraw) {
++  if (PR_TRUE == canDraw) 
++  {
+     DrawSide(aRenderingContext, NS_SIDE_BOTTOM,
+              outlineStyle,
+              outlineColor,
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsIPresShell.h	2008-02-08 11:21:05.000000000 -0700
++++ layout/base/nsIPresShell.h	2008-02-04 15:48:00.000000000 -0700
+@@ -329,6 +329,15 @@
+   virtual NS_HIDDEN_(nsIFrame*) GetPrimaryFrameFor(nsIContent* aContent) const = 0;
+ 
+   /**
++   * Gets the real primary frame associated with the content object.
++   *
++   * In the case of absolutely positioned elements and floated elements,
++   * the real primary frame is the frame that is out of the flow and not the
++   * placeholder frame.
++   */
++  virtual NS_HIDDEN_(nsIFrame*) GetRealPrimaryFrameFor(nsIContent* aContent) const = 0;
++
++  /**
+    * Returns a layout object associated with the primary frame for the content object.
+    *
+    * @param aContent   the content object for which we seek a layout object
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsPresShell.cpp	2008-02-08 11:21:04.000000000 -0700
++++ layout/base/nsPresShell.cpp	2008-02-04 15:49:03.000000000 -0700
+@@ -839,6 +839,7 @@
+   NS_IMETHOD StyleChangeReflow();
+   NS_IMETHOD GetPageSequenceFrame(nsIPageSequenceFrame** aResult) const;
+   virtual NS_HIDDEN_(nsIFrame*) GetPrimaryFrameFor(nsIContent* aContent) const;
++  virtual NS_HIDDEN_(nsIFrame*) GetRealPrimaryFrameFor(nsIContent* aContent) const;
+ 
+   NS_IMETHOD GetLayoutObjectFor(nsIContent*   aContent,
+                                 nsISupports** aResult) const;
+@@ -4587,6 +4588,15 @@
+   return FrameManager()->GetPrimaryFrameFor(aContent, -1);
+ }
+ 
++nsIFrame*
++PresShell::GetRealPrimaryFrameFor(nsIContent* aContent) const
++{
++  nsIFrame *primaryFrame = FrameManager()->GetPrimaryFrameFor(aContent, -1);
++  if (!primaryFrame)
++    return nsnull;
++  return nsPlaceholderFrame::GetRealFrameFor(primaryFrame);
++}
++
+ NS_IMETHODIMP
+ PresShell::GetLayoutObjectFor(nsIContent*   aContent,
+                               nsISupports** aResult) const 
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-08 11:21:01.000000000 -0700
++++ extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-08 12:00:56.000000000 -0700
+@@ -36,10 +36,13 @@
+ 
+ #include "nsSpatialNavigationPrivate.h"
+ #include "nsGUIEvent.h"
++#include "nsIDOMHTMLImageElement.h"
+ 
+-//#define DEBUG_romaxa 1
++// #define DEBUG_romaxa 1
++
++PRInt32 gRectFudge = 1;
++PRInt32 gRectFudgeY = 1;
+ 
+-PRInt32 gRectFudge = 20;
+ PRInt32 gDirectionalBias = 1;
+ 
+ NS_INTERFACE_MAP_BEGIN(nsSpatialNavigation)
+@@ -63,19 +66,36 @@
+   mKeyWasDown = PR_FALSE;
+ }
+ 
+-#ifdef DEBUG_romaxa
++// #ifdef DEBUG_romaxa
+ nsresult debug_content(nsISupports *content)
+ {
+   nsresult rv;
+   nsCOMPtr<nsIDOMNode> node;
+   node = do_QueryInterface(content, &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+-  nsRect rect = makeRectRelativeToGlobalView(node);
++  // nsRect rect = makeRectRelativeToGlobalView(node);
+   nsString str;
+   node->GetNodeName(str);
++
++/*******************************************
+   printf("DBG:N:'%s', rect[%i,%i,%i,%i]",
+           NS_ConvertUTF16toUTF8(str).get(),
+           rect.x,rect.y,rect.width,rect.height);
++*******************************************/
++
++
++  nsCOMPtr<nsIDOMHTMLAnchorElement> link(do_QueryInterface(content));
++  if (link)
++  {
++    nsAutoString href;
++    link->GetHref(href);
++    printf("<%s href=\"%s\">\n", NS_ConvertUTF16toUTF8(str).get(), NS_ConvertUTF16toUTF8(href).get());
++  } 
++    else
++  {
++    printf("<%s>\n", NS_ConvertUTF16toUTF8(str).get());
++  }
++
+ /*
+   nsCOMPtr<nsIDOMNSHTMLElement> nselem;
+   nselem = do_QueryInterface(content, &rv);
+@@ -92,7 +112,7 @@
+ */
+   printf("\n");
+ }
+-#endif
++// #endif
+ 
+ nsSpatialNavigation::~nsSpatialNavigation()
+ {
+@@ -258,7 +278,7 @@
+     return NS_ERROR_FAILURE;
+ 
+   if (NS_FAILED(keyEvent->GetKeyCode(&keyCode)))
+-	return NS_ERROR_FAILURE;
++  return NS_ERROR_FAILURE;
+   
+   if (keyCode == nsIDOMKeyEvent::DOM_VK_RETURN && !aReal && formControlType != NS_FORM_TEXTAREA) {
+     nsCOMPtr<nsIContent> focusedContent;
+@@ -507,6 +527,7 @@
+                  nsIContent** aCurrentContent)
+ {
+ 
++  PRInt64 precedentDistance = LL_MaxInt();
+   *aCurrentContent = nsnull;
+ 
+   // There are some rects with zero width or height.
+@@ -514,11 +535,15 @@
+   // we will fix this up here by setting such a point to at
+   // least 1 px.
+ 
++  // printf("aFocusedRect.width(%d), aFocusedRect.height(%d)\n", aFocusedRect.width, aFocusedRect.height);
++
+   if (aFocusedRect.width == 0) {
++    // printf("FOCUSED RECT WIDTH IS ZERO !!!!!\n");
+     aFocusedRect.width = 1;
+   }
+ 
+   if (aFocusedRect.height == 0) {
++    // printf("FOCUSED RECT HEIGHT IS ZERO !!!!!\n");
+     aFocusedRect.height = 1;
+   }
+ 
+@@ -526,6 +551,8 @@
+   nsRect frameRect;
+   
+   PRInt64 d;
++  PRBool superPrecedent = PR_FALSE;
++  PRBool precedent = PR_FALSE;
+ 
+   do
+   {
+@@ -544,7 +571,7 @@
+     // nav to isn't part of the flow of the currently
+     // focused frame
+ 
+-	if (!isAREA) 
++  if (!isAREA) 
+     {
+       nsIFrame* flowFrame = aFocusedFrame;
+       PRBool currentFrameIsFocusedFrame = PR_FALSE;
+@@ -559,7 +586,7 @@
+       }
+       if (currentFrameIsFocusedFrame)
+         continue;
+-	}
++  }
+ 
+     ////////////////////////////////////////////////////////////////////////////////////
+     // a special case for area's which are not enumerated by the nsIFrameTraversal
+@@ -585,8 +612,8 @@
+         mapAreas->Item(i,getter_AddRefs(domNode));
+         
+         nsCOMPtr<nsIDOMHTMLAreaElement> e = do_QueryInterface(domNode);        
+-		nsCOMPtr<nsIContent> content= do_QueryInterface(domNode);
+-		getFrameForContent(content, &frame);
++        nsCOMPtr<nsIContent> content= do_QueryInterface(domNode);
++        getFrameForContent(content, &frame);
+         
+         getRectOfAreaElement(frame, e, &frameRect);
+         
+@@ -612,28 +639,81 @@
+         (aFocusedFrame && (frame->GetContent() == aFocusedFrame->GetContent())))
+       continue;
+ 
+-	// make sure the frame is targetable for focus
+-	if (!isTargetable(focusDocuments, frame))
+-      continue;
+-	
++    // make sure the frame is targetable for focus
++    if (!isTargetable(focusDocuments, frame)) continue;
++  
+     // RECT !!
+     frameRect = makeRectRelativeToGlobalView(frame);
+ 
++    // until I track down exactly why "makeRectRelativeToGlobalView" is giving
++    // us negative heights let's get the height directly --pete
++
++    nsCOMPtr<nsIContent> content = frame->GetContent();
++    if (!content) continue;
++
+     // no frames without size and be navigated to
+     // successfully.
+     if (frameRect.width == 0 || frameRect.height == 0)
+-      continue;
++    {
++      useImageIf(content, frameRect);
++      const nsSize ns(frameRect.width, frameRect.height);
++      frame->SetSize(ns);
++    }
+     
+     // deflate the rect to avoid overlapping with other
+     // rects.
+-    frameRect.Deflate(gRectFudge, gRectFudge);
++    frameRect.Deflate(gRectFudge, gRectFudgeY);
++
++    // ensure positive width
++    frameRect.width = abs(frameRect.width);
++    frameRect.height = abs(frameRect.height);
+ 
+     if (!isRectInDirection(aDirection, aFocusedRect, frameRect))
+       continue;
+     
+-    nsCOMPtr<nsIContent> content = frame->GetContent();
+-    if (!content)
+-      continue;
++    nsCOMPtr<nsIDOMNode> n = do_QueryInterface(content);
++    nsString str;
++    if (n) n->GetNodeName(str);
++
++    if (str.Equals(NS_LITERAL_STRING("IFRAME"))) continue;
++
++    // if target takes precedence then use it - distance is not always the shortest for a precedent target
++    if (takesSuperPrecedence(aDirection, aFocusedRect, frameRect))
++    {
++      // reset distance as we are now in super precedence mode
++      if (!superPrecedent) *aDSoFar = LL_MaxInt();
++      superPrecedent = PR_TRUE;
++
++      precedentDistance = getPrecedentDistance(aDirection, aFocusedRect, frameRect);
++
++      if ((*aDSoFar) > precedentDistance)
++      {
++        (*aDSoFar) = precedentDistance;
++
++        NS_IF_RELEASE(*aCurrentContent);
++        NS_ADDREF(*aCurrentContent = content);
++      } 
++    }
++
++    if (superPrecedent) continue;
++
++    // if target takes precedence then use it - distance is not always the shortest for a precedent target
++    if (takesPrecedence(aDirection, aFocusedRect, frameRect))
++    {
++      precedent = PR_TRUE;
++
++      precedentDistance = getPrecedentDistance(aDirection, aFocusedRect, frameRect);
++
++      if ((*aDSoFar) > precedentDistance)
++      {
++        (*aDSoFar) = precedentDistance;
++
++        NS_IF_RELEASE(*aCurrentContent);
++        NS_ADDREF(*aCurrentContent = content);
++      }
++    }
++
++    if (precedent) continue;
+ 
+     d = spatialDistance(aDirection, aFocusedRect, frameRect);
+     
+@@ -725,6 +805,8 @@
+               aContent);
+ 
+ 
++  // debug_content(*aContent);
++
+   if ( (hhElement || iFrameElement) && mNavigationFramesState)
+   {
+     mNavigationFramesState = PR_FALSE;
+@@ -868,12 +950,21 @@
+   if (!isAREA) 
+   {
+     // RECT !!
+-		if (focusedFrame)
+-	 		focusedRect = makeRectRelativeToGlobalView(focusedFrame);
++    if (focusedFrame)
++    {
++      focusedRect = makeRectRelativeToGlobalView(focusedFrame);
++      nsRect size (focusedFrame->GetRect());
++
++      // until I track down exactly why "makeRectRelativeToGlobalView" is giving
++      // us negative heights let's get the height directly --pete
++      // focusedRect.height = NS_TWIPS_TO_POINTS(size.height);
++      focusedRect.height = abs(focusedRect.height);
++      focusedRect.width = abs(focusedRect.width);
++    }
+ 
+     // deflate the rect to avoid overlapping with other
+     // rects.
+-    focusedRect.Deflate(gRectFudge, gRectFudge);
++    focusedRect.Deflate(gRectFudge, gRectFudgeY);
+   }
+   else
+   {
+@@ -883,10 +974,12 @@
+ 
+   nsCOMPtr<nsIContent> c;
+   if (focusedFrame)
++  {
+     getContentInDirection(direction, presContext, focusedRect, focusedFrame, PR_FALSE, isAREA, getter_AddRefs(c));
++  }
+   
+-  if (c) {
+-   
++  if (c) 
++  {
+     nsIDocument* doc = c->GetDocument();
+     if (!doc)
+       return NS_ERROR_FAILURE;
+@@ -923,7 +1016,7 @@
+   
+     presContext = shell->GetPresContext();
+ 
+-	nsIFrame* parentFrame = shell->GetRootFrame();
++    nsIFrame* parentFrame = shell->GetRootFrame();
+ 
+     nsCOMPtr<nsIDocument> subdoc = focusedContent->GetDocument();
+     if (!subdoc) return NS_OK;
+@@ -935,7 +1028,7 @@
+     if (!domWindowInternal) return NS_OK;
+ 
+     nsCOMPtr<nsIDOMWindowInternal> domWindowInternal2 = domWindowInternal;
+-	domWindowInternal2->GetOpener(getter_AddRefs(domWindowInternal));
++    domWindowInternal2->GetOpener(getter_AddRefs(domWindowInternal));
+     if (!domWindowInternal) 
+       domWindowInternal = domWindowInternal2;
+ 
+@@ -956,10 +1049,11 @@
+     nsRect subdocRect = subdocFrame->GetRect();
+ 
+     nsPoint frame_offset = subdocFrame->GetOffsetToExternal(parentFrame);
+-	
+-	subdocRect.x = frame_offset.x;
+-	subdocRect.y = frame_offset.y;
++  
++    subdocRect.x = frame_offset.x;
++    subdocRect.y = frame_offset.y;
+ 
++    // printf("CALL:B getContentInDirection \n");
+     getContentInDirection(direction, presContext, subdocRect, subdocFrame, PR_TRUE, PR_FALSE, getter_AddRefs(c));
+   }
+ 
+@@ -1017,8 +1111,7 @@
+ void 
+ nsSpatialNavigation::setFocusedContent(nsIContent* c)
+ {
+-  if (!c)
+-    return;
++  if (!c) return;
+ 
+   nsCOMPtr<nsIContent> subdocContent;
+   getContentFromFrame(c, getter_AddRefs(subdocContent));
+@@ -1028,6 +1121,11 @@
+   }
+ 
+   nsIContent* currentContent = c;
++
++  // printf("**************************************************\n");
++  // debug_content(c);
++  // printf("**************************************************\n");
++
+   nsCOMPtr<nsIDOMElement> element = do_QueryInterface(currentContent);
+   nsCOMPtr<nsIDOMNode> node(do_QueryInterface(element));
+ 
+@@ -1040,7 +1138,8 @@
+   nsPresContext* presContext = getPresContext(c);
+   nsCOMPtr<nsIPresShell> presShell = presContext->PresShell();
+   //#ifdef OLDER_LAYOUT  
+-  if (mService->mOrderLayout) {
++  if (mService->mOrderLayout) 
++  {
+     // Google Spreadsheets works ugly with this call
+     presContext->EventStateManager()->SetContentState(c, NS_EVENT_STATE_FOCUS);  
+     presShell->ScrollContentIntoView(c, 
+@@ -1087,7 +1186,7 @@
+   rootWindow->GetContent(getter_AddRefs(windowContent));
+   
+   if (!windowContent)
+-	return nsnull;
++  return nsnull;
+ 
+   NS_ADDREF(resultWindow = windowContent);
+   return resultWindow;
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-02-08 11:21:02.000000000 -0700
++++ extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-02-05 10:36:50.000000000 -0700
+@@ -233,11 +233,18 @@
+ void     poly2Rect                    (int sides, nscoord* coord, nsRect* rect);
+ void     getRectOfAreaElement         (nsIFrame* f, nsIDOMHTMLAreaElement* e, nsRect* r);
+ PRBool   isRectInDirection            (int direction, nsRect& focusedRect, nsRect& frameRect);
++PRBool   takesSuperPrecedence         (int direction, nsRect& c, nsRect& t);
++PRBool   takesPrecedence              (int direction, nsRect& c, nsRect& t);
+ PRInt64  spatialDistance              (int direction, nsRect& a, nsRect& b);
++PRInt64  getPrecedentDistance         (int direction, nsRect& c, nsRect& t);
++void     useImageIf                   (nsIContent* aContent, nsRect& r);
+ void     GetWindowFromDocument        (nsIDOMDocument* aDocument, nsIDOMWindowInternal** aWindow);
++void     displayRectProperties        (nsRect& curRect, nsRect& targetRect);
+ PRBool   IsPartiallyVisible           (nsIPresShell* shell, nsIFrame* frame, PRBool aForce = PR_TRUE);
+ void     ScrollWindow                 (int direction, nsIDOMWindow* window);
+ 
++nsresult debug_content                (nsISupports *content);
++
+ 
+ 
+ class DisableJSScope
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-02-08 11:21:02.000000000 -0700
++++ extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-02-08 12:07:08.000000000 -0700
+@@ -37,6 +37,7 @@
+ #include "nsSpatialNavigationPrivate.h"
+ #include "nsIDOMNSElement.h"
+ #include "nsIDOMTextRectangle.h"
++#include "nsIDOMHTMLImageElement.h"
+ 
+ #ifdef DEBUG_outputframes
+ #include "nsIFrameDebug.h"
+@@ -44,6 +45,23 @@
+ #include "nsComponentManagerUtils.h"
+ #include "nsRect.h"
+ 
++void displayRectProperties (nsRect& curRect, nsRect& targetRect)
++{
++  printf("######## CURRENT RECT ########\n");
++  printf("TOP(%d), LEFT(%d)\n", curRect.y, curRect.x);
++  printf("HEIGHT(%d), WIDTH(%d)\n", curRect.height, curRect.width);
++  printf("MIDDLE LEFT(%d), MIDDLE TOP(%d)\n", (curRect.y + curRect.height/2), (curRect.x + curRect.width/2));
++  printf("BOTTOM(%d), RIGHT(%d)\n", (curRect.y + curRect.height), (curRect.x + curRect.width));
++  printf("##############################\n");
++
++  printf("######## TARGET  RECT ########\n");
++  printf("TOP(%d), LEFT(%d)\n", targetRect.y, targetRect.x);
++  printf("HEIGHT(%d), WIDTH(%d)\n", targetRect.height, targetRect.width);
++  printf("MIDDLE LEFT(%d), MIDDLE TOP(%d)\n", (targetRect.y + targetRect.height/2), (targetRect.x + targetRect.width/2));
++  printf("BOTTOM(%d), RIGHT(%d)\n", (targetRect.y + targetRect.height), (targetRect.x + targetRect.width));
++  printf("##############################\n");
++}
++
+ static PRBool is_space(char c)
+ {
+   return (c == ' '  || c == '\f' || c == '\n' ||
+@@ -311,9 +329,8 @@
+   
+   nsIPresShell *presShell = doc->GetPrimaryShell();
+   nsIFrame* frame = presShell->GetPrimaryFrameFor(aContent);
+-  
+-  if (!frame)
+-    return NS_ERROR_FAILURE;
++
++  if (!frame) return NS_ERROR_FAILURE;
+   
+   *aFrame = frame;
+   return NS_OK;
+@@ -444,7 +461,9 @@
+   domrect->GetRight(&pright);
+   domrect->GetTop(&ptop);
+   domrect->GetBottom(&pbottom);
+-  result = nsRect(pleft, ptop, pright - pleft, pbottom - ptop);
++
++  result = nsRect(pleft, ptop, abs(pright - pleft), abs(pbottom - ptop));
++
+   if (result.width && result.height) return result;
+   // Some <a> links (ex: google.com 1 2 3 4 5 ...) have size 0
+   // Check their parent
+@@ -452,6 +471,7 @@
+   if (!node) return result; nsCOMPtr<nsIDOMNode> child;
+   node->GetFirstChild(getter_AddRefs(child));
+   if (!child) return result;
++
+   return makeRectRelativeToGlobalView(child);
+ }
+ 
+@@ -533,26 +553,126 @@
+ {
+   if (direction == eNavLeft)
+   {
+-    return (frameRect.x < focusedRect.x);
++    int middle = frameRect.x + abs(frameRect.width)/2;
++    return (middle < focusedRect.x);
+   }
+   
+   if (direction == eNavRight)
+   {
+-    return (frameRect.x + abs(frameRect.width) > focusedRect.x + abs(focusedRect.width));
++    int middle = frameRect.x + abs(frameRect.width)/2;
++    return (middle  > focusedRect.x + abs(focusedRect.width));
+   }
+   
+   if (direction == eNavUp)
+   {
++    int middle = frameRect.y + abs(frameRect.height)/2;
++    // return (middle < focusedRect.y);
+     return (frameRect.y < focusedRect.y);
+   }
+   
+   if (direction == eNavDown)
+   {
+-    return (frameRect.y + abs(frameRect.height) > focusedRect.y + abs(focusedRect.height));
++    int middle = frameRect.y + abs(frameRect.height)/2;
++    // return (middle > focusedRect.y + abs(focusedRect.height));
++    // displayRectProperties(focusedRect, frameRect);
++    return (frameRect.y > focusedRect.y);
+   }
+   return PR_FALSE;
+ }
+ 
++// takesSuperPrecedence means that is is a very preferable target
++// where the middle falls between the top or bottom of the current rect
++PRBool takesSuperPrecedence(int direction, nsRect& c, nsRect& t)
++{
++  PRBool rv = PR_FALSE;
++  
++  if (direction == eNavLeft || direction == eNavRight)
++  {
++    int tMiddle = t.y + abs(t.height)/2;
++    int tBottom = t.y + abs(t.height);
++    int tEnd    = t.x + abs(t.width);
++
++    int cBottom = c.y + abs(c.height);
++    int cEnd    = c.x + abs(c.width);
++
++    if (direction == eNavLeft && tEnd > c.x) return PR_FALSE;
++
++    if (direction == eNavRight && t.x < cEnd) return PR_FALSE;
++
++    if (t.y >= c.y && t.y <= cBottom             ||
++        tMiddle >= c.y && tMiddle <= cBottom     || 
++        tBottom >= c.y && tBottom <= cBottom     || 
++        t.y == c.y                               || 
++        tBottom == cBottom                       ||
++        t.y <= c.y && tBottom >= cBottom)
++      rv = PR_TRUE;
++  }
++
++  if (direction == eNavUp || direction == eNavDown)
++  {
++    int tMiddle = t.x + abs(t.width)/2;
++    int tEnd    = t.x + abs(t.width);
++    int tBottom = t.y + abs(t.height);
++
++    int cEnd    = c.x + abs(c.width);
++    int cBottom = c.y + abs(c.height);
++
++    if (direction == eNavUp && t.y > c.y) return PR_FALSE;
++
++    if (direction == eNavDown && t.y < c.y) return PR_FALSE;
++
++    if (tMiddle >= c.x && tMiddle <= cEnd || 
++        t.x >= c.x && t.x <= cEnd         || 
++        c.x == t.x                        || 
++        cEnd == tEnd                      ||
++        tEnd >= c.x && tEnd <= cEnd       ||
++        t.x <= c.x && tEnd >= cEnd)
++      rv = PR_TRUE;
++  }
++
++  return rv;
++}
++  
++PRBool takesPrecedence(int direction, nsRect& c, nsRect& t)
++{
++  PRBool rv = PR_FALSE;
++  
++  if (direction == eNavLeft || direction == eNavRight)
++  {
++    int half = abs(c.height)/2;
++    int minY(c.y/* - half*/);
++    int maxY(c.y + abs(c.height)/* + half*/);
++
++    int tMiddle = t.y + abs(t.height)/2;
++    int tBottom = t.y + abs(t.height);
++
++    int cBottom = c.y + abs(c.height);
++
++    if (t.y >= minY && t.y <=  maxY              || 
++        tBottom >= minY && tBottom <= maxY       || 
++        tMiddle >= c.y && tMiddle <= cBottom     || 
++        t.y >= c.y && t.y <= cBottom             ||
++        tBottom >= c.y && tBottom <= cBottom     ||
++        t.y <= c.y && tBottom >= cBottom)
++      rv = PR_TRUE;
++  }
++
++  if (direction == eNavUp || direction == eNavDown)
++  {
++    int half = abs(c.width)/2;
++    int minX(c.x /*- half*/);
++    int maxX(c.x + abs(c.width)/* + half*/);
++
++    int cEnd = c.x + abs(c.width);
++    int tEnd = t.x + abs(t.width);
++
++    if (t.x >= minX && t.x <=  maxX  || tEnd >= minX && tEnd <= maxX)
++      rv = PR_TRUE;
++  }
++
++  return rv;
++}
++
+ PRInt64 spatialDistance(int direction, nsRect& a, nsRect& b)
+ {
+   PRBool inlineNavigation = PR_FALSE;
+@@ -612,6 +732,9 @@
+     //         |---|
+     //         |---|
+     //
++
++    // printf("   CUR: a.y (%d), a.x (%d), a.width (%d), a.height (%d)\n", a.y, a.x, a.width, a.height);
++    // printf("TARGET: b.y (%d), b.x (%d), b.width (%d), b.height (%d)\n", b.y, b.x, b.width, b.height);
+     
+     if (a.y > b.y + b.height) 
+     {
+@@ -765,6 +888,143 @@
+   return d;
+ }
+ 
++// sqrt( (x1 - x2)2 + (y1 - y2)2 )
++PRInt64 getPrecedentDistance(int direction, nsRect& c, nsRect& t)
++{
++  PRInt64 rv = LL_MaxInt();
++  PRInt64 sec = LL_MaxInt();
++
++  if (direction == eNavLeft)
++  {
++    int cY(c.y + abs(c.height)/2), tY(t.y + abs(t.height)/2);
++    int cX(c.x), tX(t.x + abs(t.width));
++
++    int p = ((cX - tX)*(cX - tX)) + ((cY - tY)*(cY - tY));
++
++    sec = sqrt(p);
++
++    p = ((c.x - t.x)*(c.x - t.x)) + ((c.y - t.y)*(c.y - t.y));
++
++    rv = sqrt(p);
++
++    if (sec < rv && c.y == t.y) rv = sec;
++  }
++
++  if (direction == eNavRight)
++  {
++    int cY(c.y + abs(c.height)/2), tY(t.y + abs(t.height)/2);
++    int cX(c.x + abs(c.width)), tX(t.x);
++
++    int p = ((tX - cX)*(tX - cX)) + ((tY - cY)*(tY - cY));
++
++    sec = sqrt(p);
++
++    p = ((t.x - c.x)*(t.x - c.x)) + ((t.y - c.y)*(t.y - c.y));
++
++    rv = sqrt(p);
++
++    if (sec < rv && c.y == t.y) rv = sec;
++  }
++
++  if (direction == eNavUp)
++  {
++    int cX(c.x + abs(c.width)/2), tX(t.x + abs(t.width)/2);
++    int cY(c.y), tY(t.y + abs(t.height));
++
++    int p = ((cX - tX)*(cX - tX)) + ((cY - tY)*(cY - tY));
++
++    sec = sqrt(p);
++
++    p = ((c.x - t.x)*(c.x - t.x)) + ((c.y - t.y)*(c.y - t.y));
++
++    rv = sqrt(p);
++
++    if (sec < rv && c.x == t.x) rv = sec;
++
++    sec = (c.y - t.y);
++
++    if (sec < rv) rv = sec;
++  }
++
++  if (direction == eNavDown)
++  {
++    // get middle X for current and target rects
++    int cX(c.x + abs(c.width)/2), tX(t.x + abs(t.width)/2);
++    int cY(c.y + abs(c.height)/2), tY(t.y + abs(t.height)/2);
++
++    int p = ((tX - cX)*(tX - cX)) + ((tY - cY)*(tY - cY));
++
++    sec = sqrt(p);
++
++    p = ((t.x - c.x)*(t.x - c.x)) + ((t.y - c.y)*(t.y - c.y));
++
++    rv = sqrt(p);
++
++    if (sec < rv && c.x == t.x) rv = sec;
++
++    sec = (t.y - c.y);
++
++    if (sec < rv) rv = sec;
++  }
++
++  return abs(rv);
++}
++
++void useImageIf (nsIContent* aContent, nsRect& r)
++{
++  nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aContent);
++  if (node)
++  {
++    nsCOMPtr<nsIDOMNodeList> children;
++    node->GetChildNodes(getter_AddRefs(children));
++
++    if (!children) return;
++
++    PRUint32 childCount = 0;
++    children->GetLength(&childCount);
++
++    for (PRUint32 i=0; i<childCount; ++i)
++    {
++      nsCOMPtr<nsIDOMNode> child;
++      children->Item(i, getter_AddRefs(child));
++
++      if (child)
++      {
++        nsString str;
++        child->GetNodeName(str);
++
++        nsCOMPtr<nsIDOMHTMLImageElement> img(do_QueryInterface(child));
++ 
++        if (img)
++        {
++          PRInt32 width, height;
++
++          img->GetWidth(&width);
++          img->GetHeight(&height);
++
++          nsAutoString src, alt;
++          img->GetSrc(src);
++          img->GetAlt(alt);
++
++          /********************************************
++          printf("<img src=\"%s\" alt=\"%s\" width=\"%d\" height=\"%d\">\n", 
++                     NS_ConvertUTF16toUTF8(src).get(), NS_ConvertUTF16toUTF8(alt).get(), 
++                     width, height);
++          ********************************************/
++
++          r.width = width;
++          r.height = height;
++
++          nsRect nr = makeRectRelativeToGlobalView(img);
++ 
++          r.x = nr.x;
++          r.y = nr.y;
++        }
++      }
++    }
++  }
++}
++
+ void GetWindowFromDocument(nsIDOMDocument* aDocument, nsIDOMWindowInternal** aWindow)
+ {
+   nsCOMPtr<nsIDOMDocumentView> docview = do_QueryInterface(aDocument);
