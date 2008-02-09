@@ -1,61 +1,56 @@
-# XPTC_InvokeByIndex crashes
-# Bug 339782  [ARM] XPTC_InvokeByIndex crashes when cross-compiled under GCC 3.4.x with EABI (CodeSourcery)
 Index: xpcom/reflect/xptcall/src/md/unix/xptcinvoke_arm.cpp
 ===================================================================
 RCS file: /cvsroot/mozilla/xpcom/reflect/xptcall/src/md/unix/xptcinvoke_arm.cpp,v
-retrieving revision 1.10
-diff --unified -r1.10 xptcinvoke_arm.cpp
---- xpcom/reflect/xptcall/src/md/unix/xptcinvoke_arm.cpp	6 Feb 2007 08:25:37 -0000	1.10
-+++ xpcom/reflect/xptcall/src/md/unix/xptcinvoke_arm.cpp	10 Oct 2007 09:35:28 -0000
-@@ -43,12 +43,22 @@
+retrieving revision 1.12
+diff -u -b -B -r1.12 xptcinvoke_arm.cpp
+--- xpcom/reflect/xptcall/src/md/unix/xptcinvoke_arm.cpp	2 Nov 2007 14:38:07 -0000	1.12
++++ xpcom/reflect/xptcall/src/md/unix/xptcinvoke_arm.cpp	12 Dec 2007 16:14:01 -0000
+@@ -43,6 +43,19 @@
  #error "This code is for Linux ARM only. Check that it works on your system, too.\nBeware that this code is highly compiler dependent."
  #endif
  
++
++
++/* Note that we give a "worst case" estimate of how much stack _might_ be
++* needed (for __ARM_EABI__), rather than the real count - this should be safe */
++
 +#ifdef __ARM_EABI__
 +#define DOUBLEWORD_ALIGN(p) ((PRUint32 *)((((PRUint32)(p)) + 7) & 0xfffffff8))
++#define VAR_STACK_SIZE_64 3
 +#else
 +#define DOUBLEWORD_ALIGN(p) (p)
++#define VAR_STACK_SIZE_64 2
 +#endif
 +
  // Remember that these 'words' are 32bit DWORDS
  
  static PRUint32
- invoke_count_words(PRUint32 paramCount, nsXPTCVariant* s)
- {
-     PRUint32 result = 0;
-+
-+    /* Note that we give a "worst case" estimate of how much stack _might_ be
-+     * needed, rather than the real count - this should be safe */
-+
-     for(PRUint32 i = 0; i < paramCount; i++, s++)
-     {
-         if(s->IsPtrData())
-@@ -64,7 +74,7 @@
+@@ -64,7 +78,7 @@
              result++;
              break;
          case nsXPTType::T_I64    :
 -            result+=2;
-+            result+=3;
++            result+=VAR_STACK_SIZE_64;
              break;
          case nsXPTType::T_U8     :
          case nsXPTType::T_U16    :
-@@ -72,13 +82,13 @@
+@@ -72,13 +86,13 @@
              result++;
              break;
          case nsXPTType::T_U64    :
 -            result+=2;
-+            result+=3;
++            result+=VAR_STACK_SIZE_64;
              break;
          case nsXPTType::T_FLOAT  :
              result++;
              break;
          case nsXPTType::T_DOUBLE :
 -            result+=2;
-+            result+=3;
++            result+=VAR_STACK_SIZE_64;
              break;
          case nsXPTType::T_BOOL   :
          case nsXPTType::T_CHAR   :
-@@ -91,6 +101,15 @@
+@@ -91,6 +105,15 @@
              break;
          }
      }
@@ -71,7 +66,7 @@ diff --unified -r1.10 xptcinvoke_arm.cpp
      return result;
  }
  
-@@ -109,13 +128,16 @@
+@@ -109,13 +132,16 @@
          case nsXPTType::T_I8     : *((PRInt8*)  d) = s->val.i8;          break;
          case nsXPTType::T_I16    : *((PRInt16*) d) = s->val.i16;         break;
          case nsXPTType::T_I32    : *((PRInt32*) d) = s->val.i32;         break;
@@ -94,10 +89,10 @@ diff --unified -r1.10 xptcinvoke_arm.cpp
 Index: xpcom/reflect/xptcall/src/md/unix/xptcstubs_arm.cpp
 ===================================================================
 RCS file: /cvsroot/mozilla/xpcom/reflect/xptcall/src/md/unix/xptcstubs_arm.cpp,v
-retrieving revision 1.11
-diff --unified -r1.11 xptcstubs_arm.cpp
---- xpcom/reflect/xptcall/src/md/unix/xptcstubs_arm.cpp	6 Feb 2007 08:25:37 -0000	1.11
-+++ xpcom/reflect/xptcall/src/md/unix/xptcstubs_arm.cpp	10 Oct 2007 09:35:28 -0000
+retrieving revision 1.13
+diff -u -b -B -r1.13 xptcstubs_arm.cpp
+--- xpcom/reflect/xptcall/src/md/unix/xptcstubs_arm.cpp	2 Nov 2007 14:38:07 -0000	1.13
++++ xpcom/reflect/xptcall/src/md/unix/xptcstubs_arm.cpp	12 Dec 2007 16:14:01 -0000
 @@ -61,6 +61,12 @@
  static nsresult PrepareAndDispatch(nsXPTCStubBase* self, uint32 methodIndex, PRUint32* args) asm("_PrepareAndDispatch")
  DONT_DROP_OR_WARN;
@@ -111,7 +106,7 @@ diff --unified -r1.11 xptcstubs_arm.cpp
  static nsresult
  PrepareAndDispatch(nsXPTCStubBase* self, uint32 methodIndex, PRUint32* args)
  {
-@@ -104,13 +110,16 @@
+@@ -104,13 +111,16 @@
          case nsXPTType::T_I8     : dp->val.i8  = *((PRInt8*)  ap);       break;
          case nsXPTType::T_I16    : dp->val.i16 = *((PRInt16*) ap);       break;
          case nsXPTType::T_I32    : dp->val.i32 = *((PRInt32*) ap);       break;
