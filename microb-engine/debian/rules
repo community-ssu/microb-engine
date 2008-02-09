@@ -246,7 +246,9 @@ ifeq ($(debug),y)
 #Hack for tablet compiler
 ifeq ($(TABLET),.tablet)
 ifeq ($(GCCENV),.cs)
+ifeq (,$(findstring $(DEB_HOST_ARCH),arm armel))
 	optimize_add += -O1
+endif
 endif
 endif
 	configopts += --disable-strip --enable-debug --enable-debugger-info-modules
