@@ -200,6 +200,7 @@ usr/lib/microb-engine/chrome/browser/content/branding/about*.png
 usr/lib/microb-engine/chrome/browser/content/branding/config*.html
 usr/lib/microb-engine/chrome/browser/content/branding/extensions*
 usr/lib/microb-engine/chrome/browser/content/branding/feed*.gif
+usr/lib/microb-engine/chrome/browser/content/browser/feeds/*
 usr/lib/microb-engine/chrome/browser*.manifest
 usr/lib/microb-engine/res/fon*
 usr/lib/microb-engine/res/forms.css
@@ -230,6 +231,12 @@ usr/lib/microb-engine/components/*gnomevfs*.so
 usr/lib/microb-engine/components/nsExtensionManager.js
 usr/lib/microb-engine/components/nsProxyAutoConfig*.js
 usr/lib/microb-engine/components/*xulappinfo*
+usr/lib/microb-engine/components/Feed*.js
+usr/lib/microb-engine/components/*feed*.xpt
+usr/lib/microb-engine/components/WebContentConverter.js
+usr/lib/microb-engine/components/nsSetDefaultBrowser.js
+usr/lib/microb-engine/components/*mozgnome*.so
 usr/lib/microb-engine/*jprof*
 ../resources/components/*.js usr/lib/microb-engine/components
+../resources/scripts/*.sh usr/share/browser/scripts
 usr/lib/microb-engine/regxp*

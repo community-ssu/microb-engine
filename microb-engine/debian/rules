@@ -352,6 +352,7 @@ unpack-stamp:
 	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(config)
 	tar -zxvf $(CURDIR)/tarballs/$(srcdir).tar.gz -C $(btree) > /dev/null
 	cp -rf  $(CUR_DEB_DIR)/resources/branding $(builddir)/
+	cd $(builddir) && cd toolkit/components/ && ln -s ../../browser/components/feeds browser-feeds && ln -s ../../browser/components/shell shell
 	cd $(builddir) && for str in `cat $(CURDIR)/tarballs/trunkupdates/series`;do echo; echo Applying trunk update: $$str...; echo; patch -p1 < $(CURDIR)/tarballs/trunkupdates/$$str; done 
 ifeq ($(svgport),y)
 	cd $(builddir) && cd layout && mv svg svg.back && cp -rf ../../../debian/resources/sandbox/svg_backport/layout/svg ./
