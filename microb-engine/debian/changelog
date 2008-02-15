@@ -1,3 +1,14 @@
+microb-engine (1.0.4-13) unstable; urgency=low
+
+  * Adding SNAV work to date 
+  * Disabled -O1 for debug arm build
+  * Sync with bug 339782
+  * Checkin missing file to make better_rss feature available
+  * Fixed default amount of sessionhistory.max_entries
+  * Fixed ln -s without errors
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 15 Feb 2008 12:57:21 +0200
+
 microb-engine (1.0.4-12) unstable; urgency=low
 
   * Added some prefs for extensions updating
