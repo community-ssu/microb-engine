@@ -1,3 +1,9 @@
+microb-engine (1.0.4-14) unstable; urgency=low
+
+  * Magic fix for bug NB#78227, disabled not required stuff
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 18 Feb 2008 17:17:39 +0200
+
 microb-engine (1.0.4-13) unstable; urgency=low
 
   * Adding SNAV work to date 

@@ -77,7 +77,6 @@ snav/SNAV_rich_edit.diff
 345_BUG382486_EngineOutputProtocolSupport.diff
 350_GnomeVfsWriteSupport.diff
 355_MICROB_PANGO_LINKING.diff
-370_Suspend_Plugin_At_Start.diff
 
 memleaks/attachment.cgi?id=270043.diff
 
