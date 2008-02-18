@@ -729,12 +729,12 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/src/nsFeedSniffer.cpp mozil
    // Thus begins the actual sniffing.
 -  nsDependentCSubstring dataString((const char*)testData, length);
 +  //  nsDependentCSubstring dataString((const char*)testData, length);
-+  char *tmp_str = strdup(testData);
-+  strncpy(tmp_str, testData, length);
-+  if (!tmp_str)  
-+    return NS_OK; 
++  // char *tmp_str = strdup(testData);
++  // strncpy(tmp_str, testData, length);
++  // if (!tmp_str)  
++  //  return NS_OK; 
 +
-+  nsCString dataString((const char *)tmp_str);
++  nsCString dataString((const char *)testData, length);
  
    PRBool isFeed = PR_FALSE;
  
