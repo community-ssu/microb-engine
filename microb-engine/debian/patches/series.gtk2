@@ -156,6 +156,7 @@ crash/415_BUG371882_Editor_Crash.diff
 crash/460_stylecontext_random_crash.diff
 crash/JSopcode_null_check1.diff
 crash/chrome_resources_fail.diff
+crash/Bug78227.maps.crash.diff
 #CRASHES
 
 465_BUG371253_enable_flat_install.diff

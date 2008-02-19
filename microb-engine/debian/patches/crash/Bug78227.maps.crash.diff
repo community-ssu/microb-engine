@@ -1,0 +1,15 @@
+#Bug 78227 Browser crashes while zooming maps in mapquest.com web page.
+--- mozilla/content/base/src/nsXMLHttpRequest.cpp.orig	2008-02-08 18:30:53.000000000 +0200
++++ mozilla/content/base/src/nsXMLHttpRequest.cpp	2008-02-19 10:10:27.000000000 +0200
+@@ -1273,10 +1273,11 @@ nsXMLHttpRequest::OnStartRequest(nsIRequ
+   }
+ 
+   nsCOMPtr<nsIChannel> channel(do_QueryInterface(request));
+   NS_ENSURE_TRUE(channel, NS_ERROR_UNEXPECTED);
+ 
++  NS_ENSURE_TRUE(mChannel, NS_ERROR_UNEXPECTED);
+   mChannel->SetOwner(mPrincipal);
+ 
+   mReadRequest = request;
+   mContext = ctxt;
+   mState |= XML_HTTP_REQUEST_PARSEBODY;
