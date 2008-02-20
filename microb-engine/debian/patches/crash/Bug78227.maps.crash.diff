@@ -1,15 +1,88 @@
 #Bug 78227 Browser crashes while zooming maps in mapquest.com web page.
---- mozilla/content/base/src/nsXMLHttpRequest.cpp.orig	2008-02-08 18:30:53.000000000 +0200
-+++ mozilla/content/base/src/nsXMLHttpRequest.cpp	2008-02-19 10:10:27.000000000 +0200
-@@ -1273,10 +1273,11 @@ nsXMLHttpRequest::OnStartRequest(nsIRequ
+#Bug 390219  Trunk topcrash [@ nsXMLHttpRequest::OnStartRequest]
+Index: mozilla/content/base/src/nsXMLHttpRequest.cpp
+===================================================================
+--- mozilla.orig/content/base/src/nsXMLHttpRequest.cpp
++++ mozilla/content/base/src/nsXMLHttpRequest.cpp
+@@ -1257,43 +1257,58 @@
+   PRUint32 totalRead;
+   return inStr->ReadSegments(nsXMLHttpRequest::StreamReaderFunc, (void*)this, count, &totalRead);
+ }
+ 
+ /* void onStartRequest (in nsIRequest request, in nsISupports ctxt); */
+ NS_IMETHODIMP
+ nsXMLHttpRequest::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
+ {
++  nsresult rv;
++  nsCOMPtr<nsIMultiPartChannel> mpChannel = do_QueryInterface(request);
++  if (mpChannel) {
++    nsCOMPtr<nsIChannel> baseChannel;
++    rv = mpChannel->GetBaseChannel(getter_AddRefs(baseChannel));
++    NS_ENSURE_SUCCESS(rv, rv);
++
++    if (baseChannel != mChannel) {
++      return NS_OK;
++    }
++  }
++  else if (request != mChannel) {
++    return NS_OK;
++  }
++
+   // Don't do anything if we have been aborted
+   if (mState & XML_HTTP_REQUEST_UNINITIALIZED)
+     return NS_OK;
+ 
+   if (mState & XML_HTTP_REQUEST_ABORTED) {
+     NS_ERROR("Ugh, still getting data on an aborted XMLHttpRequest!");
+ 
+     return NS_ERROR_UNEXPECTED;
    }
  
    nsCOMPtr<nsIChannel> channel(do_QueryInterface(request));
    NS_ENSURE_TRUE(channel, NS_ERROR_UNEXPECTED);
  
-+  NS_ENSURE_TRUE(mChannel, NS_ERROR_UNEXPECTED);
-   mChannel->SetOwner(mPrincipal);
+-  mChannel->SetOwner(mPrincipal);
++  channel->SetOwner(mPrincipal);
  
    mReadRequest = request;
    mContext = ctxt;
    mState |= XML_HTTP_REQUEST_PARSEBODY;
+   ChangeState(XML_HTTP_REQUEST_LOADED);
+ 
+   nsIURI* uri = GetBaseURI();
+ 
+   // Create an empty document from it 
+   const nsAString& emptyStr = EmptyString();
+-  nsresult rv = nsContentUtils::CreateDocument(emptyStr, emptyStr, nsnull, uri,
+-                                               uri, mPrincipal,
+-                                               getter_AddRefs(mDocument));
++  rv = nsContentUtils::CreateDocument(emptyStr, emptyStr, nsnull, uri,
++                                      uri, mPrincipal,
++                                      getter_AddRefs(mDocument));
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   // Reset responseBody
+   mResponseBody.Truncate();
+ 
+   // Register as a load listener on the document
+   nsCOMPtr<nsPIDOMEventTarget> target(do_QueryInterface(mDocument));
+   if (target) {
+@@ -1364,18 +1379,16 @@
+ /* void onStopRequest (in nsIRequest request, in nsISupports ctxt, in nsresult status, in wstring statusArg); */
+ NS_IMETHODIMP
+ nsXMLHttpRequest::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult status)
+ {
+   // Don't do anything if we have been aborted
+   if (mState & XML_HTTP_REQUEST_UNINITIALIZED)
+     return NS_OK;
+ 
+-  nsresult rv = NS_OK;
+-
+   nsCOMPtr<nsIParser> parser;
+ 
+   // If we're loading a multipart stream of XML documents, we'll get
+   // an OnStopRequest() for the last part in the stream, and then
+   // another one for the end of the initiating
+   // "multipart/x-mixed-replace" stream too. So we must check that we
+   // still have an xml parser stream listener before accessing it
+   // here.
