@@ -702,3 +702,23 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.h
    PRUint8      *mImageBits;
    GdkPixmap    *mImagePixmap;
    PRUint8      *mTrueAlphaBits;
+   
+Index: mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
+===================================================================
+   
+--- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2008-02-20 10:44:59.000000000 -0500
++++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2008-02-20 10:46:56.000000000 -0500
+@@ -152,7 +152,12 @@
+   if (mSurface)
+   {
+     if (!aWindow) return NS_ERROR_NULL_POINTER;
+-
++    if (!mDisplay)
++    {
++        delete mSurface;
++        mSurface = nsnull;
++        return NS_ERROR_OUT_OF_MEMORY;
++    }
+     // we want to ref the window here so that we can unref in the drawing surface.
+     // otherwise, we can not unref and that causes windows that are created in the
+     // drawing surface not to be freed.

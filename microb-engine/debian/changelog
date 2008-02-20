@@ -1,3 +1,9 @@
+microb-engine (1.0.4-17) unstable; urgency=low
+
+  * Fixed OOM bug NB#80274 
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Wed, 20 Feb 2008 11:23:53 -0500
+
 microb-engine (1.0.4-16) unstable; urgency=low
 
   * Proper fix for bug NB#78227 and BMO#389508
