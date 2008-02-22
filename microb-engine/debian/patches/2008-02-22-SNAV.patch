@@ -1,0 +1,101 @@
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsCSSRendering.cpp	2008-02-22 07:58:14.000000000 -0700
++++ layout/base/nsCSSRendering.cpp	2008-02-22 08:02:24.000000000 -0700
+@@ -73,6 +73,10 @@
+ #include "nsIDOMTextRectangle.h"
+ #include "nsLayoutUtils.h"
+ #include "nsINameSpaceManager.h"
++#include "nsIDOMViewCSS.h"
++#include "nsIDOMCSSValue.h"
++#include "nsIDOMDocumentView.h"
++#include "nsIDOMCSSStyleDeclaration.h"
+ 
+ #ifdef MOZ_CAIRO_GFX
+ #include "gfxContext.h"
+@@ -103,6 +107,64 @@
+ 
+   printf("<%s>\n", NS_ConvertUTF16toUTF8(str).get());
+ }
++
++PRBool isOverflowHidden (nsIFrame* aFrame)
++{
++  PRBool rv = PR_FALSE;
++
++  NS_ENSURE_TRUE(aFrame, rv);
++
++  nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aFrame->GetContent());
++  if (!node) return rv;
++
++  nsCOMPtr<nsIDOMDocument> doc;
++  node->GetOwnerDocument(getter_AddRefs(doc));
++  if (!doc) return rv;
++
++  nsCOMPtr<nsIDOMDocumentView> docView(do_QueryInterface(doc));
++  NS_ENSURE_TRUE(docView, rv);
++  
++  nsCOMPtr<nsIDOMAbstractView> defaultView;
++  docView->GetDefaultView(getter_AddRefs(defaultView));
++  nsCOMPtr<nsIDOMViewCSS> defaultViewCSS(do_QueryInterface(defaultView));
++  NS_ENSURE_TRUE(defaultViewCSS, rv);
++  
++  nsAutoString value;
++
++  nsCOMPtr<nsIDOMElement> el = do_QueryInterface(aFrame->GetContent());
++  if (!el) return rv;
++
++  nsCOMPtr<nsIDOMCSSStyleDeclaration> computedStyle;
++  defaultViewCSS->GetComputedStyle(el, EmptyString(), getter_AddRefs(computedStyle));
++
++  PRBool hasHidden(PR_FALSE), hasAbsolute(PR_FALSE);
++
++  if (computedStyle)
++  {
++    nsCOMPtr<nsIDOMCSSValue> cssValue;
++    computedStyle->GetPropertyCSSValue(NS_LITERAL_STRING("overflow"), getter_AddRefs(cssValue));
++    if (cssValue)
++    {
++      nsAutoString str;
++      cssValue->GetCssText(str);
++
++      if (str.EqualsLiteral("hidden")) hasHidden = PR_TRUE;
++    }
++
++    computedStyle->GetPropertyCSSValue(NS_LITERAL_STRING("position"), getter_AddRefs(cssValue));
++    if (cssValue)
++    {
++      nsAutoString str;
++      cssValue->GetCssText(str);
++
++      if (str.EqualsLiteral("absolute")) hasAbsolute = PR_TRUE;
++    }
++  }
++
++  rv = (hasHidden && hasAbsolute);
++
++  return rv;
++}
+  
+ nsRect makeRectRelativeToGlobalView (nsIDOMNode *aNode)
+ {
+@@ -2201,9 +2263,13 @@
+     outside.Inflate(width, width);
+   }
+ 
+-  if (aForFrame->IsEmpty())
++  if (isOverflowHidden(aForFrame->GetParent()))
+   {
++    outside = aDirtyRect;
++  }
+ 
++  if (aForFrame->IsEmpty())
++  {
+     nsRect outOfFlowRect = getOutOfFlowRect(aForFrame, aPresContext);
+ 
+     if (outside.width < outOfFlowRect.width) outside.width = outOfFlowRect.width;
+@@ -2212,7 +2278,6 @@
+ 
+     outside.x = outOfFlowRect.x;
+     outside.y = outOfFlowRect.y;
+-    
+   }
+ 
+   // rounded version of the border
