@@ -1,3 +1,9 @@
+microb-engine (1.0.4-19) unstable; urgency=low
+
+  * Added patch from pref bug 324161 - Optimize parseInt for Number 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 23 Feb 2008 08:58:02 +0200
+
 microb-engine (1.0.4-18) unstable; urgency=low
 
   * Fixed Bug BMO#386773 - Implement NPN_PluginThreadAsyncCall
