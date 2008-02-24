@@ -27,9 +27,9 @@ Index: mozilla/js/src/jsnum.c
          return JS_TRUE;
      }
  
-+    value = vp[2];
++    value = argv[0];
 +    if (JSVAL_IS_INT(value)) {
-+        JS_SET_RVAL(cx, vp, value);
++        *rval = INT_TO_JSVAL(value);
 +        return JS_TRUE;
 +    }
 +
