@@ -1,5 +1,5 @@
 --- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsCSSRendering.cpp	2008-02-22 07:58:14.000000000 -0700
-+++ layout/base/nsCSSRendering.cpp	2008-02-22 08:02:24.000000000 -0700
++++ mozilla/layout/base/nsCSSRendering.cpp	2008-02-22 08:02:24.000000000 -0700
 @@ -73,6 +73,10 @@
  #include "nsIDOMTextRectangle.h"
  #include "nsLayoutUtils.h"

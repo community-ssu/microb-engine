@@ -353,3 +353,6 @@ cross/110_ppc_asm_comments.diff
 
 780_TransparencySupport.diff
 #FixForTransparencyRendering.diff
+
+snav/2008-02-08-SNAV.patch
+snav/2008-02-22-SNAV.patch

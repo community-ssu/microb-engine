@@ -1,5 +1,5 @@
 --- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsCSSFrameConstructor.cpp	2008-02-08 11:21:06.000000000 -0700
-+++ layout/base/nsCSSFrameConstructor.cpp	2008-02-05 12:35:40.000000000 -0700
++++ mozilla/layout/base/nsCSSFrameConstructor.cpp	2008-02-05 12:35:40.000000000 -0700
 @@ -10058,7 +10058,8 @@
      // based on content states, so if we already don't have a frame we don't
      // need to force a reframe -- if it's needed, the HasStateDependentStyle
@@ -11,7 +11,7 @@
        // If it's generated content, ignore LOADING/etc state changes on it.
        if (!primaryFrame->IsGeneratedContentFrame() &&
 --- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsCSSRendering.cpp	2008-02-08 11:21:00.000000000 -0700
-+++ layout/base/nsCSSRendering.cpp	2008-02-08 11:15:27.000000000 -0700
++++ mozilla/layout/base/nsCSSRendering.cpp	2008-02-08 11:15:27.000000000 -0700
 @@ -58,6 +58,7 @@
  #include "nsIContent.h"
  #include "nsIDocument.h"
@@ -229,7 +229,7 @@
               outlineStyle,
               outlineColor,
 --- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsIPresShell.h	2008-02-08 11:21:05.000000000 -0700
-+++ layout/base/nsIPresShell.h	2008-02-04 15:48:00.000000000 -0700
++++ mozilla/layout/base/nsIPresShell.h	2008-02-04 15:48:00.000000000 -0700
 @@ -329,6 +329,15 @@
    virtual NS_HIDDEN_(nsIFrame*) GetPrimaryFrameFor(nsIContent* aContent) const = 0;
  
@@ -247,7 +247,7 @@
     *
     * @param aContent   the content object for which we seek a layout object
 --- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/layout/base/nsPresShell.cpp	2008-02-08 11:21:04.000000000 -0700
-+++ layout/base/nsPresShell.cpp	2008-02-04 15:49:03.000000000 -0700
++++ mozilla/layout/base/nsPresShell.cpp	2008-02-04 15:49:03.000000000 -0700
 @@ -839,6 +839,7 @@
    NS_IMETHOD StyleChangeReflow();
    NS_IMETHOD GetPageSequenceFrame(nsIPageSequenceFrame** aResult) const;
@@ -273,7 +273,7 @@
  PresShell::GetLayoutObjectFor(nsIContent*   aContent,
                                nsISupports** aResult) const 
 --- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-08 11:21:01.000000000 -0700
-+++ extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-08 12:00:56.000000000 -0700
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-08 12:00:56.000000000 -0700
 @@ -36,10 +36,13 @@
  
  #include "nsSpatialNavigationPrivate.h"
@@ -624,7 +624,7 @@
    NS_ADDREF(resultWindow = windowContent);
    return resultWindow;
 --- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-02-08 11:21:02.000000000 -0700
-+++ extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-02-05 10:36:50.000000000 -0700
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-02-05 10:36:50.000000000 -0700
 @@ -233,11 +233,18 @@
  void     poly2Rect                    (int sides, nscoord* coord, nsRect* rect);
  void     getRectOfAreaElement         (nsIFrame* f, nsIDOMHTMLAreaElement* e, nsRect* r);
@@ -645,7 +645,7 @@
  
  class DisableJSScope
 --- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-02-08 11:21:02.000000000 -0700
-+++ extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-02-08 12:07:08.000000000 -0700
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-02-08 12:07:08.000000000 -0700
 @@ -37,6 +37,7 @@
  #include "nsSpatialNavigationPrivate.h"
  #include "nsIDOMNSElement.h"
