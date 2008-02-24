@@ -1,3 +1,9 @@
+microb-engine (1.0.4-22) unstable; urgency=low
+
+  * Fixes: NB#80603 [SSU] Unable to open browser after software update
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 24 Feb 2008 19:32:38 +0200
+
 microb-engine (1.0.4-21) unstable; urgency=low
 
   * Fixed broken building

@@ -26,6 +26,7 @@ case "$1" in
     if [ -x $ABOUTSYSTEMSCRIPT ]; then
 	    $ABOUTSYSTEMSCRIPT add $PKGNAME $PKGVERSION
     fi
+    echo > /var/lock/browser_extensions.stamp
     # Temporary hack while not used new microb component
     ;;
     abort-upgrade|abort-remove|abort-deconfigure)
