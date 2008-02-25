@@ -4638,8 +4638,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp
                                            context->password,
                                            EmptyString(),
                                            &entry);
-@@ -719,16 +735,27 @@
-   entry->passField.Assign(aPassFieldName);
+@@ -720,16 +736,27 @@
    EncryptDataUCS2(aUser, entry->userValue);
    EncryptDataUCS2(aPassword, entry->passValue);
    AddSignonData(aKey, entry);
@@ -4647,7 +4646,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp
    return NS_OK;
  }
  
-+NS_IMETHODIMP
+ NS_IMETHODIMP
 +EmbedPasswordMgr::AddUserFull2(const nsACString& aKey,
 +                               const nsAString& aUser,
 +                               const nsAString& aPassword,
@@ -4658,7 +4657,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp
 +  return AddUserFull(aKey, aUser, aPassword, aUserFieldName, aPassFieldName);
 +}
 +
- NS_IMETHODIMP
++NS_IMETHODIMP
  EmbedPasswordMgr::ReadPasswords(nsIFile* aPasswordFile)
  {
    nsCOMPtr<nsIInputStream> fileStream;
@@ -4666,6 +4665,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPasswordMgr.cpp
    if (!fileStream)
      return NS_ERROR_OUT_OF_MEMORY;
    nsCOMPtr<nsILineInputStream> lineStream = do_QueryInterface(fileStream);
+   NS_ASSERTION(lineStream, "File stream is not an nsILineInputStream");
 @@ -771,17 +798,19 @@
        break;
      case STATE_USERFIELD:
@@ -5463,12 +5463,6 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
  
 -    const char *grePath = sPath;
 -    NS_ASSERTION(grePath, "Warning: Failed to init grePath.\n");
--
--    if (!grePath)
--      grePath = getenv("MOZILLA_FIVE_HOME");
--
--    if (!grePath)
--      return;
 +  nsresult rv;
 +  nsCOMPtr<nsILocalFile> binDir;
 +  nsCOMPtr<nsILocalFile> compDir;
@@ -5484,27 +5478,47 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
 +    if (NS_FAILED(rv)) return;
 +  } else
 +    NS_ASSERTION(EmbedPrivate::sCompPath, "Warning: Failed to init Component Path.\n");
-+
+ 
+-    if (!grePath)
+-      grePath = getenv("MOZILLA_FIVE_HOME");
 +  const char *grePath = sPath;
 +  NS_ASSERTION(grePath, "Warning: Failed to init grePath.\n");
-+
+ 
+-    if (!grePath)
+-      return;
 +  if (!grePath)
 +    grePath = getenv("MOZILLA_FIVE_HOME");
-+
+ 
+-    nsCOMPtr<nsILocalFile> greDir;
+-    rv = NS_NewNativeLocalFile(nsDependentCString(grePath), PR_TRUE,
+-                               getter_AddRefs(greDir));
+-    if (NS_FAILED(rv))
+-      return;
 +  if (!grePath) return;
-+
+ 
+-    rv = XRE_InitEmbedding(greDir, binDir,
+-                           NS_CONST_CAST(GTKEmbedDirectoryProvider*,
+-                                         &kDirectoryProvider),
+-                           nsnull, nsnull);
+-    if (NS_FAILED(rv))
+-      return;
 +  nsCOMPtr<nsILocalFile> greDir;
 +  rv = NS_NewNativeLocalFile(nsDependentCString(grePath), PR_TRUE,
 +                             getter_AddRefs(greDir));
 +  if (NS_FAILED(rv)) return;
-+
+ 
+-    if (EmbedPrivate::sProfileDir) {
+-      XRE_NotifyProfile();
+-    }
 +  PRBool needsRestart = PR_TRUE;
-+
+ 
+-    rv = RegisterAppComponents();
+-    NS_ASSERTION(NS_SUCCEEDED(rv), "Warning: Failed to register app components.\n");
 +  if (EmbedPrivate::sProfileDir && !EmbedPrivate::sProfileLock) {
 +    rv = XRE_LockProfileDirectory(EmbedPrivate::sProfileDir,
 +                                  &EmbedPrivate::sProfileLock);
 +    if (NS_FAILED(rv)) return;
-+  }
+   }
 +
 +  rv = XRE_InitEmbedding(greDir, binDir,
 +                         const_cast<GTKEmbedDirectoryProvider*>
@@ -5513,21 +5527,10 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
 +  if (NS_FAILED(rv)) return;
 +
 +  EmbedPrivate::sXpcomStarted = PR_TRUE;
- 
--    nsCOMPtr<nsILocalFile> greDir;
--    rv = NS_NewNativeLocalFile(nsDependentCString(grePath), PR_TRUE,
--                               getter_AddRefs(greDir));
--    if (NS_FAILED(rv))
--      return;
++
 +  if (EmbedPrivate::sProfileDir)
 +    XRE_NotifyProfile();
- 
--    rv = XRE_InitEmbedding(greDir, binDir,
--                           NS_CONST_CAST(GTKEmbedDirectoryProvider*,
--                                         &kDirectoryProvider),
--                           nsnull, nsnull);
--    if (NS_FAILED(rv))
--      return;
++
 +#ifdef MOZ_RDF
 +  nsCOMPtr<nsIExtensionManager>
 +    extensionManager(do_GetService("@mozilla.org/extensions/manager;1", &rv));
@@ -5535,10 +5538,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
 +    NS_WARNING("Fail to initialize extension manager");
 +    return;
 +  }
- 
--    if (EmbedPrivate::sProfileDir) {
--      XRE_NotifyProfile();
--    }
++
 +#ifndef MOZ_NO_COMMANDLINE
 +  nsCOMPtr<nsICommandLineRunner>
 +    cmdline(do_CreateInstance("@mozilla.org/toolkit/command-line;1", &rv));
@@ -5547,10 +5547,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
 +  extensionManager->Start(nsnull, &needsRestart);
 +#endif
 +#endif
- 
--    rv = RegisterAppComponents();
--    NS_ASSERTION(NS_SUCCEEDED(rv), "Warning: Failed to register app components.\n");
--  }
++
 +  rv = RegisterAppComponents(needsRestart);
 +  NS_ASSERTION(NS_SUCCEEDED(rv), "Warning: Failed to register app components.\n");
  }
@@ -7795,7 +7792,7 @@ Index: mozilla/embedding/browser/gtk/src/Makefile.in
  
  CPPSRCS		= \
  		gtkmozembed2.cpp \
-@@ -182,16 +188,17 @@
+@@ -182,16 +190,17 @@
  endif
  
  ifdef MOZ_GTKEMBED_DYN
@@ -9323,7 +9320,7 @@ Index: mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/src/gtkmozembed_glue.cpp
 +++ mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
-@@ -49,16 +49,17 @@
+@@ -49,39 +49,35 @@
  
  #ifndef XPCOM_GLUE
  #error This file only makes sense when XPCOM_GLUE is defined.
@@ -9341,15 +9338,20 @@ Index: mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
    GTKF(gtk_moz_embed_common_remove_passwords) \
    GTKF(gtk_moz_embed_common_get_history_list) \
    GTKF(gtk_moz_embed_get_zoom_level) \
-@@ -71,17 +72,19 @@
+   GTKF(gtk_moz_embed_set_zoom_level) \
+   GTKF(gtk_moz_embed_find_text) \
+-  GTKF(gtk_moz_embed_clipboard) \
+   GTKF(gtk_moz_embed_notify_plugins) \
+   GTKF(gtk_moz_embed_get_context_info) \
+-  GTKF(gtk_moz_embed_get_selection) \
    GTKF(gtk_moz_embed_get_doc_info) \
-   GTKF(gtk_moz_embed_insert_text) \
+-  GTKF(gtk_moz_embed_insert_text) \
    GTKF(gtk_moz_embed_common_nsx509_to_raw) \
    GTKF(gtk_moz_embed_common_observe) \
-   GTKF(gtk_moz_embed_get_shistory_list) \
-   GTKF(gtk_moz_embed_get_shistory_index) \
-   GTKF(gtk_moz_embed_shistory_goto_index) \
-   GTKF(gtk_moz_embed_get_server_cert) \
+-  GTKF(gtk_moz_embed_get_shistory_list) \
+-  GTKF(gtk_moz_embed_get_shistory_index) \
+-  GTKF(gtk_moz_embed_shistory_goto_index) \
+-  GTKF(gtk_moz_embed_get_server_cert) \
 -  GTKF(gtk_moz_embed_get_nsIWebBrowser)
 +  GTKF(gtk_moz_embed_get_nsIWebBrowser) \
 +  GTKF(gtk_moz_embed_do_command) \

@@ -1,3 +1,9 @@
+microb-engine (1.0.4-23) unstable; urgency=low
+
+  * Fixed running of TestGtkEmbed with external libgtkmozembed
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 25 Feb 2008 23:35:37 +0200
+
 microb-engine (1.0.4-22) unstable; urgency=low
 
   * Fixes: NB#80603 [SSU] Unable to open browser after software update
