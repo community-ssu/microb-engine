@@ -1,6 +1,6 @@
 --- mozilla/xpcom/base/nsMemoryImpl.cpp.orig	2006-11-22 19:51:59.000000000 +0200
 +++ mozilla/xpcom/base/nsMemoryImpl.cpp	2008-02-26 09:07:15.000000000 +0200
-@@ -49,10 +49,18 @@
+@@ -49,10 +49,19 @@
  
  #include "nsAlgorithm.h"
  #include "nsAutoLock.h"
@@ -11,8 +11,9 @@
 +
 +#ifdef __arm__
 +const char *kHighMark = "/sys/kernel/high_watermark";
++//const char *kHighMark = "/sys/kernel/low_watermark";
 +#else
-+const char *kHighMark = "/tmp/high_watermark";
++const char *kHighMark = "/tmp/high_mem.link";
 +#endif
  
  #if defined(XP_WIN)
