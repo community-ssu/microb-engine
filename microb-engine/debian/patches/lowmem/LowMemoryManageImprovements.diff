@@ -107,3 +107,29 @@
  };
  
  #endif // nsMemoryImpl_h__
+--- mozilla/xpcom/ds/nsRecyclingAllocator.cpp.orig	2006-05-10 20:30:09.000000000 +0300
++++ mozilla/xpcom/ds/nsRecyclingAllocator.cpp	2008-02-26 10:36:58.000000000 +0200
+@@ -321,16 +321,23 @@ nsRecyclingAllocatorImpl::Init(size_t nb
+ }
+ 
+ NS_IMETHODIMP
+ nsRecyclingAllocatorImpl::HeapMinimize(PRBool immediate)
+ {
+     // XXX Not yet implemented
+     return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ NS_IMETHODIMP
++nsRecyclingAllocatorImpl::SetLowMemory(PRBool aIsLowMem)
++{
++    // XXX Not yet implemented
++    return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP
+ nsRecyclingAllocatorImpl::IsLowMemory(PRBool *lowmemoryb_ptr)
+ {
+     // XXX Not yet implemented
+     return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
