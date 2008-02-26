@@ -1,0 +1,56 @@
+--- extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-22 07:58:14.000000000 -0700
++++ /home/petejc/src/microb_latest/microb-engine/scratch_build/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-26 12:20:28.000000000 -0700
+@@ -37,6 +37,7 @@
+ #include "nsSpatialNavigationPrivate.h"
+ #include "nsGUIEvent.h"
+ #include "nsIDOMHTMLImageElement.h"
++#include "nsIDOMNSHTMLAnchorElement.h"
+ 
+ // #define DEBUG_romaxa 1
+ 
+@@ -87,9 +88,14 @@
+   nsCOMPtr<nsIDOMHTMLAnchorElement> link(do_QueryInterface(content));
+   if (link)
+   {
++    nsCOMPtr<nsIDOMNSHTMLAnchorElement> nslink(do_QueryInterface(link));
++
++    nsAutoString text;
++    if (nslink) nslink->GetText(text);
++
+     nsAutoString href;
+     link->GetHref(href);
+-    printf("<%s href=\"%s\">\n", NS_ConvertUTF16toUTF8(str).get(), NS_ConvertUTF16toUTF8(href).get());
++    printf("<%s href=\"%s\">%s</a>\n", NS_ConvertUTF16toUTF8(str).get(), NS_ConvertUTF16toUTF8(href).get(), NS_ConvertUTF16toUTF8(text).get());
+   } 
+     else
+   {
+@@ -641,7 +647,7 @@
+ 
+     // make sure the frame is targetable for focus
+     if (!isTargetable(focusDocuments, frame)) continue;
+-  
++
+     // RECT !!
+     frameRect = makeRectRelativeToGlobalView(frame);
+ 
+@@ -677,8 +683,10 @@
+ 
+     if (str.Equals(NS_LITERAL_STRING("IFRAME"))) continue;
+ 
++    PRBool isInView = IsPartiallyVisible(aPresContext->PresShell(), frame, PR_FALSE);
++
+     // if target takes precedence then use it - distance is not always the shortest for a precedent target
+-    if (takesSuperPrecedence(aDirection, aFocusedRect, frameRect))
++    if (isInView && takesSuperPrecedence(aDirection, aFocusedRect, frameRect))
+     {
+       // reset distance as we are now in super precedence mode
+       if (!superPrecedent) *aDSoFar = LL_MaxInt();
+@@ -698,7 +706,7 @@
+     if (superPrecedent) continue;
+ 
+     // if target takes precedence then use it - distance is not always the shortest for a precedent target
+-    if (takesPrecedence(aDirection, aFocusedRect, frameRect))
++    if (isInView && takesPrecedence(aDirection, aFocusedRect, frameRect))
+     {
+       precedent = PR_TRUE;
+ 
