@@ -25,8 +25,8 @@
  NS_IMETHODIMP
  nsMemoryImpl::IsLowMemory(PRBool *result)
  {
-+    if (sIsLowMem) {
-+        *result = PR_TRUE;
++    if (sLowMemState >= 0) {
++        *result = sLowMemState == 1;
 +        return NS_OK;
 +    }
  #if defined(WINCE)
@@ -53,9 +53,9 @@
  }
  
 +NS_IMETHODIMP
-+nsMemoryImpl::SetLowMemory(PRBool aIsLowMem)
++nsMemoryImpl::SetLowMemory(PRInt32 aLowMemState)
 +{
-+    sIsLowMem = aIsLowMem;
++    sLowMemState = aLowMemState;
 +    return NS_OK;
 +}
  
@@ -69,8 +69,8 @@
  
  PRInt32
  nsMemoryImpl::sIsFlushing = 0;
-+PRBool
-+nsMemoryImpl::sIsLowMem = PR_FALSE;
++PRInt32
++nsMemoryImpl::sLowMemState = -1;
 +
  
  nsMemoryImpl::FlushEvent
@@ -90,7 +90,7 @@
 +     * This can setup lowmemory situation from third party instance
 +     * @param isLowMem - enable or disable internal lowmem flag
 +     */
-+    void setLowMemory(in boolean isLowMem);
++    void setLowMemory(in long lowMemState);
 +
  };
  
@@ -103,7 +103,7 @@
      static PRInt32    sIsFlushing;
      static FlushEvent sFlushEvent;
 +private:
-+    static PRBool    sIsLowMem;
++    static PRInt32    sLowMemState;
  };
  
  #endif // nsMemoryImpl_h__
@@ -120,7 +120,7 @@
  }
  
  NS_IMETHODIMP
-+nsRecyclingAllocatorImpl::SetLowMemory(PRBool aIsLowMem)
++nsRecyclingAllocatorImpl::SetLowMemory(PRInt32 aLowMemState)
 +{
 +    // XXX Not yet implemented
 +    return NS_ERROR_NOT_IMPLEMENTED;
