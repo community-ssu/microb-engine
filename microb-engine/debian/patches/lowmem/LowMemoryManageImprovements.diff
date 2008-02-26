@@ -1,0 +1,107 @@
+--- mozilla/xpcom/base/nsMemoryImpl.cpp.orig	2006-11-22 19:51:59.000000000 +0200
++++ mozilla/xpcom/base/nsMemoryImpl.cpp	2008-02-26 08:58:35.000000000 +0200
+@@ -77,10 +77,16 @@
+ #define NS_FLUSH_FREQUENCY        100000
+ 
+ // fail allocation one in this number of flushes:
+ #define NS_FAIL_FREQUENCY         10
+ 
++#ifdef __arm__
++const char *kHighMark = "/sys/kernel/high_watermark";
++#else
++const char *kHighMark = "/tmp/high_watermark";
++#endif
++
+ PRUint32 gFlushFreq = 0;
+ PRUint32 gFailFreq = 0;
+ 
+ static void*
+ mallocator(PRSize size, PRUint32& counter, PRUint32 max)
+@@ -179,24 +185,42 @@ nsMemoryImpl::HeapMinimize(PRBool aImmed
+ }
+ 
+ NS_IMETHODIMP
+ nsMemoryImpl::IsLowMemory(PRBool *result)
+ {
++    if (sIsLowMem) {
++        *result = PR_TRUE;
++        return NS_OK;
++    }
+ #if defined(WINCE)
+     MEMORYSTATUS stat;
+     GlobalMemoryStatus(&stat);
+     *result = ((float)stat.dwAvailPhys / stat.dwTotalPhys) < 0.1;
+ #elif defined(XP_WIN)
+     MEMORYSTATUS stat;
+     GlobalMemoryStatus(&stat);
+     *result = ((float)stat.dwAvailPageFile / stat.dwTotalPageFile) < 0.1;
+ #else
+-    *result = PR_FALSE;
++    int fd = open (kHighMark, O_RDONLY);
++    if (fd == -1) {
++        *result = PR_FALSE;
++        return NS_OK;
++    }
++    int c = 0;
++    read (fd, &c, 1);
++    close (fd);
++    *result = (c == '1');
+ #endif
+     return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsMemoryImpl::SetLowMemory(PRBool aIsLowMem)
++{
++    sIsLowMem = aIsLowMem;
++    return NS_OK;
++}
+ 
+ /*static*/ nsresult 
+ nsMemoryImpl::InitFlusher()
+ {
+ #ifdef NS_MEMORY_FLUSHER
+@@ -269,10 +293,13 @@ nsMemoryImpl::FlushEvent::Run()
+     return NS_OK;
+ }
+ 
+ PRInt32
+ nsMemoryImpl::sIsFlushing = 0;
++PRBool
++nsMemoryImpl::sIsLowMem = PR_FALSE;
++
+ 
+ nsMemoryImpl::FlushEvent
+ nsMemoryImpl::sFlushEvent;
+ 
+ XPCOM_API(void*)
+--- mozilla/xpcom/base/nsIMemory.idl.orig	2006-11-22 19:51:59.000000000 +0200
++++ mozilla/xpcom/base/nsIMemory.idl	2008-02-26 08:53:34.000000000 +0200
+@@ -124,7 +124,14 @@ interface nsIMemory : nsISupports
+      * This predicate can be used to determine if we're in a low-memory
+      * situation (what constitutes low-memory is platform dependent). This
+      * can be used to trigger the memory pressure observers.
+      */
+     boolean isLowMemory();
++
++    /**
++     * This can setup lowmemory situation from third party instance
++     * @param isLowMem - enable or disable internal lowmem flag
++     */
++    void setLowMemory(in boolean isLowMem);
++
+ };
+ 
+--- mozilla/xpcom/base/nsMemoryImpl.h.orig	2006-11-22 19:51:59.000000000 +0200
++++ mozilla/xpcom/base/nsMemoryImpl.h	2008-02-26 08:54:33.000000000 +0200
+@@ -69,8 +69,10 @@ protected:
+         const PRUnichar* mReason;
+     };
+ 
+     static PRInt32    sIsFlushing;
+     static FlushEvent sFlushEvent;
++private:
++    static PRBoole    sIsLowMem;
+ };
+ 
+ #endif // nsMemoryImpl_h__
