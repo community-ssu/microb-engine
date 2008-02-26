@@ -22,7 +22,7 @@ diff -ruN -p -U5 mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.cpp mozi
    nsPNGDecoder *decoder = NS_STATIC_CAST(nsPNGDecoder*, png_get_progressive_ptr(png_ptr));
 +  PRBool lowMem = PR_FALSE;
 +  if (decoder->mMem && NS_SUCCEEDED(decoder->mMem->IsLowMemory(&lowMem)) && lowMem) {
-+    decoder->mError = PR_TRUE;
++    decoder->mError = PR_TRUE; end_callback(png_ptr, nsnull);
 +    return;
 +  }
  
