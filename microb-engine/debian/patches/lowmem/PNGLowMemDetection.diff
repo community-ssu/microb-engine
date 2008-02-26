@@ -1,6 +1,6 @@
-diff -ruN -p -U5 mozilla/libpr0n.orig/decoders/png/nsPNGDecoder.cpp mozilla/libpr0n/decoders/png/nsPNGDecoder.cpp
---- mozilla/libpr0n.orig/decoders/png/nsPNGDecoder.cpp	2008-02-21 10:22:24.000000000 +0200
-+++ mozilla/libpr0n/decoders/png/nsPNGDecoder.cpp	2008-02-26 09:32:58.000000000 +0200
+diff -ruN -p -U5 mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.cpp mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
+--- mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.cpp	2008-02-21 10:22:24.000000000 +0200
++++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp	2008-02-26 09:32:58.000000000 +0200
 @@ -115,10 +115,12 @@ NS_IMETHODIMP nsPNGDecoder::Init(imgILoa
          116,  69,  88, 116, '\0',   /* tEXt */
          116,  73,  77,  69, '\0',   /* tIME */
@@ -30,9 +30,9 @@ diff -ruN -p -U5 mozilla/libpr0n.orig/decoders/png/nsPNGDecoder.cpp mozilla/libp
    if (decoder->interlacebuf) {
      line = decoder->interlacebuf+(row_num*decoder->ibpr);
      png_progressive_combine_row(png_ptr, line, new_row);
-diff -ruN -p -U5 mozilla/libpr0n.orig/decoders/png/nsPNGDecoder.h mozilla/libpr0n/decoders/png/nsPNGDecoder.h
---- mozilla/libpr0n.orig/decoders/png/nsPNGDecoder.h	2008-02-21 10:22:24.000000000 +0200
-+++ mozilla/libpr0n/decoders/png/nsPNGDecoder.h	2008-02-26 09:29:33.000000000 +0200
+diff -ruN -p -U5 mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.h mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
+--- mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.h	2008-02-21 10:22:24.000000000 +0200
++++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h	2008-02-26 09:29:33.000000000 +0200
 @@ -81,8 +81,9 @@ public:
    PRUint8 *colorLine, *alphaLine;
  #endif
