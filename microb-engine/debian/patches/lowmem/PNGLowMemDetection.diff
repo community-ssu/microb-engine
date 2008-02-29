@@ -1,7 +1,11 @@
-diff -ruN -p -U5 mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.cpp mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
---- mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.cpp	2008-02-21 10:22:24.000000000 +0200
-+++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp	2008-02-26 09:32:58.000000000 +0200
-@@ -115,10 +115,12 @@ NS_IMETHODIMP nsPNGDecoder::Init(imgILoa
+Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
+===================================================================
+--- mozilla.orig/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
++++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
+@@ -112,16 +112,18 @@
+         112,  72,  89, 115, '\0',   /* pHYs */
+         115,  66,  73,  84, '\0',   /* sBIT */
+         115,  80,  76,  84, '\0',   /* sPLT */
          116,  69,  88, 116, '\0',   /* tEXt */
          116,  73,  77,  69, '\0',   /* tIME */
          122,  84,  88, 116, '\0'};  /* zTXt */
@@ -14,7 +18,13 @@ diff -ruN -p -U5 mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.cpp mozi
  
    /* do png init stuff */
  
-@@ -411,10 +413,15 @@ row_callback(png_structp png_ptr, png_by
+   /* Initialize the container's source image header. */
+   /* Always decode to 24 bit pixdepth */
+ 
+@@ -408,16 +410,24 @@
+    * where old_row is what was displayed for previous rows.  Note
+    * that the first pass (pass == 0 really) will completely cover
+    * the old row, so the rows do not have to be initialized.  After
     * the first pass (and only for interlaced images), you will have
     * to pass the current row, and the function will combine the
     * old row and the new row.
@@ -22,7 +32,10 @@ diff -ruN -p -U5 mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.cpp mozi
    nsPNGDecoder *decoder = NS_STATIC_CAST(nsPNGDecoder*, png_get_progressive_ptr(png_ptr));
 +  PRBool lowMem = PR_FALSE;
 +  if (decoder->mMem && NS_SUCCEEDED(decoder->mMem->IsLowMemory(&lowMem)) && lowMem) {
-+    decoder->mError = PR_TRUE; end_callback(png_ptr, nsnull);
++    if (!decoder->mError) {
++      decoder->mError = PR_TRUE;
++      end_callback(png_ptr, nsnull);
++    }
 +    return;
 +  }
  
@@ -30,10 +43,17 @@ diff -ruN -p -U5 mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.cpp mozi
    if (decoder->interlacebuf) {
      line = decoder->interlacebuf+(row_num*decoder->ibpr);
      png_progressive_combine_row(png_ptr, line, new_row);
-diff -ruN -p -U5 mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.h mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
---- mozilla/modules/libpr0n.orig/decoders/png/nsPNGDecoder.h	2008-02-21 10:22:24.000000000 +0200
-+++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h	2008-02-26 09:29:33.000000000 +0200
-@@ -81,8 +81,9 @@ public:
+   }
+   else
+     line = new_row;
+Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
+===================================================================
+--- mozilla.orig/modules/libpr0n/decoders/png/nsPNGDecoder.h
++++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
+@@ -78,11 +78,12 @@
+   png_structp mPNG;
+   png_infop mInfo;
+ #ifndef MOZ_CAIRO_GFX
    PRUint8 *colorLine, *alphaLine;
  #endif
    PRUint8 *interlacebuf;
