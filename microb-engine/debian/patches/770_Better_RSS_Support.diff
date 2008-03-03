@@ -1,6 +1,6 @@
-diff -U 8 -prN mozilla-orig/browser/components/feeds/content/subscribe.css mozilla/browser/components/feeds/content/subscribe.css
---- mozilla-orig/browser/components/feeds/content/subscribe.css	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/browser/components/feeds/content/subscribe.css	2008-01-29 14:03:02.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/content/subscribe.css mozilla/browser/components/feeds/content/subscribe.css
+--- mozilla-wout-770patch/browser/components/feeds/content/subscribe.css	1969-12-31 20:00:00.000000000 -0400
++++ mozilla/browser/components/feeds/content/subscribe.css	2008-03-03 14:27:20.000000000 -0400
 @@ -0,0 +1,154 @@
 +
 +*[hidden] {
@@ -156,9 +156,9 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/content/subscribe.css mozil
 +  font-size: 85%;
 +  font-weight: normal;
 +}
-diff -U 8 -prN mozilla-orig/browser/components/feeds/content/subscribe.dtd mozilla/browser/components/feeds/content/subscribe.dtd
---- mozilla-orig/browser/components/feeds/content/subscribe.dtd	1969-12-31 20:00:00.000000000 -0400
-+++ mozilla/browser/components/feeds/content/subscribe.dtd	2008-01-29 14:03:02.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/content/subscribe.dtd mozilla/browser/components/feeds/content/subscribe.dtd
+--- mozilla-wout-770patch/browser/components/feeds/content/subscribe.dtd	1969-12-31 20:00:00.000000000 -0400
++++ mozilla/browser/components/feeds/content/subscribe.dtd	2008-03-03 14:27:20.000000000 -0400
 @@ -0,0 +1,16 @@
 +<!ENTITY feedPage.title
 +  "Viewing Feed">
@@ -176,9 +176,9 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/content/subscribe.dtd mozil
 +  "Subscribe to this feed using ">
 +<!ENTITY feedLiveBookmarks
 +  "Live Bookmarks">
-diff -U 8 -prN mozilla-orig/browser/components/feeds/content/subscribe.xhtml mozilla/browser/components/feeds/content/subscribe.xhtml
---- mozilla-orig/browser/components/feeds/content/subscribe.xhtml	2008-01-29 13:41:49.000000000 -0400
-+++ mozilla/browser/components/feeds/content/subscribe.xhtml	2008-01-29 14:03:03.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/content/subscribe.xhtml mozilla/browser/components/feeds/content/subscribe.xhtml
+--- mozilla-wout-770patch/browser/components/feeds/content/subscribe.xhtml	2008-03-03 13:15:46.000000000 -0400
++++ mozilla/browser/components/feeds/content/subscribe.xhtml	2008-03-03 14:27:20.000000000 -0400
 @@ -4,57 +4,87 @@
    <!ENTITY % htmlDTD
      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -278,9 +278,9 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/content/subscribe.xhtml moz
      <div id="feedBody">
        <div id="feedTitle">
          <a id="feedTitleLink">
-diff -U 8 -prN mozilla-orig/browser/components/feeds/jar.mn mozilla/browser/components/feeds/jar.mn
---- mozilla-orig/browser/components/feeds/jar.mn	2008-01-29 13:41:49.000000000 -0400
-+++ mozilla/browser/components/feeds/jar.mn	2008-01-29 14:03:03.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/jar.mn mozilla/browser/components/feeds/jar.mn
+--- mozilla-wout-770patch/browser/components/feeds/jar.mn	2008-03-03 13:15:47.000000000 -0400
++++ mozilla/browser/components/feeds/jar.mn	2008-03-03 14:27:20.000000000 -0400
 @@ -1,3 +1,8 @@
  browser.jar:
 -*   content/browser/feeds/subscribe.xhtml               (content/subscribe.xhtml) 
@@ -292,9 +292,9 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/jar.mn mozilla/browser/comp
 +* content/browser/feeds/subscribe.css                 (content/subscribe.css)
 +
 +
-diff -U 8 -prN mozilla-orig/browser/components/feeds/src/FeedConverter.js mozilla/browser/components/feeds/src/FeedConverter.js
---- mozilla-orig/browser/components/feeds/src/FeedConverter.js	2008-01-29 13:41:49.000000000 -0400
-+++ mozilla/browser/components/feeds/src/FeedConverter.js	2008-01-29 14:27:19.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/src/FeedConverter.js mozilla/browser/components/feeds/src/FeedConverter.js
+--- mozilla-wout-770patch/browser/components/feeds/src/FeedConverter.js	2008-03-03 13:15:47.000000000 -0400
++++ mozilla/browser/components/feeds/src/FeedConverter.js	2008-03-03 14:27:20.000000000 -0400
 @@ -345,23 +345,28 @@ var FeedResultService = {
    /**
     * See nsIFeedService.idl
@@ -327,9 +327,38 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/src/FeedConverter.js mozill
        // http://foo.com/index.rdf -> feed://foo.com/index.rdf
        // other urils: prepend feed: scheme, e.g.
        // https://foo.com/index.rdf -> feed:https://foo.com/index.rdf
-diff -U 8 -prN mozilla-orig/browser/components/feeds/src/FeedWriter.js mozilla/browser/components/feeds/src/FeedWriter.js
---- mozilla-orig/browser/components/feeds/src/FeedWriter.js	2008-01-29 13:41:49.000000000 -0400
-+++ mozilla/browser/components/feeds/src/FeedWriter.js	2008-01-29 14:03:03.000000000 -0400
+@@ -373,20 +378,24 @@ var FeedResultService = {
+       var macURI = ios.newURI(spec, null, null);
+       if (macURI.schemeIs("http")) {
+         macURI.scheme = "feed";
+         spec = macURI.spec;
+       }
+       else
+         spec = "feed:" + spec;
+ #endif
+-      var ss = 
+-          Cc["@mozilla.org/browser/shell-service;1"].
+-          getService(Ci.nsIShellService);
+-      ss.openApplicationWithURI(clientApp, spec);
++//       var ss = 
++//           Cc["@mozilla.org/browser/shell-service;1"].
++//           getService(Ci.nsIShellService);
++//       ss.openApplicationWithURI(clientApp, spec);
++      var proc = Cc["@mozilla.org/process/util;1"].createInstance
++                   (Ci.nsIProcess);
++      proc.init(clientApp);
++      proc.run(false, [spec], 1);
+       break;
+ 
+     default:
+       // "web" should have been handled elsewhere
+       LOG("unexpected handler: " + handler);
+       // fall through
+     case "bookmarks":
+       var wm = 
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/src/FeedWriter.js mozilla/browser/components/feeds/src/FeedWriter.js
+--- mozilla-wout-770patch/browser/components/feeds/src/FeedWriter.js	2008-03-03 13:15:46.000000000 -0400
++++ mozilla/browser/components/feeds/src/FeedWriter.js	2008-03-03 14:27:20.000000000 -0400
 @@ -192,16 +192,17 @@ FeedWriter.prototype = {
  
        node = node.nextSibling;
@@ -553,9 +582,9 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/src/FeedWriter.js mozilla/b
      // Otherwise, we should set it to "ask"
      if (useAsDefault)
        prefs.setCharPref(PREF_SELECTED_ACTION, defaultHandler);
-diff -U 8 -prN mozilla-orig/browser/components/feeds/src/Makefile.in mozilla/browser/components/feeds/src/Makefile.in
---- mozilla-orig/browser/components/feeds/src/Makefile.in	2008-01-29 13:41:49.000000000 -0400
-+++ mozilla/browser/components/feeds/src/Makefile.in	2008-01-29 14:03:03.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/src/Makefile.in mozilla/browser/components/feeds/src/Makefile.in
+--- mozilla-wout-770patch/browser/components/feeds/src/Makefile.in	2008-03-03 13:15:47.000000000 -0400
++++ mozilla/browser/components/feeds/src/Makefile.in	2008-03-03 14:27:20.000000000 -0400
 @@ -41,27 +41,28 @@ VPATH		= @srcdir@
  
  include $(DEPTH)/config/autoconf.mk
@@ -586,9 +615,9 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/src/Makefile.in mozilla/bro
 +LOCAL_INCLUDES = -I$(srcdir)/../../../../toolkit/components/build/
  
  include $(topsrcdir)/config/rules.mk
-diff -U 8 -prN mozilla-orig/browser/components/feeds/src/WebContentConverter.js mozilla/browser/components/feeds/src/WebContentConverter.js
---- mozilla-orig/browser/components/feeds/src/WebContentConverter.js	2008-01-29 13:41:49.000000000 -0400
-+++ mozilla/browser/components/feeds/src/WebContentConverter.js	2008-01-29 14:03:03.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/src/WebContentConverter.js mozilla/browser/components/feeds/src/WebContentConverter.js
+--- mozilla-wout-770patch/browser/components/feeds/src/WebContentConverter.js	2008-03-03 13:15:47.000000000 -0400
++++ mozilla/browser/components/feeds/src/WebContentConverter.js	2008-03-03 14:27:20.000000000 -0400
 @@ -650,19 +650,20 @@ var WebContentConverterRegistrar = {
       * where a user manually removes a reader, but that's not supported yet!
       */
@@ -639,9 +668,9 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/src/WebContentConverter.js 
     */
    createInstance: function WCCR_createInstance(outer, iid) {
      if (outer != null)
-diff -U 8 -prN mozilla-orig/browser/components/feeds/src/nsFeedSniffer.cpp mozilla/browser/components/feeds/src/nsFeedSniffer.cpp
---- mozilla-orig/browser/components/feeds/src/nsFeedSniffer.cpp	2008-01-29 13:41:49.000000000 -0400
-+++ mozilla/browser/components/feeds/src/nsFeedSniffer.cpp	2008-01-29 14:03:03.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/src/nsFeedSniffer.cpp mozilla/browser/components/feeds/src/nsFeedSniffer.cpp
+--- mozilla-wout-770patch/browser/components/feeds/src/nsFeedSniffer.cpp	2008-03-03 13:15:47.000000000 -0400
++++ mozilla/browser/components/feeds/src/nsFeedSniffer.cpp	2008-03-03 14:27:20.000000000 -0400
 @@ -40,17 +40,18 @@
  
  #include "prmem.h"
@@ -764,9 +793,9 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/src/nsFeedSniffer.cpp mozil
  NS_IMETHODIMP
  nsFeedSniffer::OnStartRequest(nsIRequest* request, nsISupports* context)
  {
-diff -U 8 -prN mozilla-orig/browser/components/feeds/src/nsFeedSniffer.h mozilla/browser/components/feeds/src/nsFeedSniffer.h
---- mozilla-orig/browser/components/feeds/src/nsFeedSniffer.h	2008-01-29 13:41:49.000000000 -0400
-+++ mozilla/browser/components/feeds/src/nsFeedSniffer.h	2008-01-29 14:03:03.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/browser/components/feeds/src/nsFeedSniffer.h mozilla/browser/components/feeds/src/nsFeedSniffer.h
+--- mozilla-wout-770patch/browser/components/feeds/src/nsFeedSniffer.h	2008-03-03 13:15:47.000000000 -0400
++++ mozilla/browser/components/feeds/src/nsFeedSniffer.h	2008-03-03 14:27:20.000000000 -0400
 @@ -34,17 +34,23 @@
   * the terms of any one of the MPL, the GPL or the LGPL.
   *
@@ -791,137 +820,10 @@ diff -U 8 -prN mozilla-orig/browser/components/feeds/src/nsFeedSniffer.h mozilla
    NS_DECL_NSICONTENTSNIFFER
    NS_DECL_NSIREQUESTOBSERVER
    NS_DECL_NSISTREAMLISTENER
-diff -U 8 -prN mozilla-orig/browser/components/shell/src/Makefile.in mozilla/browser/components/shell/src/Makefile.in
---- mozilla-orig/browser/components/shell/src/Makefile.in	2008-01-29 13:41:50.000000000 -0400
-+++ mozilla/browser/components/shell/src/Makefile.in	2008-01-29 14:02:55.000000000 -0400
-@@ -41,16 +41,17 @@ srcdir    = @srcdir@
- VPATH   = @srcdir@
- 
- include $(DEPTH)/config/autoconf.mk
- 
- MODULE = shellservice
- FORCE_STATIC_LIB = 1
- FORCE_USE_PIC = 1
- USE_STATIC_LIBS = 1
-+LIBXUL_LIBRARY = 1
- 
- REQUIRES	= \
- 		  xpcom \
- 		  string \
- 		  uriloader \
- 		  webbrowserpersist \
- 		  dom \
- 		  intl \
-@@ -81,17 +82,21 @@ ifdef CPPSRCS
- LIBRARY_NAME = shellservice_s
- endif
- 
- include $(topsrcdir)/config/rules.mk
- 
- DEFINES += -DMOZ_APP_NAME=\"$(MOZ_APP_NAME)\"
- 
- JS_SET_BROWSER_COMPONENT = nsSetDefaultBrowser.js
-+EXTRA_COMPONENTS = nsSetDefaultBrowser.js
- 
- CXXFLAGS += $(TK_CFLAGS)
- 
- libs::
- 	$(INSTALL) $(srcdir)/$(JS_SET_BROWSER_COMPONENT) $(DIST)/bin/components
- 
-+install::
-+	$(SYSINSTALL) $(IFLAGS1) $(srcdir)/$(JS_SET_BROWSER_COMPONENT) $(DESTDIR)$(mozappdir)/components
-+
- clobber::
- 	rm -f $(DIST)/lib/$(LIBRARY_NAME).lib
--	rm -f $(DIST)/bin/components/$(JS_SET_BROWSER_COMPONENT)
-+# 	rm -f $(DIST)/bin/components/$(JS_SET_BROWSER_COMPONENT)
-diff -U 8 -prN mozilla-orig/browser/components/shell/src/nsGNOMEShellService.cpp mozilla/browser/components/shell/src/nsGNOMEShellService.cpp
---- mozilla-orig/browser/components/shell/src/nsGNOMEShellService.cpp	2008-01-29 13:41:50.000000000 -0400
-+++ mozilla/browser/components/shell/src/nsGNOMEShellService.cpp	2008-01-29 14:02:55.000000000 -0400
-@@ -38,17 +38,17 @@
- #include "nsGNOMEShellService.h"
- #include "nsShellService.h"
- #include "nsIServiceManager.h"
- #include "nsILocalFile.h"
- #include "nsIProperties.h"
- #include "nsDirectoryServiceDefs.h"
- #include "nsIPrefService.h"
- #include "prenv.h"
--#include "nsStringAPI.h"
-+
- #include "nsIGConfService.h"
- #include "nsIGnomeVFSService.h"
- #include "nsIStringBundle.h"
- #include "gfxIImageFrame.h"
- #include "nsIOutputStream.h"
- #include "nsIProcess.h"
- #include "nsNetUtil.h"
- #include "nsIDOMHTMLImageElement.h"
-@@ -524,25 +524,25 @@ nsGNOMEShellService::GetDesktopBackgroun
-   // The result must be in RGB order with the high 8 bits zero.
-   *aColor = (red << 16 | green << 8  | blue);
-   return NS_OK;
- }
- 
- static void
- ColorToHex(PRUint32 aColor, nsCString& aResult)
- {
--  char *buf = aResult.BeginWriting(7);
--  if (!buf)
--    return;
--
--  PRUint8 red = (aColor >> 16);
--  PRUint8 green = (aColor >> 8) & 0xff;
--  PRUint8 blue = aColor & 0xff;
--
--  PR_snprintf(buf, 8, "#%02x%02x%02x", red, green, blue);
-+//   char *buf = aResult.BeginWriting(7);
-+//   if (!buf)
-+//     return;
-+// 
-+//   PRUint8 red = (aColor >> 16);
-+//   PRUint8 green = (aColor >> 8) & 0xff;
-+//   PRUint8 blue = aColor & 0xff;
-+// 
-+//   PR_snprintf(buf, 8, "#%02x%02x%02x", red, green, blue);
- }
- 
- NS_IMETHODIMP
- nsGNOMEShellService::SetDesktopBackgroundColor(PRUint32 aColor)
- {
-   nsCOMPtr<nsIGConfService> gconf = do_GetService(NS_GCONFSERVICE_CONTRACTID);
- 
-   nsCString colorString;
-diff -U 8 -prN mozilla-orig/browser/components/shell/src/nsGNOMEShellService.h mozilla/browser/components/shell/src/nsGNOMEShellService.h
---- mozilla-orig/browser/components/shell/src/nsGNOMEShellService.h	2008-01-29 13:41:50.000000000 -0400
-+++ mozilla/browser/components/shell/src/nsGNOMEShellService.h	2008-01-29 14:02:55.000000000 -0400
-@@ -33,17 +33,23 @@
-  * the terms of any one of the MPL, the GPL or the LGPL.
-  *
-  * ***** END LICENSE BLOCK ***** */
- 
- #ifndef nsgnomeshellservice_h____
- #define nsgnomeshellservice_h____
- 
- #include "nsIShellService.h"
-+#ifdef MOZILLA_INTERNAL_API
-+#include "nsString.h"
-+#include "nsXPIDLString.h"
-+#include "nsReadableUtils.h"
-+#else
- #include "nsStringAPI.h"
-+#endif
- 
- class nsGNOMEShellService : public nsIShellService
- {
- public:
-   nsGNOMEShellService() : mCheckedThisSession(PR_FALSE) { }
- 
-   NS_DECL_ISUPPORTS
-   NS_DECL_NSISHELLSERVICE
-diff -U 8 -prN mozilla-orig/toolkit/components/Makefile.in mozilla/toolkit/components/Makefile.in
---- mozilla-orig/toolkit/components/Makefile.in	2008-01-29 13:41:31.000000000 -0400
-+++ mozilla/toolkit/components/Makefile.in	2008-01-29 14:04:27.000000000 -0400
+Binary files mozilla-wout-770patch/config/Expression.pyc and mozilla/config/Expression.pyc differ
+diff -ruN -p -U8 mozilla-wout-770patch/toolkit/components/Makefile.in mozilla/toolkit/components/Makefile.in
+--- mozilla-wout-770patch/toolkit/components/Makefile.in	2008-03-03 13:15:18.000000000 -0400
++++ mozilla/toolkit/components/Makefile.in	2008-03-03 14:27:20.000000000 -0400
 @@ -62,17 +62,17 @@ DIRS += \
  
  ifneq (,$(filter cocoa, $(MOZ_WIDGET_TOOLKIT)))
@@ -932,7 +834,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/Makefile.in mozilla/toolkit/compo
  
  ifdef MOZ_FEEDS
 -DIRS += feeds
-+DIRS += feeds browser-feeds shell
++DIRS += feeds browser-feeds
  endif
  
  ifdef MOZ_PLACES
@@ -941,10 +843,10 @@ diff -U 8 -prN mozilla-orig/toolkit/components/Makefile.in mozilla/toolkit/compo
  endif
  endif
  
-diff -U 8 -prN mozilla-orig/toolkit/components/build/Makefile.in mozilla/toolkit/components/build/Makefile.in
---- mozilla-orig/toolkit/components/build/Makefile.in	2008-01-29 13:41:31.000000000 -0400
-+++ mozilla/toolkit/components/build/Makefile.in	2008-01-29 14:04:41.000000000 -0400
-@@ -82,29 +82,33 @@ REQUIRES = 	\
+diff -ruN -p -U8 mozilla-wout-770patch/toolkit/components/build/Makefile.in mozilla/toolkit/components/build/Makefile.in
+--- mozilla-wout-770patch/toolkit/components/build/Makefile.in	2008-03-03 13:15:18.000000000 -0400
++++ mozilla/toolkit/components/build/Makefile.in	2008-03-03 14:27:20.000000000 -0400
+@@ -82,29 +82,31 @@ REQUIRES = 	\
  		find \
  		gfx \
  		locale \
@@ -954,7 +856,6 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/Makefile.in mozilla/toolkit
  		url-classifier \
  		feeds \
 +		browser-feeds \
-+		shellservice \
  		storage \
  		$(NULL)
  
@@ -969,7 +870,6 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/Makefile.in mozilla/toolkit
  	-I$(srcdir)/../url-classifier/src \
  	-I$(srcdir)/../feeds/src \
 +	-I$(srcdir)/../browser-feeds/src \
-+	-I$(srcdir)/../shell/src \
  	$(NULL)
  
  ifdef ALERTS_SERVICE
@@ -978,7 +878,7 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/Makefile.in mozilla/toolkit
  	$(NULL)
  endif
  
-@@ -132,16 +136,22 @@ SHARED_LIBRARY_LIBS += ../alerts/src/mac
+@@ -132,16 +134,17 @@ SHARED_LIBRARY_LIBS += ../alerts/src/mac
  endif
  
  ifdef MOZ_URL_CLASSIFIER
@@ -988,11 +888,6 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/Makefile.in mozilla/toolkit
  ifdef MOZ_FEEDS
  SHARED_LIBRARY_LIBS += ../feeds/src/$(LIB_PREFIX)feed_s.$(LIB_SUFFIX)
 +SHARED_LIBRARY_LIBS += ../browser-feeds/src/$(LIB_PREFIX)browser_feeds_s.$(LIB_SUFFIX)
-+endif
-+
-+ifneq (,$(filter windows mac cocoa gtk2, $(MOZ_WIDGET_TOOLKIT)))
-+SHARED_LIBRARY_LIBS += ../shell/src/$(LIB_PREFIX)shellservice_s.$(LIB_SUFFIX) \
-+	$(NULL)
  endif
  
  SHARED_LIBRARY_LIBS += ../typeaheadfind/src/$(LIB_PREFIX)fastfind_s.$(LIB_SUFFIX)
@@ -1001,28 +896,10 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/Makefile.in mozilla/toolkit
  EXTRA_DSO_LDOPTS += \
  	$(LIBS_DIR) \
  	$(EXTRA_DSO_LIBS) \
-@@ -153,9 +163,17 @@ EXTRA_DSO_LDOPTS += \
- ifneq (,$(filter mac cocoa,$(MOZ_WIDGET_TOOLKIT)))
- EXTRA_DSO_LDOPTS += $(TK_LIBS)
- endif
- 
- ifeq ($(OS_ARCH),WINNT)
- OS_LIBS	+= $(call EXPAND_LIBNAME,shell32 ole32)
- endif
- 
-+# Mac: Need to link with CoreFoundation for Mac Migrators (PList reading code)
-+# GTK2: Need to link with glib for GNOME shell service
-+ifneq (,$(filter mac cocoa gtk2,$(MOZ_WIDGET_TOOLKIT)))
-+EXTRA_DSO_LDOPTS += \
-+  $(TK_LIBS) \
-+  $(NULL)
-+endif
-+
- include $(topsrcdir)/config/rules.mk
-diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsCID.h mozilla/toolkit/components/build/nsToolkitCompsCID.h
---- mozilla-orig/toolkit/components/build/nsToolkitCompsCID.h	2008-01-29 13:41:31.000000000 -0400
-+++ mozilla/toolkit/components/build/nsToolkitCompsCID.h	2008-01-29 14:05:22.000000000 -0400
-@@ -172,8 +172,23 @@
+diff -ruN -p -U8 mozilla-wout-770patch/toolkit/components/build/nsToolkitCompsCID.h mozilla/toolkit/components/build/nsToolkitCompsCID.h
+--- mozilla-wout-770patch/toolkit/components/build/nsToolkitCompsCID.h	2008-03-03 13:15:18.000000000 -0400
++++ mozilla/toolkit/components/build/nsToolkitCompsCID.h	2008-03-03 14:27:20.000000000 -0400
+@@ -172,8 +172,17 @@
  #define NS_NAVBOOKMARKSSERVICE_CID \
  { 0x9de95a0c, 0x39a4, 0x4d64, {0x9a, 0x53, 0x17, 0x94, 0x0d, 0xd7, 0xca, 0xbb}}
  
@@ -1040,16 +917,10 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsCID.h mozilla
 +
 +#define NS_ABOUTFEEDS_CID \
 +{ 0x12ff56ec, 0x58be, 0x402c, { 0xb0, 0x57, 0x1, 0xf9, 0x61, 0xde, 0x96, 0x9b } }
-+
-+#define NS_SHELLSERVICE_CID \
-+{ 0x63c7b9f4, 0xcc8, 0x43f8, { 0xb6, 0x66, 0xa, 0x66, 0x16, 0x55, 0xcb, 0x73 } }
-+
-+#define NS_SHELLSERVICE_CONTRACTID \
-+"@mozilla.org/browser/shell-service;1"
-diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
---- mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp	2008-01-29 13:41:31.000000000 -0400
-+++ mozilla/toolkit/components/build/nsToolkitCompsModule.cpp	2008-01-29 14:05:22.000000000 -0400
-@@ -61,18 +61,23 @@
+diff -ruN -p -U8 mozilla-wout-770patch/toolkit/components/build/nsToolkitCompsModule.cpp mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
+--- mozilla-wout-770patch/toolkit/components/build/nsToolkitCompsModule.cpp	2008-03-03 13:15:18.000000000 -0400
++++ mozilla/toolkit/components/build/nsToolkitCompsModule.cpp	2008-03-03 14:27:20.000000000 -0400
+@@ -61,16 +61,18 @@
  #ifdef MOZ_URL_CLASSIFIER
  #include "nsUrlClassifierDBService.h"
  #include "nsUrlClassifierStreamUpdater.h"
@@ -1062,18 +933,13 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mo
 +#include "nsAboutFeeds.h"
  #endif
  
-+#ifdef MOZ_WIDGET_GTK2
-+#include "nsGNOMEShellService.h"
-+#endif
  /////////////////////////////////////////////////////////////////////////////
  
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsAppStartup, Init)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsUserInfo)
  
  #ifdef ALERTS_SERVICE
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsAlertsService)
- #endif
-@@ -95,18 +100,22 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsTypeAhe
+@@ -95,16 +97,17 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsTypeAhe
  NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsUrlClassifierDBService,
                                           nsUrlClassifierDBService::GetInstance)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsUrlClassifierStreamUpdater)
@@ -1085,18 +951,13 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mo
 +NS_GENERIC_FACTORY_CONSTRUCTOR(nsFeedSniffer)
  #endif
  
-+#ifdef MOZ_WIDGET_GTK2
-+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsGNOMEShellService, Init)
-+#endif
  /////////////////////////////////////////////////////////////////////////////
  
  static const nsModuleComponentInfo components[] =
  {
    { "App Startup Service",
      NS_TOOLKIT_APPSTARTUP_CID,
-     NS_APPSTARTUP_CONTRACTID,
-     nsAppStartupConstructor },
-@@ -157,12 +166,29 @@ static const nsModuleComponentInfo compo
+@@ -157,12 +160,22 @@ static const nsModuleComponentInfo compo
      NS_URLCLASSIFIERUTILS_CONTRACTID,
      nsUrlClassifierUtilsConstructor },
  #endif
@@ -1115,20 +976,13 @@ diff -U 8 -prN mozilla-orig/toolkit/components/build/nsToolkitCompsModule.cpp mo
 +    NS_ABOUT_MODULE_CONTRACTID_PREFIX "feeds",
 +    nsAboutFeeds::Create
 +  },
-+#endif
-+#ifdef MOZ_WIDGET_GTK2
-+  { "Browser Shell Service",
-+    NS_SHELLSERVICE_CID,
-+    NS_SHELLSERVICE_CONTRACTID,
-+    nsGNOMEShellServiceConstructor 
-+  },
  #endif
  };
  
  NS_IMPL_NSGETMODULE(nsToolkitCompsModule, components)
-diff -U 8 -prN mozilla-orig/toolkit/library/libxul-config.mk mozilla/toolkit/library/libxul-config.mk
---- mozilla-orig/toolkit/library/libxul-config.mk	2008-01-29 13:41:31.000000000 -0400
-+++ mozilla/toolkit/library/libxul-config.mk	2008-01-29 14:06:20.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/toolkit/library/libxul-config.mk mozilla/toolkit/library/libxul-config.mk
+--- mozilla-wout-770patch/toolkit/library/libxul-config.mk	2008-03-03 13:15:19.000000000 -0400
++++ mozilla/toolkit/library/libxul-config.mk	2008-03-03 14:27:20.000000000 -0400
 @@ -259,17 +259,17 @@ endif
  COMPONENT_LIBS += \
  	jar$(VERSION_NUMBER) \
@@ -1148,9 +1002,9 @@ diff -U 8 -prN mozilla-orig/toolkit/library/libxul-config.mk mozilla/toolkit/lib
  ifdef MOZ_MATHML
  COMPONENT_LIBS += ucvmath
  endif
-diff -U 8 -prN mozilla-orig/toolkit/library/nsStaticXULComponents.cpp mozilla/toolkit/library/nsStaticXULComponents.cpp
---- mozilla-orig/toolkit/library/nsStaticXULComponents.cpp	2008-01-29 13:41:31.000000000 -0400
-+++ mozilla/toolkit/library/nsStaticXULComponents.cpp	2008-01-29 14:06:30.000000000 -0400
+diff -ruN -p -U8 mozilla-wout-770patch/toolkit/library/nsStaticXULComponents.cpp mozilla/toolkit/library/nsStaticXULComponents.cpp
+--- mozilla-wout-770patch/toolkit/library/nsStaticXULComponents.cpp	2008-03-03 13:15:19.000000000 -0400
++++ mozilla/toolkit/library/nsStaticXULComponents.cpp	2008-03-03 14:27:20.000000000 -0400
 @@ -258,17 +258,17 @@
  #define XULENABLED_MODULES                   \
      MODULE(tkAutoCompleteModule)             \
@@ -1170,71 +1024,3 @@ diff -U 8 -prN mozilla-orig/toolkit/library/nsStaticXULComponents.cpp mozilla/to
  #endif
  
  #ifdef MOZ_SPELLCHECK
-diff -U 8 -prN mozilla-orig/toolkit/system/gnome/nsGnomeVFSService.cpp mozilla/toolkit/system/gnome/nsGnomeVFSService.cpp
---- mozilla-orig/toolkit/system/gnome/nsGnomeVFSService.cpp	2008-01-29 13:41:32.000000000 -0400
-+++ mozilla/toolkit/system/gnome/nsGnomeVFSService.cpp	2008-01-29 14:07:07.000000000 -0400
-@@ -45,17 +45,17 @@
- #include "nsAutoPtr.h"
- 
- extern "C" {
- #include <libgnomevfs/gnome-vfs-application-registry.h>
- #include <libgnomevfs/gnome-vfs-init.h>
- #include <libgnomevfs/gnome-vfs-mime.h>
- #include <libgnomevfs/gnome-vfs-mime-handlers.h>
- #include <libgnomevfs/gnome-vfs-mime-info.h>
--#include <libgnome/gnome-url.h>
-+////#include <libgnome/gnome-url.h>
- }
- 
- class nsGnomeVFSMimeApp : public nsIGnomeVFSMimeApp
- {
- public:
-   NS_DECL_ISUPPORTS
-   NS_DECL_NSIGNOMEVFSMIMEAPP
- 
-@@ -234,18 +234,18 @@ nsGnomeVFSService::GetDescriptionForMime
- }
- 
- NS_IMETHODIMP
- nsGnomeVFSService::ShowURI(nsIURI *aURI)
- {
-   nsCAutoString spec;
-   aURI->GetSpec(spec);
- 
--  if (gnome_url_show(spec.get(), NULL))
--    return NS_OK;
-+  //if (gnome_url_show(spec.get(), NULL))
-+  //  return NS_OK;
- 
-   return NS_ERROR_FAILURE;
- }
- 
- NS_IMETHODIMP
- nsGnomeVFSService::SetAppStringKey(const nsACString &aID,
-                                    PRInt32           aKey,
-                                    const nsACString &aValue)
-diff -U 8 -prN mozilla-orig/toolkit/toolkit-tiers.mk mozilla/toolkit/toolkit-tiers.mk
---- mozilla-orig/toolkit/toolkit-tiers.mk	2008-01-29 13:41:32.000000000 -0400
-+++ mozilla/toolkit/toolkit-tiers.mk	2008-01-29 14:07:19.000000000 -0400
-@@ -260,19 +260,19 @@ ifdef NS_TRACE_MALLOC
- tier_toolkit_dirs += tools/trace-malloc
- endif
- 
- ifdef MOZ_LDAP_XPCOM
- tier_toolkit_staticdirs += directory/c-sdk
- tier_toolkit_dirs	+= directory/xpcom
- endif
- 
--ifdef MOZ_ENABLE_GNOME_COMPONENT
-+#ifdef MOZ_ENABLE_GNOME_COMPONENT
- tier_toolkit_dirs    += toolkit/system/gnome
--endif
-+#endif
- 
- ifdef MOZ_ENABLE_DBUS
- tier_toolkit_dirs    += toolkit/system/dbus
- endif
- 
- ifdef MOZ_LEAKY
- tier_toolkit_dirs        += tools/leaky
- endif
