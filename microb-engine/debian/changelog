@@ -1,3 +1,9 @@
+microb-engine (1.0.4-28) unstable; urgency=low
+
+  * Fixes: NB#77844 Spatial navigation works unpredictably
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Tue,  4 Mar 2008 15:21:13 -0500
+
 microb-engine (1.0.4-27) unstable; urgency=low
 
   * Fixes: NB#78032 Message field title is not properly aligned 

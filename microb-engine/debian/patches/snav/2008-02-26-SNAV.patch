@@ -1,5 +1,5 @@
 --- extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-22 07:58:14.000000000 -0700
-+++ /home/petejc/src/microb_latest/microb-engine/scratch_build/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-26 12:20:28.000000000 -0700
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-02-26 12:20:28.000000000 -0700
 @@ -37,6 +37,7 @@
  #include "nsSpatialNavigationPrivate.h"
  #include "nsGUIEvent.h"
