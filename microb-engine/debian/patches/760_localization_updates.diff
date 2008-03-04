@@ -3464,7 +3464,7 @@ diff -ruN mozilla.orig/toolkit/locales/en-US/chrome/global-platform/unix/platfor
 -EnterUserPasswordFor=Enter username and password for %1$S
 -EnterPasswordFor=Enter password for %1$S on %2$S
 -
-+EnterUserPasswordForRealm=Realm: %1$S
++EnterUserPasswordForRealm=%1$S
 +EnterUserPasswordForProxy=Proxy: %1$S
 +EnterUserPasswordFor=%1$S
 +EnterPasswordFor=%1$S on %2$S
