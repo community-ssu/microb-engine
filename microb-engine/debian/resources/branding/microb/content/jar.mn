@@ -3,3 +3,5 @@ browser.jar:
   content/branding/about.png                     (about.png)
   content/branding/feed.gif                      (feed.gif)
   content/branding/config.html                   (config.html)
+  content/branding/extensions.js                 (extensions.js)
+  content/branding/extensions.html               (extensions.html)

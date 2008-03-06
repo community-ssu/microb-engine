@@ -1,3 +1,9 @@
+microb-engine (1.0.4-29) unstable; urgency=low
+
+  * Added extensions.html file 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 06 Mar 2008 10:37:18 +0200
+
 microb-engine (1.0.4-28) unstable; urgency=low
 
   * Fixes: NB#77844 Spatial navigation works unpredictably
