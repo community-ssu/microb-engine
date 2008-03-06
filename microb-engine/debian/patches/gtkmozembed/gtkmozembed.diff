@@ -9320,7 +9320,7 @@ Index: mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/src/gtkmozembed_glue.cpp
 +++ mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
-@@ -49,39 +49,35 @@
+@@ -49,38 +49,32 @@
  
  #ifndef XPCOM_GLUE
  #error This file only makes sense when XPCOM_GLUE is defined.
@@ -9352,10 +9352,7 @@ Index: mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
 -  GTKF(gtk_moz_embed_get_shistory_index) \
 -  GTKF(gtk_moz_embed_shistory_goto_index) \
 -  GTKF(gtk_moz_embed_get_server_cert) \
--  GTKF(gtk_moz_embed_get_nsIWebBrowser)
-+  GTKF(gtk_moz_embed_get_nsIWebBrowser) \
-+  GTKF(gtk_moz_embed_do_command) \
-+  GTKF(gtk_moz_embed_get_text)
+   GTKF(gtk_moz_embed_get_nsIWebBrowser)
  
  #define GTKMOZEMBED_FUNCTIONS \
    GTKF(gtk_moz_embed_get_type) \
@@ -9363,7 +9360,6 @@ Index: mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
    GTKF(gtk_moz_embed_push_startup) \
    GTKF(gtk_moz_embed_pop_startup) \
    GTKF(gtk_moz_embed_set_path) \
-   GTKF(gtk_moz_embed_set_comp_path) \
 Index: mozilla/embedding/browser/gtk/src/gtkmozembed_internal.h
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/src/gtkmozembed_internal.h
