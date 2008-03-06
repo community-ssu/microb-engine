@@ -1,3 +1,9 @@
+microb-engine (1.0.4-31) unstable; urgency=low
+
+  * Fixes: NB#77921 Image cropped when zoomed in/out by tapping 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 06 Mar 2008 12:55:59 +0200
+
 microb-engine (1.0.4-30) unstable; urgency=low
 
   * Fixed using of microb-refui with libgtkmozembed package
