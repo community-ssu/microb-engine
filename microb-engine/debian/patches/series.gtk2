@@ -303,6 +303,7 @@ xpinstaller/01_ConfirmNoXul.diff
 xpinstaller/02_DownloadManagerMOZStorage.diff
 xpinstaller/04_ChromeRegistrationWithRDFwithoutXUL.diff
 #xpinstaller/05_IncompatibleStateNotification.diff
+xpinstaller/06_RemoveDownloadCancel.diff
 
 lowmem/LowMemoryManageImprovements.diff
 lowmem/PNGLowMemDetection.diff
