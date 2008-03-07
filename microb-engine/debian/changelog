@@ -1,3 +1,9 @@
+microb-engine (1.0.4-32) unstable; urgency=low
+
+  * Enabled check compatibility for XPI addons 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 07 Mar 2008 13:01:02 +0200
+
 microb-engine (1.0.4-31) unstable; urgency=low
 
   * Fixes: NB#77921 Image cropped when zoomed in/out by tapping 
