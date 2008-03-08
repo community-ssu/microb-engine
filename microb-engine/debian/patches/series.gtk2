@@ -343,6 +343,16 @@ trunk_updates/Bug386773_NPN_PluginThreadAsyncCall.diff
 ##trunk_updates/new/25.BUG391261.diff
 #plugin end
 
+trunk_updates/new2/1_396651.diff
+trunk_updates/new2/2_394673.diff
+trunk_updates/new2/3_396587.diff
+trunk_updates/new2/4_396969.diff
+trunk_updates/new2/5_395915.diff
+trunk_updates/new2/6_389636.diff
+trunk_updates/new2/7_392318.diff
+trunk_updates/new2/8_tt.diff
+trunk_updates/new2/9_397011.diff
+
 cross/010_BUG376279_security_cross_compile.diff
 cross/020_nspr_dpkg_cross.diff
 cross/030_host_libidl_dpkg_cross.diff

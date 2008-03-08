@@ -1,3 +1,10 @@
+microb-engine (1.0.4-34) unstable; urgency=low
+
+  * Fixes: NB#78270 Google spreadsheet can't add content with VKB
+  * Some other trunk fixes
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 08 Mar 2008 12:53:52 +0200
+
 microb-engine (1.0.4-33) unstable; urgency=low
 
   * Fixed full cancel on RemoveDownload call 

@@ -1,0 +1,151 @@
+Index: mozilla/layout/base/nsCSSFrameConstructor.h
+===================================================================
+--- mozilla.orig/layout/base/nsCSSFrameConstructor.h
++++ mozilla/layout/base/nsCSSFrameConstructor.h
+@@ -453,22 +453,21 @@
+                              PRBool&                      aCreatedPseudo);
+ 
+   const nsStyleDisplay* GetDisplay(nsIFrame* aFrame);
+ 
+   // END TABLE SECTION
+ 
+ protected:
+   static nsresult CreatePlaceholderFrameFor(nsIPresShell*    aPresShell, 
+-                                            nsPresContext*  aPresContext,
+-                                            nsFrameManager*  aFrameManager,
+                                             nsIContent*      aContent,
+                                             nsIFrame*        aFrame,
+                                             nsStyleContext*  aStyleContext,
+                                             nsIFrame*        aParentFrame,
++                                            nsIFrame*        aPrevInFlow,
+                                             nsIFrame**       aPlaceholderFrame);
+ 
+ private:
+   // @param OUT aNewFrame the new radio control frame
+   nsresult ConstructRadioControlFrame(nsIFrame**         aNewFrame,
+                                       nsIContent*        aContent,
+                                       nsStyleContext*    aStyleContext);
+ 
+Index: mozilla/layout/base/nsCSSFrameConstructor.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsCSSFrameConstructor.cpp
++++ mozilla/layout/base/nsCSSFrameConstructor.cpp
+@@ -1390,22 +1390,21 @@
+   }
+ 
+   if (needPlaceholder) {
+     NS_ASSERTION(frameItems != &aFrameItems,
+                  "Putting frame in-flow _and_ want a placeholder?");
+     nsIFrame* placeholderFrame;
+     nsresult rv =
+       nsCSSFrameConstructor::CreatePlaceholderFrameFor(mPresShell,
+-                                                       mPresContext,
+-                                                       mFrameManager,
+                                                        aContent,
+                                                        aNewFrame,
+                                                        aStyleContext,
+                                                        aParentFrame,
++                                                       nsnull,
+                                                        &placeholderFrame);
+     if (NS_FAILED(rv)) {
+       // Note that aNewFrame could be the top frame for a scrollframe setup,
+       // hence already set as the primary frame.  So we have to clean up here.
+       // But it shouldn't have any out-of-flow kids.
+       // XXXbz Maybe add a utility function to assert that?
+       CleanupFrameReferences(mFrameManager, aNewFrame);
+       aNewFrame->Destroy();
+@@ -4653,41 +4652,40 @@
+   // Fixed pos kids are taken care of directly in CreateContinuingFrame()
+ 
+   return NS_OK;
+ }
+ 
+ /* static */
+ nsresult
+ nsCSSFrameConstructor::CreatePlaceholderFrameFor(nsIPresShell*    aPresShell, 
+-                                                 nsPresContext*  aPresContext,
+-                                                 nsFrameManager*  aFrameManager,
+                                                  nsIContent*      aContent,
+                                                  nsIFrame*        aFrame,
+                                                  nsStyleContext*  aStyleContext,
+                                                  nsIFrame*        aParentFrame,
++                                                 nsIFrame*        aPrevInFlow,
+                                                  nsIFrame**       aPlaceholderFrame)
+ {
+   nsRefPtr<nsStyleContext> placeholderStyle = aPresShell->StyleSet()->
+     ResolveStyleForNonElement(aStyleContext->GetParent());
+   
+   // The placeholder frame gets a pseudo style context
+   nsPlaceholderFrame* placeholderFrame =
+     (nsPlaceholderFrame*)NS_NewPlaceholderFrame(aPresShell, placeholderStyle);
+ 
+   if (placeholderFrame) {
+-    placeholderFrame->Init(aContent, aParentFrame, nsnull);
++    placeholderFrame->Init(aContent, aParentFrame, aPrevInFlow);
+   
+     // The placeholder frame has a pointer back to the out-of-flow frame
+     placeholderFrame->SetOutOfFlowFrame(aFrame);
+   
+     aFrame->AddStateBits(NS_FRAME_OUT_OF_FLOW);
+ 
+     // Add mapping from absolutely positioned frame to its placeholder frame
+-    aFrameManager->RegisterPlaceholderFrame(placeholderFrame);
++    aPresShell->FrameManager()->RegisterPlaceholderFrame(placeholderFrame);
+ 
+     *aPlaceholderFrame = NS_STATIC_CAST(nsIFrame*, placeholderFrame);
+     
+     return NS_OK;
+   }
+   else {
+     return NS_ERROR_OUT_OF_MEMORY;
+   }
+@@ -10571,25 +10569,23 @@
+     nsIFrame* oofFrame = nsPlaceholderFrame::GetRealFrameForPlaceholder(aFrame);
+     nsIFrame* oofContFrame;
+     rv = CreateContinuingFrame(aPresContext, oofFrame, aParentFrame, &oofContFrame);
+     if (NS_FAILED(rv)) {
+       *aContinuingFrame = nsnull;
+       return rv;
+     }
+     // create a continuing placeholder frame
+-    rv = CreatePlaceholderFrameFor(shell, aPresContext, shell->FrameManager(),
+-                                   content, oofContFrame, styleContext,
+-                                   aParentFrame, &newFrame);
++    rv = CreatePlaceholderFrameFor(shell, content, oofContFrame, styleContext,
++                                   aParentFrame, aFrame, &newFrame);
+     if (NS_FAILED(rv)) {
+       oofContFrame->Destroy();
+       *aContinuingFrame = nsnull;
+       return rv;
+     }
+-    newFrame->Init(content, aParentFrame, aFrame);
+   } else if (nsGkAtoms::fieldSetFrame == frameType) {
+     newFrame = NS_NewFieldSetFrame(shell, styleContext);
+ 
+     if (newFrame) {
+       newFrame->Init(content, aParentFrame, aFrame);
+ 
+       // XXXbz should we be passing in a non-null aContentParentFrame?
+       nsHTMLContainerFrame::CreateViewForFrame(newFrame, nsnull, PR_FALSE);
+Index: mozilla/layout/generic/nsFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsFrame.cpp
++++ mozilla/layout/generic/nsFrame.cpp
+@@ -547,16 +547,17 @@
+ /////////////////////////////////////////////////////////////////////////////
+ // nsIFrame
+ 
+ NS_IMETHODIMP
+ nsFrame::Init(nsIContent*      aContent,
+               nsIFrame*        aParent,
+               nsIFrame*        aPrevInFlow)
+ {
++  NS_PRECONDITION(!mContent, "Double-initing a frame?");
+   NS_ASSERTION(IsFrameOfType(eDEBUGAllFrames) &&
+                !IsFrameOfType(eDEBUGNoFrames),
+                "IsFrameOfType implementation that doesn't call base class");
+ 
+   mContent = aContent;
+   mParent = aParent;
+ 
+   if (aContent) {

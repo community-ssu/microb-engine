@@ -1,0 +1,128 @@
+Index: mozilla/content/base/src/nsDocument.h
+===================================================================
+--- mozilla.orig/content/base/src/nsDocument.h
++++ mozilla/content/base/src/nsDocument.h
+@@ -649,19 +649,20 @@
+                                                    nsIDOMNodeList** aResult);
+   virtual NS_HIDDEN_(nsresult) GetContentListFor(nsIContent* aContent,
+                                                  nsIDOMNodeList** aResult);
+   virtual NS_HIDDEN_(void) FlushSkinBindings();
+ 
+   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsDocument, nsIDocument)
+ 
+   /**
+-   * Utility method for getElementsByClassName
++   * Utility method for getElementsByClassName.  aRootNode is the node (either
++   * document or element), which getElementsByClassName was called on.
+    */
+-  static nsresult GetElementsByClassNameHelper(nsIContent* aContent,
++  static nsresult GetElementsByClassNameHelper(nsINode* aRootNode,
+                                                const nsAString& aClasses,
+                                                nsIDOMNodeList** aReturn);
+ protected:
+ 
+   /**
+    * Check that aId is not empty and log a message to the console
+    * service if it is.
+    * @returns PR_TRUE if aId looks correct, PR_FALSE otherwise.
+Index: mozilla/content/base/src/nsDocument.cpp
+===================================================================
+--- mozilla.orig/content/base/src/nsDocument.cpp
++++ mozilla/content/base/src/nsDocument.cpp
+@@ -1636,41 +1636,43 @@
+   // If we couldn't get a BODY, return the root element.
+   return GetDocumentElement(aElement);
+ }
+ 
+ NS_IMETHODIMP
+ nsDocument::GetElementsByClassName(const nsAString& aClasses,
+                                    nsIDOMNodeList** aReturn)
+ {
+-  return GetElementsByClassNameHelper(mRootContent, aClasses, aReturn);
++  return GetElementsByClassNameHelper(this, aClasses, aReturn);
+ }
+ 
+ 
+ // static GetElementsByClassName helpers
+ nsresult
+-nsDocument::GetElementsByClassNameHelper(nsIContent* aContent,
++nsDocument::GetElementsByClassNameHelper(nsINode* aRootNode,
+                                          const nsAString& aClasses,
+                                          nsIDOMNodeList** aReturn)
+ {
++  NS_PRECONDITION(aRootNode, "Must have root node");
++
+   nsAttrValue attrValue;
+   attrValue.ParseAtomArray(aClasses);
+   // nsAttrValue::Equals is sensitive to order, so we'll send an array
+   nsCOMArray<nsIAtom>* classes = new nsCOMArray<nsIAtom>;
+   NS_ENSURE_TRUE(classes, NS_ERROR_OUT_OF_MEMORY);
+ 
+   if (attrValue.Type() == nsAttrValue::eAtomArray) {
+     classes->AppendObjects(*(attrValue.GetAtomArrayValue()));
+   } else if (!attrValue.IsEmptyString()) {
+     classes->AppendObject(attrValue.GetAtomValue());
+   }
+   
+   nsBaseContentList* elements;
+-  if (classes->Count() > 0 && aContent) {
+-    elements = new nsContentList(aContent, MatchClassNames,
++  if (classes->Count() > 0) {
++    elements = new nsContentList(aRootNode, MatchClassNames,
+                                  DestroyClassNameArray, classes);
+   } else {
+     elements = new nsBaseContentList();
+   }
+   if (!elements) {
+     delete classes;
+     return NS_ERROR_OUT_OF_MEMORY;
+   }
+Index: mozilla/content/base/test/test_bug395915.html
+===================================================================
+--- /dev/null
++++ mozilla/content/base/test/test_bug395915.html
+@@ -0,0 +1,44 @@
++<!DOCTYPE HTML>
++<html class="A b">
++<!--
++https://bugzilla.mozilla.org/show_bug.cgi?id=395915
++-->
++<head>
++  <title>Test for Bug 395915</title>
++  <script type="text/javascript" src="/MochiKit/MochiKit.js"></script>
++  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
++  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
++</head>
++<body>
++<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=395915">Mozilla Bug 395915</a>
++<p id="display"></p>
++<div id="content" style="display: none">
++
++</div>
++<pre id="test">
++<script class="testbody" type="text/javascript">
++
++/** Test for Bug 395915 **/
++is(document.getElementsByClassName("a").length, 0,
++   "Class names are case-sensitive");
++is(document.getElementsByClassName("A").length, 1,
++   "Have one node of class A");
++is(document.getElementsByClassName("A")[0], document.documentElement,
++   "Root is class A");
++
++is(document.getElementsByClassName("a b").length, 0,
++   "Class names are case-sensitive two");
++is(document.getElementsByClassName("A B").length, 0,
++   "Class names are case-sensitive three");
++is(document.getElementsByClassName("a B").length, 0,
++   "Class names are case-sensitive four");
++is(document.getElementsByClassName("A b").length, 1,
++   "Have one node of class 'A b'");
++is(document.getElementsByClassName("A b")[0], document.documentElement,
++   "Root is class 'A b'");
++
++</script>
++</pre>
++</body>
++</html>
++

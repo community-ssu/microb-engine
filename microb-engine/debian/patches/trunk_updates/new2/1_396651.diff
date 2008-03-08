@@ -1,0 +1,26 @@
+Index: xpccomponents.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/js/src/xpconnect/src/xpccomponents.cpp,v
+retrieving revision 1.119
+diff -u -8 -p -r1.119 xpccomponents.cpp
+--- mozilla/js/src/xpconnect/src/xpccomponents.cpp	19 Sep 2007 00:26:40 -0000	1.119
++++ mozilla/js/src/xpconnect/src/xpccomponents.cpp	19 Sep 2007 18:11:49 -0000
+@@ -2756,16 +2756,18 @@ nsXPCComponents_Utils::LookupMethod()
+ #endif
+ 
+     // Get JSContext of current call
+     JSContext* cx;
+     rv = cc->GetJSContext(&cx);
+     if(NS_FAILED(rv) || !cx)
+         return NS_ERROR_FAILURE;
+ 
++    JSAutoRequest ar(cx);
++
+     // get place for return value
+     jsval *retval = nsnull;
+     rv = cc->GetRetValPtr(&retval);
+     if(NS_FAILED(rv) || !retval)
+         return NS_ERROR_FAILURE;
+ 
+     // get argc and argv and verify arg count
+     PRUint32 argc;
