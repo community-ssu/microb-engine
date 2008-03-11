@@ -141,7 +141,7 @@ perf_addon/spidermonkey_alloc.diff
 perf_addon/605_css_erros_parsing_disable.diff
 #perf_addon/delayed_threads_xpcom_init.diff
 #Performance improvements
-perf_addon/Bug324161.js_parse_int.diff
+#perf_addon/Bug324161.js_parse_int.diff
 
 #debug_tools/images_debug.diff
 #620_cairo_1.4.0_update.diff
