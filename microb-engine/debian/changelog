@@ -1,3 +1,10 @@
+microb-engine (1.0.4-35) unstable; urgency=low
+
+  * Fixes: NB#78005 MB#419510 PAC dateRange function doesn't handle
+    months after JUN and weekdayRange doesn't handle SAT
+
+ -- Josh Soref <josh.soref@nokia.com>  Tue, 11 Mar 2008 18:10:00 +0200
+
 microb-engine (1.0.4-34) unstable; urgency=low
 
   * Fixes: NB#78270 Google spreadsheet can't add content with VKB
