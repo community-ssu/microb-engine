@@ -1,10 +1,10 @@
-Index: netwerk/base/src/nsProxyAutoConfig.js
+Index: mozilla/netwerk/base/src/nsProxyAutoConfig.js
 ===================================================================
 RCS file: /cvsroot/mozilla/netwerk/base/src/nsProxyAutoConfig.js,v
 retrieving revision 1.54
-diff -r1.54 netwerk/base/src/nsProxyAutoConfig.js
---- netwerk/base/src/nsProxyAutoConfig.js Mon Feb 25 22:44:59 2008
-+++ netwerk/base/src/nsProxyAutoConfig.js    Mon Feb 25 22:45:18 2008
+diff -r1.54 mozilla/netwerk/base/src/nsProxyAutoConfig.js
+--- mozilla/netwerk/base/src/nsProxyAutoConfig.js Mon Feb 25 22:44:59 2008
++++ mozilla/netwerk/base/src/nsProxyAutoConfig.js    Mon Feb 25 22:45:18 2008
 @@ -243,15 +243,14 @@ var pacUtils = 
  "   return newRe.test(url);\n" +
  "}\n" +
