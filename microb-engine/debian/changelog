@@ -1,3 +1,9 @@
+microb-engine (1.0.4-37) unstable; urgency=low
+
+  * Fixes patch format for NB#78005
+
+ -- Josh Soref <josh.soref@nokia.com>  Wed, 12 Mar 2008 12:10:00 +0200
+
 microb-engine (1.0.4-36) unstable; urgency=low
 
   * Fixes: NB#82252 cannot login to reader.google.com page
