@@ -1,3 +1,9 @@
+microb-engine (1.0.4-40) unstable; urgency=low
+
+  * Updated patch 775_Addon_Better_RSS_Support.diff 
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Thu, 13 Mar 2008 13:41:06 -0400
+
 microb-engine (1.0.4-39) unstable; urgency=low
 
   * Addon for previous commit. 
