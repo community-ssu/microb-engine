@@ -1,0 +1,15 @@
+Index: mozilla/embedding/components/webbrowserpersist/src/nsWebBrowserPersist.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/embedding/components/webbrowserpersist/src/nsWebBrowserPersist.cpp,v
+retrieving revision 1.134
+diff -u -p -w -r1.134 mozilla/embedding/components/webbrowserpersist/src/nsWebBrowserPersist.cpp
+--- mozilla/embedding/components/webbrowserpersist/src/nsWebBrowserPersist.cpp	12 Mar 2008 18:30:00 +0200	1.134
++++ mozilla/embedding/components/webbrowserpersist/src/nsWebBrowserPersist.cpp	12 Mar 2008 18:35:00 +0200
+@@ -912,6 +912,7 @@ NS_IMETHODIMP nsWebBrowserPersist::OnDat
+                     rv = StartUpload(storStream, data->mFile, contentType);
+                     if (NS_FAILED(rv))
+                     {
++                        readError = PR_FALSE;
+                         cancel = PR_TRUE;
+                     }
+                 }

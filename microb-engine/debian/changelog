@@ -1,3 +1,10 @@
+microb-engine (1.0.4-42) unstable; urgency=low
+
+  * Fixes: NB#81006 Wrong error message is displayed after making space in
+    device and try to download a file
+
+ -- Josh Soref <josh.soref@nokia.com>  Fri, 14 Mar 2008 15:30:00 +0200
+
 microb-engine (1.0.4-41) unstable; urgency=low
 
   * updated series.gtk2 file
