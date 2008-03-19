@@ -1,0 +1,17 @@
+--- mozilla/view/src/nsScrollPortView.cpp.orig	2007-06-05 12:39:54.000000000 +0300
++++ mozilla/view/src/nsScrollPortView.cpp	2008-03-19 12:55:55.000000000 +0200
+@@ -469,11 +469,13 @@ NS_IMETHODIMP nsScrollPortView::ScrollBy
+ NS_IMETHODIMP nsScrollPortView::ScrollByPixels(PRInt32 aNumPixelsX,
+                                                PRInt32 aNumPixelsY)
+ {
+   nsCOMPtr<nsIDeviceContext> dev;
+   mViewManager->GetDeviceContext(*getter_AddRefs(dev));
+-  PRInt32 p2a = dev->AppUnitsPerDevPixel(); 
++  PRInt32 p2a = 60;
++  if (dev)
++    dev->AppUnitsPerDevPixel(); 
+ 
+   nscoord dx = NSIntPixelsToAppUnits(aNumPixelsX, p2a);
+   nscoord dy = NSIntPixelsToAppUnits(aNumPixelsY, p2a);
+ 
+   return ScrollTo(mOffsetX + dx, mOffsetY + dy, 0);

@@ -157,6 +157,7 @@ crash/415_BUG371882_Editor_Crash.diff
 crash/460_stylecontext_random_crash.diff
 crash/JSopcode_null_check1.diff
 crash/chrome_resources_fail.diff
+crash/possible_crash_on_gdocs.diff
 
 #CRASHES
 
