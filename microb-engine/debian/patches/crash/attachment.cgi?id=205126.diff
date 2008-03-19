@@ -270,7 +270,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
  
   Entry:
  	x1,x2 - x-coordinates of the destination line
-@@ -765,36 +783,47 @@
+@@ -772,36 +790,47 @@
    if (aDWidth <= 0 || aDHeight <= 0 || aSWidth <= 0 || aSHeight <= 0) {
      return NS_OK;
    }
@@ -318,7 +318,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
        }
  
        if (gdk_rgb_get_visual()->depth <= 8) {
-@@ -839,34 +868,38 @@
+@@ -846,34 +875,38 @@
            // we have both a set of rectangles and a bitmap defining the clip
            // let X11 clip to the bitmap, do the rectangles by hand
            nsRegionRectSet *rectSet = nsnull;
@@ -357,7 +357,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
        if (!gc)
          gc = ((nsRenderingContextGTK&)aContext).GetGC();
  
-@@ -883,24 +916,27 @@
+@@ -890,24 +923,27 @@
                                       aDX, aDY, aDWidth, aDHeight,
                                       GDK_RGB_DITHER_MAX, 
                                       scaledRGB + 3*((aDY-dstOrigY)*dstWidth+(aDX-dstOrigX)),
@@ -386,7 +386,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
        gdk_pixmap_unref(pixmap);
  
      mFlags = 0;
-@@ -1319,23 +1355,27 @@
+@@ -1326,23 +1362,27 @@
    readWidth = aDWidth;
    readHeight = aDHeight;
  
@@ -416,7 +416,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
      return;
    }
  
-@@ -1484,23 +1524,27 @@
+@@ -1491,23 +1531,27 @@
    if (readX+readWidth > surfaceWidth)
      readWidth = surfaceWidth-readX;
    if (readY+readHeight > surfaceHeight)
@@ -446,7 +446,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
      return;
    }
  
-@@ -1591,40 +1635,58 @@
+@@ -1598,40 +1642,58 @@
    gdk_gc_unref(imageGC);
  
    XDestroyImage(ximage);
@@ -506,7 +506,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
                                  XYPixmap,
                                  0, /* x offset, XXX fix this */
                                  (char *)mAlphaBits,  /* cast away our sign. */
-@@ -1648,16 +1710,17 @@
+@@ -1655,16 +1717,17 @@
        GdkColor fg = { 1, 0, 0, 0 };
        s1bitGC = gdk_gc_new(mAlphaPixmap);
        gdk_gc_set_foreground(s1bitGC, &fg);
@@ -524,7 +524,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
    // XXX should use (different?) GC cache here
    if (mAlphaPixmap) {
      // Setup gc to use the given alpha-pixmap for clipping
-@@ -1732,31 +1795,44 @@
+@@ -1739,31 +1802,44 @@
  
  void nsImageGTK::SlowTile(nsDrawingSurfaceGTK *aSurface,
                            const nsRect &aTileRect,
@@ -569,7 +569,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
    gdk_gc_set_clip_origin(fgc, aTileRect.x, aTileRect.y);
  
    nsRect drawRect = aTileRect;
-@@ -1973,27 +2049,35 @@
+@@ -1980,27 +2056,35 @@
    return NS_OK;
  }
  
@@ -605,7 +605,7 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.cpp
      for (PRInt32 y = 0; y < mHeight; ++y) {
        PRUint8 *alphaTarget = mAlphaBits + y*mAlphaRowBytes;
        PRUint32 alphaBitPos = 7;
-@@ -2012,26 +2096,39 @@
+@@ -2019,26 +2103,39 @@
    }
  
    if (!mImagePixmap)
@@ -650,7 +650,31 @@ Index: mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
 ===================================================================
 --- mozilla.orig/gfx/src/gtk/nsRenderingContextGTK.cpp
 +++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
-@@ -166,20 +166,28 @@
+@@ -148,17 +148,22 @@
+ //  ::gdk_rgb_init();
+ 
+   mSurface = new nsDrawingSurfaceGTK();
+   mDisplay = GDK_DISPLAY();
+ 
+   if (mSurface)
+   {
+     if (!aWindow) return NS_ERROR_NULL_POINTER;
+-
++    if (!mDisplay)
++    {
++        delete mSurface;
++        mSurface = nsnull;
++        return NS_ERROR_OUT_OF_MEMORY;
++    }
+     // we want to ref the window here so that we can unref in the drawing surface.
+     // otherwise, we can not unref and that causes windows that are created in the
+     // drawing surface not to be freed.
+     GdkDrawable *win = (GdkDrawable*)aWindow->GetNativeData(NS_NATIVE_WINDOW);
+     if (win)
+       gdk_window_ref((GdkWindow*)win);
+     else
+     {
+@@ -166,20 +171,28 @@
  
        if (!w)
        {
@@ -679,6 +703,25 @@ Index: mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
      GdkGC *gc = (GdkGC *)aWindow->GetNativeData(NS_NATIVE_GRAPHIC);
      mSurface->Init(win,gc);
  
+@@ -196,16 +209,18 @@
+ }
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::Init(nsIDeviceContext* aContext,
+                                           nsIDrawingSurface* aSurface)
+ {
+   mContext = aContext;
+   NS_IF_ADDREF(mContext);
+ 
++  mDisplay = GDK_DISPLAY();
++
+   mSurface = (nsDrawingSurfaceGTK *) aSurface;
+   NS_ADDREF(mSurface);
+   mOffscreenSurface = mSurface;
+ 
+   return (CommonInit());
+ }
+ 
+ NS_IMETHODIMP nsRenderingContextGTK::CommonInit()
 Index: mozilla/gfx/src/gtk/nsImageGTK.h
 ===================================================================
 --- mozilla.orig/gfx/src/gtk/nsImageGTK.h
@@ -702,23 +745,3 @@ Index: mozilla/gfx/src/gtk/nsImageGTK.h
    PRUint8      *mImageBits;
    GdkPixmap    *mImagePixmap;
    PRUint8      *mTrueAlphaBits;
-   
-Index: mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp
-===================================================================
-   
---- mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp.orig	2008-02-20 10:44:59.000000000 -0500
-+++ mozilla/gfx/src/gtk/nsRenderingContextGTK.cpp	2008-02-20 10:46:56.000000000 -0500
-@@ -152,7 +152,12 @@
-   if (mSurface)
-   {
-     if (!aWindow) return NS_ERROR_NULL_POINTER;
--
-+    if (!mDisplay)
-+    {
-+        delete mSurface;
-+        mSurface = nsnull;
-+        return NS_ERROR_OUT_OF_MEMORY;
-+    }
-     // we want to ref the window here so that we can unref in the drawing surface.
-     // otherwise, we can not unref and that causes windows that are created in the
-     // drawing surface not to be freed.

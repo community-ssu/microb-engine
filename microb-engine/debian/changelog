@@ -1,3 +1,9 @@
+microb-engine (1.0.4-44) unstable; urgency=low
+
+  * Fixes: NB#80274 Browser crash 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 19 Mar 2008 07:40:12 +0200
+
 microb-engine (1.0.4-43) unstable; urgency=low
 
   * Removed win symbols from patch 
