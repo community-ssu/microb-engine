@@ -1,3 +1,9 @@
+microb-engine (1.0.4-46) unstable; urgency=low
+
+  * Fixes: NB#82630 In some cases XPI based add-ons can not be installed.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 20 Mar 2008 18:42:48 +0200
+
 microb-engine (1.0.4-45) unstable; urgency=low
 
   * Fixed possible crash on google docs
