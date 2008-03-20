@@ -105,73 +105,6 @@ diff -ruN -p -u10 mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager
   *          supplied is not a RDF string literal or resource.
   */
  function stringData(literalOrResource) {
-@@ -2635,32 +2638,37 @@ BlocklistItemData.prototype = {
-     return { minVersion: minVersion, maxVersion: maxVersion };
-   }
- };
- 
- /**
-  * Installs, manages and tracks compatibility for Extensions and Themes
-  * @constructor
-  */
- function ExtensionManager() {
-   gApp = Components.classes["@mozilla.org/xre/app-info;1"]
--                   .getService(Components.interfaces.nsIXULAppInfo)
-+                   .getService(Components.interfaces.nsIXULAppInfo);
-+/*
-                    .QueryInterface(Components.interfaces.nsIXULRuntime);
-   gOSTarget = gApp.OS;
-   try {
-     gXPCOMABI = gApp.XPCOMABI;
-   } catch (ex) {
-     // Provide a default for gXPCOMABI. It won't be compared to an
-     // item's metadata (i.e. install.rdf can't specify e.g. WINNT_unknownABI
-     // as targetPlatform), but it will be displayed in error messages and
-     // transmitted to update URLs.
-     gXPCOMABI = UNKNOWN_XPCOM_ABI;
--  }
-+  }*/
-+
-+  gXPCOMABI = UNKNOWN_XPCOM_ABI;
-+  gOSTarget = "_UNKNOWN";
-+
-   gPref = Components.classes["@mozilla.org/preferences-service;1"]
-                     .getService(Components.interfaces.nsIPrefBranch2);
- 
-   gOS = Components.classes["@mozilla.org/observer-service;1"]
-                   .getService(Components.interfaces.nsIObserverService);
-   gOS.addObserver(this, "xpcom-shutdown", false);
- 
-   gConsole = Components.classes["@mozilla.org/consoleservice;1"]
-                        .getService(Components.interfaces.nsIConsoleService);  
-   
-@@ -4209,24 +4217,25 @@ ExtensionManager.prototype = {
-           if (abi != null) {
-             requireABICompatibility = true;
-             // If we don't know our ABI, we can't be compatible
-             if (abi == gXPCOMABI && abi != UNKNOWN_XPCOM_ABI) {
-               foundMatchingOSAndABI = true;
-               break;
-             }
-           }
-         }
-       }
--      if (!foundMatchingOS || (requireABICompatibility && !foundMatchingOSAndABI)) {
-+/*      if (!foundMatchingOS || (requireABICompatibility && !foundMatchingOSAndABI)) {
-         installData.error = INSTALLERROR_INCOMPATIBLE_PLATFORM;
-         return installData;
-       }
-+*/
-     }
- 
-     // Validate the Item ID
-     if (!gIDTest.test(installData.id)) {
-       installData.error = INSTALLERROR_INVALID_GUID;
-       return installData;
-     }
-      
-     // Check the target application range specified by the extension metadata.
-     if (gCheckCompatibility &&
 diff -ruN -p -u10 mozilla.orig/toolkit/xre/nsAppRunner.cpp mozilla/toolkit/xre/nsAppRunner.cpp
 --- mozilla.orig/toolkit/xre/nsAppRunner.cpp	2007-06-01 18:46:15.000000000 +0300
 +++ mozilla/toolkit/xre/nsAppRunner.cpp	2007-06-01 19:45:34.000000000 +0300
@@ -288,7 +221,7 @@ diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/Makefile.in mozil
 +
 +DEFINES += -DMOZ_APP_DISPLAYNAME=$(MOZ_APP_DISPLAYNAME) \
 +	-DMOZ_APP_VERSION=$(MOZ_APP_VERSION) \
-+	-DTOOLKIT_EM_VERSION=$(shell $(PERL) $(topsrcdir)/config/milestone.pl --topsrcdir=$(topsrcdir))
++	-DTOOLKIT_EM_VERSION=$(shell $(PERL) $(topsrcdir)/config/milestone.pl --topsrcdir=$(topsrcdir)) -DTARGET_XPCOM_ABI=$(TARGET_XPCOM_ABI) -DOSARCH=$(OSARCH)
 +
 +MODULE		= xulappinfo
 +XPIDL_MODULE	= xulappinfo
@@ -323,10 +256,10 @@ diff -ruN -p -U10 mozilla/embedding/components/xulappinfo.orig/xulappinfo.js moz
 +
 +XULAppInfoService.prototype.vendor = "mozilla.org";
 +XULAppInfoService.prototype.ID = "{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}";
-+XULAppInfoService.prototype.OS = "_UNKNOWN";
++#expand XULAppInfoService.prototype.OS = "__OSARCH__";
 +XULAppInfoService.prototype.inSafeMode = false;
 +XULAppInfoService.prototype.logConsoleErrors = false;
-+XULAppInfoService.prototype.XPCOMABI = "UNKNOWN_XPCOM_ABI";
++#expand XULAppInfoService.prototype.XPCOMABI = "__TARGET_XPCOM_ABI__";
 +#expand XULAppInfoService.prototype.name = "__MOZ_APP_DISPLAYNAME__";
 +#expand XULAppInfoService.prototype.version = "__MOZ_APP_VERSION__";
 +#expand XULAppInfoService.prototype.appBuildID = "__BUILD_ID__";

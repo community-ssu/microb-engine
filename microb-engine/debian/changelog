@@ -1,3 +1,9 @@
+microb-engine (1.0.4-47) unstable; urgency=low
+
+  * Fixes: NB#82699 Incompatible XPI component can be installed on the device
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 20 Mar 2008 19:28:31 +0200
+
 microb-engine (1.0.4-46) unstable; urgency=low
 
   * Fixes: NB#82630 In some cases XPI based add-ons can not be installed.
