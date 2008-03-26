@@ -267,7 +267,7 @@ else
 endif
 
 ifeq ($(GCCENV),.cs)
-	optimize_add +=  -finline-functions -fno-unit-at-a-time
+	optimize_add +=  -finline-functions -fno-unit-at-a-time -finline-limit=64
 endif
 
 ifeq ($(jprof),y)

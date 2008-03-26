@@ -1,3 +1,9 @@
+microb-engine (1.0.4-48) unstable; urgency=low
+
+  * Fixes: NB#83061 limit inline functions size
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 26 Mar 2008 13:31:58 +0200
+
 microb-engine (1.0.4-47) unstable; urgency=low
 
   * Fixes: NB#82699 Incompatible XPI component can be installed on the device
