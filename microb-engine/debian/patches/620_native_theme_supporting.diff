@@ -285,3 +285,14 @@ Index: mozilla/layout/style/forms.css
  optgroup[disabled] {
    background-color: transparent;
  }
+--- mozilla/widget/src/gtk2/gtk2drawing.c.orig	2008-03-28 16:20:09.000000000 -0400
++++ mozilla/widget/src/gtk2/gtk2drawing.c	2008-03-28 16:20:42.000000000 -0400
+@@ -600,7 +600,7 @@
+     GtkWidget *w;
+     GtkStyle *style;
+ 
+-    state_type = GTK_STATE_NORMAL;
++    // state_type = GTK_STATE_NORMAL;
+ 
+     if (isradio) {
+         moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);

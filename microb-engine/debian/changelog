@@ -1,3 +1,10 @@
+microb-engine (1.0.4-49) unstable; urgency=low
+
+  * Fixes: NB#78128 Checkbox and radio input elements with disabled attribute
+    are not dimmed 
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Fri, 28 Mar 2008 17:32:12 -0400
+
 microb-engine (1.0.4-48) unstable; urgency=low
 
   * Fixes: NB#83061 limit inline functions size
