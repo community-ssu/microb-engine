@@ -2,29 +2,8 @@
 # It disables the feed header from rss subscription page
 # It sends a request to add the rss button into toolbar
 # Contributor: Anton Rogaynis
---- mozilla/browser/components/feeds/src/nsFeedSniffer.cpp.orig	2008-03-13 12:28:32.000000000 -0400
-+++ mozilla/browser/components/feeds/src/nsFeedSniffer.cpp	2008-03-13 12:36:51.000000000 -0400
-@@ -387,9 +387,16 @@
-   }
- 
-   // If we sniffed a feed, coerce our internal type
--  if (isFeed && !HasAttachmentDisposition(channel)) 
-+  if (isFeed && !HasAttachmentDisposition(channel)) {
-     sniffedType.AssignLiteral(TYPE_MAYBE_FEED); 
--  else
-+
-+    nsCOMPtr<nsISupports> service = do_GetService("@browser/engine-client-observer;1", &rv);
-+    NS_ENSURE_SUCCESS(rv, PR_TRUE);
-+    nsCOMPtr<nsIObserver> Observer = do_QueryInterface(service, &rv);
-+    NS_ENSURE_SUCCESS(rv, PR_TRUE);
-+    rv = Observer->Observe(nsnull, "DOMLink_MAYBE_FEED", nsnull);
-+    
-+  } else
-     sniffedType.Truncate();
-   return NS_OK;
- }
---- mozilla/browser/components/feeds/content/subscribe.xhtml.orig	2008-03-13 12:42:32.000000000 -0400
-+++ mozilla/browser/components/feeds/content/subscribe.xhtml	2008-03-13 13:14:03.000000000 -0400
+--- mozilla/browser/components/feeds/content/subscribe.xhtml.orig	2008-03-31 16:05:16.000000000 -0400
++++ mozilla/browser/components/feeds/content/subscribe.xhtml	2008-03-31 16:07:45.000000000 -0400
 @@ -29,7 +29,8 @@
              src="chrome://browser/content/feeds/subscribe.js"/>
    </head>
@@ -57,8 +36,8 @@
  	  <!--
  	  <xul:vbox>
              <xul:hbox align="center">
---- mozilla/browser/components/feeds/src/nsFeedSniffer.cpp.orig	2008-03-13 13:18:56.000000000 -0400
-+++ mozilla/browser/components/feeds/src/nsFeedSniffer.cpp	2008-03-13 13:37:36.000000000 -0400
+--- mozilla/browser/components/feeds/src/nsFeedSniffer.cpp.orig	2008-03-31 16:05:16.000000000 -0400
++++ mozilla/browser/components/feeds/src/nsFeedSniffer.cpp	2008-03-31 16:10:27.000000000 -0400
 @@ -61,6 +61,8 @@
  #include "nsIHttpChannel.h"
  #include "nsIMIMEHeaderParam.h"
@@ -68,3 +47,26 @@
  #define TYPE_ATOM "application/atom+xml"
  #define TYPE_RSS "application/rss+xml"
  #define TYPE_MAYBE_FEED "application/vnd.mozilla.maybe.feed"
+@@ -387,9 +389,20 @@
+   }
+ 
+   // If we sniffed a feed, coerce our internal type
+-  if (isFeed && !HasAttachmentDisposition(channel)) 
++  if (isFeed && !HasAttachmentDisposition(channel)) {
+     sniffedType.AssignLiteral(TYPE_MAYBE_FEED); 
+-  else
++
++    nsCAutoString url;
++    rv = originalURI->GetSpec(url);
++    NS_ENSURE_SUCCESS(rv, PR_TRUE);
++
++    nsCOMPtr<nsISupports> service = do_GetService("@browser/engine-client-observer;1", &rv);
++    NS_ENSURE_SUCCESS(rv, PR_TRUE);
++    nsCOMPtr<nsIObserver> Observer = do_QueryInterface(service, &rv);
++    NS_ENSURE_SUCCESS(rv, PR_TRUE);
++    rv = Observer->Observe(nsnull, "DOMLink_MAYBE_FEED", NS_ConvertUTF8toUTF16(url).get());
++    
++  } else
+     sniffedType.Truncate();
+   return NS_OK;
+ }
