@@ -1,17 +1,18 @@
---- /home/petejc/src/microb_latest/microb-engine/scratch_build/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-03-27 08:44:34.000000000 -0600
-+++ extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-03-26 11:11:50.000000000 -0600
-@@ -65,6 +65,10 @@
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-03-31 13:47:00.000000000 -0600
++++ extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-03-31 13:21:16.000000000 -0600
+@@ -65,6 +65,11 @@
    mNavigationFramesState = PR_FALSE;
    mKeyPressedState = 0;
    mKeyWasDown = PR_FALSE;
 +  mSelectPopup = PR_FALSE;
 +  mSelectPopupCount = 0;
++  mSelectMultiCount = 0;
 +  mSelectControlSelected = PR_FALSE;
 +  mSelectNavCount = 0;
  }
  
  // #ifdef DEBUG_romaxa
-@@ -153,45 +157,61 @@
+@@ -153,45 +158,61 @@
  {
    mKeyWasDown = PR_TRUE;
    mKeyPressedCount = 0;
@@ -22,7 +23,7 @@
 +  if (!mService->mEnabled) return NS_OK;
 +
 +/****************
-+  if (!mKeyPressedState) 
++  // if (!mKeyPressedState) 
 +  {
      aEvent->StopPropagation();
      aEvent->PreventDefault();
@@ -84,7 +85,7 @@
    return rv;
  }
  
-@@ -246,7 +266,7 @@
+@@ -246,7 +267,7 @@
      designMode = DMode.EqualsLiteral("on");
      if (designMode) return NS_OK;
    }
@@ -93,7 +94,7 @@
    if (targetContent->IsNodeOfType(nsINode::eHTML_FORM_CONTROL)) 
    {
        nsCOMPtr<nsIFormControl> formControl(do_QueryInterface(targetContent));
-@@ -262,8 +282,65 @@
+@@ -262,8 +283,107 @@
            return NS_OK;
          }
        }
@@ -102,6 +103,12 @@
 +
 +      if (formControlType == NS_FORM_SELECT)
 +      {
++        if (!mSelectControlSelected)
++        {
++          aEvent->StopPropagation();
++          aEvent->PreventDefault();
++        }
++
 +        PRUint32 keyCode;
 +        nsCOMPtr<nsIDOMKeyEvent> keyEvent(do_QueryInterface(aEvent));
 +  
@@ -110,9 +117,13 @@
 +        if (NS_FAILED(keyEvent->GetKeyCode(&keyCode)))
 +          return NS_ERROR_FAILURE;
 +
++
 +        nsCOMPtr<nsIDOMHTMLSelectElement> element = do_QueryInterface(mLastContent);
 +        if (element)
 +        {
++          PRBool isMultiple = PR_FALSE;
++          element->GetMultiple(&isMultiple);
++
 +          PRInt32 size  = 0;
 +          PRUint32 len  = 0;
 +          PRInt32 index = 0;
@@ -123,7 +134,13 @@
 +
 +          if (keyCode == nsIDOMKeyEvent::DOM_VK_RETURN)
 +          {
-+            mSelectControlSelected = !mSelectControlSelected;
++            if (isMultiple && !mSelectControlSelected) 
++            {
++              element->SetSelectedIndex(0);
++              mSelectMultiCount = 0;
++            }
++
++            mSelectControlSelected = isMultiple ? PR_TRUE : !mSelectControlSelected;
 +
 +            if (size < 2) 
 +            {
@@ -132,36 +149,62 @@
 +            }
 +          }
 +
-+        if (mSelectPopup) return NS_OK;
-+
-+          if (mSelectControlSelected)
++          if (mSelectControlSelected && isMultiple) 
 +          {
-+            if (mSelectNavCount == len || mSelectNavCount < 0)
-+            {
-+              mSelectControlSelected = PR_FALSE;
-+              mSelectNavCount = 0;
-+            } 
-+              else if (!mSelectPopup)
-+            {
-+              if (keyCode == nsIDOMKeyEvent::DOM_VK_DOWN) ++mSelectNavCount;
-+          
-+              if (keyCode == nsIDOMKeyEvent::DOM_VK_UP) --mSelectNavCount;
++            if (keyCode == nsIDOMKeyEvent::DOM_VK_DOWN) ++mSelectMultiCount;
++            if (keyCode == nsIDOMKeyEvent::DOM_VK_UP) --mSelectMultiCount;
 +
-+              element->SetSelectedIndex(mSelectNavCount);
++            if (mSelectMultiCount >= 0 && mSelectMultiCount <= len)
++            {
++              return NS_OK;
++            } 
++              else
++            {
++              if (mSelectMultiCount < 0) mSelectMultiCount = 0;
++              if (mSelectMultiCount > (PRInt32)len) mSelectMultiCount = len;
++
++              mSelectControlSelected = PR_FALSE;
++            }
++          }
++            else
++          {
++            if (mSelectPopup) 
++            {
++              aEvent->StopPropagation();
++              aEvent->PreventDefault();
 +
 +              return NS_OK;
 +            }
++
++            if (mSelectControlSelected)
++            {
++              if (mSelectNavCount == len || mSelectNavCount < 0)
++              {
++                mSelectControlSelected = PR_FALSE;
++                mSelectNavCount = 0;
++              } 
++                else if (!mSelectPopup)
++              {
++                if (keyCode == nsIDOMKeyEvent::DOM_VK_DOWN) ++mSelectNavCount;
++          
++                if (keyCode == nsIDOMKeyEvent::DOM_VK_UP) --mSelectNavCount;
++
++                element->SetSelectedIndex(mSelectNavCount);
++
++                return NS_OK;
++              }
++            } 
++              else if (size > 1 && index < 0 && !mSelectControlSelected)
++            {
++              element->SetSelectedIndex(-1);
++            }
 +          } 
-+            else if (size > 1 && index < 0 && !mSelectControlSelected)
-+          {
-+            element->SetSelectedIndex(-1);
-+          }
 +        }
 +      }
    }
    else if (mService->mIgnoreTextFields && targetContent->IsNodeOfType(nsINode::eHTML)) 
    {
-@@ -285,7 +362,7 @@
+@@ -285,7 +405,7 @@
  
    if (NS_FAILED(keyEvent->GetKeyCode(&keyCode)))
    return NS_ERROR_FAILURE;
@@ -170,7 +213,30 @@
    if (keyCode == nsIDOMKeyEvent::DOM_VK_RETURN && !aReal && formControlType != NS_FORM_TEXTAREA) {
      nsCOMPtr<nsIContent> focusedContent;
      getFocusedContent(0, getter_AddRefs(focusedContent));
-@@ -475,6 +552,7 @@
+@@ -431,7 +551,10 @@
+       }
+ 
+       if (textLength != 0 && selectionStart != 0)
+-        return NS_OK;
++      {
++        printf("RETURNING ...\n");
++        // return NS_OK;
++      }
+     }
+ 
+     // We're using this key, no one else should
+@@ -468,13 +591,17 @@
+       }
+ 
+       if (textLength  != selectionEnd)
+-        return NS_OK;
++      {
++        printf("RETURNING ...\n");
++        // return NS_OK;
++      }
+     }
+ 
+     aEvent->StopPropagation();  // We're using this key, no one else should
      aEvent->PreventDefault();
      return aReal?Down():NS_OK;
    }
@@ -178,7 +244,7 @@
    return NS_OK;
  }
  
-@@ -813,8 +891,6 @@
+@@ -813,8 +940,6 @@
                aContent);
  
  
@@ -187,7 +253,7 @@
    if ( (hhElement || iFrameElement) && mNavigationFramesState)
    {
      mNavigationFramesState = PR_FALSE;
-@@ -1145,22 +1221,27 @@
+@@ -1145,22 +1270,28 @@
  
    nsPresContext* presContext = getPresContext(c);
    nsCOMPtr<nsIPresShell> presShell = presContext->PresShell();
@@ -198,6 +264,7 @@
      // Google Spreadsheets works ugly with this call
 -    presContext->EventStateManager()->SetContentState(c, NS_EVENT_STATE_FOCUS);  
 +    // presContext->EventStateManager()->SetContentState(c, NS_EVENT_STATE_FOCUS);  
++
      presShell->ScrollContentIntoView(c, 
                                       NS_PRESSHELL_SCROLL_IF_NOT_VISIBLE,
                                       NS_PRESSHELL_SCROLL_IF_NOT_VISIBLE);
@@ -219,23 +286,8 @@
    nsIFrame* focusedFrame;
    getFrameForContent(c, &focusedFrame);
    nsRect rect = makeRectRelativeToGlobalView(focusedFrame);
---- /home/petejc/src/microb_latest/microb-engine/scratch_build/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-03-27 08:44:06.000000000 -0600
-+++ extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-03-25 14:49:29.000000000 -0600
-@@ -173,6 +173,12 @@
-   PRUint32 mKeyPressedCount;
-   PRUint16 mKeyPressedState;
-   PRBool mKeyWasDown;
-+
-+  PRBool mSelectControlSelected;
-+  PRBool mSelectPopup;
-+  PRInt32 mSelectPopupCount;
-+  PRInt32 mSelectNavCount;
-+  nsCOMPtr<nsIContent> mLastContent;
- };
- 
- 
---- /home/petejc/src/microb_latest/microb-engine/scratch_build/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-03-27 08:44:06.000000000 -0600
-+++ extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-03-25 10:42:33.000000000 -0600
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-03-31 13:46:52.000000000 -0600
++++ extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-03-31 09:07:44.000000000 -0600
 @@ -420,6 +420,16 @@
  
    PRBool disabled = PR_FALSE;
@@ -262,3 +314,31 @@
  PRBool IsPartiallyVisible(nsIPresShell* shell, nsIFrame* frame, PRBool aForce)
  {
     // We need to know if at least a kMinPixels around the object is visible
+@@ -1114,8 +1122,9 @@
+ 
+ void ScrollWindow(int direction, nsIDOMWindow* contentWindow)
+ {
+-  if (!contentWindow)
+-    return;
++  printf("ScrollWindow ...\n");
++
++  if (!contentWindow) return;
+   
+   if (direction == eNavLeft)
+     contentWindow->ScrollBy(-1* gScrollOffset, 0);
+--- /home/petejc/src/microb_latest/microb-engine/scratch_build_orig/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-03-31 13:46:52.000000000 -0600
++++ extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-03-31 11:51:54.000000000 -0600
+@@ -173,6 +173,13 @@
+   PRUint32 mKeyPressedCount;
+   PRUint16 mKeyPressedState;
+   PRBool mKeyWasDown;
++
++  PRBool mSelectControlSelected;
++  PRBool mSelectPopup;
++  PRInt32 mSelectPopupCount;
++  PRInt32 mSelectNavCount;
++  PRInt32 mSelectMultiCount;
++  nsCOMPtr<nsIContent> mLastContent;
+ };
+ 
+ 
