@@ -67,7 +67,7 @@ diff -ruN mozilla.orig/dom/locales/en-US/chrome/appstrings.properties mozilla/do
 +netReset=Document contains no data
 +netOffline=Unable to display document while offline. To go online, uncheck Work Offline from the File menu.
 +isprinting=Document cannot change while printing or in print preview.
-+deniedPortAccess=Access to the port number given has been disabled for security reasons
++deniedPortAccess=%1$S\n\nAddress specifies port which is normally used for other purposes than Web browsing and request has been cancelled for security reasons.
 +proxyResolveFailure=Connection is configured to use proxy server
 +proxyConnectFailure=Connection is configured to use proxy server
 +contentEncodingError=Unable to display page. Invalid or unsupported form of compression. Contact the web site owners to inform them of this problem.
