@@ -140,7 +140,7 @@
 +  nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aFrame->GetContent());
 +  nsRect r = makeRectRelativeToGlobalView(node);
 +
-+  nsIntRect rect = rf->GetScreenRectExternal();
++  //nsIntRect rect = rf->GetScreenRectExternal();
 +
 +  result.x = aPresContext->DevPixelsToAppUnits(r.x);
 +  result.y = aPresContext->DevPixelsToAppUnits(r.y);

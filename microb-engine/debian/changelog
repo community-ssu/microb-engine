@@ -1,3 +1,9 @@
+microb-engine (1.0.4-54) unstable; urgency=low
+
+  * Fixes: NB#83226 Crash [@getOutOfFlowRect]
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Mon,  7 Apr 2008 14:54:28 -0400
+
 microb-engine (1.0.4-53) unstable; urgency=low
 
   * Fixes: NB#83424 mages are scaled but not displayed in full resoluti 
