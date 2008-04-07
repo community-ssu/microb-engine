@@ -372,6 +372,7 @@ cross/100_mips_build_error.diff
 cross/110_ppc_asm_comments.diff
 
 780_TransparencySupport.diff
+790_MinimumMaxViewersSize.diff
 #FixForTransparencyRendering.diff
 
 snav/2008-02-08-SNAV.patch
