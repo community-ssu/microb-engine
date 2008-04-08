@@ -373,6 +373,7 @@ cross/110_ppc_asm_comments.diff
 
 780_TransparencySupport.diff
 790_MinimumMaxViewersSize.diff
+800_gtk_repaint_problem.diff
 #FixForTransparencyRendering.diff
 
 snav/2008-02-08-SNAV.patch
