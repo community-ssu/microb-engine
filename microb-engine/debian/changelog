@@ -1,3 +1,9 @@
+microb-engine (1.0.4-59) unstable; urgency=low
+
+  * jemalloc disabled by default
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 09 Apr 2008 13:46:51 +0300
+
 microb-engine (1.0.4-58) unstable; urgency=low
 
   * Fixed MOZ_MEMORY define  
