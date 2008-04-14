@@ -1,3 +1,10 @@
+microb-engine (1.0.4-60) unstable; urgency=low
+
+  * Fixes MB:412822 nsIFilePicker makes it hard to drop in other url systems
+  * Includes MB:428666 Save Page As saves "Web Page, complete"
+
+ -- Josh Soref <josh.soref@nokia.com>  Mon, 14 Apr 2008 15:25:09 +0300
+
 microb-engine (1.0.4-59) unstable; urgency=low
 
   * jemalloc disabled by default

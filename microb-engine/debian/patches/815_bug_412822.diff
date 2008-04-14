@@ -1,0 +1,1067 @@
+Index: mozilla/embedding/browser/gtk/src/EmbedFilePicker.cpp
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/EmbedFilePicker.cpp
++++ mozilla/embedding/browser/gtk/src/EmbedFilePicker.cpp
+@@ -127,22 +127,21 @@
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ /* readonly attribute nsILocalFile file; */
+ NS_IMETHODIMP EmbedFilePicker::GetFile(nsILocalFile **aFile)
+ {
+ 
+   NS_ENSURE_ARG_POINTER(aFile);
+-
+-  if (mFilename.IsEmpty())
+-    return NS_OK;
+-
++  *aFile = nsnull;
+   nsCOMPtr<nsIURI> baseURI;
+-  nsresult rv = NS_NewURI(getter_AddRefs(baseURI), mFilename);
++  nsresult rv = GetFileURL(getter_AddRefs(baseURI));
++  if (!baseURI)
++    return rv;
+ 
+   nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(baseURI, &rv));
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   nsCOMPtr<nsIFile> file;
+   rv = fileURL->GetFile(getter_AddRefs(file));
+ 
+   nsCOMPtr<nsILocalFile> localfile;
+@@ -157,29 +156,24 @@
+   GtkWidget* parentWidget = GetGtkWidgetForDOMWindow(mParent);
+   NS_ENSURE_TRUE(parentWidget, NS_OK);
+   /* XXX this message isn't really sure what it's trying to say */
+   g_signal_emit_by_name(GTK_OBJECT(parentWidget), "alert", "File protocol not supported.", NULL);
+   return NS_OK;
+ }
+ 
+ /* readonly attribute nsIFileURL fileURL; */
+-NS_IMETHODIMP EmbedFilePicker::GetFileURL(nsIFileURL **aFileURL)
++NS_IMETHODIMP EmbedFilePicker::GetFileURL(nsIURI **aFileURL)
+ {
+   NS_ENSURE_ARG_POINTER(aFileURL);
+   *aFileURL = nsnull;
+-
+-  nsCOMPtr<nsILocalFile> file;
+-  GetFile(getter_AddRefs(file));
+-  NS_ENSURE_TRUE(file, NS_ERROR_FAILURE);
+-  nsCOMPtr<nsIFileURL> fileURL = do_CreateInstance(NS_STANDARDURL_CONTRACTID);
+-  NS_ENSURE_TRUE(fileURL, NS_ERROR_OUT_OF_MEMORY);
+-  fileURL->SetFile(file);
+-  NS_ADDREF(*aFileURL = fileURL);
++  if (mFileURI.IsEmpty())
+   return NS_OK;
++
++  return NS_NewURI(aFileURL, mFileURI);
+ }
+ 
+ /* readonly attribute nsISimpleEnumerator files; */
+ NS_IMETHODIMP EmbedFilePicker::GetFiles(nsISimpleEnumerator * *aFiles)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+@@ -199,14 +193,14 @@
+                         PR_GetEnv("HOME"),
+                         "",
+                         &retname,
+                         &response,
+                         NULL);
+ 
+   *_retval = response ? nsIFilePicker::returnOK : nsIFilePicker::returnCancel;
+ 
+-  mFilename = retname;
++  mFileURI = retname;
+   if (retname)
+     NS_Free(retname);
+ 
+   return NS_OK;
+ }
+Index: mozilla/embedding/browser/gtk/src/EmbedFilePicker.h
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/EmbedFilePicker.h
++++ mozilla/embedding/browser/gtk/src/EmbedFilePicker.h
+@@ -64,14 +64,14 @@
+ public:
+   NS_DECL_ISUPPORTS
+   NS_DECL_NSIFILEPICKER
+   EmbedFilePicker();
+ 
+ protected:
+   nsIDOMWindow *mParent;
+   PRInt16 mMode;
+-  nsCString mFilename;
++  nsCString mFileURI;
+ 
+ private:
+   ~EmbedFilePicker();
+ };
+ #endif
+Index: mozilla/toolkit/components/filepicker/content/filepicker.js
+===================================================================
+--- mozilla.orig/toolkit/components/filepicker/content/filepicker.js
++++ mozilla/toolkit/components/filepicker/content/filepicker.js
+@@ -40,30 +40,32 @@
+ # the provisions above, a recipient may use your version of this file under
+ # the terms of any one of the MPL, the GPL or the LGPL.
+ #
+ # ***** END LICENSE BLOCK *****
+ 
+ const nsIFilePicker       = Components.interfaces.nsIFilePicker;
+ const nsIProperties       = Components.interfaces.nsIProperties;
+ const NS_DIRECTORYSERVICE_CONTRACTID = "@mozilla.org/file/directory_service;1";
++const NS_IOSERVICE_CONTRACTID = "@mozilla.org/network/io-service;1";
+ const nsITreeBoxObject = Components.interfaces.nsITreeBoxObject;
+ const nsIFileView = Components.interfaces.nsIFileView;
+ const NS_FILEVIEW_CONTRACTID = "@mozilla.org/filepicker/fileview;1";
+ const nsITreeView = Components.interfaces.nsITreeView;
+ const nsILocalFile = Components.interfaces.nsILocalFile;
+ const nsIFile = Components.interfaces.nsIFile;
+ const NS_LOCAL_FILE_CONTRACTID = "@mozilla.org/file/local;1";
+ const NS_PROMPTSERVICE_CONTRACTID = "@mozilla.org/embedcomp/prompt-service;1";
+ 
+ var sfile = Components.classes[NS_LOCAL_FILE_CONTRACTID].createInstance(nsILocalFile);
+ var retvals;
+ var filePickerMode;
+ var homeDir;
+ var treeView;
++var allowURLs;
+ 
+ var textInput;
+ var okButton;
+ 
+ var gFilePickerBundle;
+ 
+ // name of new directory entered by the user to be remembered
+ // for next call of newDir() in case something goes wrong with creation
+@@ -86,16 +88,17 @@
+     }
+ 
+     const initialText = o.defaultString;
+     const filterTitles = o.filters.titles;
+     const filterTypes = o.filters.types;
+     const numFilters = filterTitles.length;
+ 
+     document.title = title;
++    allowURLs = o.allowURLs;
+ 
+     if (initialText) {
+       textInput.value = initialText;
+     }
+   }
+ 
+   if (filePickerMode != nsIFilePicker.modeOpen && filePickerMode != nsIFilePicker.modeOpenMultiple) {
+     var newDirButton = document.getElementById("newDirButton");
+@@ -230,19 +233,38 @@
+ function selectOnOK()
+ {
+   var errorTitle, errorMessage, promptService;
+   var ret = nsIFilePicker.returnOK;
+ 
+   var isDir = false;
+   var isFile = false;
+ 
+-  var fileList = processPath(textInput.value);
++  retvals.filterIndex = document.getElementById("filterMenuList").selectedIndex;
++  retvals.fileURL = null;
++
++  if (allowURLs) {
++    try {
++      var ios = Components.classes[NS_IOSERVICE_CONTRACTID].getService(Components.interfaces.nsIIOService);
++      retvals.fileURL = ios.newURI(textInput.value, '', null);
++      var fileList = [];
++      if (retvals.fileURL instanceof Components.interfaces.nsIFileURL)
++        fileList.push(retvals.fileURL.nsIFileURL.file);
++      gFilesEnumerator.mFiles = fileList;
++      retvals.files = gFilesEnumerator;
++      retvals.buttonStatus = ret;
+ 
+-  if (!fileList) { // generic error message, should probably never happen
++      return true;
++    } catch (e) {
++    }
++  }
++
++  var fileList = processPath(textInput.value);
++  if (!fileList) {
++    // generic error message, should probably never happen
+     showErrorDialog("errorPathProblemTitle",
+                     "errorPathProblemMessage",
+                     textInput.value);
+     return false;
+   }
+ 
+   var curFileIndex;
+   for (curFileIndex = 0; curFileIndex < fileList.length &&
+@@ -372,19 +394,16 @@
+       break;
+     }
+   }
+ 
+   gFilesEnumerator.mFiles = fileList;
+ 
+   retvals.files = gFilesEnumerator;
+   retvals.buttonStatus = ret;
+-
+-  var filterMenuList = document.getElementById("filterMenuList");
+-  retvals.filterIndex = filterMenuList.selectedIndex;
+   
+   return (ret != nsIFilePicker.returnCancel);
+ }
+ 
+ var gFilesEnumerator = {
+   mFiles: null,
+   mIndex: 0,
+ 
+Index: mozilla/widget/public/nsIFilePicker.idl
+===================================================================
+--- mozilla.orig/widget/public/nsIFilePicker.idl
++++ mozilla/widget/public/nsIFilePicker.idl
+@@ -35,21 +35,21 @@
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsISupports.idl"
+ 
+ interface nsILocalFile;
+-interface nsIFileURL;
++interface nsIURI;
+ interface nsIDOMWindow;
+ interface nsISimpleEnumerator;
+ 
+-[scriptable, uuid(80faf095-c807-4558-a2cc-185ed70754ea)]
++[scriptable, uuid(d24ef0aa-d555-4117-84af-9cbbb7406909)]
+ interface nsIFilePicker : nsISupports
+ {
+   const short modeOpen        = 0;              // Load a file or directory
+   const short modeSave        = 1;              // Save a file or directory
+   const short modeGetFolder   = 2;              // Select a folder/directory
+   const short modeOpenMultiple= 3;              // Load multiple files
+ 
+   const short returnOK        = 0;              // User hit Ok, process selection
+@@ -58,16 +58,17 @@
+ 
+   const long filterAll        = 0x01;           // *.*
+   const long filterHTML       = 0x02;           // *.html; *.htm
+   const long filterText       = 0x04;           // *.txt
+   const long filterImages     = 0x08;           // *.png; *.gif; *.jpg; *.jpeg
+   const long filterXML        = 0x10;           // *.xml
+   const long filterXUL        = 0x20;           // *.xul
+   const long filterApps       = 0x40;           // Applications (per-platform implementation)
++  const long filterAllowURLs  = 0x80;           // Allow URLs
+ 
+  /**
+   * Initialize the file picker widget.  The file picker is not valid until this
+   * method is called.
+   *
+   * @param      parent   nsIDOMWindow parent.  This dialog will be dependent
+   *                      on this parent. parent must be non-null.
+   * @param      title    The title for the file widget
+@@ -127,21 +128,21 @@
+  /**
+   * Get the nsILocalFile for the file or directory.
+   *
+   * @return Returns the file currently selected
+   */
+   readonly attribute nsILocalFile file;
+ 
+  /**
+-  * Get the nsIFileURL for the file or directory.
++  * Get the nsIURL for the file or directory.
+   *
+   * @return Returns the file currently selected
+   */
+-  readonly attribute nsIFileURL fileURL;
++  readonly attribute nsIURI fileURL;
+ 
+  /**
+   * Get the enumerator for the selected files
+   * only works in the modeOpenMultiple mode
+   *
+   * @return Returns the files currently selected
+   */
+   readonly attribute nsISimpleEnumerator files;
+Index: mozilla/widget/src/beos/nsFilePicker.cpp
+===================================================================
+--- mozilla.orig/widget/src/beos/nsFilePicker.cpp
++++ mozilla/widget/src/beos/nsFilePicker.cpp
+@@ -41,17 +41,16 @@
+ 
+ #include "nsCOMPtr.h"
+ #include "nsNetUtil.h"
+ #include "nsIServiceManager.h"
+ #include "nsIPlatformCharset.h"
+ #include "nsFilePicker.h"
+ #include "nsILocalFile.h"
+ #include "nsIURL.h"
+-#include "nsIFileURL.h"
+ #include "nsIStringBundle.h"
+ #include "nsReadableUtils.h"
+ #include "nsEscape.h"
+ #include "nsEnumeratorUtils.h"
+ #include "nsString.h"
+ #include <Window.h>
+ #include <View.h>
+ #include <Button.h>
+@@ -287,30 +286,25 @@
+ NS_IMETHODIMP nsFilePicker::GetFiles(nsISimpleEnumerator **aFiles)
+ {
+ 	NS_ENSURE_ARG_POINTER(aFiles);
+ 	return NS_NewArrayEnumerator(aFiles, mFiles);
+ }
+ 
+ //-------------------------------------------------------------------------
+ 
+-NS_IMETHODIMP nsFilePicker::GetFileURL(nsIFileURL **aFileURL)
++NS_IMETHODIMP nsFilePicker::GetFileURL(nsIURI **aFileURL)
+ {
+-	nsCOMPtr<nsILocalFile> file(do_CreateInstance("@mozilla.org/file/local;1"));
+-	NS_ENSURE_TRUE(file, NS_ERROR_FAILURE);
+-	file->InitWithNativePath(mFile);
++	*aFileURL = nsnull;
++	nsCOMPtr<nsILocalFile> file;
++	nsresult rv = GetFile(getter_AddRefs(file));
++	if (!file)
++		return rv;
+ 
+-	nsCOMPtr<nsIURI> uri;
+-	NS_NewFileURI(getter_AddRefs(uri), file);
+-	nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(uri));
+-	NS_ENSURE_TRUE(fileURL, NS_ERROR_FAILURE);
+-
+-	NS_ADDREF(*aFileURL = fileURL);
+-
+-	return NS_OK;
++	return NS_NewFileURI(aFileURL, file);
+ }
+ 
+ //-------------------------------------------------------------------------
+ //
+ // Get the file + path
+ //
+ //-------------------------------------------------------------------------
+ NS_IMETHODIMP nsFilePicker::SetDefaultString(const nsAString& aString)
+Index: mozilla/widget/src/beos/nsFilePicker.h
+===================================================================
+--- mozilla.orig/widget/src/beos/nsFilePicker.h
++++ mozilla/widget/src/beos/nsFilePicker.h
+@@ -77,17 +77,17 @@
+   virtual ~nsFilePicker();
+ 
+   // nsIFilePicker (less what's in nsBaseFilePicker)
+   NS_IMETHOD GetDefaultString(nsAString& aDefaultString);
+   NS_IMETHOD SetDefaultString(const nsAString& aDefaultString);
+   NS_IMETHOD GetDefaultExtension(nsAString& aDefaultExtension);
+   NS_IMETHOD SetDefaultExtension(const nsAString& aDefaultExtension);
+   NS_IMETHOD GetFile(nsILocalFile * *aFile);
+-  NS_IMETHOD GetFileURL(nsIFileURL * *aFileURL);
++  NS_IMETHOD GetFileURL(nsIURI * *aFileURL);
+   NS_IMETHOD GetFiles(nsISimpleEnumerator **aFiles);
+   NS_IMETHOD Show(PRInt16 *_retval);
+   NS_IMETHOD AppendFilter(const nsAString& aTitle, const nsAString& aFilter);
+ 
+ protected:
+   // method from nsBaseFilePicker
+   virtual void InitNative(nsIWidget *aParent, const nsAString& aTitle,
+                           PRInt16 aMode);
+Index: mozilla/widget/src/cocoa/nsFilePicker.h
+===================================================================
+--- mozilla.orig/widget/src/cocoa/nsFilePicker.h
++++ mozilla/widget/src/cocoa/nsFilePicker.h
+@@ -68,17 +68,17 @@
+     // nsIFilePicker (less what's in nsBaseFilePicker)
+   NS_IMETHOD GetDefaultString(nsAString& aDefaultString);
+   NS_IMETHOD SetDefaultString(const nsAString& aDefaultString);
+   NS_IMETHOD GetDefaultExtension(nsAString& aDefaultExtension);
+   NS_IMETHOD GetFilterIndex(PRInt32 *aFilterIndex);
+   NS_IMETHOD SetFilterIndex(PRInt32 aFilterIndex);
+   NS_IMETHOD SetDefaultExtension(const nsAString& aDefaultExtension);
+   NS_IMETHOD GetFile(nsILocalFile * *aFile);
+-  NS_IMETHOD GetFileURL(nsIFileURL * *aFileURL);
++  NS_IMETHOD GetFileURL(nsIURI * *aFileURL);
+   NS_IMETHOD GetFiles(nsISimpleEnumerator **aFiles);
+   NS_IMETHOD Show(PRInt16 *_retval); 
+   NS_IMETHOD AppendFilter(const nsAString& aTitle, const nsAString& aFilter);
+ 
+ protected:
+ 
+   virtual void InitNative(nsIWidget *aParent, const nsAString& aTitle,
+                           PRInt16 aMode);
+Index: mozilla/widget/src/cocoa/nsFilePicker.mm
+===================================================================
+--- mozilla.orig/widget/src/cocoa/nsFilePicker.mm
++++ mozilla/widget/src/cocoa/nsFilePicker.mm
+@@ -50,17 +50,16 @@
+ 
+ #include "nsCOMPtr.h"
+ #include "nsReadableUtils.h"
+ #include "nsNetUtil.h"
+ #include "nsIComponentManager.h"
+ #include "nsILocalFile.h"
+ #include "nsILocalFileMac.h"
+ #include "nsIURL.h"
+-#include "nsIFileURL.h"
+ #include "nsArrayEnumerator.h"
+ #include "nsIStringBundle.h"
+ 
+ #include "nsFilePicker.h"
+ 
+ const float kAccessoryViewPadding = 5;
+ const int   kSaveTypeControlTag = 1;
+ 
+@@ -496,33 +495,25 @@
+     *aFile = mFiles.ObjectAt(0);
+     NS_IF_ADDREF(*aFile);
+   }
+ 
+   return NS_OK;
+ }
+ 
+ //-------------------------------------------------------------------------
+-NS_IMETHODIMP nsFilePicker::GetFileURL(nsIFileURL **aFileURL)
++NS_IMETHODIMP nsFilePicker::GetFileURL(nsIURI **aFileURL)
+ {
+   NS_ENSURE_ARG_POINTER(aFileURL);
+   *aFileURL = nsnull;
+ 
+   if (mFiles.Count() == 0)
+     return NS_OK;
+ 
+-  nsCOMPtr<nsIURI> uri;
+-  nsresult rv = NS_NewFileURI(getter_AddRefs(uri), mFiles.ObjectAt(0));
+-  if (NS_FAILED(rv)) return rv;
+-
+-  nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(uri));
+-  NS_ENSURE_TRUE(fileURL, NS_ERROR_FAILURE);
+-  
+-  NS_ADDREF(*aFileURL = fileURL);
+-  return NS_OK;
++  return NS_NewFileURI(aFileURL, mFiles.ObjectAt(0));
+ }
+ 
+ //-------------------------------------------------------------------------
+ NS_IMETHODIMP nsFilePicker::GetFiles(nsISimpleEnumerator **aFiles)
+ {
+   return NS_NewArrayEnumerator(aFiles, mFiles);
+ }
+ 
+Index: mozilla/widget/src/gtk2/nsFilePicker.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsFilePicker.cpp
++++ mozilla/widget/src/gtk2/nsFilePicker.cpp
+@@ -80,48 +80,53 @@
+   GTK_FILE_CHOOSER_ACTION_SAVE,
+   GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+   GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER
+ } GtkFileChooserAction;
+ 
+ 
+ typedef gchar* (*_gtk_file_chooser_get_filename_fn)(GtkFileChooser *chooser);
+ typedef GSList* (*_gtk_file_chooser_get_filenames_fn)(GtkFileChooser *chooser);
++typedef gchar* (*_gtk_file_chooser_get_uri_fn)(GtkFileChooser *chooser);
++typedef GSList* (*_gtk_file_chooser_get_uris_fn)(GtkFileChooser *chooser);
+ typedef GtkWidget* (*_gtk_file_chooser_dialog_new_fn)(const gchar *title,
+                                                       GtkWindow *parent,
+                                                       GtkFileChooserAction action,
+                                                       const gchar *first_button_text,
+                                                       ...);
+ typedef void (*_gtk_file_chooser_set_select_multiple_fn)(GtkFileChooser* chooser, gboolean truth);
+ typedef void (*_gtk_file_chooser_set_do_overwrite_confirmation_fn)(GtkFileChooser* chooser, gboolean do_confirm);
+ typedef void (*_gtk_file_chooser_set_current_name_fn)(GtkFileChooser* chooser, const gchar* name);
+ typedef void (*_gtk_file_chooser_set_current_folder_fn)(GtkFileChooser* chooser, const gchar* folder);
+ typedef void (*_gtk_file_chooser_add_filter_fn)(GtkFileChooser* chooser, GtkFileFilter* filter);
+ typedef void (*_gtk_file_chooser_set_filter_fn)(GtkFileChooser* chooser, GtkFileFilter* filter);
+ typedef GtkFileFilter* (*_gtk_file_chooser_get_filter_fn)(GtkFileChooser* chooser);
+ typedef GSList* (*_gtk_file_chooser_list_filters_fn)(GtkFileChooser* chooser);
+ typedef GtkFileFilter* (*_gtk_file_filter_new_fn)();
+ typedef void (*_gtk_file_filter_add_pattern_fn)(GtkFileFilter* filter, const gchar* pattern);
+ typedef void (*_gtk_file_filter_set_name_fn)(GtkFileFilter* filter, const gchar* name);
++typedef void (*_gtk_file_chooser_set_local_only_fn)(GtkFileChooser *chooser, gboolean local_only);
+ 
+-
+-DECL_FUNC_PTR(gtk_file_chooser_get_filename);
++DECL_FUNC_PTgtk_file_chooser_get_filename);
+ DECL_FUNC_PTR(gtk_file_chooser_get_filenames);
++DECL_FUNC_PTR(gtk_file_chooser_get_uri);
++DECL_FUNC_PTR(gtk_file_chooser_get_uris);
+ DECL_FUNC_PTR(gtk_file_chooser_dialog_new);
+ DECL_FUNC_PTR(gtk_file_chooser_set_select_multiple);
+ DECL_FUNC_PTR(gtk_file_chooser_set_do_overwrite_confirmation);
+ DECL_FUNC_PTR(gtk_file_chooser_set_current_name);
+ DECL_FUNC_PTR(gtk_file_chooser_set_current_folder);
+ DECL_FUNC_PTR(gtk_file_chooser_add_filter);
+ DECL_FUNC_PTR(gtk_file_chooser_set_filter);
+ DECL_FUNC_PTR(gtk_file_chooser_get_filter);
+ DECL_FUNC_PTR(gtk_file_chooser_list_filters);
+ DECL_FUNC_PTR(gtk_file_filter_new);
+ DECL_FUNC_PTR(gtk_file_filter_add_pattern);
+ DECL_FUNC_PTR(gtk_file_filter_set_name);
++DECL_FUNC_PTR(gtk_file_chooser_set_local_only);
+ 
+ static GtkWindow *
+ get_gtk_window_for_nsiwidget(nsIWidget *widget)
+ {
+   // Get native GdkWindow
+   GdkWindow *gdk_win = GDK_WINDOW(widget->GetNativeData(NS_NATIVE_WIDGET));
+   if (!gdk_win)
+     return NULL;
+@@ -184,28 +189,31 @@
+     mGTK24 = LoadVersionedLibrary("gtk-2", ".4");
+     if (!mGTK24) {
+       return NS_ERROR_NOT_AVAILABLE;
+     }
+     GET_LIBGTK_FUNC(gtk_file_chooser_get_filename);
+   }
+ 
+   GET_LIBGTK_FUNC(gtk_file_chooser_get_filenames);
++  GET_LIBGTK_FUNC(gtk_file_chooser_get_uri);
++  GET_LIBGTK_FUNC(gtk_file_chooser_get_uris);
+   GET_LIBGTK_FUNC(gtk_file_chooser_dialog_new);
+   GET_LIBGTK_FUNC(gtk_file_chooser_set_select_multiple);
+   GET_LIBGTK_FUNC_OPT(gtk_file_chooser_set_do_overwrite_confirmation);
+   GET_LIBGTK_FUNC(gtk_file_chooser_set_current_name);
+   GET_LIBGTK_FUNC(gtk_file_chooser_set_current_folder);
+   GET_LIBGTK_FUNC(gtk_file_chooser_add_filter);
+   GET_LIBGTK_FUNC(gtk_file_chooser_set_filter);
+   GET_LIBGTK_FUNC(gtk_file_chooser_get_filter);
+   GET_LIBGTK_FUNC(gtk_file_chooser_list_filters);
+   GET_LIBGTK_FUNC(gtk_file_filter_new);
+   GET_LIBGTK_FUNC(gtk_file_filter_add_pattern);
+   GET_LIBGTK_FUNC(gtk_file_filter_set_name);
++  GET_LIBGTK_FUNC(gtk_file_chooser_set_local_only);
+ 
+   initialized = PR_TRUE;
+ 
+   // Woot.
+   return NS_OK;
+ }
+ 
+ void
+@@ -277,24 +285,24 @@
+ }
+ 
+ void
+ nsFilePicker::ReadValuesFromFileChooser(GtkWidget *file_chooser)
+ {
+   mFiles.Clear();
+ 
+   if (mMode == nsIFilePicker::modeOpenMultiple) {
+-    mFile.Truncate();
++    mFileURL.Truncate();
+ 
+     GSList *list = _gtk_file_chooser_get_filenames (GTK_FILE_CHOOSER(file_chooser));
+     g_slist_foreach(list, ReadMultipleFiles, NS_STATIC_CAST(gpointer, &mFiles));
+     g_slist_free(list);
+   } else {
+-    gchar *filename = _gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(file_chooser));
+-    mFile.Assign(filename);
++    gchar *filename = _gtk_file_chooser_get_uri (GTK_FILE_CHOOSER(file_chooser));
++    mFileURL.Assign(filename);
+     g_free(filename);
+   }
+ 
+   GtkFileFilter *filter = _gtk_file_chooser_get_filter (GTK_FILE_CHOOSER(file_chooser));
+   GSList *filter_list = _gtk_file_chooser_list_filters (GTK_FILE_CHOOSER(file_chooser));
+ 
+   mSelectedType = NS_STATIC_CAST(PRInt16, g_slist_index (filter_list, filter));
+   g_slist_free(filter_list);
+@@ -331,16 +339,17 @@
+   mParentWidget = aParent;
+   mTitle.Assign(aTitle);
+   mMode = aMode;
+ }
+ 
+ NS_IMETHODIMP
+ nsFilePicker::AppendFilters(PRInt32 aFilterMask)
+ {
++  mAllowURLs = !!(aFilterMask & filterAllowURLs);
+   return nsBaseFilePicker::AppendFilters(aFilterMask);
+ }
+ 
+ NS_IMETHODIMP
+ nsFilePicker::AppendFilter(const nsAString& aTitle, const nsAString& aFilter)
+ {
+   if (aFilter.EqualsLiteral("..apps")) {
+     // No platform specific thing we can do here, really....
+@@ -405,41 +414,36 @@
+ }
+ 
+ NS_IMETHODIMP
+ nsFilePicker::GetFile(nsILocalFile **aFile)
+ {
+   NS_ENSURE_ARG_POINTER(aFile);
+ 
+   *aFile = nsnull;
+-  if (mFile.IsEmpty()) {
+-    return NS_OK;
+-  }
+-
+-  nsCOMPtr<nsILocalFile> file(do_CreateInstance("@mozilla.org/file/local;1"));
+-  NS_ENSURE_TRUE(file, NS_ERROR_FAILURE);
++  nsCOMPtr<nsIURI> uri;
++  nsresult rv = GetFileURL(getter_AddRefs(uri));
++  if (!uri)
++    return rv;
+ 
+-  file->InitWithNativePath(mFile);
++  nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(uri, &rv));
++  NS_ENSURE_SUCCESS(rv, rv);
+ 
+-  NS_ADDREF(*aFile = file);
++  nsCOMPtr<nsIFile> file;
++  rv = fileURL->GetFile(getter_AddRefs(file));
++  NS_ENSURE_SUCCESS(rv, rv);
+ 
+-  return NS_OK;
++  return CallQueryInterface(file, aFile);
+ }
+ 
+ NS_IMETHODIMP
+-nsFilePicker::GetFileURL(nsIFileURL **aFileURL)
++nsFilePicker::GetFileURL(nsIURI **aFileURL)
+ {
+-  nsCOMPtr<nsILocalFile> file;
+-  GetFile(getter_AddRefs(file));
+-
+-  nsCOMPtr<nsIURI> uri;
+-  NS_NewFileURI(getter_AddRefs(uri), file);
+-  NS_ENSURE_TRUE(uri, NS_ERROR_FAILURE);
+-
+-  return CallQueryInterface(uri, aFileURL);
++  *aFileURL = nsnull;
++  return NS_NewFileURI(aFileURL, mFileURL);
+ }
+ 
+ NS_IMETHODIMP
+ nsFilePicker::GetFiles(nsISimpleEnumerator **aFiles)
+ {
+   NS_ENSURE_ARG_POINTER(aFiles);
+ 
+   if (mMode == nsIFilePicker::modeOpenMultiple) {
+@@ -507,16 +511,19 @@
+   GtkFileChooserAction action = GetGtkFileChooserAction(mMode);
+   const gchar *accept_button = (mMode == GTK_FILE_CHOOSER_ACTION_SAVE)
+                                ? GTK_STOCK_SAVE : GTK_STOCK_OPEN;
+   GtkWidget *file_chooser =
+       _gtk_file_chooser_dialog_new(title, parent_widget, action,
+                                    GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                    accept_button, GTK_RESPONSE_ACCEPT,
+                                    NULL);
++  if (mAllowURLs) {
++    _gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), FALSE);
++  }
+ 
+   if (parent_widget && parent_widget->group) {
+     gtk_window_group_add_window(parent_widget->group, GTK_WINDOW(file_chooser));
+   }
+ 
+   if (mMode == nsIFilePicker::modeOpenMultiple) {
+     _gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER(file_chooser), TRUE);
+   } else if (mMode == nsIFilePicker::modeSave) {
+Index: mozilla/widget/src/gtk2/nsFilePicker.h
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsFilePicker.h
++++ mozilla/widget/src/gtk2/nsFilePicker.h
+@@ -63,17 +63,17 @@
+   NS_IMETHODIMP AppendFilter(const nsAString& aTitle, const nsAString& aFilter);
+   NS_IMETHODIMP SetDefaultString(const nsAString& aString);
+   NS_IMETHODIMP GetDefaultString(nsAString& aString);
+   NS_IMETHODIMP SetDefaultExtension(const nsAString& aExtension);
+   NS_IMETHODIMP GetDefaultExtension(nsAString& aExtension);
+   NS_IMETHODIMP GetFilterIndex(PRInt32 *aFilterIndex);
+   NS_IMETHODIMP SetFilterIndex(PRInt32 aFilterIndex);
+   NS_IMETHODIMP GetFile(nsILocalFile **aFile);
+-  NS_IMETHODIMP GetFileURL(nsIFileURL **aFileURL);
++  NS_IMETHODIMP GetFileURL(nsIURI **aFileURL);
+   NS_IMETHODIMP GetFiles(nsISimpleEnumerator **aFiles);
+   NS_IMETHODIMP Show(PRInt16 *aReturn);
+ 
+   virtual void InitNative(nsIWidget *aParent, const nsAString& aTitle, PRInt16 aMode);
+ 
+   static void Shutdown();
+ 
+ protected:
+@@ -81,17 +81,18 @@
+ 
+   void ReadValuesFromFileChooser(GtkWidget *file_chooser);
+ 
+   nsCOMPtr<nsIWidget>    mParentWidget;
+   nsCOMArray<nsILocalFile> mFiles;
+ 
+   PRInt16   mMode;
+   PRInt16   mSelectedType;
+-  nsCString mFile;
++  PRBool    mAllowURLs;
++  nsCString mFileURL;
+   nsString  mTitle;
+   nsString  mDefault;
+   nsString  mDefaultExtension;
+ 
+   nsCStringArray mFilters;
+   nsCStringArray mFilterNames;
+ 
+ private:
+Index: mozilla/widget/src/os2/nsFilePicker.cpp
+===================================================================
+--- mozilla.orig/widget/src/os2/nsFilePicker.cpp
++++ mozilla/widget/src/os2/nsFilePicker.cpp
+@@ -46,17 +46,16 @@
+ #include "nsReadableUtils.h"
+ #include "nsNetUtil.h"
+ #include "nsIServiceManager.h"
+ #include "nsIPlatformCharset.h"
+ #include "nsWidgetDefs.h"
+ #include "nsFilePicker.h"
+ #include "nsILocalFile.h"
+ #include "nsIURL.h"
+-#include "nsIFileURL.h"
+ #include "nsIStringBundle.h"
+ #include "nsEnumeratorUtils.h"
+ #include "nsCRT.h"
+ 
+ #include "nsOS2Uni.h"
+ 
+ /* Item structure */
+ typedef struct _MyData
+@@ -395,30 +394,25 @@
+   file->InitWithNativePath(mFile);
+ 
+   NS_ADDREF(*aFile = file);
+ 
+   return NS_OK;
+ }
+ 
+ //-------------------------------------------------------------------------
+-NS_IMETHODIMP nsFilePicker::GetFileURL(nsIFileURL **aFileURL)
++NS_IMETHODIMP nsFilePicker::GetFileURL(nsIURI **aFileURL)
+ {
+-  nsCOMPtr<nsILocalFile> file(do_CreateInstance("@mozilla.org/file/local;1"));
+-  NS_ENSURE_TRUE(file, NS_ERROR_FAILURE);
+-  file->InitWithNativePath(mFile);
++  *aFileURL = nsnull;
++  nsCOMPtr<nsILocalFile> file;
++  nsresult rv = GetFile(getter_AddRefs(file));
++  if (!file)
++    return rv;
+ 
+-  nsCOMPtr<nsIURI> uri;
+-  NS_NewFileURI(getter_AddRefs(uri), file);
+-  nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(uri));
+-  NS_ENSURE_TRUE(fileURL, NS_ERROR_FAILURE);
+-  
+-  NS_ADDREF(*aFileURL = fileURL);
+-
+-  return NS_OK;
++  return NS_NewFileURI(aFileURL, file);
+ }
+ 
+ NS_IMETHODIMP nsFilePicker::GetFiles(nsISimpleEnumerator **aFiles)
+ {
+   NS_ENSURE_ARG_POINTER(aFiles);
+   return NS_NewArrayEnumerator(aFiles, mFiles);
+ }
+ 
+Index: mozilla/widget/src/os2/nsFilePicker.h
+===================================================================
+--- mozilla.orig/widget/src/os2/nsFilePicker.h
++++ mozilla/widget/src/os2/nsFilePicker.h
+@@ -65,17 +65,17 @@
+     // nsIFilePicker (less what's in nsBaseFilePicker)
+   NS_IMETHOD GetDefaultString(nsAString& aDefaultString);
+   NS_IMETHOD SetDefaultString(const nsAString& aDefaultString);
+   NS_IMETHOD GetDefaultExtension(nsAString& aDefaultExtension);
+   NS_IMETHOD SetDefaultExtension(const nsAString& aDefaultExtension);
+   NS_IMETHOD GetFilterIndex(PRInt32 *aFilterIndex);
+   NS_IMETHOD SetFilterIndex(PRInt32 aFilterIndex);
+   NS_IMETHOD GetFile(nsILocalFile * *aFile);
+-  NS_IMETHOD GetFileURL(nsIFileURL * *aFileURL);
++  NS_IMETHOD GetFileURL(nsIURI * *aFileURL);
+   NS_IMETHOD GetFiles(nsISimpleEnumerator **aFiles);
+   NS_IMETHOD Show(PRInt16 *_retval); 
+   NS_IMETHOD AppendFilter(const nsAString& aTitle, const nsAString& aFilter);
+ 
+ protected:
+   /* method from nsBaseFilePicker */
+   virtual void InitNative(nsIWidget *aParent, const nsAString& aTitle,
+                           PRInt16 aMode);
+Index: mozilla/widget/src/photon/nsFilePicker.cpp
+===================================================================
+--- mozilla.orig/widget/src/photon/nsFilePicker.cpp
++++ mozilla/widget/src/photon/nsFilePicker.cpp
+@@ -42,17 +42,16 @@
+ #include "nsReadableUtils.h"
+ #include "nsNetUtil.h"
+ #include "nsWindow.h"
+ #include "nsIServiceManager.h"
+ #include "nsIPlatformCharset.h"
+ #include "nsFilePicker.h"
+ #include "nsILocalFile.h"
+ #include "nsIURL.h"
+-#include "nsIFileURL.h"
+ #include "nsIStringBundle.h"
+ #include "nsEnumeratorUtils.h"
+ #include "nsCRT.h"
+ 
+ NS_IMPL_ISUPPORTS1(nsFilePicker, nsIFilePicker)
+ 
+ char nsFilePicker::mLastUsedDirectory[PATH_MAX+1] = { 0 };
+ 
+@@ -262,30 +261,25 @@
+ 
+ NS_IMETHODIMP nsFilePicker::GetFiles(nsISimpleEnumerator **aFiles)
+ {
+  	NS_ENSURE_ARG_POINTER(aFiles);
+  	return NS_NewArrayEnumerator(aFiles, mFiles);
+ }
+ 
+ //-------------------------------------------------------------------------
+-NS_IMETHODIMP nsFilePicker::GetFileURL(nsIFileURL **aFileURL)
++NS_IMETHODIMP nsFilePicker::GetFileURL(nsIURI **aFileURL)
+ {
+-  nsCOMPtr<nsILocalFile> file(do_CreateInstance("@mozilla.org/file/local;1"));
+-  NS_ENSURE_TRUE(file, NS_ERROR_FAILURE);
+-  file->InitWithNativePath(mFile);
++  *aFileURL = nsnull;
++  nsCOMPtr<nsILocalFile> file;
++  nsresult rv = GetFile(getter_AddRefs(file));
++  if (!file)
++    return rv;
+ 
+-  nsCOMPtr<nsIURI> uri;
+-  NS_NewFileURI(getter_AddRefs(uri), file);
+-  nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(uri));
+-  NS_ENSURE_TRUE(fileURL, NS_ERROR_FAILURE);
+-  
+-  NS_ADDREF(*aFileURL = fileURL);
+-
+-  return NS_OK;
++  return NS_NewFileURI(aFileURL, file);
+ }
+ 
+ //-------------------------------------------------------------------------
+ //
+ // Get the file + path
+ //
+ //-------------------------------------------------------------------------
+ NS_IMETHODIMP nsFilePicker::SetDefaultString(const nsAString& aString)
+Index: mozilla/widget/src/photon/nsFilePicker.h
+===================================================================
+--- mozilla.orig/widget/src/photon/nsFilePicker.h
++++ mozilla/widget/src/photon/nsFilePicker.h
+@@ -63,17 +63,17 @@
+   // nsIFilePicker (less what's in nsBaseFilePicker)
+   NS_IMETHOD GetDefaultString(nsAString& aDefaultString);
+   NS_IMETHOD SetDefaultString(const nsAString& aDefaultString);
+   NS_IMETHOD GetDefaultExtension(nsAString& aDefaultExtension);
+   NS_IMETHOD SetDefaultExtension(const nsAString& aDefaultExtension);
+ 	NS_IMETHOD GetFilterIndex(PRInt32 *aFilterIndex);
+ 	NS_IMETHOD SetFilterIndex(PRInt32 aFilterIndex);
+   NS_IMETHOD GetFile(nsILocalFile * *aFile);
+-  NS_IMETHOD GetFileURL(nsIFileURL * *aFileURL);
++  NS_IMETHOD GetFileURL(nsIURI * *aFileURL);
+   NS_IMETHOD Show(PRInt16 *_retval); 
+   NS_IMETHOD AppendFilter(const nsAString& aTitle, const nsAString& aFilter);
+ 	NS_IMETHOD GetFiles(nsISimpleEnumerator **aFiles);
+ 
+ protected:
+   // method from nsBaseFilePicker
+   virtual void InitNative(nsIWidget *aParent, const nsAString& aTitle,
+                           PRInt16 aMode);
+Index: mozilla/widget/src/windows/nsFilePicker.cpp
+===================================================================
+--- mozilla.orig/widget/src/windows/nsFilePicker.cpp
++++ mozilla/widget/src/windows/nsFilePicker.cpp
+@@ -44,17 +44,16 @@
+ #include "nsNetUtil.h"
+ #include "nsWindow.h"
+ #include "nsIServiceManager.h"
+ #include "nsIPlatformCharset.h"
+ #include "nsICharsetConverterManager.h"
+ #include "nsFilePicker.h"
+ #include "nsILocalFile.h"
+ #include "nsIURL.h"
+-#include "nsIFileURL.h"
+ #include "nsIStringBundle.h"
+ #include "nsEnumeratorUtils.h"
+ #include "nsCRT.h"
+ #include <windows.h>
+ #include <shlobj.h>
+ 
+ // commdlg.h and cderr.h are needed to build with WIN32_LEAN_AND_MEAN
+ #include <commdlg.h>
+@@ -401,46 +400,42 @@
+ NS_IMETHODIMP nsFilePicker::Show(PRInt16 *aReturnVal)
+ {
+   return ShowW(aReturnVal);
+ }
+ 
+ NS_IMETHODIMP nsFilePicker::GetFile(nsILocalFile **aFile)
+ {
+   NS_ENSURE_ARG_POINTER(aFile);
++  *aFile = nsnull;
+ 
+   if (mUnicodeFile.IsEmpty())
+       return NS_OK;
+ 
+   nsCOMPtr<nsILocalFile> file(do_CreateInstance("@mozilla.org/file/local;1"));
+     
+   NS_ENSURE_TRUE(file, NS_ERROR_FAILURE);
+ 
+   file->InitWithPath(mUnicodeFile);
+ 
+   NS_ADDREF(*aFile = file);
+ 
+   return NS_OK;
+ }
+ 
+ //-------------------------------------------------------------------------
+-NS_IMETHODIMP nsFilePicker::GetFileURL(nsIFileURL **aFileURL)
++NS_IMETHODIMP nsFilePicker::GetFileURL(nsIURI **aFileURL)
+ {
+-  nsCOMPtr<nsILocalFile> file(do_CreateInstance("@mozilla.org/file/local;1"));
+-  NS_ENSURE_TRUE(file, NS_ERROR_FAILURE);
+-  file->InitWithPath(mUnicodeFile);
++  *aFileURL = nsnull;
++  nsCOMPtr<nsILocalFile> file;
++  nsresult rv = GetFile(getter_AddRefs(file));
++  if (!file)
++    return rv;
+ 
+-  nsCOMPtr<nsIURI> uri;
+-  NS_NewFileURI(getter_AddRefs(uri), file);
+-  nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(uri));
+-  NS_ENSURE_TRUE(fileURL, NS_ERROR_FAILURE);
+-
+-  NS_ADDREF(*aFileURL = fileURL);
+-
+-  return NS_OK;
++  return NS_NewFileURI(aFileURL, file);
+ }
+ 
+ NS_IMETHODIMP nsFilePicker::GetFiles(nsISimpleEnumerator **aFiles)
+ {
+   NS_ENSURE_ARG_POINTER(aFiles);
+   return NS_NewArrayEnumerator(aFiles, mFiles);
+ }
+ 
+Index: mozilla/widget/src/windows/nsFilePicker.h
+===================================================================
+--- mozilla.orig/widget/src/windows/nsFilePicker.h
++++ mozilla/widget/src/windows/nsFilePicker.h
+@@ -65,17 +65,17 @@
+     // nsIFilePicker (less what's in nsBaseFilePicker)
+   NS_IMETHOD GetDefaultString(nsAString& aDefaultString);
+   NS_IMETHOD SetDefaultString(const nsAString& aDefaultString);
+   NS_IMETHOD GetDefaultExtension(nsAString& aDefaultExtension);
+   NS_IMETHOD SetDefaultExtension(const nsAString& aDefaultExtension);
+   NS_IMETHOD GetFilterIndex(PRInt32 *aFilterIndex);
+   NS_IMETHOD SetFilterIndex(PRInt32 aFilterIndex);
+   NS_IMETHOD GetFile(nsILocalFile * *aFile);
+-  NS_IMETHOD GetFileURL(nsIFileURL * *aFileURL);
++  NS_IMETHOD GetFileURL(nsIURI * *aFileURL);
+   NS_IMETHOD GetFiles(nsISimpleEnumerator **aFiles);
+   NS_IMETHOD Show(PRInt16 *aReturnVal); 
+   NS_IMETHOD ShowW(PRInt16 *aReturnVal); 
+   NS_IMETHOD AppendFilter(const nsAString& aTitle, const nsAString& aFilter);
+ 
+ protected:
+   /* method from nsBaseFilePicker */
+   virtual void InitNative(nsIWidget *aParent,
+Index: mozilla/xpfe/components/filepicker/src/nsFilePicker.js.in
+===================================================================
+--- mozilla.orig/xpfe/components/filepicker/src/nsFilePicker.js.in
++++ mozilla/xpfe/components/filepicker/src/nsFilePicker.js.in
+@@ -111,26 +111,29 @@
+   /* readonly attribute nsILocalFile file; */
+   set file(a) { throw "readonly property"; },
+   get file()  { return this.mFilesEnumerator.mFiles[0]; },
+ 
+   /* readonly attribute nsISimpleEnumerator files; */
+   set files(a) { throw "readonly property"; },
+   get files()  { return this.mFilesEnumerator; },
+ 
+-  /* readonly attribute nsIFileURL fileURL; */
++  /* readonly attribute nsIURI fileURL; */
+   set fileURL(a) { throw "readonly property"; },
+   get fileURL()  {
+-    if (this.mFilesEnumerator) {
++    if (this.mFileURL)
++      return this.mFileURL;
++
++    if (!this.mFilesEnumerator)
++      return null;
++
+       var ioService = Components.classes["@mozilla.org/network/io-service;1"]
+                     .getService(Components.interfaces.nsIIOService);
+-      var url       = ioService.newFileURI(this.file);
+-      return url;
+-    }
+-    return null;
++
++    return this.mFileURL = ioService.newFileURI(this.file);
+   },
+ 
+   /* attribute wstring defaultString; */
+   set defaultString(a) { this.mDefaultString = a; },
+   get defaultString()  { return this.mDefaultString; },
+ 
+   /* attribute wstring defaultExtension */
+   set defaultExtension(ext) { },
+@@ -167,16 +170,17 @@
+     if (filterMask & nsIFilePicker.filterXML) {
+       this.appendFilter(bundle.GetStringFromName("xmlTitle"),
+                    bundle.GetStringFromName("xmlFilter"));
+     }
+     if (filterMask & nsIFilePicker.filterXUL) {
+       this.appendFilter(bundle.GetStringFromName("xulTitle"),
+                    bundle.GetStringFromName("xulFilter"));
+     }
++    this.mAllowURLs = !!(filterMask & nsIFilePicker.filterAllowURLs);
+     if (filterMask & nsIFilePicker.filterApps) {
+       // We use "..apps" as a special filter for executable files
+       this.appendFilter(bundle.GetStringFromName("appsTitle"),
+                         "..apps");
+     }
+     if (filterMask & nsIFilePicker.filterAll) {
+       this.appendFilter(bundle.GetStringFromName("allTitle"),
+                    bundle.GetStringFromName("allFilter"));
+@@ -202,16 +206,17 @@
+     o.title = this.mTitle;
+     o.mode = this.mMode;
+     o.displayDirectory = this.mDisplayDirectory;
+     o.defaultString = this.mDefaultString;
+     o.filterIndex = this.mFilterIndex;
+     o.filters = new Object();
+     o.filters.titles = this.mFilterTitles;
+     o.filters.types = this.mFilters;
++    o.allowURLs = this.mAllowURLs;
+     o.retvals = new Object();
+ 
+     var parent;
+     if (this.mParentWindow) {
+       parent = this.mParentWindow;
+     } else if (typeof(window) == "object" && window != null) {
+       parent = window;
+     } else {
+@@ -242,16 +247,17 @@
+                         "",
+                         "chrome,modal,titlebar,resizable=yes,dependent=yes",
+                         o);
+       if (parentWin)
+         parentWin.blurSuppression = false;
+ 
+       this.mFilterIndex = o.retvals.filterIndex;
+       this.mFilesEnumerator = o.retvals.files;
++      this.mFileURL = o.retvals.fileURL;
+       lastDirectory = o.retvals.directory;
+       return o.retvals.buttonStatus;
+     } catch(ex) { dump("unable to open file picker\n" + ex + "\n"); }
+ 
+     return null;
+   }
+ }
+ 
