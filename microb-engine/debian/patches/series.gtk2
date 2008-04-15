@@ -118,7 +118,7 @@ snav/BUG_form_select_element.diff
 335_DISABLE_DEFAULT_DOWNLOAD_SUFFIX.diff
 340_Fix_NativeGtkButtonsWidgets.diff
 345_BUG382486_EngineOutputProtocolSupport.diff
-350_GnomeVfsWriteSupport.diff
+#350_GnomeVfsWriteSupport.diff
 355_MICROB_PANGO_LINKING.diff
 
 memleaks/attachment.cgi?id=270043.diff
@@ -382,3 +382,5 @@ snav/2008-02-22-SNAV.patch
 snav/2008-02-26-SNAV.patch
 
 815_bug_412822.diff
+trunk_updates/BUG_121059_draft.diff
+trunk_updates/BUG_382486_draft.diff

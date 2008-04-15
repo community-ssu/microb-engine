@@ -1,3 +1,11 @@
+microb-engine (1.0.4-61) unstable; urgency=low
+
+  * Checkpoint for Bug 78267 Cannot select and attach file from Bluetooth device
+  * Fixes MB:121059 [RFE] File inputs should allow URLs
+  * Fixes MB:382486 Create nsChannelStreamAdaptor and use it for gnomevfs
+
+ -- Josh Soref <josh.soref@nokia.com>  Tue, 15 Apr 2008 20:23:12 +0300
+
 microb-engine (1.0.4-60) unstable; urgency=low
 
   * Fixes MB:412822 nsIFilePicker makes it hard to drop in other url systems

@@ -1,0 +1,214 @@
+--- mozilla/content/html/content/src/nsHTMLInputElement.cpp	2008-04-11 16:44:37.000000000 +0300
++++ mozilla/content/html/content/src/nsHTMLInputElement.cpp	2008-04-07 16:43:24.000000000 +0300
+@@ -109,6 +109,7 @@
+ // input type=image
+ #include "nsImageLoadingContent.h"
+ #include "nsIDOMWindowInternal.h"
++#include "nsIFileURL.h"
+ 
+ #include "nsIViewManager.h"
+ // XXX align=left, hspace, vspace, border? other nav4 attrs
+@@ -311,6 +312,11 @@ protected:
+    * and submits the form if either is present.
+    */
+   nsresult MaybeSubmitForm(nsPresContext* aPresContext);
++
++  /**
++   * Get an nsIFile for the currently selected file in an file control.
++   */
++  nsresult GetFile(nsIURI** aFile);
+   
+   nsCOMPtr<nsIControllers> mControllers;
+ 
+@@ -800,6 +806,31 @@ nsHTMLInputElement::SetFileName(const ns
+ }
+ 
+ nsresult
++nsHTMLInputElement::GetFile(nsIURI** aFile)
++{
++  *aFile = nsnull;
++
++  if (!mFileName || mType != NS_FORM_INPUT_FILE) {
++    return NS_ERROR_NOT_AVAILABLE;
++  }
++
++  nsresult rv = NS_ERROR_NOT_AVAILABLE;
++
++  // XXX timeless FIXME
++  rv = NS_NewURI(aFile, *mFileName);
++
++  if (NS_FAILED(rv)) {
++    // this is no "file://", try as local file
++    nsCOMPtr<nsILocalFile> localFile;
++    rv = NS_NewLocalFile(*mFileName, PR_FALSE, getter_AddRefs(localFile));
++    if (NS_SUCCEEDED(rv))
++      rv = NS_NewFileURI(aFile, localFile);
++  }
++
++  return rv;
++}
++
++nsresult
+ nsHTMLInputElement::SetValueInternal(const nsAString& aValue,
+                                      nsITextControlFrame* aFrame)
+ {
+@@ -2413,57 +2444,56 @@ nsHTMLInputElement::SubmitNamesValues(ns
+     //
+     // Open the file
+     //
+-    nsCOMPtr<nsIFile> file;
+- 
+-    if (mFileName) {
+-      if (StringBeginsWith(*mFileName, NS_LITERAL_STRING("file:"),
+-                           nsCaseInsensitiveStringComparator())) {
+-        // Converts the URL string into the corresponding nsIFile if possible.
+-        // A local file will be created if the URL string begins with file://.
+-        rv = NS_GetFileFromURLSpec(NS_ConvertUTF16toUTF8(*mFileName),
+-                                   getter_AddRefs(file));
+-      }
+-      if (!file) {
+-        // this is no "file://", try as local file
+-        nsCOMPtr<nsILocalFile> localFile;
+-        rv = NS_NewLocalFile(*mFileName, PR_FALSE, getter_AddRefs(localFile));
+-        file = localFile;
+-      }
+-    }
++    nsCOMPtr<nsIURI> fileURI;
++    rv = GetFile(getter_AddRefs(fileURI));
+ 
+-    if (file) {
++    // XXX timeless FIXME
++    if (fileURI) {
+ 
+       //
+       // Get the leaf path name (to be submitted as the value)
+       //
+       nsAutoString filename;
+-      rv = file->GetLeafName(filename);
++      GetFileName(filename);
+ 
+-      if (NS_SUCCEEDED(rv) && !filename.IsEmpty()) {
++      if (!filename.IsEmpty()) {
+         PRBool acceptsFiles = aFormSubmission->AcceptsFiles();
+ 
+         if (acceptsFiles) {
+-          //
+-          // Get content type
+-          //
+-          nsCOMPtr<nsIMIMEService> MIMEService =
+-            do_GetService(NS_MIMESERVICE_CONTRACTID, &rv);
+-          NS_ENSURE_SUCCESS(rv, rv);
+-
+           nsCAutoString contentType;
+-          rv = MIMEService->GetTypeFromFile(file, contentType);
+-          if (NS_FAILED(rv)) {
+-            contentType.AssignLiteral("application/octet-stream");
+-          }
+-
+           //
+           // Get input stream
+           //
+           nsCOMPtr<nsIInputStream> fileStream;
+-          rv = NS_NewLocalFileInputStream(getter_AddRefs(fileStream),
+-                                          file, -1, -1,
+-                                          nsIFileInputStream::CLOSE_ON_EOF |
+-                                          nsIFileInputStream::REOPEN_ON_REWIND);
++          nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(fileURI));
++          if (fileURL) {
++            nsCOMPtr<nsIFile> file;
++            fileURL->GetFile(getter_AddRefs(file));
++            if (file) {
++              //
++              // Get content type
++              //
++              nsCOMPtr<nsIMIMEService> MIMEService =
++                do_GetService(NS_MIMESERVICE_CONTRACTID, &rv);
++
++              if (!MIMEService ||
++                  NS_FAILED(MIMEService->GetTypeFromFile(file, contentType)))
++                contentType.AssignLiteral("application/octet-stream");
++
++              rv = NS_NewLocalFileInputStream(getter_AddRefs(fileStream),
++                                              file, -1, -1,
++                                              nsIFileInputStream::CLOSE_ON_EOF |
++                                              nsIFileInputStream::REOPEN_ON_REWIND);
++            }
++          }
++          if (!fileStream) {
++            nsCOMPtr<nsIChannel> channel;
++            NS_NewChannel(getter_AddRefs(channel), fileURI);
++            if (channel) {
++              channel->GetContentType(contentType);
++              channel->Open(getter_AddRefs(fileStream));
++            }
++          }
+           if (fileStream) {
+             //
+             // Create buffered stream (for efficiency)
+--- mozilla/layout/forms/nsFileControlFrame.cpp	2007-05-14 12:11:52.000000000 +0300
++++ mozilla/layout/forms/nsFileControlFrame.cpp	2008-04-07 16:36:11.000000000 +0300
+@@ -278,7 +278,8 @@ nsFileControlFrame::MouseClick(nsIDOMEve
+     return result;
+ 
+   // Set filter "All Files"
+-  filePicker->AppendFilters(nsIFilePicker::filterAll);
++  filePicker->AppendFilters(nsIFilePicker::filterAll
++                          | nsIFilePicker::filterAllowURLs);
+ 
+   // Set default directry and filename
+   nsAutoString defaultName;
+@@ -322,28 +323,37 @@ nsFileControlFrame::MouseClick(nsIDOMEve
+   }
+   
+   // Set property
++  nsAutoString unicodePath;
++
+   nsCOMPtr<nsILocalFile> localFile;
+   result = filePicker->GetFile(getter_AddRefs(localFile));
+   if (localFile) {
+-    nsAutoString unicodePath;
+     result = localFile->GetPath(unicodePath);
+-    if (!unicodePath.IsEmpty()) {
+-      // Tell mTextFrame that this update of the value is a user initiated
+-      // change. Otherwise it'll think that the value is being set by a script
+-      // and not fire onchange when it should.
+-      PRBool oldState = mTextFrame->GetFireChangeEventState();
+-      mTextFrame->SetFireChangeEventState(PR_TRUE);
+-      mTextFrame->SetFormProperty(nsGkAtoms::value, unicodePath);
+-      mTextFrame->SetFireChangeEventState(oldState);
+-      nsCOMPtr<nsIFileControlElement> fileControl = do_QueryInterface(mContent);
+-      if (fileControl) {
+-        fileControl->SetFileName(unicodePath);
+-      }
+-      
+-      // May need to fire an onchange here
+-      mTextFrame->CheckFireOnChange();
+-      return NS_OK;
++  } else {
++    nsCOMPtr<nsIURI> uri;
++    result = filePicker->GetFileURL(getter_AddRefs(uri));
++    if (uri) {
++      nsCAutoString path;
++      uri->GetSpec(path);
++      CopyUTF8toUTF16(path, unicodePath);
++    }
++  }
++  if (!unicodePath.IsEmpty()) {
++    // Tell mTextFrame that this update of the value is a user initiated
++    // change. Otherwise it'll think that the value is being set by a script
++    // and not fire onchange when it should.
++    PRBool oldState = mTextFrame->GetFireChangeEventState();
++    mTextFrame->SetFireChangeEventState(PR_TRUE);
++    mTextFrame->SetFormProperty(nsGkAtoms::value, unicodePath);
++    mTextFrame->SetFireChangeEventState(oldState);
++    nsCOMPtr<nsIFileControlElement> fileControl = do_QueryInterface(mContent);
++    if (fileControl) {
++      fileControl->SetFileName(unicodePath);
+     }
++      
++    // May need to fire an onchange here
++    mTextFrame->CheckFireOnChange();
++    return NS_OK;
+   }
+ 
+   return NS_FAILED(result) ? result : NS_ERROR_FAILURE;
