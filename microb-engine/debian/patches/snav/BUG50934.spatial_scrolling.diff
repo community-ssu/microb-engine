@@ -369,22 +369,22 @@ diff -ruN -p -u10 mozilla/extensions/spatialnavigation/src.orig/nsSpatialNavigat
 +  dwinint->GetOuterWidth(&ow);
 +  dwinint->GetPageYOffset(&yo);
 +  dwinint->GetPageXOffset(&xo);
-+  if (rect.y + rect.height < yo) {
++  if (rect.y + rect.height < 0) {
 +    inside = PR_FALSE;
 +    if (ypos)
 +      *ypos = -1;
 +  }
-+  if (yo + oh < rect.y) {
++  if (oh < rect.y) {
 +    inside = PR_FALSE;
 +    if (ypos)
 +      *ypos = 1;
 +  }
-+  if (rect.x + rect.width < xo) {
++  if (rect.x + rect.width < 0) {
 +    inside = PR_FALSE;
 +    if (xpos)
 +      *xpos = -1;
 +  }
-+  if (xo + ow < rect.x) {
++  if (ow < rect.x) {
 +    inside = PR_FALSE;
 +    if (xpos)
 +      *xpos = 1;

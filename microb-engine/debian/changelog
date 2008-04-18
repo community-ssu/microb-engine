@@ -1,3 +1,10 @@
+microb-engine (1.0.4-62) unstable; urgency=low
+
+  * Fixes: NB#82684 [SNAV] Select and Enter HW keys stop working when page is
+    scrolled through many links
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Fri, 18 Apr 2008 10:13:20 -0400
+
 microb-engine (1.0.4-61) unstable; urgency=low
 
   * Checkpoint for Bug 78267 Cannot select and attach file from Bluetooth device
