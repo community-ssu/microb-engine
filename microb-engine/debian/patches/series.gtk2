@@ -380,6 +380,8 @@ cross/110_ppc_asm_comments.diff
 snav/2008-02-08-SNAV.patch
 snav/2008-02-22-SNAV.patch
 snav/2008-02-26-SNAV.patch
+snav/2008-03-26-SNAV.patch
+snav/2008-04-28-SNAV.patch
 
 815_bug_412822.diff
 trunk_updates/BUG_121059_draft.diff

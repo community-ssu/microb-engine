@@ -1,3 +1,9 @@
+microb-engine (1.0.4-63) unstable; urgency=low
+
+  * Fixes: NB#77809 [SNAV] mozilla default snav algorithm needs improvements
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Mon, 28 Apr 2008 17:07:19 -0400
+
 microb-engine (1.0.4-62) unstable; urgency=low
 
   * Fixes: NB#82684 [SNAV] Select and Enter HW keys stop working when page is
