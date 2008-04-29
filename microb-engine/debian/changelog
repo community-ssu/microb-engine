@@ -1,3 +1,9 @@
+microb-engine (1.0.4-64) unstable; urgency=low
+
+  * Fixes: NB#78267 Cannot select and attach file from Bluetooth device
+ 
+ -- Josh Soref <josh.soref@nokia.com>  Tue, 29 Apr 2008 17:33:12 +0300
+
 microb-engine (1.0.4-63) unstable; urgency=low
 
   * Fixes: NB#77809 [SNAV] mozilla default snav algorithm needs improvements

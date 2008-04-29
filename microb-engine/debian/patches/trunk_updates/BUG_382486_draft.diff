@@ -502,12 +502,19 @@ RCS file: /cvsroot/mozilla/extensions/gnomevfs/nsGnomeVFSProtocolHandler.cpp,v
 retrieving revision 1.14
 diff -U 1 -r1.14 nsGnomeVFSProtocolHandler.cpp
 --- mozilla/extensions/gnomevfs/nsGnomeVFSProtocolHandler.cpp	10 Nov 2006 23:49:04 -0000	1.14
-+++ mozilla/extensions/gnomevfs/nsGnomeVFSProtocolHandler.cpp	17 Jan 2008 22:37:57 -0000
-@@ -60,2 +60,3 @@
++++ mozilla/extensions/gnomevfs/nsGnomeVFSProtocolHandler.cpp	29 Apr 2008 15:53:53 -0000
+@@ -60,2 +61,3 @@
  #include "nsINetUtil.h"
 +#include "nsISupportsIterators.h"
  #include "nsAutoPtr.h"
-@@ -761,2 +762,268 @@
+@@ -701,2 +723,6 @@
+ 
++  // If this is our first-time through here, then open the URI.
++  if (!mHandle && !mDirOpen)
++    GnomeVFSResult rv = DoOpen();
++
+   *aResult = mBytesRemaining;
+@@ -761,2 +787,268 @@
  
 +class nsGnomeVFSOutputStream : public nsIOutputStream
 +{
