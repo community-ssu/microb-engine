@@ -68,7 +68,7 @@ pref("browser.cache.disk_cache_ssl",        false);
 pref("browser.cache.check_doc_frequency",   3);
 // Fastback caching - if this pref is negative, then we calculate the number
 // of content viewers to cache based on the amount of available memory.
-pref("browser.sessionhistory.max_total_viewers", 1);
+pref("browser.sessionhistory.max_total_viewers", 0);
 pref("browser.sessionhistory.max_viewers", 1);
 
 pref("browser.display.use_document_fonts",  1);  // 0 = never, 1 = quick, 2 = always

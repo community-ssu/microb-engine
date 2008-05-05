@@ -1,3 +1,9 @@
+microb-engine (1.0.4-65) unstable; urgency=low
+
+  * Fixes: NB#85212 Continuous browsing and memory use (browser endurance	test) 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 05 May 2008 11:09:25 +0300
+
 microb-engine (1.0.4-64) unstable; urgency=low
 
   * Fixes: NB#78267 Cannot select and attach file from Bluetooth device
