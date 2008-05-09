@@ -382,6 +382,7 @@ snav/2008-02-22-SNAV.patch
 snav/2008-02-26-SNAV.patch
 snav/2008-03-26-SNAV.patch
 snav/2008-04-28-SNAV.patch
+snav/999_block_list.diff
 
 815_bug_412822.diff
 trunk_updates/BUG_121059_draft.diff

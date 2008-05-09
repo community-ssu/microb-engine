@@ -1,0 +1,214 @@
+# Created block list handling functionality for SNAV
+# user_prefs("snav.block", "list_of_urls");
+# Contributor Anton Rogaynis
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp.orig	2008-05-08 17:55:21.000000000 -0400
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-05-09 11:34:37.000000000 -0400
+@@ -38,6 +38,8 @@
+ #include "nsGUIEvent.h"
+ #include "nsIDOMHTMLImageElement.h"
+ #include "nsIDOMNSHTMLAnchorElement.h"
++#include "nsCURILoader.h"
++#include "nsEmbedCID.h"
+ 
+ // #define DEBUG_romaxa 1
+ 
+@@ -50,6 +52,8 @@
+   NS_INTERFACE_MAP_ENTRY(nsISpatialNavigation)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMKeyListener)
+   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIDOMEventListener, nsIDOMKeyListener)
++  NS_INTERFACE_MAP_ENTRY(nsIWebProgressListener)
++  NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
+ NS_INTERFACE_MAP_END
+ 
+ NS_IMPL_ADDREF(nsSpatialNavigation)
+@@ -147,6 +151,57 @@
+ 
+ nsSpatialNavigation::~nsSpatialNavigation()
+ {
++  // Remove the progress listener
++  nsCOMPtr<nsIWebProgress> progress =
++    do_GetService(NS_DOCUMENTLOADER_SERVICE_CONTRACTID);
++  if (progress)
++    progress->RemoveProgressListener(this);
++}
++
++NS_IMETHODIMP 
++nsSpatialNavigation::OnStateChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, PRUint32 aStateFlags, nsresult aStatus)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP
++nsSpatialNavigation::OnProgressChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest,
++                                            PRInt32 aCurSelfProgress, PRInt32 aMaxSelfProgress, PRInt32 aCurTotalProgress, PRInt32 aMaxTotalProgress)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP
++nsSpatialNavigation::OnLocationChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, nsIURI *aLocation)
++{
++
++  nsCString spec;
++  NS_ENSURE_ARG_POINTER(aLocation);
++  aLocation->GetSpec(spec);
++  int i;
++  mBlocked = PR_FALSE;
++
++  if(mService)
++    for (i = 0; i < mService->mSnavBlockList.Length(); i++) {
++      if(0 == PL_strncasecmp(mService->mSnavBlockList[i].get(), spec.get(), PL_strlen(mService->mSnavBlockList[i].get()))) {
++        mBlocked = PR_TRUE;
++        break;
++      }
++    }
++
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsSpatialNavigation::OnStatusChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, nsresult aStatus, const PRUnichar *aMessage)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP
++nsSpatialNavigation::OnSecurityChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, PRUint32 aState)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ NS_IMETHODIMP 
+@@ -245,6 +300,9 @@
+ nsresult 
+ nsSpatialNavigation::HandleKey(nsIDOMEvent* aEvent, PRBool aReal)
+ {
++  if(mBlocked)
++    return NS_OK;
++
+   nsCOMPtr<nsIDOMNSUIEvent> uiEvent(do_QueryInterface(aEvent));
+   if (uiEvent)
+   {
+@@ -640,7 +698,16 @@
+                                   NS_STATIC_CAST(nsIDOMKeyListener*, this),
+                                   PR_FALSE, 
+                                   systemGroup);
+-  
++
++  nsCOMPtr<nsIWebProgress> progress = do_GetService(NS_DOCUMENTLOADER_SERVICE_CONTRACTID, &rv);
++
++  if (NS_SUCCEEDED(rv)) {
++    rv = progress->AddProgressListener((nsIWebProgressListener*)this,
++                                    nsIWebProgress::NOTIFY_LOCATION);
++  }
++  else
++    printf("------------- Could not get nsIWebProgress\n");
++
+   return NS_OK;
+ }
+ 
+@@ -1065,6 +1132,9 @@
+ nsresult
+ nsSpatialNavigation::handleMove(int direction)
+ {
++  if(mBlocked)
++    return NS_OK;
++
+   nsCOMPtr<nsIContent> focusedContent;
+   getFocusedContent(direction, getter_AddRefs(focusedContent));
+ 
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h.orig	2008-05-08 17:55:21.000000000 -0400
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-05-09 11:31:22.000000000 -0400
+@@ -129,10 +129,15 @@
+ #include "nsPIDOMWindow.h"
+ #include "nsStyleContext.h"
+ 
++#include "nsIWebProgress.h"
++#include "nsIWebProgressListener.h"
++#include "nsClassHashtable.h"
++#include "nsDataHashtable.h"
++
+ class nsSpatialNavigationService;
+ class nsSpatialNavigation;
+ 
+-class nsSpatialNavigation : public nsISpatialNavigation, public nsIDOMKeyListener
++class nsSpatialNavigation : public nsISpatialNavigation, public nsIDOMKeyListener, public nsIWebProgressListener, public nsSupportsWeakReference
+ {
+ public:
+   
+@@ -140,6 +145,7 @@
+   NS_DECL_NSISPATIALNAVIGATION
+   
+   NS_DECL_NSIDOMEVENTLISTENER
++  NS_DECL_NSIWEBPROGRESSLISTENER
+   
+   // ----- nsIDOMKeyListener ----------------------------
+   NS_IMETHOD KeyDown(nsIDOMEvent* aKeyEvent);
+@@ -180,6 +186,7 @@
+   PRInt32 mSelectNavCount;
+   PRInt32 mSelectMultiCount;
+   nsCOMPtr<nsIContent> mLastContent;
++  PRBool mBlocked;
+ };
+ 
+ 
+@@ -205,6 +212,7 @@
+   PRInt32 mKeyCodeUp;
+   PRInt32 mKeyCodeDown;
+   PRInt32 mKeyCodeModifier;
++  nsTArray<nsCString> mSnavBlockList;
+ 
+ };
+ 
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp.orig	2008-05-08 17:55:13.000000000 -0400
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp	2008-05-09 11:33:43.000000000 -0400
+@@ -171,7 +171,18 @@
+     rv = prefBranch->GetIntPref("snav.keyCode.modifier", &tempInt32);
+     if (NS_SUCCEEDED(rv))
+       mKeyCodeModifier = tempInt32;
+-    
++
++    nsCString blockStr;
++    rv = prefBranch->GetCharPref("snav.block", getter_Copies(blockStr));
++    char * bStr = blockStr.BeginWriting();
++    char * token;
++
++    while ((token = NS_strtok(" ", &bStr)) != NULL) {
++      nsCString buf;
++      buf.Assign(token);
++      mSnavBlockList.AppendElement(buf);
++    }
++
+     return NS_OK;
+   }
+   
+@@ -228,7 +239,18 @@
+     {
+       prefBranch->GetIntPref(prefc.get(), &mKeyCodeModifier);
+     }
+-    
++
++    nsCString blockStr;
++    rv = prefBranch->GetCharPref("snav.block", getter_Copies(blockStr));
++    char * bStr = blockStr.BeginWriting();
++    char * token;
++
++    while ((token = NS_strtok(" ", &bStr)) != NULL) {
++      nsCString buf;
++      buf.Assign(token);
++      mSnavBlockList.AppendElement(buf);
++    }
++
+     return NS_OK;
+   }
+   
+--- mozilla/extensions/spatialnavigation/src/Makefile.in.orig	2008-05-08 18:12:13.000000000 -0400
++++ mozilla/extensions/spatialnavigation/src/Makefile.in	2008-05-08 18:12:31.000000000 -0400
+@@ -78,6 +78,7 @@
+ 	necko \
+ 	docshell \
+ 	unicharutil \
++	uriloader \
+ 	view \
+ 	webshell \
+ 	windowwatcher \

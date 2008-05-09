@@ -1,3 +1,10 @@
+microb-engine (1.0.4-66) unstable; urgency=low
+
+  * Fixes: NB#77991 NB#78945 URLs block list. Disabling SNAV for certain
+    pages.
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Fri,  9 May 2008 13:42:21 -0400
+
 microb-engine (1.0.4-65) unstable; urgency=low
 
   * Fixes: NB#85212 Continuous browsing and memory use (browser endurance	test) 
