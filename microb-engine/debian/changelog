@@ -1,3 +1,9 @@
+microb-engine (1.0.4-67) unstable; urgency=low
+
+  * Removed pref snav.block from all.js 
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Mon, 12 May 2008 12:46:42 -0400
+
 microb-engine (1.0.4-66) unstable; urgency=low
 
   * Fixes: NB#77991 NB#78945 URLs block list. Disabling SNAV for certain
