@@ -1,3 +1,9 @@
+microb-engine (1.0.4-68) unstable; urgency=low
+
+  * Fixes: NB#79937 Zooming in or out makes panning noticeably slower 
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Mon, 19 May 2008 17:14:40 +0300
+
 microb-engine (1.0.4-67) unstable; urgency=low
 
   * Removed pref snav.block from all.js 
