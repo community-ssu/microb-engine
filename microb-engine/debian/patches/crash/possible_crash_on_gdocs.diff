@@ -9,7 +9,7 @@
 -  PRInt32 p2a = dev->AppUnitsPerDevPixel(); 
 +  PRInt32 p2a = 60;
 +  if (dev)
-+    dev->AppUnitsPerDevPixel(); 
++    p2a = dev->AppUnitsPerDevPixel();
  
    nscoord dx = NSIntPixelsToAppUnits(aNumPixelsX, p2a);
    nscoord dy = NSIntPixelsToAppUnits(aNumPixelsY, p2a);

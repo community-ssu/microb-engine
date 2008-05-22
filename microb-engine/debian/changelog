@@ -1,3 +1,9 @@
+microb-engine (1.0.4-69) unstable; urgency=low
+
+  * Fixes: NB#79937 Zooming in or out makes panning noticeably slower
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 22 May 2008 13:27:00 +0300
+
 microb-engine (1.0.4-68) unstable; urgency=low
 
   * Fixes: NB#79937 Zooming in or out makes panning noticeably slower 
