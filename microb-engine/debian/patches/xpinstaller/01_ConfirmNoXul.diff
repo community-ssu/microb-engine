@@ -1,8 +1,0 @@
-Index: mozilla/xpinstall/public/xpinstall.js
-===================================================================
---- mozilla.orig/xpinstall/public/xpinstall.js
-+++ mozilla/xpinstall/public/xpinstall.js
-@@ -1,2 +1,2 @@
- pref("xpinstall.enabled",       true);
--pref("xpinstall.whitelist.required", true);
-+pref("xpinstall.whitelist.required", false);
