@@ -1,0 +1,64 @@
+# Fixes to the extension manager functionality.
+Index: mozilla/toolkit/xre/nsEmbedFunctions.cpp
+===================================================================
+--- mozilla.orig/toolkit/xre/nsEmbedFunctions.cpp
++++ mozilla/toolkit/xre/nsEmbedFunctions.cpp
+@@ -61,20 +61,35 @@
+ }
+ 
+ nsresult
+ XRE_LockProfileDirectory(nsILocalFile* aDirectory,
+                          nsISupports* *aLockObject)
+ {
+   nsCOMPtr<nsIProfileLock> lock;
+ 
+-  nsresult rv = NS_LockProfilePath(aDirectory, nsnull, nsnull,
++  nsresult rv = NS_LockProfilePath(aDirectory, aDirectory, nsnull,
+                                    getter_AddRefs(lock));
+-  if (NS_SUCCEEDED(rv))
+-    NS_ADDREF(*aLockObject = lock);
++
++  NS_ENSURE_SUCCESS(rv, NS_ERROR_OUT_OF_MEMORY);
++  NS_ADDREF(*aLockObject = lock);
++
++  nsCOMPtr<nsILocalFile> profD;
++  rv = lock->GetDirectory(getter_AddRefs(profD));
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  nsCOMPtr<nsILocalFile> profLD;
++  rv = lock->GetLocalDirectory(getter_AddRefs(profLD));
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  if (!gDirServiceProvider)
++   new nsXREDirProvider;
++
++  if (gDirServiceProvider)
++		rv = gDirServiceProvider->SetProfile(profD, profLD);
+ 
+   return rv;
+ }
+ 
+ static nsStaticModuleInfo *sCombined;
+ static PRInt32 sInitCounter;
+ 
+ nsresult
+@@ -94,17 +109,18 @@
+   if (++sInitCounter > 1) // XXXbsmedberg is this really the right solution?
+     return NS_OK;
+ 
+   if (!aAppDirectory)
+     aAppDirectory = aLibXULDirectory;
+ 
+   nsresult rv;
+ 
+-  new nsXREDirProvider; // This sets gDirServiceProvider
++  if (!gDirServiceProvider)
++    new nsXREDirProvider; // This sets gDirServiceProvider
+   if (!gDirServiceProvider)
+     return NS_ERROR_OUT_OF_MEMORY;
+ 
+   rv = gDirServiceProvider->Initialize(aAppDirectory, aLibXULDirectory,
+                                        aAppDirProvider);
+   if (NS_FAILED(rv))
+     return rv;
+ 

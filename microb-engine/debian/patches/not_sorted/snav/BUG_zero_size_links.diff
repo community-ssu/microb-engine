@@ -1,0 +1,106 @@
+# Some <a> links (ex: google.com 1 2 3 4 5 ...) have size 0                                                                                                             
+# Check their parent
+# Probably we have to check child instead  parent...
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h.orig	2007-07-15 14:21:48.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2007-07-16 10:03:42.000000000 +0300
+@@ -215,20 +215,21 @@ nsresult createFrameTraversal         (n
+                                        PRBool aFollowOOFs,
+                                        nsIBidirectionalEnumerator** outTraversal);
+ nsresult getEventTargetFromWindow     (nsIDOMWindow* aWindow, nsIDOM3EventTarget** aEventTarget, nsIDOMEventGroup** aSystemGroup);
+ void     getContentFromFrame          (nsIContent* c, nsIContent** outContent);
+ nsresult getFrameForContent           (nsIContent* aContent, nsIFrame** aFrame);
+ PRBool   isContentOfType              (nsIContent* content, const char* type);
+ PRBool   isArea                       (nsIContent* content);
+ PRBool   isMap                        (nsIFrame* frame);
+ PRBool   isTargetable                 (PRBool focusDocuments, nsIFrame* frame);
+ nsRect   makeRectRelativeToGlobalView (nsIFrame *aFrame);
++nsRect   makeRectRelativeToGlobalView (nsIDOMNode *aNode);
+ void     poly2Rect                    (int sides, nscoord* coord, nsRect* rect);
+ void     getRectOfAreaElement         (nsIFrame* f, nsIDOMHTMLAreaElement* e, nsRect* r);
+ PRBool   isRectInDirection            (int direction, nsRect& focusedRect, nsRect& frameRect);
+ PRInt64  spatialDistance              (int direction, nsRect& a, nsRect& b);
+ void     GetWindowFromDocument        (nsIDOMDocument* aDocument, nsIDOMWindowInternal** aWindow);
+ PRBool   IsPartiallyVisible           (nsIPresShell* shell, nsIFrame* frame, PRBool aForce = PR_TRUE);
+ void     ScrollWindow                 (int direction, nsIDOMWindow* window);
+ 
+ 
+ 
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp.orig	2007-07-15 14:21:48.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2007-07-16 10:07:55.000000000 +0300
+@@ -417,36 +417,49 @@ isTargetable(PRBool focusDocuments, nsIF
+     return !disabled && (! inputType.LowerCaseEqualsLiteral("hidden")) && (!inputType.LowerCaseEqualsLiteral("button"));
+ 
+   nsAutoString textareaType;
+   nsCOMPtr<nsIDOMHTMLTextAreaElement> textareaElement = do_QueryInterface(currentContent);
+   if (textareaElement && NS_SUCCEEDED(textareaElement->GetDisabled(&disabled)) && NS_SUCCEEDED(textareaElement->GetType(textareaType)))
+     return !disabled && (! textareaType.LowerCaseEqualsLiteral("hidden"));
+ 
+   return PR_FALSE;
+ }
+ 
++
+ nsRect makeRectRelativeToGlobalView(nsIFrame *aFrame)
+ {
++  NS_ENSURE_TRUE(aFrame, nsRect(0,0,0,0));
++  nsCOMPtr<nsIDOMNode> nsNode = do_QueryInterface(aFrame->GetContent());
++  return makeRectRelativeToGlobalView(nsNode);
++}
++
++nsRect makeRectRelativeToGlobalView(nsIDOMNode *aNode)
++{
+   nsRect result(0,0,0,0);
+-  NS_ENSURE_TRUE(aFrame, result);
+-  
+-  nsCOMPtr<nsIDOMNSElement> nsElem = do_QueryInterface(aFrame->GetContent());
++  if (!aNode) return result; nsCOMPtr<nsIDOMNSElement> nsElem = do_QueryInterface(aNode);
+   NS_ENSURE_TRUE(nsElem, result);
+   nsCOMPtr<nsIDOMTextRectangle> domrect;
+   nsElem->GetBoundingClientRect(getter_AddRefs(domrect));
+   float pleft,pright,ptop,pbottom;
+   domrect->GetLeft(&pleft);
+   domrect->GetRight(&pright);
+   domrect->GetTop(&ptop);
+   domrect->GetBottom(&pbottom);
+   result = nsRect(pleft, ptop, pright - pleft, pbottom - ptop);
+-  return result;
++  if (result.width && result.height) return result;
++  // Some <a> links (ex: google.com 1 2 3 4 5 ...) have size 0
++  // Check their parent
++  nsCOMPtr<nsIDOMNode> node = do_QueryInterface(nsElem);
++  if (!node) return result; nsCOMPtr<nsIDOMNode> child;
++  node->GetFirstChild(getter_AddRefs(child));
++  if (!child) return result;
++  return makeRectRelativeToGlobalView(child);
+ }
+ 
+ 
+ void poly2Rect(int sides, nscoord* coord, nsRect* rect)
+ {
+   nscoord x1, x2, y1, y2, xtmp, ytmp;
+   x1 = x2 = coord[0];
+   y1 = y2 = coord[1];
+   for (PRInt32 i = 2; i < sides; i += 2) 
+   {
+@@ -796,20 +809,22 @@ PRBool IsPartiallyVisible(nsIPresShell* 
+    nsRect relFrameRect = frame->GetRect();
+    nsPoint frameOffset;
+    nsIView *containingView = frame->GetViewExternal();
+    if (!containingView) {
+      frame->GetOffsetFromView(frameOffset, &containingView);
+      if (!containingView)
+        return PR_FALSE;  // no view -- not visible
+      relFrameRect.x = frameOffset.x;
+      relFrameRect.y = frameOffset.y;
+    }
++   relFrameRect.width +=1;
++   relFrameRect.height +=1;
+  
+    PRUint16 minPixels = PRUint16(nsPresContext::CSSPixelsToAppUnits(kMinPixels));
+    nsRectVisibility rectVisibility;
+    viewManager->GetRectVisibility(containingView, relFrameRect, 
+                                   minPixels, 
+                                   &rectVisibility);
+  
+    if (rectVisibility == nsRectVisibility_kVisible
+       ||(aForce &&
+       (

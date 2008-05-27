@@ -1,0 +1,19 @@
+--- mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp.orig	2008-04-02 02:34:20.000000000 +0300
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp	2008-04-10 15:54:32.000000000 +0300
+@@ -242,11 +242,15 @@ nsNativeThemeGTK::GetGtkWidgetAndState(P
+       aState->inHover = (eventState & NS_EVENT_STATE_HOVER) == NS_EVENT_STATE_HOVER;
+       aState->isDefault = IsDefaultButton(aFrame);
+       aState->canDefault = FALSE; // XXX fix me
+       aState->depressed = FALSE;
+ 
+-      if (aFrame && aFrame->GetContent()->IsNodeOfType(nsINode::eXUL)) {
++      if (aFrame
++#ifdef MOZ_XUL
++          && aFrame->GetContent()->IsNodeOfType(nsINode::eXUL)
++#endif
++      ) {
+         // For these widget types, some element (either a child or parent)
+         // actually has element focus, so we check the focused attribute
+         // to see whether to draw in the focused state.
+         if (aWidgetType == NS_THEME_TEXTFIELD ||
+             aWidgetType == NS_THEME_TEXTFIELD_MULTILINE ||

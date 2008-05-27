@@ -1,0 +1,175 @@
+# Allow to use FIXED_BUG347731 in gtkmozembed
+Index: mozilla/content/base/src/nsContentList.h
+===================================================================
+--- mozilla.orig/content/base/src/nsContentList.h
++++ mozilla/content/base/src/nsContentList.h
+@@ -41,17 +41,17 @@
+  * getElementsByTagName, some properties on nsIDOMHTMLDocument, etc).
+  */
+ 
+ #ifndef nsContentList_h___
+ #define nsContentList_h___
+ 
+ #include "nsISupports.h"
+ #include "nsCOMArray.h"
+-#include "nsString.h"
++#include "nsStringGlue.h"
+ #include "nsIDOMHTMLCollection.h"
+ #include "nsIDOMNodeList.h"
+ #include "nsStubMutationObserver.h"
+ #include "nsIAtom.h"
+ #include "nsINameSpaceManager.h"
+ #include "nsCycleCollectionParticipant.h"
+ 
+ // Magic namespace id that means "match all namespaces".  This is
+Index: mozilla/content/html/content/public/nsIForm.h
+===================================================================
+--- mozilla.orig/content/html/content/public/nsIForm.h
++++ mozilla/content/html/content/public/nsIForm.h
+@@ -33,17 +33,17 @@
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ #ifndef nsIForm_h___
+ #define nsIForm_h___
+ 
+ #include "nsISupports.h"
+-#include "nsAString.h"
++#include "nsStringGlue.h"
+ 
+ class nsIFormControl;
+ class nsISimpleEnumerator;
+ class nsIURI;
+ template<class T> class nsTArray;
+ 
+ #define NS_FORM_METHOD_GET  0
+ #define NS_FORM_METHOD_POST 1
+Index: mozilla/layout/base/nsPresContext.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresContext.cpp
++++ mozilla/layout/base/nsPresContext.cpp
+@@ -906,17 +906,17 @@
+         doc->AddCharSetObserver(this);
+         UpdateCharSet(doc->GetDocumentCharacterSet());
+       }
+     }
+   }
+ }
+ 
+ void
+-nsPresContext::UpdateCharSet(const nsAFlatCString& aCharSet)
++nsPresContext::UpdateCharSet(const nsCString& aCharSet)
+ {
+   if (mLangService) {
+     NS_IF_RELEASE(mLangGroup);
+     mLangGroup = mLangService->LookupCharSet(aCharSet.get()).get();  // addrefs
+ 
+     if (mLangGroup == nsGkAtoms::Japanese && mEnableJapaneseTransform) {
+       mLanguageSpecificTransformType =
+         eLanguageSpecificTransformType_Japanese;
+Index: mozilla/layout/base/nsPresContext.h
+===================================================================
+--- mozilla.orig/layout/base/nsPresContext.h
++++ mozilla/layout/base/nsPresContext.h
+@@ -38,17 +38,17 @@
+ /* a presentation of a document, part 1 */
+ 
+ #ifndef nsPresContext_h___
+ #define nsPresContext_h___
+ 
+ #include "nsISupports.h"
+ #include "nsColor.h"
+ #include "nsCoord.h"
+-#include "nsAString.h"
++#include "nsStringGlue.h"
+ #include "nsCOMPtr.h"
+ #include "nsIPresShell.h"
+ #include "nsRect.h"
+ #include "nsIDeviceContext.h"
+ #include "nsFont.h"
+ #include "nsIWeakReference.h"
+ #include "nsITheme.h"
+ #include "nsILanguageAtomService.h"
+@@ -748,17 +748,17 @@
+   static NS_HIDDEN_(int) PR_CALLBACK PrefChangedCallback(const char*, void*);
+ 
+   NS_HIDDEN_(void) UpdateAfterPreferencesChanged();
+   static NS_HIDDEN_(void) PR_CALLBACK PrefChangedUpdateTimerCallback(nsITimer *aTimer, void *aClosure);
+ 
+   NS_HIDDEN_(void) GetUserPreferences();
+   NS_HIDDEN_(void) GetFontPreferences();
+ 
+-  NS_HIDDEN_(void) UpdateCharSet(const nsAFlatCString& aCharSet);
++  NS_HIDDEN_(void) UpdateCharSet(const nsCString& aCharSet);
+ 
+   // IMPORTANT: The ownership implicit in the following member variables
+   // has been explicitly checked.  If you add any members to this class,
+   // please make the ownership explicit (pinkerton, scc).
+   
+   nsPresContextType     mType;
+   nsIPresShell*         mShell;         // [WEAK]
+   nsCOMPtr<nsIDocument> mDocument;
+Index: mozilla/layout/style/nsCSSValue.h
+===================================================================
+--- mozilla.orig/layout/style/nsCSSValue.h
++++ mozilla/layout/style/nsCSSValue.h
+@@ -36,17 +36,17 @@
+  * ***** END LICENSE BLOCK ***** */
+ 
+ /* representation of simple property values within CSS declarations */
+ 
+ #ifndef nsCSSValue_h___
+ #define nsCSSValue_h___
+ 
+ #include "nsColor.h"
+-#include "nsString.h"
++#include "nsStringGlue.h"
+ #include "nsCoord.h"
+ #include "nsCSSProperty.h"
+ #include "nsIURI.h"
+ #include "nsCOMPtr.h"
+ #include "nsAutoPtr.h"
+ #include "nsCRTGlue.h"
+ #include "nsStringBuffer.h"
+ 
+Index: mozilla/embedding/components/windowwatcher/public/nsPromptUtils.h
+===================================================================
+--- mozilla.orig/embedding/components/windowwatcher/public/nsPromptUtils.h
++++ mozilla/embedding/components/windowwatcher/public/nsPromptUtils.h
+@@ -35,16 +35,19 @@
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #ifndef NSPROMPTUTILS_H_
+ #define NSPROMPTUTILS_H_
+ 
+ #include "nsIHttpChannel.h"
+ 
++#ifndef kNotFound
++#define kNotFound -1
++#endif
+ /**
+  * @file
+  * This file defines some helper functions that simplify interaction
+  * with authentication prompts.
+  */
+ 
+ /**
+  * Given a username (possibly in DOMAIN\user form) and password, parses the
+@@ -159,14 +162,14 @@
+   nsAutoString realm;
+   aAuthInfo->GetRealm(realm);
+   
+   // Now assemble the key: host:port (realm)
+   key.Append(host);
+   key.Append(':');
+   key.AppendInt(port);
+   key.AppendLiteral(" (");
+-  AppendUTF16toUTF8(realm, key);
++	key.Append(NS_ConvertUTF16toUTF8(realm));
+   key.Append(')');
+ }
+ 
+ #endif
+ 

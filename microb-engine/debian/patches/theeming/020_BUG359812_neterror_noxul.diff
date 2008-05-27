@@ -1,0 +1,27 @@
+# Patches for microb-engine
+# Oleg Romashin <oleg.romashin@nokia.com>
+# Bug 359812: No reason to use XUL based button in netError.xhtml
+Index: mozilla/docshell/resources/content/netError.xhtml
+===================================================================
+--- mozilla.orig/docshell/resources/content/netError.xhtml
++++ mozilla/docshell/resources/content/netError.xhtml
+@@ -269,18 +269,17 @@
+              error types.  -->
+         <div id="securityOverrideDiv">
+           <a id="securityOverrideLink" href="javascript:showSecuritySection();" >&securityOverride.linkText;</a>
+           <div id="securityOverrideContent" style="display: none;">&securityOverride.warningText;</div>
+         </div>
+       </div>
+ 
+       <!-- Retry Button -->
+-      <xul:button xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+-                  id="errorTryAgain" label="&retry.label;" oncommand="retryThis(this);" />
++      <button id="errorTryAgain" onclick="retryThis();">&retry.label;</button>
+ 
+     </div>
+ 
+     <!--
+     - Note: It is important to run the script this way, instead of using
+     - an onload handler. This is because error pages are loaded as
+     - LOAD_BACKGROUND, which means that onload handlers will not be executed.
+     -->

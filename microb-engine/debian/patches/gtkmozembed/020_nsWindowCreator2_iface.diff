@@ -1,0 +1,73 @@
+Index: mozilla/embedding/browser/gtk/src/EmbedWindowCreator.cpp
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/EmbedWindowCreator.cpp
++++ mozilla/embedding/browser/gtk/src/EmbedWindowCreator.cpp
+@@ -45,17 +45,17 @@
+ EmbedWindowCreator::EmbedWindowCreator(void)
+ {
+ }
+ 
+ EmbedWindowCreator::~EmbedWindowCreator()
+ {
+ }
+ 
+-NS_IMPL_ISUPPORTS1(EmbedWindowCreator, nsIWindowCreator)
++NS_IMPL_ISUPPORTS2(EmbedWindowCreator, nsIWindowCreator, nsIWindowCreator2)
+ 
+ NS_IMETHODIMP
+ EmbedWindowCreator::CreateChromeWindow(nsIWebBrowserChrome *aParent,
+ 				       PRUint32 aChromeFlags,
+ 				       nsIWebBrowserChrome **_retval)
+ {
+   NS_ENSURE_ARG_POINTER(_retval);
+ 
+@@ -99,8 +99,20 @@
+   
+   if (*_retval) {
+     NS_ADDREF(*_retval);
+     return NS_OK;
+   }
+ 
+   return NS_ERROR_FAILURE;
+ }
++
++NS_IMETHODIMP
++EmbedWindowCreator::CreateChromeWindow2(nsIWebBrowserChrome *aParent,
++                                        PRUint32 aChromeFlags,
++                                        PRUint32 aContextFlags,
++                                        nsIURI *aURI,
++                                        PRBool *aCancel,
++                                        nsIWebBrowserChrome **_retval)
++{
++  return CreateChromeWindow(aParent, aChromeFlags, _retval);
++}
++
+Index: mozilla/embedding/browser/gtk/src/EmbedWindowCreator.h
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/EmbedWindowCreator.h
++++ mozilla/embedding/browser/gtk/src/EmbedWindowCreator.h
+@@ -34,21 +34,23 @@
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #ifndef __EmbedWindowCreator_h
+ #define __EmbedWindowCreator_h
+ 
+ #include <nsIWindowCreator.h>
++#include "nsIWindowCreator2.h"
+ 
+-class EmbedWindowCreator : public nsIWindowCreator
++class EmbedWindowCreator : public nsIWindowCreator2
+ {
+  public:
+   EmbedWindowCreator();
+   virtual ~EmbedWindowCreator();
+ 
+   NS_DECL_ISUPPORTS
+   NS_DECL_NSIWINDOWCREATOR
++  NS_DECL_NSIWINDOWCREATOR2
+   
+ };
+ 
+ #endif /* __EmbedWindowCreator_h */

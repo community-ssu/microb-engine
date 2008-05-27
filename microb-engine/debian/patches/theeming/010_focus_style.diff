@@ -1,0 +1,111 @@
+# Changed styling for MAC
+# Disabled double focusing (should be focus property)
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp
++++ mozilla/layout/base/nsPresShell.cpp
+@@ -2107,35 +2107,35 @@
+ 
+     if ((NS_SUCCEEDED(result) && focusRingWidth != 1 && focusRingWidth <= 4 ) || focusRingOnAnything) {
+       PRUint32 index = 0;
+       nsAutoString strRule;
+       if (!focusRingOnAnything)
+         strRule.AppendLiteral("*|*:link:focus, *|*:visited");    // If we only want focus rings on the normal things like links
+       strRule.AppendLiteral(":focus {outline: ");     // For example 3px dotted WindowText (maximum 4)
+       strRule.AppendInt(focusRingWidth);
+-      strRule.AppendLiteral("px dotted WindowText !important; } ");     // For example 3px dotted WindowText
++      strRule.AppendLiteral("px solid -moz-mac-focusring !important; -moz-outline-radius: .3em;  -moz-outline-offset: .05em; } ");     // For example 3px dotted WindowText
+       // insert the rules
+       result = mPrefStyleSheet->
+         InsertRuleInternal(strRule, sInsertPrefSheetRulesAt, &index);
+       NS_ENSURE_SUCCESS(result, result);
+       if (focusRingWidth != 1) {
+         // If the focus ring width is different from the default, fix buttons with rings
+         strRule.AssignLiteral("button::-moz-focus-inner, input[type=\"reset\"]::-moz-focus-inner,");
+         strRule.AppendLiteral("input[type=\"button\"]::-moz-focus-inner, ");
+         strRule.AppendLiteral("input[type=\"submit\"]::-moz-focus-inner { padding: 1px 2px 1px 2px; border: ");
+         strRule.AppendInt(focusRingWidth);
+-        strRule.AppendLiteral("px dotted transparent !important; } ");
++        strRule.AppendLiteral("px solid transparent !important; } ");
+         result = mPrefStyleSheet->
+           InsertRuleInternal(strRule, sInsertPrefSheetRulesAt, &index);
+         NS_ENSURE_SUCCESS(result, result);
+           
+-        strRule.AssignLiteral("button:focus::-moz-focus-inner, input[type=\"reset\"]:focus::-moz-focus-inner,");
++/*          strRule.AssignLiteral("button:focus::-moz-focus-inner, input[type=\"reset\"]:focus::-moz-focus-inner,");
+         strRule.AppendLiteral("input[type=\"button\"]:focus::-moz-focus-inner, input[type=\"submit\"]:focus::-moz-focus-inner {");
+-        strRule.AppendLiteral("border-color: ButtonText !important; }");
++        strRule.AppendLiteral("border-color: -moz-mac-focusring !important; }");*/
+         result = mPrefStyleSheet->
+           InsertRuleInternal(strRule, sInsertPrefSheetRulesAt, &index);
+       }
+     }
+   }
+   return result;
+ }
+ 
+Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp
++++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp
+@@ -169,17 +169,17 @@
+         aColor = GDK_COLOR_TO_NS_RGB(mStyle->bg[GTK_STATE_NORMAL]);
+         break;
+     case eColor_captiontext:
+         // text in active window caption, size box, and scrollbar arrow box (!)
+         aColor = GDK_COLOR_TO_NS_RGB(mStyle->fg[GTK_STATE_NORMAL]);
+         break;
+     case eColor_graytext:
+         // disabled text in windows, menus, etc.
+-        aColor = GDK_COLOR_TO_NS_RGB(mStyle->fg[GTK_STATE_INSENSITIVE]);
++        aColor = GDK_COLOR_TO_NS_RGB(mStyle->text[GTK_STATE_INSENSITIVE]);
+         break;
+     case eColor_highlight:
+         // background of selected item
+         aColor = GDK_COLOR_TO_NS_RGB(mStyle->base[GTK_STATE_SELECTED]);
+         break;
+     case eColor_highlighttext:
+         // text of selected item
+         aColor = GDK_COLOR_TO_NS_RGB(mStyle->text[GTK_STATE_SELECTED]);
+@@ -213,16 +213,20 @@
+         aColor = sMenuText;
+         break;
+     case eColor_scrollbar:
+         // scrollbar gray area
+         aColor = GDK_COLOR_TO_NS_RGB(mStyle->bg[GTK_STATE_ACTIVE]);
+         break;
+ 
+     case eColor_threedface:
++        // 3-D face color
++        aColor = GDK_COLOR_TO_NS_RGB(mStyle->bg[GTK_STATE_INSENSITIVE]);
++        break;
++
+     case eColor_buttonface:
+         // 3-D face color
+         aColor = sButtonBackground;
+         break;
+ 
+     case eColor_buttontext:
+         // text on push buttons
+         aColor = sButtonText;
+@@ -296,16 +300,20 @@
+         aColor = GDK_COLOR_TO_NS_RGB(mStyle->text[GTK_STATE_ACTIVE]);
+         break;
+     case eColor__moz_menuhover:
+         aColor = sMenuHover;
+         break;
+     case eColor__moz_menuhovertext:
+         aColor = sMenuHoverText;
+         break;
++    case eColor__moz_mac_focusring:
++        //default focusring color value
++        aColor = GDK_COLOR_TO_NS_RGB(mStyle->dark[GTK_STATE_SELECTED]);
++        break;
+     case eColor__moz_oddtreerow:
+         aColor = sOddCellBackground;
+         break;
+     default:
+         /* default color is BLACK */
+         aColor = 0;
+         res    = NS_ERROR_FAILURE;
+         break;

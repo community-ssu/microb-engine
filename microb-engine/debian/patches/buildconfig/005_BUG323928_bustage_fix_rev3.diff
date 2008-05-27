@@ -1,0 +1,106 @@
+#Bug 386862  Building GTK2 Linux embedding-profile=basic failed 
+Index: mozilla/widget/src/gtk2/Makefile.in
+===================================================================
+--- mozilla.orig/widget/src/gtk2/Makefile.in
++++ mozilla/widget/src/gtk2/Makefile.in
+@@ -99,24 +99,29 @@
+ 		nsGtkKeyUtils.cpp \
+ 		nsClipboard.cpp \
+ 		nsDragService.cpp \
+ 		nsFilePicker.cpp \
+ 		nsSound.cpp \
+ 		nsNativeKeyBindings.cpp \
+ 		nsScreenGtk.cpp \
+ 		nsScreenManagerGtk.cpp \
+-		nsDeviceContextSpecG.cpp \
+-		nsPrintOptionsGTK.cpp \
+ 		nsImageToPixbuf.cpp \
+ 		nsAccessibilityHelper.cpp \
+ 		nsIdleServiceGTK.cpp \
++		$(NULL)
++
++ifdef MOZ_ENABLE_POSTSCRIPT
++CPPSRCS		+= \
++		nsDeviceContextSpecG.cpp \
++		nsPrintOptionsGTK.cpp \
+ 		nsPrintDialogGTK.cpp \
+ 		nsPrintSettingsGTK.cpp \
+-		$(NULL)
++  	$(NULL)
++endif
+ 
+ # build our subdirs, too
+ ifdef ACCESSIBILITY
+ REQUIRES	+= accessibility
+ endif
+ 
+ SHARED_LIBRARY_LIBS = ../xpwidgets/libxpwidgets_s.a
+ 
+Index: mozilla/gfx/thebes/src/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/thebes/src/Makefile.in
++++ mozilla/gfx/thebes/src/Makefile.in
+@@ -77,17 +77,22 @@
+ CPPSRCS +=	gfxPDFSurface.cpp
+ EXTRA_DSO_LDOPTS += $(MOZ_CAIRO_LIBS)
+ REQUIRES += uconv
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+ CPPSRCS +=      gfxXlibSurface.cpp gfxPlatformGtk.cpp gfxXlibNativeRenderer.cpp
+ CPPSRCS +=	gfxPangoFonts.cpp 
+-CPPSRCS +=	gfxPDFSurface.cpp gfxPSSurface.cpp
++ifdef MOZ_ENABLE_CAIRO_PDF
++CPPSRCS +=	gfxPDFSurface.cpp
++endif
++ifdef MOZ_ENABLE_CAIRO_PS
++CPPSRCS +=	gfxPSSurface.cpp
++endif
+ CPPSRCS +=	gfxFontconfigUtils.cpp
+ CPPSRCS +=	nsUnicodeRange.cpp
+ CSRCS = cairo-xlib-utils.c
+ EXTRA_DSO_LDOPTS += $(MOZ_PANGO_LIBS) $(ZLIB_LIBS) $(MOZ_XFT_LIBS) $(XLDFLAGS) $(XLIBS)
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),beos)
+ CPPSRCS	+= 	gfxBeOSSurface.cpp gfxBeOSPlatform.cpp
+Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWidgetFactory.cpp
++++ mozilla/widget/src/gtk2/nsWidgetFactory.cpp
+@@ -245,16 +245,17 @@
+     "@mozilla.org/gfx/screenmanager;1",
+     nsScreenManagerGtkConstructor },
+ #ifdef NATIVE_THEME_SUPPORT
+    { "Native Theme Renderer",
+     NS_THEMERENDERER_CID,
+     "@mozilla.org/chrome/chrome-native-theme;1",
+      nsNativeThemeGTKConstructor },
+ #endif
++#ifdef USE_POSTSCRIPT
+   { "PrintSettings Service",
+     NS_PRINTSETTINGSSERVICE_CID,
+     "@mozilla.org/gfx/printsettings-service;1",
+     nsPrintOptionsGTKConstructor },
+   { "Gtk Printer Enumerator",
+     NS_PRINTER_ENUMERATOR_CID,
+     //    "@mozilla.org/gfx/printer_enumerator/gtk;1",
+     "@mozilla.org/gfx/printerenumerator;1",
+@@ -263,16 +264,17 @@
+     NS_PRINTSESSION_CID,
+     "@mozilla.org/gfx/printsession;1",
+     nsPrintSessionConstructor },
+   { "Gtk Device Context Spec",
+     NS_DEVICE_CONTEXT_SPEC_CID,
+     //    "@mozilla.org/gfx/device_context_spec/gtk;1",
+     "@mozilla.org/gfx/devicecontextspec;1",
+     nsDeviceContextSpecGTKConstructor },
++#endif
+   { "Image to gdk-pixbuf converter",
+     NS_IMAGE_TO_PIXBUF_CID,
+     "@mozilla.org/widget/image-to-gdk-pixbuf;1",
+     nsImageToPixbufConstructor },
+   { "User Idle Service",
+     NS_IDLE_SERVICE_CID,
+     "@mozilla.org/widget/idleservice;1",
+     nsIdleServiceGTKConstructor },

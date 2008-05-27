@@ -1,0 +1,98 @@
+# Some times after using fudge function width and height gets negative value 
+# Workaround? (may be not)
+#
+diff -ruN -p -U10 mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2007-07-14 17:01:17.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2007-07-15 12:29:43.000000000 +0300
+@@ -30,20 +30,22 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsSpatialNavigationPrivate.h"
+ #include "nsGUIEvent.h"
+ 
++//#define DEBUG_romaxa 1
++
+ PRInt32 gRectFudge = 20;
+ PRInt32 gDirectionalBias = 1;
+ 
+ NS_INTERFACE_MAP_BEGIN(nsSpatialNavigation)
+   NS_INTERFACE_MAP_ENTRY(nsISpatialNavigation)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMKeyListener)
+   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIDOMEventListener, nsIDOMKeyListener)
+ NS_INTERFACE_MAP_END
+ 
+ NS_IMPL_ADDREF(nsSpatialNavigation)
+@@ -552,20 +554,31 @@ void DoTraversal(int aDirection,
+     {
+ #ifdef DEBUG_dougt
+       if (d == 0)
+       {
+         printf("there is overlapping content;\n");
+       }
+ #endif
+       (*aDSoFar) = d;
+       NS_IF_RELEASE(*aCurrentContent);
+       NS_ADDREF(*aCurrentContent = content);
++#ifdef DEBUG_romaxa
++      nsCOMPtr<nsIDOMNode> node = do_QueryInterface(content);
++      nsString str;
++      if (node)
++        node->GetNodeName(str);
++      printf("N:'%s', fr[%i,%i,%i,%i],tr[%i,%i,%i,%i],d:%i\n",
++             NS_ConvertUTF16toUTF8(str).get(),
++             aFocusedRect.x,aFocusedRect.y,aFocusedRect.width,aFocusedRect.height,
++             frameRect.x,frameRect.y,frameRect.width,frameRect.height,
++             (PRInt32)d);
++#endif
+     }
+   }
+   while(1);
+ }
+ 
+ inline void centerRect(int aDirection, nsRect& aRect)
+ {
+   if (aDirection == eNavLeft)
+     aRect.x = 1000000;
+   else if (aDirection == eNavRight)
+diff -ruN -p -U10 mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
+--- mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2007-07-14 16:17:30.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2007-07-15 12:28:44.000000000 +0300
+@@ -527,31 +527,31 @@ void getRectOfAreaElement(nsIFrame* f, n
+ 
+ PRBool isRectInDirection(int direction, nsRect& focusedRect, nsRect& frameRect)
+ {
+   if (direction == eNavLeft)
+   {
+     return (frameRect.x < focusedRect.x);
+   }
+   
+   if (direction == eNavRight)
+   {
+-    return (frameRect.x + frameRect.width > focusedRect.x + focusedRect.width);
++    return (frameRect.x + abs(frameRect.width) > focusedRect.x + abs(focusedRect.width));
+   }
+   
+   if (direction == eNavUp)
+   {
+     return (frameRect.y < focusedRect.y);
+   }
+   
+   if (direction == eNavDown)
+   {
+-    return (frameRect.y + frameRect.height > focusedRect.y + focusedRect.height);
++    return (frameRect.y + abs(frameRect.height) > focusedRect.y + abs(focusedRect.height));
+   }
+   return PR_FALSE;
+ }
+ 
+ PRInt64 spatialDistance(int direction, nsRect& a, nsRect& b)
+ {
+   PRBool inlineNavigation = PR_FALSE;
+   nsPoint m, n;
+   
+   if (direction == eNavLeft)

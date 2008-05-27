@@ -1,0 +1,338 @@
+--- mozilla/embedding/browser/gtk/src/EmbedPrompter.cpp.orig	2007-12-19 18:44:16.000000000 +0200
++++ mozilla/embedding/browser/gtk/src/EmbedPrompter.cpp	2007-12-19 18:04:54.000000000 +0200
+@@ -33,17 +33,16 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "EmbedPrompter.h"
+-#include "nsReadableUtils.h"
+ 
+ #include <gtk/gtkversion.h>
+ 
+ #if GTK_CHECK_VERSION(2,3,1)
+ #define USE_GTK_COMBOBOX
+ #endif
+ 
+ enum {
+@@ -224,23 +223,23 @@ EmbedPrompter::Create(PromptType aType, 
+ 
+     // Add a dropdown menu
+     if (aType == TYPE_SELECT) {
+ #ifdef USE_GTK_COMBOBOX
+     // Build up a GtkComboBox containing the items
+     mOptionMenu = gtk_combo_box_new_text ();
+ 
+     for (PRUint32 i = 0; i < mItemCount; ++i) {
+-      gtk_combo_box_append_text(GTK_COMBO_BOX(mOptionMenu), mItemList[i].get());
++      gtk_combo_box_append_text(GTK_COMBO_BOX(mOptionMenu), (gchar*)g_list_nth_data(mItemList, i));
+     }
+ #else
+         // Build up a GtkMenu containing the items
+         GtkWidget* menu = gtk_menu_new();
+         for (PRUint32 i = 0; i < mItemCount; ++i) {
+-            GtkWidget* item = gtk_menu_item_new_with_label(mItemList[i].get());
++            GtkWidget* item = gtk_menu_item_new_with_label((gchar*)g_list_nth_data(mItemList, i));
+             gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+         }
+ 
+         // Now create an OptionMenu and set this as the menu
+         mOptionMenu = gtk_option_menu_new();
+ 
+         gtk_option_menu_set_menu(GTK_OPTION_MENU(mOptionMenu), menu);
+ #endif /* USE_GTK_COMBOBOX */
+@@ -271,107 +270,102 @@ EmbedPrompter::Create(PromptType aType, 
+     gtk_box_pack_start(GTK_BOX(dialogHBox), contentsVBox, FALSE, FALSE, 0);
+     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mWindow)->vbox), dialogHBox, FALSE,
+                        FALSE, 0);
+ 
+     return NS_OK;
+ }
+ 
+ void
+-EmbedPrompter::SetTitle(const PRUnichar *aTitle)
++EmbedPrompter::SetTitle(const gchar *aTitle)
+ {
+-    CopyUTF16toUTF8(aTitle, mTitle);
++    mTitle.Assign(aTitle);
+ }
+ 
+ void
+-EmbedPrompter::SetTextValue(const PRUnichar *aTextValue)
++EmbedPrompter::SetTextValue(const gchar *aTextValue)
+ {
+-    CopyUTF16toUTF8(aTextValue, mTextValue);
++    mTextValue.Assign(aTextValue);
+ }
+ 
+ void
+-EmbedPrompter::SetCheckMessage(const PRUnichar *aMessage)
++EmbedPrompter::SetCheckMessage(const gchar *aMessage)
+ {
+-    CopyUTF16toUTF8(aMessage, mCheckMessage);
++    mCheckMessage.Assign(aMessage);
+ }
+ 
+ void
+-EmbedPrompter::SetMessageText(const PRUnichar *aMessageText)
++EmbedPrompter::SetMessageText(const gchar *aMessageText)
+ {
+-    CopyUTF16toUTF8(aMessageText, mMessageText);
++    mMessageText.Assign(aMessageText);
+ }
+ 
+ void
+-EmbedPrompter::SetUser(const PRUnichar *aUser)
++EmbedPrompter::SetUser(const gchar *aUser)
+ {
+-    CopyUTF16toUTF8(aUser, mUser);
++    mUser.Assign(aUser);
+ }
+ 
+ void
+-EmbedPrompter::SetPassword(const PRUnichar *aPass)
++EmbedPrompter::SetPassword(const gchar *aPass)
+ {
+-    CopyUTF16toUTF8(aPass, mPass);
++    mPass.Assign(aPass);
+ }
+ 
+ void
+-EmbedPrompter::SetCheckValue(const PRBool aValue)
++EmbedPrompter::SetCheckValue(const gboolean aValue)
+ {
+     mCheckValue = aValue;
+ }
+ 
+ void
+-EmbedPrompter::SetItems(const PRUnichar** aItemArray, PRUint32 aCount)
++EmbedPrompter::SetItems(const GList* list)
+ {
+-    if (mItemList)
+-        delete[] mItemList;
+-
+-    mItemCount = aCount;
+-    mItemList = new nsCString[aCount];
+-    for (PRUint32 i = 0; i < aCount; ++i)
+-        CopyUTF16toUTF8(aItemArray[i], mItemList[i]);
++    mItemList = (GList*)list;
++    mItemCount = g_list_length(mItemList);
+ }
+ 
+ void
+-EmbedPrompter::SetButtons(const PRUnichar* aButton0Label,
+-                          const PRUnichar* aButton1Label,
+-                          const PRUnichar* aButton2Label)
++EmbedPrompter::SetButtons(const gchar* aButton0Label,
++                          const gchar* aButton1Label,
++                          const gchar* aButton2Label)
+ {
+-    CopyUTF16toUTF8(aButton0Label, mButtonLabels[0]);
+-    CopyUTF16toUTF8(aButton1Label, mButtonLabels[1]);
+-    CopyUTF16toUTF8(aButton2Label, mButtonLabels[2]);
++    mButtonLabels[0].Assign(aButton0Label);
++    mButtonLabels[1].Assign(aButton1Label);
++    mButtonLabels[2].Assign(aButton2Label);
+ }
+ 
+ void
+-EmbedPrompter::GetCheckValue(PRBool *aValue)
++EmbedPrompter::GetCheckValue(gboolean *aValue)
+ {
+     *aValue = mCheckValue;
+ }
+ 
+ void
+-EmbedPrompter::GetConfirmValue(PRBool *aConfirmValue)
++EmbedPrompter::GetConfirmValue(gboolean *aConfirmValue)
+ {
+     *aConfirmValue = mConfirmResult;
+ }
+  
+ void
+-EmbedPrompter::GetTextValue(PRUnichar **aTextValue)
++EmbedPrompter::GetTextValue(gchar **aTextValue)
+ {
+-    *aTextValue = UTF8ToNewUnicode(mTextValue);
++    *aTextValue = g_strdup(mTextValue.get());
+ }
+ 
+ void
+-EmbedPrompter::GetUser(PRUnichar **aUser)
++EmbedPrompter::GetUser(gchar **aUser)
+ {
+-    *aUser = UTF8ToNewUnicode(mUser);
++    *aUser = g_strdup(mUser.get());
+ }
+ 
+ void
+-EmbedPrompter::GetPassword(PRUnichar **aPass)
++EmbedPrompter::GetPassword(gchar **aPass)
+ {
+-    *aPass = UTF8ToNewUnicode(mPass);
++    *aPass = g_strdup(mPass.get());
+ }
+ 
+ void
+ EmbedPrompter::GetSelectedItem(PRInt32 *aIndex)
+ {
+     *aIndex = mSelectedItem;
+ }
+ 
+@@ -421,8 +415,45 @@ EmbedPrompter::SaveDialogValues()
+ 
+     if (mOptionMenu)
+ #ifdef USE_GTK_COMBOBOX
+         mSelectedItem = gtk_combo_box_get_active(GTK_COMBO_BOX(mOptionMenu));
+ #else
+         mSelectedItem = gtk_option_menu_get_history(GTK_OPTION_MENU(mOptionMenu));
+ #endif /* USE_GTK_COMBOBOX */
+ }
++
++void
++EmbedPrompter::GetButtonLabel(PRUint32 aFlags, PRUint32 aPos,
++                              const gchar* aStringValue, nsACString & aLabel)
++{
++    PRUint32 posFlag = (aFlags & (255 * aPos)) / aPos;
++    switch (posFlag) {
++    case 0:
++        break;
++    case GTK_MOZ_EMBED_BUTTON_TITLE_OK:
++        aLabel.Assign(GTK_STOCK_OK);
++        break;
++    case GTK_MOZ_EMBED_BUTTON_TITLE_CANCEL:
++        aLabel.Assign(GTK_STOCK_CANCEL);
++        break;
++    case GTK_MOZ_EMBED_BUTTON_TITLE_YES:
++        aLabel.Assign(GTK_STOCK_YES);
++        break;
++    case GTK_MOZ_EMBED_BUTTON_TITLE_NO:
++        aLabel.Assign(GTK_STOCK_NO);
++        break;
++    case GTK_MOZ_EMBED_BUTTON_TITLE_SAVE:
++        aLabel.Assign(GTK_STOCK_SAVE);
++        break;
++    case GTK_MOZ_EMBED_BUTTON_TITLE_DONT_SAVE:
++        aLabel.Assign("Don't Save");
++        break;
++    case GTK_MOZ_EMBED_BUTTON_TITLE_REVERT:
++        aLabel.Assign("Revert");
++        break;
++    case GTK_MOZ_EMBED_BUTTON_TITLE_IS_STRING:
++        aLabel.Assign(aStringValue);
++        break;
++    default:
++        NS_WARNING("Unexpected button flags");
++    }
++}
+--- mozilla/embedding/browser/gtk/src/EmbedPrompter.h.orig	2007-12-19 18:44:16.000000000 +0200
++++ mozilla/embedding/browser/gtk/src/EmbedPrompter.h	2007-12-19 18:04:32.000000000 +0200
+@@ -33,17 +33,20 @@
+  * use your version of this file under the terms of the MPL, indicate your
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+-#include "nsString.h"
++#ifndef __EmbedPrompter_h
++#define __EmbedPrompter_h
++
++#include "nsStringGlue.h"
+ #include <gtk/gtk.h>
+ 
+ #define EMBED_MAX_BUTTONS 3
+ 
+ class EmbedPrompter {
+ 
+ public:
+ 
+@@ -58,56 +61,63 @@ public:
+         TYPE_PROMPT,
+         TYPE_PROMPT_USER_PASS,
+         TYPE_PROMPT_PASS,
+         TYPE_SELECT,
+         TYPE_UNIVERSAL
+     };
+ 
+     nsresult Create(PromptType aType, GtkWindow* aParentWindow);
+-    void     SetTitle(const PRUnichar *aTitle);
+-    void     SetTextValue (const PRUnichar *aTextValue);
+-    void     SetCheckMessage(const PRUnichar *aCheckMessage);
+-    void     SetCheckValue(const PRBool aValue);
+-    void     SetMessageText(const PRUnichar *aMessageText);
+-    void     SetUser(const PRUnichar *aUser);
+-    void     SetPassword(const PRUnichar *aPass);
+-    void     SetButtons(const PRUnichar* aButton0Label,
+-                        const PRUnichar* aButton1Label,
+-                        const PRUnichar* aButton2Label);
+-    void     SetItems(const PRUnichar **aItemArray, PRUint32 aCount);
+-
+-    void     GetCheckValue(PRBool *aValue);
+-    void     GetConfirmValue(PRBool *aConfirmValue);
+-    void     GetTextValue(PRUnichar **aTextValue);
+-    void     GetUser(PRUnichar **aUser);
+-    void     GetPassword(PRUnichar **aPass);
++    void     SetTitle(const gchar *aTitle);
++    void     SetTextValue (const gchar *aTextValue);
++    void     SetCheckMessage(const gchar *aCheckMessage);
++    void     SetCheckValue(const gboolean aValue);
++    void     SetMessageText(const gchar *aMessageText);
++    void     SetUser(const gchar *aUser);
++    void     SetPassword(const gchar *aPass);
++    void     SetButtons(const gchar* aButton0Label,
++                        const gchar* aButton1Label,
++                        const gchar* aButton2Label);
++    void     SetItems(const GList* list);
++
++    void     GetCheckValue(gboolean *aValue);
++    void     GetConfirmValue(gboolean *aConfirmValue);
++    void     GetTextValue(gchar **aTextValue);
++    void     GetUser(gchar **aUser);
++    void     GetPassword(gchar **aPass);
+     void     GetButtonPressed(PRInt32 *aButton);
+     void     GetSelectedItem(PRInt32 *aIndex);
++    void     GetButtonLabel(PRUint32 aFlags, PRUint32 aPos,
++                            const gchar * aStringValue,
++                            nsACString & aLabel);
++
+ 
+     void     Run(void);
+ 
+ private:
+ 
+     void     SaveDialogValues();
+ 
+     nsCString    mTitle;
+     nsCString    mMessageText;
+     nsCString    mTextValue;
+     nsCString    mCheckMessage;
+-    PRBool       mCheckValue;
++    gboolean     mCheckValue;
+     nsCString    mUser;
+     nsCString    mPass;
+     nsCString    mButtonLabels[EMBED_MAX_BUTTONS];
+-    nsCString   *mItemList;
++    GList       *mItemList;
+     PRUint32     mItemCount;
+ 
+     PRInt32      mButtonPressed;
+-    PRBool       mConfirmResult;
++    gboolean     mConfirmResult;
+     PRInt32      mSelectedItem;
+ 
+     GtkWidget   *mWindow;
+     GtkWidget   *mUserField;
+     GtkWidget   *mPassField;
+     GtkWidget   *mTextField;
+     GtkWidget   *mOptionMenu;
+     GtkWidget   *mCheckBox;
+ };
++
++
++#endif

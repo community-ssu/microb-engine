@@ -1,0 +1,107 @@
+# Engine part for enabling saving/downloading on different protocols gnomevfs/smb...
+Index: EmbedDownloadMgr.cpp
+===================================================================
+RCS file: /opt/tinderbox/rsync/cvs.mozilla.org/mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.cpp,v
+retrieving revision 1.5
+diff -p -u -8 -r1.5 EmbedDownloadMgr.cpp
+--- mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.cpp	23 Mar 2007 15:56:57 -0000	1.5
++++ mozilla/embedding/browser/gtk/src/EmbedDownloadMgr.cpp	30 Mar 2007 02:35:38 -0000
+@@ -44,17 +44,16 @@
+ #ifdef MOZILLA_INTERNAL_API
+ #include "nsXPIDLString.h"
+ #else
+ #include "nsComponentManagerUtils.h"
+ #endif
+ #include "nsIChannel.h"
+ #include "nsIWebProgress.h"
+ #include "nsIDOMWindow.h"
+-#include "nsIURI.h"
+ #include "nsCRT.h"
+ #include "nsIPromptService.h"
+ #include "nsIWebProgressListener2.h"
+ #include "nsCOMPtr.h"
+ #include "nsIServiceManager.h"
+ #include "nsIInterfaceRequestorUtils.h"
+ #include "nsIURI.h"
+ #include "nsIURL.h"
+@@ -235,16 +234,49 @@ NS_IMETHODIMP EmbedDownloadMgr::PromptFo
+   nsresult rv = aLauncher->SetWebProgressListener(listener);
+   if (NS_FAILED(rv))
+     return NS_ERROR_FAILURE;
+ 
+   NS_ADDREF(*_retval = destFile);
+   return NS_OK;
+ }
+ 
++#ifdef OUTPUT_HANDLER_IMPL
++NS_IMETHODIMP EmbedDownloadMgr::PromptForSaveToUri(nsIHelperAppLauncher *aLauncher,
++                                                   nsISupports *aWindowContext,
++                                                   const PRUnichar *aDefaultFile,
++                                                   const PRUnichar *aSuggestedFileExtension,
++                                                   nsIURI **_retval)
++{
++  nsresult rv;
++
++  nsCAutoString file_path;
++  file_path.Assign (mDownload->file_name_with_path);
++  nsCOMPtr<nsIIOService> ios (do_GetService(NS_IOSERVICE_CONTRACTID));
++  if (!ios)
++    return FALSE;
++
++  nsCOMPtr<nsIURI> uri;
++  rv = ios->NewURI(file_path, "", nsnull, getter_AddRefs(uri));
++  if (!uri)
++    return FALSE;
++
++  NS_ADDREF (*_retval = uri);
++
++  /* Progress listener to follow the download and connecting it to
++     the launcher which controls the download. */
++  nsCOMPtr<nsIWebProgressListener2> listener = new ProgressListener(mDownload);
++  rv = aLauncher->SetWebProgressListener (listener);
++  if (NS_FAILED (rv))
++    return NS_ERROR_FAILURE;
++
++  return NS_OK;
++}
++#endif
++
+ /* nsIWebProgressListener Functions
+    all these methods must be here due to nsIWebProgressListener/2 inheritance */
+ NS_IMETHODIMP ProgressListener::OnStatusChange(nsIWebProgress *aWebProgress,
+                                                nsIRequest *aRequest,
+                                                nsresult aStatus,
+                                                const PRUnichar *aMessage)
+ {
+   if (NS_SUCCEEDED(aStatus))
+Index: Makefile.in
+===================================================================
+RCS file: /opt/tinderbox/rsync/cvs.mozilla.org/mozilla/embedding/browser/gtk/src/Makefile.in,v
+retrieving revision 1.72
+diff -p -u -8 -r1.72 Makefile.in
+--- mozilla/embedding/browser/gtk/src/Makefile.in	23 Mar 2007 15:56:57 -0000	1.72
++++ mozilla/embedding/browser/gtk/src/Makefile.in	30 Mar 2007 02:37:58 -0000
+@@ -48,20 +48,21 @@ LIBRARY_NAME    = gtkembedmoz
+ LIBXUL_LIBRARY  = 1
+ FORCE_STATIC_LIB = 1
+ 
+ LOCAL_INCLUDES += \
+                   -I. \
+                   $(NULL)
+ 
+ #Temporary define for full migration from libxul
+-#MOZ_GTKEMBED_DYN = 1
++MOZ_GTKEMBED_DYN = 1
++DEFINES += -DOUTPUT_HANDLER_IMPL
+ 
+ ifdef MOZ_GTKEMBED_DYN
+-#DEFINES += -DFIXED_BUG347731
++DEFINES += -DFIXED_BUG347731
+ FORCE_SHARED_LIB = 1
+ ifdef MOZ_ENABLE_LIBXUL
+ LIBXUL_LIBRARY  = 
+ endif
+ endif
+ 
+ DEFINES += -DIMPL_XREAPI
+ 

@@ -1,0 +1,26 @@
+# increasing size of UA string
+--- mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp.orig	2007-06-14 01:42:08.000000000 +0300
++++ mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp	2007-06-27 00:26:05.000000000 +0300
+@@ -2756,21 +2756,21 @@ nsresult nsPluginHostImpl::ReloadPlugins
+       NS_DispatchToCurrentThread(ev);
+   }
+ 
+   PLUGIN_LOG(PLUGIN_LOG_NORMAL,
+   ("nsPluginHostImpl::ReloadPlugins End active_instance_count=%d\n",
+   mActivePluginList.mCount));
+ 
+   return rv;
+ }
+ 
+-#define NS_RETURN_UASTRING_SIZE 128
++#define NS_RETURN_UASTRING_SIZE 256
+ 
+ 
+ ////////////////////////////////////////////////////////////////////////
+ nsresult nsPluginHostImpl::UserAgent(const char **retstring)
+ {
+   static char resultString[NS_RETURN_UASTRING_SIZE];
+   nsresult res;
+ 
+   nsCOMPtr<nsIHttpProtocolHandler> http = do_GetService(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX "http", &res);
+   if (NS_FAILED(res))

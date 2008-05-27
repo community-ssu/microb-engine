@@ -1,0 +1,51 @@
+# BMO 376279. Wrong detection of OS_TEST in CROSS_COMPILE configuration. Patch imported from the bug.
+--- mozilla/security/manager/Makefile.in.orig	2007-01-06 16:27:21.000000000 +0200
++++ mozilla/security/manager/Makefile.in	2007-04-02 22:24:46.231700500 +0300
+@@ -202,20 +202,21 @@ DEFAULT_GMAKE_FLAGS += \
+ 	NATIVE_CC="$(HOST_CC)" \
+ 	CC="$(CC)" \
+ 	CCC="$(CXX)" \
+ 	LINK="$(LD)" \
+ 	AS="$(AS)" \
+ 	AR='$(AR) $(AR_FLAGS:$@=$$@)' \
+ 	RANLIB="$(RANLIB)" \
+ 	RC="$(RC) $(RCFLAGS)" \
+ 	OS_ARCH="$(OS_ARCH)" \
+ 	CPU_ARCH="$(TARGET_CPU)" \
++	OS_TEST="$(TARGET_CPU)" \
+ 	$(NULL)
+ SKIP_CHK=1
+ endif
+ SUBMAKEFILES = boot/Makefile ssl/Makefile pki/Makefile locales/Makefile
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+ # Attempt to properly handle NSS' refusal to implement a dependency system
+ export:: .nss.cleaned
+ 
+--- mozilla/security/coreconf/arch.mk.orig	2005-07-07 19:50:47.000000000 +0300
++++ mozilla/security/coreconf/arch.mk	2007-04-02 22:28:18.660976500 +0300
+@@ -59,21 +59,23 @@ ifeq ($(USE_64), 1)
+ else
+ 	64BIT_TAG=
+ endif
+ 
+ OS_ARCH := $(subst /,_,$(shell uname -s))
+ 
+ #
+ # Attempt to differentiate between sparc and x86 Solaris
+ #
+ 
++ifndef OS_TEST
+ OS_TEST := $(shell uname -m)
++endif
+ ifeq ($(OS_TEST),i86pc)
+     OS_RELEASE := $(shell uname -r)_$(OS_TEST)
+ else
+     OS_RELEASE := $(shell uname -r)
+ endif
+ 
+ #
+ # Force the IRIX64 machines to use IRIX.
+ #
+ 

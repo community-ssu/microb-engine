@@ -1,0 +1,956 @@
+microb-engine (20080520-38) unstable; urgency=low
+
+  * Return back wchar check disable hack.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 27 May 2008 16:39:07 +0300
+
+microb-engine (20080520-37) unstable; urgency=low
+
+  * Changed XCS-Cross-Build-Depends to XS-Cross-Build-Depends in
+    debian control file
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 27 May 2008 16:21:25 +0300
+
+microb-engine (20080520-36) unstable; urgency=low
+
+  * Fixed toolbar css style for fennec browser 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 27 May 2008 10:42:27 +0300
+
+microb-engine (20080520-35) unstable; urgency=low
+
+  * Fixed gfx API visibility to visible
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 27 May 2008 08:28:13 +0300
+
+microb-engine (20080520-34) unstable; urgency=low
+
+  * Fixes required for running fennec browser 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 19:36:57 +0300
+
+microb-engine (20080520-33) unstable; urgency=low
+
+  * Add missing xml bindings for XUL elements 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 19:26:47 +0300
+
+microb-engine (20080520-32) unstable; urgency=low
+
+  * Add important js components 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 19:22:46 +0300
+
+microb-engine (20080520-31) unstable; urgency=low
+
+  * Fixed prompt stuff for TestMozEmbed widget 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 18:33:32 +0300
+
+microb-engine (20080520-30) unstable; urgency=low
+
+  * Fixed Gecko useragent string 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Mon, 26 May 2008 16:37:26 +0300
+
+microb-engine (20080520-29) unstable; urgency=low
+
+  * Fixed radio/check buttons for hildon theeming 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Mon, 26 May 2008 16:09:12 +0300
+
+microb-engine (20080520-28) unstable; urgency=low
+
+  * Encode binary tarball 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 15:24:56 +0300
+
+microb-engine (20080520-27) unstable; urgency=low
+
+  * Add Launcher for TestMozEmbed application 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 15:04:47 +0300
+
+microb-engine (20080520-26) unstable; urgency=low
+
+  * Disable dyngstring and fixed nojemalloc option 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 10:57:53 +0300
+
+microb-engine (20080520-25) unstable; urgency=low
+
+  * Add source tree for building xulrunner applications 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 10:40:25 +0300
+
+microb-engine (20080520-24) unstable; urgency=low
+
+  * Fixed chrome/resources packaging
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 10:27:48 +0300
+
+microb-engine (20080520-23) unstable; urgency=low
+
+  * Add nojemalloc deb build option
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 09:42:01 +0300
+
+microb-engine (20080520-22) unstable; urgency=low
+
+  * Add bugfix for using non-tanslucent canvas bug 430906 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 24 May 2008 10:05:28 +0300
+
+microb-engine (20080520-21) unstable; urgency=low
+
+  * Fixed scrollbars theeming  
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 23 May 2008 17:30:50 +0300
+
+microb-engine (20080520-20) unstable; urgency=low
+
+  * Enabled xpfe browser instance interface for touch browser  
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 22 May 2008 17:38:38 +0300
+
+microb-engine (20080520-19) unstable; urgency=low
+
+  * Enable jemalloc back 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 22 May 2008 14:40:43 +0300
+
+microb-engine (20080520-18) unstable; urgency=low
+
+  * Enable toolkit components 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 22 May 2008 10:19:51 +0300
+
+microb-engine (20080520-17) unstable; urgency=low
+
+  * Fixed lintian strict dependency problem 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 21 May 2008 19:22:07 +0300
+
+microb-engine (20080520-16) unstable; urgency=low
+
+  * Fixed microb-full installation 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 21 May 2008 18:57:15 +0300
+
+microb-engine (20080520-15) unstable; urgency=low
+
+  * Fixed lintian errors for microb-full package 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 21 May 2008 13:37:44 +0300
+
+microb-engine (20080520-14) unstable; urgency=low
+
+  * Fixed find usage 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 21 May 2008 09:48:17 +0300
+
+microb-engine (20080520-13) unstable; urgency=low
+
+  * Fixed lintian errors
+  * Added new package which contain common resources
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 21 May 2008 09:16:21 +0300
+
+microb-engine (20080520-12) unstable; urgency=low
+
+  * Fixed conflict of microb-full and microb-*
+  * Fixed microb-xulrunner dependency
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 22:16:40 +0300
+
+microb-engine (20080520-11) unstable; urgency=low
+
+  * Fixed canvas support for microb-engine (fixed panning on mobile fennec browser) 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 22:12:53 +0300
+
+microb-engine (20080520-10) unstable; urgency=low
+
+  * Enabled mozilla download manager
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 21:30:30 +0300
+
+microb-engine (20080520-9) unstable; urgency=low
+
+  * Fixed running Fennec browser on microb-engine 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 21:28:02 +0300
+
+microb-engine (20080520-8) unstable; urgency=low
+
+  * Fixed rpath problem 
+  * Fixes: 78311 fixing problems for microb-engine compilation using gcc	4.2
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 20 May 2008 21:01:09 +0300
+
+microb-engine (20080520-7) unstable; urgency=low
+
+  * Fixed object destruction order error
+  * Disabled short-wchar flag
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 20 May 2008 19:58:05 +0300
+
+microb-engine (20080520-6) unstable; urgency=low
+
+  * Add system sqlite dependency 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 19:14:23 +0300
+
+microb-engine (20080520-5) unstable; urgency=low
+
+  * Fixed patch apply 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 18:58:24 +0300
+
+microb-engine (20080520-4) unstable; urgency=low
+
+  * Fixed adding binary updates 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 18:04:20 +0300
+
+microb-engine (20080520-3) unstable; urgency=low
+
+  * Fixed embedding tests for refui 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 17:42:25 +0300
+
+microb-engine (20080520-2) unstable; urgency=low
+
+  * Fixed AutoConfig building in basic configuration 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 16:58:31 +0300
+
+microb-engine (20080520-1) unstable; urgency=low
+
+  * Updated to trunk 20080520
+  * Migrate original tarball to mercurial repository
+  * fixed rules dependency
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 15:18:09 +0300
+
+microb-engine (20080416-1) unstable; urgency=low
+
+  * updated to trunk 20080416
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 16 Apr 2008 23:24:26 +0300
+
+microb-engine (20080410-2) unstable; urgency=low
+
+  * Updated to trunk 20080410
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 10 Apr 2008 15:14:05 +0300
+
+microb-engine (20080329-1) unstable; urgency=low
+
+  * Updated to trunk
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 29 Mar 2008 09:50:08 +0200
+
+microb-engine (20080304-3) unstable; urgency=low
+
+  * Updated to trunk 20080319 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 19 Mar 2008 10:20:01 +0200
+
+microb-engine (20080304-2) unstable; urgency=low
+
+  * Fixed setlowmem compat
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 07 Mar 2008 02:43:19 +0200
+
+microb-engine (20080304-1) unstable; urgency=low
+
+  * Updated to trunk 20080304
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 06 Mar 2008 11:53:43 +0200
+
+microb-engine (20080222-2) unstable; urgency=low
+
+  * Added patch from pref bug 324161 - Optimize parseInt for Number
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 23 Feb 2008 09:00:29 +0200
+
+microb-engine (20080222-1) unstable; urgency=low
+
+  * Updated to trunk 20080222
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 22 Feb 2008 20:21:25 +0200
+
+microb-engine (20080116-1) unstable; urgency=low
+
+  * Updated to trunk 20071227
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 27 Dec 2007 09:55:31 +0200
+
+microb-engine (20071107-2) unstable; urgency=low
+
+  * Updated to trunk 20071120
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 Nov 2007 19:49:34 +0200
+
+microb-engine (20071107-1) unstable; urgency=low
+
+  * Updated to trunk 20071107
+
+ -- Oleg Romashin <romaxa@gmail.com>  Wed,  7 Nov 2007 13:57:18 +0200
+
+microb-engine (20071101-1) unstable; urgency=low
+
+  * Updated configs and patches
+  * Updated to trunk 20071101
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 01 Nov 2007 08:45:01 +0200
+
+microb-engine (20071026-1) unstable; urgency=low
+
+  * Updated main patchset
+  * Updated to trunk 20071026
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 27 Oct 2007 12:52:22 +0300
+
+microb-engine (20071023-2) unstable; urgency=low
+
+  * Updated main patchset
+  * Created minimal configuration for Trunk Mozilla
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 26 Oct 2007 19:20:24 +0300
+
+microb-engine (20071023-1) unstable; urgency=low
+
+  * Updated to trunk 20071023
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 23 Oct 2007 13:43:21 +0300
+
+microb-engine (20071011-1) unstable; urgency=low
+ 
+  * Increased main version number, for stable release
+  * 
+  * Fixed getting of proper tarball if it not exists
+  * Added patch from bug 339782, Need to be checked and tested in default build
+  * Disabled layout.full.true.zoom.mode
+  * Fixed XML parsing error
+  * Added localization updates
+  * Changed how to create the dictionary link when the microb-spellcheck is installed, allowing it to be installed in scratchbox.
+  * Functionalities added: Ignore misspelled word. Ignore trailing non-alphanumeric characteres. Ignore words that contains numbers.
+  * Added MotionEventsRequested type
+  * Temporary disabled JS_THREADED_INTERP for ARM environment
+  * Fixed possible crash
+  * Disabled X/Y THICKNESS for dropdown paint arrow
+  * Enabled back TiledBG scaling patch (need to be tested)
+  * Fixed gtkmozembed dependencies
+  * Fixed docomand typo bug
+  * Fixed building with command manager
+  * Added SELECT functionality
+  * Updated GTK mozembed patch according latest changes in libgtkmozembed package
+  * Added GtkMozEmbed package from engine building
+  * Update 701_FixForTiledBGScaling.diff
+  * Added mini config with disabled almost everething what possible to disable
+  * Some fixes for building and working in mini configuration
+  * Added very minimal configuration of microb engine 
+  * Added experimental patch for gmail initial loading performance.
+  * Fixed bug  71445 zooming to 120% is very slow and after zooming pannings barely works
+  * Update 701_FixForTiledBGScaling patch, faster bg tile for alpha 8 images
+  * Reverted back to old version for JS handler event info
+  * Make JS Break patch more simple, because window->setenabled is not implemented
+
+ -- Oleg Romashin <romaxa@gmail.com>  Wed, 10 Oct 2007 18:12:18 +0300
+
+microb-engine (1.0.3-24) unstable; urgency=low
+
+  * Updated for building with trunk engine. 
+    Version 2007-09-29
+    Bonsai Date: 2007-09-28 23:12
+  * Adding patch for ftv improvements. Fixes: NB#71266
+  * Enabled back JS suspending while Native events handling<F2>
+  * Minor fix for select element handling
+  * Fixed bug:[SNAV] Select element looses focus while spatial navigation.
+    Fixes: NB#71068
+  * Disabled activation offscreen element
+  * Enabled variables initialize for js_LookupPropertyWithFlags crash
+  * Fixed bug:Zoom level not preserved for next page. Fixes: NB#70843
+  * Fixed Bug 381074 Hang with display: table-caption, large padding and left
+    float inside it
+  * Fixed mType initialization for both constructors
+  * Fixed glib criticals on create backbuffer
+  * Fixed bug:Graphics error when switching to full screen - TRUE. 
+    Fixes: NB#69433
+  * Fixed disabled state for buttons widgets
+  * Fixed bug:Dropmenu widget looks bad. Fixes: NB#70572
+  * Added NULL check for some random crash
+  * Fixed bug: Browser crash on opening page after invoking WLAN connection
+    through browser. Fixes: NB#70633
+  * Fixed bug:Internet keywords feature does not call "Google.. Lucky". 
+    Fixes: NB#70218
+  * Fixed bug:Valgrind reported unconditional jumps in Browser. 
+    Fixes: NB#66825
+  * Fixed bug: Page www.4players.de is not rendered correctly after zooming
+    its content. Fixes: NB#57072
+  * Fixed bug:Incorrect focus behaviour when scrolling page with HW keys.
+    Fixes: NB#50934
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 30 Sep 2007 15:02:19 +0300
+
+microb-engine (1.0.3-22) unstable; urgency=low
+
+  * Fixed bug:Authentication : Server and Message fields are incorrect..
+    Fixes: NB#61394
+  * Fixed often crash in JavaScript after enabling JS suspend in
+    JSBreakExperimental.diff
+  * Disabled trunk updates while not fixed crash
+  * Fixed uninitialized variable in JS flags
+  * Fixed bug:Page www.4players.de is not rendered correctly after zooming its
+    content. Fixes: NB#57072
+  * Add 701_FixForTiledBGScaling.diff
+  * Fixed bug:RSS channel items are duplicated. Fixes: NB#56207
+  * Fixed bug:Internet keywords feature does not call "Google.. Lucky". 
+    Fixes: NB#70218
+  * Fixed bug:Needless scrollbars visible. Fixes: NB#64367
+  * Fixed bug:Network error messages are wider than browser window and they
+    look complex and messy when zoom level is bigger than 100%. 
+    Fixes: NB#65694
+  * Fixed bug:"browse" button on www.zshare.net is two times smaller than on
+    desktop version. Fixes: NB#65700
+  * Fixed bug:xbm file opening causes edless loop. Fixes: NB#68589
+  * Fixed bug:going back to previous page takes some time on www.one.lv.
+    Fixes: NB#60962
+  * Update 666_fixForPixelBug.diff patch
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 23 Sep 2007 21:39:56 +0300
+
+microb-engine (1.0.3-20) unstable; urgency=low
+
+  * Fixed bug:link navigation should be triggered by key-up not key-down and only
+    if scrolling isn't triggered. Fixes: MB#1791
+  * Fixed bug:Incorrect focus behaviour when scrolling page with HW keys.
+    Fixes: NB#50934
+  * Fixed bug:onFocus is not set on input element by the Select HW Key..
+    Fixes: NB#55701
+  * Added storage building for FF config
+  * Fixed bug:some drop-down menus are disabled and should be dimmed. 
+    Fixes: NB#60893
+  * Fixed bug:Valgrind reported unconditional jumps in Browser. Fixes: NB#66825
+  * Fixed bug with Javascript focus
+  * Fixed building gecko 1.8 compat by default
+  * Fixed building PasswordManager with DEBUG, logging options
+  * Updated moztree gtkmozembed
+  * Fixed storage enabled
+  * Added patch from some hiddens JS bugs
+  * Added FF configuration option
+  * Disabled double registration for FTV component
+  * Fixed fit to view set for special browser window
+  * Fixed bug:Zoom level not preserved. Fixes: NB#69384
+  * Enabled Windowless mode
+  * Fixed HandleEvent plugins handling
+  * Enabled using system cairo
+  * Fixed bug:WB toolbar lacks RSS button for BBC feeds. Fixes: NB#54733
+  * Fixed bug:uri_link_error_invalid_protocol isnot shown in most variants.
+    Fixes: NB#65361
+  * Fixed bug:Images flicker after zooming.. Fixes: NB#68855
+  * Update 666_fixForPixelBug.diff patch
+  * Added proper option for building SVG backport
+  * Rename fixForPixelBug.diff to 666_fixForPixelBug.diff
+  * Fixed crash on Incremental download test with htpps
+  * Fixed bug:Unable to pan image. Fixes: NB#65521
+  * Fixed bug:Pages using charset UTF-8 look bad when opened from local file
+    system. FixeS: NB#66781
+  * Fixed bug:Triple scrollbars on cnn.com page zoomed to 300%. 
+    Fixes: NB#61550
+  * Fixed bug:Focus stays in location bar after page is loaded. Fixes: NB#63870
+  * Fixed bug:Auto - focus not working properly. Fixes: NB#66666
+  * Fixed bug:[GFX-GTK2] Page 'www.nordea.com' is rendered
+    incorrectly. Fixes: NB#54907
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 17 Sep 2007 09:30:14 +0300
+
+microb-engine (1.0.3-19) unstable; urgency=low
+
+  * Disabled wrong workarround for initializing engine in separate thread
+  * Fixed bug:wrong reaction on bluetooth disconnect while loading operation.
+    Fixes: NB#52233
+  * Fixed bug:Fixed broken installation of FTV component. Fixes: NB#68749
+  * Adding about:extensions implementation.
+  * Fixed building of XPCOM stub
+  * Added patch which will allow initialize almost all xpcom in separate
+    thread
+  * Fixed library search patch for microb packages
+  * Added some comments and info in prepare engine script
+  * Added commented updated zooming patch to series file
+  * Added new patch for zom implementation.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun,  9 Sep 2007 17:24:38 +0300
+
+microb-engine (1.0.3-18) unstable; urgency=low
+
+  * Fixed bug:malformedURI error message must be rephrased. Fixes: NB#50743
+  * Small updated for oforward functionality
+  * Fixed bug:Expanded combobox blocks toolbar and Zoom HWK. Fixes: NB#66625
+  * Fixed bug:Image cropped when zoomed in/out by tapping. Fixes: NB#65511
+  * Fixed bug:Image size is not optimised to the size of browser window.
+    Fixes: NB#65544
+  * Removed some patches for plugin host... Will come back on next week, after testing first patches
+  * Fixed bug:CSS style are incorrectly applied to network error notification
+    pages. Fixes: NB#57857
+  * Updated trunk patchset
+  * Fixed bug:Form elememt render wrong when displayed on colored background.
+    Fixes: NB#66905
+  * Plugin related stuff moved to the end of patchset (for easy disabling)
+  * Fixed bug:Unable to move focus out of text field with rocker. 
+    Fixes: NB#66792.
+  * Fixed bug:[SNAV]JS| MicroB : on mouse move error. Fixes: NB#35989
+  * Additional fix for Bug 35989 [SNAV]JS| MicroB : on mouse move error
+  * Fixed bug with changing theme on fly Bug 393976
+  * Fixed proper drawing of themed buttons
+  * Added patches from trunk (leaks)
+  * Added some crash,leaks,plugins fixes from trunk(Still not tested.). 
+  * Added UI for FitToView feature
+  * Disabled running 2 or more JScripts in the same window.
+  * Improved FTV components Possible build on TRUNK mozilla sources
+  * Fixed problems with getting BOX dimensions
+  * Fixed Some problems in spatial navigation and FTV
+  * Updated to latest trunk
+  * Added xulrunner package
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 31 Aug 2007 20:24:09 +0300
+
+microb-engine (1.0.3-17) unstable; urgency=low
+
+  * Fixed bug:"about:" gives "XML Parsing Error". Fixes: NB#67047
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 29 Aug 2007 14:14:39 +0300
+
+microb-engine (1.0.3-16) unstable; urgency=low
+
+  * Fixed back spatial navigation (was broken on this week)
+  * Fixed bug:Page state is not preserved in FTV mode. Fixes: NB#66436
+  * Fixed bug:Security Testing: Browser crashes while opening GIF images.
+    Fixes: NB#66409
+  * Fixed bug:about:config Set Preference is not working with boolean types.
+    Fixes: NB#66688
+  * fixing url parsing to handle spaces (they're converted to plus as part of
+    urls)
+  * Fixed bug:Fixed broken CSS style for form controls.
+  * Fixed bug:Click on the zooming bar on the left once, and you get a CSM
+    menu launched. Fixes: NB#65859
+  * Fixed bug:microb-refui should depend on libgtkmozembed. Fixes: MB#1810
+  * Fixed bug:By pressing the Tab button in the text area of the web page the
+    focus goes to the non-text entry field. Fixes: NB#55046
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 26 Aug 2007 16:04:37 +0300
+
+microb-engine (1.0.3-15) unstable; urgency=low
+
+  * Fixed SNAV compilation problem
+  * Fixed possible crash on yahoo
+  * Fixed moving of mouse to the proper place
+  * Bug 1831 make description for about:config localizable
+    includes engineer's English for all localizations
+  * Fixed bug:55046 By pressing the Tab button in the text area of the web
+    page the focus goes to the non-text entry field
+  * Fixed bug: Scrolling to not visible focusable element might
+    not happen. Fixes: NB#44373
+  * Fixed bug: fit width to view changes only part of the page. Fixes: NB#60297
+  * Fixed bug: Dvice doesn't use proxy configuration scripts
+    (*.pac). Fixes: NB#62885
+  * Fixed bug: disabled textarea is shown badly. Fixes: NB#50404
+  * Fixed bug: rocker does not work in text. Fixes: NB#65844
+  * Fixed bug: some drop-down menus are disabled and should be 
+    dimmed. Fixes: NB#60893
+  * Added libsqlite and nssdbm libraries
+  * Added symlink for mozilla-config in system directory
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 17 Aug 2007 19:15:30 +0300
+
+microb-engine (1.0.3-14) unstable; urgency=low
+
+  * Updated for building with branch and trunk mozilla.tar.gz
+  * Added depends for microb-refui
+  * Removed resources installing from engine (while crashes in gfx will not
+    fixed)
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 12 Aug 2007 20:23:31 +0300
+
+microb-engine (1.0.3-13) unstable; urgency=low
+
+  * Disabled good theming of radio/check buttons, dropdowns... because we have
+    broken Stretch/composite functionality
+  * Fixed division by 0 on gfx GTK2
+  * Fixed default zoom value
+  * Added comment to 226_ZoomControlsTestGtkEmbed.diff
+  * Added controls for zoom testing
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 10 Aug 2007 11:14:38 +0300
+
+microb-engine (1.0.3-12) unstable; urgency=low
+
+  * Changed section name(user/libs to libs) in Debian control file.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue,  7 Aug 2007 12:36:45 +0300
+
+microb-engine (1.0.3-11) unstable; urgency=low
+
+  * Reorganized patchset, removed wrong patches
+    #275_BUG_353882_lp0.diff
+    #280_BUG_339358_lp0.diff
+    #285_BUG_311566.diff
+    #210_BUG242145_jidctint.diff
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 02 Aug 2007 19:08:20 +0300
+
+microb-engine (1.0.3-10) unstable; urgency=low
+
+  * Fixed CSS3 opacity (spreadsheets.google.com ...) Fixes: NB#53448
+  * Fixed crash GetRootScrollFrame (workaround)
+  * Added ( series.gtk2min -> vanilla ) with minimal patchset (removed old bugs, patches,...)
+  * Fixed broken rendering of styled button with empty title (background-image
+    + value = "") imdb.com. Fixes: NB#52194
+  * Fixed bug browser crashes while trying to access frame specific CSM.
+    Fixes: NB#64066
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 01 Aug 2007 13:14:58 +0300
+
+microb-engine (1.0.3-9) unstable; urgency=low
+
+  *  Fixed bug:libnss3-dev package is broken. Fixes: NB#64441
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 29 Jul 2007 15:44:23 +0300
+
+microb-engine (1.0.3-8) unstable; urgency=low
+
+  * Fixed bug:libnss3-dev package is broken. Fixes: NB#64441
+  * Fix alignment for radio/check widgets
+  * Fix for downscaling support
+  * Small fix to improve gtk toggle buttons drawing
+  * Fixed bug:native widgets painting is obsolete for comboboxes. Fixes: NB#59498
+  * Fixed bug:native widgets drawing double focus. Fixes: NB#59555
+  * Broken docs.google.com/spreadsheets back
+  * Fixed major crash that was ther reason of last reject :(
+  * Need to fix problem with opacity rule.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 27 Jul 2007 17:11:50 +0300
+
+microb-engine (1.0.3-7) unstable; urgency=low
+
+  * fixing set preference, core bug was setPref needed a prefservice param 
+  * indenting code
+  * removing useless functions
+  * Added patches copy for building with latesttrunk mozilla sources.
+  * Somehow we have to remove most of them:
+     1) Add something from trunk updates to disable difference on reject places
+     2) Use small patch context
+     3) Remove patch at all (some of them probably useless
+  * For building Mozilla trunk based on thebes GFX use DEB_BUILD_OPTIONS=config=thebestrunk dpkg-buildpackages -us -uc ....)
+  * Improved support for building in different configurations
+  * Added thebestrunk, and clean xulrunner configuration
+  * about: protocol doesn't have a search property for locations. 
+    adding code to synthesize it so that the code which always worked in other
+    places will work here. Fixes :NB#53597
+  * Fixed unpacking uuencoded file
+  * Added helper script for preparing mozilla build tree in NON debian
+    environment
+  * Adding support for non microb consumers.
+  * Indenting functions
+  * Removing onsubmit handler which was what broke the form magic
+  * Adding back the search button printer
+  * Fixed bug with complicated links, dimensions 0  (<a><div>...)
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 20 Jul 2007 21:05:10 +0300
+
+microb-engine (1.0.3-6) unstable; urgency=low
+
+  * Fixed spellchecker building
+  * Enabled building of spellcheck extension by default
+  * Disabled patch wich breaks google spreadsheets
+  * Fixed lucky widgets style
+  * Fixed tab space in BUG_FirstElSkip.diff
+  * Fixed Scroll and setup first focus
+  * Fixed almost of all bugs with SNAV
+  * Fixed some problems with spatial direction
+  * Fixes: NB#44957,NB#50050,NB#50948,NB#57253
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 15 Jul 2007 15:29:46 +0300
+
+microb-engine (1.0.3-5) unstable; urgency=low
+
+  * Fixed cairo transparency
+  * Fixed building svg_port
+  * Fixed for building with latest trunk
+  * Fixes: NB#61468 Link is wrongly displayed on www.ning.com
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun,  8 Jul 2007 00:03:59 +0300
+
+microb-engine (1.0.3-4.1.1) unstable; urgency=low
+
+  * Fixes: NB#61991,NB#58189,NB#62021,NB#62144,NB#62009,NB#57491,NB#62006,NB#62065,NB#61674
+  * Added commented patch JSWakeup
+  * Added JS Perf experimental patch into patches directory
+  * Theme supporting: button theming
+  * Protect for accessing to wrong array values
+  * Small fix for most Stretch invalid reads
+  * Theme supporting: duplicating focus drawing for some widgets
+  * Theme supporting: focus around widgets enabled
+  * Theme supporting: button has focus
+  * Theme supporting: fixed button drawing
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed,  4 Jul 2007 15:40:43 +0300
+
+microb-engine (1.0.3-3.1.1) unstable; urgency=low
+
+  * Fixes: NB#52982,NB#53025,NB#61630,NB#61996,NB#61999,NB#59499,NB#55564
+  * Fixed checkbox style according to latest fix in Gtk Images
+  * Fixed Image drawing on normal zoom mode (lines in google maps.. and other)
+  * Disabled encoding original tarball
+  * Added missing interfaces according Josh request.
+  * Implemented: NR#167783
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun,  1 Jul 2007 19:57:40 +0300
+
+microb-engine (1.0.3-2.1.0) unstable; urgency=low
+
+  * Added some memory leak fixes
+  * Fixed all xpt file linking for JS Compat
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 30 Jun 2007 19:00:04 +0300
+
+microb-engine (1.0.3-1.0rmx5) unstable; urgency=low
+
+  * Reorganized package structure for building wih diff gz
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 28 Jun 2007 17:59:50 +0300
+
+microb-engine (1.0.2-1.1) unstable; urgency=low
+
+  * Fixes: NB#43765,NB#53177,NB#53900
+  * Added easy building microb in different configurations (cairo/gtk2)
+  * Added Fixed Mozilla Version for extensions and other compat things
+  * Added some (probably important) trunk updated while main tarball not ...
+  * Fixed working of layout.css.dpi preference on gtk2 build
+  * Removed not used call in FTV Fixed crash on FTV + Zoom functionality 
+  * Disabled xul building
+  * Added some checks and null set to avoid random crashes in style
+  * Fixed checkbox background
+  * Fixed crash on CNN.com CNN->FTV_ON->Zoom*2->FTV_OFF
+  * Fixed checkbox buttons
+  * Fixed position of radion button
+  * Removed nss includes from engine
+  * Fixed nss-certs version dependens and added softpkcs11 alternative
+  * Created separate packages for nspr and nss
+  * Moved framemerging stuff into microb-engine package
+  * Fixed building with RDF but without XUL enabled
+  * Moved all patches related to build config problems in separate folder
+  * Fixed for building with enabled CAIRO_GFX
+  * Added trunk version cached scale patch
+  * Merged patches Added missing patch
+  * Updated patchset for fast easy building without GTK backout patches ...
+  * GTK Pathes moved on top
+  * Added patch for loading only cached images
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 23 Jun 2007 21:35:15 +0300
+
+microb-engine (1.0.1-1.1) unstable; urgency=low
+
+  * Improved quality of form widgets
+  * Missed file for proper working about:config in XUL build
+  * Fix for Microb engine with XUL enabled
+  * Merged patches/610_update_fulltruezoom_mode.diff...
+  * Updated 610_update_fulltruezoom_mode.diff patch
+  * Added patch to update fulltruezoom mode variable in runtime
+  * Fixed display and working XUL based about:config
+  * Fixes: NB#55046,NB#50404,NB#53044,NB#54162
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 15 Jun 2007 16:11:23 +0300
+
+microb-engine (0.8.34-1.1) unstable; urgency=low
+
+  * Fixed broken canvas cairo on arm
+  * Updated patch 580_focus_for_visible_area.diff
+  * Added experimental patch for using JS fdlibm
+  * Enabled canvas in current mozilla build
+  * Disabled CSS erros parsing
+  * Fixed canvas proper rendering Added patch related to lags in gmail chats
+  * Added vertical resize flag
+  * Added extension manager functionality
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri,  8 Jun 2007 17:32:31 +0300
+
+microb-engine (0.8.33-1.1) unstable; urgency=low
+
+  * Added missing commit [9847] 05/27/07 16:23:04 romashin Fixed some glib...
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun,  3 Jun 2007 18:27:17 +0300
+
+microb-engine (0.8.32-1.1) unstable; urgency=low
+
+  * Restored other fixes related to broken images backgrounds
+  * Rstored back missed commit: Changeset 9798 Fixed bug 57476 Page layout is ...
+  * Fixed broken layout on gmail
+  * Disabled broken opacity property
+  * Improved JS policy manage stuff
+  * Added checking for pref to handle jsfocus
+  * Updated fix: Set focus just for visible area
+  * Set JS focus just for visible area
+  * moved back old zoom implementation for current week build
+  * Deleted not used patches, and added some new
+  * Still one workarround for stripes in images
+  * Additional fix for stripes in images
+  * Probably fixed all stripes in images
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun,  3 Jun 2007 14:41:33 +0300
+
+microb-engine (0.8.31-1.1) unstable; urgency=low
+
+  * Disabled mouse up -> move by default
+  * Fixed some glib criticals
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 28 May 2007 19:27:40 +0300
+
+microb-engine (0.8.30-1.1) unstable; urgency=low
+
+  * Disable full true zoom while FTV
+  * Fixes: NB#58463
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 27 May 2007 11:38:44 +0300
+
+microb-engine (0.8.29-1.1) unstable; urgency=low
+
+  * Fixes: NB#53862,NB#54448,NB#57476,NB#56960
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 25 May 2007 10:06:24 +0300
+
+microb-engine (0.8.28-1.1) unstable; urgency=low
+
+  * Added separate patch for Native Suspend Implementation
+  * Added still some event blockers
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 20 May 2007 18:25:09 +0300
+
+microb-engine (0.8.27-1.1) unstable; urgency=low
+
+  * Fixes:NB#56432
+  * Reorganized patche numbers
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 15 May 2007 13:03:11 +0300
+
+microb-engine (0.8.26-1.1) unstable; urgency=low
+
+  * Disabled svg backport, while crash reason not found
+  * Thumb supporting patch: signals handlers set to 'after' priority
+  * Fixes: NB#54111
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 11 May 2007 11:33:03 +0300
+
+microb-engine (0.8.25-1.0) unstable; urgency=low
+
+  * Fixed some calculations, and probably glib criticals
+  * Enabled building with SVG
+  * Added SVG backport version wich possible to build with current tree
+  * Added patch which will allow to build SVG and SVG renderer on current ...
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue,  8 May 2007 20:35:22 +0300
+
+microb-engine (0.8.24-1.0) unstable; urgency=low
+
+  * Fixes: NB#36689
+  * Disabled after connecting for key, mouse events while all problems not 
+  * Added last order for signals emitting in other events
+  * Added possibility for connecting to motion signal outside from
+  * Added patch for disabling proessing events when We want to exit
+  * Added a patch which fixed trubles with supporting Thumb VKB
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun,  6 May 2007 20:07:30 +0300
+
+microb-engine (0.8.22-1.0) unstable; urgency=low
+
+  * Fixes: NB#52019
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed,  2 May 2007 08:40:00 +0300
+
+microb-engine (0.8.21-1.0) unstable; urgency=low
+
+  * Fixes: NB#53515,NB#53910
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 29 Apr 2007 21:05:02 +0300
+
+microb-engine (0.8.20-1.0) unstable; urgency=low
+
+  * Fixes: NB#52028,NB#52298,NB#54140,NB#54340,NB#54594,NB#54959,NB#55085,NB#39996
+  * Fixes: NB#50602,NB#50652,NB#51175,NB#55029,NB#55054
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 27 Apr 2007 23:35:14 +0300
+
+microb-engine (0.8.19-1.0) unstable; urgency=low
+
+  * Removed fno-unit-at-time compile option
+  * Fixes:NB#54649,NB#53944,NB#54205
+  * Fixed proper check for domain existing
+  * Added more proper preferencable fix for mail.google.com domain
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 26 Apr 2007 10:27:43 +0300
+
+microb-engine (0.8.18-8trunk1.0) unstable; urgency=low
+
+  * Fixes: NB#50404,NB#53065,NB#53073,NB#53486,NB#53977,NB#54204
+  * Fixes: NB#54639,NB#54728,NB#54858
+  * Added all patches from bug 54340 JavaScript? profiling and optimization
+  * Updated back 9_BUG178513.backout patch and debian/patches/series
+  * Removed unlicencsed file visualinfo.c from mozilla.tar.gz and updated...
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 24 Apr 2007 16:53:22 +0300
+
+microb-engine (0.8.18-4trunk1.0) unstable; urgency=low
+
+  * Minimized rocket count
+  * Disabled dbus from build config
+  * Added last paint event for helping to close progress and know about finish 
+  * Setup more slower frame constructor signals count
+  * Added patch for bug 54205 libxul symbols reduction
+  * Fixed small system font size
+  * Set more proper paint count number
+  * Fixes: NB#54204
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 22 Apr 2007 20:16:22 +0300
+
+microb-engine (0.8.18-3trunk1.0) unstable; urgency=low
+
+  * Added rocket parsing patch It will increase tokenizing time after first...
+  * Some optimization for content response values
+  *  	Fixed proper emiting signal for first paint
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 22 Apr 2007 12:48:15 +0300
+
+microb-engine (0.8.18-2trunk1.0) unstable; urgency=low
+
+  * Added layout state listener Implemented firing of first reflow...
+  * Added patch for Immediate painting layout 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 21 Apr 2007 11:58:13 +0300
+
+microb-engine (0.8.18-1trunk1.0) unstable; urgency=low
+
+  * Disabled strict spellcheck installing
+  * Nasty finished loading optimization
+  * Disabled connection_state_optimization & nasty_finished_loading patches
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 20 Apr 2007 13:22:27 +0300
+
+microb-engine (0.8.16-1trunk1.0) unstable; urgency=low
+
+  * Start loading just after getting first data block to render 
+  * Disabled native uconv... a lot of problems on pages
+  * Added bustage fixe for native uconv
+  * Added some disables for stripped configuration
+  * Added stripped version of config thebes
+  * Updated to trunk Disabled OJI Added Thebes cache fix added Netwerk
+    buffer...
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 19 Apr 2007 14:06:47 +0300
+
+microb-engine (0.8.16-1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 13 Apr 2007 13:17:20 +0300

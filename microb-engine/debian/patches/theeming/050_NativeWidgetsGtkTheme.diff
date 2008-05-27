@@ -1,0 +1,45 @@
+Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+@@ -1343,17 +1343,17 @@
+   case NS_THEME_MENUITEM:
+   case NS_THEME_MENUARROW:
+   case NS_THEME_MENUSEPARATOR:
+   case NS_THEME_CHECKMENUITEM:
+   case NS_THEME_RADIOMENUITEM:
+   case NS_THEME_SPLITTER:
+   case NS_THEME_WINDOW:
+   case NS_THEME_DIALOG:
+-  case NS_THEME_DROPDOWN:
++  // case NS_THEME_DROPDOWN:
+   case NS_THEME_DROPDOWN_TEXT:
+     return !IsWidgetStyled(aPresContext, aFrame, aWidgetType);
+ 
+   case NS_THEME_DROPDOWN_BUTTON:
+     // "Native" dropdown buttons cause padding and margin problems, but only
+     // in HTML so allow them in XUL.
+     return (!aFrame || aFrame->GetContent()->IsNodeOfType(nsINode::eXUL)) &&
+            !IsWidgetStyled(aPresContext, aFrame, aWidgetType);
+Index: mozilla/widget/src/gtk2/gtk2drawing.c
+===================================================================
+--- mozilla.orig/widget/src/gtk2/gtk2drawing.c
++++ mozilla/widget/src/gtk2/gtk2drawing.c
+@@ -123,16 +123,17 @@
+ static gint
+ setup_widget_prototype(GtkWidget* widget)
+ {
+     static GtkWidget* protoLayout;
+     ensure_window_widget();
+     if (!protoLayout) {
+         protoLayout = gtk_fixed_new();
+         gtk_container_add(GTK_CONTAINER(gProtoWindow), protoLayout);
++        gtk_widget_set_name(protoLayout, "GtkMozLayout");
+     }
+ 
+     gtk_container_add(GTK_CONTAINER(protoLayout), widget);
+     gtk_widget_realize(widget);
+     return MOZ_GTK_SUCCESS;
+ }
+ 
+ static gint

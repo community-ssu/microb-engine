@@ -1,0 +1,63 @@
+--- mozilla/toolkit/components/places/src/nsNavHistory.cpp.orig	2008-05-20 16:13:12.000000000 +0300
++++ mozilla/toolkit/components/places/src/nsNavHistory.cpp	2008-05-20 16:16:00.000000000 +0300
+@@ -1134,31 +1134,35 @@ nsNavHistory::InitStatements()
+         "h.rev_host, h.visit_count, "
+         SQL_STR_FRAGMENT_MAX_VISIT_DATE( "b.fk" )
+         ", f.url, null, b.id, b.dateAdded, b.lastModified "
+       "FROM moz_bookmarks b "
+       "JOIN moz_places h ON b.fk = h.id "
+       "LEFT OUTER JOIN moz_favicons f ON h.favicon_id = f.id "
+       "WHERE b.id = ?1"),
+     getter_AddRefs(mDBBookmarkToUrlResult));
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
++#if 0 
++/// Maemo SQLite3 doesn't support GROUP_CONCAT
++
+   // mDBGetTags
+   rv = mDBConn->CreateStatement(NS_LITERAL_CSTRING(
+       "SELECT GROUP_CONCAT(t.title, ' ') "
+       "FROM moz_places h "
+       "JOIN moz_bookmarks b ON b.type = ") +
+         nsPrintfCString("%d", nsINavBookmarksService::TYPE_BOOKMARK) +
+         NS_LITERAL_CSTRING(" AND b.fk = h.id "
+       "JOIN moz_bookmarks t ON t.parent = ?1 AND t.id = b.parent "
+       "WHERE h.url = ?2"),
+     getter_AddRefs(mDBGetTags));
+   NS_ENSURE_SUCCESS(rv, rv);
++#endif 
+ 
+   // mFoldersWithAnnotationQuery
+   rv = mDBConn->CreateStatement(NS_LITERAL_CSTRING(
+     "SELECT annos.item_id, annos.content FROM moz_anno_attributes attrs " 
+     "JOIN moz_items_annos annos ON attrs.id = annos.anno_attribute_id "
+     "WHERE attrs.name = ?1"), 
+     getter_AddRefs(mFoldersWithAnnotationQuery));
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   // mDBVisitsForFrecency
+--- mozilla/configure.in.orig	2008-05-20 16:10:09.000000000 +0300
++++ mozilla/configure.in	2008-05-20 16:10:38.000000000 +0300
+@@ -121,21 +121,21 @@ GTK2_VERSION=2.10.0
+ MAKE_VERSION=3.78
+ WINDRES_VERSION=2.14.90
+ W32API_VERSION=3.8
+ GNOMEVFS_VERSION=2.0
+ GNOMEUI_VERSION=2.2.0
+ GCONF_VERSION=1.2.1
+ LIBGNOME_VERSION=2.0
+ STARTUP_NOTIFICATION_VERSION=0.8
+ DBUS_VERSION=0.60
+ LCMS_VERSION=1.17
+-SQLITE_VERSION=3.5.4
++SQLITE_VERSION=3.4.1
+ 
+ MSMANIFEST_TOOL=
+ 
+ dnl Set various checks
+ dnl ========================================================
+ MISSING_X=
+ AC_PROG_AWK
+ 
+ dnl Initialize the Pthread test variables early so they can be
+ dnl  overridden by each platform.

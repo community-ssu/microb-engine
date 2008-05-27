@@ -1,0 +1,24 @@
+# Bug: 401079 Building accessible without XUL fails.
+#
+Index: mozilla/accessible/src/base/nsAccessibleEventData.cpp
+===================================================================
+--- mozilla.orig/accessible/src/base/nsAccessibleEventData.cpp
++++ mozilla/accessible/src/base/nsAccessibleEventData.cpp
+@@ -44,16 +44,17 @@
+ #include "nsIDOMDocument.h"
+ #include "nsIEventStateManager.h"
+ #include "nsIPersistentProperties2.h"
+ #include "nsIServiceManager.h"
+ #ifdef MOZ_XUL
+ #include "nsIDOMXULMultSelectCntrlEl.h"
+ #include "nsXULTreeAccessible.h"
+ #endif
++#include "nsIAccessibleText.h"
+ #include "nsIContent.h"
+ #include "nsIPresShell.h"
+ #include "nsPresContext.h"
+ 
+ PRBool nsAccEvent::gLastEventFromUserInput = PR_FALSE;
+ nsIDOMNode* nsAccEvent::gLastEventNodeWeak = 0;
+ 
+ NS_IMPL_ISUPPORTS1(nsAccEvent, nsIAccessibleEvent)

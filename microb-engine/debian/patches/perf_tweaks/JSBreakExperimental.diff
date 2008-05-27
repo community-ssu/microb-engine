@@ -1,0 +1,99 @@
+# Make UI Responsive while JS Script is working 
+Index: mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
+===================================================================
+--- mozilla.orig/widget/src/xpwidgets/nsBaseAppShell.cpp
++++ mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
+@@ -205,16 +205,22 @@
+ nsBaseAppShell::ResumeNative()
+ {
+   --mSuspendNativeCount;
+   NS_ASSERTION(mSuspendNativeCount >= 0, "Unbalanced call to nsBaseAppShell::ResumeNative!");
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
++nsBaseAppShell::WakeupNative(PRBool mayWait)
++{
++  return OnProcessNextEvent(nsnull, PR_FALSE, 0);
++}
++
++NS_IMETHODIMP
+ nsBaseAppShell::GetEventloopNestingLevel(PRUint32* aNestingLevelResult)
+ {
+   NS_ENSURE_ARG_POINTER(aNestingLevelResult);
+ 
+   *aNestingLevelResult = mEventloopNestingLevel;
+ 
+   return NS_OK;
+ }
+Index: mozilla/widget/public/nsIAppShell.idl
+===================================================================
+--- mozilla.orig/widget/public/nsIAppShell.idl
++++ mozilla/widget/public/nsIAppShell.idl
+@@ -93,12 +93,17 @@
+   /**
+    * Resumes the use of additional platform-specific methods to run Gecko
+    * events on the main application thread.  Calls to suspendNative() and
+    * resumeNative() may be nested.  On some platforms this will be a no-op.
+    */
+   void resumeNative();
+ 
+   /**
++   * Will call DoNextNativeEvent for proceeding native event loop
++   */
++  void wakeupNative(in boolean mayWait);
++
++  /**
+    * The current event loop nesting level.
+    */
+   readonly attribute unsigned long eventloopNestingLevel;
+ };
+Index: mozilla/dom/src/base/nsJSEnvironment.cpp
+===================================================================
+--- mozilla.orig/dom/src/base/nsJSEnvironment.cpp
++++ mozilla/dom/src/base/nsJSEnvironment.cpp
+@@ -219,16 +219,20 @@
+ static PRTime sMaxChromeScriptRunTime;
+ 
+ static nsIScriptSecurityManager *sSecurityManager;
+ 
+ static nsICollation *gCollation;
+ 
+ static nsIUnicodeDecoder *gDecoder;
+ 
++#include "nsWidgetsCID.h"
++#include "nsIAppShell.h"
++static NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
++
+ // nsUserActivityObserver observes user-interaction-active and
+ // user-interaction-inactive notifications. It counts the number of
+ // notifications and if the number is bigger than NS_CC_SOFT_LIMIT_ACTIVE
+ // (in case the current notification is user-interaction-active) or
+ // NS_CC_SOFT_LIMIT_INACTIVE (current notification is user-interaction-inactive)
+ // MaybeCC is called with aHigherParameter set to PR_TRUE, otherwise PR_FALSE.
+ //
+ // When moving from active state to inactive, nsJSContext::CC() is called
+@@ -864,16 +868,23 @@
+   // Get the native context
+   nsJSContext *ctx = static_cast<nsJSContext *>(::JS_GetContextPrivate(cx));
+ 
+   if (!ctx) {
+     // Can happen; see bug 355811
+     return JS_TRUE;
+   }
+ 
++  nsCOMPtr<nsIAppShell> appShell = do_GetService(kAppShellCID);
++  if (appShell) {
++    ctx->SetScriptsEnabled(PR_FALSE, PR_FALSE);
++    appShell->WakeupNative(PR_FALSE);
++    ctx->SetScriptsEnabled(PR_TRUE, PR_FALSE);
++  }
++
+   // XXX Save the operation callback time so we can restore it after the GC,
+   // because GCing can cause JS to run on our context, causing our
+   // ScriptEvaluated to be called, and clearing our operation callback time.
+   // See bug 302333.
+   PRTime callbackTime = ctx->mOperationCallbackTime;
+ 
+   MaybeGC(cx);
+ 

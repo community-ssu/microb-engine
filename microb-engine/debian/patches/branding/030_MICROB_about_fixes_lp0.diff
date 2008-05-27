@@ -1,0 +1,226 @@
+# Fast link to about:config from about
+# XUL disabled about:config page, see debian/resources/branding/microb/content/config.html
+Index: mozilla/docshell/base/nsAboutRedirector.cpp
+===================================================================
+--- mozilla.orig/docshell/base/nsAboutRedirector.cpp
++++ mozilla/docshell/base/nsAboutRedirector.cpp
+@@ -64,17 +64,21 @@
+   URI.  Perhaps we should separate the two concepts out...
+  */
+ static RedirEntry kRedirMap[] = {
+     { "credits", "http://www.mozilla.org/credits/",
+       nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT },
+     { "mozilla", "chrome://global/content/mozilla.xhtml",
+       nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT },
+     { "plugins", "chrome://global/content/plugins.html", 0 },
++#ifdef MOZ_XUL
+     { "config", "chrome://global/content/config.xul", 0 },
++#else
++    { "config", "chrome://branding/content/config.html", 0},
++#endif
+ #ifdef MOZ_CRASHREPORTER
+     { "crashes", "chrome://global/content/crashes.xhtml", 0 },
+ #endif
+ #ifdef MOZ_XUL_APP
+     { "logo", "chrome://branding/content/about.png",
+ #else
+     { "logo", "chrome://global/content/logo.gif",
+ #endif
+Index: mozilla/toolkit/content/about.xhtml
+===================================================================
+--- mozilla.orig/toolkit/content/about.xhtml
++++ mozilla/toolkit/content/about.xhtml
+@@ -55,29 +55,31 @@
+ <head>
+   <title>About:</title>
+   <link rel="stylesheet" href="chrome://global/skin/about.css" type="text/css"/>
+ </head>
+ 
+ <body dir="&locale.dir;">
+ <div id="aboutPageContainer">
+   <div id="aboutLogoContainer">
+-    <a id="vendorURL" href="http://www.mozilla.org/">
+-      <img src="about:logo" alt="&brandShortName;"/>
+-#expand <p id="version">&about.version; __MOZ_APP_VERSION__</p>
++    <a id="vendorURL" href="http://browser.garage.maemo.org/">
++      <img height="105" src="about:logo" alt="&brandShortName;"/>
+     </a>
+   </div>
++<p style="color:blue;font-size: 250%;" id="packname">&brandShortName;</p>
++#expand <p id="version">&about.version; __MOZ_APP_VERSION__</p>
+ 
+   <ul id="aboutPageList">
+     <li>&about.copy.beforeLink; <a href="about:credits">&about.copy.linkTitle;</a> &about.copy.afterLink;</li>
+     <li>&about.license.beforeLink; <a href="about:license">&about.license.linkTitle;</a> &about.license.afterLink;</li>
+     <!-- Release notes link removed pending fix for bug 349985
+     <li>&about.relnotes.beforeLink; <a id="releaseNotesURL" href="">&about.relnotes.linkTitle;</a> &about.relnotes.afterLink;</li>
+     -->
+     <li>&about.buildconfig.beforeLink; <a href="about:buildconfig">&about.buildconfig.linkTitle;</a> &about.buildconfig.afterLink;</li>
++     <li>&about.config.beforeLink; <a href="about:config">&about.config.linkTitle;</a>&about.config.afterLink;</li>
+     <script type="application/javascript">
+       // get release notes URL from prefs
+       try {
+         var formatter = Components.classes["@mozilla.org/toolkit/URLFormatterService;1"]
+                                   .getService(Components.interfaces.nsIURLFormatter);
+         var releaseNotesURL = formatter.formatURLPref("app.releaseNotesURL");
+         var relnotes = document.getElementById("releaseNotesURL");
+         relnotes.setAttribute("href", releaseNotesURL);
+Index: mozilla/toolkit/themes/winstripe/global/about.css
+===================================================================
+--- mozilla.orig/toolkit/themes/winstripe/global/about.css
++++ mozilla/toolkit/themes/winstripe/global/about.css
+@@ -1,27 +1,26 @@
+ html {
+   background: -moz-Dialog;
+ }
+ 
+ body {
+   margin: 0;
+-  padding: 0 1em;
++  padding: 0 0em;
+   color: -moz-FieldText;
+   font: message-box;
+ }
+ 
+ #aboutPageContainer {
+   position: relative;
+   min-width: 330px;
+   max-width: 50em;
+   margin: 4em auto;
+   border: 1px solid ThreeDShadow;
+   -moz-border-radius: 10px;
+-  padding: 3em;
+   -moz-padding-start: 30px;
+   background: -moz-Field;
+ }
+ 
+ .aboutPageWideContainer {
+   max-width: 80% !important;
+ }
+ 
+@@ -46,8 +45,12 @@
+   -moz-margin-start: 1.5em;
+   padding: 0;
+   list-style: square;
+ }
+ 
+ ul > li {
+   margin-top: .5em;
+ }
++
++*:not(body):not(html) {
++  margin: 1% ! important;
++}
+Index: mozilla/toolkit/themes/winstripe/global/netError.css
+===================================================================
+--- mozilla.orig/toolkit/themes/winstripe/global/netError.css
++++ mozilla/toolkit/themes/winstripe/global/netError.css
+@@ -8,17 +8,17 @@
+  */
+ 
+ html {
+   background: -moz-Dialog;
+ }
+ 
+ body {
+   margin: 0;
+-  padding: 0 1em;
++  padding: 0 0em;
+   color: -moz-FieldText;
+   font: message-box;
+ }
+ 
+ h1 {
+   margin: 0 0 .6em 0;
+   border-bottom: 1px solid ThreeDLightShadow;
+   font-size: 160%;
+@@ -37,39 +37,39 @@
+ ul {
+   list-style: square;
+ }
+ 
+ #errorPageContainer {
+   position: relative;
+   min-width: 13em;
+   max-width: 52em;
+-  margin: 4em auto;
++  margin: 1em auto;
+   border: 1px solid ThreeDShadow;
+   -moz-border-radius: 10px;
+-  padding: 3em;
+-  -moz-padding-start: 30px;
++  padding: 1em;
++  -moz-padding-start: 5px;
+   background: url("chrome://global/skin/icons/warning-large.png") left 0 no-repeat -moz-Field;
+   -moz-background-origin: content;
+ }
+ 
+ #errorPageContainer.certerror {
+   background-image: url("chrome://global/skin/icons/sslWarning.png");
+ }
+ 
+ body[dir="rtl"] #errorPageContainer {
+   background-position: right 0;
+ }
+ 
+ #errorTitle {
+-  -moz-margin-start: 80px;
++  -moz-margin-start: 40px;
+ }
+ 
+ #errorLongContent {
+-  -moz-margin-start: 80px;
++  -moz-margin-start: 40px;
+ }
+ 
+ #errorShortDesc > p {
+   overflow: auto;
+   border-bottom: 1px solid ThreeDLightShadow;
+   padding-bottom: 1em;
+   font-size: 130%;
+   white-space: pre-wrap;
+Index: mozilla/toolkit/themes/pinstripe/global/netError.css
+===================================================================
+--- mozilla.orig/toolkit/themes/pinstripe/global/netError.css
++++ mozilla/toolkit/themes/pinstripe/global/netError.css
+@@ -8,17 +8,17 @@
+  */
+ 
+ html {
+   background: -moz-Dialog;
+ }
+ 
+ body {
+   margin: 0;
+-  padding: 0 1em;
++  padding: 0 0em;
+   color: -moz-FieldText;
+   font: message-box;
+ }
+ 
+ h1 {
+   margin: 0 0 .6em 0;
+   border-bottom: 1px solid ThreeDLightShadow;
+   font-size: 160%;
+Index: mozilla/toolkit/locales/en-US/chrome/global/about.dtd
+===================================================================
+--- mozilla.orig/toolkit/locales/en-US/chrome/global/about.dtd
++++ mozilla/toolkit/locales/en-US/chrome/global/about.dtd
+@@ -7,13 +7,17 @@
+ <!ENTITY about.license.beforeLink     "Read the">
+ <!ENTITY about.license.linkTitle      "licensing information">
+ <!ENTITY about.license.afterLink      "for this product.">
+ 
+ <!ENTITY about.relnotes.beforeLink    "Read the">
+ <!ENTITY about.relnotes.linkTitle     "release notes">
+ <!ENTITY about.relnotes.afterLink     "for this version.">
+ 
++<!ENTITY about.config.beforeLink "Change this application's">
++<!ENTITY about.config.linkTitle "internal settings">
++<!ENTITY about.config.afterLink " (unsupported).">
++
+ <!ENTITY about.buildconfig.beforeLink "See the">
+ <!ENTITY about.buildconfig.linkTitle  "build configuration">
+ <!ENTITY about.buildconfig.afterLink  "used for this version.">
+ 
+ <!ENTITY about.buildIdentifier        "Build identifier: ">

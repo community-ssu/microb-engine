@@ -1,0 +1,14 @@
+usr/include/microb-engine/*
+usr/lib/pkgconfig/*js*pc
+usr/lib/pkgconfig/*plugin*pc
+usr/lib/pkgconfig/*xpcom*pc
+usr/lib/pkgconfig/*engine.*pc
+usr/lib/pkgconfig/libxul-embedding.*pc
+usr/lib/pkgconfig/libxul.*pc
+usr/lib/*.la
+usr/share/idl/*
+usr/lib/microb-engine/libxpcomglue_s.a
+usr/lib/microb-engine/xpidl
+usr/lib/microb-engine/xpt_link
+usr/lib/microb-engine-dev*
+../resources/sandbox/mozilla-src*.gz usr/share/microb-engine/

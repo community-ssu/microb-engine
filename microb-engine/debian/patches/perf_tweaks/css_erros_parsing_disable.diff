@@ -1,0 +1,27 @@
+# XXX turn this off for minimo builds
+# 
+--- mozilla/layout/style/nsCSSScanner.h.orig	2007-06-04 21:34:02.000000000 +0300
++++ mozilla/layout/style/nsCSSScanner.h	2007-06-04 21:34:07.000000000 +0300
+@@ -40,21 +40,21 @@
+ /* tokenization of CSS style sheets */
+ 
+ #ifndef nsCSSScanner_h___
+ #define nsCSSScanner_h___
+ 
+ #include "nsString.h"
+ #include "nsCOMPtr.h"
+ class nsIUnicharInputStream;
+ 
+ // XXX turn this off for minimo builds
+-#define CSS_REPORT_PARSE_ERRORS
++//#define CSS_REPORT_PARSE_ERRORS
+ 
+ #define CSS_BUFFER_SIZE 256
+ 
+ // for #ifdef CSS_REPORT_PARSE_ERRORS
+ #include "nsXPIDLString.h"
+ class nsIURI;
+ 
+ // Token types
+ enum nsCSSTokenType {
+   // A css identifier (e.g. foo)

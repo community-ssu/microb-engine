@@ -1,0 +1,114 @@
+# Patches for microb-engine
+# Oleg Romashin <oleg.romashin@nokia.com>
+# Bug 93213  embedding/browser/gtk/tests built even with --disable-tests
+
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -5784,16 +5784,28 @@
+ dnl build the tests by default
+ dnl ========================================================
+ MOZ_ARG_DISABLE_BOOL(tests,
+ [  --disable-tests         Do not build test libraries & programs],
+     ENABLE_TESTS=,
+     ENABLE_TESTS=1 )
+ 
+ dnl ========================================================
++dnl you can enable some tests even if tests are disabled by
++dnl previous option
++dnl ========================================================
++ENABLE_EMBEDDING_TESTS=$ENABLE_TESTS
++MOZ_ARG_ENABLE_BOOL(embedding-tests,
++[  --enable-embedding-tests
++                           Do build embedding tests libraries & programs,
++                           even if tests are disabled],
++    ENABLE_EMBEDDING_TESTS=1,
++    ENABLE_EMBEDDING_TESTS= )
++
++dnl ========================================================
+ dnl parental controls (for Windows Vista)
+ dnl ========================================================
+ MOZ_ARG_DISABLE_BOOL(parental-controls,
+ [  --disable-parental-controls
+                            Do not build parental controls],
+    MOZ_DISABLE_PARENTAL_CONTROLS=1,
+    MOZ_DISABLE_PARENTAL_CONTROLS=)
+ if test -n "$MOZ_DISABLE_PARENTAL_CONTROLS"; then
+@@ -8118,16 +8130,17 @@
+ AC_SUBST(CXX_VERSION)
+ AC_SUBST(MSMANIFEST_TOOL)
+ AC_SUBST(MOZ_NO_FILEPICKER)
+ AC_SUBST(MOZ_NO_DRAGSERVICE)
+ AC_SUBST(MOZ_NO_GTKSOUND)
+ AC_SUBST(MOZ_NO_TOOLTIPS)
+ AC_SUBST(MOZ_NO_COMMANDLINE)
+ AC_SUBST(MOZ_NO_CONTEXTMENU)
++AC_SUBST(ENABLE_EMBEDDING_TESTS)
+ 
+ if test "$USING_HCC"; then
+    CC='${topsrcdir}/build/hcc'
+    CC="$CC '$_OLDCC'"
+    CXX='${topsrcdir}/build/hcpp'
+    CXX="$CXX '$_OLDCXX'"
+    AC_SUBST(CC)
+    AC_SUBST(CXX)
+Index: mozilla/config/autoconf.mk.in
+===================================================================
+--- mozilla.orig/config/autoconf.mk.in
++++ mozilla/config/autoconf.mk.in
+@@ -117,16 +117,17 @@
+ MACOSX_DEPLOYMENT_TARGET = @MACOSX_DEPLOYMENT_TARGET@
+ MOZ_MAIL_NEWS	= @MOZ_MAIL_NEWS@
+ MOZ_CALENDAR	= @MOZ_CALENDAR@
+ MOZ_PLAINTEXT_EDITOR_ONLY = @MOZ_PLAINTEXT_EDITOR_ONLY@
+ MOZ_COMPOSER = @MOZ_COMPOSER@
+ BUILD_STATIC_LIBS = @BUILD_STATIC_LIBS@
+ MOZ_ENABLE_LIBXUL = @MOZ_ENABLE_LIBXUL@
+ ENABLE_TESTS	= @ENABLE_TESTS@
++ENABLE_EMBEDDING_TESTS	= @ENABLE_EMBEDDING_TESTS@
+ IBMBIDI = @IBMBIDI@
+ MOZ_UNIVERSALCHARDET = @MOZ_UNIVERSALCHARDET@
+ SUNCTL = @SUNCTL@
+ ACCESSIBILITY = @ACCESSIBILITY@
+ MOZ_VIEW_SOURCE = @MOZ_VIEW_SOURCE@
+ MOZ_XPINSTALL = @MOZ_XPINSTALL@
+ MOZ_JSLOADER  = @MOZ_JSLOADER@
+ MOZ_USE_NATIVE_UCONV = @MOZ_USE_NATIVE_UCONV@
+Index: mozilla/embedding/browser/gtk/gtkembed.pkg
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/gtkembed.pkg
++++ mozilla/embedding/browser/gtk/gtkembed.pkg
+@@ -1,9 +1,11 @@
+ [gtkembed]
+ dist/bin/@DLLP@gtkembedmoz@DLLS@
+-dist/bin/TestGtkEmbed
++#if ENABLE_EMBEDDING_TESTS
++dist/bin/TestGtkEmbed@BINS@
++#endif
+ 
+ #if ENABLE_TESTS
+ dist/bin/TestGtkEmbedNotebook@BINS@
+ dist/bin/TestGtkEmbedSocket@BINS@
+ dist/bin/TestGtkEmbedChild@BINS@
+ #endif
+Index: mozilla/embedding/browser/gtk/Makefile.in
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/Makefile.in
++++ mozilla/embedding/browser/gtk/Makefile.in
+@@ -42,15 +42,13 @@
+ VPATH		= @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
+ MODULE		= gtkembedmoz
+ 
+ DIRS=src
+ 
+-ifdef ENABLE_TESTS
+ TOOL_DIRS  += tests
+-endif
+ 
+ PACKAGE_FILE = gtkembed.pkg
+ 
+ include $(topsrcdir)/config/rules.mk

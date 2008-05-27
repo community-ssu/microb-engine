@@ -1,0 +1,17 @@
+# Remove -Werror
+# nsVoidArray.h:193: warning: cast from 'char*' to 'nsVoidArray::Impl*' increases required alignment of target type
+--- mozilla/netwerk/cookie/src/Makefile.in.orig	2007-08-28 19:02:43.000000000 +0300
++++ mozilla/netwerk/cookie/src/Makefile.in	2007-12-27 08:05:54.000000000 +0200
+@@ -53,12 +53,11 @@ REQUIRES	= \
+ 		storage \
+ 		$(NULL)
+ 
+ CPPSRCS		= \
+ 		nsCookie.cpp \
+ 		nsCookieService.cpp \
+ 		$(NULL)
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+-CXXFLAGS += $(WARNINGS_AS_ERRORS)
+ DEFINES += -DIMPL_NS_NET

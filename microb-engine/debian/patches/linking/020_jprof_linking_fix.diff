@@ -1,0 +1,45 @@
+# Fix for linking jprof library with ld-linux.so.2
+# See http://developer.mozilla.org/en/docs/Setting_up_jprof
+#
+Index: mozilla/tools/jprof/stub/Makefile.in
+===================================================================
+--- mozilla.orig/tools/jprof/stub/Makefile.in
++++ mozilla/tools/jprof/stub/Makefile.in
+@@ -55,11 +55,13 @@
+ EXPORTS         = \
+                 jprof.h \
+                 $(NULL)
+ 
+ EXPORTS         := $(addprefix $(srcdir)/, $(EXPORTS))
+ 
+ REQUIRES	= xpcom
+ 
++EXTRA_DSO_LDOPTS += /lib/ld-linux.so.2
++
+ include $(topsrcdir)/config/rules.mk
+ 
+ DEFINES		+= -D_IMPL_JPROF_API
+Index: mozilla/embedding/browser/gtk/tests/Makefile.in
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/tests/Makefile.in
++++ mozilla/embedding/browser/gtk/tests/Makefile.in
+@@ -69,16 +69,19 @@
+ 		$(NULL)
+ endif
+ 
+ include $(topsrcdir)/config/config.mk
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+ LIBS += $(XPCOM_STANDALONE_GLUE_LDOPTS)
++ifdef MOZ_JPROF
++LIBS += -ljprof
++endif
+ 
+ DEFINES += -DXPCOM_GLUE
+ 
+ CXXFLAGS	+= $(MOZ_GTK2_CFLAGS)
+ 
+ ifdef ENABLE_GNOME
+ CXXFLAGS	+= `gnome-config --cflags gnomeui`
+ EXTRA_LIBS	+= `gnome-config --libs gnomeui`

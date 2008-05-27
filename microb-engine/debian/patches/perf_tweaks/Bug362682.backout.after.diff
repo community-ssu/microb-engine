@@ -1,0 +1,166 @@
+Index: mozilla/gfx/thebes/src/gfxPangoFonts.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxPangoFonts.cpp
++++ mozilla/gfx/thebes/src/gfxPangoFonts.cpp
+@@ -16,16 +16,17 @@
+  *
+  * The Initial Developer of the Original Code is Mozilla Foundation.
+  * Portions created by the Initial Developer are Copyright (C) 2005
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
+  *   Vladimir Vukicevic <vladimir@mozilla.com>
+  *   Masayuki Nakano <masayuki@d-toybox.com>
++ *   Mats Palmgren <mats.palmgren@bredband.net>
+  *
+  * based on nsFontMetricsPango.cpp by
+  *   Christopher Blizzard <blizzard@mozilla.org>
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either the GNU General Public License Version 2 or later (the "GPL"), or
+  * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+@@ -85,17 +86,16 @@
+ #else // THEBES_USE_PANGO_CAIRO
+ #include <pango/pangocairo.h>
+ #endif // THEBES_USE_PANGO_CAIRO
+ 
+ #include <cairo.h>
+ #include <cairo-ft.h>
+ 
+ #include <pango/pango.h>
+-#include <pango/pango-utils.h>
+ #include <pango/pangocairo.h>
+ #include <pango/pangofc-fontmap.h>
+ 
+ #include <gdk/gdkpango.h>
+ 
+ #include <math.h>
+ 
+ #define FLOAT_PANGO_SCALE ((gfxFloat)PANGO_SCALE)
+@@ -105,18 +105,18 @@
+ #endif
+ #ifndef PANGO_GLYPH_UNKNOWN_FLAG
+ #define PANGO_GLYPH_UNKNOWN_FLAG ((PangoGlyph)0x10000000)
+ #endif
+ #ifndef PANGO_GLYPH_EMPTY
+ #define PANGO_GLYPH_EMPTY           ((PangoGlyph)0)
+ #endif
+ // For g a PangoGlyph,
+-#define IS_MISSING_GLYPH(g) (((g) & PANGO_GLYPH_UNKNOWN_FLAG) || (g) == PANGO_GLYPH_EMPTY)
+-#define IS_MISSING_GLYPH(g) (((g) & 0x10000000) || (g) == 0x0FFFFFFF)
++#define IS_MISSING_GLYPH(g) (((g) & PANGO_GLYPH_UNKNOWN_FLAG || (g) == PANGO_GLYPH_EMPTY))
++#define IS_EMPTY_GLYPH(g) ((g) == PANGO_GLYPH_EMPTY)
+ 
+ static PangoLanguage *GetPangoLanguage(const nsACString& aLangGroup);
+ static void GetMozLanguage(const PangoLanguage *aLang, nsACString &aMozLang);
+ 
+ /* static */ gfxPangoFontCache* gfxPangoFontCache::sPangoFontCache = nsnull;
+ /* static */ gfxPangoFontNameMap* gfxPangoFontNameMap::sPangoFontNameMap = nsnull;
+ 
+ /**
+@@ -404,17 +404,17 @@
+         mPangoFont = nsnull;
+         mXftFont = nsnull;
+         // XXX we don't need to reset mGlyphTestingFont
+     }
+ 
+     mPangoFontDesc = pango_font_description_new();
+ 
+     pango_font_description_set_family(mPangoFontDesc, NS_ConvertUTF16toUTF8(mName).get());
+-    gfxFloat size = mAdjustedSize ? mAdjustedSize : GetStyle()->size;
++    gfxFloat size = mAdjustedSize != 0.0f ? mAdjustedSize : GetStyle()->size;
+     MOZ_pango_font_description_set_absolute_size(mPangoFontDesc, size * PANGO_SCALE);
+     pango_font_description_set_style(mPangoFontDesc, ThebesStyleToPangoStyle(GetStyle()));
+     pango_font_description_set_weight(mPangoFontDesc, ThebesStyleToPangoWeight(GetStyle()));
+ 
+     //printf ("%s, %f, %d, %d\n", NS_ConvertUTF16toUTF8(mName).get(), GetStyle()->size, ThebesStyleToPangoStyle(GetStyle()), ThebesStyleToPangoWeight(GetStyle()));
+ #ifndef THEBES_USE_PANGO_CAIRO
+     mPangoCtx = pango_xft_get_context(GDK_DISPLAY(), 0);
+     gdk_pango_context_set_colormap(mPangoCtx, gdk_rgb_get_cmap());
+@@ -424,20 +424,21 @@
+ 
+     if (!GetStyle()->langGroup.IsEmpty())
+         pango_context_set_language(mPangoCtx, GetPangoLanguage(GetStyle()->langGroup));
+ 
+     pango_context_set_font_description(mPangoCtx, mPangoFontDesc);
+ 
+     mHasMetrics = PR_FALSE;
+ 
+-    if (mAdjustedSize != 0)
++    if (mAdjustedSize != 0.0f)
+         return;
+ 
+     mAdjustedSize = GetStyle()->size;
++    if (mAdjustedSize == 0.0f || GetStyle()->sizeAdjust == 0.0f)
+     if (GetStyle()->sizeAdjust == 0)
+         return;
+ 
+     gfxSize isz, lsz;
+     GetCharSize('x', isz, lsz);
+     gfxFloat aspect = isz.height / GetStyle()->size;
+     mAdjustedSize = GetStyle()->GetAdjustedSize(aspect);
+     RealizeFont(PR_TRUE);
+@@ -492,16 +493,24 @@
+         return;
+     fontNameMap->Put(name, mPangoFont);
+ }
+ 
+ void
+ gfxPangoFont::GetCharSize(char aChar, gfxSize& aInkSize, gfxSize& aLogSize,
+                           PRUint32 *aGlyphID)
+ {
++    if (NS_UNLIKELY(GetStyle()->size == 0.0)) {
++        if (aGlyphID)
++            *aGlyphID = 0;
++        aInkSize.SizeTo(0.0, 0.0);
++        aLogSize.SizeTo(0.0, 0.0);
++        return;
++    }
++
+     PangoAnalysis analysis;
+     // Initialize new fields, gravity and flags in pango 1.16
+     // (or padding in 1.14).
+     // Use memset instead of { 0 } aggregate initialization or placement new
+     // default initialization so that padding (which may have meaning in other
+     // versions) is initialized.
+     memset(&analysis, 0, sizeof(analysis));
+     analysis.font = GetPangoFont();
+@@ -510,17 +519,17 @@
+ 
+     PangoGlyphString *glstr = pango_glyph_string_new();
+     pango_shape (&aChar, 1, &analysis, glstr);
+ 
+     if (aGlyphID) {
+         *aGlyphID = 0;
+         if (glstr->num_glyphs == 1) {
+             PangoGlyph glyph = glstr->glyphs[0].glyph;
+-            if (!IS_MISSING_GLYPH(glyph)) {
++            if (!IS_MISSING_GLYPH(glyph) && !IS_EMPTY_GLYPH(glyph)) {
+                 *aGlyphID = glyph;
+             }
+         }
+     }
+ 
+     PangoRectangle ink_rect, log_rect;
+     pango_glyph_string_extents(glstr, analysis.font, &ink_rect, &log_rect);
+ 
+@@ -631,17 +640,17 @@
+     XftUnlockFace(xftFont);
+ #else
+     /* pango_cairo case; try to get all the metrics from pango itself */
+     PangoFont *font = GetPangoFont(); // RealizeFont is called here.
+ 
+     PangoFontMetrics *pfm = pango_font_get_metrics (font, NULL);
+ 
+     // ??
+-    mMetrics.emHeight = mAdjustedSize ? mAdjustedSize : GetStyle()->size;
++    mMetrics.emHeight = mAdjustedSize != 0.0f ? mAdjustedSize : GetStyle()->size;
+ 
+     mMetrics.maxAscent = pango_font_metrics_get_ascent(pfm) / FLOAT_PANGO_SCALE;
+     mMetrics.maxDescent = pango_font_metrics_get_descent(pfm) / FLOAT_PANGO_SCALE;
+ 
+     gfxFloat lineHeight = mMetrics.maxAscent + mMetrics.maxDescent;
+ 
+     if (lineHeight > mMetrics.emHeight)
+         mMetrics.externalLeading = lineHeight - mMetrics.emHeight;

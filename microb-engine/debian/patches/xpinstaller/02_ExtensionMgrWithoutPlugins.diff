@@ -1,0 +1,176 @@
+Index: mozilla/toolkit/mozapps/extensions/content/extensions.js
+===================================================================
+--- mozilla.orig/toolkit/mozapps/extensions/content/extensions.js
++++ mozilla/toolkit/mozapps/extensions/content/extensions.js
+@@ -865,16 +865,17 @@
+                         .createInstance(Components.interfaces.nsIRDFDataSource);
+   gExtensionsView.database.AddDataSource(gSearchDS);
+   var ioService = Components.classes["@mozilla.org/network/io-service;1"]
+                             .getService(nsIIOService);
+   if (!ioService.offline)
+     retrieveRepositoryAddons(document.getElementById("searchbox").value);
+ }
+ 
++#ifdef MOZ_PLUGINS
+ function initPluginsDS()
+ {
+   gPluginsDS = Components.classes["@mozilla.org/rdf/datasource;1?name=in-memory-datasource"]
+                          .createInstance(Components.interfaces.nsIRDFDataSource);
+   rebuildPluginsDS();
+ }
+ 
+ function rebuildPluginsDS()
+@@ -981,16 +982,17 @@
+   var isDisabled = plugin.disabled || plugin.blocklisted;
+   gPluginsDS.Change(gRDF.GetResource(PREFIX_ITEM_URI + plugin.filename),
+                     gRDF.GetResource(PREFIX_NS_EM + "isDisabled"),
+                     gRDF.GetLiteral(isDisabled ? "false" : "true"),
+                     gRDF.GetLiteral(isDisabled ? "true" : "false"));
+   gExtensionsViewController.onCommandUpdate();
+   gExtensionsView.selectedItem.focus();
+ }
++#endif
+ 
+ ///////////////////////////////////////////////////////////////////////////////
+ // Startup, Shutdown
+ function Startup()
+ {
+   gExtensionStrings = document.getElementById("extensionsStrings");
+   gPref = Components.classes["@mozilla.org/preferences-service;1"]
+                     .getService(Components.interfaces.nsIPrefBranch2);
+@@ -1032,18 +1034,20 @@
+   gExtensionManager.sortTypeByProperty(nsIUpdateItem.TYPE_ANY, "name", true);
+   // Extension Command Updating is handled by a command controller.
+   gExtensionsView.controllers.appendController(gExtensionsViewController);
+   gExtensionsView.addEventListener("select", onAddonSelect, false);
+ 
+   gRDF = Components.classes["@mozilla.org/rdf/rdf-service;1"]
+                    .getService(Components.interfaces.nsIRDFService);
+ 
++#ifdef MOZ_PLUGINS
+   initPluginsDS();
+   gExtensionsView.database.AddDataSource(gPluginsDS);
++#endif
+   if (gShowGetAddonsPane)
+     initSearchDS();
+   gExtensionsView.database.AddDataSource(gExtensionManager.datasource);
+   gExtensionsView.setAttribute("ref", RDFURI_ITEM_ROOT);
+ 
+   document.getElementById("search-view").hidden = !gShowGetAddonsPane;
+   updateOptionalViews();
+ 
+@@ -1053,17 +1057,19 @@
+   gExtensionsViewController.onCommandUpdate();
+ 
+   // Now look and see if we're being opened by XPInstall
+   gDownloadManager = new XPInstallDownloadManager();
+   var os = Components.classes["@mozilla.org/observer-service;1"]
+                      .getService(Components.interfaces.nsIObserverService);
+   os.addObserver(gDownloadManager, "xpinstall-download-started", false);
+   os.addObserver(gAddonsMsgObserver, "addons-message-notification", false);
++#ifdef MOZ_PLUGINS
+   os.addObserver(gPluginObserver, "plugins-list-updated", false);
++#endif
+ 
+   gObserverIndex = gExtensionManager.addInstallListener(gDownloadManager);
+ 
+   if (!gCheckCompat) {
+     var msgText = getExtensionString("disabledCompatMsg");
+     var buttonLabel = getExtensionString("enableButtonLabel");
+     var buttonAccesskey = getExtensionString("enableButtonAccesskey");
+     var notifyData = "addons-enable-compatibility";
+@@ -1183,17 +1189,19 @@
+   gExtensionsView.database.RemoveDataSource(gExtensionManager.datasource);
+ 
+   gExtensionManager.removeInstallListenerAt(gObserverIndex);
+ 
+   var os = Components.classes["@mozilla.org/observer-service;1"]
+                      .getService(Components.interfaces.nsIObserverService);
+   os.removeObserver(gAddonsMsgObserver, "addons-message-notification");
+   os.removeObserver(gDownloadManager, "xpinstall-download-started");
++#ifdef MOZ_PLUGINS
+   os.removeObserver(gPluginObserver, "plugins-list-updated");
++#endif
+   var currentNotification = document.getElementById("addonsMsg").currentNotification;
+   if (currentNotification && currentNotification.value == "addons-no-updates")
+     window.removeEventListener("select", noUpdatesDismiss, true);
+ }
+ 
+ var TemplateBuilderListener = {
+   willRebuild: function(aBuilder) {
+   },
+@@ -1985,22 +1993,24 @@
+       else
+         gCurrentTheme = gPref.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN);
+       updateOptionalViews();
+       updateGlobalCommands();
+     }
+   }
+ };
+ 
++#ifdef MOZ_PLUGINS
+ const gPluginObserver = {
+   observe: function (aSubject, aTopic, aData)
+   {
+     rebuildPluginsDS();
+   }
+ };
++#endif
+ 
+ function isXPInstallEnabled() {
+   var enabled = false;
+   var locked = false;
+   try {
+     enabled = gPref.getBoolPref("xpinstall.enabled");
+     if (enabled)
+       return true;
+@@ -2702,22 +2712,24 @@
+ 
+     cmd_cancelUpgrade: function (aSelectedItem)
+     {
+       this.cmd_cancelInstall(aSelectedItem);
+     },
+ 
+     cmd_disable: function (aSelectedItem)
+     {
++#ifdef MOZ_PLUGINS
+       if (aSelectedItem.getAttribute("plugin") == "true") {
+         var name = aSelectedItem.getAttribute("name");
+         var desc = aSelectedItem.getAttribute("description");
+         togglePluginDisabled(name, desc);
+         return;
+       }
++#endif
+ 
+       var id = getIDFromResourceURI(aSelectedItem.id);
+       var dependentItems = gExtensionManager.getDependentItemListForID(id, false, { });
+ 
+       if (dependentItems.length > 0) {
+         name = aSelectedItem.getAttribute("name");
+         var result = confirmOperation(name, "disableTitle", "disableQueryMessage",
+                                       "disableButton", "cancelButton",
+@@ -2729,22 +2741,24 @@
+       gExtensionsViewController.onCommandUpdate();
+       gExtensionsView.selectedItem.focus();
+       updateOptionalViews();
+       updateGlobalCommands();
+     },
+ 
+     cmd_enable: function (aSelectedItem)
+     {
++#ifdef MOZ_PLUGINS
+       if (aSelectedItem.getAttribute("plugin") == "true") {
+         var name = aSelectedItem.getAttribute("name");
+         var desc = aSelectedItem.getAttribute("description");
+         togglePluginDisabled(name, desc);
+         return;
+       }
++#endif
+ 
+       gExtensionManager.enableItem(getIDFromResourceURI(aSelectedItem.id));
+       gExtensionsViewController.onCommandUpdate();
+       gExtensionsView.selectedItem.focus();
+       updateOptionalViews();
+       updateGlobalCommands();
+     }
+   }

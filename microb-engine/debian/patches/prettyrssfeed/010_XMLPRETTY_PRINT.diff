@@ -1,0 +1,223 @@
+# Patch for using XMLPretty printer XSL as normal RSS reader without new component
+# (need help to improve it)
+#
+Index: mozilla/content/xml/document/resources/XMLPrettyPrint.xsl
+===================================================================
+--- mozilla.orig/content/xml/document/resources/XMLPrettyPrint.xsl
++++ mozilla/content/xml/document/resources/XMLPrettyPrint.xsl
+@@ -1,9 +1,9 @@
+-<?xml version="1.0"?>
++<?xml version="1.0" encoding="ISO-8859-1"?>
+ <!-- ***** BEGIN LICENSE BLOCK *****
+    - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+    -
+    - The contents of this file are subject to the Mozilla Public License Version
+    - 1.1 (the "License"); you may not use this file except in compliance with
+    - the License. You may obtain a copy of the License at
+    - http://www.mozilla.org/MPL/
+    -
+@@ -31,135 +31,78 @@
+    - use your version of this file under the terms of the MPL, indicate your
+    - decision by deleting the provisions above and replace them with the notice
+    - and other provisions required by the LGPL or the GPL. If you do not delete
+    - the provisions above, a recipient may use your version of this file under
+    - the terms of any one of the MPL, the GPL or the LGPL.
+    -
+    - ***** END LICENSE BLOCK ***** -->
+ 
+-<!DOCTYPE overlay SYSTEM "chrome://global/locale/xml/prettyprint.dtd">
++	 <!DOCTYPE overlay SYSTEM "chrome://global/locale/xml/prettyprint.dtd">
+ 
+-<xsl:stylesheet version="1.0"
+-                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+-                xmlns="http://www.w3.org/1999/xhtml">
+-
+-  <xsl:output method="xml"/>
+-
+-  <xsl:template match="/">
+-    <link href="chrome://global/content/xml/XMLPrettyPrint.css" type="text/css" rel="stylesheet"/>
+-    <link title="Monospace" href="chrome://global/content/xml/XMLMonoPrint.css" type="text/css" rel="alternate stylesheet"/>
+-    <div id="header">
+-      <p>
+-        &xml.nostylesheet;
+-      </p>
+-    </div>
+-    <xsl:apply-templates/>
+-  </xsl:template>
+-
+-  <xsl:template match="*">
+-    <div>
+-      <xsl:text>&lt;</xsl:text>
+-      <span class="start-tag"><xsl:value-of select="name(.)"/></span>
+-      <xsl:apply-templates select="@*"/>
+-      <xsl:text>/&gt;</xsl:text>
+-    </div>
+-  </xsl:template>
+-
+-  <xsl:template match="*[node()]">
+-    <div>
+-      <xsl:text>&lt;</xsl:text>
+-      <span class="start-tag"><xsl:value-of select="name(.)"/></span>
+-      <xsl:apply-templates select="@*"/>
+-      <xsl:text>&gt;</xsl:text>
+-
+-      <span class="text"><xsl:value-of select="."/></span>
+-
+-      <xsl:text>&lt;/</xsl:text>
+-      <span class="end-tag"><xsl:value-of select="name(.)"/></span>
+-      <xsl:text>&gt;</xsl:text>
+-    </div>
+-  </xsl:template>
+-
+-  <xsl:template match="*[* or processing-instruction() or comment() or string-length(.) &gt; 50]">
+-    <div class="expander-open">
+-      <xsl:call-template name="expander"/>
+-
+-      <xsl:text>&lt;</xsl:text>
+-      <span class="start-tag"><xsl:value-of select="name(.)"/></span>
+-      <xsl:apply-templates select="@*"/>
+-      <xsl:text>&gt;</xsl:text>
+-
+-      <div class="expander-content"><xsl:apply-templates/></div>
+-
+-      <xsl:text>&lt;/</xsl:text>
+-      <span class="end-tag"><xsl:value-of select="name(.)"/></span>
+-      <xsl:text>&gt;</xsl:text>
+-    </div>
+-  </xsl:template>
+-
+-  <xsl:template match="@*">
+-    <xsl:text> </xsl:text>
+-    <span class="attribute-name"><xsl:value-of select="name(.)"/></span>
+-    <xsl:text>=</xsl:text>
+-    <span class="attribute-value">"<xsl:value-of select="."/>"</span>
+-  </xsl:template>
+-
+-  <xsl:template match="text()">
+-    <xsl:if test="normalize-space(.)">
+-      <xsl:value-of select="."/>
+-    </xsl:if>
+-  </xsl:template>
+-
+-  <xsl:template match="processing-instruction()">
+-    <div class="pi">
+-      <xsl:text>&lt;?</xsl:text>
+-      <xsl:value-of select="name(.)"/>
+-      <xsl:text> </xsl:text>
+-      <xsl:value-of select="."/>
+-      <xsl:text>?&gt;</xsl:text>
+-    </div>
+-  </xsl:template>
+-
+-  <xsl:template match="processing-instruction()[string-length(.) &gt; 50]">
+-    <div class="expander-open">
+-      <xsl:call-template name="expander"/>
+-
+-      <span class="pi">
+-        <xsl:text> &lt;?</xsl:text>
+-        <xsl:value-of select="name(.)"/>
+-      </span>
+-      <div class="expander-content pi"><xsl:value-of select="."/></div>
+-      <span class="pi">
+-        <xsl:text>?&gt;</xsl:text>
+-      </span>
+-    </div>
+-  </xsl:template>
+-
+-  <xsl:template match="comment()">
+-    <div class="comment">
+-      <xsl:text>&lt;!--</xsl:text>
+-      <xsl:value-of select="."/>
+-      <xsl:text>--&gt;</xsl:text>
+-    </div>
+-  </xsl:template>
+-
+-  <xsl:template match="comment()[string-length(.) &gt; 50]">
+-    <div class="expander-open">
+-      <xsl:call-template name="expander"/>
+-
+-      <span class="comment">
+-        <xsl:text>&lt;!--</xsl:text>
+-      </span>
+-      <div class="expander-content comment">
+-        <xsl:value-of select="."/>
+-      </div>
+-      <span class="comment">
+-        <xsl:text>--&gt;</xsl:text>
+-      </span> 
+-    </div>
+-  </xsl:template>
+-  
+-  <xsl:template name="expander">
+-    <div class="expander">&#x2212;</div>
+-  </xsl:template>
+-
+-</xsl:stylesheet>
++	 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
++		 <xsl:output method="html" indent="yes" />
++		 <xsl:variable name="title" select="/rss/channel/title"/>
++		 <xsl:variable name="feedtitle" select="/feed/title"/>
++		 <xsl:variable name="rdftitle" select="/rdf:RDF/channel/title"/>
++		 <xsl:template match="/">
++			 <html><head>
++					 <title><xsl:value-of select="$title"/><xsl:value-of select="$feedtitle"/><xsl:value-of select="$rdftitle"/>
++						 XML Feed
++					 </title>
++					 <link rel="stylesheet" href="chrome://global/content/xml/XMLPrettyPrint.css" type="text/css"/>
++				 </head>
++				 <body>
++					 <div>
++						 <span><xsl:value-of select="$title"/></span>
++						 <span><xsl:value-of select="$feedtitle"/></span>
++						 <span><xsl:value-of select="$rdftitle"/></span>
++					 </div>
++					 <br/>
++					 <hr/>
++					 <xsl:apply-templates select="rdf:RDF/channel"/>
++				 </body>
++			 </html>
++		 </xsl:template>
++		 <xsl:template match="channel">
++			 <xsl:apply-templates select="item"/>
++		 </xsl:template>
++		 <xsl:template match="entry">
++			 <div id="item">
++				 <ul>
++					 <li>
++						 <a href="{id}" class="item"><xsl:value-of select="title"/></a><br/>
++						 <div>
++							 <xsl:value-of select="content" />
++						 </div>
++						 <xsl:if test="count(child::enclosure)=1">
++							 <p class="mediaenclosure"><embed src="{enclosure/@url}" width="100" height="55"><xsl:value-of select="child::enclosure/@url"/></embed></p>
++						 </xsl:if>
++					 </li>
++				 </ul>
++			 </div>
++		 </xsl:template>
++		 <xsl:template match="link">
++		 </xsl:template>
++		 <xsl:template match="updated">
++		 </xsl:template>
++		 <xsl:template match="generator">
++		 </xsl:template>
++		 <xsl:template match="id">
++		 </xsl:template>
++		 <xsl:template match="title">
++		 </xsl:template>
++		 <xsl:template match="item">
++			 <div id="item">
++				 <ul>
++					 <li>
++						 <a href="{link}" class="item"><xsl:value-of select="title"/></a><br/>
++						 <div>
++							 <xsl:value-of select="description" />
++						 </div>
++						 <xsl:if test="count(child::enclosure)=1">
++							 <p class="mediaenclosure"><embed src="{enclosure/@url}" width="100" height="55"><xsl:value-of select="child::enclosure/@url"/></embed></p>
++						 </xsl:if>
++					 </li>
++				 </ul>
++			 </div>
++		 </xsl:template>
++	 </xsl:stylesheet>

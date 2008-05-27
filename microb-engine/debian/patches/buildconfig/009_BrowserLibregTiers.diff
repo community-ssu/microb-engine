@@ -1,0 +1,25 @@
+# Adding Libreg to tiers_necko_dirs
+#
+--- mozilla/browser/build.mk.orig	2007-08-03 18:19:32.000000000 +0300
++++ mozilla/browser/build.mk	2007-10-29 22:27:54.000000000 +0200
+@@ -36,16 +36,20 @@
+ # ***** END LICENSE BLOCK *****
+ 
+ ifndef LIBXUL_SDK
+ include $(topsrcdir)/toolkit/toolkit-tiers.mk
+ endif
+ 
+ TIERS += app
+ 
++ifeq (1_,$(MOZ_NO_XPCOM_OBSOLETE)_$(MOZ_XPINSTALL))
++tier_necko_dirs += modules/libreg
++endif
++
+ ifdef MOZ_EXTENSIONS
+ tier_app_dirs += extensions
+ endif
+ 
+ ifdef MOZ_BRANDING_DIRECTORY
+ tier_app_dirs += $(MOZ_BRANDING_DIRECTORY)
+ endif
+ 

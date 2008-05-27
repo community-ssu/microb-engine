@@ -1,0 +1,1121 @@
+# Gmail performance stuff
+# pete@mozdevgroup.com, daniel@mozdevgroup.com
+Index: mozilla/content/base/public/nsIDocument.h
+===================================================================
+--- mozilla.orig/content/base/public/nsIDocument.h
++++ mozilla/content/base/public/nsIDocument.h
+@@ -926,16 +926,18 @@
+     return mMayStartLayout;
+   }
+ 
+   void SetMayStartLayout(PRBool aMayStartLayout)
+   {
+     mMayStartLayout = aMayStartLayout;
+   }
+ 
++  virtual nsresult EnsureUpToDate() = 0;
++
+   JSObject* GetJSObject() const
+   {
+     return mJSObject;
+   }
+ 
+   void SetJSObject(JSObject *aJSObject)
+   {
+     mJSObject = aJSObject;
+Index: mozilla/content/base/src/nsDocument.h
+===================================================================
+--- mozilla.orig/content/base/src/nsDocument.h
++++ mozilla/content/base/src/nsDocument.h
+@@ -652,16 +652,22 @@
+ 
+   /**
+    * Utility method for getElementsByClassName.  aRootNode is the node (either
+    * document or element), which getElementsByClassName was called on.
+    */
+   static nsresult GetElementsByClassNameHelper(nsINode* aRootNode,
+                                                const nsAString& aClasses,
+                                                nsIDOMNodeList** aReturn);
++
++  virtual nsresult EnsureUpToDate()
++  {
++    return NS_OK;
++  }
++
+ protected:
+ 
+   /**
+    * Check that aId is not empty and log a message to the console
+    * service if it is.
+    * @returns PR_TRUE if aId looks correct, PR_FALSE otherwise.
+    */
+   static PRBool CheckGetElementByIdArg(const nsAString& aId);
+Index: mozilla/content/html/content/src/nsGenericHTMLElement.cpp
+===================================================================
+--- mozilla.orig/content/html/content/src/nsGenericHTMLElement.cpp
++++ mozilla/content/html/content/src/nsGenericHTMLElement.cpp
+@@ -106,16 +106,37 @@
+ #include "nsIDOMText.h"
+ 
+ #include "nsIEditor.h"
+ #include "nsIEditorIMESupport.h"
+ #include "nsEventDispatcher.h"
+ #include "nsLayoutUtils.h"
+ #include "nsContentCreatorFunctions.h"
+ 
++#include "../../document/src/nsHTMLDocument.h"
++
++//#ifdef DEBUG_db48x
++#define NODE_FINALIZE_WRITE                     \
++  {                                             \
++    nsIDocument *fw_doc = GetOwnerDoc();        \
++    nsresult fw_rv = NS_OK;                     \
++    if (fw_doc)                                 \
++      fw_rv = fw_doc->EnsureUpToDate();         \
++    NS_ENSURE_SUCCESS(fw_rv, fw_rv);            \
++  }
++//#else
++//#define NODE_FINALIZE_WRITE
++//#endif
++
++// If this flag is set on an nsGenericHTMLFormElement, that means that we have
++// added ourselves to our mForm.  It's possible to have a non-null mForm, but
++// not have this flag set.  That happens when the form is set via the content
++// sink.
++#define ADDED_TO_FORM (1 << NODE_TYPE_SPECIFIC_BITS_OFFSET)
++
+ class nsINodeInfo;
+ class nsIDOMNodeList;
+ class nsRuleWalker;
+ 
+ static nsIFrame*
+ GetStyledFrameFor(nsGenericHTMLElement* aElement)
+ {
+   nsIFrame *frame = aElement->GetPrimaryFrame(Flush_Layout);
+@@ -355,31 +376,35 @@
+ 
+   return NS_OK;
+ }
+ 
+ nsresult
+ nsGenericHTMLElement::GetElementsByTagName(const nsAString& aTagname,
+                                            nsIDOMNodeList** aReturn)
+ {
++  NODE_FINALIZE_WRITE
++
+   nsAutoString tagName(aTagname);
+ 
+   // Only lowercase the name if this element has no namespace (i.e.
+   // it's a HTML element, not an XHTML element).
+   if (mNodeInfo && mNodeInfo->NamespaceEquals(kNameSpaceID_None))
+     ToLowerCase(tagName);
+ 
+   return nsGenericHTMLElementBase::GetElementsByTagName(tagName, aReturn);
+ }
+ 
+ nsresult
+ nsGenericHTMLElement::GetElementsByTagNameNS(const nsAString& aNamespaceURI,
+                                              const nsAString& aLocalName,
+                                              nsIDOMNodeList** aReturn)
+ {
++  NODE_FINALIZE_WRITE
++
+   nsAutoString localName(aLocalName);
+ 
+   // Only lowercase the name if this element has no namespace (i.e.
+   // it's a HTML element, not an XHTML element).
+   if (mNodeInfo && mNodeInfo->NamespaceEquals(kNameSpaceID_None))
+     ToLowerCase(localName);
+ 
+   return nsGenericHTMLElementBase::GetElementsByTagNameNS(aNamespaceURI,
+@@ -660,16 +685,18 @@
+   }
+ 
+   return NS_OK;
+ }
+ 
+ nsresult
+ nsGenericHTMLElement::GetInnerHTML(nsAString& aInnerHTML)
+ {
++  NODE_FINALIZE_WRITE
++
+   aInnerHTML.Truncate();
+ 
+   nsCOMPtr<nsIDocument> doc = GetOwnerDoc();
+   if (!doc) {
+     return NS_OK; // We rely on the document for doing HTML conversion
+   }
+ 
+   nsCOMPtr<nsIDOMNode> thisNode(do_QueryInterface(static_cast<nsIContent *>
+@@ -710,16 +737,18 @@
+ 
+   docEncoder->SetContainerNode(thisNode);
+   return docEncoder->EncodeToString(aInnerHTML);
+ }
+ 
+ nsresult
+ nsGenericHTMLElement::SetInnerHTML(const nsAString& aInnerHTML)
+ {
++  NODE_FINALIZE_WRITE
++
+   // This BeginUpdate/EndUpdate pair is important to make us reenable the
+   // scriptloader before the last EndUpdate call.
+   mozAutoDocUpdate updateBatch(GetCurrentDoc(), UPDATE_CONTENT_MODEL, PR_TRUE);
+ 
+   // Batch possible DOMSubtreeModified events.
+   mozAutoSubtreeModified subtree(GetOwnerDoc(), nsnull);
+ 
+   // Remove childnodes
+@@ -1004,16 +1033,18 @@
+   NS_ENSURE_ARG_POINTER(aLength);
+   *aLength = nsPresContext::AppUnitsToIntCSSPixels(GetClientAreaRect().width);
+   return NS_OK;
+ }
+ 
+ nsresult
+ nsGenericHTMLElement::ScrollIntoView(PRBool aTop)
+ {
++  NODE_FINALIZE_WRITE
++
+   nsIDocument *document = GetCurrentDoc();
+ 
+   if (!document) {
+     return NS_OK;
+   }
+ 
+   // Get the presentation shell
+   nsCOMPtr<nsIPresShell> presShell = document->GetPrimaryShell();
+@@ -1129,16 +1160,18 @@
+   nsGenericElement::UpdateEditableState();
+ }
+ 
+ nsresult
+ nsGenericHTMLElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
+                                  nsIContent* aBindingParent,
+                                  PRBool aCompileEventHandlers)
+ {
++  NODE_FINALIZE_WRITE
++
+   nsresult rv = nsGenericHTMLElementBase::BindToTree(aDocument, aParent,
+                                                      aBindingParent,
+                                                      aCompileEventHandlers);
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   if (aDocument) {
+     if (HasFlag(NODE_IS_EDITABLE) && GetContentEditableValue() == eTrue) {
+       nsCOMPtr<nsIHTMLDocument> htmlDocument = do_QueryInterface(aDocument);
+Index: mozilla/content/html/document/src/nsHTMLDocument.cpp
+===================================================================
+--- mozilla.orig/content/html/document/src/nsHTMLDocument.cpp
++++ mozilla/content/html/document/src/nsHTMLDocument.cpp
+@@ -501,16 +501,18 @@
+                "nsHTMLDocument::Reset() - Wyciwyg Channel  still exists!");
+ 
+   mWyciwygChannel = nsnull;
+ 
+   // Make the content type default to "text/html", we are a HTML
+   // document, after all. Once we start getting data, this may be
+   // changed.
+   mContentType = "text/html";
++
++  mWriteData.Truncate(0);
+ }
+ 
+ nsStyleSet::sheetType
+ nsHTMLDocument::GetAttrSheetType()
+ {
+   if (IsXHTML()) {
+     return nsDocument::GetAttrSheetType();
+   }
+@@ -1236,16 +1238,18 @@
+               }
+             }
+           }
+         }
+       }
+     }
+   }
+ 
++  EnsureUpToDate();
++
+   // Reset this now, since we're really done "loading" this document.written
+   // document.
+   NS_ASSERTION(mWriteState == eNotWriting || mWriteState == ePendingClose ||
+                mWriteState == eDocumentClosed, "EndLoad called early");
+   mWriteState = eNotWriting;
+ 
+   PRBool turnOnEditing =
+     mParser && (HasFlag(NODE_IS_EDITABLE) || mContentEditableCount > 0);
+@@ -1283,16 +1287,18 @@
+ {
+   NS_PRECONDITION(nsnull != aMap, "null ptr");
+   mImageMaps.RemoveObject(aMap);
+ }
+ 
+ nsIDOMHTMLMapElement *
+ nsHTMLDocument::GetImageMap(const nsAString& aMapName)
+ {
++  EnsureUpToDate();
++
+   nsAutoString name;
+   PRUint32 i, n = mImageMaps.Count();
+   nsIDOMHTMLMapElement *firstMatch = nsnull;
+ 
+   for (i = 0; i < n; ++i) {
+     nsIDOMHTMLMapElement *map = mImageMaps[i];
+     NS_ASSERTION(map, "Null map in map list!");
+ 
+@@ -1580,16 +1586,18 @@
+ {
+   return nsDocument::CreateTextNode(aData, aReturn);
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetElementsByTagName(const nsAString& aTagname,
+                                      nsIDOMNodeList** aReturn)
+ {
++  EnsureUpToDate();
++
+   nsAutoString tmp(aTagname);
+   if (!IsXHTML()) {
+     ToLowerCase(tmp); // HTML elements are lower case internally.
+   }
+   return nsDocument::GetElementsByTagName(tmp, aReturn);
+ }
+ 
+ NS_IMETHODIMP
+@@ -1795,16 +1803,19 @@
+   CopyUTF8toUTF16(str, aURL);
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetBody(nsIDOMHTMLElement** aBody)
+ {
++  EnsureUpToDate();
++
++  NS_ENSURE_ARG_POINTER(aBody);
+   *aBody = nsnull;
+ 
+   nsIContent* body = GetBodyContent();
+ 
+   if (body) {
+     // There is a body element, return that as the body.
+     return CallQueryInterface(body, aBody);
+   }
+@@ -1856,32 +1867,36 @@
+   }
+ 
+   return rootElem->AppendChild(aBody, getter_AddRefs(tmp));
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetImages(nsIDOMHTMLCollection** aImages)
+ {
++  EnsureUpToDate();
++
+   if (!mImages) {
+     mImages = new nsContentList(this, nsGkAtoms::img, mDefaultNamespaceID);
+     if (!mImages) {
+       return NS_ERROR_OUT_OF_MEMORY;
+     }
+   }
+ 
+   *aImages = mImages;
+   NS_ADDREF(*aImages);
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetApplets(nsIDOMHTMLCollection** aApplets)
+ {
++  EnsureUpToDate();
++
+   if (!mApplets) {
+     mApplets = new nsContentList(this, nsGkAtoms::applet,
+                                  mDefaultNamespaceID);
+     if (!mApplets) {
+       return NS_ERROR_OUT_OF_MEMORY;
+     }
+   }
+ 
+@@ -1922,16 +1937,18 @@
+   }
+ 
+   return PR_FALSE;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetLinks(nsIDOMHTMLCollection** aLinks)
+ {
++  EnsureUpToDate();
++
+   if (!mLinks) {
+     mLinks = new nsContentList(this, MatchLinks, nsnull, nsnull);
+     if (!mLinks) {
+       return NS_ERROR_OUT_OF_MEMORY;
+     }
+   }
+ 
+   *aLinks = mLinks;
+@@ -1963,16 +1980,18 @@
+   }
+ 
+   return PR_FALSE;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetAnchors(nsIDOMHTMLCollection** aAnchors)
+ {
++  EnsureUpToDate();
++
+   if (!mAnchors) {
+     mAnchors = new nsContentList(this, MatchAnchors, nsnull, nsnull);
+     if (!mAnchors) {
+       return NS_ERROR_OUT_OF_MEMORY;
+     }
+   }
+ 
+   *aAnchors = mAnchors;
+@@ -2365,16 +2384,17 @@
+ 
+   if (mParser && mWriteState == eDocumentOpened) {
+     mPendingScripts.RemoveElement(GenerateParserKey());
+ 
+     mWriteState = mPendingScripts.Count() == 0
+                   ? eDocumentClosed
+                   : ePendingClose;
+ 
++    EnsureUpToDate();
+     ++mWriteLevel;
+     rv = mParser->Parse(EmptyString(), mParser->GetRootContextKey(),
+                         mContentType, PR_TRUE);
+     --mWriteLevel;
+ 
+     // XXX Make sure that all the document.written content is
+     // reflowed.  We should remove this call once we change
+     // nsHTMLDocument::OpenCommon() so that it completely destroys the
+@@ -2409,98 +2429,113 @@
+     RemoveWyciwygChannel();
+     NS_ASSERTION(!mWyciwygChannel, "nsHTMLDocument::Close(): "
+                  "nsIWyciwygChannel could not be removed!");
+   }
+ 
+   return NS_OK;
+ }
+ 
+-nsresult
+-nsHTMLDocument::WriteCommon(const nsAString& aText,
+-                            PRBool aNewlineTerminate)
++nsresult nsHTMLDocument::CacheWrite(const nsAString& aText,
++                                    PRBool aNewlineTerminate)
+ {
+-  mTooDeepWriteRecursion =
+-    (mWriteLevel > NS_MAX_DOCUMENT_WRITE_DEPTH || mTooDeepWriteRecursion);
+-  NS_ENSURE_STATE(!mTooDeepWriteRecursion);
++  static NS_NAMED_LITERAL_STRING(new_line, "\n");
++  nsresult rv = NS_OK;
+ 
+   if (IsXHTML()) {
+     // No calling document.write*() on XHTML!
+-
+     return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+   }
+ 
+-  nsresult rv = NS_OK;
+-
+-  void *key = GenerateParserKey();
+-  if (mWriteState == eDocumentClosed ||
+-      (mWriteState == ePendingClose &&
+-       mPendingScripts.IndexOf(key) == kNotFound)) {
+-    mWriteState = eDocumentClosed;
+-    mParser->Terminate();
+-    NS_ASSERTION(!mParser, "mParser should have been null'd out");
+-  }
+-
+   if (!mParser) {
+     rv = Open();
+ 
+     // If Open() fails, or if it didn't create a parser (as it won't
+     // if the user chose to not discard the current document through
+     // onbeforeunload), don't write anything.
+     if (NS_FAILED(rv) || !mParser) {
+       return rv;
+     }
+   }
+ 
+-  static NS_NAMED_LITERAL_STRING(new_line, "\n");
++//#ifdef DEBUG_db48x
++  mWriteData.Append(aText);
++  if (aNewlineTerminate)
++    mWriteData.Append(new_line);
++//#else
++//  WriteCommon(aText);
++//  if (aNewlineTerminate)
++//    WriteCommon(new_line);
++//#endif
++
++  return NS_OK;
++}
++
++inline nsresult nsHTMLDocument::EnsureUpToDate()
++{
++  //printf("nsHTMLDocument::EnsureUpToDate()\n");
++  nsresult rv = NS_OK;
++  if (!mWriteData.IsEmpty())
++  {
++    rv = WriteCommon(mWriteData);
++    mWriteData.Truncate(0);
++  }
++
++  return rv;
++}
++
++nsresult
++nsHTMLDocument::WriteCommon(const nsAString& aText)
++{
++  mTooDeepWriteRecursion =
++    (mWriteLevel > NS_MAX_DOCUMENT_WRITE_DEPTH || mTooDeepWriteRecursion);
++  NS_ENSURE_STATE(!mTooDeepWriteRecursion);
++
++  nsresult rv = NS_OK;
++
++  void *key = GenerateParserKey();
++  if (mWriteState == eDocumentClosed ||
++      (mWriteState == ePendingClose &&
++       mPendingScripts.IndexOf(key) == kNotFound)) {
++    mWriteState = eDocumentClosed;
++    mParser->Terminate();
++    NS_ASSERTION(!mParser, "mParser should have been null'd out");
++  }
+ 
+   // Save the data in cache
+   if (mWyciwygChannel) {
+     if (!aText.IsEmpty()) {
+       mWyciwygChannel->WriteToCacheEntry(aText);
+     }
+-
+-    if (aNewlineTerminate) {
+-      mWyciwygChannel->WriteToCacheEntry(new_line);
+-    }
+   }
+ 
+   ++mWriteLevel;
+ 
+-  // This could be done with less code, but for performance reasons it
+-  // makes sense to have the code for two separate Parse() calls here
+-  // since the concatenation of strings costs more than we like. And
+-  // why pay that price when we don't need to?
+-  if (aNewlineTerminate) {
+-    rv = mParser->Parse(aText + new_line,
+-                        key, mContentType,
+-                        (mWriteState == eNotWriting || (mWriteLevel > 1)));
+-  } else {
+-    rv = mParser->Parse(aText,
+-                        key, mContentType,
+-                        (mWriteState == eNotWriting || (mWriteLevel > 1)));
+-  }
++  //print_string(aText);
++  rv = mParser->Parse(aText,
++                      key, mContentType,
++                      (mWriteState == eNotWriting || (mWriteLevel > 1)));
+ 
+   --mWriteLevel;
+ 
+   mTooDeepWriteRecursion = (mWriteLevel != 0 && mTooDeepWriteRecursion);
+ 
+   return rv;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::Write(const nsAString& aText)
+ {
+-  return WriteCommon(aText, PR_FALSE);
++  CacheWrite(aText, PR_FALSE);
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::Writeln(const nsAString& aText)
+ {
+-  return WriteCommon(aText, PR_TRUE);
++  CacheWrite(aText, PR_TRUE);
+ }
+ 
+ nsresult
+ nsHTMLDocument::ScriptWriteCommon(PRBool aNewlineTerminate)
+ {
+   nsAXPCNativeCallContext *ncc = nsnull;
+ 
+   nsresult rv = nsContentUtils::XPConnect()->
+@@ -2527,39 +2562,40 @@
+ 
+       JSString *jsstr = JS_ValueToString(cx, argv[0]);
+       NS_ENSURE_TRUE(jsstr, NS_ERROR_OUT_OF_MEMORY);
+ 
+       nsDependentString str(reinterpret_cast<const PRUnichar *>
+                                             (::JS_GetStringChars(jsstr)),
+                           ::JS_GetStringLength(jsstr));
+ 
+-      return WriteCommon(str, aNewlineTerminate);
++      CacheWrite(str, aNewlineTerminate);
+     }
+-
+-    if (argc > 1) {
++    else if (argc > 1) {
+       nsAutoString string_buffer;
+ 
+       for (i = 0; i < argc; ++i) {
+         JSAutoRequest ar(cx);
+ 
+         JSString *str = JS_ValueToString(cx, argv[i]);
+         NS_ENSURE_TRUE(str, NS_ERROR_OUT_OF_MEMORY);
+ 
+         string_buffer.Append(reinterpret_cast<const PRUnichar *>
+                                              (::JS_GetStringChars(str)),
+                              ::JS_GetStringLength(str));
+       }
+ 
+-      return WriteCommon(string_buffer, aNewlineTerminate);
++      CacheWrite(string_buffer, aNewlineTerminate);
++    }
++    else { // No arguments...
++      CacheWrite(EmptyString(), aNewlineTerminate);
+     }
+   }
+ 
+-  // No arguments...
+-  return WriteCommon(EmptyString(), aNewlineTerminate);
++  return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::Write()
+ {
+   return ScriptWriteCommon(PR_FALSE);
+ }
+ 
+@@ -2568,16 +2604,18 @@
+ {
+   return ScriptWriteCommon(PR_TRUE);
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetElementById(const nsAString& aElementId,
+                                nsIDOMElement** aReturn)
+ {
++  EnsureUpToDate();
++
+   NS_ENSURE_ARG_POINTER(aReturn);
+   *aReturn = nsnull;
+ 
+   nsCOMPtr<nsIAtom> idAtom(do_GetAtom(aElementId));
+   NS_ENSURE_TRUE(idAtom, NS_ERROR_OUT_OF_MEMORY);
+ 
+   // We don't have to flush before we do the initial hashtable lookup, since if
+   // the id is already in the hashtable it couldn't have been removed without
+@@ -2690,16 +2728,18 @@
+   return nsDocument::CreateAttributeNS(aNamespaceURI, aQualifiedName, aReturn);
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetElementsByTagNameNS(const nsAString& aNamespaceURI,
+                                        const nsAString& aLocalName,
+                                        nsIDOMNodeList** aReturn)
+ {
++  EnsureUpToDate();
++
+   nsAutoString tmp(aLocalName);
+ 
+   if (!IsXHTML()) {
+     ToLowerCase(tmp); // HTML elements are lower case internally.
+   }
+ 
+   return nsDocument::GetElementsByTagNameNS(aNamespaceURI, tmp, aReturn);
+ }
+@@ -2713,16 +2753,18 @@
+   return aContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::name,
+                                *elementName, eCaseMatters);
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetElementsByName(const nsAString& aElementName,
+                                   nsIDOMNodeList** aReturn)
+ {
++  EnsureUpToDate();
++
+   void* elementNameData = new nsString(aElementName);
+   NS_ENSURE_TRUE(elementNameData, NS_ERROR_OUT_OF_MEMORY);
+   nsContentList* elements =
+     new nsContentList(this,
+                       MatchNameAttribute,
+                       nsContentUtils::DestroyMatchString,
+                       elementNameData);
+   NS_ENSURE_TRUE(elements, NS_ERROR_OUT_OF_MEMORY);
+@@ -2741,16 +2783,18 @@
+   }
+ 
+   mPendingScripts.AppendElement(aScript);
+ }
+ 
+ void
+ nsHTMLDocument::ScriptExecuted(nsIScriptElement *aScript)
+ {
++  EnsureUpToDate();
++
+   if (mWriteState == eNotWriting) {
+     return;
+   }
+ 
+   mPendingScripts.RemoveElement(aScript);
+   if (mPendingScripts.Count() == 0 && mWriteState == ePendingClose) {
+     // The last pending script just finished, terminate our parser now.
+     mWriteState = eDocumentClosed;
+@@ -2774,16 +2818,18 @@
+ {
+   return mNumForms;
+ }
+ 
+ nsresult
+ nsHTMLDocument::GetBodySize(PRInt32* aWidth,
+                             PRInt32* aHeight)
+ {
++  EnsureUpToDate();
++
+   *aWidth = *aHeight = 0;
+ 
+   FlushPendingNotifications(Flush_Layout);
+ 
+   nsCOMPtr<nsIPresShell> shell = GetPrimaryShell();
+   
+   if (!shell)
+     return NS_OK;
+@@ -2808,32 +2854,38 @@
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetWidth(PRInt32* aWidth)
+ {
+   NS_ENSURE_ARG_POINTER(aWidth);
+ 
++  EnsureUpToDate();
++
+   PRInt32 height;
+   return GetBodySize(aWidth, &height);
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetHeight(PRInt32* aHeight)
+ {
+   NS_ENSURE_ARG_POINTER(aHeight);
+ 
++  EnsureUpToDate();
++
+   PRInt32 width;
+   return GetBodySize(&width, aHeight);
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetAlinkColor(nsAString& aAlinkColor)
+ {
++  EnsureUpToDate();
++
+   aAlinkColor.Truncate();
+ 
+   nsCOMPtr<nsIDOMHTMLBodyElement> body = do_QueryInterface(GetBodyContent());
+ 
+   if (body) {
+     body->GetALink(aAlinkColor);
+   } else if (mAttrStyleSheet) {
+     nscolor color;
+@@ -2863,16 +2915,18 @@
+   }
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetLinkColor(nsAString& aLinkColor)
+ {
++  EnsureUpToDate();
++
+   aLinkColor.Truncate();
+ 
+   nsCOMPtr<nsIDOMHTMLBodyElement> body = do_QueryInterface(GetBodyContent());
+ 
+   if (body) {
+     body->GetLink(aLinkColor);
+   } else if (mAttrStyleSheet) {
+     nscolor color;
+@@ -2902,16 +2956,18 @@
+   }
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetVlinkColor(nsAString& aVlinkColor)
+ {
++  EnsureUpToDate();
++
+   aVlinkColor.Truncate();
+ 
+   nsCOMPtr<nsIDOMHTMLBodyElement> body = do_QueryInterface(GetBodyContent());
+ 
+   if (body) {
+     body->GetVLink(aVlinkColor);
+   } else if (mAttrStyleSheet) {
+     nscolor color;
+@@ -2941,16 +2997,18 @@
+   }
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetBgColor(nsAString& aBgColor)
+ {
++  EnsureUpToDate();
++
+   aBgColor.Truncate();
+ 
+   nsCOMPtr<nsIDOMHTMLBodyElement> body = do_QueryInterface(GetBodyContent());
+ 
+   if (body) {
+     body->GetBgColor(aBgColor);
+   }
+ 
+@@ -2968,16 +3026,18 @@
+   // XXXldb And otherwise?
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetFgColor(nsAString& aFgColor)
+ {
++  EnsureUpToDate();
++
+   aFgColor.Truncate();
+ 
+   nsCOMPtr<nsIDOMHTMLBodyElement> body = do_QueryInterface(GetBodyContent());
+ 
+   if (body) {
+     body->GetText(aFgColor);
+   }
+ 
+@@ -2996,16 +3056,18 @@
+ 
+   return NS_OK;
+ }
+ 
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetEmbeds(nsIDOMHTMLCollection** aEmbeds)
+ {
++  EnsureUpToDate();
++
+   if (!mEmbeds) {
+     mEmbeds = new nsContentList(this, nsGkAtoms::embed, mDefaultNamespaceID);
+     if (!mEmbeds) {
+       return NS_ERROR_OUT_OF_MEMORY;
+     }
+   }
+ 
+   *aEmbeds = mEmbeds;
+@@ -3577,16 +3639,18 @@
+ nsHTMLDocument::GetBodyContentExternal()
+ {
+   return GetBodyContent();
+ }
+ 
+ nsIContent*
+ nsHTMLDocument::GetBodyContent()
+ {
++  EnsureUpToDate();
++
+   // Loop backwards because any non-elements, such as doctypes and PIs
+   // are likely to appear before the root element.
+   PRUint32 i;
+   for (i = mChildren.ChildCount(); i > 0; --i) {
+     nsIContent* html = mChildren.ChildAt(i - 1);
+     if (html->Tag() == nsGkAtoms::html &&
+         html->IsNodeOfType(nsINode::eHTML)) {
+ 
+@@ -3606,42 +3670,48 @@
+   return nsnull;
+ }
+ 
+ // forms related stuff
+ 
+ NS_IMETHODIMP
+ nsHTMLDocument::GetForms(nsIDOMHTMLCollection** aForms)
+ {
++  EnsureUpToDate();
++
+   nsContentList *forms = nsHTMLDocument::GetForms();
+   if (!forms)
+     return NS_ERROR_OUT_OF_MEMORY;
+ 
+   NS_ADDREF(*aForms = forms);
+   return NS_OK;
+ }
+ 
+ nsContentList*
+ nsHTMLDocument::GetForms()
+ {
++  EnsureUpToDate();
++
+   if (!mForms)
+     mForms = new nsContentList(this, nsGkAtoms::form, mDefaultNamespaceID);
+ 
+   return mForms;
+ }
+ 
+ static PRBool MatchFormControls(nsIContent* aContent, PRInt32 aNamespaceID,
+                                 nsIAtom* aAtom, void* aData)
+ {
+   return aContent->IsNodeOfType(nsIContent::eHTML_FORM_CONTROL);
+ }
+ 
+ nsContentList*
+ nsHTMLDocument::GetFormControls()
+ {
++  EnsureUpToDate();
++
+   if (!mFormControls) {
+     mFormControls = new nsContentList(this, MatchFormControls, nsnull, nsnull);
+   }
+ 
+   return mFormControls;
+ }
+ 
+ nsresult
+@@ -3848,16 +3918,18 @@
+   return val && val->Type() == nsAttrValue::eAtom &&
+          val->GetAtomValue() == aAtom;
+ }
+ 
+ 
+ nsresult
+ nsHTMLDocument::GetDocumentAllResult(const nsAString& aID, nsISupports** aResult)
+ {
++  EnsureUpToDate();
++
+   *aResult = nsnull;
+ 
+   PLDHashOperator op = IdTableIsLive() ? PL_DHASH_LOOKUP : PL_DHASH_ADD;
+ 
+   nsCOMPtr<nsIAtom> id = do_GetAtom(aID);
+   IdAndNameMapEntry *entry =
+     static_cast<IdAndNameMapEntry *>
+                (PL_DHashTableOperate(&mIdAndNameHashTable, id, op));
+@@ -4427,16 +4499,18 @@
+ /* boolean execCommand(in DOMString commandID, in boolean doShowUI,
+                                                in DOMString value); */
+ NS_IMETHODIMP
+ nsHTMLDocument::ExecCommand(const nsAString & commandID,
+                             PRBool doShowUI,
+                             const nsAString & value,
+                             PRBool *_retval)
+ {
++  EnsureUpToDate();
++
+   NS_ENSURE_ARG_POINTER(_retval);
+ 
+   //  for optional parameters see dom/src/base/nsHistory.cpp: HistoryImpl::Go()
+   //  this might add some ugly JS dependencies?
+ 
+   *_retval = PR_FALSE;
+ 
+   // if editing is not on, bail
+Index: mozilla/content/html/document/src/nsHTMLDocument.h
+===================================================================
+--- mozilla.orig/content/html/document/src/nsHTMLDocument.h
++++ mozilla/content/html/document/src/nsHTMLDocument.h
+@@ -250,18 +250,23 @@
+                                    nsIAtom* aAtom, void* aData);
+ 
+   static void DocumentWriteTerminationFunc(nsISupports *aRef);
+ 
+   nsIContent* GetBodyContent();
+ 
+   void GetDomainURI(nsIURI **uri);
+ 
+-  nsresult WriteCommon(const nsAString& aText,
+-                       PRBool aNewlineTerminate);
++public:
++  nsresult CacheWrite(const nsAString& aText,
++                      PRBool aNewlineTerminate);
++  virtual nsresult EnsureUpToDate();
++
++protected:
++  nsresult WriteCommon(const nsAString& aText);
+   nsresult ScriptWriteCommon(PRBool aNewlineTerminate);
+   nsresult OpenCommon(const nsACString& aContentType, PRBool aReplace);
+ 
+   nsresult CreateAndAddWyciwygChannel(void);
+   nsresult RemoveWyciwygChannel(void);
+ 
+   void *GenerateParserKey(void);
+ 
+@@ -278,16 +283,18 @@
+   nsCOMPtr<nsIDOMHTMLCollection> mLinks;
+   nsCOMPtr<nsIDOMHTMLCollection> mAnchors;
+   nsRefPtr<nsContentList> mForms;
+   nsRefPtr<nsContentList> mFormControls;
+ 
+   /** # of forms in the document, synchronously set */
+   PRInt32 mNumForms;
+ 
++  nsAutoString mWriteData;
++
+   static PRUint32 gWyciwygSessionCnt;
+ 
+   static PRBool TryHintCharset(nsIMarkupDocumentViewer* aMarkupDV,
+                                PRInt32& aCharsetSource,
+                                nsACString& aCharset);
+   static PRBool TryUserForcedCharset(nsIMarkupDocumentViewer* aMarkupDV,
+                                      nsIDocumentCharsetInfo*  aDocInfo,
+                                      PRInt32& aCharsetSource,
+Index: mozilla/content/html/document/test/Makefile.in
+===================================================================
+--- mozilla.orig/content/html/document/test/Makefile.in
++++ mozilla/content/html/document/test/Makefile.in
+@@ -42,32 +42,33 @@
+ relativesrcdir  = content/html/document/test
+ 
+ include $(DEPTH)/config/autoconf.mk
+ include $(topsrcdir)/config/rules.mk
+ 
+ # Add this back when this test passes again; it seems to fail right now when
+ # run inside an iframe, oddly, but not when run at top-level.
+ #		test_bug199692.html 
+-_TEST_FILES = 	test_bug1682.html \
+-		test_bug1823.html \
+-		bug199692-nested.html \
+-		bug199692-nested-d2.html \
+-		test_bug172261.html \
+-		test_bug255820.html \
+-		test_bug259332.html \
+-		test_bug311681.html \
+-		test_bug311681.xhtml \
+-		test_bug324378.html \
+-		test_bug332848.xhtml \
+-		test_bug359657.html \
+-		test_bug380383.html \
+-		test_bug386495.html \
+-		test_bug391777.html \
+-		test_bug402680.html \
+-		test_bug403868.html \
+-		test_bug403868.xhtml \
+-		test_bug404320.html \
+-		test_form-parsing.html \
+-		$(NULL)
++_TEST_FILES = test_bug1682.html                 \
++              test_bug1823.html                 \
++              bug199692-nested.html             \
++              bug199692-nested-d2.html          \
++              test_bug172261.html               \
++              test_bug255820.html               \
++              test_bug259332.html               \
++              test_bug311681.html               \
++              test_bug311681.xhtml              \
++              test_bug324378.html               \
++              test_bug332848.xhtml              \
++              test_bug359657.html               \
++              test_bug380383.html               \
++              test_bug386495.html               \
++              test_bug391777.html               \
++              test_bug402680.html               \
++              test_bug403868.html               \
++              test_bug403868.xhtml              \
++              test_bug404320.html               \
++              test_form-parsing.html            \
++              test_write.html                   \
++              $(NULL)
+ 
+ libs:: $(_TEST_FILES)
+ 	$(INSTALL) $(foreach f,$^,"$f") $(DEPTH)/_tests/testing/mochitest/tests/$(relativesrcdir)
+Index: mozilla/content/html/document/test/test_write.html
+===================================================================
+--- /dev/null
++++ mozilla/content/html/document/test/test_write.html
+@@ -0,0 +1,53 @@
++<html xmlns="http://www.w3.org/1999/xhtml">
++<head>
++  <title>Test document.write</title>
++  <script type="text/javascript" src="/MochiKit/MochiKit.js"></script>
++  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
++  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
++</head>
++<body>
++<script class="testbody" type="text/javascript">
++  document.write("<span id='test1'>a</span>");
++  var n = document.getElementById("test1");
++  ok(n, "creation");
++</script>
++
++<hr>
++
++<div id="ordering">
++  <script class="testbody" type="text/javascript">
++    var ordering = document.getElementById('ordering');
++
++    document.write("<span id='test2'>a</span>");
++
++    var span = document.createElement("span");
++    span.setAttribute("id", "test3");
++    span.appendChild(document.createTextNode("b"));
++    ordering.appendChild(span);
++
++    document.write("<span id='test4'>c</span>");
++
++    var n = document.getElementById("ordering");
++    var l = n.childNodes;
++    var a = [];
++
++    for (var i = 0; i < l.length; i++)
++      if (l[i].nodeType == 1)
++        a.push(l[i].getAttribute("id"));
++
++    ok(a == ["test2", "test3", "test4"], "ordering");
++  </script>
++</div>
++
++<hr>
++
++<div id="loop">
++  <script class="testbody" type="text/javascript">
++    for (var i = 5; i <= 105; i++)
++      document.write("<span id='test"+ i +"'>"+ i +", </span>");
++
++    var n = document.getElementById("test105");
++    ok(n, "loop");
++  </script>
++</body>
++</html>
+Index: mozilla/content/html/content/src/Makefile.in
+===================================================================
+--- mozilla.orig/content/html/content/src/Makefile.in
++++ mozilla/content/html/content/src/Makefile.in
+@@ -69,16 +69,17 @@
+ 		  editor \
+ 		  imglib2 \
+ 		  mimetype \
+ 		  exthandler \
+ 		  chardet \
+ 		  uconv \
+ 		  intl \
+ 		  plugin \
++		  commandhandler \
+ 		  $(NULL)
+ 
+ EXPORTS		= \
+ 		nsImageMapUtils.h \
+ 		$(NULL)
+ 
+ CPPSRCS		= \
+ 		nsGenericHTMLElement.cpp \

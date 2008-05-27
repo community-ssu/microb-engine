@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0.0
+Encoding=UTF-8
+Name=TestMozEmbed
+Comment=TestMozEmbed
+Exec=/bin/sh /usr/bin/run-embed.sh /usr/share/browser/home_page/index.html
+Icon=mozicon128
+X-Icon-path=/usr/local/minefield/icons
+X-Window-Icon=mozicon128
+Type=Application
+X-Osso-Service=org.mozilla.mozembed
+X-Osso-Type=application/x-executable

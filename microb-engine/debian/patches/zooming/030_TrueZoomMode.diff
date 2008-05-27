@@ -1,0 +1,198 @@
+# True Zoom mode feature 
+# Fake resizing of scroll frame height and width according to zoom level multiplier
+# Supposed to speedup zooming by disabling full layout reflow
+Index: mozilla/layout/generic/nsGfxScrollFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsGfxScrollFrame.cpp
++++ mozilla/layout/generic/nsGfxScrollFrame.cpp
+@@ -74,16 +74,17 @@
+ #include "nsEventDispatcher.h"
+ #include "nsContentUtils.h"
+ #include "nsLayoutUtils.h"
+ #ifdef ACCESSIBILITY
+ #include "nsIAccessibilityService.h"
+ #endif
+ #include "nsDisplayList.h"
+ #include "nsBidiUtils.h"
++#include "nsDocShellLoadTypes.h"
+ 
+ //----------------------------------------------------------------------
+ 
+ //----------nsHTMLScrollFrame-------------------------------------------
+ 
+ nsIFrame*
+ NS_NewHTMLScrollFrame(nsIPresShell* aPresShell, nsStyleContext* aContext, PRBool aIsRoot)
+ {
+@@ -453,24 +454,36 @@
+   }
+ 
+   if (aAssumeVScroll) {
+     nsSize vScrollbarPrefSize = 
+       mInner.mVScrollbarBox->GetPrefSize(const_cast<nsBoxLayoutState&>(aState->mBoxState));
+     availWidth = PR_MAX(0, availWidth - vScrollbarPrefSize.width);
+   }
+ 
++  nsPresContext* presContext = PresContext();
++  PRUint32 loadType = 0;
++  {
++    nsCOMPtr<nsISupports> container = presContext->GetContainer();
++    nsCOMPtr<nsIDocShell> docShell(do_QueryInterface(container));
++    if (docShell)
++      docShell->GetLoadType(&loadType);
++  }
++
++  if (presContext->TrueZoomMode() && aFirstPass && loadType != LOAD_ERROR_PAGE) {
++    availWidth *= presContext->GetFullZoom();
++  }
++
+   // We're forcing the padding on our scrolled frame, so let it know what that
+   // padding is.
+   mInner.mScrolledFrame->
+     SetProperty(nsGkAtoms::usedPaddingProperty,
+                 new nsMargin(aState->mReflowState.mComputedPadding),
+                 nsCSSOffsetState::DestroyMarginFunc);  
+   
+-  nsPresContext* presContext = PresContext();
+   // Pass PR_FALSE for aInit so we can pass in the correct padding
+   nsHTMLReflowState kidReflowState(presContext, aState->mReflowState,
+                                    mInner.mScrolledFrame,
+                                    nsSize(availWidth, NS_UNCONSTRAINEDSIZE),
+                                    -1, -1, PR_FALSE);
+   kidReflowState.Init(presContext, -1, -1, nsnull,
+                       &aState->mReflowState.mComputedPadding);
+   kidReflowState.mFlags.mAssumingHScrollbar = aAssumeHScroll;
+Index: mozilla/layout/base/nsPresContext.h
+===================================================================
+--- mozilla.orig/layout/base/nsPresContext.h
++++ mozilla/layout/base/nsPresContext.h
+@@ -467,16 +467,18 @@
+   void SetTextZoom(float aZoom) {
+     mTextZoom = aZoom;
+     RebuildAllStyleData(NS_STYLE_HINT_REFLOW);
+   }
+ 
+   float GetFullZoom() { return mFullZoom; }
+   void SetFullZoom(float aZoom);
+ 
++  PRBool TrueZoomMode() { return mTrueZoomMode; }
++
+   nscoord GetAutoQualityMinFontSize() {
+     return DevPixelsToAppUnits(mAutoQualityMinFontSizePixelsPref);
+   }
+   
+   static PRInt32 AppUnitsPerCSSPixel() { return nsIDeviceContext::AppUnitsPerCSSPixel(); }
+   PRInt32 AppUnitsPerDevPixel() const  { return mDeviceContext->AppUnitsPerDevPixel(); }
+   PRInt32 AppUnitsPerInch() const      { return mDeviceContext->AppUnitsPerInch(); }
+ 
+@@ -864,16 +866,17 @@
+ #ifdef IBMBIDI
+   unsigned              mIsVisual : 1;
+   unsigned              mIsBidiSystem : 1;
+ 
+ #endif
+ #ifdef DEBUG
+   PRBool                mInitialized;
+ #endif
++  PRPackedBool          mTrueZoomMode : 1;
+ 
+ 
+ protected:
+ 
+   ~nsPresContext() NS_HIDDEN;
+ 
+   // these are private, use the list in nsFont.h if you want a public list
+   enum {
+Index: mozilla/layout/base/nsPresContext.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresContext.cpp
++++ mozilla/layout/base/nsPresContext.cpp
+@@ -154,17 +154,17 @@
+ 
+ static NS_DEFINE_CID(kLookAndFeelCID,  NS_LOOKANDFEEL_CID);
+ #include "nsContentCID.h"
+ 
+   // NOTE! nsPresContext::operator new() zeroes out all members, so don't
+   // bother initializing members to 0.
+ 
+ nsPresContext::nsPresContext(nsIDocument* aDocument, nsPresContextType aType)
+-  : mType(aType), mDocument(aDocument), mTextZoom(1.0), mFullZoom(1.0),
++  : mType(aType), mDocument(aDocument), mTextZoom(1.0), mFullZoom(1.0), mTrueZoomMode(PR_FALSE),
+     mPageSize(-1, -1), mPPScale(1.0f),
+     mViewportStyleOverflow(NS_STYLE_OVERFLOW_AUTO, NS_STYLE_OVERFLOW_AUTO),
+     mImageAnimationModePref(imgIContainer::kNormalAnimMode),
+     // Font sizes default to zero; they will be set in GetFontPreferences
+     mDefaultVariableFont("serif", NS_FONT_STYLE_NORMAL, NS_FONT_VARIANT_NORMAL,
+                          NS_FONT_WEIGHT_NORMAL, 0, 0),
+     mDefaultFixedFont("monospace", NS_FONT_STYLE_NORMAL,
+                       NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
+@@ -271,16 +271,20 @@
+ #ifdef IBMBIDI
+   nsContentUtils::UnregisterPrefCallback("bidi.", PrefChangedCallback, this);
+ 
+   delete mBidiUtils;
+ #endif // IBMBIDI
+   nsContentUtils::UnregisterPrefCallback("layout.css.dpi",
+                                          nsPresContext::PrefChangedCallback,
+                                          this);
++  nsContentUtils::UnregisterPrefCallback("layout.full.true.zoom.mode",
++                                         nsPresContext::PrefChangedCallback,
++                                         this);
++
+ 
+   NS_IF_RELEASE(mDeviceContext);
+   NS_IF_RELEASE(mLookAndFeel);
+   NS_IF_RELEASE(mLangGroup);
+ }
+ 
+ NS_IMPL_CYCLE_COLLECTION_CLASS(nsPresContext)
+ 
+@@ -590,16 +594,20 @@
+ 
+   // * document colors
+   GetDocumentColorPreferences();
+ 
+   // * link colors
+   mUnderlineLinks =
+     nsContentUtils::GetBoolPref("browser.underline_anchors", mUnderlineLinks);
+ 
++  // True Zoom Mode
++  mTrueZoomMode =
++    nsContentUtils::GetBoolPref("layout.full.true.zoom.mode", mTrueZoomMode);
++
+   nsAdoptingCString colorStr =
+     nsContentUtils::GetCharPref("browser.anchor_color");
+ 
+   if (!colorStr.IsEmpty()) {
+     mLinkColor = MakeColorPref(colorStr);
+   }
+ 
+   colorStr =
+@@ -1153,19 +1161,25 @@
+   if (mDeviceContext->SetPixelScale(aZoom)) {
+     mDeviceContext->FlushFontCache();
+   }
+ 
+   NS_ASSERTION(mSupressResizeReflow == PR_FALSE, "two zooms happening at the same time? impossible!");
+   mSupressResizeReflow = PR_TRUE;
+ 
+   mFullZoom = aZoom;
+-  GetViewManager()->SetWindowDimensions(NSToCoordRound(oldWidthDevPixels * AppUnitsPerDevPixel()),
+-                                        NSToCoordRound(oldHeightDevPixels * AppUnitsPerDevPixel()));
+-  RebuildAllStyleData(NS_STYLE_HINT_REFLOW);
++  if (nsContentUtils::GetBoolPref("layout.full.zoom.mode.fast", PR_TRUE)) {
++    mShell->FrameNeedsReflow(mShell->GetRootFrame(), nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
++		mShell->ResizeReflow(NSToCoordRound(oldWidthDevPixels*AppUnitsPerDevPixel()),
++												 NSToCoordRound(oldHeightDevPixels*AppUnitsPerDevPixel()));
++  } else {
++    GetViewManager()->SetWindowDimensions(NSToCoordRound(oldWidthDevPixels * AppUnitsPerDevPixel()),
++                                          NSToCoordRound(oldHeightDevPixels * AppUnitsPerDevPixel()));
++    RebuildAllStyleData(NS_STYLE_HINT_REFLOW);
++	}
+ 
+   mSupressResizeReflow = PR_FALSE;
+ 
+   mCurAppUnitsPerDevPixel = AppUnitsPerDevPixel();
+ }
+ 
+ imgIRequest*
+ nsPresContext::LoadImage(imgIRequest* aImage, nsIFrame* aTargetFrame)

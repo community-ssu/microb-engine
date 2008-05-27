@@ -1,0 +1,26 @@
+--- mozilla/layout/base/nsCaret.cpp.orig	2008-04-09 09:16:09.000000000 +0300
++++ mozilla/layout/base/nsCaret.cpp	2008-04-10 17:03:40.000000000 +0300
+@@ -986,10 +986,11 @@ PRBool nsCaret::MustDrawCaret(PRBool aIg
+   return isCollapsed;
+ }
+ 
+ PRBool nsCaret::IsMenuPopupHidingCaret()
+ {
++#ifdef MOZ_XUL
+   // Check if there are open popups.
+   nsXULPopupManager *popMgr = nsXULPopupManager::GetInstance();
+   nsTArray<nsIFrame*> popups = popMgr->GetOpenPopups();
+ 
+   if (popups.Length() == 0)
+@@ -1025,10 +1026,11 @@ PRBool nsCaret::IsMenuPopupHidingCaret()
+       // have returned above). Even if the caret is in a subsequent popup,
+       // or another document/frame, it should be hidden.
+       return PR_TRUE;
+     }
+   }
++#endif
+ 
+   // There are no open menu popups, no need to hide the caret.
+   return PR_FALSE;
+ }
+ 

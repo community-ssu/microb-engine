@@ -1,0 +1,165 @@
+# Added timeout for changing theme
+# Listener for style_set signal from GTK widgets, allow to change theme when GTK theme changed
+Index: mozilla/widget/src/gtk2/nsWindow.h
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWindow.h
++++ mozilla/widget/src/gtk2/nsWindow.h
+@@ -348,16 +348,17 @@
+    nsresult            UpdateTranslucentWindowAlphaInternal(const nsRect& aRect,
+                                                             PRUint8* aAlphas, PRInt32 aStride);
+ 
+     gfxASurface       *GetThebesSurface();
+ 
+ #ifdef ACCESSIBILITY
+     static PRBool      sAccessibilityEnabled;
+ #endif
++    guint              mThemeTimeoutSource;
+ 
+ private:
+     void               GetToplevelWidget(GtkWidget **aWidget);
+     void               GetContainerWindow(nsWindow  **aWindow);
+     void               SetUrgencyHint(GtkWidget *top_window, PRBool state);
+     void              *SetupPluginPort(void);
+     nsresult           SetWindowIconList(const nsCStringArray &aIconList);
+     void               SetDefaultIcon(void);
+@@ -462,17 +463,16 @@
+         *flag |= mask;
+     }
+ 
+     void ClearKeyDownFlag(PRUint32 aKeyCode) {
+         PRUint32 mask;
+         PRUint32* flag = GetFlagWord32(aKeyCode, &mask);
+         *flag &= ~mask;
+     }
+-
+ };
+ 
+ class nsChildWindow : public nsWindow {
+ public:
+     nsChildWindow();
+     ~nsChildWindow();
+ };
+ 
+Index: mozilla/widget/src/gtk2/nsWindow.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp
++++ mozilla/widget/src/gtk2/nsWindow.cpp
+@@ -245,16 +245,17 @@
+ static nsWindow         *gPluginFocusWindow    = NULL;
+ 
+ static nsCOMPtr<nsIRollupListener> gRollupListener;
+ static nsWeakPtr                   gRollupWindow;
+ static PRBool                      gConsumeRollupEvent;
+ 
+ 
+ #define NS_WINDOW_TITLE_MAX_LENGTH 4095
++#define GTK_THEME_CHANGE_TIMEOUT 1500
+ 
+ #ifdef USE_XIM
+ 
+ static nsWindow    *gIMEFocusWindow = NULL;
+ static GdkEventKey *gKeyEvent = NULL;
+ static PRBool       gKeyEventCommitted = PR_FALSE;
+ static PRBool       gKeyEventChanged = PR_FALSE;
+ static PRBool       gIMESuppressCommit = PR_FALSE;
+@@ -317,16 +318,17 @@
+     mRetryPointerGrab    = PR_FALSE;
+     mRetryKeyboardGrab   = PR_FALSE;
+     mActivatePending     = PR_FALSE;
+     mTransientParent     = nsnull;
+     mWindowType          = eWindowType_child;
+     mSizeState           = nsSizeMode_Normal;
+     mOldFocusWindow      = 0;
+     mPluginType          = PluginType_NONE;
++    mThemeTimeoutSource  = 0;
+ 
+     if (!gGlobalsInitialized) {
+         gGlobalsInitialized = PR_TRUE;
+ 
+         // It's OK if either of these fail, but it may not be one day.
+         initialize_prefs();
+     }
+ 
+@@ -425,16 +427,25 @@
+ 
+     LOG(("nsWindow::Destroy [%p]\n", (void *)this));
+     mIsDestroyed = PR_TRUE;
+     mCreated = PR_FALSE;
+     
+     g_signal_handlers_disconnect_by_func(gtk_settings_get_default(),
+                                          (gpointer)G_CALLBACK(theme_changed_cb),
+                                          this);
++    if (mContainer)
++        g_signal_handlers_disconnect_by_func(G_OBJECT(mContainer),
++                                             (gpointer)G_CALLBACK(theme_changed_cb),
++                                             this);
++
++    if (mThemeTimeoutSource) {
++        g_source_remove(mThemeTimeoutSource);
++         mThemeTimeoutSource = 0;
++    }
+ 
+     // ungrab if required
+     nsCOMPtr<nsIWidget> rollupWidget = do_QueryReferent(gRollupWindow);
+     if (static_cast<nsIWidget *>(this) == rollupWidget.get()) {
+         if (gRollupListener)
+             gRollupListener->Rollup(nsnull);
+         gRollupWindow = nsnull;
+         gRollupListener = nsnull;
+@@ -3184,16 +3195,18 @@
+                                "notify::gtk-theme-name",
+                                G_CALLBACK(theme_changed_cb), this);
+         g_signal_connect_after(default_settings,
+                                "notify::gtk-font-name",
+                                G_CALLBACK(theme_changed_cb), this);
+     }
+ 
+     if (mContainer) {
++        g_signal_connect(G_OBJECT(mContainer), "style_set",
++                         G_CALLBACK(theme_changed_cb), this);
+         g_signal_connect_after(G_OBJECT(mContainer), "size_allocate",
+                                G_CALLBACK(size_allocate_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "expose_event",
+                          G_CALLBACK(expose_event_cb), NULL);
+         g_signal_connect_after(G_OBJECT(mContainer), "enter_notify_event",
+                          G_CALLBACK(enter_notify_event_cb), NULL);
+         g_signal_connect_after(G_OBJECT(mContainer), "leave_notify_event",
+                          G_CALLBACK(leave_notify_event_cb), NULL);
+@@ -4753,22 +4766,35 @@
+     if (!window)
+         return FALSE;
+ 
+     window->OnWindowStateEvent(widget, event);
+ 
+     return FALSE;
+ }
+ 
++static gboolean
++timeout_theme_change(void *data)
++{
++    nsRefPtr<nsWindow> window = (nsWindow *)data;
++    window->ThemeChanged();
++    return FALSE;
++}
++
+ /* static */
+ void
+ theme_changed_cb (GtkSettings *settings, GParamSpec *pspec, nsWindow *data)
+ {
+-    nsRefPtr<nsWindow> window = data;
+-    window->ThemeChanged();
++    nsRefPtr<nsWindow> window = (nsWindow *)data;
++    if (window->mThemeTimeoutSource) {
++      g_source_remove(window->mThemeTimeoutSource);
++      window->mThemeTimeoutSource = 0;
++    }
++    window->mThemeTimeoutSource =
++        g_timeout_add(GTK_THEME_CHANGE_TIMEOUT, timeout_theme_change, (void*)data);
+ }
+ 
+ //////////////////////////////////////////////////////////////////////
+ // These are all of our drag and drop operations
+ 
+ void
+ nsWindow::InitDragEvent(nsMouseEvent &aEvent)
+ {

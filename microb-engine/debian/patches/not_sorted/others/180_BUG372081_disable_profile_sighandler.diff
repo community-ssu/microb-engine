@@ -1,0 +1,99 @@
+# It does not work very well, we have to check,test, and fix it
+#
+--- mozilla/profile/dirserviceprovider/src/nsProfileLock.cpp.orig	2007-04-04 17:38:59.000000000 +0300
++++ mozilla/profile/dirserviceprovider/src/nsProfileLock.cpp	2007-04-04 17:51:02.672617250 +0300
+@@ -51,46 +51,50 @@
+ 
+ #ifdef XP_UNIX
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <errno.h>
+ #include <signal.h>
+ #include <stdlib.h>
+ #include "prnetdb.h"
+ #include "prsystem.h"
+ #include "prprf.h"
++#include "prenv.h"
+ #endif
+ 
+ #ifdef VMS
+ #include <rmsdef.h>
+ #endif
+ 
+ // **********************************************************************
+ // class nsProfileLock
+ //
+ // This code was moved from profile/src/nsProfileAccess.
+ // **********************************************************************
+ 
++static PRBool sDisableSignalHandling = PR_TRUE;
++
+ nsProfileLock::nsProfileLock() :
+     mHaveLock(PR_FALSE)
+ #if defined (XP_WIN)
+     ,mLockFileHandle(INVALID_HANDLE_VALUE)
+ #elif defined (XP_OS2)
+     ,mLockFileHandle(-1)
+ #elif defined (XP_UNIX)
+     ,mPidLockFileName(nsnull)
+     ,mLockFileDesc(-1)
+ #endif
+ {
+ #if defined (XP_UNIX)
+     next = prev = this;
+ #endif
++    sDisableSignalHandling = PR_TRUE;
+ }
+ 
+ 
+ nsProfileLock::nsProfileLock(nsProfileLock& src)
+ {
+     *this = src;
+ }
+ 
+ 
+ nsProfileLock& nsProfileLock::operator=(nsProfileLock& rhs)
+@@ -372,20 +376,21 @@ nsresult nsProfileLock::LockWithSymlink(
+         {
+             PR_APPEND_LINK(this, &mPidLockList);
+             if (!setupPidLockCleanup++)
+             {
+                 // Clean up on normal termination.
+                 atexit(RemovePidLockFiles);
+ 
+                 // Clean up on abnormal termination, using POSIX sigaction.
+                 // Don't arm a handler if the signal is being ignored, e.g.,
+                 // because mozilla is run via nohup.
++                if (!sDisableSignalHandling) {
+                 struct sigaction act, oldact;
+                 act.sa_handler = FatalSignalHandler;
+                 act.sa_flags = 0;
+                 sigfillset(&act.sa_mask);
+ 
+ #define CATCH_SIGNAL(signame)                                           \
+ PR_BEGIN_MACRO                                                          \
+   if (sigaction(signame, NULL, &oldact) == 0 &&                         \
+       oldact.sa_handler != SIG_IGN)                                     \
+   {                                                                     \
+@@ -395,20 +400,21 @@ PR_BEGIN_MACRO                          
+ 
+                 CATCH_SIGNAL(SIGHUP);
+                 CATCH_SIGNAL(SIGINT);
+                 CATCH_SIGNAL(SIGQUIT);
+                 CATCH_SIGNAL(SIGILL);
+                 CATCH_SIGNAL(SIGABRT);
+                 CATCH_SIGNAL(SIGSEGV);
+                 CATCH_SIGNAL(SIGTERM);
+ 
+ #undef CATCH_SIGNAL
++                }
+             }
+         }
+     }
+     else if (symlink_errno == EEXIST)
+         rv = NS_ERROR_FILE_ACCESS_DENIED;
+     else
+     {
+ #ifdef DEBUG
+         printf("symlink() failed. errno = %d\n", errno);
+ #endif

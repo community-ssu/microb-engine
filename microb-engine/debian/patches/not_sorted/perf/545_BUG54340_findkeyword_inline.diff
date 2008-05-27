@@ -1,0 +1,13 @@
+# Somebody says it will increase speed
+diff -Naur mozilla.old/js/src/jsscan.c mozilla/js/src/jsscan.c
+--- mozilla.old/js/src/jsscan.c 2007-04-17 11:44:03.000000000 +0000
++++ mozilla/js/src/jsscan.c 2007-04-20 16:23:01.000000000 +0000
+@@ -95,7 +95,7 @@
+ 
+ #define KEYWORD_COUNT (sizeof keyword_defs / sizeof keyword_defs[0])
+ 
+-static const struct keyword *
++static inline const struct keyword *
+ FindKeyword(const jschar *s, size_t length)
+ {
+     register size_t i;

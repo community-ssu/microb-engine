@@ -1,0 +1,66 @@
+Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
+===================================================================
+--- mozilla.orig/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
++++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
+@@ -225,16 +225,18 @@
+         112,  72,  89, 115, '\0',   /* pHYs */
+         115,  66,  73,  84, '\0',   /* sBIT */
+         115,  80,  76,  84, '\0',   /* sPLT */
+         116,  69,  88, 116, '\0',   /* tEXt */
+         116,  73,  77,  69, '\0',   /* tIME */
+         122,  84,  88, 116, '\0'};  /* zTXt */
+ #endif
+ 
++  NS_GetMemoryManager(getter_AddRefs(mMem));
++
+   mImageLoad = aLoad;
+   mObserver = do_QueryInterface(aLoad);  // we're holding 2 strong refs to the request.
+ 
+   /* do png init stuff */
+ 
+   /* Initialize the container's source image header. */
+   /* Always decode to 24 bit pixdepth */
+ 
+@@ -725,16 +727,25 @@
+    * old row and the new row.
+    */
+   nsPNGDecoder *decoder = static_cast<nsPNGDecoder*>(png_get_progressive_ptr(png_ptr));
+   
+   // skip this frame
+   if (decoder->mFrameIsHidden)
+     return;
+ 
++  PRBool lowMem = PR_FALSE;
++  if (decoder->mMem && NS_SUCCEEDED(decoder->mMem->IsLowMemory(&lowMem)) && lowMem) {
++    if (!decoder->mError) {
++       decoder->mError = PR_TRUE;
++      end_callback(png_ptr, nsnull);
++    }
++    return;
++  }
++
+   if (new_row) {
+     PRInt32 width;
+     decoder->mFrame->GetWidth(&width);
+     PRUint32 iwidth = width;
+ 
+     png_bytep line = new_row;
+     if (decoder->interlacebuf) {
+       line = decoder->interlacebuf + (row_num * decoder->mChannels * width);
+Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
+===================================================================
+--- mozilla.orig/modules/libpr0n/decoders/png/nsPNGDecoder.h
++++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
+@@ -94,11 +94,12 @@
+   cmsHTRANSFORM mTransform;
+ #endif
+ 
+   gfx_format format;
+   PRUint8 mChannels;
+   PRPackedBool mError;
+   PRPackedBool mFrameHasNoAlpha;
+   PRPackedBool mFrameIsHidden;
++  nsCOMPtr<nsIMemory> mMem;
+ };
+ 
+ #endif // nsPNGDecoder_h__

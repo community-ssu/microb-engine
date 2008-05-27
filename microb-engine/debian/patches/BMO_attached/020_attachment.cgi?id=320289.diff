@@ -1,0 +1,174 @@
+b=430906; add moz-opaque attribute to <canvas>
+
+diff --git a/content/base/src/nsGkAtomList.h b/content/base/src/nsGkAtomList.h
+--- a/content/base/src/nsGkAtomList.h
++++ b/content/base/src/nsGkAtomList.h
+@@ -514,6 +514,7 @@ GK_ATOM(mouseover, "mouseover")
+ GK_ATOM(mouseover, "mouseover")
+ GK_ATOM(mousethrough, "mousethrough")
+ GK_ATOM(mouseup, "mouseup")
++GK_ATOM(moz_opaque, "moz-opaque")
+ GK_ATOM(msthemecompatible, "msthemecompatible")
+ GK_ATOM(multicol, "multicol")
+ GK_ATOM(multiple, "multiple")
+diff --git a/content/canvas/public/nsICanvasRenderingContextInternal.h b/content/canvas/public/nsICanvasRenderingContextInternal.h
+--- a/content/canvas/public/nsICanvasRenderingContextInternal.h
++++ b/content/canvas/public/nsICanvasRenderingContextInternal.h
+@@ -77,6 +77,12 @@ public:
+   // If this canvas context can be represented with a simple Thebes surface,
+   // return the surface.  Otherwise returns an error.
+   NS_IMETHOD GetThebesSurface(gfxASurface **surface) = 0;
++
++  // If this context is opaque, the backing store of the canvas should
++  // be created as opaque; all compositing operators should assume the
++  // dst alpha is always 1.0.  If this is never called, the context
++  // defaults to false (not opaque).
++  NS_IMETHOD SetIsOpaque(PRBool isOpaque) = 0;
+ };
+ 
+ NS_DEFINE_STATIC_IID_ACCESSOR(nsICanvasRenderingContextInternal,
+diff --git a/content/canvas/src/nsCanvasRenderingContext2D.cpp b/content/canvas/src/nsCanvasRenderingContext2D.cpp
+--- a/content/canvas/src/nsCanvasRenderingContext2D.cpp
++++ b/content/canvas/src/nsCanvasRenderingContext2D.cpp
+@@ -296,6 +296,7 @@ public:
+                               const PRUnichar* aEncoderOptions,
+                               nsIInputStream **aStream);
+     NS_IMETHOD GetThebesSurface(gfxASurface **surface);
++    NS_IMETHOD SetIsOpaque(PRBool isOpaque);
+ 
+     // nsISupports interface
+     NS_DECL_ISUPPORTS
+@@ -334,7 +335,8 @@ protected:
+ 
+     // Member vars
+     PRInt32 mWidth, mHeight;
+-    PRBool mValid;
++    PRPackedBool mValid;
++    PRPackedBool mOpaque;
+ 
+     // the canvas element informs us when it's going away,
+     // so these are not nsCOMPtrs
+@@ -685,7 +687,12 @@ nsCanvasRenderingContext2D::SetDimension
+ 
+     // Check that the dimensions are sane
+     if (gfxASurface::CheckSurfaceSize(gfxIntSize(width, height), 0xffff)) {
+-        mThebesSurface = gfxPlatform::GetPlatform()->CreateOffscreenSurface(gfxIntSize(width, height), gfxASurface::ImageFormatARGB32);
++        gfxASurface::gfxImageFormat format = gfxASurface::ImageFormatARGB32;
++        if (mOpaque)
++            format = gfxASurface::ImageFormatRGB24;
++
++        mThebesSurface = gfxPlatform::GetPlatform()->CreateOffscreenSurface
++            (gfxIntSize(width, height), format);
+ 
+         if (mThebesSurface->CairoStatus() == 0) {
+             mThebesContext = new gfxContext(mThebesSurface);
+@@ -732,6 +739,24 @@ nsCanvasRenderingContext2D::SetDimension
+ 
+     return NS_OK;
+ }
++
++NS_IMETHODIMP
++nsCanvasRenderingContext2D::SetIsOpaque(PRBool isOpaque)
++{
++    if (isOpaque == mOpaque)
++        return NS_OK;
++
++    mOpaque = isOpaque;
++
++    if (mValid) {
++        /* If we've already been created, let SetDimensions take care of
++         * recreating our surface
++         */
++        return SetDimensions(mWidth, mHeight);
++    }
++
++    return NS_OK;
++}
+  
+ NS_IMETHODIMP
+ nsCanvasRenderingContext2D::Render(gfxContext *ctx)
+@@ -748,11 +773,18 @@ nsCanvasRenderingContext2D::Render(gfxCo
+ 
+     nsRefPtr<gfxPattern> pat = new gfxPattern(mThebesSurface);
+ 
++    gfxContext::GraphicsOperator op = ctx->CurrentOperator();
++    if (mOpaque)
++        ctx->SetOperator(gfxContext::OPERATOR_SOURCE);
++
+     // XXX I don't want to use PixelSnapped here, but layout doesn't guarantee
+     // pixel alignment for this stuff!
+     ctx->NewPath();
+     ctx->PixelSnappedRectangleAndSetPattern(gfxRect(0, 0, mWidth, mHeight), pat);
+     ctx->Fill();
++
++    if (mOpaque)
++        ctx->SetOperator(op);
+ 
+     return rv;
+ }
+diff --git a/content/html/content/src/nsHTMLCanvasElement.cpp b/content/html/content/src/nsHTMLCanvasElement.cpp
+--- a/content/html/content/src/nsHTMLCanvasElement.cpp
++++ b/content/html/content/src/nsHTMLCanvasElement.cpp
+@@ -118,6 +118,8 @@ public:
+ 
+ protected:
+   nsIntSize GetWidthHeight();
++  PRBool GetIsOpaque();
++
+   nsresult UpdateContext();
+   nsresult ToDataURLImpl(const nsAString& aMimeType,
+                          const nsAString& aEncoderOptions,
+@@ -191,8 +193,15 @@ nsHTMLCanvasElement::GetWidthHeight()
+   return size;
+ }
+ 
++PRBool
++nsHTMLCanvasElement::GetIsOpaque()
++{
++  return HasAttr(kNameSpaceID_None, nsGkAtoms::moz_opaque);
++}
++
+ NS_IMPL_INT_ATTR_DEFAULT_VALUE(nsHTMLCanvasElement, Width, width, DEFAULT_CANVAS_WIDTH)
+ NS_IMPL_INT_ATTR_DEFAULT_VALUE(nsHTMLCanvasElement, Height, height, DEFAULT_CANVAS_HEIGHT)
++NS_IMPL_BOOL_ATTR(nsHTMLCanvasElement, MozOpaque, moz_opaque)
+ 
+ nsresult
+ nsHTMLCanvasElement::SetAttr(PRInt32 aNameSpaceID, nsIAtom* aName,
+@@ -202,7 +211,7 @@ nsHTMLCanvasElement::SetAttr(PRInt32 aNa
+   nsresult rv = nsGenericHTMLElement::SetAttr(aNameSpaceID, aName, aPrefix, aValue,
+                                               aNotify);
+   if (NS_SUCCEEDED(rv) && mCurrentContext &&
+-      (aName == nsGkAtoms::width || aName == nsGkAtoms::height))
++      (aName == nsGkAtoms::width || aName == nsGkAtoms::height || aName == nsGkAtoms::moz_opaque))
+   {
+     rv = UpdateContext();
+     NS_ENSURE_SUCCESS(rv, rv);
+@@ -221,6 +230,9 @@ nsHTMLCanvasElement::GetAttributeChangeH
+       aAttribute == nsGkAtoms::height)
+   {
+     NS_UpdateHint(retval, NS_STYLE_HINT_REFLOW);
++  } else if (aAttribute == nsGkAtoms::moz_opaque)
++  {
++    NS_UpdateHint(retval, NS_STYLE_HINT_VISUAL);
+   }
+   return retval;
+ }
+@@ -488,6 +500,7 @@ nsHTMLCanvasElement::UpdateContext()
+   nsresult rv = NS_OK;
+   if (mCurrentContext) {
+     nsIntSize sz = GetWidthHeight();
++    rv = mCurrentContext->SetIsOpaque(GetIsOpaque());
+     rv = mCurrentContext->SetDimensions(sz.width, sz.height);
+   }
+ 
+diff --git a/dom/public/idl/html/nsIDOMHTMLCanvasElement.idl b/dom/public/idl/html/nsIDOMHTMLCanvasElement.idl
+--- a/dom/public/idl/html/nsIDOMHTMLCanvasElement.idl
++++ b/dom/public/idl/html/nsIDOMHTMLCanvasElement.idl
+@@ -52,6 +52,7 @@ interface nsIDOMHTMLCanvasElement : nsID
+ {
+   attribute long width;
+   attribute long height;
++  attribute boolean mozOpaque;
+ 
+   nsISupports getContext(in DOMString contextId);
+ 

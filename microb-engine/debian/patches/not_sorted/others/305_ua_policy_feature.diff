@@ -1,0 +1,43 @@
+# Allow to use different UserAgent string for different pages
+# Disable chats for GMAIL
+# see microb-engine/debian/prefs/all.js:137[0-1]
+--- mozilla/dom/src/base/nsGlobalWindow.cpp.orig	2007-04-23 16:20:59.000000000 +0300
++++ mozilla/dom/src/base/nsGlobalWindow.cpp	2007-04-24 18:44:49.023502000 +0300
+@@ -7951,20 +7951,37 @@ nsNavigator::SetDocShell(nsIDocShell *aD
+ NS_IMETHODIMP
+ nsNavigator::GetUserAgent(nsAString& aUserAgent)
+ {
+   nsresult rv;
+   nsCOMPtr<nsIHttpProtocolHandler>
+     service(do_GetService(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX "http", &rv));
+   if (NS_SUCCEEDED(rv)) {
+     nsCAutoString ua;
+     rv = service->GetUserAgent(ua);
+     CopyASCIItoUTF16(ua, aUserAgent);
++    if (!nsContentUtils::GetBoolPref("dom.window.useragent.policy", PR_FALSE))
++      return rv;
++    nsString domain;
++    nsCOMPtr<nsIWebNavigation> nav = do_QueryInterface(mDocShell);
++    NS_ENSURE_TRUE(nav, rv);
++    nsCOMPtr<nsIDOMDocument> doc;
++    nav->GetDocument(getter_AddRefs(doc));
++    NS_ENSURE_TRUE(doc, rv);
++    nsCOMPtr<nsIDOMHTMLDocument> htmldoc = do_QueryInterface(doc);
++    NS_ENSURE_TRUE(htmldoc, rv);
++    if (NS_FAILED(htmldoc->GetDomain(domain)) || domain.IsEmpty())
++      NS_ENSURE_SUCCESS(htmldoc->GetURL(domain), rv);
++    nsCString ua_match = NS_LITERAL_CSTRING("ua.policy.") + NS_ConvertUTF16toUTF8(domain);
++    const nsAdoptingCString& override = 
++      nsContentUtils::GetCharPref(ua_match.get());
++    NS_ENSURE_TRUE(override, rv);
++    CopyUTF8toUTF16(override, aUserAgent);
+   }
+ 
+   return rv;
+ }
+ 
+ NS_IMETHODIMP
+ nsNavigator::GetAppCodeName(nsAString& aAppCodeName)
+ {
+   nsresult rv;
+   nsCOMPtr<nsIHttpProtocolHandler>

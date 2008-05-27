@@ -1,0 +1,41 @@
+mk_add_options MOZ_CO_PROJECT=suite,browser,xulrunner
+ac_add_options --enable-application=suite
+
+
+   #* Simple Build
+ac_add_options --disable-javaxpcom
+ac_add_options --disable-js-static-build
+#ac_add_options --disable-tests
+
+   #* Missing environment
+ac_add_options --disable-crashreporter --disable-mochitest --disable-dbus
+
+
+   #* Toolkit Options for Linux/GTK2
+#ac_add_options --enable-default-toolkit=cairo-gtk2
+#ac_add_options --enable-xft
+#ac_add_options --disable-freetype2
+#ac_add_options --enable-pango
+
+   #* Branding
+#ac_add_options --with-branding=branding/microb
+
+   #* Perf Improvements
+#ac_add_options --disable-necko-small-buffers
+
+   #* Compiler options
+ac_add_options --disable-pedantic
+ac_add_options --disable-old-abi-compat-wrappers
+ac_add_options --enable-chrome-format=flat
+
+   #* Using of sistem libraries (Debian Way ;) )
+##ac_add_options --with-system-png #APNG required
+##ac_add_options --with-system-zlib #Some linking problems
+#ac_add_options --with-system-jpeg
+#ac_add_options --with-system-bz2
+#ac_add_options --disable-js-binary
+
+   #* Micro Base
+#ac_add_options --with-embedding-profile=basic
+#ac_add_options --with-embedding-profile=minimal
+

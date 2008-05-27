@@ -1,0 +1,731 @@
+# Some antialias hack for fast cairo rendering (broken :()
+Index: mozilla/gfx/cairo/cairo/src/cairo-analysis-surface.c
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo-analysis-surface.c
++++ mozilla/gfx/cairo/cairo/src/cairo-analysis-surface.c
+@@ -320,17 +320,17 @@
+     cairo_rectangle_int_t  extents;
+ 
+     if (!surface->target->backend->stroke)
+ 	backend_status = CAIRO_INT_STATUS_UNSUPPORTED;
+     else
+ 	backend_status = (*surface->target->backend->stroke) (surface->target, op,
+ 							      source, path, style,
+ 							      ctm, ctm_inverse,
+-							      tolerance, antialias);
++							      tolerance, CAIRO_ANTIALIAS_NONE);
+ 
+     if (backend_status == CAIRO_INT_STATUS_ANALYZE_META_SURFACE_PATTERN)
+ 	backend_status = _cairo_analysis_surface_analyze_meta_surface_pattern (surface,
+ 									       source);
+ 
+     status = _cairo_surface_get_extents (&surface->base, &extents);
+     if (status)
+ 	return status;
+@@ -393,17 +393,17 @@
+     cairo_box_t              box;
+     cairo_rectangle_int_t  extents;
+ 
+     if (!surface->target->backend->fill)
+ 	backend_status = CAIRO_INT_STATUS_UNSUPPORTED;
+     else
+ 	backend_status = (*surface->target->backend->fill) (surface->target, op,
+ 						    source, path, fill_rule,
+-						    tolerance, antialias);
++						    tolerance, CAIRO_ANTIALIAS_NONE);
+ 
+     if (backend_status == CAIRO_INT_STATUS_ANALYZE_META_SURFACE_PATTERN)
+ 	backend_status = _cairo_analysis_surface_analyze_meta_surface_pattern (surface,
+ 									       source);
+ 
+     status = _cairo_surface_get_extents (&surface->base, &extents);
+     if (status)
+ 	return status;
+Index: mozilla/gfx/cairo/cairo/src/cairo-clip.c
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo-clip.c
++++ mozilla/gfx/cairo/cairo/src/cairo-clip.c
+@@ -283,17 +283,17 @@
+     if (status) {
+ 	free (clip_path);
+ 	return status;
+     }
+ 
+     clip_path->ref_count = 1;
+     clip_path->fill_rule = fill_rule;
+     clip_path->tolerance = tolerance;
+-    clip_path->antialias = antialias;
++    clip_path->antialias = CAIRO_ANTIALIAS_NONE;
+     clip_path->prev = clip->path;
+     clip->path = clip_path;
+ 
+     return CAIRO_STATUS_SUCCESS;
+ }
+ 
+ static cairo_clip_path_t *
+ _cairo_clip_path_reference (cairo_clip_path_t *clip_path)
+@@ -405,17 +405,17 @@
+ 
+     _cairo_traps_translate (traps, -surface_rect.x, -surface_rect.y);
+     _cairo_pattern_init_solid (&pattern.solid, CAIRO_COLOR_WHITE,
+ 			       CAIRO_CONTENT_COLOR);
+ 
+     status = _cairo_surface_composite_trapezoids (CAIRO_OPERATOR_IN,
+ 						  &pattern.base,
+ 						  surface,
+-						  antialias,
++						  CAIRO_ANTIALIAS_NONE,
+ 						  0, 0,
+ 						  0, 0,
+ 						  surface_rect.width,
+ 						  surface_rect.height,
+ 						  traps->traps,
+ 						  traps->num_traps);
+ 
+     _cairo_pattern_fini (&pattern.base);
+@@ -468,17 +468,17 @@
+ 		  cairo_antialias_t   antialias,
+ 		  cairo_surface_t    *target)
+ {
+     cairo_status_t status;
+     cairo_traps_t traps;
+ 
+     status = _cairo_clip_intersect_path (clip,
+ 					 path, fill_rule, tolerance,
+-					 antialias);
++					 CAIRO_ANTIALIAS_NONE);
+     if (status == CAIRO_STATUS_SUCCESS)
+         clip->serial = _cairo_surface_allocate_clip_serial (target);
+ 
+     if (status != CAIRO_INT_STATUS_UNSUPPORTED)
+ 	return status;
+ 
+     _cairo_traps_init (&traps);
+     status = _cairo_path_fixed_fill_to_traps (path,
+@@ -487,17 +487,17 @@
+ 					      &traps);
+     if (status)
+ 	goto bail;
+ 
+     status = _cairo_clip_intersect_region (clip, &traps, target);
+     if (status != CAIRO_INT_STATUS_UNSUPPORTED)
+ 	goto bail;
+ 
+-    status = _cairo_clip_intersect_mask (clip, &traps, antialias, target);
++    status = _cairo_clip_intersect_mask (clip, &traps, CAIRO_ANTIALIAS_NONE, target);
+ 
+  bail:
+     _cairo_traps_fini (&traps);
+ 
+     return status;
+ }
+ 
+ void
+@@ -537,17 +537,17 @@
+ {
+     if (clip_path->prev)
+         _cairo_clip_path_reapply_clip_path (clip, clip_path->prev);
+ 
+     _cairo_clip_intersect_path (clip,
+                                 &clip_path->path,
+                                 clip_path->fill_rule,
+                                 clip_path->tolerance,
+-                                clip_path->antialias);
++                                CAIRO_ANTIALIAS_NONE);
+ }
+ 
+ cairo_status_t
+ _cairo_clip_init_deep_copy (cairo_clip_t    *clip,
+                             cairo_clip_t    *other,
+                             cairo_surface_t *target)
+ {
+     _cairo_clip_init (clip, target);
+Index: mozilla/gfx/cairo/cairo/src/cairo-gstate.c
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo-gstate.c
++++ mozilla/gfx/cairo/cairo/src/cairo-gstate.c
+@@ -62,17 +62,17 @@
+ _cairo_gstate_init (cairo_gstate_t  *gstate,
+ 		    cairo_surface_t *target)
+ {
+     gstate->next = NULL;
+ 
+     gstate->op = CAIRO_GSTATE_OPERATOR_DEFAULT;
+ 
+     gstate->tolerance = CAIRO_GSTATE_TOLERANCE_DEFAULT;
+-    gstate->antialias = CAIRO_ANTIALIAS_DEFAULT;
++    gstate->antialias = CAIRO_ANTIALIAS_NONE;
+ 
+     _cairo_stroke_style_init (&gstate->stroke_style);
+ 
+     gstate->fill_rule = CAIRO_GSTATE_FILL_RULE_DEFAULT;
+ 
+     gstate->font_face = NULL;
+     gstate->scaled_font = NULL;
+ 
+@@ -109,17 +109,17 @@
+ static cairo_status_t
+ _cairo_gstate_init_copy (cairo_gstate_t *gstate, cairo_gstate_t *other)
+ {
+     cairo_status_t status;
+ 
+     gstate->op = other->op;
+ 
+     gstate->tolerance = other->tolerance;
+-    gstate->antialias = other->antialias;
++    gstate->antialias = CAIRO_ANTIALIAS_NONE;
+ 
+     status = _cairo_stroke_style_init_copy (&gstate->stroke_style,
+ 					    &other->stroke_style);
+     if (status)
+ 	return status;
+ 
+     gstate->fill_rule = other->fill_rule;
+ 
+@@ -280,17 +280,17 @@
+     status = _cairo_gstate_recursive_apply_clip_path (gstate, cpath->prev);
+     if (status)
+ 	return status;
+ 
+     return _cairo_clip_clip (&gstate->clip,
+ 			     &cpath->path,
+ 			     cpath->fill_rule,
+ 			     cpath->tolerance,
+-			     cpath->antialias,
++			     CAIRO_ANTIALIAS_NONE,
+ 			     gstate->target);
+ }
+ 
+ /**
+  * _cairo_gstate_redirect_target:
+  * @gstate: a #cairo_gstate_t
+  * @child: the new child target
+  *
+@@ -1200,17 +1200,17 @@
+     return CAIRO_STATUS_SUCCESS;
+ }
+ 
+ cairo_status_t
+ _cairo_gstate_clip (cairo_gstate_t *gstate, cairo_path_fixed_t *path)
+ {
+     return _cairo_clip_clip (&gstate->clip,
+ 			     path, gstate->fill_rule, gstate->tolerance,
+-			     gstate->antialias, gstate->target);
++			     CAIRO_ANTIALIAS_NONE, gstate->target);
+ }
+ 
+ cairo_status_t
+ _cairo_gstate_clip_extents (cairo_gstate_t *gstate,
+ 		            double         *x1,
+ 		            double         *y1,
+         		    double         *x2,
+         		    double         *y2)
+@@ -1634,17 +1634,17 @@
+     return status;
+ }
+ #undef STACK_GLYPHS_LEN
+ 
+ cairo_status_t
+ _cairo_gstate_set_antialias (cairo_gstate_t *gstate,
+ 			     cairo_antialias_t antialias)
+ {
+-    gstate->antialias = antialias;
++    gstate->antialias = CAIRO_ANTIALIAS_NONE;
+ 
+     return CAIRO_STATUS_SUCCESS;
+ }
+ 
+ cairo_antialias_t
+ _cairo_gstate_get_antialias (cairo_gstate_t *gstate)
+ {
+     return gstate->antialias;
+Index: mozilla/gfx/cairo/cairo/src/cairo-meta-surface.c
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo-meta-surface.c
++++ mozilla/gfx/cairo/cairo/src/cairo-meta-surface.c
+@@ -356,17 +356,17 @@
+ 
+     status = _cairo_stroke_style_init_copy (&command->style, style);
+     if (status)
+ 	goto CLEANUP_PATH;
+ 
+     command->ctm = *ctm;
+     command->ctm_inverse = *ctm_inverse;
+     command->tolerance = tolerance;
+-    command->antialias = antialias;
++    command->antialias = CAIRO_ANTIALIAS_NONE;
+ 
+     status = _cairo_array_append (&meta->commands, &command);
+     if (status)
+ 	goto CLEANUP_STYLE;
+ 
+     return CAIRO_STATUS_SUCCESS;
+ 
+   CLEANUP_STYLE:
+@@ -406,17 +406,17 @@
+ 	goto CLEANUP_COMMAND;
+ 
+     status = _cairo_path_fixed_init_copy (&command->path, path);
+     if (status)
+ 	goto CLEANUP_SOURCE;
+ 
+     command->fill_rule = fill_rule;
+     command->tolerance = tolerance;
+-    command->antialias = antialias;
++    command->antialias = CAIRO_ANTIALIAS_NONE;
+ 
+     status = _cairo_array_append (&meta->commands, &command);
+     if (status)
+ 	goto CLEANUP_PATH;
+ 
+     return CAIRO_STATUS_SUCCESS;
+ 
+   CLEANUP_PATH:
+@@ -546,17 +546,17 @@
+ 	command->path_pointer = &command->path;
+ 	meta->is_clipped = TRUE;
+     } else {
+ 	command->path_pointer = NULL;
+ 	meta->is_clipped = FALSE;
+     }
+     command->fill_rule = fill_rule;
+     command->tolerance = tolerance;
+-    command->antialias = antialias;
++    command->antialias = CAIRO_ANTIALIAS_NONE;
+ 
+     status = _cairo_array_append (&meta->commands, &command);
+     if (status) {
+ 	if (path)
+ 	    _cairo_path_fixed_fini (&command->path);
+ 	free (command);
+ 	return status;
+     }
+@@ -732,17 +732,17 @@
+ 	    status = _cairo_surface_stroke (target,
+ 					    command->stroke.op,
+ 					    &command->stroke.source.base,
+ 					    dev_path,
+ 					    &command->stroke.style,
+ 					    &dev_ctm,
+ 					    &dev_ctm_inverse,
+ 					    command->stroke.tolerance,
+-					    command->stroke.antialias);
++					    CAIRO_ANTIALIAS_NONE);
+ 	    break;
+ 	}
+ 	case CAIRO_COMMAND_FILL:
+ 	{
+ 	    cairo_command_t *stroke_command;
+ 
+ 	    stroke_command = (i < num_elements - 1) ? elements[i + 1] : NULL;
+ 
+@@ -772,26 +772,26 @@
+ 						     command->fill.antialias,
+ 						     dev_path,
+ 						     stroke_command->stroke.op,
+ 						     &stroke_command->stroke.source.base,
+ 						     &stroke_command->stroke.style,
+ 						     &dev_ctm,
+ 						     &dev_ctm_inverse,
+ 						     stroke_command->stroke.tolerance,
+-						     stroke_command->stroke.antialias);
++						     CAIRO_ANTIALIAS_NONE);
+ 		i++;
+ 	    } else
+ 		status = _cairo_surface_fill (target,
+ 					      command->fill.op,
+ 					      &command->fill.source.base,
+ 					      dev_path,
+ 					      command->fill.fill_rule,
+ 					      command->fill.tolerance,
+-					      command->fill.antialias);
++					      CAIRO_ANTIALIAS_NONE);
+ 	    break;
+ 	}
+ 	case CAIRO_COMMAND_SHOW_GLYPHS:
+ 	{
+ 	    cairo_glyph_t *glyphs = command->show_glyphs.glyphs;
+ 	    cairo_glyph_t *dev_glyphs = glyphs;
+ 	    int i, num_glyphs = command->show_glyphs.num_glyphs;
+ 
+@@ -824,17 +824,17 @@
+ 	    /* XXX Meta surface clipping is broken and requires some
+ 	     * cairo-gstate.c rewriting.  Work around it for now. */
+ 	    if (dev_path == NULL)
+ 		_cairo_clip_reset (&clip);
+ 	    else
+ 		status = _cairo_clip_clip (&clip, dev_path,
+ 					   command->intersect_clip_path.fill_rule,
+ 					   command->intersect_clip_path.tolerance,
+-					   command->intersect_clip_path.antialias,
++					   CAIRO_ANTIALIAS_NONE,
+ 					   target);
+             assert (status == 0);
+ 	    break;
+ 	default:
+ 	    ASSERT_NOT_REACHED;
+ 	}
+ 
+ 	if (dev_path == &path_copy)
+Index: mozilla/gfx/cairo/cairo/src/cairo-surface-fallback.c
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo-surface-fallback.c
++++ mozilla/gfx/cairo/cairo/src/cairo-surface-fallback.c
+@@ -494,17 +494,17 @@
+ 	_cairo_traps_translate (info->traps, - dst_x, - dst_y);
+ 
+     _cairo_pattern_init_solid (&pattern.solid, CAIRO_COLOR_WHITE,
+ 			       CAIRO_CONTENT_COLOR);
+     if (!src)
+ 	src = &pattern.base;
+ 
+     status = _cairo_surface_composite_trapezoids (op,
+-						  src, dst, info->antialias,
++						  src, dst, CAIRO_ANTIALIAS_NONE,
+ 						  extents->x,         extents->y,
+ 						  extents->x - dst_x, extents->y - dst_y,
+ 						  extents->width,     extents->height,
+ 						  info->traps->traps,
+ 						  info->traps->num_traps);
+     _cairo_pattern_fini (&pattern.base);
+ 
+     return status;
+@@ -650,17 +650,17 @@
+                                                          CAIRO_COLOR_TRANSPARENT,
+                                                          &clear_region);
+                 goto out;
+             }
+         }
+     }
+ 
+     traps_info.traps = traps;
+-    traps_info.antialias = antialias;
++    traps_info.antialias = CAIRO_ANTIALIAS_NONE;
+ 
+     status = _clip_and_composite (clip, op, src,
+                                   _composite_traps_draw_func,
+                                   &traps_info, dst, &extents);
+ 
+ out:
+     if (has_trap_region)
+         _cairo_region_fini (&trap_region);
+@@ -840,17 +840,17 @@
+ 	return status;
+     }
+ 
+     status = _clip_and_composite_trapezoids (source,
+ 				             op,
+ 					     surface,
+ 					     &traps,
+ 					     surface->clip,
+-					     antialias);
++	 						 CAIRO_ANTIALIAS_NONE);
+ 
+     _cairo_traps_fini (&traps);
+ 
+     return status;
+ }
+ 
+ cairo_status_t
+ _cairo_surface_fallback_fill (cairo_surface_t		*surface,
+@@ -901,17 +901,17 @@
+ 	return status;
+     }
+ 
+     status = _clip_and_composite_trapezoids (source,
+ 					     op,
+ 					     surface,
+ 					     &traps,
+ 					     surface->clip,
+-					     antialias);
++					     CAIRO_ANTIALIAS_NONE);
+ 
+     _cairo_traps_fini (&traps);
+ 
+     return status;
+ }
+ 
+ typedef struct {
+     cairo_scaled_font_t *font;
+@@ -1234,17 +1234,17 @@
+ 	_cairo_trapezoid_array_translate_and_scale (offset_traps, traps, num_traps,
+                                                     - state.image_rect.x, - state.image_rect.y,
+                                                     1.0, 1.0);
+ 	traps = offset_traps;
+     }
+ 
+     status = _cairo_surface_composite_trapezoids (op, pattern,
+ 					          &state.image->base,
+-						  antialias,
++				 			CAIRO_ANTIALIAS_NONE,
+ 						  src_x, src_y,
+ 						  dst_x - state.image_rect.x,
+ 						  dst_y - state.image_rect.y,
+ 						  width, height,
+ 						  traps, num_traps);
+     if (offset_traps)
+ 	free (offset_traps);
+ 
+Index: mozilla/gfx/cairo/cairo/src/cairo-surface.c
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo-surface.c
++++ mozilla/gfx/cairo/cairo/src/cairo-surface.c
+@@ -1480,26 +1480,26 @@
+     status = _cairo_surface_copy_pattern_for_destination (source, surface, &dev_source.base);
+     if (status)
+ 	return status;
+ 
+     if (surface->backend->stroke) {
+ 	status = surface->backend->stroke (surface, op, &dev_source.base,
+ 					   path, stroke_style,
+ 					   &dev_ctm, &dev_ctm_inverse,
+-					   tolerance, antialias);
++					   tolerance, CAIRO_ANTIALIAS_NONE);
+ 
+ 	if (status != CAIRO_INT_STATUS_UNSUPPORTED)
+             goto FINISH;
+     }
+ 
+     status = _cairo_surface_fallback_stroke (surface, op, &dev_source.base,
+                                              path, stroke_style,
+                                              &dev_ctm, &dev_ctm_inverse,
+-                                             tolerance, antialias);
++                                             tolerance, CAIRO_ANTIALIAS_NONE);
+ 
+  FINISH:
+     if (dev_path == &real_dev_path)
+         _cairo_path_fixed_fini (&real_dev_path);
+     _cairo_pattern_fini (&dev_source.base);
+ 
+     return status;
+ }
+@@ -1520,25 +1520,25 @@
+ 
+     status = _cairo_surface_copy_pattern_for_destination (source, surface, &dev_source.base);
+     if (status)
+ 	return status;
+ 
+     if (surface->backend->fill) {
+ 	status = surface->backend->fill (surface, op, &dev_source.base,
+ 					 path, fill_rule,
+-					 tolerance, antialias);
++					 tolerance, CAIRO_ANTIALIAS_NONE);
+ 
+ 	if (status != CAIRO_INT_STATUS_UNSUPPORTED)
+             goto FINISH;
+     }
+ 
+     status = _cairo_surface_fallback_fill (surface, op, &dev_source.base,
+                                            path, fill_rule,
+-                                           tolerance, antialias);
++                                           tolerance, CAIRO_ANTIALIAS_NONE);
+ 
+  FINISH:
+     _cairo_pattern_fini (&dev_source.base);
+ 
+     return status;
+ }
+ 
+ cairo_status_t
+@@ -1568,27 +1568,27 @@
+ 	return dst->status;
+ 
+     if (dst->finished)
+ 	return CAIRO_STATUS_SURFACE_FINISHED;
+ 
+     if (dst->backend->composite_trapezoids) {
+ 	status = dst->backend->composite_trapezoids (op,
+ 						     pattern, dst,
+-						     antialias,
++						     CAIRO_ANTIALIAS_NONE,
+ 						     src_x, src_y,
+                                                      dst_x, dst_y,
+ 						     width, height,
+ 						     traps, num_traps);
+ 	if (status != CAIRO_INT_STATUS_UNSUPPORTED)
+ 	    return status;
+     }
+ 
+     return  _cairo_surface_fallback_composite_trapezoids (op, pattern, dst,
+-							  antialias,
++							  CAIRO_ANTIALIAS_NONE,
+ 							  src_x, src_y,
+ 							  dst_x, dst_y,
+ 							  width, height,
+ 							  traps, num_traps);
+ }
+ 
+ /**
+  * cairo_surface_copy_page:
+@@ -1777,17 +1777,17 @@
+ 	return CAIRO_STATUS_SURFACE_FINISHED;
+ 
+     assert (surface->backend->intersect_clip_path != NULL);
+ 
+     status = surface->backend->intersect_clip_path (surface,
+ 						    dev_path,
+ 						    fill_rule,
+ 						    tolerance,
+-						    antialias);
++						    CAIRO_ANTIALIAS_NONE);
+ 
+     return status;
+ }
+ 
+ static cairo_status_t
+ _cairo_surface_set_clip_path_recursive (cairo_surface_t *surface,
+ 					cairo_clip_path_t *clip_path)
+ {
+@@ -1799,17 +1799,17 @@
+     status = _cairo_surface_set_clip_path_recursive (surface, clip_path->prev);
+     if (status)
+ 	return status;
+ 
+     return _cairo_surface_intersect_clip_path (surface,
+ 					       &clip_path->path,
+ 					       clip_path->fill_rule,
+ 					       clip_path->tolerance,
+-					       clip_path->antialias);
++					       CAIRO_ANTIALIAS_NONE);
+ }
+ 
+ /**
+  * _cairo_surface_set_clip_path:
+  * @surface: the #cairo_surface_t to set the clip on
+  * @clip_path: the clip path to set
+  * @serial: the clip serial number associated with the clip path
+  *
+Index: mozilla/gfx/cairo/cairo/src/cairo.c
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo.c
++++ mozilla/gfx/cairo/cairo/src/cairo.c
+@@ -867,24 +867,24 @@
+  * This value is a hint, and a particular backend may or may not support
+  * a particular value.  At the current time, no backend supports
+  * %CAIRO_ANTIALIAS_SUBPIXEL when drawing shapes.
+  *
+  * Note that this option does not affect text rendering, instead see
+  * cairo_font_options_set_antialias().
+  **/
+ void
+-cairo_set_antialias (cairo_t *cr, cairo_antialias_t antialias)
++cairo_set_antialias (cairo_t *cr, cairo_antialias_t anCAIRO_ANTIALIAS_NONEtialias)
+ {
+     cairo_status_t status;
+ 
+     if (cr->status)
+ 	return;
+ 
+-    status = _cairo_gstate_set_antialias (cr->gstate, antialias);
++    status = _cairo_gstate_set_antialias (cr->gstate, CAIRO_ANTIALIAS_NONE);
+     if (status)
+ 	_cairo_set_error (cr, status);
+ }
+ 
+ /**
+  * cairo_set_fill_rule:
+  * @cr: a #cairo_t
+  * @fill_rule: a fill rule, specified as a #cairo_fill_rule_t
+Index: mozilla/gfx/cairo/cairo/src/cairo-pattern.c
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo-pattern.c
++++ mozilla/gfx/cairo/cairo/src/cairo-pattern.c
+@@ -1217,17 +1217,17 @@
+ 	{
+ 	    pixman_image_unref (pixman_image);
+ 	    return CAIRO_STATUS_NO_MEMORY;
+ 	}
+ 
+ 	attr->x_offset = attr->y_offset = 0;
+ 	attr->matrix = pattern->base.matrix;
+ 	attr->extend = pattern->base.extend;
+-	attr->filter = CAIRO_FILTER_NEAREST;
++	attr->filter = CAIRO_FILTER_FAST;
+ 	attr->acquired = FALSE;
+ 
+ 	*out = &image->base;
+ 
+ 	return CAIRO_STATUS_SUCCESS;
+     }
+ 
+     if (pattern->base.type == CAIRO_PATTERN_TYPE_LINEAR) {
+@@ -1300,17 +1300,17 @@
+ 					   0, 0, width, height, out);
+ 
+     cairo_surface_destroy (&image->base);
+ 
+     attr->x_offset = -x;
+     attr->y_offset = -y;
+     cairo_matrix_init_identity (&attr->matrix);
+     attr->extend = repeat ? CAIRO_EXTEND_REPEAT : CAIRO_EXTEND_NONE;
+-    attr->filter = CAIRO_FILTER_NEAREST;
++    attr->filter = CAIRO_FILTER_FAST;
+     attr->acquired = FALSE;
+ 
+     return status;
+ }
+ 
+ /* We maintain a small cache here, because we don't want to constantly
+  * recreate surfaces for simple solid colors. */
+ #define MAX_SURFACE_CACHE_SIZE 16
+@@ -1410,17 +1410,17 @@
+ 
+ DONE:
+     *out = cairo_surface_reference (solid_surface_cache.cache[i].surface);
+ 
+ NOCACHE:
+     attribs->x_offset = attribs->y_offset = 0;
+     cairo_matrix_init_identity (&attribs->matrix);
+     attribs->extend = CAIRO_EXTEND_REPEAT;
+-    attribs->filter = CAIRO_FILTER_NEAREST;
++    attribs->filter = CAIRO_FILTER_FAST;
+     attribs->acquired = FALSE;
+ 
+     status = CAIRO_STATUS_SUCCESS;
+ 
+ UNLOCK:
+     CAIRO_MUTEX_UNLOCK (_cairo_pattern_solid_surface_cache_lock);
+ 
+     return status;
+@@ -1523,17 +1523,17 @@
+     attr->extend = pattern->base.extend;
+     attr->filter = pattern->base.filter;
+     if (_cairo_matrix_is_integer_translation (&pattern->base.matrix,
+ 					      &tx, &ty))
+     {
+ 	cairo_matrix_init_identity (&attr->matrix);
+ 	attr->x_offset = tx;
+ 	attr->y_offset = ty;
+-	attr->filter = CAIRO_FILTER_NEAREST;
++	attr->filter = CAIRO_FILTER_FAST;
+     }
+     else
+     {
+ 	attr->matrix = pattern->base.matrix;
+ 	attr->x_offset = attr->y_offset = 0;
+ 	tx = 0;
+ 	ty = 0;
+     }
+Index: mozilla/gfx/cairo/cairo/src/cairoint.h
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairoint.h
++++ mozilla/gfx/cairo/cairo/src/cairoint.h
+@@ -949,17 +949,17 @@
+ typedef enum {
+     CAIRO_STOCK_WHITE,
+     CAIRO_STOCK_BLACK,
+     CAIRO_STOCK_TRANSPARENT
+ } cairo_stock_t;
+ 
+ #define CAIRO_EXTEND_SURFACE_DEFAULT CAIRO_EXTEND_NONE
+ #define CAIRO_EXTEND_GRADIENT_DEFAULT CAIRO_EXTEND_PAD
+-#define CAIRO_FILTER_DEFAULT CAIRO_FILTER_BEST
++#define CAIRO_FILTER_DEFAULT CAIRO_FILTER_FAST
+ 
+ struct _cairo_pattern {
+     cairo_pattern_type_t    type;
+     unsigned int	    ref_count;
+     cairo_status_t          status;
+     cairo_user_data_array_t user_data;
+ 
+     cairo_matrix_t	    matrix;

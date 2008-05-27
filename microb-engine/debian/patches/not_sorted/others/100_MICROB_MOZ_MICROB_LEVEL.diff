@@ -1,0 +1,59 @@
+# Patches for microb-engine
+# Oleg Romashin <oleg.romashin@nokia.com>
+# DP: Additional strips for toolkit libxul library
+
+Index: mozilla/toolkit/components/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/Makefile.in
++++ mozilla/toolkit/components/Makefile.in
+@@ -97,16 +97,22 @@
+ 
+ ifdef MOZ_XUL
+ DIRS += \
+ 	autocomplete \
+ 	satchel \
+ 	$(NULL)
+ endif # MOZ_XUL
+ 
++ifdef MOZ_MICROB
++DIRS += \
++	history/public \
++	$(NULL)
++endif
++
+ ifdef MOZ_SUITE
+ # Suite can't use passwordmgr because mail still depends on wallet (bug 239131)
+ DIRS += passwordmgr/public
+ else
+ DIRS += passwordmgr
+ ifndef MOZ_PLACES
+ DIRS +=	history
+ endif # MOZ_PLACES
+Index: mozilla/xpfe/components/Makefile.in
+===================================================================
+--- mozilla.orig/xpfe/components/Makefile.in
++++ mozilla/xpfe/components/Makefile.in
+@@ -71,19 +71,22 @@
+ 
+ ifdef MOZ_RDF
+ DIRS += \
+         intl \
+         windowds \
+         $(NULL)
+ endif
+ 
++DIRS += \
++        directory
++        $(NULL)
++
+ ifdef MOZ_HAVE_BROWSER
+ DIRS += \
+-        directory \
+         resetPref \
+         $(NULL)
+ 
+ ifndef MOZ_PHOENIX
+ ifndef MOZ_XULRUNNER
+ DIRS += \
+         related \
+         autocomplete \

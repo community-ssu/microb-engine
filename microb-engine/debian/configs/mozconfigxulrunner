@@ -1,0 +1,25 @@
+mk_add_options MOZ_CO_PROJECT=suite,browser,xulrunner
+ac_add_options --enable-application=xulrunner
+
+
+   #* Simple Build
+ac_add_options --disable-javaxpcom
+ac_add_options --disable-js-static-build
+ac_add_options --disable-tests
+
+   #* Branding
+ac_add_options --with-branding=branding/microb
+
+   #* Missing environment
+ac_add_options --disable-crashreporter --disable-mochitest --disable-dbus
+
+
+ac_add_options --disable-pedantic
+ac_add_options --disable-old-abi-compat-wrappers
+ac_add_options --enable-chrome-format=flat
+
+   #* Micro Base
+ac_add_options --with-embedding-profile=default
+#ac_add_options --with-embedding-profile=basic
+#ac_add_options --with-embedding-profile=minimal
+

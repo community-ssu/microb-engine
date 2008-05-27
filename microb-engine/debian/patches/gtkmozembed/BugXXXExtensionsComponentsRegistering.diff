@@ -1,0 +1,90 @@
+Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/EmbedPrivate.cpp
++++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
+@@ -83,16 +83,20 @@
+ #include "GtkPromptService.h"
+ 
+ #ifdef MOZ_ACCESSIBILITY_ATK
+ #include "nsIAccessibilityService.h"
+ #include "nsIAccessible.h"
+ #include "nsIDOMDocument.h"
+ #endif
+ 
++#ifdef MOZ_RDF
++#include "nsIExtensionManager.h"
++#endif
++
+ PRUint32     EmbedPrivate::sWidgetCount = 0;
+ 
+ char        *EmbedPrivate::sPath        = nsnull;
+ char        *EmbedPrivate::sCompPath    = nsnull;
+ nsVoidArray *EmbedPrivate::sWindowList  = nsnull;
+ nsILocalFile *EmbedPrivate::sProfileDir  = nsnull;
+ nsISupports  *EmbedPrivate::sProfileLock = nsnull;
+ GtkWidget   *EmbedPrivate::sOffscreenWindow = 0;
+@@ -534,16 +538,24 @@
+     rv = XRE_InitEmbedding(greDir, binDir,
+                            const_cast<GTKEmbedDirectoryProvider*>(&kDirectoryProvider),
+                            nsnull, nsnull);
+     if (NS_FAILED(rv))
+       return;
+ 
+     if (sProfileDir)
+       XRE_NotifyProfile();
++
++#ifdef MOZ_RDF
++    PRBool needsRestart;
++    nsCOMPtr<nsIExtensionManager>
++      extensionManager(do_GetService("@mozilla.org/extensions/manager;1", &rv));
++    if (extensionManager)
++      extensionManager->Start(nsnull, &needsRestart);
++#endif
+ 
+     rv = RegisterAppComponents();
+     NS_ASSERTION(NS_SUCCEEDED(rv), "Warning: Failed to register app components.\n");
+   }
+ }
+ 
+ /* static */
+ void
+@@ -968,16 +980,17 @@
+   nsCOMPtr<nsIComponentRegistrar> cr;
+   nsresult rv = NS_GetComponentRegistrar(getter_AddRefs(cr));
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   nsCOMPtr<nsIComponentManager> cm;
+   rv = NS_GetComponentManager (getter_AddRefs (cm));
+   NS_ENSURE_SUCCESS (rv, rv);
+ 
++  cr->AutoRegister(nsnull);
+   for (int i = 0; i < sNumAppComps; ++i) {
+     nsCOMPtr<nsIGenericFactory> componentFactory;
+     rv = NS_NewGenericFactory(getter_AddRefs(componentFactory),
+                               &(sAppComps[i]));
+     if (NS_FAILED(rv)) {
+       NS_WARNING("Unable to create factory for component");
+       continue;  // don't abort registering other components
+     }
+Index: mozilla/embedding/browser/gtk/src/Makefile.in
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/Makefile.in
++++ mozilla/embedding/browser/gtk/src/Makefile.in
+@@ -60,16 +60,17 @@
+ 		  layout \
+ 		  uriloader \
+ 		  webbrwsr \
+ 		  shistory \
+ 		  embed_base \
+ 		  windowwatcher \
+ 		  profdirserviceprovider \
+ 		  xulapp \
++		  extensions \
+ 		  $(NULL)
+ 
+ ifdef ACCESSIBILITY
+ REQUIRES        += accessibility
+ endif
+ 
+ CPPSRCS		= \
+ 		gtkmozembed2.cpp \

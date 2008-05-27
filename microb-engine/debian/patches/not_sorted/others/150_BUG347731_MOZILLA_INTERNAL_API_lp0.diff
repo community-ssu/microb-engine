@@ -1,0 +1,203 @@
+#extensions/spatialnavigation doesn't build with libxul and bsmedberg's latest landing
+Index: gfx/src/nsFont.cpp
+===================================================================
+--- gfx/src/nsFont.cpp.orig
++++ gfx/src/nsFont.cpp
+@@ -31,27 +31,36 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsFont.h"
++#ifdef MOZILLA_INTERNAL_API
+ #include "nsString.h"
++#else
++#include "nsStringAPI.h"
++#endif
+ #include "nsUnicharUtils.h"
+ #include "nsCRT.h"
+ 
+ nsFont::nsFont(const char* aName, PRUint8 aStyle, PRUint8 aVariant,
+                PRUint16 aWeight, PRUint8 aDecoration, nscoord aSize,
+                float aSizeAdjust)
+ {
++#ifdef MOZILLA_INTERNAL_API
+   NS_ASSERTION(aName && IsASCII(nsDependentCString(aName)),
+                "Must only pass ASCII names here");
+   name.AssignASCII(aName);
++#else
++//  NS_ConvertASCIItoUTF16(NS_LITERAL_CSTRING(aName), name);
++  CopyASCIItoUTF16(NS_LITERAL_CSTRING(aName), name);
++#endif
+   style = aStyle;
+   systemFont = PR_FALSE;
+   variant = aVariant;
+   familyNameQuirks = PR_FALSE;
+   weight = aWeight;
+   decorations = aDecoration;
+   size = aSize;
+   sizeAdjust = aSizeAdjust;
+@@ -96,17 +105,23 @@
+ PRBool nsFont::BaseEquals(const nsFont& aOther) const
+ {
+   if ((style == aOther.style) &&
+       (systemFont == aOther.systemFont) &&
+       (familyNameQuirks == aOther.familyNameQuirks) &&
+       (weight == aOther.weight) &&
+       (size == aOther.size) &&
+       (sizeAdjust == aOther.sizeAdjust) &&
+-      name.Equals(aOther.name, nsCaseInsensitiveStringComparator())) {
++#ifdef MOZILLA_INTERNAL_API
++      name.Equals(aOther.name, nsCaseInsensitiveStringComparator())
++#else
++//FIXME
++      CaseInsensitiveCompare(NS_LossyConvertUTF16toASCII(name).get(), NS_LossyConvertUTF16toASCII(aOther.name).get(), 0)
++#endif
++      ) {
+     return PR_TRUE;
+   }
+   return PR_FALSE;
+ }
+ 
+ PRBool nsFont::Equals(const nsFont& aOther) const
+ {
+   if (BaseEquals(aOther) &&
+@@ -140,19 +155,26 @@
+ 
+ const PRUnichar kNullCh       = PRUnichar('\0');
+ const PRUnichar kSingleQuote  = PRUnichar('\'');
+ const PRUnichar kDoubleQuote  = PRUnichar('\"');
+ const PRUnichar kComma        = PRUnichar(',');
+ 
+ PRBool nsFont::EnumerateFamilies(nsFontFamilyEnumFunc aFunc, void* aData) const
+ {
++#ifdef MOZILLA_INTERNAL_API
+   const PRUnichar *p, *p_end;
+   name.BeginReading(p);
+   name.EndReading(p_end);
++#else
++//nsTHashtable.cpp:46
++  const PRUnichar *p, *p_end;
++  PRUint32 len = NS_StringGetData(name, &p);
++  p_end = p + len;
++#endif
+   nsAutoString family;
+ 
+   while (p < p_end) {
+     while (nsCRT::IsAsciiSpace(*p))
+       if (++p == p_end)
+         return PR_TRUE;
+ 
+     PRBool generic;
+@@ -176,17 +198,21 @@
+ 
+     } else {
+       // unquoted font family
+       const PRUnichar *nameStart = p;
+       while (++p != p_end && *p != kComma)
+         /* nothing */ ;
+ 
+       family = Substring(nameStart, p);
++#ifdef MOZILLA_INTERNAL_API
+       family.CompressWhitespace(PR_FALSE, PR_TRUE);
++#else
++      CompressWhitespace(family);
++#endif
+       generic = IsGenericFontFamily(family);
+     }
+ 
+     if (!family.IsEmpty() && !(*aFunc)(family, generic, aData))
+       return PR_FALSE;
+ 
+     ++p; // may advance past p_end
+   }
+Index: gfx/src/nsRect.cpp
+===================================================================
+--- gfx/src/nsRect.cpp.orig
++++ gfx/src/nsRect.cpp
+@@ -31,17 +31,17 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsRect.h"
+-#include "nsString.h"
++#include "nsStringGlue.h"
+ #include "nsUnitConversion.h"
+ #include "nsIDeviceContext.h"
+ 
+ #ifdef MIN
+ #undef MIN
+ #endif
+ 
+ #ifdef MAX
+@@ -210,17 +210,17 @@
+   nscoord bottom = NSToCoordRound(float(YMost()) / aScale);
+   x = NSToCoordRound(float(x) / aScale);
+   y = NSToCoordRound(float(y) / aScale);
+   width = (right - x);
+   height = (bottom - y);
+   return *this;
+ }
+ 
+-#ifdef DEBUG
++#if defined(DEBUG) && defined(MOZILLA_INTERNAL_API)
+ // Diagnostics
+ 
+ FILE* operator<<(FILE* out, const nsRect& rect)
+ {
+   nsAutoString tmp;
+ 
+   // Output the coordinates in fractional pixels so they're easier to read
+   tmp.AppendLiteral("{");
+Index: xpcom/ds/nsHashtable.h
+===================================================================
+--- xpcom/ds/nsHashtable.h.orig
++++ xpcom/ds/nsHashtable.h
+@@ -51,17 +51,17 @@
+  */
+ 
+ #ifndef nsHashtable_h__
+ #define nsHashtable_h__
+ 
+ #include "pldhash.h"
+ #include "prlock.h"
+ #include "nscore.h"
+-#include "nsString.h"
++#include "nsStringGlue.h"
+ #include "nsISupportsBase.h"
+ #include "nsTraceRefcnt.h"
+ 
+ class nsIObjectInputStream;
+ class nsIObjectOutputStream;
+ 
+ class nsHashtable;
+ class nsStringKey;
+@@ -423,17 +423,21 @@
+     enum Ownership {
+         NEVER_OWN,  // very long lived, even clones don't need to copy it.
+         OWN_CLONE,  // as long lived as this key. But clones make a copy.
+         OWN         // to be free'd in key dtor. Clones make their own copy.
+     };
+ 
+     nsStringKey(const nsStringKey& aKey);
+     nsStringKey(const PRUnichar* str, PRInt32 strLen = -1, Ownership own = OWN_CLONE);
++#ifdef MOZILLA_INTERNAL_API
+     nsStringKey(const nsAFlatString& str);
++#else
++    nsStringKey(const nsString& str);
++#endif
+     nsStringKey(const nsAString& str);
+     ~nsStringKey(void);
+ 
+     PRUint32 HashCode(void) const;
+     PRBool Equals(const nsHashKey* aKey) const;
+     nsHashKey* Clone() const;
+     nsStringKey(nsIObjectInputStream* aStream, nsresult *aResult);
+     nsresult Write(nsIObjectOutputStream* aStream) const;

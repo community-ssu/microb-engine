@@ -1,0 +1,61 @@
+# Checking for JPEG image encoder support is required
+#
+--- mozilla/modules/libpr0n/decoders/jpeg/Makefile.in.orig	2007-07-24 01:02:19.000000000 +0300
++++ mozilla/modules/libpr0n/decoders/jpeg/Makefile.in	2007-10-25 17:30:23.000000000 +0300
+@@ -54,12 +54,18 @@ REQUIRES	= xpcom \
+ 		  thebes \
+ 		  imglib2 \
+ 		  $(JPEG_REQUIRES) \
+ 		  $(LCMS_REQUIRES) \
+ 		  $(NULL)
+ 
+ CPPSRCS		= nsJPEGDecoder.cpp
+ 
++# From mozilla/jpeg/Makefile.in
++# (on certain platforms, or if JPEG image encoder support is required)
++ifeq (,$(filter os2 windows,$(MOZ_WIDGET_TOOLKIT))$(filter jpeg,$(MOZ_IMG_ENCODERS)))
++DEFINES += -DMOZ_IMG_ENCODERS_NO_JPEG=1
++endif
++
+ CSRCS		= iccjpeg.c
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+--- mozilla/modules/libpr0n/decoders/jpeg/iccjpeg.c.orig	2007-07-24 01:02:19.000000000 +0300
++++ mozilla/modules/libpr0n/decoders/jpeg/iccjpeg.c	2007-10-25 17:28:50.000000000 +0300
+@@ -48,16 +48,17 @@
+  * SOI and JFIF or Adobe markers, but before all else.)
+  */
+ 
+ void
+ write_icc_profile (j_compress_ptr cinfo,
+ 		   const JOCTET *icc_data_ptr,
+ 		   unsigned int icc_data_len)
+ {
++#ifndef MOZ_IMG_ENCODERS_NO_JPEG
+   unsigned int num_markers;	/* total number of markers we'll write */
+   int cur_marker = 1;		/* per spec, counting starts at 1 */
+   unsigned int length;		/* number of bytes to write in this marker */
+ 
+   /* Calculate the number of markers we'll need, rounding up of course */
+   num_markers = icc_data_len / MAX_DATA_BYTES_IN_MARKER;
+   if (num_markers * MAX_DATA_BYTES_IN_MARKER != icc_data_len)
+     num_markers++;
+@@ -96,16 +97,17 @@ write_icc_profile (j_compress_ptr cinfo,
+ 
+     /* Add the profile data */
+     while (length--) {
+       jpeg_write_m_byte(cinfo, *icc_data_ptr);
+       icc_data_ptr++;
+     }
+     cur_marker++;
+   }
++#endif
+ }
+ 
+ 
+ /*
+  * Prepare for reading an ICC profile
+  */
+ 
+ void

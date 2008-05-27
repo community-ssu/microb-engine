@@ -1,0 +1,15 @@
+--- mozilla/content/base/src/nsNodeUtils.cpp.orig	2007-12-15 11:59:00.000000000 +0200
++++ mozilla/content/base/src/nsNodeUtils.cpp	2007-12-27 11:02:19.000000000 +0200
+@@ -59,11 +59,11 @@
+ #define IMPL_MUTATION_NOTIFICATION(func_, content_, params_)      \
+   PR_BEGIN_MACRO                                                  \
+   nsINode* node = content_;                                       \
+   NS_ASSERTION(node->GetOwnerDoc() == doc, "Bogus document");     \
+   if (doc) {                                                      \
+-    static_cast<nsIMutationObserver*>(doc->BindingManager())->    \
++    ((nsIMutationObserver*)doc->BindingManager())->    \
+       func_ params_;                                              \
+   }                                                               \
+   do {                                                            \
+     nsINode::nsSlots* slots = node->GetExistingSlots();           \
+     if (slots && !slots->mMutationObservers.IsEmpty()) {          \

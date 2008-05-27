@@ -1,0 +1,23 @@
+# Bug 333869  After changing designMode, the input element become unusable
+Index: mozilla/docshell/base/nsDocShellEditorData.cpp
+===================================================================
+--- mozilla.orig/docshell/base/nsDocShellEditorData.cpp
++++ mozilla/docshell/base/nsDocShellEditorData.cpp
+@@ -184,16 +184,17 @@
+   // necessary to ensure that assigment into the nsCOMPtr does
+   // not temporarily reduce the refCount of the editor to zero
+   if (mEditor.get() != inEditor)
+   {
+     if (mEditor)
+     {
+       mEditor->PreDestroy();
+       mEditor = nsnull;
++      mMakeEditable = PR_FALSE;
+     }
+       
+     mEditor = inEditor;    // owning addref
+     if (!mEditor)
+       mMakeEditable = PR_FALSE;
+   }   
+   
+   return NS_OK;

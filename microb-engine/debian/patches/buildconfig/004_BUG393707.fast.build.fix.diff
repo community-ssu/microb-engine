@@ -1,0 +1,30 @@
+# Bug: 393707 Landing 389634 broke building without XUL
+#
+Index: mozilla/embedding/components/windowwatcher/src/nsWindowWatcher.cpp
+===================================================================
+--- mozilla.orig/embedding/components/windowwatcher/src/nsWindowWatcher.cpp
++++ mozilla/embedding/components/windowwatcher/src/nsWindowWatcher.cpp
+@@ -922,19 +922,22 @@
+     // we're opening a modal content window (the helper classes are
+     // no-ops if given no window), for chrome dialogs we don't want to
+     // do any of that (it's done elsewhere for us).
+ 
+     if (windowIsModalContentDialog) {
+       modalContentWindow = do_QueryInterface(*_retval);
+     }
+ 
++#ifdef MOZ_XUL
+     nsAutoWindowStateHelper windowStateHelper(aParent);
+ 
+-    if (!windowStateHelper.DefaultEnabled()) {
++    if (!windowStateHelper.DefaultEnabled())
++#endif
++    {
+       // Default to cancel not opening the modal window.
+       NS_RELEASE(*_retval);
+ 
+       return NS_OK;
+     }
+ 
+     // Reset popup state while opening a modal dialog, and firing
+     // events about the dialog, to prevent the current state from

@@ -1,0 +1,58 @@
+# Hack to emulate mouse movements when navigate with keyboard
+# Help for some pages with JS menus...
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+@@ -30,16 +30,17 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsSpatialNavigationPrivate.h"
++#include "nsGUIEvent.h"
+ 
+ PRInt32 gRectFudge = 20;
+ PRInt32 gDirectionalBias = 1;
+ 
+ NS_INTERFACE_MAP_BEGIN(nsSpatialNavigation)
+   NS_INTERFACE_MAP_ENTRY(nsISpatialNavigation)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMKeyListener)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMMouseListener)
+@@ -931,16 +932,33 @@
+   presContext->EventStateManager()->MoveCaretToFocus();
+ 
+   //#else
+   nsCOMPtr<nsIDOMNSHTMLElement> nsElement = do_QueryInterface(element);
+   if (nsElement) 
+     nsElement->Focus();
+   //#endif
+ 
++  nsIFrame* focusedFrame;
++  getFrameForContent(c, &focusedFrame);
++  nsRect rect = makeRectRelativeToGlobalView(focusedFrame);
++  nsIViewManager* viewManager = presShell->GetViewManager();
++  if (!viewManager) return;
++  nsIView* rootView = nsnull;
++  viewManager->GetRootView(rootView);
++  if (!rootView) return;
++  nsMouseEvent event(PR_TRUE, NS_MOUSE_MOVE, rootView->GetWidget(), nsMouseEvent::eReal);
++  nsPoint pt(rect.x, rect.y);
++  pt.x += (PRInt32)rect.width / 2;
++  pt.y += (PRInt32)rect.height / 2;
++  event.refPoint.x = pt.x;
++  event.refPoint.y = pt.y;
++  event.time = PR_IntervalNow();
++  nsEventStatus status;
++  viewManager->DispatchEvent(&event, &status);
+ }
+ 
+ 
+ nsIDOMWindow*
+ nsSpatialNavigation::getContentWindow()
+ {
+ 
+   nsIDOMWindow* resultWindow = nsnull;

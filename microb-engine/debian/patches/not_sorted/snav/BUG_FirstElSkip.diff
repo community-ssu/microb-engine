@@ -1,0 +1,162 @@
+# Looks like we always skipping first element while enumerating frames...
+# Fix for disabling such behaviour as scrolling and focus moving together
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+@@ -433,17 +433,17 @@
+     aFocusedRect.height = 1;
+   }
+ 
+   nsIFrame* frame;
+   nsRect frameRect;
+   
+   PRInt64 d;
+   
+-  while (1) 
++  do
+   {
+     aFrameTraversal->Next();
+     
+     nsISupports* currentItem;
+     aFrameTraversal->CurrentItem(&currentItem);
+     frame = static_cast<nsIFrame*>(currentItem);
+ 
+     if (!frame)
+@@ -552,16 +552,17 @@
+         printf("there is overlapping content;\n");
+       }
+ #endif
+       (*aDSoFar) = d;
+       NS_IF_RELEASE(*aCurrentContent);
+       NS_ADDREF(*aCurrentContent = frame->GetContent());
+     }
+   }
++  while(1);
+ }
+ 
+ inline void centerRect(int aDirection, nsRect& aRect)
+ {
+   if (aDirection == eNavLeft)
+     aRect.x = 1000000;
+   else if (aDirection == eNavRight)
+     aRect.x = 0;
+@@ -628,25 +629,27 @@
+   return NS_OK;
+ }
+ 
+ 
+ nsresult
+ nsSpatialNavigation::handleMove(int direction)
+ {
+   nsCOMPtr<nsIContent> focusedContent;
+-  getFocusedContent(direction, getter_AddRefs(focusedContent));
++  PRBool doScroll = getFocusedContent(direction, getter_AddRefs(focusedContent));
+ 
+   // there are some websites which have no focusable elements,
+   // only text, for example. In these cases, scrolling have to be
+   // performed by snav.
+   if (!focusedContent) {
+-     ScrollWindow(direction, getContentWindow());
++     if (doScroll)
++       ScrollWindow(direction, getContentWindow());
+      return NS_OK;
+   }
++
+   nsPresContext* presContext = getPresContext(focusedContent);
+   if(!presContext)
+     return NS_ERROR_NULL_POINTER;
+ 
+   nsIFrame* focusedFrame;
+   getFrameForContent(focusedContent, &focusedFrame);
+ 
+   nsRect focusedRect;
+@@ -771,52 +774,60 @@
+   ScrollWindow(direction, getContentWindow());
+ 
+   ///////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+   return NS_OK;
+ 
+ }
+ 
+-void
++PRBool
+ nsSpatialNavigation::getFocusedContent(int direction, nsIContent** aContent)
+ {
+   *aContent = nsnull;
+   
+   nsCOMPtr<nsIDOMWindow> contentWindow = getContentWindow();
+   if (!contentWindow)
+-    return;
++    return PR_TRUE;
+   
+   nsCOMPtr<nsPIDOMWindow> privateWindow = do_QueryInterface(contentWindow);
+   nsIFocusController *focusController = privateWindow->GetRootFocusController();
+   
+   if (!focusController)
+-    return;
++    return PR_TRUE;
+   
+   nsCOMPtr<nsIDOMElement> element;
+   focusController->GetFocusedElement(getter_AddRefs(element));
+   
+   if (element)
+   {
+     nsCOMPtr<nsIContent> content = do_QueryInterface(element);
+     NS_IF_ADDREF(*aContent = content);
+-    return;
++    return PR_TRUE;
+   }
+ 
+   contentWindow = getContentWindow();
+   DisableJSScope foopy (contentWindow);
+ 
+   //xxxx should/can we prevent it from going into chrome???
+ //  if (direction == eNavLeft || direction == eNavUp)
+-    focusController->MoveFocus(PR_TRUE, nsnull);
++   focusController->MoveFocus(PR_TRUE, nsnull);
++   nsresult rv = focusController->GetFocusedElement(getter_AddRefs(element));
++   if (element) {
++     nsCOMPtr<nsIContent> c = do_QueryInterface(element);
++     foopy.~DisableJSScope();
++     setFocusedContent(c);
++     return PR_FALSE;
++   }
+ //  else
+ //    focusController->MoveFocus(PR_FALSE, nsnull);
+   
+   // so there is no focused content -- lets make some up, hightlight it and return.  
+ //  focusController->GetFocusedElement(getter_AddRefs(element));
++  return PR_TRUE;
+ }
+ 
+ void 
+ nsSpatialNavigation::setFocusedContent(nsIContent* c)
+ {
+   if (!c)
+     return;
+ 
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+===================================================================
+--- mozilla.orig/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+@@ -147,17 +147,17 @@
+   
+   nsPresContext* getPresContext(nsIContent* aContent);
+   
+   PRInt64 spatialDistance(int direction, nsRect& a, nsRect& b);
+   
+   nsIDOMWindow* getContentWindow();
+   
+   void setFocusedContent(nsIContent* aContent);
+-  void getFocusedContent(int direction, nsIContent** aContent);
++  PRBool getFocusedContent(int direction, nsIContent** aContent);
+   
+   nsresult handleMove(int direction);
+   nsresult getContentInDirection(int direction, nsPresContext* presContext, nsRect& focusedRect, nsIFrame* focusedFrame, PRBool aFocusDocuments, PRBool isAREA, nsIContent** aContent);
+ 
+   nsCOMPtr<nsIDOMWindow> mTopWindow;
+ 
+   nsSpatialNavigationService* mService;
+ 

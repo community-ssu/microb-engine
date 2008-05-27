@@ -1,0 +1,107 @@
+# Hack which will allow to disable some mouse events or replace it with others...
+# Ex: Replace mousedown on mouseclick on gmail (problems with stylus iteractions)
+--- mozilla/dom/src/base/nsDOMClassInfo.cpp.orig	2007-04-26 02:00:41.000000000 +0300
++++ mozilla/dom/src/base/nsDOMClassInfo.cpp	2007-04-29 17:13:25.423111000 +0300
+@@ -6553,20 +6553,36 @@ nsEventReceiverSH::AddEventListenerHelpe
+     sXPConnect->GetWrappedNativeOfJSObject(cx, obj, getter_AddRefs(wrapper));
+   if (NS_FAILED(rv)) {
+     nsDOMClassInfo::ThrowJSException(cx, rv);
+ 
+     return JS_FALSE;
+   }
+ 
+   // Set obj to be the object on which we'll actually register the
+   // event listener.
+   wrapper->GetJSObject(&obj);
++  
++  PRBool rename_listener = PR_FALSE;
++  if (argv[0]) {
++    PRInt32 renamer = nsContentUtils::GetIntPref("dom.jsevent.renamer", 0);
++    if (renamer == 2) rename_listener = PR_TRUE;
++    if (nsContentUtils::GetBoolPref("dom.window.jsevents.policy", PR_FALSE) &&
++        NS_FAILED(sSecMan->CheckPropertyAccess(cx, obj,
++                                               JS_GET_CLASS(cx, obj)->name,
++                                               argv[0],
++                                               nsIXPCSecurityManager::ACCESS_CALL_METHOD))) {
++        JS_ClearPendingException(cx);
++        if (!renamer)
++          return JS_TRUE;
++        if (renamer == 1) rename_listener = PR_TRUE;
++    }
++  }
+ 
+   // Check that the caller has permission to call obj's addEventListener.
+   if (NS_FAILED(sSecMan->CheckPropertyAccess(cx, obj,
+                                              JS_GET_CLASS(cx, obj)->name,
+                                              sAddEventListener_id,
+                                              nsIXPCSecurityManager::ACCESS_GET_PROPERTY)) ||
+       NS_FAILED(sSecMan->CheckPropertyAccess(cx, obj,
+                                              JS_GET_CLASS(cx, obj)->name,
+                                              sAddEventListener_id,
+                                              nsIXPCSecurityManager::ACCESS_CALL_METHOD))) {
+@@ -6586,20 +6602,27 @@ nsEventReceiverSH::AddEventListenerHelpe
+   }
+ 
+   JSString* jsstr = JS_ValueToString(cx, argv[0]);
+   if (!jsstr) {
+     nsDOMClassInfo::ThrowJSException(cx, NS_ERROR_OUT_OF_MEMORY);
+ 
+     return JS_FALSE;
+   }
+ 
+   nsDependentJSString type(jsstr);
++  if (rename_listener) {
++    nsCString replace_match = NS_LITERAL_CSTRING("jsevent.renamer.") + NS_ConvertUTF16toUTF8(type);
++    const nsAdoptingCString& override =
++      nsContentUtils::GetCharPref(replace_match.get());
++    if (override)
++      CopyUTF8toUTF16(override, type);
++  }
+ 
+   nsCOMPtr<nsIDOMEventListener> listener;
+ 
+   {
+     nsCOMPtr<nsISupports> tmp;
+     sXPConnect->WrapJS(cx, JSVAL_TO_OBJECT(argv[1]),
+                        NS_GET_IID(nsIDOMEventListener), getter_AddRefs(tmp));
+ 
+     listener = do_QueryInterface(tmp, &rv);
+     if (NS_FAILED(rv)) {
+--- mozilla/content/events/src/nsEventListenerManager.cpp.orig	2007-06-01 12:20:08.000000000 +0300
++++ mozilla/content/events/src/nsEventListenerManager.cpp	2007-06-02 17:07:58.000000000 +0300
+@@ -891,20 +891,35 @@ nsEventListenerManager::RegisterScriptEv
+         nsCOMPtr<nsIXPConnectJSObjectHolder> holder;
+         rv = nsContentUtils::XPConnect()->
+           WrapNative(cx, (JSObject *)aScope, aObject, NS_GET_IID(nsISupports),
+                      getter_AddRefs(holder));
+         NS_ENSURE_SUCCESS(rv, rv);
+         JSObject *jsobj = nsnull;
+       
+         rv = holder->GetJSObject(&jsobj);
+         NS_ENSURE_SUCCESS(rv, rv);
+ 
++        if (nsContentUtils::GetBoolPref("dom.window.jsevents.policy", PR_FALSE)) {
++          nsCString sevname;
++          aName->ToUTF8String(sevname);
++          jsval sEventID = STRING_TO_JSVAL(::JS_InternString(cx, sevname.get()));
++          rv = nsContentUtils::GetSecurityManager()->
++            CheckPropertyAccess(cx, jsobj,
++                                "EventTarget",
++                                sEventID,
++                                nsIXPCSecurityManager::ACCESS_SET_PROPERTY);
++          
++          if (NS_FAILED(rv)) {
++            // XXX set pending exception on the native call context?
++            return rv;
++          }
++        }
+         rv = nsContentUtils::GetSecurityManager()->
+           CheckPropertyAccess(cx, jsobj,
+                               "EventTarget",
+                               sAddListenerID,
+                               nsIXPCSecurityManager::ACCESS_SET_PROPERTY);
+         if (NS_FAILED(rv)) {
+           // XXX set pending exception on the native call context?
+           return rv;
+         }
+     } else {

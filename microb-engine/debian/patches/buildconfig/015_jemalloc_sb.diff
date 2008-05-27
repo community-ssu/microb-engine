@@ -1,0 +1,22 @@
+Index: mozilla/memory/jemalloc/Makefile.in
+===================================================================
+--- mozilla.orig/memory/jemalloc/Makefile.in
++++ mozilla/memory/jemalloc/Makefile.in
+@@ -78,16 +78,17 @@
+ # Using a pre-built DLL, so just install it.
+ libs:: $(WIN32_CUSTOM_CRT_DIR)/mozcrt19.dll
+ 	$(INSTALL) $< $(FINAL_TARGET)
+ endif
+ 
+ else
+ 
+ MODULE_OPTIMIZE_FLAGS = -O2
++MOZ_OPTIMIZE_FLAGS += -Os
+ ifeq ($(OS_ARCH),SunOS)
+ ifndef GNU_CC
+ MODULE_OPTIMIZE_FLAGS = -xO5
+ endif
+ endif
+ 
+ LIBRARY_NAME	= jemalloc
+ 

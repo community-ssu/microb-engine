@@ -1,0 +1,79 @@
+Index: mozilla/gfx/thebes/src/gfxPangoFonts.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxPangoFonts.cpp
++++ mozilla/gfx/thebes/src/gfxPangoFonts.cpp
+@@ -67,16 +67,17 @@
+ 
+ #include <locale.h>
+ #include <freetype/tttables.h>
+ 
+ #include <cairo.h>
+ #include <cairo-ft.h>
+ 
+ #include <pango/pango.h>
++#include <pango/pango-utils.h>
+ #include <pango/pangocairo.h>
+ #include <pango/pangofc-fontmap.h>
+ 
+ #include <gdk/gdkpango.h>
+ 
+ #include <math.h>
+ 
+ #define FLOAT_PANGO_SCALE ((gfxFloat)PANGO_SCALE)
+@@ -86,18 +87,17 @@
+ #endif
+ #ifndef PANGO_GLYPH_UNKNOWN_FLAG
+ #define PANGO_GLYPH_UNKNOWN_FLAG ((PangoGlyph)0x10000000)
+ #endif
+ #ifndef PANGO_GLYPH_EMPTY
+ #define PANGO_GLYPH_EMPTY           ((PangoGlyph)0)
+ #endif
+ // For g a PangoGlyph,
+-#define IS_MISSING_GLYPH(g) ((g) & PANGO_GLYPH_UNKNOWN_FLAG)
+-#define IS_EMPTY_GLYPH(g) ((g) == PANGO_GLYPH_EMPTY)
++#define IS_MISSING_GLYPH(g) (((g) & PANGO_GLYPH_UNKNOWN_FLAG) || (g) == PANGO_GLYPH_EMPTY)
+ 
+ static PangoLanguage *GetPangoLanguage(const nsACString& aLangGroup);
+ 
+ /* static */ gfxPangoFontCache* gfxPangoFontCache::sPangoFontCache = nsnull;
+ 
+ /**
+  ** gfxPangoFontGroup
+  **/
+@@ -502,17 +502,17 @@
+ 
+     PangoGlyphString *glstr = pango_glyph_string_new();
+     pango_shape (&aChar, 1, &analysis, glstr);
+ 
+     if (aGlyphID) {
+         *aGlyphID = 0;
+         if (glstr->num_glyphs == 1) {
+             PangoGlyph glyph = glstr->glyphs[0].glyph;
+-            if (!IS_MISSING_GLYPH(glyph) && !IS_EMPTY_GLYPH(glyph)) {
++            if (!IS_MISSING_GLYPH(glyph)) {
+                 *aGlyphID = glyph;
+             }
+         }
+     }
+ 
+     PangoRectangle ink_rect, log_rect;
+     pango_glyph_string_extents(glstr, analysis.font, &ink_rect, &log_rect);
+ 
+@@ -633,16 +633,17 @@
+         if (os2 && os2->ySuperscriptYOffset) {
+             val = CONVERT_DESIGN_UNITS_TO_PIXELS(os2->ySuperscriptYOffset,
+                                                  face->size->metrics.y_scale);
+             mMetrics.superscriptOffset = PR_MAX(1, val);
+         } else {
+             mMetrics.superscriptOffset = mMetrics.xHeight;
+         }
+     
++        // mSubscriptOffset
+         if (os2 && os2->ySubscriptYOffset) {
+             val = CONVERT_DESIGN_UNITS_TO_PIXELS(os2->ySubscriptYOffset,
+                                                  face->size->metrics.y_scale);
+             // some fonts have the incorrect sign. 
+             val = (val < 0) ? -val : val;
+             mMetrics.subscriptOffset = PR_MAX(1, val);
+         } else {
+             mMetrics.subscriptOffset = mMetrics.xHeight;

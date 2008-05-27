@@ -1,0 +1,88 @@
+# Patches for microb-engine
+# Oleg Romashin <oleg.romashin@nokia.com>
+# DP: Renaming mozilla directories names and folders for MicroB project
+
+Index: mozilla/xulrunner/confvars.sh
+===================================================================
+--- mozilla.orig/xulrunner/confvars.sh
++++ mozilla/xulrunner/confvars.sh
+@@ -31,20 +31,24 @@
+ # use your version of this file under the terms of the MPL, indicate your
+ # decision by deleting the provisions above and replace them with the notice
+ # and other provisions required by the GPL or the LGPL. If you do not delete
+ # the provisions above, a recipient may use your version of this file under
+ # the terms of any one of the MPL, the GPL or the LGPL.
+ #
+ # ***** END LICENSE BLOCK *****
+ 
+-MOZ_APP_NAME=xulrunner
+-MOZ_APP_DISPLAYNAME=XULRunner
++MOZ_APP_NAME=microb-engine
++MOZ_APP_DISPLAYNAME=MicroB
+ MOZ_UPDATER=1
+ MOZ_XULRUNNER=1
+ MOZ_ENABLE_LIBXUL=1
++if test $MOZ_APP_VERSION; then
++  MOZ_APP_VERSION=$MOZ_APP_VERSION
++else
+ MOZ_APP_VERSION=$MOZILLA_VERSION
++fi
+ MOZ_JAVAXPCOM=1
+ if test "$MOZ_STORAGE"; then
+   MOZ_PLACES=1
+ fi
+ MOZ_EXTENSIONS_DEFAULT=" gnomevfs"
+ MOZ_NO_XPCOM_OBSOLETE=1
+Index: mozilla/build/unix/mozilla.pc.in
+===================================================================
+--- /dev/null
++++ mozilla/build/unix/mozilla.pc.in
+@@ -0,0 +1,13 @@
++prefix=%prefix%
++exec_prefix=%exec_prefix%
++libdir=%libdir%
++includedir=%includedir%
++idldir=%idldir%
++staticlibs=${libdir}/static/libxul.a ${libdir}/static/libxpcom.a ${libdir}/static/libmozjs.a ${libdir}/static/lib/libcrmf.a -lnss3 -lplds4 -lplc4 -lnspr4 -lpthread -ldl -lXt
++
++Name: XPCOM
++Description: The Mozilla Cross Platform Component Library
++Version: %MOZILLA_VERSION%
++Requires: %NSPR_NAME% >= %NSPR_VERSION%
++Libs: -L${libdir} -lplds4 -lplc4 -lnspr4 -lpthread -ldl -lxpcom -lxul -lnss3 %SUPERWIN_LIBS%
++Cflags: -I${includedir} -I${includedir}/xpcom -I${includedir}/string -I${includedir}/dom -I${includedir}/chrome -I${includedir}/locale -I${includedir}/webbrowserpersist -I${includedir}/find -I${includedir}/docshell -I${includedir}/webshell -I${includedir}/widget -I${includedir}/content -I${includedir}/browser -I${includedir}/necko -I${includedir}/pref -I${includedir}/history -I${includedir}/gfx -I${includedir}/webbrowserpersist -I${includedir}/layout -I${includedir}/webbrwsr -I${includedir}/shistory -I${includedir}/txtsvc -I${includedir}/windowwatcher -I${includedir}/appcomps -I${includedir}/nspr -I${includedir}/xpcom_obsolete -I${includedir}/zoomer -I${includedir}/minimo -I${includedir}/chardet -I${includedir}/exthandler -I${includedir}/uriloader  -I${includedir}/mimetype -I${includedir}/pipnss -I${includedir}/embed_base -I${includedir}/profdirserviceprovider  -I${includedir}/nkcache -I${includedir}/embedcomponents -I${includedir}/intl -I${includedir}/gtkembedmoz -I${includedir}/mork -I${includedir}/imglib2 -I${includedir}/unicharutil -I${includedir}/xulapp -I${includedir}/editor -I${includedir}/composer -I${includedir}/cookie -I${includedir}/pipboot -I${includedir}/view -I${includedir}/extensions -I${includedir}/toolkitcomps -I${includedir}/rdf
+Index: mozilla/config/autoconf.mk.in
+===================================================================
+--- mozilla.orig/config/autoconf.mk.in
++++ mozilla/config/autoconf.mk.in
+@@ -53,24 +53,26 @@
+ MOZ_APP_DISPLAYNAME = @MOZ_APP_DISPLAYNAME@
+ MOZ_APP_VERSION = @MOZ_APP_VERSION@
+ 
+ MOZ_PKG_SPECIAL = @MOZ_PKG_SPECIAL@
+ 
+ prefix		= @prefix@
+ exec_prefix	= @exec_prefix@
+ bindir		= @bindir@
+-includedir	= @includedir@/$(MOZ_APP_NAME)-$(MOZ_APP_VERSION)
++includedir	= @includedir@/$(MOZ_APP_NAME)
+ libdir		= @libdir@
+ datadir		= @datadir@
+ mandir		= @mandir@
+-idldir		= $(datadir)/idl/$(MOZ_APP_NAME)-$(MOZ_APP_VERSION)
++idldir		= $(datadir)/idl/$(MOZ_APP_NAME)
+ 
+-installdir	= $(libdir)/$(MOZ_APP_NAME)-$(MOZ_APP_VERSION)
+-sdkdir		= $(libdir)/$(MOZ_APP_NAME)-devel-$(MOZ_APP_VERSION)
++installdir	= $(libdir)/$(MOZ_APP_NAME)
++sdkdir		= $(libdir)/$(MOZ_APP_NAME)-devel
++mozappdir	= $(libdir)/$(MOZ_APP_NAME)
++mredir		= $(libdir)/mre/mre
+ 
+ DIST		= $(DEPTH)/dist
+ LIBXUL_SDK      = @LIBXUL_SDK@
+ 
+ ifdef LIBXUL_SDK
+ LIBXUL_DIST = $(LIBXUL_SDK)
+ else
+ LIBXUL_DIST = $(DIST)

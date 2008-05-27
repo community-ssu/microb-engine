@@ -1,0 +1,199 @@
+# BUILD BUSTAGE
+buildcfg/050_BUG347854_Building_XULRunner.diff
+buildcfg/NSSDEBUG.diff
+buildcfg/045_BUG323928_bustage_fix_rev2_lp0.diff
+buildcfg/BUG393707.fast.build.fix.diff
+# BUILD BUSTAGE
+
+# SNAV
+snav/395_SNAV_BUGS.diff
+snav/445_snav_crash.diff
+snav/962_snav_improvements.diff
+snav/555_BUG_52019.diff
+snav/BUG_55568_invalid_read.vl.diff
+snav/BUG_FirstElSkip.diff
+snav/BUG_Visiblity.diff
+snav/BUG_NewUnitsForSnav.diff
+snav/BUG_FixBrokenDirection.diff
+snav/BUG_zero_size_links.diff
+snav/SNAV_rich_edit.diff
+snav/BUG50934.spatial_scrolling.diff
+snav/DISABLE_Selecting_offscreen_element.diff
+snav/BUG_form_select_element.diff
+# SNAV
+
+005_MozmicrobComp_lp0.diff -p0
+010_BUG349921_toolkit_branding.diff
+015_BUILDFIX_embedding_tests.diff
+020_OUTSIDE_entropy.diff
+025_OUTSIDE_zip.diff
+030_MICROB_DISABLE_GRAB_EVENT_FIRING.diff
+035_MICROB_moz_mork_disable.diff
+040_MICROB_moz_xremote_disable.diff
+045_MICROB_autoset_grehome_display.diff
+050_BUG_security.diff
+055_MICROB_microb_defines.diff
+060_BUG340510_nsBoxObject.diff
+065_BUG_mainthreadalreadydead.diff
+070_MICROB_about_fixes_lp0.diff -p0
+075_BUILDFIX_libxul_no_nss.diff
+080_MICROB_xslt_xpath_disable_lp0.diff -p0
+#175_MICROB_bad_cert_at_once_lp0.diff -p0
+085_MICROB_fittoview_extension.diff
+090_MICROB_imagezoom_extension.diff
+095_MICROB_paths_and_names_lp0.diff -p0
+100_MICROB_MOZ_MICROB_LEVEL.diff
+105_BUG369722_ARM_EABI_lp0.diff -p0
+110_BUILD_CONFIG_xul_manual_enable.diff
+115_NO_WEBBRZ_CHROME_LISTNRS_lp0.diff -p0
+120_Timeout_TestGtkEmbed.diff
+125_ZoomControlsTestGtkEmbed.diff
+130_ftv_testgtkembed.diff
+135_DisableInternalMozFilepicker_lp0.diff -p0
+140_DisableNativeGtkPrintClass_lp0.diff -p0
+145_Sound_Drag_XIM_disable.gtk2.diff
+150_BUG347731_MOZILLA_INTERNAL_API_lp0.diff -p0
+155_BUG347731_SpatialNavigationFIXED_LIBXUL.diff
+160_perf_metrics_fix.diff
+165_BUG359812_neterror_noxul.diff
+170_random_to_urandom_lp0.diff -p0
+175_Native_theme_gtk_pref.diff
+180_BUG372081_disable_profile_sighandler.diff
+185_XMLPRETTY_PRINT.diff
+190_BUG_toolkit_cairo_linkage.diff
+195_MBUG_42865_zoom_navigation_fix.diff
+200_DISABLE_DEFAULT_DOWNLOAD_SUFFIX.diff
+205_Fix_NativeGtkButtonsWidgets.diff
+210_BUG382486_EngineOutputProtocolSupport.diff
+215_GnomeVfsWriteSupport.diff
+220_MICROB_PANGO_LINKING.diff
+225_Suspend_Plugin_At_Start.diff
+
+
+230_DONT_CHECKIN_adding_get_content_length_method.diff
+235_gnomevfs_downloads.diff
+240_download_full_disk_fix.diff
+245_jar_support_back.diff
+250_window_title_XMLPrettyPrint.diff
+
+#Performance improvements
+perf_addon/attachment.cgi?id=246204.diff
+perf_addon/bug54205.diff
+perf_addon/540_BUG54340_js_malloc.diff
+perf_addon/545_BUG54340_findkeyword_inline.diff
+perf_addon/550_BUG54340_optimization_options.diff
+perf_addon/thread_wait_block.diff
+perf_addon/spidermonkey_alloc.diff
+perf_addon/605_css_erros_parsing_disable.diff
+#Performance improvements
+
+#debug_tools/images_debug.diff
+#620_cairo_1.4.0_update.diff
+255_cairo_fast_image_render.diff
+260_total_cairo_unantialias.diff
+265_cairo_buggy_repeat_fix.diff
+#debug_tools/cairo_debug_composite.diff
+270_BUG375179_spellcheck_libxul.diff
+
+#CRASHES
+crash/415_BUG371882_Editor_Crash.diff
+crash/460_stylecontext_random_crash.diff
+crash/JSopcode_null_check1.diff
+crash/chrome_resources_fail.diff
+crash/Bug339782.additional.fix.diff
+#CRASHES
+
+275_focus_style.diff
+280_drag_session_ensure.diff
+285_minimize_paint_delay.diff
+290_layout_state_listener.diff
+295_content_rocket_parsing.diff
+300_BUG50404_button_colors.diff
+305_ua_policy_feature.diff
+310_BUG53541.54649.diff
+315_drag_remove_at_all.diff
+320_BUG_52028_fast_fix_without_storage_enabling.diff
+325_BUG54742rss_add_support.diff
+330_do_not_load_partial_cached_content.diff
+
+#GTKMOZEMBED_TRUNK BUSTAGE PATCHES
+gtkmozembed/001_gnomevfs_downloads.diff
+gtkmozembed/gtkmozembed.diff
+#GTKMOZEMBED_TRUNK BUSTAGE PATCHES
+
+335_BUG_50743_js_alert_title_fix.diff
+340_jsevent.policy.renamer.diff
+
+345_connect_move_signal_after_default.diff
+350_NativeSuspendImplementation.diff
+355_thumb_supporting_stuff.diff
+crash/625_BUG56960_layout_indexof_crash.diff 
+360_focus_for_visible_area.diff
+365_added_vertical_resize_flag.diff
+
+#Extension Manager
+370_extension_manager.diff
+375_extension_manager_more_fixes.diff
+
+#Image loading
+380_image_loading_only_cached.diff
+385_image_loading_force_reload.diff
+
+390_native_theme_supporting.diff
+395_BUG_333869.fix.diff
+400_bigger_ua_string_length_61630.diff
+405_GetRootScrollFrameOpen.diff
+
+perf_addon/JSBreakExperimental.diff
+
+#Part which not included in minimal patchset
+
+#075_JS_DUMP_lp0.diff -p0
+#080_OUTSIDE_js_binary.diff
+410_LAYOUT_LOGGIN_FINALIZE_lp0.diff -p0
+#145_BUG_small_encoders_count.diff
+#265_bad_unicode_symbol_lp0.diff -p0
+#310_BUG_915.diff
+
+415_jprof_linking_fix.diff
+#380_XFT_ALWAYS_FIX.diff
+#385_system_cairo_build.diff
+420_bug372703_bustage_fix.diff
+
+crash/395_TrimSpaceFixCrash.diff
+crash/FitToViewRandomCrashes.diff
+
+#440_BUG376279_security_cross_compile.diff
+#445_nspr_dpkg_cross.diff
+#450_host_libidl_dpkg_cross.diff
+#455_xpcom_uclibc.diff
+#460_uclibc_strings_index.diff
+
+425_netwerk_buffer_count.diff
+
+430_onchange_text_input_fix.diff
+435_mouse_event_order.diff
+440_ftv_improvements.diff
+
+#575_js_handler_events_info.diff
+445_js_handler_events_info_1.diff
+
+450_disable_F6_focus.diff
+455_malformedURI_message_rephrased.diff -p0
+460_obex_error_handling.diff
+465_unknown_protocol_handling.diff
+470_bug54733.diff.diff
+475_BUG65700.theeming.diff
+
+480_BUG204011_theme_change.diff
+485_unblock_mouseevents_ontoolbar.diff
+
+490_BUG65511.imgdoc_zoom.diff
+
+valgrind/bug66825.diff
+
+495_Bug70843.RestoreZoomState.diff
+
+500_spellchecker_select_enabling.diff
+#750_MotionEventsRequests.diff
+

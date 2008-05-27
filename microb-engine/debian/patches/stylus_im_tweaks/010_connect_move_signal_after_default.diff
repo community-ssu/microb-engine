@@ -1,0 +1,58 @@
+# Will allow to handle move signal outside from mozilla/widget/gtk2
+# Thumb supporting stuff: Changed callback attaching method to avoid overriding signals.
+# contact: Anton Rogaynis ext-anton(dot)rogaynis(at)nokia.com
+# 555_connect_move_signal_after_default.diff
+
+Index: mozilla/widget/src/gtk2/nsWindow.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp
++++ mozilla/widget/src/gtk2/nsWindow.cpp
+@@ -3016,21 +3016,21 @@ nsWindow::NativeCreate(nsIWidget        
+                                G_CALLBACK(theme_changed_cb), this);
+     }
+ 
+     if (mContainer) {
+         g_signal_connect_after(G_OBJECT(mContainer), "size_allocate",
+                                G_CALLBACK(size_allocate_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "expose_event",
+                          G_CALLBACK(expose_event_cb), NULL);
+-        g_signal_connect(G_OBJECT(mContainer), "enter_notify_event",
++        g_signal_connect_after(G_OBJECT(mContainer), "enter_notify_event",
+                          G_CALLBACK(enter_notify_event_cb), NULL);
+-        g_signal_connect(G_OBJECT(mContainer), "leave_notify_event",
++        g_signal_connect_after(G_OBJECT(mContainer), "leave_notify_event",
+                          G_CALLBACK(leave_notify_event_cb), NULL);
+-        g_signal_connect(G_OBJECT(mContainer), "motion_notify_event",
++        g_signal_connect_after(G_OBJECT(mContainer), "motion_notify_event",
+                          G_CALLBACK(motion_notify_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "button_press_event",
+                          G_CALLBACK(button_press_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "button_release_event",
+                          G_CALLBACK(button_release_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "focus_in_event",
+                          G_CALLBACK(focus_in_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "focus_out_event",
+--- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-05-09 10:27:11.000000000 +0300
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2007-05-09 10:35:32.000000000 +0300
+@@ -3027,17 +3027,17 @@
+                          G_CALLBACK(leave_notify_event_cb), NULL);
+         g_signal_connect_after(G_OBJECT(mContainer), "motion_notify_event",
+                          G_CALLBACK(motion_notify_event_cb), NULL);
+-        g_signal_connect(G_OBJECT(mContainer), "button_press_event",
++        g_signal_connect_after(G_OBJECT(mContainer), "button_press_event",
+                          G_CALLBACK(button_press_event_cb), NULL);
+-        g_signal_connect(G_OBJECT(mContainer), "button_release_event",
++        g_signal_connect_after(G_OBJECT(mContainer), "button_release_event",
+                          G_CALLBACK(button_release_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "focus_in_event",
+                          G_CALLBACK(focus_in_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "focus_out_event",
+                          G_CALLBACK(focus_out_event_cb), NULL);
+-        g_signal_connect(G_OBJECT(mContainer), "key_press_event",
++        g_signal_connect_after(G_OBJECT(mContainer), "key_press_event",
+                          G_CALLBACK(key_press_event_cb), NULL);
+-        g_signal_connect(G_OBJECT(mContainer), "key_release_event",
++        g_signal_connect_after(G_OBJECT(mContainer), "key_release_event",
+                          G_CALLBACK(key_release_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "scroll_event",
+                          G_CALLBACK(scroll_event_cb), NULL);

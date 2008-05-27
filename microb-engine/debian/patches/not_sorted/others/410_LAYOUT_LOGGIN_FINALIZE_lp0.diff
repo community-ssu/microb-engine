@@ -1,0 +1,157 @@
+# Some times crash used to happen here on closing, until was not fixed in 
+# 150_BUG_testgtkembed-pushpopembed.diff
+# 155_BUG_mainthreadalreadydead.diff
+# Maybe not required anymore... maybe some checks is still useful
+Index: xpcom/glue/pldhash.c
+===================================================================
+--- xpcom/glue/pldhash.c.orig
++++ xpcom/glue/pldhash.c
+@@ -363,37 +363,40 @@
+         PL_DHashTableDumpMeter(table, NULL, dumpfp);
+         fputc('\n', dumpfp);
+     }
+ #endif
+ 
+     INCREMENT_RECURSION_LEVEL(table);
+ 
+     /* Call finalize before clearing entries, so it can enumerate them. */
+-    table->ops->finalize(table);
++    if (table->ops)
++        table->ops->finalize(table);
+ 
+     /* Clear any remaining live entries. */
+     entryAddr = table->entryStore;
+     entrySize = table->entrySize;
+     entryLimit = entryAddr + PL_DHASH_TABLE_SIZE(table) * entrySize;
+     while (entryAddr < entryLimit) {
+         entry = (PLDHashEntryHdr *)entryAddr;
+         if (ENTRY_IS_LIVE(entry)) {
+             METER(table->stats.removeEnums++);
++        if (table->ops)
+             table->ops->clearEntry(table, entry);
+         }
+         entryAddr += entrySize;
+     }
+ 
+     DECREMENT_RECURSION_LEVEL(table);
+     NS_ASSERTION(RECURSION_LEVEL(table) == 0,
+                  "RECURSION_LEVEL(table) == 0");
+ 
+     /* Free entry storage last. */
+-    table->ops->freeTable(table, table->entryStore);
++    if (table->ops)
++        table->ops->freeTable(table, table->entryStore);
+ }
+ 
+ static PLDHashEntryHdr * PL_DHASH_FASTCALL
+ SearchTable(PLDHashTable *table, const void *key, PLDHashNumber keyHash,
+             PLDHashOperator op)
+ {
+     PLDHashNumber hash1, hash2;
+     int hashShift, sizeLog2;
+@@ -412,20 +415,22 @@
+ 
+     /* Miss: return space for a new entry. */
+     if (PL_DHASH_ENTRY_IS_FREE(entry)) {
+         METER(table->stats.misses++);
+         return entry;
+     }
+ 
+     /* Hit: return entry. */
+-    matchEntry = table->ops->matchEntry;
+-    if (MATCH_ENTRY_KEYHASH(entry, keyHash) && matchEntry(table, entry, key)) {
+-        METER(table->stats.hits++);
+-        return entry;
++    if (table->ops) {
++        matchEntry = table->ops->matchEntry;
++        if (MATCH_ENTRY_KEYHASH(entry, keyHash) && matchEntry(table, entry, key)) {
++            METER(table->stats.hits++);
++            return entry;
++        }
+     }
+ 
+     /* Collision: double hash. */
+     sizeLog2 = PL_DHASH_BITS - table->hashShift;
+     hash2 = HASH2(keyHash, sizeLog2, hashShift);
+     sizeMask = PR_BITMASK(sizeLog2);
+ 
+     /* Save the first removed entry pointer so PL_DHASH_ADD can recycle it. */
+@@ -486,17 +491,18 @@
+     newLog2 = oldLog2 + deltaLog2;
+     oldCapacity = PR_BIT(oldLog2);
+     newCapacity = PR_BIT(newLog2);
+     if (newCapacity >= PL_DHASH_SIZE_LIMIT)
+         return PR_FALSE;
+     entrySize = table->entrySize;
+     nbytes = newCapacity * entrySize;
+ 
+-    newEntryStore = table->ops->allocTable(table, nbytes + ENTRY_STORE_EXTRA);
++    if (table->ops)
++        newEntryStore = table->ops->allocTable(table, nbytes + ENTRY_STORE_EXTRA);
+     if (!newEntryStore)
+         return PR_FALSE;
+ 
+     /* We can't fail from here on, so update table parameters. */
+ #ifdef DEBUG
+     recursionLevel = RECURSION_LEVEL(table);
+ #endif
+     table->hashShift = PL_DHASH_BITS - newLog2;
+@@ -539,17 +545,18 @@
+     PLDHashEntryHdr *entry;
+     PRUint32 size;
+     int deltaLog2;
+ 
+     NS_ASSERTION(op == PL_DHASH_LOOKUP || RECURSION_LEVEL(table) == 0,
+                  "op == PL_DHASH_LOOKUP || RECURSION_LEVEL(table) == 0");
+     INCREMENT_RECURSION_LEVEL(table);
+ 
+-    keyHash = table->ops->hashKey(table, key);
++    if (table->ops)
++        keyHash = table->ops->hashKey(table, key);
+     keyHash *= PL_DHASH_GOLDEN_RATIO;
+ 
+     /* Avoid 0 and 1 hash codes, they indicate free and removed entries. */
+     ENSURE_LIVE_KEYHASH(keyHash);
+     keyHash &= ~COLLISION_FLAG;
+ 
+     switch (op) {
+       case PL_DHASH_LOOKUP:
+@@ -594,17 +601,17 @@
+         if (!ENTRY_IS_LIVE(entry)) {
+             /* Initialize the entry, indicating that it's no longer free. */
+             METER(table->stats.addMisses++);
+             if (ENTRY_IS_REMOVED(entry)) {
+                 METER(table->stats.addOverRemoved++);
+                 table->removedCount--;
+                 keyHash |= COLLISION_FLAG;
+             }
+-            if (table->ops->initEntry &&
++            if (table->ops && table->ops->initEntry &&
+                 !table->ops->initEntry(table, entry, key)) {
+                 /* We haven't claimed entry yet; fail with null return. */
+                 memset(entry + 1, 0, table->entrySize - sizeof *entry);
+                 entry = NULL;
+                 break;
+             }
+             entry->keyHash = keyHash;
+             table->entryCount++;
+@@ -644,17 +651,18 @@
+ void
+ PL_DHashTableRawRemove(PLDHashTable *table, PLDHashEntryHdr *entry)
+ {
+     PLDHashNumber keyHash;      /* load first in case clearEntry goofs it */
+ 
+     NS_ASSERTION(PL_DHASH_ENTRY_IS_LIVE(entry),
+                  "PL_DHASH_ENTRY_IS_LIVE(entry)");
+     keyHash = entry->keyHash;
+-    table->ops->clearEntry(table, entry);
++    if (table->ops)
++        table->ops->clearEntry(table, entry);
+     if (keyHash & COLLISION_FLAG) {
+         MARK_ENTRY_REMOVED(entry);
+         table->removedCount++;
+     } else {
+         METER(table->stats.removeFrees++);
+         MARK_ENTRY_FREE(entry);
+     }
+     table->entryCount--;

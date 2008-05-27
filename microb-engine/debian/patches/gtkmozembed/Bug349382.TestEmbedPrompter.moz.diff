@@ -1,0 +1,322 @@
+diff -ruN -p -U8 tests.orig/Makefile.in tests/Makefile.in
+--- mozilla/embedding/browser/gtk/tests.orig/Makefile.in	2007-09-24 06:44:29.000000000 +0300
++++ mozilla/embedding/browser/gtk/tests/Makefile.in	2007-12-19 18:49:26.000000000 +0200
+@@ -41,23 +41,25 @@ topsrcdir	= @top_srcdir@
+ srcdir		= @srcdir@
+ VPATH		= @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
+ MODULE		= gtkembedmoz
+ REQUIRES	= xpcom \
+ 		  dom \
++		  string \
+ 		  $(NULL)
+ 
+ CPPSRCS         = \
+ 		TestGtkEmbed.cpp \
+ 		TestGtkEmbedNotebook.cpp \
+ 		TestGtkEmbedSocket.cpp \
+-		TestGtkEmbedChild.cpp
++		TestGtkEmbedChild.cpp \
++		$(NULL)
+ 
+ SIMPLE_PROGRAMS = $(CPPSRCS:.cpp=)
+ 
+ # ENABLE_GNOME=1
+ 
+ ifdef ENABLE_GNOME
+ CPPSRCS	       += TestGtkEmbedMDI.cpp
+ endif
+@@ -97,8 +99,18 @@ ifndef GNU_CC
+ # So, this gets around the problem.
+ DEFINES           += -D_TIME_H=1
+ endif
+ endif
+ 
+ ifeq ($(OS_ARCH), OpenVMS)
+ DEFINES		+= -DGENERIC_MOTIF_REDEFINES
+ endif
++
++LOCAL_INCLUDES += \
++		-I. \
++		$(NULL)
++
++export::
++	$(NSINSTALL) $(topsrcdir)/embedding/browser/gtk/src/EmbedPrompter.h .
++	$(NSINSTALL) $(topsrcdir)/embedding/browser/gtk/src/EmbedPrompter.cpp .
++
++GARBAGE += EmbedPrompter.cpp EmbedPrompter.h
+diff -ruN -p -U8 tests.orig/TestGtkEmbed.cpp tests/TestGtkEmbed.cpp
+--- mozilla/embedding/browser/gtk/tests.orig/TestGtkEmbed.cpp	2007-12-18 16:05:25.000000000 +0200
++++ mozilla/embedding/browser/gtk/tests/TestGtkEmbed.cpp	2007-12-19 18:37:40.000000000 +0200
+@@ -44,16 +44,19 @@
+ // mozilla specific headers
+ #include "nsIDOMKeyEvent.h"
+ #include "nsIDOMMouseEvent.h"
+ #include "nsIDOMUIEvent.h"
+ 
+ #include "nsStringAPI.h"
+ #include "gtkmozembed_glue.cpp"
+ 
++#include "EmbedPrompter.h"
++#include "EmbedPrompter.cpp"
++
+ typedef struct _TestGtkBrowser {
+   GtkWidget  *topLevelWindow;
+   GtkWidget  *topLevelVBox;
+   GtkWidget  *menuBar;
+   GtkWidget  *fileMenuItem;
+   GtkWidget  *fileMenu;
+   GtkWidget  *fileOpenNewBrowser;
+   GtkWidget  *fileStream;
+@@ -164,16 +167,37 @@ static gint dom_mouse_over_cb    (GtkMoz
+ static gint dom_mouse_out_cb     (GtkMozEmbed *embed, nsIDOMMouseEvent *event,
+ 				  TestGtkBrowser *browser);
+ static gint dom_activate_cb      (GtkMozEmbed *embed, nsIDOMUIEvent *event,
+ 				  TestGtkBrowser *browser);
+ static gint dom_focus_in_cb      (GtkMozEmbed *embed, nsIDOMUIEvent *event,
+ 				  TestGtkBrowser *browser);
+ static gint dom_focus_out_cb     (GtkMozEmbed *embed, nsIDOMUIEvent *event,
+ 				  TestGtkBrowser *browser);
++static void alert_cb             (GtkMozEmbed *embed, const char *title, const char *text, gboolean is_blocking,
++				                  const char *check_msg, gboolean *check_val,
++                                  TestGtkBrowser *browser);
++static gboolean confirm_cb       (GtkMozEmbed *embed, const char *title, const char *text,
++				                  const char *check_msg, gboolean *check_val,
++				                  TestGtkBrowser *browser);
++static gint confirm_ex_cb        (GtkMozEmbed *embed, const char *title, const char *text,
++				                  guint bt_flags,
++                                  const char *button1, const char *button2, const char *button3,
++                                  const char *check_msg, gboolean *check_val,
++				                  TestGtkBrowser *browser);
++static gboolean prompt_cb        (GtkMozEmbed *embed, const char *title, const char *text,
++				                  char **value, const char *check_msg, gboolean *check_val,
++				                  TestGtkBrowser *browser);
++static gboolean prompt_auth_cb   (GtkMozEmbed *embed, const char *title, const char *text,
++				                  char **user, char **pass, const char *check_msg, gboolean *check_val,
++				                  TestGtkBrowser *browser);
++static gboolean select_cb        (GtkMozEmbed *embed, const char *title, const char *text,
++				                  GList *list, gint *selected_item,
++				                  TestGtkBrowser *browser);
++
+ 
+ // callbacks from the singleton object
+ static void new_window_orphan_cb (GtkMozEmbedSingle *embed,
+ 				  GtkMozEmbed **retval, guint chromemask,
+ 				  gpointer data);
+ 
+ // some utility functions
+ static void update_status_bar_text  (TestGtkBrowser *browser);
+@@ -537,16 +561,28 @@ new_gtk_browser(guint32 chromeMask)
+   gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "dom_mouse_out",
+ 		     GTK_SIGNAL_FUNC(dom_mouse_out_cb), browser);
+   gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "dom_activate",
+ 		     GTK_SIGNAL_FUNC(dom_activate_cb), browser);
+   gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "dom_focus_in",
+ 		     GTK_SIGNAL_FUNC(dom_focus_in_cb), browser);
+   gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "dom_focus_out",
+ 		     GTK_SIGNAL_FUNC(dom_focus_out_cb), browser);
++  gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "alert",
++		     GTK_SIGNAL_FUNC(alert_cb), browser);
++  gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "confirm",
++		     GTK_SIGNAL_FUNC(confirm_cb), browser);
++  gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "prompt",
++		     GTK_SIGNAL_FUNC(prompt_cb), browser);
++  gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "prompt_auth",
++		     GTK_SIGNAL_FUNC(prompt_auth_cb), browser);
++  gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "select",
++		     GTK_SIGNAL_FUNC(select_cb), browser);
++  gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "confirm_ex",
++		     GTK_SIGNAL_FUNC(confirm_ex_cb), browser);
+   // hookup to when the window is destroyed
+   gtk_signal_connect(GTK_OBJECT(browser->mozEmbed), "destroy",
+ 		     GTK_SIGNAL_FUNC(destroy_cb), browser);
+   
+   // set the chrome type so it's stored in the object
+   gtk_moz_embed_set_chrome_mask(GTK_MOZ_EMBED(browser->mozEmbed),
+ 				actualChromeMask);
+ 
+@@ -1016,16 +1052,182 @@ gint dom_focus_in_cb      (GtkMozEmbed *
+ 
+ gint dom_focus_out_cb     (GtkMozEmbed *embed, nsIDOMUIEvent *event,
+ 			   TestGtkBrowser *browser)
+ {
+   //g_print("dom_focus_out_cb\n");
+   return NS_OK;
+ }
+ 
++void alert_cb             (GtkMozEmbed *embed, const char *title, const char *text, gboolean is_blocking,
++                           const char *check_msg, gboolean *check_val,
++                           TestGtkBrowser *browser)
++{
++  // g_print("%s\n", __FUNCTION__);
++  EmbedPrompter prompter;
++  prompter.SetTitle(title ? title : "Alert");
++  prompter.SetMessageText(text);
++  if (check_msg && check_val) {
++    prompter.SetCheckMessage(check_msg);
++    prompter.SetCheckValue(*check_val);
++    prompter.Create(EmbedPrompter::TYPE_ALERT_CHECK,
++                  GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(embed))));
++  } else {
++    prompter.Create(EmbedPrompter::TYPE_ALERT,
++                  GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(embed))));
++  }
++  prompter.Run();
++  if (check_msg && check_val)
++    prompter.GetCheckValue(check_val);
++  return;
++
++}
++
++gboolean confirm_cb       (GtkMozEmbed *embed, const char *title, const char *text,
++                           const char *check_msg, gboolean *check_val,
++                           TestGtkBrowser *browser)
++{
++  EmbedPrompter prompter;
++  prompter.SetTitle(title ? title : "Confirm");
++  prompter.SetMessageText(text);
++  if (check_msg && check_val) {
++    prompter.SetCheckMessage(check_msg);
++    prompter.SetCheckValue(*check_val);
++    prompter.Create(EmbedPrompter::TYPE_CONFIRM_CHECK,
++                  GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(embed))));
++  } else {
++    prompter.Create(EmbedPrompter::TYPE_CONFIRM,
++                    GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(embed))));
++  }
++  prompter.Run();
++  if (check_msg && check_val)
++    prompter.GetCheckValue(check_val);
++  gboolean aConfirm = FALSE;
++  prompter.GetConfirmValue(&aConfirm);
++  return aConfirm;
++}
++
++gint confirm_ex_cb        (GtkMozEmbed *embed, const char *title, const char *text,
++                           guint bt_flags,
++                           const char *button1, const char *button2, const char *button3,
++                           const char *check_msg, gboolean *check_val,
++                           TestGtkBrowser *browser)
++{
++  // g_print("%s\n", __FUNCTION__);
++  EmbedPrompter prompter;
++  prompter.SetTitle(title ? title : "Confirm");
++  prompter.SetMessageText(text);
++
++  nsCString button0Label, button1Label, button2Label;
++  prompter.GetButtonLabel(bt_flags, GTK_MOZ_EMBED_BUTTON_POS_0, button1, button0Label);
++  prompter.GetButtonLabel(bt_flags, GTK_MOZ_EMBED_BUTTON_POS_1, button2, button1Label);
++  prompter.GetButtonLabel(bt_flags, GTK_MOZ_EMBED_BUTTON_POS_2, button3, button2Label);
++  prompter.SetButtons(button0Label.get(),
++                      button1Label.get(),
++                      button2Label.get());
++
++  if (check_msg)
++      prompter.SetCheckMessage(check_msg);
++  if (check_val)
++      prompter.SetCheckValue(*check_val);
++
++  prompter.Create(EmbedPrompter::TYPE_UNIVERSAL,
++                  GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(embed))));
++  prompter.Run();
++
++  if (check_val)
++      prompter.GetCheckValue(check_val);
++
++  gint aRetVal = 0;
++  prompter.GetButtonPressed(&aRetVal);
++  return aRetVal;
++}
++
++gboolean prompt_cb         (GtkMozEmbed *embed, const char *title, const char *text,
++                           char **value, const char *check_msg, gboolean *check_val,
++                           TestGtkBrowser *browser)
++{
++  // g_print("%s\n", __FUNCTION__);
++  EmbedPrompter prompter;
++  prompter.SetTitle(title ? title : "Prompt");
++  prompter.SetMessageText(text);
++  prompter.SetTextValue(*value);
++  if (check_msg)
++      prompter.SetCheckMessage(check_msg);
++  if (check_val)
++      prompter.SetCheckValue(*check_val);
++
++  prompter.Create(EmbedPrompter::TYPE_PROMPT,
++                  GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(embed))));
++  prompter.Run();
++  if (check_val)
++      prompter.GetCheckValue(check_val);
++  
++  gboolean aConfirm = FALSE;
++  prompter.GetConfirmValue(&aConfirm);
++  if (aConfirm) {
++    if (*value)
++      NS_Free(*value);
++    prompter.GetTextValue(value);
++  }
++  return aConfirm;
++}
++
++gboolean prompt_auth_cb   (GtkMozEmbed *embed, const char *title, const char *text,
++                           char **user, char **pass, const char *check_msg, gboolean *check_val,
++                           TestGtkBrowser *browser)
++{
++  // g_print("%s\n", __FUNCTION__);
++  EmbedPrompter prompter;
++  prompter.SetTitle(title ? title : "Prompt");
++  prompter.SetMessageText(text);
++  prompter.SetUser(*user);
++  prompter.SetPassword(*pass);
++  if (check_msg)
++    prompter.SetCheckMessage(check_msg);
++  if (check_val)
++    prompter.SetCheckValue(*check_val);
++
++  prompter.Create(EmbedPrompter::TYPE_PROMPT_USER_PASS,
++                  GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(embed))));
++  prompter.Run();
++  if (check_val)
++    prompter.GetCheckValue(check_val);
++  gboolean aConfirm = FALSE;
++  prompter.GetConfirmValue(&aConfirm);
++  if (aConfirm) {
++    if (*user)
++      NS_Free(*user);
++    prompter.GetUser(user);
++
++    if (*pass)
++      NS_Free(*pass);
++    prompter.GetPassword(pass);
++  }
++  return aConfirm;
++}
++
++gboolean select_cb        (GtkMozEmbed *embed, const char *title, const char *text,
++                           GList *list, gint *selected_item,
++                           TestGtkBrowser *browser)
++{
++  // g_print("%s\n", __FUNCTION__);
++  EmbedPrompter prompter;
++  prompter.SetTitle(title ? title : "Select");
++  prompter.SetMessageText(text);
++  prompter.SetItems(list);
++  prompter.Create(EmbedPrompter::TYPE_SELECT,
++                  GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(embed))));
++  prompter.Run();
++  prompter.GetSelectedItem(selected_item);
++  gboolean aConfirm = FALSE;
++  prompter.GetConfirmValue(&aConfirm);
++  return aConfirm;
++}
++
+ void new_window_orphan_cb (GtkMozEmbedSingle *embed,
+ 			   GtkMozEmbed **retval, guint chromemask,
+ 			   gpointer data)
+ {
+   g_print("new_window_orphan_cb\n");
+   g_print("chromemask is %d\n", chromemask);
+   TestGtkBrowser *newBrowser = new_gtk_browser(chromemask);
+   *retval = GTK_MOZ_EMBED(newBrowser->mozEmbed);

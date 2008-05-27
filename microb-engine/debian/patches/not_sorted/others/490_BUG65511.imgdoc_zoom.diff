@@ -1,0 +1,211 @@
+# Zoom and auto image zoom fixes                                                                                                                                                                     
+# Works fine on trunk      
+Index: mozilla/content/html/document/src/nsImageDocument.cpp
+===================================================================
+--- mozilla.orig/content/html/document/src/nsImageDocument.cpp
++++ mozilla/content/html/document/src/nsImageDocument.cpp
+@@ -66,16 +66,17 @@
+ #include "nsContentPolicyUtils.h"
+ #include "nsPIDOMWindow.h"
+ #include "nsIDOMElement.h"
+ #include "nsIDOMNSHTMLElement.h"
+ #include "nsContentErrors.h"
+ #include "ImageErrors.h"
+ 
+ #define AUTOMATIC_IMAGE_RESIZING_PREF "browser.enable_automatic_image_resizing"
++#define AUTOMATIC_IMAGE_RESIZING_MOVE 5
+ 
+ class nsImageDocument;
+ 
+ class ImageListener: public nsMediaDocumentStreamListener
+ {
+ public:
+   ImageListener(nsImageDocument* aDocument);
+   virtual ~ImageListener();
+@@ -139,16 +140,18 @@
+   PRPackedBool                  mImageIsOverflowing;
+   // mImageIsResized is true if the image is currently resized
+   PRPackedBool                  mImageIsResized;
+   // mShouldResize is true if the image should be resized when it doesn't fit
+   // mImageIsResized cannot be true when this is false, but mImageIsResized
+   // can be false when this is true
+   PRPackedBool                  mShouldResize;
+   PRPackedBool                  mFirstResize;
++  PRInt32                       mPressX;
++  PRInt32                       mPressY;
+ };
+ 
+ ImageListener::ImageListener(nsImageDocument* aDocument)
+   : nsMediaDocumentStreamListener(aDocument)
+ {
+ }
+ 
+ 
+@@ -319,16 +322,17 @@
+ 
+ void
+ nsImageDocument::Destroy()
+ {
+   if (mImageContent) {
+     // Remove our event listener from the image content.
+     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(mImageContent);
+     target->RemoveEventListener(NS_LITERAL_STRING("click"), this, PR_FALSE);
++    target->RemoveEventListener(NS_LITERAL_STRING("mousedown"), this, PR_FALSE);
+ 
+     // Break reference cycle with mImageContent, if we have one
+     nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mImageContent);
+     if (imageLoader) {
+       imageLoader->RemoveObserver(this);
+     }
+ 
+     mImageContent = nsnull;
+@@ -358,16 +362,17 @@
+   if (aScriptGlobalObject) {
+     if (!mRootContent) {
+       // Create synthetic document
+       nsresult rv = CreateSyntheticDocument();
+       NS_ASSERTION(NS_SUCCEEDED(rv), "failed to create synthetic document");
+ 
+       target = do_QueryInterface(mImageContent);
+       target->AddEventListener(NS_LITERAL_STRING("click"), this, PR_FALSE);
++      target->AddEventListener(NS_LITERAL_STRING("mousedown"), this, PR_FALSE);
+     }
+ 
+     target = do_QueryInterface(aScriptGlobalObject);
+     target->AddEventListener(NS_LITERAL_STRING("resize"), this, PR_FALSE);
+     target->AddEventListener(NS_LITERAL_STRING("keypress"), this, PR_FALSE);
+   }
+ }
+ 
+@@ -405,16 +410,22 @@
+   *aImageRequest = nsnull;
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsImageDocument::ShrinkToFit()
+ {
+   // Keep image content alive while changing the attributes.
++  nsIPresShell *shell = GetPrimaryShell();
++  if (shell) {
++    nsPresContext* context = shell->GetPresContext();
++    if (context && 1.0 != context->GetFullZoom())
++      return NS_OK;
++  }
+   nsCOMPtr<nsIContent> imageContent = mImageContent;
+   nsCOMPtr<nsIDOMHTMLImageElement> image = do_QueryInterface(mImageContent);
+   image->SetWidth(PR_MAX(1, NSToCoordFloor(GetRatio() * mImageWidth)));
+   image->SetHeight(PR_MAX(1, NSToCoordFloor(GetRatio() * mImageHeight)));
+   
+   imageContent->SetAttr(kNameSpaceID_None, nsGkAtoms::style,
+                         NS_LITERAL_STRING("cursor: -moz-zoom-in"), PR_TRUE);
+   
+@@ -513,35 +524,52 @@
+ NS_IMETHODIMP
+ nsImageDocument::HandleEvent(nsIDOMEvent* aEvent)
+ {
+   nsAutoString eventType;
+   aEvent->GetType(eventType);
+   if (eventType.EqualsLiteral("resize")) {
+     CheckOverflowing(PR_FALSE);
+   }
++  else if (eventType.EqualsLiteral("mousedown")) {
++    nsCOMPtr<nsIDOMMouseEvent> event(do_QueryInterface(aEvent));
++    if (event) {
++      event->GetClientX(&mPressX);
++      event->GetClientY(&mPressY);
++    }
++  }
+   else if (eventType.EqualsLiteral("click")) {
+     mShouldResize = PR_TRUE;
++    PRInt32 x = 0, y = 0;
++    nsCOMPtr<nsIDOMMouseEvent> event(do_QueryInterface(aEvent));
++    if (event) {
++      event->GetClientX(&x);
++      event->GetClientY(&y);
++    }
++    if (PR_ABS(x - mPressX) > AUTOMATIC_IMAGE_RESIZING_MOVE
++        || PR_ABS(y - mPressY) > AUTOMATIC_IMAGE_RESIZING_MOVE)
++      return NS_OK;
++
+     if (mImageIsResized) {
+-      PRInt32 x = 0, y = 0;
+-      nsCOMPtr<nsIDOMMouseEvent> event(do_QueryInterface(aEvent));
+-      if (event) {
+-        event->GetClientX(&x);
+-        event->GetClientY(&y);
+-        PRInt32 left = 0, top = 0;
+-        nsCOMPtr<nsIDOMNSHTMLElement> nsElement(do_QueryInterface(mImageContent));
+-        nsElement->GetOffsetLeft(&left);
+-        nsElement->GetOffsetTop(&top);
+-        x -= left;
+-        y -= top;
+-      }
++      PRInt32 left = 0, top = 0;
++      nsCOMPtr<nsIDOMNSHTMLElement> nsElement(do_QueryInterface(mImageContent));
++      nsElement->GetOffsetLeft(&left);
++      nsElement->GetOffsetTop(&top);
++      x -= left;
++      y -= top;
+       mShouldResize = PR_FALSE;
+       RestoreImageTo(x, y);
+     }
+     else if (mImageIsOverflowing) {
++      nsIPresShell *shell = GetPrimaryShell();
++      if (shell) {
++        nsPresContext* context = shell->GetPresContext();
++        if (context && 1.0 != context->GetFullZoom())
++          context->SetFullZoom(1.0);
++      }
+       ShrinkToFit();
+     }
+   }
+   else if (eventType.EqualsLiteral("keypress")) {
+     nsCOMPtr<nsIDOMKeyEvent> keyEvent = do_QueryInterface(aEvent);
+     PRUint32 charCode;
+     keyEvent->GetCharCode(&charCode);
+     // plus key
+@@ -550,16 +578,22 @@
+       if (mImageIsResized) {
+         RestoreImage();
+       }
+     }
+     // minus key
+     else if (charCode == 0x2D) {
+       mShouldResize = PR_TRUE;
+       if (mImageIsOverflowing) {
++        nsIPresShell *shell = GetPrimaryShell();
++        if (shell) {
++          nsPresContext* context = shell->GetPresContext();
++          if (context && 1.0 != context->GetFullZoom())
++            context->SetFullZoom(1.0);
++        }
+         ShrinkToFit();
+       }
+     }
+   }
+ 
+   return NS_OK;
+ }
+ 
+@@ -634,16 +668,20 @@
+       visibleArea.Deflate(m);
+     m = styleContext->GetStyleBorder()->GetBorder();
+     visibleArea.Deflate(m);
+     if (styleContext->GetStylePadding()->GetPadding(m))
+       visibleArea.Deflate(m);
+ 
+     mVisibleWidth = nsPresContext::AppUnitsToIntCSSPixels(visibleArea.width);
+     mVisibleHeight = nsPresContext::AppUnitsToIntCSSPixels(visibleArea.height);
++    if (context && 1.0 != context->GetFullZoom()) {
++      RestoreImage();
++      return NS_OK;
++    }
+   }
+ 
+   PRBool imageWasOverflowing = mImageIsOverflowing;
+   mImageIsOverflowing =
+     mImageWidth > mVisibleWidth || mImageHeight > mVisibleHeight;
+   PRBool windowBecameBigEnough = imageWasOverflowing && !mImageIsOverflowing;
+ 
+   if (changeState || mShouldResize || mFirstResize ||

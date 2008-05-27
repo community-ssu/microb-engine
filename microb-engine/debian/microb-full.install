@@ -1,0 +1,11 @@
+usr/lib/microb-engine/components usr/lib/microb-xulrunner/
+usr/lib/microb-engine/modules usr/lib/microb-xulrunner/
+usr/lib/microb-engine/lib* usr/lib/microb-xulrunner/
+usr/lib/microb-engine/*.ini usr/lib/microb-xulrunner/
+usr/lib/microb-engine/xp* usr/lib/microb-xulrunner/
+usr/lib/microb-engine/xul* usr/lib/microb-xulrunner/
+usr/lib/microb-engine/run* usr/lib/microb-xulrunner/
+usr/lib/microb-engine/Test* usr/lib/microb-xulrunner/
+usr/lib/microb-engine/*.prop* usr/lib/microb-xulrunner/
+usr/lib/microb-engine/*.list usr/lib/microb-xulrunner/
+../patches/*.js usr/lib/microb-xulrunner/components/

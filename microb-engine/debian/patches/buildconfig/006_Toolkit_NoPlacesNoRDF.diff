@@ -1,0 +1,26 @@
+# Do not compile history if RDF and places are not defined
+#
+Index: mozilla/toolkit/components/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/Makefile.in
++++ mozilla/toolkit/components/Makefile.in
+@@ -108,17 +108,19 @@
+ endif # MOZ_XUL
+ 
+ ifdef MOZ_SUITE
+ # Suite can't use passwordmgr because mail still depends on wallet (bug 239131)
+ DIRS += passwordmgr/public
+ else
+ DIRS += passwordmgr
+ ifndef MOZ_PLACES
++ifdef MOZ_XUL
+ DIRS +=	history
++endif # MOZ_XUL
+ endif # MOZ_PLACES
+ endif # MOZ_SUITE
+ endif # MOZ_THUNDERBIRD
+ 
+ ifndef MOZ_SUITE
+ # XXX Suite doesn't want these just yet
+ ifdef MOZ_RDF
+ DIRS +=	downloads

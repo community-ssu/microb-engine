@@ -1,0 +1,208 @@
+# This patch will allow to build gtkmozembed library as shared library which preloaded
+# in dependentlibs.list list
+Index: mozilla/toolkit/toolkit-tiers.mk
+===================================================================
+--- mozilla.orig/toolkit/toolkit-tiers.mk
++++ mozilla/toolkit/toolkit-tiers.mk
+@@ -244,34 +244,34 @@
+ tier_toolkit_dirs += extensions/pref
+ endif
+ 
+ # JavaXPCOM JNI code is compiled into libXUL
+ ifdef MOZ_JAVAXPCOM
+ tier_toolkit_dirs += extensions/java/xpcom/src
+ endif
+ 
+-ifndef BUILD_STATIC_LIBS
+-ifdef MOZ_XUL_APP
+-ifneq (,$(MOZ_ENABLE_GTK2))
+-tier_toolkit_dirs += embedding/browser/gtk
+-endif
+-endif
+-endif
+-
+ ifdef MOZ_XUL_APP
+ ifndef BUILD_STATIC_LIBS
+ tier_toolkit_dirs += toolkit/library
+ endif
+ endif
+ 
+ ifdef MOZ_ENABLE_LIBXUL
+ tier_toolkit_dirs += xpcom/stub
+ endif
+ 
++ifndef BUILD_STATIC_LIBS
++ifdef MOZ_XUL_APP
++ifneq (,$(MOZ_ENABLE_GTK2))
++tier_toolkit_dirs += embedding/browser/gtk
++endif
++endif
++endif
++
+ ifdef NS_TRACE_MALLOC
+ tier_toolkit_dirs += tools/trace-malloc
+ endif
+ 
+ ifdef MOZ_LDAP_XPCOM
+ tier_toolkit_staticdirs += directory/c-sdk
+ tier_toolkit_dirs	+= directory/xpcom
+ endif
+Index: mozilla/xpcom/stub/Makefile.in
+===================================================================
+--- mozilla.orig/xpcom/stub/Makefile.in
++++ mozilla/xpcom/stub/Makefile.in
+@@ -77,16 +77,22 @@
+ 
+ # Force use of PIC
+ FORCE_USE_PIC	= 1 
+ 
+ FORCE_SHARED_LIB = 1
+ 
+ EXTRA_DSO_LDOPTS = $(LIBS_DIR)
+ 
++ifneq (,$(MOZ_ENABLE_GTK2))
++DEPENDENT_LIBS_LIST += \
++	$(LIB_PREFIX)gtkembedmoz$(DLL_SUFFIX) \
++	$(NULL)
++endif
++
+ DEPENDENT_LIBS_LIST += \
+ 	$(LIB_PREFIX)nspr4$(DLL_SUFFIX) \
+ 	$(LIB_PREFIX)plc4$(DLL_SUFFIX) \
+ 	$(LIB_PREFIX)plds4$(DLL_SUFFIX) \
+ 	$(NULL)
+ 
+ ifdef MOZ_ENABLE_LIBXUL
+ 
+Index: mozilla/toolkit/library/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/library/Makefile.in
++++ mozilla/toolkit/library/Makefile.in
+@@ -73,23 +73,16 @@
+ ifeq ($(OS_ARCH)_$(GNU_CC),WINNT_)
+ CPPSRCS += dlldeps-xul.cpp
+ endif
+ 
+ ifeq ($(OS_ARCH),OS2)
+ CPPSRCS += dlldeps-xul.cpp
+ endif
+ 
+-# dependent libraries
+-ifneq (,$(MOZ_ENABLE_GTK2))
+-SHARED_LIBRARY_LIBS += \
+-  $(DEPTH)/embedding/browser/gtk/src/$(LIB_PREFIX)gtkembedmoz.$(LIB_SUFFIX)
+-DEFINES += -DMOZ_ENABLE_GTK2
+-endif
+-
+ SHARED_LIBRARY_LIBS += \
+ 	$(DEPTH)/toolkit/xre/$(LIB_PREFIX)xulapp_s.$(LIB_SUFFIX) \
+ 	$(NULL)
+ 
+ SHARED_LIBRARY_LIBS += \
+ 	$(foreach component,$(COMPONENT_LIBS),$(DEPTH)/staticlib/components/$(LIB_PREFIX)$(component).$(LIB_SUFFIX)) \
+ 	$(foreach lib,$(STATIC_LIBS),$(DEPTH)/staticlib/$(LIB_PREFIX)$(lib).$(LIB_SUFFIX)) \
+ 	$(NULL)
+Index: mozilla/embedding/browser/gtk/src/Makefile.in
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/Makefile.in
++++ mozilla/embedding/browser/gtk/src/Makefile.in
+@@ -48,17 +48,17 @@
+ LIBXUL_LIBRARY  = 1
+ FORCE_STATIC_LIB = 1
+ 
+ LOCAL_INCLUDES += \
+                   -I. \
+                   $(NULL)
+ 
+ #Temporary define for full migration from libxul
+-#MOZ_GTKEMBED_DYN = 1
++MOZ_GTKEMBED_DYN = 1
+ 
+ ifdef MOZ_GTKEMBED_DYN
+ #DEFINES += -DFIXED_BUG347731
+ FORCE_SHARED_LIB = 1
+ ifdef MOZ_ENABLE_LIBXUL
+ LIBXUL_LIBRARY  = 
+ endif
+ endif
+@@ -214,16 +214,20 @@
+ CXXFLAGS        += $(MOZ_GTK2_CFLAGS)
+ CFLAGS          += $(MOZ_GTK2_CFLAGS)
+ ifdef MOZ_GNOMEVFS_CFLAGS
+ CXXFLAGS        += $(MOZ_GNOMEVFS_CFLAGS)
+ CFLAGS          += $(MOZ_GNOMEVFS_CFLAGS)
+ endif
+ DEFINES         += -D_IMPL_GTKMOZEMBED
+ 
++ifdef GNU_CC
++CFLAGS   += -fno-unit-at-a-time
++CXXFLAGS += -fno-unit-at-a-time
++endif
+ 
+ MARSHAL_FILE = gtkmozembedmarshal
+ MARSHAL_PREFIX = gtkmozembed
+ 
+ $(MARSHAL_FILE).h: $(MARSHAL_FILE).list
+ 	glib-genmarshal --prefix=$(MARSHAL_PREFIX) $(srcdir)/$(MARSHAL_FILE).list --skip-source --header > $(MARSHAL_FILE).h
+ 
+ $(MARSHAL_FILE).c: $(MARSHAL_FILE).list $(MARSHAL_FILE).h
+Index: mozilla/xpcom/glue/standalone/nsGlueLinkingDlopen.cpp
+===================================================================
+--- mozilla.orig/xpcom/glue/standalone/nsGlueLinkingDlopen.cpp
++++ mozilla/xpcom/glue/standalone/nsGlueLinkingDlopen.cpp
+@@ -52,16 +52,17 @@
+ #endif
+ 
+ struct DependentLib
+ {
+     void         *libHandle;
+     DependentLib *next;
+ };
+ 
++static void* sFirst = 0;
+ static DependentLib *sTop;
+ static void* sXULLibHandle;
+ 
+ static void
+ AppendDependentLib(void *libHandle)
+ {
+     DependentLib *d = new DependentLib;
+     if (!d)
+@@ -75,16 +76,19 @@
+ 
+ static void
+ ReadDependentCB(const char *aDependentLib)
+ {
+     void *libHandle = dlopen(aDependentLib, RTLD_GLOBAL | RTLD_LAZY);
+     if (!libHandle)
+         return;
+ 
++    if (sFirst == 0)
++      sFirst = libHandle;
++
+     AppendDependentLib(libHandle);
+ }
+ 
+ GetFrozenFunctionsFunc
+ XPCOMGlueLoad(const char *xpcomFile)
+ {
+     char xpcomDir[MAXPATHLEN];
+     if (realpath(xpcomFile, xpcomDir)) {
+@@ -147,16 +151,16 @@
+     // if it is null (same as RTLD_DEFAULT)
+ 
+     nsresult rv = NS_OK;
+     while (symbols->functionName) {
+         char buffer[512];
+         snprintf(buffer, sizeof(buffer),
+                  LEADING_UNDERSCORE "%s", symbols->functionName);
+ 
+-        *symbols->function = (NSFuncPtr) dlsym(sXULLibHandle, buffer);
++        *symbols->function = (NSFuncPtr) dlsym(sFirst, buffer);
+         if (!*symbols->function)
+             rv = NS_ERROR_LOSS_OF_SIGNIFICANT_DATA;
+ 
+         ++symbols;
+     }
+     return rv;
+ }

@@ -1,0 +1,170 @@
+# Allow to get info about First frame painting
+# Related to hacks with progress bar
+# gtkmozembed 220_connection_state_optimization2.diff
+Index: mozilla/docshell/base/nsIDocShell.idl
+===================================================================
+--- mozilla.orig/docshell/base/nsIDocShell.idl
++++ mozilla/docshell/base/nsIDocShell.idl
+@@ -434,16 +434,17 @@
+ 
+   /**
+    * Gets the channel for the currently loaded document, if any. 
+    * For a new document load, this will be the channel of the previous document
+    * until after OnLocationChange fires.
+    */
+   readonly attribute nsIChannel currentDocumentChannel;
+ 
++  void fireOnLayoutStateChange(in unsigned long aStateFlags);
+   /**
+    * Set the offset of this child in its container.
+    */
+   [noscript] void setChildOffset(in unsigned long offset);
+ 
+   /**
+    * Find out whether the docshell is currently in the middle of a page
+    * transition (after the onunload event has fired, but before the new
+Index: mozilla/docshell/base/nsDocShell.cpp
+===================================================================
+--- mozilla.orig/docshell/base/nsDocShell.cpp
++++ mozilla/docshell/base/nsDocShell.cpp
+@@ -9290,16 +9290,27 @@
+         return PR_FALSE;
+     }
+     
+     nsCAutoString str;
+     aURI->GetSpec(str);
+     return str.EqualsLiteral("about:blank");
+ }
+ 
++/* void fireOnLayoutStateChange (in unsigned long aStateFlags); */
++NS_IMETHODIMP
++nsDocShell::FireOnLayoutStateChange(PRUint32 aStateFlags)
++{
++    FireOnStateChange(this, NULL,
++                      nsIWebProgressListener::STATE_NEGOTIATING |
++                      nsIWebProgressListener::STATE_IS_DOCUMENT,
++                      aStateFlags);
++    return NS_OK;
++}
++
+ PRBool
+ nsDocShell::IsOKToLoadURI(nsIURI* aURI)
+ {
+     NS_PRECONDITION(aURI, "Must have a URI!");
+     
+     if (!mFiredUnloadEvent) {
+         return PR_TRUE;
+     }
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp
++++ mozilla/layout/base/nsPresShell.cpp
+@@ -4257,16 +4257,20 @@
+   }
+   
+   mPaintingSuppressed = PR_FALSE;
+   nsIFrame* rootFrame = FrameManager()->GetRootFrame();
+   if (rootFrame) {
+     // let's assume that outline on a root frame is not supported
+     nsRect rect(nsPoint(0, 0), rootFrame->GetSize());
+     rootFrame->Invalidate(rect, PR_FALSE);
++    nsCOMPtr<nsISupports> container = mPresContext->GetContainer();
++    nsCOMPtr<nsIDocShell> docShell(do_QueryInterface(container));
++    if (docShell)
++      docShell->FireOnLayoutStateChange(NS_FRAME_FIRST_REFLOW);
+   }
+ 
+   // This makes sure to get the same thing that nsPresContext::EnsureVisible()
+   // got.
+   nsCOMPtr<nsISupports> container = mPresContext->GetContainer();
+   nsCOMPtr<nsPIDOMWindow> ourWindow = do_GetInterface(container);
+   nsCOMPtr<nsIFocusController> focusController =
+     ourWindow ? ourWindow->GetRootFocusController() : nsnull;
+Index: mozilla/layout/base/nsCSSFrameConstructor.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsCSSFrameConstructor.cpp
++++ mozilla/layout/base/nsCSSFrameConstructor.cpp
+@@ -1848,24 +1848,28 @@
+   , mGfxScrollFrame(nsnull)
+   , mPageSequenceFrame(nsnull)
+   , mUpdateCount(0)
+   , mQuotesDirty(PR_FALSE)
+   , mCountersDirty(PR_FALSE)
+   , mInitialContainingBlockIsAbsPosContainer(PR_FALSE)
+   , mIsDestroyingFrameTree(PR_FALSE)
+   , mRebuildAllStyleData(PR_FALSE)
++  , mIsFirstRestylePaint(PR_TRUE)
+ {
+   if (!gGotXBLFormPrefs) {
+     gGotXBLFormPrefs = PR_TRUE;
+ 
+     gUseXBLForms =
+       nsContentUtils::GetBoolPref("nglayout.debug.enable_xbl_forms");
+   }
+ 
++  mIsPaintSignalsCount =
++    nsContentUtils::GetIntPref("nglayout.frame.constructor.signals", 4);
++
+   // XXXbz this should be in Init() or something!
+   if (!mPendingRestyles.Init()) {
+     // now what?
+   }
+ 
+ #ifdef DEBUG
+   static PRBool gFirstTime = PR_TRUE;
+   if (gFirstTime) {
+@@ -13545,17 +13549,30 @@
+ {
+   if (!mConstructor)
+     return NS_OK;  // event was revoked
+ 
+   // Make sure that any restyles that happen from now on will go into
+   // a new event.
+   mConstructor->mRestyleEvent.Forget();  
+   
+-  return mConstructor->mPresShell->FlushPendingNotifications(Flush_Style);
++  nsresult rv = mConstructor->mPresShell->FlushPendingNotifications(Flush_Style);
++  if (mConstructor->mIsPaintSignalsCount > 0) {
++    nsPresContext *context = mConstructor->mPresShell->GetPresContext();
++    nsCOMPtr<nsISupports> container = context->GetContainer();
++    nsCOMPtr<nsIDocShell> docShell(do_QueryInterface(container));
++    if (docShell && mConstructor->mIsFirstRestylePaint) {
++      docShell->FireOnLayoutStateChange(NS_FRAME_HAS_VIEW);
++      mConstructor->mIsFirstRestylePaint = PR_FALSE;
++    } else if (docShell && mConstructor->mIsPaintSignalsCount == 1) {
++      docShell->FireOnLayoutStateChange(NS_FRAME_IMPL_RESERVED);
++    }
++    mConstructor->mIsPaintSignalsCount--;
++  }
++  return rv;
+ }
+ 
+ NS_IMETHODIMP
+ nsCSSFrameConstructor::LazyGenerateChildrenEvent::Run()
+ {
+   mPresShell->GetDocument()->FlushPendingNotifications(Flush_Layout);
+ 
+   // this is hard-coded to handle only menu popup frames
+Index: mozilla/layout/base/nsCSSFrameConstructor.h
+===================================================================
+--- mozilla.orig/layout/base/nsCSSFrameConstructor.h
++++ mozilla/layout/base/nsCSSFrameConstructor.h
+@@ -1177,16 +1177,18 @@
+   nsQuoteList         mQuoteList;
+   nsCounterManager    mCounterManager;
+   PRUint16            mUpdateCount;
+   PRPackedBool        mQuotesDirty : 1;
+   PRPackedBool        mCountersDirty : 1;
+   PRPackedBool        mInitialContainingBlockIsAbsPosContainer : 1;
+   PRPackedBool        mIsDestroyingFrameTree : 1;
+   PRPackedBool        mRebuildAllStyleData : 1;
++  PRPackedBool        mIsFirstRestylePaint : 1;
++  PRUint16            mIsPaintSignalsCount;
+ 
+   nsRevocableEventPtr<RestyleEvent> mRestyleEvent;
+ 
+   nsCOMPtr<nsILayoutHistoryState> mTempFrameTreeState;
+ 
+   nsDataHashtable<nsISupportsHashKey, RestyleData> mPendingRestyles;
+ 
+   static nsIXBLService * gXBLService;

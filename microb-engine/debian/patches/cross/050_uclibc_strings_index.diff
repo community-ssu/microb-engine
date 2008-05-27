@@ -1,0 +1,28 @@
+#Bug 376533  uClibc strings/index and childiterator.index conficts
+--- mozilla/layout/base/nsChildIterator.h.orig	2007-04-03 11:55:10.000000000 +0300
++++ mozilla/layout/base/nsChildIterator.h	2007-04-03 12:02:42.454772750 +0300
+@@ -39,20 +39,24 @@
+ /*
+  * used by nsCSSFrameConstructor to determine and iterate the child list
+  * used to construct frames (normal children or something from XBL)
+  */
+ 
+ #include "nsCOMPtr.h"
+ #include "nsIContent.h"
+ #include "nsIDOMNodeList.h"
+ #include "nsIDOMNode.h"
+ 
++#ifdef __UCLIBC__
++#undef index
++#endif
++
+ /**
+  * Helper class for iterating children during frame construction.
+  * This class should always be used in lieu of the straight content
+  * node APIs, since it handles XBL-generated anonymous content as
+  * well.
+  */
+ class ChildIterator
+ {
+ protected:
+   nsCOMPtr<nsIContent> mContent;

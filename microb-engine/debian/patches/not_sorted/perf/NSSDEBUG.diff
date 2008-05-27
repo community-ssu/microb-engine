@@ -1,0 +1,74 @@
+Index: mozilla/security/coreconf/UNIX.mk
+===================================================================
+--- mozilla.orig/security/coreconf/UNIX.mk
++++ mozilla/security/coreconf/UNIX.mk
+@@ -39,16 +39,19 @@
+ LIB_SUFFIX  = a
+ DLL_SUFFIX  = so
+ AR          = ar cr $@
+ LDOPTS     += -L$(SOURCE_LIB_DIR)
+ 
+ ifdef BUILD_OPT
+ 	OPTIMIZER  += -O
+ 	DEFINES    += -UDEBUG -DNDEBUG
++ifndef BUILD_STRIP
++	OPTIMIZER  += -g
++endif
+ else
+ 	OPTIMIZER  += -g
+ 	DEFINES    += -DDEBUG -UNDEBUG -DDEBUG_$(shell whoami)
+ endif
+ 
+ ifdef BUILD_TREE
+ NSINSTALL_DIR  = $(BUILD_TREE)/nss
+ NSINSTALL      = $(BUILD_TREE)/nss/nsinstall
+Index: mozilla/security/coreconf/Linux.mk
+===================================================================
+--- mozilla.orig/security/coreconf/Linux.mk
++++ mozilla/security/coreconf/Linux.mk
+@@ -144,19 +144,19 @@
+ 		MKSHLIB += -Wl,--version-script,$(MAPFILE)
+ 	endif
+ 	PROCESS_MAP_FILE = grep -v ';-' $< | \
+          sed -e 's,;+,,' -e 's; DATA ;;' -e 's,;;,,' -e 's,;.*,;,' > $@
+ endif
+ 
+ ifdef BUILD_OPT
+ ifeq (11,$(ALLOW_OPT_CODE_SIZE)$(OPT_CODE_SIZE))
+-	OPTIMIZER = -Os
++	OPTIMIZER = -Os -g
+ else
+-	OPTIMIZER = -O2
++	OPTIMIZER = -O2 -g
+ endif
+ endif
+ 
+ ifeq ($(USE_PTHREADS),1)
+ OS_PTHREAD = -lpthread 
+ endif
+ 
+ OS_CFLAGS		= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(ARCHFLAG) -ansi -Wall -Werror-implicit-function-declaration -pipe -DLINUX -Dlinux -D_POSIX_SOURCE -D_BSD_SOURCE -DHAVE_STRERROR
+Index: mozilla/security/manager/Makefile.in
+===================================================================
+--- mozilla.orig/security/manager/Makefile.in
++++ mozilla/security/manager/Makefile.in
+@@ -153,16 +153,19 @@
+ DEFAULT_GMAKE_FLAGS += NSS_ENABLE_ECC=1
+ ABS_topsrcdir   := $(shell cd $(topsrcdir); pwd)
+ ifneq ($(ABS_topsrcdir),$(MOZ_BUILD_ROOT))
+ DEFAULT_GMAKE_FLAGS += BUILD_TREE=$(MOZ_BUILD_ROOT)
+ endif
+ ifndef MOZ_DEBUG
+ DEFAULT_GMAKE_FLAGS += BUILD_OPT=1
+ endif
++ifdef ENABLE_STRIP
++DEFAULT_GMAKE_FLAGS += BUILD_STRIP=1
++endif
+ ifdef GNU_CC
+ DEFAULT_GMAKE_FLAGS += NS_USE_GCC=1 NS_USE_NATIVE=
+ else
+ DEFAULT_GMAKE_FLAGS += NS_USE_GCC= NS_USE_NATIVE=1
+ endif
+ ifdef USE_N32
+ # It is not really necessary to specify USE_PTHREADS=1.  USE_PTHREADS
+ # merely adds _PTH to coreconf's OBJDIR name.

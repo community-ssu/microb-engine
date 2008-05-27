@@ -1,0 +1,19 @@
+# Branding Makefile
+#  - jars chrome artwork
+
+DEPTH = ../../..
+topsrcdir = @top_srcdir@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include $(DEPTH)/config/autoconf.mk
+
+BROWSER_APP_FILES = \
+	mozicon128.png \
+	$(NULL)
+
+export::
+	$(NSINSTALL) -D $(DIST)/branding
+	cp $(addprefix $(srcdir)/, $(BROWSER_APP_FILES)) $(DIST)/branding/
+
+include $(topsrcdir)/config/rules.mk

@@ -1,0 +1,23 @@
+# 010_BUG349921_toolkit_branding.diff
+# allow to use Branding directory in xulrunner configuration
+--- mozilla/toolkit/toolkit-tiers.mk.orig	2007-10-28 10:18:46.000000000 +0200
++++ mozilla/toolkit/toolkit-tiers.mk	2007-10-28 10:21:07.000000000 +0200
+@@ -279,8 +286,18 @@ endif
+ 
+ ifdef MOZ_MAPINFO
+ tier_toolkit_dirs	+= tools/codesighs
+ endif
+ 
+ ifdef MOZ_MOCHITEST
+ tier_toolkit_dirs	+= testing/mochitest
+ endif
++
++ifndef MOZ_PHOENIX
++ifdef MOZ_XULRUNNER
++ifdef MOZ_BRANDING_DIRECTORY
++tier_toolkit_dirs += $(MOZ_BRANDING_DIRECTORY)
++#tier_toolkit_dirs += modules/libreg
++#tier_toolkit_dirs += browser
++endif
++endif
++endif

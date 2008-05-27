@@ -1,0 +1,29 @@
+--- mozilla/toolkit/library/nsStaticXULComponents.cpp.orig	2008-05-20 15:42:38.000000000 +0300
++++ mozilla/toolkit/library/nsStaticXULComponents.cpp	2008-05-20 16:57:12.000000000 +0300
+@@ -133,11 +133,13 @@
+ #define XREMOTE_MODULES
+ #endif
+ 
+ #ifdef MOZ_ENABLE_GTK2
+ #ifdef MOZ_PREF_EXTENSIONS
+-#define SYSTEMPREF_MODULES MODULE(nsSystemPrefModule)
++#define SYSTEMPREF_MODULES \
++    MODULE(nsSystemPrefModule) \
++    MODULE(nsAutoConfigModule)
+ #else
+ #define SYSTEMPREF_MODULES
+ #endif
+ #else
+ #define SYSTEMPREF_MODULES
+@@ -317,11 +319,10 @@
+     XREMOTE_MODULES                          \
+     XPINSTALL_MODULES                        \
+     JSDEBUGGER_MODULES                       \
+     MODULE(BOOT)                             \
+     MODULE(NSS)                              \
+-    MODULE(nsAutoConfigModule)               \
+     SYSTEMPREF_MODULES                       \
+     SPELLCHECK_MODULE                        \
+     XMLEXTRAS_MODULE                         \
+     LAYOUT_DEBUG_MODULE                      \
+     UNIXPROXY_MODULE                         \

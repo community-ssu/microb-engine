@@ -1,0 +1,23 @@
+# Some fixes for image loading like Opera
+diff -ruN -U 8 -p mozilla.orig/content/base/src/nsImageLoadingContent.cpp mozilla/content/base/src/nsImageLoadingContent.cpp
+--- mozilla.orig/content/base/src/nsImageLoadingContent.cpp	2007-06-22 17:16:34.000000000 -0400
++++ mozilla/content/base/src/nsImageLoadingContent.cpp	2007-06-22 17:15:18.000000000 -0400
+@@ -455,17 +455,17 @@ nsImageLoadingContent::LoadImageWithChan
+ NS_IMETHODIMP nsImageLoadingContent::ForceReload()
+ {
+   nsCOMPtr<nsIURI> currentURI;
+   GetCurrentURI(getter_AddRefs(currentURI));
+   if (!currentURI) {
+     return NS_ERROR_NOT_AVAILABLE;
+   }
+ 
+-  return LoadImage(currentURI, PR_TRUE, PR_TRUE, nsnull, nsIRequest::VALIDATE_ALWAYS);
++  return LoadImage(currentURI, PR_TRUE, PR_TRUE, nsnull, nsIRequest::LOAD_FROM_CACHE);
+ }
+ 
+ /*
+  * Non-interface methods
+  */
+ 
+ nsresult
+ nsImageLoadingContent::LoadImage(const nsAString& aNewURI,

@@ -1,0 +1,2045 @@
+Index: src/EmbedContextMenuInfo.cpp
+===================================================================
+--- mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.cpp
++++ mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.cpp
+@@ -32,603 +32,867 @@
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
++
+ #include "EmbedContextMenuInfo.h"
+-#include "nsIImageLoadingContent.h"
+-#include "imgILoader.h"
++#include "EmbedGtkTools.h"
++
++#include "gtkmozembed_context.h"
++#include "gtkmozembed.h"
++#include "gtkmozembed_internal.h"
++
++#include "nsIContent.h"
++
+ #include "nsIDOMDocument.h"
+-#include "nsIDOMHTMLDocument.h"
+-#include "nsIDOMHTMLElement.h"
+-#include "nsIDOMHTMLHtmlElement.h"
++#include "nsIDOMDocumentView.h"
++#include "nsIDOMElement.h"
++#include "nsIDOMEvent.h"
++#include "nsIDOMEventTarget.h"
+ #include "nsIDOMHTMLAnchorElement.h"
+-#include "nsIDOMHTMLImageElement.h"
+ #include "nsIDOMHTMLAreaElement.h"
+-#include "nsIDOMHTMLLinkElement.h"
+-#include "nsIDOMDocumentView.h"
+-#include "nsIDOMAbstractView.h"
+-#include "nsIDOMViewCSS.h"
+-#include "nsIDOMCSSStyleDeclaration.h"
+-#include "nsIDOMCSSValue.h"
+-#include "nsIDOMCSSPrimitiveValue.h"
+-#include "nsNetUtil.h"
+-#include "nsUnicharUtils.h"
++#include "nsIDOMHTMLImageElement.h"
++#include "nsIDOMHTMLInputElement.h"
++#include "nsIDOMHTMLTextAreaElement.h"
+ #include "nsIDOMMouseEvent.h"
+ #include "nsIDOMNSEvent.h"
++#include "nsIDOMNSHTMLDocument.h"
++#include "nsIDOMNSEditableElement.h"
++#include "nsIDOMNode.h"
+ #include "nsIDOMWindow.h"
+ #include "nsIDOMWindowCollection.h"
+-#include "nsIWebBrowser.h"
+-#include "nsIDOM3Document.h"
+-#include "nsIContent.h"
+-#include "nsIPresShell.h"
+-#include "nsIFormControl.h"
+ #include "nsIDOMNSHTMLInputElement.h"
+ #include "nsIDOMNSHTMLTextAreaElement.h"
+-#include "nsIDOMHTMLInputElement.h"
+-#include "nsIDOMHTMLTextAreaElement.h"
+-#include "nsIDOMNSHTMLDocument.h"
+-#include "nsIDOMNodeList.h"
+-#include "nsISelection.h"
++
++#include "nsISelectionController.h"
++#include "nsIFormControl.h"
++#include "nsIWebBrowser.h"
++#include "nsIWebNavigation.h"
++
++#include "gfxIImageFrame.h"
++// imglib2
++#include "imgIRequest.h"
++#include "imgIContainer.h"
++#include "nsIImageLoadingContent.h"
++
++
++#include "nsPIDOMWindow.h"
++#include "nsIDocShell.h"
++#include "nsIInterfaceRequestorUtils.h"
++
++// composer
++#include "nsIEditingSession.h"
++
++// editor
++#include "nsIPlaintextEditor.h"
++#include "nsIEditor.h"
+ #include "nsIDocument.h"
+-#include "EmbedPrivate.h"
+-#include <stdio.h>
+-#include <stdarg.h>
+-#include <stdlib.h>
+-#include <glib.h>
+-#if defined(FIXED_BUG347731) || !defined(MOZ_ENABLE_LIBXUL)
+-#include "nsIFrame.h"
+-#endif
++
++
++//#include ".h"
++#include "nsIDOMNSElement.h"
++#include "nsIDOMHTMLObjectElement.h"
++#include "nsIDOMNodeList.h"
++#include "nsIDOMCSSStyleDeclaration.h"
++#include "nsIDOMCSSValue.h"
++#include "nsIDOMCSSPrimitiveValue.h"
++#include "nsIDOM3Document.h"
++#include "nsIDOMViewCSS.h"
++
++#include "nsIDOMTextRectangle.h"
+ 
+ //*****************************************************************************
+ // class EmbedContextMenuInfo
+ //*****************************************************************************
+-EmbedContextMenuInfo::EmbedContextMenuInfo(EmbedPrivate *aOwner) : mCtxFrameNum(-1), mEmbedCtxType(0)
++
++EmbedContextMenuInfo::EmbedContextMenuInfo(GtkMozContext *ctx, const void *aEmbed)
++: mCtx(ctx),
++  mEmbed(aEmbed),
++  mIsScrollableElement(PR_FALSE)
+ {
+-  mOwner = aOwner;
+-  mEventNode = nsnull;
+-  mCtxDocument = nsnull;
+-  mNSHHTMLElement = nsnull;
+-  mNSHHTMLElementSc = nsnull;
+-  mCtxEvent = nsnull;
+-  mEventNode = nsnull;
+-  mFormRect = nsRect(0,0,0,0);
+ }
+ 
+ EmbedContextMenuInfo::~EmbedContextMenuInfo(void)
+ {
+-  mEventNode = nsnull;
+-  mCtxDocument = nsnull;
+-  mNSHHTMLElement = nsnull;
+-  mNSHHTMLElementSc = nsnull;
+-  mCtxEvent = nsnull;
+-  mEventNode = nsnull;
+ }
+ 
+ NS_IMPL_ADDREF(EmbedContextMenuInfo)
+ NS_IMPL_RELEASE(EmbedContextMenuInfo)
+ NS_INTERFACE_MAP_BEGIN(EmbedContextMenuInfo)
+ NS_INTERFACE_MAP_ENTRY(nsISupports)
+ NS_INTERFACE_MAP_END
+ 
++static PRBool
++IsXULNode(nsIDOMNode *aNode, PRUint32 *aType = 0)
++{
++  PRBool retval = PR_FALSE;
++  if (!aNode) return retval;
++
++  nsString sorigNode;
++  aNode->GetNodeName(sorigNode);
++  if (sorigNode.EqualsLiteral("#document"))
++    return retval;
++  retval = StringBeginsWith(sorigNode, NS_LITERAL_STRING("xul:"));
++
++  if (!aType) return retval;
++
++  if (sorigNode.EqualsLiteral("xul:thumb")
++      || sorigNode.EqualsLiteral("xul:vbox")
++      || sorigNode.EqualsLiteral("xul:spacer"))
++    *aType = PR_FALSE; // Magic
++  else if (sorigNode.EqualsLiteral("xul:slider"))
++    *aType = 2; // Magic
++  else if (sorigNode.EqualsLiteral("xul:scrollbarbutton"))
++    *aType = 3; // Magic
++
++  return retval;
++}
++
+ nsresult
+-EmbedContextMenuInfo::SetFrameIndex()
++EmbedContextMenuInfo::SetFramePosition(void)
+ {
++  nsresult rv;
++
++  //FIXME canot get frame info without main window
++  if (!GTK_IS_MOZ_EMBED(mEmbed)) return NS_ERROR_FAILURE;
++
++  nsCOMPtr<nsIDOMWindow> mainWindow;
++  {
++    nsIWebBrowser *webBrowser = nsnull;
++    gtk_moz_embed_get_nsIWebBrowser(GTK_MOZ_EMBED(mEmbed), &webBrowser);
++    NS_ENSURE_TRUE(webBrowser, NS_ERROR_FAILURE);
++    rv = webBrowser->GetContentDOMWindow(getter_AddRefs(mainWindow));
++  }
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  nsCOMPtr<nsIDOMWindow> ctxWindow;
++  rv = GetDOMWindowByNode(mEventNode, getter_AddRefs(ctxWindow));
++
++  mCtx->docindex = -1;
++  if (!ctxWindow || ctxWindow == mainWindow)
++    return NS_OK;
++
++  mCtx->type |= GTK_MOZ_EMBED_CTX_IFRAME;
++
+   nsCOMPtr<nsIDOMWindowCollection> frames;
+-  mCtxDomWindow->GetFrames(getter_AddRefs(frames));
+-  nsCOMPtr<nsIDOMWindow> currentWindow;
++  rv = mainWindow->GetFrames(getter_AddRefs(frames));
++  NS_ENSURE_SUCCESS(rv, rv);
++
+   PRUint32 frameCount = 0;
+   frames->GetLength(&frameCount);
++  nsCOMPtr<nsIDOMWindow> currentWindow;
++  NS_ENSURE_SUCCESS(rv, rv);
+   for (unsigned int i= 0; i < frameCount; i++) {
+     frames->Item(i, getter_AddRefs(currentWindow));
+-    nsCOMPtr<nsIDOMDocument> currentDoc;
+-    currentWindow->GetDocument(getter_AddRefs(currentDoc));
+-    if (currentDoc == mCtxDocument) {
+-      mCtxFrameNum = i;
+-      mCtxDomWindow = currentWindow;
+-      nsCOMPtr<nsIDocument> doc = do_QueryInterface(currentDoc);
+-      if (doc)
+-        mCtxDocTitle = doc->GetDocumentTitle();
+-      return NS_OK;
+-    }
++    if (currentWindow != ctxWindow) continue;
++    mCtx->docindex = i;
++    break;
+   }
+-  return NS_ERROR_FAILURE;
++  return NS_OK;
+ }
+ 
+ nsresult
+-EmbedContextMenuInfo::GetFormControlType(nsIDOMEvent* aEvent)
++EmbedContextMenuInfo::CheckRichEdit(void)
+ {
+-  if (!aEvent)
+-    return NS_OK;
+-  nsCOMPtr<nsIDOMNSEvent> nsevent(do_QueryInterface(aEvent));
+-  nsCOMPtr<nsIDOMEventTarget> target;
+-  nsevent->GetOriginalTarget(getter_AddRefs(target));
+-  //    mOrigTarget  = target;
+-  if (SetFormControlType(target)) {
+-    nsCOMPtr<nsIDOMNode> eventNode = do_QueryInterface(target);
+-    if (!eventNode)
+-      return NS_OK;
+-    //Frame Stuff
+-    nsCOMPtr<nsIDOMDocument> domDoc;
+-    nsresult rv = eventNode->GetOwnerDocument(getter_AddRefs(domDoc));
+-    if (!NS_SUCCEEDED(rv) || !domDoc) {
+-      return NS_OK;
+-    }
+-    mEventNode = eventNode;
+-    mCtxDocument = domDoc;
+-    nsCOMPtr<nsIDocument> doc = do_QueryInterface(mCtxDocument);
+-    if (!doc)
+-      return NS_OK;
+-    nsIPresShell *presShell = doc->GetPrimaryShell();
+-    if (!presShell)
+-      return NS_OK;
+-    nsCOMPtr<nsIContent> tgContent = do_QueryInterface(mEventTarget);
+-	nsIFrame* frame = nsnull;
+-#if defined(FIXED_BUG347731) || !defined(MOZ_ENABLE_LIBXUL)
+-#ifdef MOZILLA_1_8_BRANCH
+-    presShell->GetPrimaryFrameFor(tgContent, &frame);
+-#else
+-    frame = presShell->GetPrimaryFrameFor(tgContent);
+-#endif
+-    if (frame)
+-      mFormRect = frame->GetScreenRectExternal();
+-#endif
+-    return NS_OK;
+-  }
+-  return NS_ERROR_FAILURE;
++  nsresult rv;
++  nsCOMPtr<nsIDOMElement> targetDOMElement;
++  rv = mCtxDocument->GetDocumentElement(getter_AddRefs(targetDOMElement));
++  if (!targetDOMElement) return rv;
++
++  nsCOMPtr<nsIDOMNSHTMLDocument> htmlDoc = do_QueryInterface(mCtxDocument, &rv);
++  if (!htmlDoc) return rv;
++
++  nsString DMode;
++  htmlDoc->GetDesignMode(DMode);
++  if (!DMode.EqualsLiteral("on")) return rv;
++
++  mCtx->type |= GTK_MOZ_EMBED_CTX_INPUT_TEXT | GTK_MOZ_EMBED_CTX_RICHEDIT | GTK_MOZ_EMBED_CTX_MULTILINE;
++  mIsScrollableElement = PR_FALSE;
++  return rv;
+ }
+ 
+ nsresult
+-EmbedContextMenuInfo::SetFormControlType(nsIDOMEventTarget *originalTarget)
++EmbedContextMenuInfo::CheckFormControl(void)
+ {
+-  nsresult rv = NS_ERROR_FAILURE;
+-  nsCOMPtr<nsIContent> targetContent = do_QueryInterface(originalTarget);
++  nsresult rv;
++  nsCOMPtr<nsIDOMEventTarget> eventTarget;
++  rv = mCtxEvent->GetTarget(getter_AddRefs(eventTarget));
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  nsCOMPtr<nsIContent> tgContent = do_QueryInterface(eventTarget, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
+   mCtxFormType = 0;
+-#ifdef MOZILLA_1_8_BRANCH
+-  if (targetContent && targetContent->IsContentOfType(nsIContent::eHTML_FORM_CONTROL)) {
+-#else
+-  if (targetContent && targetContent->IsNodeOfType(nsIContent::eHTML_FORM_CONTROL)) {
+-#endif
+-    nsCOMPtr<nsIFormControl> formControl(do_QueryInterface(targetContent));
+-    if (formControl) {
+-      mCtxFormType = formControl->GetType();
+-      rv = NS_OK;
+-      //#ifdef MOZ_LOGGING
+-      switch (mCtxFormType) {
+-      case NS_FORM_BUTTON_BUTTON:
+-        break;
+-      case NS_FORM_BUTTON_RESET:
+-        break;
+-      case NS_FORM_BUTTON_SUBMIT:
+-        break;
+-      case NS_FORM_INPUT_BUTTON:
+-        break;
+-      case NS_FORM_INPUT_CHECKBOX:
+-        break;
+-      case NS_FORM_INPUT_FILE:
+-        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
+-        break;
+-      case NS_FORM_INPUT_HIDDEN:
+-        break;
+-      case NS_FORM_INPUT_RESET:
+-        break;
+-      case NS_FORM_INPUT_IMAGE:
+-        break;
+-      case NS_FORM_INPUT_PASSWORD:
+-        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
+-        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_IPASSWORD;
+-        break;
+-      case NS_FORM_INPUT_RADIO:
+-        break;
+-      case NS_FORM_INPUT_SUBMIT:
+-        break;
+-      case NS_FORM_INPUT_TEXT:
+-        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
+-        break;
+-      case NS_FORM_LABEL:
+-        break;
+-      case NS_FORM_OPTION:
+-        break;
+-      case NS_FORM_OPTGROUP:
+-        break;
+-      case NS_FORM_LEGEND:
+-        break;
+-      case NS_FORM_SELECT:
+-        break;
+-      case NS_FORM_TEXTAREA:
+-        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
+-        break;
+-      case NS_FORM_OBJECT:
+-        break;
+-      default:
+-        break;
+-      }
+-      if (mEmbedCtxType & GTK_MOZ_EMBED_CTX_INPUT) {
+-        PRBool rdonly = PR_FALSE;
+-        if (mCtxFormType == NS_FORM_TEXTAREA) {
+-          nsCOMPtr<nsIDOMHTMLTextAreaElement> input;
+-          input = do_QueryInterface(mEventNode, &rv);
+-          if (!NS_FAILED(rv) && input)
+-            rv = input->GetReadOnly(&rdonly);
+-          if (!NS_FAILED(rv) && rdonly) {
+-            mEmbedCtxType |= GTK_MOZ_EMBED_CTX_ROINPUT;
+-          }
+-        } else {
+-          nsCOMPtr<nsIDOMHTMLInputElement> input;
+-          input = do_QueryInterface(mEventNode, &rv);
+-          if (!NS_FAILED(rv) && input)
+-            rv = input->GetReadOnly(&rdonly);
+-          if (!NS_FAILED(rv) && rdonly) {
+-            mEmbedCtxType |= GTK_MOZ_EMBED_CTX_ROINPUT;
+-          }
+-        }
+-      }
+-      //#endif
+-    }
+-  }
+-  return rv;
+-}
++  if (!tgContent->IsNodeOfType(nsIContent::eHTML_FORM_CONTROL))
++    return NS_ERROR_FAILURE;
+ 
+-const char*
+-EmbedContextMenuInfo::GetSelectedText()
+-{
+-  nsString cString;
+-  nsresult rv = NS_ERROR_FAILURE;
+-  if (mCtxFormType != 0 && mEventNode) {
+-    PRInt32 TextLength = 0, selStart = 0, selEnd = 0;
+-    if (mCtxFormType == NS_FORM_INPUT_TEXT || mCtxFormType == NS_FORM_INPUT_FILE) {
+-      nsCOMPtr<nsIDOMNSHTMLInputElement> nsinput = do_QueryInterface(mEventNode, &rv);
+-      if (NS_SUCCEEDED(rv) && nsinput)
+-        nsinput->GetTextLength(&TextLength);
+-      if (TextLength > 0) {
+-        nsinput->GetSelectionEnd(&selEnd);
+-        nsinput->GetSelectionStart(&selStart);
+-        if (selStart < selEnd || mCtxFormType == NS_FORM_INPUT_FILE) {
+-          nsCOMPtr<nsIDOMHTMLInputElement> input = do_QueryInterface(mEventNode, &rv);
+-          rv = input->GetValue(cString);
+-        }
+-      }
+-    } else if (mCtxFormType == NS_FORM_TEXTAREA) {
+-      nsCOMPtr<nsIDOMNSHTMLTextAreaElement> nsinput = do_QueryInterface(mEventNode, &rv);
+-      if (NS_SUCCEEDED(rv) && nsinput)
+-        nsinput->GetTextLength(&TextLength);
+-      if (TextLength > 0) {
+-        nsinput->GetSelectionStart(&selStart);
+-        nsinput->GetSelectionEnd(&selEnd);
+-        if (selStart < selEnd) {
+-          nsCOMPtr<nsIDOMHTMLTextAreaElement> input = do_QueryInterface(mEventNode, &rv);
+-          rv = input->GetValue(cString);
+-        }
+-      }
+-    }
+-    if (NS_SUCCEEDED(rv) && !cString.IsEmpty()) {
+-      if (selStart < selEnd) {
+-        cString.Cut(0, selStart);
+-        cString.Cut(selEnd-selStart, TextLength);
+-      }
+-      rv = NS_OK;
++  nsCOMPtr<nsIFormControl> formControl(do_QueryInterface(tgContent, &rv));
++  NS_ENSURE_SUCCESS(rv, rv);
++  mCtxFormType = formControl->GetType();
++  switch (mCtxFormType) {
++  case NS_FORM_BUTTON_BUTTON:
++    break;
++  case NS_FORM_BUTTON_RESET:
++    break;
++  case NS_FORM_BUTTON_SUBMIT:
++    break;
++  case NS_FORM_INPUT_BUTTON:
++    break;
++  case NS_FORM_INPUT_CHECKBOX:
++    break;
++  case NS_FORM_INPUT_FILE:
++    break;
++  case NS_FORM_INPUT_HIDDEN:
++    break;
++  case NS_FORM_INPUT_RESET:
++    break;
++  case NS_FORM_INPUT_IMAGE:
++    break;
++  case NS_FORM_INPUT_PASSWORD:
++    mCtx->type |= GTK_MOZ_EMBED_CTX_INPUT_TEXT;
++    mCtx->type |= GTK_MOZ_EMBED_CTX_IPASSWORD;
++    break;
++  case NS_FORM_INPUT_RADIO:
++    break;
++  case NS_FORM_INPUT_SUBMIT:
++    break;
++  case NS_FORM_INPUT_TEXT:
++    mCtx->type |= GTK_MOZ_EMBED_CTX_INPUT_TEXT;
++    break;
++  case NS_FORM_LABEL:
++    break;
++  case NS_FORM_OPTION:
++    break;
++  case NS_FORM_OPTGROUP:
++    break;
++  case NS_FORM_LEGEND:
++    break;
++  case NS_FORM_SELECT:
++    mIsScrollableElement = PR_FALSE;
++    break;
++  case NS_FORM_TEXTAREA:
++    mCtx->type |= GTK_MOZ_EMBED_CTX_INPUT_TEXT | GTK_MOZ_EMBED_CTX_MULTILINE;
++    break;
++  case NS_FORM_OBJECT:
++    break;
++  default:
++    break;
++  }
++  if (mCtx->type & GTK_MOZ_EMBED_CTX_INPUT_TEXT) {
++    PRBool rdonly = PR_FALSE;
++    if (mCtxFormType == NS_FORM_TEXTAREA) {
++      nsCOMPtr<nsIDOMHTMLTextAreaElement> input;
++      input = do_QueryInterface(mEventNode);
++      if (input) input->GetReadOnly(&rdonly);
++    } else {
++      nsCOMPtr<nsIDOMHTMLInputElement> input;
++      input = do_QueryInterface(mEventNode);
++      if (input) input->GetReadOnly(&rdonly);
+     }
+-  } else if (mCtxDocument) {
+-    nsCOMPtr<nsIDOMNSHTMLDocument> htmlDoc = do_QueryInterface(mCtxDocument, &rv);
+-    if (NS_FAILED(rv) || !htmlDoc)
+-      return nsnull;
+-    rv = htmlDoc->GetSelection(cString);
+-    if (NS_FAILED(rv) || cString.IsEmpty())
+-      return nsnull;
+-    rv = NS_OK;
++    mIsScrollableElement = rdonly;
+   }
+-  if (rv == NS_OK) {
+-    return NS_ConvertUTF16toUTF8(cString).get();
+-  }
+-  return nsnull;
++  return rv;
+ }
+ 
+ nsresult
+-EmbedContextMenuInfo::CheckDomImageElement(nsIDOMNode *node, nsString& aHref,
+-                                           PRInt32 *aWidth, PRInt32 *aHeight)
++EmbedContextMenuInfo::ResolveBaseURL (const nsAString &relurl, nsACString &url)
+ {
+-  nsresult rv = NS_ERROR_FAILURE;
+-  nsCOMPtr<nsIDOMHTMLImageElement> image =
+-    do_QueryInterface(node, &rv);
+-  if (image) {
+-    rv = image->GetSrc(aHref);
+-    if (NS_FAILED(rv)) {
+-      return rv;
+-    }
+-    rv = image->GetWidth(aWidth);
+-    rv = image->GetHeight(aHeight);
+-    rv = NS_OK;
+-  }
+-  return rv;
++  nsCString cRelURL(NS_ConvertUTF16toUTF8(relurl).get());
++  return mBaseURI->Resolve (cRelURL, url);
+ }
+ 
+ nsresult
+-EmbedContextMenuInfo::GetImageRequest(imgIRequest **aRequest, nsIDOMNode *aDOMNode)
++EmbedContextMenuInfo::CheckDomHtmlNode(nsIDOMNode *aNode, PRBool &aHasImage)
+ {
+-  NS_ENSURE_ARG(aDOMNode);
+-  NS_ENSURE_ARG_POINTER(aRequest);
+-
+-  // Get content
+-  nsCOMPtr<nsIImageLoadingContent> content(do_QueryInterface(aDOMNode));
+-  NS_ENSURE_TRUE(content, NS_ERROR_FAILURE);
++  nsresult rv;
+ 
+-  return content->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
+-                             aRequest);
+-}
++  nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aNode, &rv);
++  NS_ENSURE_TRUE(node, NS_ERROR_FAILURE);
+ 
+-nsresult
+-EmbedContextMenuInfo::CheckDomHtmlNode(nsIDOMNode *aNode)
+-{
+-  nsresult rv = NS_ERROR_FAILURE;
+   nsString uTag;
++  nsString tmp;
+   PRUint16 dnode_type;
+-
+-  nsCOMPtr<nsIDOMNode> node;
+-  if (!aNode && mEventNode)
+-    node = mEventNode;
+-  nsCOMPtr<nsIDOMHTMLElement> element  = do_QueryInterface(node, &rv);
+-  if (!element) {
+-    element = do_QueryInterface(mOrigNode, &rv);
+-    if (element) {
+-      node = mOrigNode;
+-      element  = do_QueryInterface(node, &rv);
+-    }
+-  }
+-
+   rv = node->GetNodeType(&dnode_type);
+-  if (NS_FAILED(rv)) {
+-    return rv;
+-  }
++  NS_ENSURE_SUCCESS(rv, rv);
+ 
+-  if (!((nsIDOMNode::ELEMENT_NODE == dnode_type) && element)) {
++  if (nsIDOMNode::ELEMENT_NODE != dnode_type)
+     return rv;
+-  }
+-  nsCOMPtr<nsIDOMNSHTMLElement> nodeElement = do_QueryInterface(node, &rv);
+-  if (NS_SUCCEEDED(rv) && nodeElement) {
+-    mNSHHTMLElement = nodeElement;
+-  } else {
+-    mNSHHTMLElement = nsnull;
+-  }
+-  rv = element->GetLocalName(uTag);
+-  if (NS_FAILED(rv)) {
+-    return rv;
+-  }
++
++  node->GetLocalName(uTag);
+   if (uTag.LowerCaseEqualsLiteral("object")) {
++    nsCOMPtr<nsIDOMHTMLObjectElement> object;
++    object = do_QueryInterface (node);
++    if (!object) return NS_ERROR_FAILURE;
++    nsString value;
++    object->GetType(value);
++    if (StringBeginsWith(value, NS_LITERAL_STRING("/image"))) {
++      nsString img;
++      rv = object->GetData (img);
++      if (NS_FAILED (rv)) return NS_ERROR_FAILURE;
++      nsCString cImg;
++      rv = ResolveBaseURL (img, cImg);
++      if (NS_FAILED (rv)) return NS_ERROR_FAILURE;
++      SetStringProperty ("image", cImg.get());
++      mCtx->type |= GTK_MOZ_EMBED_CTX_IMAGE;
++      aHasImage = PR_TRUE;
++    }
+   }
+   else if (uTag.LowerCaseEqualsLiteral("html")) {
++    nsCOMPtr<nsIDOMNodeList> nodeList;
++    rv = mCtxDocument->GetElementsByTagName (NS_LITERAL_STRING("body"),
++                                             getter_AddRefs (nodeList));
++    if (NS_SUCCEEDED (rv) && nodeList) {
++      nsCOMPtr<nsIDOMNode> bodyNode;
++      nodeList->Item (0, getter_AddRefs (bodyNode));
++      nsString cssurl;
++      rv = GetCSSBackground (bodyNode, cssurl);
++      if (NS_SUCCEEDED (rv)) {
++        nsCString bgimg;
++        rv = ResolveBaseURL (cssurl, bgimg);
++        if (NS_FAILED (rv)) return NS_ERROR_FAILURE;
++        SetStringProperty ("image", bgimg.get());
++        mCtx->type |= GTK_MOZ_EMBED_CTX_IMAGE;
++        aHasImage = PR_TRUE;
++      }
++    }
+   }
+   else if (uTag.LowerCaseEqualsLiteral("a")) {
+-    nsCOMPtr<nsIDOMHTMLAnchorElement> anchor = do_QueryInterface(node);
+-    anchor->GetHref(mCtxHref);
+-    mEmbedCtxType |= GTK_MOZ_EMBED_CTX_LINK;
+-    if (anchor && !mCtxHref.IsEmpty()) {
+-      if (mCtxHref.LowerCaseEqualsLiteral("text/smartbookmark")) {
++
++    nsCOMPtr<nsIDOMHTMLAnchorElement> anchor = do_QueryInterface(node, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    mCtx->type |= GTK_MOZ_EMBED_CTX_LINK;
++    anchor->GetHref(tmp);
++    if (!tmp.IsEmpty()) {
++      SetStringProperty ("link", tmp);
++      if (tmp.LowerCaseEqualsLiteral("text/smartbookmark")) {
++
+         nsCOMPtr<nsIDOMNode> childNode;
+         node->GetFirstChild(getter_AddRefs(childNode));
+         if (childNode) {
+           PRInt32 width, height;
+-          rv = CheckDomImageElement(node, mCtxImgHref, &width, &height);
+-          if (NS_SUCCEEDED(rv))
+-            mEmbedCtxType |= GTK_MOZ_EMBED_CTX_IMAGE;
++          tmp.Truncate();
++          rv = CheckDomImageElement(node, tmp, width, height);
++          if (NS_SUCCEEDED(rv)) {
++            mCtx->type |= GTK_MOZ_EMBED_CTX_IMAGE;
++            SetStringProperty ("image", tmp);
++          }
++        }
++      } else {
++        nsCOMPtr<nsIDOMNode> childNode;
++        node->GetFirstChild(getter_AddRefs(childNode));
++        if (childNode) {
++          childNode->GetLocalName(uTag);
++          mIsScrollableElement = !uTag.LowerCaseEqualsLiteral("div");
+         }
+-      } else if (StringBeginsWith(mCtxHref, NS_LITERAL_STRING("mailto:"))) {
+-        mEmbedCtxType |= GTK_MOZ_EMBED_CTX_EMAIL;
+       }
+     }
+   }
++  else if (uTag.LowerCaseEqualsLiteral("option")) {
++    mCtx->type |= GTK_MOZ_EMBED_CTX_NONE;
++    rv = NS_OK;
++  }
+   else if (uTag.LowerCaseEqualsLiteral("area")) {
+     nsCOMPtr<nsIDOMHTMLAreaElement> area = do_QueryInterface(node, &rv);
++    mCtx->type |= GTK_MOZ_EMBED_CTX_LINK;
+     if (NS_SUCCEEDED(rv) && area) {
+       PRBool aNoHref = PR_FALSE;
+       rv = area->GetNoHref(&aNoHref);
+-      if (aNoHref == PR_FALSE)
+-        rv = area->GetHref(mCtxHref);
+-      else
+-        rv = area->GetTarget(mCtxHref);
+-      mEmbedCtxType |= GTK_MOZ_EMBED_CTX_LINK;
++      rv = aNoHref?area->GetTarget(tmp):area->GetHref(tmp);
++      SetStringProperty ("link", tmp);
+       rv = NS_OK;
+     }
+   }
+   else if (uTag.LowerCaseEqualsLiteral("img")) {
+     PRInt32 width, height;
+-    rv = CheckDomImageElement(node, mCtxImgHref, &width, &height);
+-    if (NS_SUCCEEDED(rv))
+-      mEmbedCtxType |= GTK_MOZ_EMBED_CTX_IMAGE;
+-  } else {
++    rv = CheckDomImageElement(node, tmp, width, height);
++    if (NS_SUCCEEDED(rv)) {
++      mCtx->type |= GTK_MOZ_EMBED_CTX_IMAGE;
++      SetStringProperty ("image", tmp);
++    }
++  } else
+     rv = NS_ERROR_FAILURE;
++  if (!aHasImage)
++  {
++    nsString cssurl;
++    rv = GetCSSBackground (node, cssurl);
++    if (NS_SUCCEEDED (rv))
++    {
++      nsCString bgimg;
++
++      rv = ResolveBaseURL (cssurl, bgimg);
++      if (NS_FAILED (rv))
++        return NS_ERROR_FAILURE;
++      SetStringProperty ("image", bgimg.get());
++      mCtx->type |= GTK_MOZ_EMBED_CTX_IMAGE;
++      aHasImage = PR_TRUE;
++    }
+   }
+   return rv;
+ }
+ 
+ nsresult
+-EmbedContextMenuInfo::UpdateContextData(void *aEvent)
++EmbedContextMenuInfo::SetIntProperty (const char *name, int value)
++{
++  GValue *val = g_new0 (GValue, 1);
++  g_value_init (val, G_TYPE_INT);
++  g_value_set_int (val, value);
++  gtk_moz_context_set_prop(mCtx, name, val);
++  return NS_OK;
++}
++
++nsresult
++EmbedContextMenuInfo::SetStringProperty (const char *name, const char *value)
++{
++  GValue *val = g_new0 (GValue, 1);
++  g_value_init (val, G_TYPE_STRING);
++  g_value_set_string (val, value);
++  gtk_moz_context_set_prop(mCtx, name, val);
++  return NS_OK;
++}
++
++nsresult
++EmbedContextMenuInfo::SetStringProperty (const char *name, const nsAString &value)
++{
++  nsCString cValue(NS_ConvertUTF16toUTF8(value).get());
++  return SetStringProperty (name, cValue.get());
++}
++
++/* static */
++nsresult
++EmbedContextMenuInfo::GetCSSBackground (nsIDOMNode *node, nsAString& url)
+ {
+-  NS_ENSURE_ARG_POINTER(aEvent);
++
+   nsresult rv;
+-  nsCOMPtr<nsIDOMEvent> event = do_QueryInterface((nsISupports*)aEvent, &rv);
+-  if (NS_FAILED(rv) || !event)
++
++  NS_ENSURE_TRUE (mViewCSS, NS_ERROR_FAILURE);
++
++  nsCOMPtr<nsIDOMElement> element = do_QueryInterface (node);
++  NS_ENSURE_TRUE (element, NS_ERROR_FAILURE);
++
++  nsCOMPtr<nsIDOMCSSStyleDeclaration> decl;
++  mViewCSS->GetComputedStyle (element, nsString(),
++                              getter_AddRefs (decl));
++  NS_ENSURE_TRUE (decl, NS_ERROR_FAILURE);
++
++  nsCOMPtr<nsIDOMCSSValue> CSSValue;
++  decl->GetPropertyCSSValue (NS_LITERAL_STRING("background-image"), getter_AddRefs (CSSValue));
++
++  nsCOMPtr<nsIDOMCSSPrimitiveValue> primitiveValue =
++    do_QueryInterface (CSSValue);
++  if (!primitiveValue) return NS_ERROR_FAILURE;
++
++  PRUint16 type;
++  rv = primitiveValue->GetPrimitiveType (&type);
++  NS_ENSURE_SUCCESS (rv, NS_ERROR_FAILURE);
++
++  if (type != nsIDOMCSSPrimitiveValue::CSS_URI) return NS_ERROR_FAILURE;
++
++  rv = primitiveValue->GetStringValue (url);
++  NS_ENSURE_SUCCESS (rv, NS_ERROR_FAILURE);
++
++  return NS_OK;
++}
++
++/* static */
++nsresult
++EmbedContextMenuInfo::GetImageRequest(imgIRequest **aRequest, nsIDOMNode *aDOMNode)
++{
++  NS_ENSURE_ARG(aDOMNode);
++  NS_ENSURE_ARG_POINTER(aRequest);
++
++  // Get content
++  nsCOMPtr<nsIImageLoadingContent> content(do_QueryInterface(aDOMNode));
++  NS_ENSURE_TRUE(content, NS_ERROR_FAILURE);
++
++  return content->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
++                             aRequest);
++}
++
++/* static */
++nsresult
++EmbedContextMenuInfo::CheckDomImageElement(nsIDOMNode *node, nsString& aHref,
++                                           PRInt32 &aWidth, PRInt32 &aHeight, PRUint32 *aSize)
++{
++  nsresult rv;
++  nsCOMPtr<nsIDOMHTMLImageElement> image =
++    do_QueryInterface(node, &rv);
++  NS_ENSURE_TRUE(image, rv);
++  rv = image->GetSrc(aHref);
++  NS_ENSURE_SUCCESS(rv, rv);
++  image->GetWidth(&aWidth);
++  image->GetHeight(&aHeight);
++  if (!aSize) return rv;
++  nsCOMPtr<imgIRequest> request;
++  GetImageRequest(getter_AddRefs(request), node);
++  NS_ENSURE_TRUE(request, rv);
++  nsCOMPtr<imgIContainer> imgCont;
++  request->GetImage(getter_AddRefs(imgCont));
++  NS_ENSURE_TRUE(imgCont, rv);
++  nsCOMPtr<gfxIImageFrame> currentFrame;
++  imgCont->GetCurrentFrame(getter_AddRefs(currentFrame));
++  NS_ENSURE_TRUE(currentFrame, rv);
++  currentFrame->GetImageDataLength(aSize);
++  return rv;
++}
++
++/* static */
++nsresult
++EmbedContextMenuInfo::GetJSHandledInfo(nsIDOMEvent *aEvent, PRInt32 *aIsJSHandled)
++{
++  if (!aEvent && !aIsJSHandled)
+     return NS_ERROR_FAILURE;
+-  return UpdateContextData(event);
++  nsresult rv = NS_ERROR_FAILURE;
++#ifdef MOZ_JS_HANDLER_INFO
++  if (aEvent) {
++    PRUint32 flags;
++    rv = aEvent->GetPrivateFlags(&flags);
++    if (NS_SUCCEEDED(rv) && (flags & NS_PRIV_EVENT_FLAG_SCRIPT)) {
++      mIsJSHandledElement = aIsJSHandled?*aIsJSHandled:1;
++    } else {
++      mIsJSHandledElement = 0;
++      rv = NS_ERROR_FAILURE;
++    }
++  }
++  if (aIsJSHandled)
++    *aIsJSHandled = mIsJSHandledElement;
++#endif
++  return rv;
+ }
+ 
+ nsresult
+-EmbedContextMenuInfo::GetElementForScroll(nsIDOMEvent *aEvent)
++EmbedContextMenuInfo::InsertTextToNode(nsIDOMNode *aDOMNode, nsAString &aString, PRInt32 surr1, PRInt32 surr2)
+ {
+-  if (!aEvent) return NS_ERROR_UNEXPECTED;
+-  nsCOMPtr<nsIDOMNSEvent> nsevent(do_QueryInterface(aEvent));
+-  nsCOMPtr<nsIDOMEventTarget> target;
+-  nsevent->GetOriginalTarget(getter_AddRefs(target));
+-  if (!target) return NS_ERROR_UNEXPECTED;
+-  nsCOMPtr<nsIDOMNode> targetDOMNode(do_QueryInterface(target));
+-  if (!targetDOMNode) return NS_ERROR_UNEXPECTED;
+-  nsCOMPtr<nsIDOMDocument> targetDOMDocument;
+-  targetDOMNode->GetOwnerDocument(getter_AddRefs(targetDOMDocument));
+-  if (!targetDOMDocument) return NS_ERROR_UNEXPECTED;
+-  return GetElementForScroll(targetDOMDocument);
++  nsresult rv;
++
++  nsCOMPtr<nsIDOMNode> targetNode = do_QueryInterface(aDOMNode, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  nsString nodeName, buffer;
++  PRInt32 selectionStart = 0, selectionEnd = 0, textLength = 0;
++  targetNode->GetNodeName(nodeName);
++  if (mCtxFormType == NS_FORM_TEXTAREA) {
++    nsCOMPtr<nsIDOMHTMLTextAreaElement> input;
++    input = do_QueryInterface(targetNode, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    PRBool rdonly = PR_FALSE;
++    input->GetReadOnly(&rdonly);
++    if (rdonly) return NS_ERROR_FAILURE;
++
++    nsCOMPtr<nsIDOMNSHTMLTextAreaElement> nsinput;
++    nsinput = do_QueryInterface(targetNode, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    rv = input->GetValue(buffer);
++    if (!buffer.IsEmpty()) {
++      NS_ENSURE_SUCCESS(rv, rv);
++      rv = input->GetValue(buffer);
++      nsinput->GetSelectionStart(&selectionStart);
++      nsinput->GetSelectionEnd(&selectionEnd);
++
++      if (selectionStart != selectionEnd)
++        buffer.Cut(selectionStart, selectionEnd - selectionStart);
++      if (surr1 != 0 || surr2 != 0) {
++        buffer.Cut(textLength + surr1, surr2);
++        buffer.Insert(aString, selectionStart + surr1);
++      } else
++        buffer.Insert(aString, selectionStart);
++    } else
++      buffer.Assign(aString);
++
++    input->SetValue(buffer);
++    int len = aString.Length();
++    nsinput->SetSelectionRange(selectionStart + len, selectionStart + len);
++
++    nsCOMPtr<nsIDOMNSEditableElement> nseditable;
++    nseditable = do_QueryInterface(targetNode, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++
++    nsCOMPtr<nsIEditor> theEditor;
++    nseditable->GetEditor(getter_AddRefs(theEditor));
++    NS_ENSURE_TRUE(theEditor, NS_OK);
++
++    nsCOMPtr<nsISelectionController> selectionController;
++    theEditor->GetSelectionController(getter_AddRefs(selectionController));
++    PRBool sync = PR_TRUE;
++    short selectionType = nsISelectionController::SELECTION_NORMAL;
++    selectionController->ScrollSelectionIntoView(selectionType, selectionType, sync);
++  }
++  else if (mCtx->type & GTK_MOZ_EMBED_CTX_INPUT_TEXT) {
++    nsCOMPtr<nsIDOMHTMLInputElement> input;
++    input = do_QueryInterface(targetNode, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    PRBool rdonly = PR_FALSE;
++    input->GetReadOnly(&rdonly);
++    if (rdonly) return NS_ERROR_FAILURE;
++
++    nsCOMPtr<nsIDOMNSHTMLInputElement> nsinput;
++    nsinput = do_QueryInterface(targetNode, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    rv = input->GetValue(buffer);
++    if (!buffer.IsEmpty()) {
++      nsinput->GetSelectionStart(&selectionStart);
++      nsinput->GetSelectionEnd(&selectionEnd);
++
++      if (selectionStart != selectionEnd)
++        buffer.Cut(selectionStart, selectionEnd - selectionStart);
++
++      if (surr1 != 0 || surr2 != 0) {
++        buffer.Cut(textLength + surr1, surr2);
++        buffer.Insert(aString, selectionStart + surr1);
++      } else
++        buffer.Insert(aString, selectionStart);
++    } else
++      buffer.Assign(aString);
++
++    input->SetValue(buffer);
++    nsinput->SetSelectionRange(selectionStart + aString.Length(), selectionStart + aString.Length());
++
++    nsCOMPtr<nsIDOMNSEditableElement> nseditable;
++    nseditable = do_QueryInterface(targetNode, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++
++    nsCOMPtr<nsIEditor> theEditor;
++    nseditable->GetEditor(getter_AddRefs(theEditor));
++    NS_ENSURE_TRUE(theEditor, NS_OK);
++
++    nsCOMPtr<nsISelectionController> selectionController;
++    theEditor->GetSelectionController(getter_AddRefs(selectionController));
++    PRBool sync = PR_TRUE;
++    short selectionType = nsISelectionController::SELECTION_NORMAL;
++    selectionController->ScrollSelectionIntoView(selectionType, selectionType, sync);
++  }
++  else {
++    nsCOMPtr<nsIWebBrowser> webBrowser;
++    gtk_moz_embed_get_nsIWebBrowser(GTK_MOZ_EMBED(mEmbed), getter_AddRefs(webBrowser));
++    NS_ENSURE_TRUE(webBrowser, NS_ERROR_FAILURE);
++    nsCOMPtr<nsIEditingSession> editingSession = do_GetInterface(webBrowser);
++    if (!editingSession)
++      return NS_ERROR_FAILURE;
++
++    nsCOMPtr<nsIEditor> theEditor;
++    nsCOMPtr<nsPIDOMWindow> piWin;
++    nsCOMPtr<nsIDocument> doc = do_QueryInterface(mCtxDocument);
++    NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
++    piWin = doc->GetWindow();
++    editingSession->GetEditorForWindow(piWin, getter_AddRefs(theEditor));
++    NS_ENSURE_TRUE(theEditor, NS_ERROR_FAILURE);
++
++    nsCOMPtr<nsIPlaintextEditor> textEditor;
++    textEditor = do_QueryInterface(theEditor, &rv);
++    if (NS_FAILED(rv) || !textEditor)
++      return NS_ERROR_FAILURE;
++    if (surr1 != 0 || surr2 != 0) {
++      DoCommand(webBrowser, "cmd_delete", surr2);
++    }
++    textEditor->InsertText(aString);
++  }
++  return NS_OK;
+ }
+ 
+ nsresult
+-EmbedContextMenuInfo::GetElementForScroll(nsIDOMDocument *targetDOMDocument)
++EmbedContextMenuInfo::GetEventData()
+ {
+-  nsCOMPtr<nsIDOMElement> targetDOMElement;
+-  targetDOMDocument->GetDocumentElement(getter_AddRefs(targetDOMElement));
+-  if (!targetDOMElement) return NS_ERROR_UNEXPECTED;
+-  nsString bodyName(NS_LITERAL_STRING("body"));
+-  nsCOMPtr<nsIDOMNodeList> bodyList;
+-  targetDOMElement->GetElementsByTagName(bodyName, getter_AddRefs(bodyList));
+-  PRUint32 i = 0;
+-  bodyList->GetLength(&i);
+-  if (i) {
+-    nsCOMPtr<nsIDOMNode> domBodyNode;
+-    bodyList->Item(0, getter_AddRefs(domBodyNode));
+-    if (!domBodyNode) return NS_ERROR_UNEXPECTED;
+-    mNSHHTMLElementSc = do_QueryInterface(domBodyNode);
+-    if (!mNSHHTMLElementSc) return NS_ERROR_UNEXPECTED;
++  nsresult rv;
++
++  nsCOMPtr<nsIDOMMouseEvent> mouseEvent(do_QueryInterface(mCtxEvent, &rv));
++  if (!mouseEvent) {
++    nsCOMPtr<nsIDOMNSElement> nselement;
++    nselement = do_QueryInterface(mOrigNode, &rv);
++    if (nselement) {
++      nsCOMPtr<nsIDOMTextRectangle> rect;
++      nselement->GetBoundingClientRect(getter_AddRefs(rect));
++      if (rect) {
++        float l = 0, t = 0;
++        //float r = 0, b = 0;
++        rect->GetLeft((float*)&l);
++        rect->GetTop((float*)&t);
++        mCtx->x = (guint)trunc(l);
++        mCtx->y = (guint)trunc(t);
++      }
++    }
++  } else {
++    PRUint16 btn = 1729;
++    mouseEvent->GetButton (&btn);
++    switch (btn) {
++    case 0:
++      mCtx->button = 1;
++      break;
++    case 1:
++      mCtx->button = 2;
++      break;
++    case 2:
++      mCtx->button = 3;
++      break;
++    case (PRUint16) -1:
++    default:
++      mCtx->button = 0;
++      break;
++    }
++    if (mCtx->button != 0) {
++      mouseEvent->GetClientX((PRInt32*)&mCtx->x);
++      mouseEvent->GetClientY((PRInt32*)&mCtx->y);
++      mouseEvent->GetScreenX((PRInt32*)&mCtx->x_root);
++      mouseEvent->GetScreenY((PRInt32*)&mCtx->y_root);
++    }
+   }
+   return NS_OK;
+ }
+ 
+ nsresult
+ EmbedContextMenuInfo::UpdateContextData(nsIDOMEvent *aDOMEvent)
+ {
++  NS_ENSURE_ARG_POINTER(aDOMEvent);
++
++  nsresult rv;
++
+   if (mCtxEvent == aDOMEvent)
+     return NS_OK;
+ 
+-  nsresult rv = nsnull;
+-  mCtxEvent = aDOMEvent;
+-  NS_ENSURE_ARG_POINTER(mCtxEvent);
++  mCtxEvent = do_QueryInterface(aDOMEvent, &rv);
++  NS_ENSURE_SUCCESS(rv , NS_OK);
+ 
+   PRUint16 eventphase;
+   mCtxEvent->GetEventPhase(&eventphase);
+   if (!eventphase) {
+     mCtxEvent = nsnull;
+     return NS_ERROR_FAILURE;
+   }
+ 
+-  nsCOMPtr<nsIDOMEventTarget> originalTarget = nsnull;
+-  nsCOMPtr<nsIDOMNode> originalNode = nsnull;
+-
+-  nsCOMPtr<nsIDOMNSEvent> aEvent = do_QueryInterface(mCtxEvent, &rv);
+-  if (NS_FAILED(rv) || !aEvent)
+-    return NS_OK;
+-
+-  nsCOMPtr<nsIDOMMouseEvent> mouseEvent(do_QueryInterface(mCtxEvent, &rv));
+-  if (mouseEvent) {
+-    ((nsIDOMMouseEvent*)mouseEvent)->GetClientX(&mX);
+-    ((nsIDOMMouseEvent*)mouseEvent)->GetClientY(&mY);
++  // Get mOrigNode
++  {
++    nsCOMPtr<nsIDOMNode> origNode;
++    nsCOMPtr<nsIDOMNSEvent> aEvent = do_QueryInterface(mCtxEvent, &rv);
++    NS_ENSURE_SUCCESS(rv , NS_OK);
++
++    nsCOMPtr<nsIDOMEventTarget> origTarget;
++    rv = aEvent->GetOriginalTarget(getter_AddRefs(origTarget));
++    origNode = do_QueryInterface(origTarget, &rv);
++    NS_ENSURE_SUCCESS(rv , NS_ERROR_NULL_POINTER);
++    if (origNode == mOrigNode)
++      return NS_OK;
++    mOrigNode = origNode;
+   }
+ 
+-  if (aEvent)
+-    rv = aEvent->GetOriginalTarget(getter_AddRefs(originalTarget));
+-  originalNode = do_QueryInterface(originalTarget);
+-  if (NS_FAILED(rv) || !originalNode)
+-    return NS_ERROR_NULL_POINTER;
++  GetEventData();
+ 
+-  //    nsresult SelText = mOwner->ClipBoardAction(GTK_MOZ_EMBED_CAN_COPY);
+-  if (originalNode == mOrigNode)
+-    return NS_OK;
++  mEventNode = nsnull;
++  mCtxDocument = nsnull;
++  mCtx->docindex = -1;
++  mCtx->type = GTK_MOZ_EMBED_CTX_NONE;
+ 
+-  mEmbedCtxType = GTK_MOZ_EMBED_CTX_NONE;
+-  mOrigNode = originalNode;
+-  if (mOrigNode) {
+-    nsString SOrigNode;
+-    mOrigNode->GetNodeName(SOrigNode);
+-    if (SOrigNode.EqualsLiteral("#document"))
+-      return NS_OK;
+-    if (SOrigNode.EqualsLiteral("xul:thumb")
+-        || SOrigNode.EqualsLiteral("xul:slider")
+-        || SOrigNode.EqualsLiteral("xul:scrollbarbutton")
+-        || SOrigNode.EqualsLiteral("xul:vbox")
+-        || SOrigNode.EqualsLiteral("xul:spacer")) {
+-      mEmbedCtxType |= GTK_MOZ_EMBED_CTX_XUL;
+-      return NS_OK;
+-    }
++  // Get mEventNode
++  {
++    nsCOMPtr<nsIDOMEventTarget> eventTarget;
++    rv = mCtxEvent->GetTarget(getter_AddRefs(eventTarget));
++    NS_ENSURE_SUCCESS(rv , NS_OK);
++    mEventNode = do_QueryInterface(eventTarget, &rv);
+   }
+-  if (mCtxEvent)
+-    rv = mCtxEvent->GetTarget(getter_AddRefs(mEventTarget));
+-  if (NS_FAILED(rv) || !mEventTarget) {
++  NS_ENSURE_SUCCESS(rv , NS_OK);
++
++  if (IsXULNode(mOrigNode, &mIsScrollableElement)) {
++    mCtx->type |= GTK_MOZ_EMBED_CTX_XUL;
+     return NS_OK;
+   }
+-  nsCOMPtr<nsIDOMNode> eventNode = do_QueryInterface(mEventTarget, &rv);
+-  mEventNode = eventNode;
+-  //Frame Stuff
+-  nsCOMPtr<nsIDOMDocument> domDoc;
+-  if (mEventNode)
++  mIsScrollableElement = PR_TRUE;
++
++  // Get mCtxDocument
++  {
++    nsCOMPtr<nsIDOMDocument> domDoc;
+     rv = mEventNode->GetOwnerDocument(getter_AddRefs(domDoc));
+-  if (!NS_SUCCEEDED(rv) || !domDoc) {
+-    //  return NS_OK;
+-  }
+-  if (NS_SUCCEEDED(rv) && domDoc && mCtxDocument != domDoc) {
+-    mCtxDocument = domDoc;
+-    mNSHHTMLElementSc = nsnull;
+-    nsCOMPtr<nsIDOM3Document> docuri = do_QueryInterface(mCtxDocument);
+-    docuri->GetDocumentURI(mCtxURI);
+-    NS_ENSURE_ARG_POINTER(mOwner);
+-    nsCOMPtr<nsIWebBrowser> webBrowser;
+-    mOwner->mWindow->GetWebBrowser(getter_AddRefs(webBrowser));
+-    webBrowser->GetContentDOMWindow(getter_AddRefs(mCtxDomWindow));
+-    nsCOMPtr<nsIDOMDocument> mainDocument;
+-    mCtxDomWindow->GetDocument(getter_AddRefs(mainDocument));
+-    if (!mainDocument) {
+-      return NS_OK;
+-    }
+-    mCtxFrameNum = -1;
+-    if (mainDocument != domDoc) {
+-      mEmbedCtxType |= GTK_MOZ_EMBED_CTX_IFRAME;
+-      SetFrameIndex();
++    if (!NS_SUCCEEDED(rv) || !domDoc)
++      rv = mOrigNode->GetOwnerDocument(getter_AddRefs(domDoc));
++    if (NS_SUCCEEDED(rv) && domDoc && mCtxDocument != domDoc) {
++      mCtxDocument = domDoc;
++      nsCOMPtr<nsIDOM3Document> docuri = do_QueryInterface(mCtxDocument);
++      nsString uri;
++      docuri->GetDocumentURI(mCtxURI);
++      SetStringProperty("docuri", uri);
+     }
+   }
+-  nsCOMPtr<nsIDOMElement> targetDOMElement;
+-  mCtxDocument->GetDocumentElement(getter_AddRefs(targetDOMElement));
+-  if (!targetDOMElement) return NS_ERROR_UNEXPECTED;
+-  nsCOMPtr<nsIDOMNSHTMLDocument> htmlDoc = do_QueryInterface(mCtxDocument);
+-  if (htmlDoc) {
+-    nsString DMode;
+-    htmlDoc->GetDesignMode(DMode);
+-    if (DMode.EqualsLiteral("on")) {
+-      mEmbedCtxType |= GTK_MOZ_EMBED_CTX_INPUT;
+-      mEmbedCtxType |= GTK_MOZ_EMBED_CTX_RICHEDIT;
+-    }
+-  }
+-  nsCOMPtr<nsIDocument> doc = do_QueryInterface(mCtxDocument);
+-  if (!doc)
+-    return NS_OK;
+-  nsIPresShell *presShell = doc->GetPrimaryShell();
+-  if (!presShell)
+-    return NS_OK;
+-  nsCOMPtr<nsIContent> tgContent = do_QueryInterface(mEventTarget);
+-  nsIFrame* frame = nsnull;
+-#if defined(FIXED_BUG347731) || !defined(MOZ_ENABLE_LIBXUL)
+-  if (mEmbedCtxType & GTK_MOZ_EMBED_CTX_RICHEDIT)
+-    frame = presShell->GetRootFrame();
+-  else {
+-#ifdef MOZILLA_1_8_BRANCH
+-    frame = nsnull;
+-    presShell->GetPrimaryFrameFor(tgContent, &frame);
+-#else
+-    frame = presShell->GetPrimaryFrameFor(tgContent);
+-#endif
+-  }
+-  if (frame) {
+-    mFormRect = frame->GetScreenRectExternal();
+-  }
+-#endif
+-  if (NS_SUCCEEDED(SetFormControlType(mEventTarget))) {
+-    return NS_OK;
+-  }
+-  CheckDomHtmlNode();
+-  nsCOMPtr<nsIDOMNode> node = mEventNode;
++
++  nsCOMPtr<nsIDOMDocumentView> docView (do_QueryInterface (mCtxDocument));
++  NS_ENSURE_TRUE (docView, NS_ERROR_FAILURE);
++  nsCOMPtr<nsIDOMAbstractView> abstractView;
++  docView->GetDefaultView (getter_AddRefs (abstractView));
++  NS_ENSURE_TRUE (abstractView, NS_ERROR_FAILURE);
++  mViewCSS = do_QueryInterface (abstractView);
++  NS_ENSURE_TRUE (mViewCSS, NS_ERROR_FAILURE);
++
++  nsCOMPtr<nsIWebNavigation> webNav (do_GetInterface (abstractView, &rv));
++  NS_ENSURE_SUCCESS (rv, rv);
++
++  rv = webNav->GetCurrentURI (getter_AddRefs (mBaseURI));
++  NS_ENSURE_SUCCESS (rv, rv);
++
++  SetFramePosition();
++  CheckRichEdit();
++  CheckFormControl();
++
++  nsCOMPtr<nsIDOMNode> node;
+   nsCOMPtr<nsIDOMNode> parentNode;
++
++  nsCOMPtr<nsIDOMHTMLElement> element = do_QueryInterface(mEventNode, &rv);
++  if (element)
++    node = do_QueryInterface(mEventNode, &rv);
++  else /* Fallback to XML/XSLT content */
++    node = do_QueryInterface(mOrigNode, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  PRBool has_image = PR_FALSE;
++  CheckDomHtmlNode(node, has_image);
+   node->GetParentNode(getter_AddRefs(parentNode));
+   node = parentNode;
+   while (node) {
+-    if (NS_FAILED(CheckDomHtmlNode()))
++    if (NS_FAILED(CheckDomHtmlNode(node, has_image)))
+       break;
+     node->GetParentNode(getter_AddRefs(parentNode));
+     node = parentNode;
+   }
+-  mEmbedCtxType |= GTK_MOZ_EMBED_CTX_DOCUMENT;
++  mCtx->type |= GTK_MOZ_EMBED_CTX_DOCUMENT;
++
++  return NS_OK;
++}
++
++nsresult
++EmbedContextMenuInfo::GetContextText(nsAString &aString, PRBool aSelection, PRInt32 *aSelStart)
++{
++  nsresult rv;
++  if (mCtxFormType != 0 && mEventNode) {
++    PRInt32 selStart = 0, selEnd = 0;
++    if (mCtxFormType == NS_FORM_INPUT_TEXT || mCtxFormType == NS_FORM_INPUT_FILE) {
++      nsCOMPtr<nsIDOMHTMLInputElement> input = do_QueryInterface(mEventNode, &rv);
++      if (NS_SUCCEEDED(rv) && input)
++        rv = input->GetValue(aString);
++      if (aString.IsEmpty()) return NS_ERROR_FAILURE;
++      nsCOMPtr<nsIDOMNSHTMLInputElement> nsinput = do_QueryInterface(mEventNode, &rv);
++      if (NS_SUCCEEDED(rv) && nsinput) {
++        nsinput->GetSelectionEnd(&selEnd);
++        nsinput->GetSelectionStart(&selStart);
++      }
++    } else if (mCtxFormType == NS_FORM_TEXTAREA) {
++      nsCOMPtr<nsIDOMHTMLTextAreaElement> input = do_QueryInterface(mEventNode, &rv);
++      if (NS_SUCCEEDED(rv) && input)
++        rv = input->GetValue(aString);
++      if (aString.IsEmpty()) return NS_ERROR_FAILURE;
++      nsCOMPtr<nsIDOMNSHTMLTextAreaElement> nsinput = do_QueryInterface(mEventNode, &rv);
++      if (NS_SUCCEEDED(rv) && nsinput) {
++        nsinput->GetSelectionEnd(&selEnd);
++        nsinput->GetSelectionStart(&selStart);
++      }
++    }
++    if (selStart < selEnd && aSelection) {
++      PRInt32 textLength = aString.Length();
++      aString.Cut(0, selStart);
++      aString.Cut(selEnd-selStart, textLength);
++    }
++    if (aSelStart) *aSelStart = selStart;
++  } else if (mCtxDocument) {
++    nsCOMPtr<nsIDOMNSHTMLDocument> htmlDoc = do_QueryInterface(mCtxDocument, &rv);
++    NS_ENSURE_SUCCESS(rv, rv);
++    rv = htmlDoc->GetSelection(aString);
++    if (NS_FAILED(rv) || aString.IsEmpty())
++      return NS_ERROR_FAILURE;
++  }
+   return NS_OK;
+ }
+Index: src/EmbedContextMenuInfo.h
+===================================================================
+--- mozilla/embedding/browser/gtk/src.orig/EmbedContextMenuInfo.h
++++ mozilla/embedding/browser/gtk/src/EmbedContextMenuInfo.h
+@@ -36,66 +36,76 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ #ifndef EmbedContextMenuInfo_h__
+ #define EmbedContextMenuInfo_h__
++
+ #include "nsCOMPtr.h"
+-#include "nsIDOMNode.h"
+-#include "nsIDOMEvent.h"
+-#include "imgIContainer.h"
+-#include "imgIRequest.h"
+-#include "nsIDOMEventTarget.h"
+-#include "nsRect.h"
+-// for strings
+-#ifdef MOZILLA_INTERNAL_API
+-#include "nsXPIDLString.h"
+-#include "nsReadableUtils.h"
+-#endif
+-#include "EmbedWindow.h"
+-#include "nsIDOMNSHTMLElement.h"
++#include "nsStringGlue.h"
++#include "gtkmozembed_context.h"
++
++class nsIDOMEvent;
++class nsIDOMNode;
++class nsIDOMWindow;
++class nsIDOMDocument;
++class nsIDOMViewCSS;
++class imgIRequest;
++class nsIURI;
++
+ //*****************************************************************************
+ // class EmbedContextMenuInfo
+ //
+ //*****************************************************************************
+ class EmbedContextMenuInfo : public nsISupports
+ {
+ public:
+-  EmbedContextMenuInfo(EmbedPrivate *aOwner);
+-  virtual ~EmbedContextMenuInfo(void);
++  EmbedContextMenuInfo (GtkMozContext *ctx, const void *aEmbed = nsnull);
++  virtual ~EmbedContextMenuInfo (void);
++
+   NS_DECL_ISUPPORTS
+-  nsresult          GetFormControlType(nsIDOMEvent *aDOMEvent);
+-  nsresult          UpdateContextData(nsIDOMEvent *aDOMEvent);
+-  nsresult          UpdateContextData(void *aEvent);
+-  const char*       GetSelectedText();
+-  nsresult          GetElementForScroll(nsIDOMDocument *targetDOMDocument);
+-  nsresult          GetElementForScroll(nsIDOMEvent *aEvent);
+-  nsresult          CheckDomImageElement(nsIDOMNode *node, nsString& aHref,
+-                                       PRInt32 *aWidth, PRInt32 *aHeight);
+-  nsresult          GetImageRequest(imgIRequest **aRequest, nsIDOMNode *aDOMNode);
+-  nsString          GetCtxDocTitle(void) { return mCtxDocTitle; }
+-
+-
+-  PRInt32                 mX, mY, mObjWidth, mObjHeight, mCtxFrameNum;
+-  nsString                mCtxURI, mCtxHref, mCtxImgHref;
+-  PRUint32                mEmbedCtxType;
+-  PRInt32 mCtxFormType;
+-  nsCOMPtr<nsIDOMNode>    mEventNode;
+-  nsCOMPtr<nsIDOMEventTarget> mEventTarget;
+-  nsCOMPtr<nsIDOMDocument>mCtxDocument;
+-  nsRect               mFormRect;
+-  nsCOMPtr<nsIDOMWindow>  mCtxDomWindow;
+-  nsCOMPtr<nsIDOMEvent>   mCtxEvent;
+-  nsCOMPtr<nsIDOMNSHTMLElement> mNSHHTMLElement;
+-  nsCOMPtr<nsIDOMNSHTMLElement> mNSHHTMLElementSc;
++
++  nsresult UpdateContextData (nsIDOMEvent *aDOMEvent);
++  nsresult GetContextText (nsAString &aString, PRBool aSelection = PR_TRUE, PRInt32 *aSelStart = nsnull);
++  nsresult GetJSHandledInfo (nsIDOMEvent *aEvent, PRInt32 *aIsJSHandled = nsnull);
++  nsresult InsertTextToNode (nsIDOMNode *aDOMNode, nsAString &aString, PRInt32 surr1, PRInt32 surr2);
++  nsresult GetCSSBackground   (nsIDOMNode *node, nsAString& url);
++
++// Utils
++  static nsresult CheckDomImageElement (nsIDOMNode *node, nsString& aHref, PRInt32 &aWidth, PRInt32 &aHeight, PRUint32 *aSize = nsnull);
++  static nsresult GetImageRequest (imgIRequest **aRequest, nsIDOMNode *aDOMNode);
++
+ private:
+-  nsresult          SetFrameIndex();
+-  nsresult          SetFormControlType(nsIDOMEventTarget *originalTarget);
+-  nsresult          CheckDomHtmlNode(nsIDOMNode *aNode = nsnull);
+-
+-  EmbedPrivate           *mOwner;
+-  nsCOMPtr<nsIDOMNode>    mOrigNode;
+-  nsString                mCtxDocTitle;
++
++  nsresult SetFramePosition(void);
++  nsresult CheckRichEdit(void);
++  nsresult CheckFormControl(void);
++  nsresult CheckDomHtmlNode(nsIDOMNode* aNode, PRBool &aHasImage);
++  nsresult GetEventData ();
++  nsresult ResolveBaseURL     (const nsAString &relurl, nsACString &url);
++  nsresult SetIntProperty     (const char *name, int value);
++  nsresult SetStringProperty  (const char *name, const char *value);
++  nsresult SetStringProperty  (const char *name, const nsAString &value);
++
++  GtkMozContext              *mCtx;
++  const void                 *mEmbed;
++
++  nsCOMPtr<nsIDOMEvent>      mCtxEvent;
++  nsCOMPtr<nsIDOMNode>       mOrigNode;
++  nsCOMPtr<nsIDOMNode>       mEventNode;
++  nsCOMPtr<nsIDOMViewCSS>    mViewCSS;
++  nsCOMPtr<nsIURI>           mBaseURI;
++
++  nsCOMPtr<nsIDOMDocument>   mCtxDocument;
++
++  PRUint32                   mCtxFormType;
++  nsString                   mCtxURI;
++
++  PRUint32                   mIsScrollableElement;
++  PRUint32                   mIsJSHandledElement;
++
++
+ }; // class EmbedContextMenuInfo
++
+ #endif // EmbedContextMenuInfo_h__
+Index: src/Makefile.in
+===================================================================
+--- mozilla/embedding/browser/gtk/src.orig/Makefile.in
++++ mozilla/embedding/browser/gtk/src/Makefile.in
+@@ -61,32 +61,41 @@
+ 		  uriloader \
+ 		  webbrwsr \
+ 		  shistory \
+ 		  embed_base \
+ 		  windowwatcher \
+ 		  profdirserviceprovider \
+ 		  xulapp \
+ 		  extensions \
++		  imglib2 \
++		  commandhandler \
++		  editor \
++		  composer \
+ 		  $(NULL)
+ 
+ ifdef ACCESSIBILITY
+ REQUIRES        += accessibility
+ endif
+ 
+ CPPSRCS		= \
+ 		gtkmozembed2.cpp \
+ 		EmbedPrivate.cpp \
+ 		EmbedWindow.cpp \
+ 		EmbedProgress.cpp \
+ 		EmbedContentListener.cpp \
+ 		EmbedEventListener.cpp \
+ 		EmbedWindowCreator.cpp \
+ 		$(NULL)
+ 
++CPPSRCS		+= \
++		EmbedContextMenuInfo.cpp \
++		gtkmozembed_context.cpp \
++		$(NULL)
++
+ ifdef MOZ_ENABLE_GTK2
+ CSRCS           = \
+ 		gtkmozembedmarshal.c
+ CPPSRCS         += \
+ 		EmbedGtkTools.cpp \
+ 		GtkPromptService.cpp
+ endif
+ 
+@@ -96,16 +105,19 @@
+ 
+ include $(topsrcdir)/config/config.mk
+ 
+ EXPORTS		= \
+ 		gtkmozembed.h \
+ 		gtkmozembed_glue.cpp \
+ 		gtkmozembed_internal.h
+ 
++EXPORTS		+= \
++		gtkmozembed_context.h
++
+ include $(topsrcdir)/config/rules.mk
+ 
+ ifeq ($(OS_ARCH), SunOS)
+ ifndef GNU_CC
+ # When using Sun's WorkShop compiler, including
+ # /wherever/workshop-5.0/SC5.0/include/CC/std/time.h
+ # causes most of these compiles to fail with:
+ # line 29: Error: Multiple declaration for std::tm.
+Index: src/gtkmozembed_context.cpp
+===================================================================
+--- /dev/null
++++ mozilla/embedding/browser/gtk/src/gtkmozembed_context.cpp
+@@ -0,0 +1,208 @@
++/* ***** BEGIN LICENSE BLOCK *****
++ * vim:set ts=2 sw=2 sts=2 tw=80 et cindent:
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is mozilla.org code.
++ *
++ * The Initial Developer of the Original Code is
++ * Christopher Blizzard. Portions created by Christopher Blizzard are Copyright (C) Christopher Blizzard.  All Rights Reserved.
++ * Portions created by the Initial Developer are Copyright (C) 2001
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Christopher Blizzard <blizzard@mozilla.org>
++ *   Ramiro Estrugo <ramiro@eazel.com>
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either the GNU General Public License Version 2 or later (the "GPL"), or
++ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include <stdio.h>
++#include "gtkmozembed_context.h"
++
++#include "EmbedContextMenuInfo.h"
++
++// class and instance initialization
++
++#define GTK_MOZ_CTX_GET_PRIVATE(object)(G_TYPE_INSTANCE_GET_PRIVATE ((object), GTK_TYPE_MOZ_CONTEXT, GtkMozContextPrivate))
++
++struct _GtkMozContextPrivate
++{
++    EmbedContextMenuInfo *info;
++    GHashTable *props;
++};
++
++static void gtk_moz_context_class_init (GtkMozContextClass *klass);
++static void gtk_moz_context_init (GtkMozContext *ctx);
++static void gtk_moz_context_finalize (GObject *object);
++
++static GObjectClass *parent_class = NULL;
++
++// GObject + class-related functions
++
++GType
++gtk_moz_context_get_type (void)
++{
++  static GType moz_context_type = 0;
++  if (moz_context_type == 0)
++  {
++    const GTypeInfo our_info =
++    {
++      sizeof (GtkMozContextClass),
++      NULL, /* base_init */
++      NULL, /* base_finalize */
++      (GClassInitFunc) gtk_moz_context_class_init,
++      NULL,
++      NULL, /* class_data */
++      sizeof (GtkMozContext),
++      0, /* n_preallocs */
++      (GInstanceInitFunc) gtk_moz_context_init,
++    };
++
++    moz_context_type = g_type_register_static (G_TYPE_OBJECT,
++                                               "GtkMozContext",
++                                               &our_info,
++                                               (GTypeFlags)0);
++  }
++
++  return moz_context_type;
++}
++
++static void
++_moz_context_free_g_value (gpointer value)
++{
++    g_value_unset ((GValue *) value);
++    g_free (value);
++}
++
++void gtk_moz_context_init (GtkMozContext *ctx)
++{
++  ctx->priv = G_TYPE_INSTANCE_GET_PRIVATE ((ctx), GTK_TYPE_MOZ_CONTEXT, GtkMozContextPrivate);
++
++  ctx->priv->info = NULL;
++  ctx->priv->props = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, _moz_context_free_g_value);
++  g_hash_table_lookup (((GtkMozContext *) ctx)->priv->props, "test");
++
++  ctx->x = ctx->y = ctx->x_root = ctx->y_root = ctx->button = ctx->type = ctx->modifier = 0;
++  ctx->docindex = -1;
++
++  return;
++}
++GtkMozContext *
++gtk_moz_context_new ()
++{
++  return GTK_MOZ_CONTEXT(g_object_new(GTK_TYPE_MOZ_CONTEXT, NULL));
++}
++
++gboolean
++gtk_moz_context_update_from_event (GtkMozContext *ctx, gpointer event)
++{
++  gboolean ret = FALSE;
++  g_return_val_if_fail(GTK_IS_MOZ_CONTEXT(ctx), ret);
++  g_return_val_if_fail(event, ret);
++
++  if (!ctx->priv->info)
++    ctx->priv->info = new EmbedContextMenuInfo(ctx, g_object_get_data(G_OBJECT(ctx), "mozembed"));
++
++  EmbedContextMenuInfo* info = static_cast<EmbedContextMenuInfo*>(ctx->priv->info);
++  g_return_val_if_fail(info, ret);
++
++  ret = NS_SUCCEEDED(info->UpdateContextData(static_cast<nsIDOMEvent*>(event)));
++  return ret;
++}
++
++gboolean
++gtk_moz_context_set_prop (GtkMozContext *ctx, const char *name, GValue *value)
++{
++  g_return_val_if_fail(GTK_IS_MOZ_CONTEXT(ctx), FALSE);
++  g_hash_table_insert (GTK_MOZ_CONTEXT(ctx)->priv->props, g_strdup (name), value);
++  return TRUE;
++}
++
++const GValue*
++gtk_moz_context_get_prop (GtkMozContext *ctx, const char *name)
++{
++  g_return_val_if_fail(GTK_IS_MOZ_CONTEXT(ctx), NULL);
++  return (const GValue *) g_hash_table_lookup (GTK_MOZ_CONTEXT(ctx)->priv->props, name);
++}
++
++gboolean
++gtk_moz_context_get_text (GtkMozContext *ctx, gchar **text, gint *position)
++{
++  g_return_val_if_fail(GTK_IS_MOZ_CONTEXT(ctx), FALSE);
++  EmbedContextMenuInfo* info = static_cast<EmbedContextMenuInfo*>(ctx->priv->info);
++  g_return_val_if_fail(info, FALSE);
++
++  nsString textStr;
++  PRInt32 pos = 0;
++  NS_ENSURE_SUCCESS(info->GetContextText(textStr, !(position), &pos), FALSE);
++  if (text) *text = ToNewUTF8String(textStr);
++  if (position) *position = pos;
++  return TRUE;
++}
++
++gboolean
++gtk_moz_context_insert_text(GtkMozContext *ctx, const gchar *string, gpointer node, gint surr1, gint surr2)
++{
++  g_return_val_if_fail(GTK_IS_MOZ_CONTEXT(ctx), FALSE);
++  EmbedContextMenuInfo* info = static_cast<EmbedContextMenuInfo*>(ctx->priv->info);
++  g_return_val_if_fail(info, FALSE);
++
++  if (!string && node) {
++      //ScrollToSelectedNode((nsIDOMNode*)node);
++      return TRUE;
++  }
++  g_return_val_if_fail(string, FALSE);
++
++  nsString aString;
++  NS_ENSURE_SUCCESS(info->InsertTextToNode((nsIDOMNode*)node, aString, (PRInt32)surr1, (PRInt32)surr2), FALSE);
++
++  return TRUE;
++}
++
++// GObject methods
++void
++gtk_moz_context_finalize (GObject *object)
++{
++  GtkMozContext * ctx = GTK_MOZ_CONTEXT(object);
++
++  g_hash_table_destroy (ctx->priv->props);
++  ctx->priv->props = NULL;
++
++  if (ctx->priv->info)
++    delete (EmbedContextMenuInfo*)ctx->priv->info;
++  ctx->priv->info = NULL;
++
++  G_OBJECT_CLASS (parent_class)->finalize (object);
++}
++
++void
++gtk_moz_context_class_init(GtkMozContextClass *klass)
++{
++  GObjectClass *object_class = G_OBJECT_CLASS (klass);
++
++  parent_class = G_OBJECT_CLASS(g_type_class_peek_parent (klass));
++  object_class->finalize = gtk_moz_context_finalize;
++
++  g_type_class_add_private (object_class, sizeof (GtkMozContextPrivate));
++}
+Index: src/gtkmozembed_context.h
+===================================================================
+--- /dev/null
++++ mozilla/embedding/browser/gtk/src/gtkmozembed_context.h
+@@ -0,0 +1,143 @@
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is mozilla.org code.
++ *
++ * The Initial Developer of the Original Code is
++ * Christopher Blizzard.
++ * Portions created by the Initial Developer are Copyright (C) 2001
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Christopher Blizzard <blizzard@mozilla.org>
++ *   Ramiro Estrugo <ramiro@eazel.com>
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either the GNU General Public License Version 2 or later (the "GPL"), or
++ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#ifndef gtkmozembed_context_h
++#define gtkmozembed_context_h
++
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
++#include <stddef.h>
++#include <gtk/gtk.h>
++
++#ifdef MOZILLA_CLIENT
++#include "nscore.h"
++#else /* MOZILLA_CLIENT */
++#ifndef nscore_h__
++/* Because this header may be included from files which not part of the mozilla
++   build system, define macros from nscore.h */
++
++#if (__GNUC__ >= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)
++#define NS_HIDDEN __attribute__((visibility("hidden")))
++#else
++#define NS_HIDDEN
++#endif
++
++#define NS_FROZENCALL
++#define NS_EXPORT_(type) type
++#define NS_IMPORT_(type) type
++#endif /* nscore_h__ */
++#endif /* MOZILLA_CLIENT */
++
++#ifdef XPCOM_GLUE
++
++#define GTKMOZEMBED_API(type, name, params) \
++  typedef type (NS_FROZENCALL * name##Type) params; \
++  extern name##Type name NS_HIDDEN;
++
++#else /* XPCOM_GLUE */
++
++#ifdef _IMPL_GTKMOZEMBED
++#define GTKMOZEMBED_API(type, name, params) NS_EXPORT_(type) name params;
++#else
++#define GTKMOZEMBED_API(type,name, params) NS_IMPORT_(type) name params;
++#endif
++
++#endif /* XPCOM_GLUE */
++
++#define GTK_TYPE_MOZ_CONTEXT             (gtk_moz_context_get_type())
++#define GTK_MOZ_CONTEXT(obj)             GTK_CHECK_CAST((obj), GTK_TYPE_MOZ_CONTEXT, GtkMozContext)
++#define GTK_MOZ_CONTEXT_CLASS(klass)     GTK_CHECK_CLASS_CAST((klass), GTK_TYPE_MOZ_CONTEXT, GtkMozContextClass)
++#define GTK_IS_MOZ_CONTEXT(obj)          GTK_CHECK_TYPE((obj), GTK_TYPE_MOZ_CONTEXT)
++#define GTK_IS_MOZ_CONTEXT_CLASS(klass)  GTK_CHECK_CLASS_TYPE((klass), GTK_TYPE_MOZ_CONTEXT)
++#define GTK_MOZ_CONTEXT_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_MOZ_CONTEXT, GtkMozContextClass))
++
++typedef struct _GtkMozContext        GtkMozContext;
++typedef struct _GtkMozContextClass   GtkMozContextClass;
++typedef struct _GtkMozContextPrivate GtkMozContextPrivate;
++
++struct _GtkMozContext
++{
++  GObject  object;
++  /*< private > */
++  GtkMozContextPrivate *priv;
++
++  guint button;
++  guint type;
++  guint modifier;
++  guint x, y;
++  gint  x_root, y_root;
++  gint  docindex;
++};
++
++struct _GtkMozContextClass
++{
++  GObjectClass parent_class;
++};
++
++GTKMOZEMBED_API(GType,          gtk_moz_context_get_type,           (void))
++GTKMOZEMBED_API(GtkMozContext*, gtk_moz_context_new,                (void))
++GTKMOZEMBED_API(gboolean,       gtk_moz_context_set_prop,           (GtkMozContext *ctx, const char *name, GValue *value))
++GTKMOZEMBED_API(const GValue*,  gtk_moz_context_get_prop,           (GtkMozContext *ctx, const char *name))
++
++GTKMOZEMBED_API(gboolean,       gtk_moz_context_update_from_event,  (GtkMozContext *ctx, gpointer event))
++GTKMOZEMBED_API(gboolean,       gtk_moz_context_get_text,           (GtkMozContext *ctx, gchar **text, gint *position))
++GTKMOZEMBED_API(gboolean,       gtk_moz_context_insert_text,        (GtkMozContext *ctx, const gchar *string, gpointer node, gint surr1, gint surr2))
++
++
++typedef enum
++{
++  GTK_MOZ_EMBED_CTX_NONE       = 0,
++  GTK_MOZ_EMBED_CTX_XUL        = 1 << 1,
++  GTK_MOZ_EMBED_CTX_DOCUMENT   = 1 << 2,
++  GTK_MOZ_EMBED_CTX_LINK       = 1 << 3,
++  GTK_MOZ_EMBED_CTX_IMAGE      = 1 << 4,
++  GTK_MOZ_EMBED_CTX_IFRAME     = 1 << 5,
++  GTK_MOZ_EMBED_CTX_INPUT_TEXT = 1 << 6,
++  GTK_MOZ_EMBED_CTX_IPASSWORD  = 1 << 7,
++  GTK_MOZ_EMBED_CTX_RICHEDIT   = 1 << 8,
++  GTK_MOZ_EMBED_CTX_MULTILINE  = 1 << 9
++} GtkMozContextContext;
++
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
++#endif /* gtkmozembed_context_h */
++
+Index: src/gtkmozembed_glue.cpp
+===================================================================
+--- mozilla/embedding/browser/gtk/src.orig/gtkmozembed_glue.cpp
++++ mozilla/embedding/browser/gtk/src/gtkmozembed_glue.cpp
+@@ -35,22 +35,32 @@
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ // This file is an implementation file, meant to be #included in a
+ // single C++ file of an embedding application. It is called after
+ // XPCOMGlueStartup to glue the gtkmozembed functions.
+ 
+ #include "gtkmozembed.h"
++#include "gtkmozembed_context.h"
+ #include "nsXPCOMGlue.h"
+ 
+ #ifndef XPCOM_GLUE
+ #error This file only makes sense when XPCOM_GLUE is defined.
+ #endif
+ 
++#define GTKMOZEMBED_CONTEXT_FUNCTIONS \
++  GTKF(gtk_moz_context_new) \
++  GTKF(gtk_moz_context_get_type) \
++  GTKF(gtk_moz_context_update_from_event) \
++  GTKF(gtk_moz_context_set_prop) \
++  GTKF(gtk_moz_context_get_prop) \
++  GTKF(gtk_moz_context_get_text) \
++  GTKF(gtk_moz_context_insert_text)
++
+ #define GTKMOZEMBED_FUNCTIONS \
+   GTKF(gtk_moz_embed_get_type) \
+   GTKF(gtk_moz_embed_new) \
+   GTKF(gtk_moz_embed_push_startup) \
+   GTKF(gtk_moz_embed_pop_startup) \
+   GTKF(gtk_moz_embed_set_path) \
+   GTKF(gtk_moz_embed_set_comp_path) \
+   GTKF(gtk_moz_embed_set_profile_path) \
+@@ -67,17 +77,18 @@
+   GTKF(gtk_moz_embed_get_link_message) \
+   GTKF(gtk_moz_embed_get_js_status) \
+   GTKF(gtk_moz_embed_get_title) \
+   GTKF(gtk_moz_embed_get_location) \
+   GTKF(gtk_moz_embed_reload) \
+   GTKF(gtk_moz_embed_set_chrome_mask) \
+   GTKF(gtk_moz_embed_get_chrome_mask) \
+   GTKF(gtk_moz_embed_single_get_type) \
+-  GTKF(gtk_moz_embed_single_get)
++  GTKF(gtk_moz_embed_single_get) \
++  GTKMOZEMBED_CONTEXT_FUNCTIONS
+ 
+ #define GTKF(fname) fname##Type fname;
+ 
+ GTKMOZEMBED_FUNCTIONS
+ 
+ #undef GTKF
+ 
+ #define GTKF(fname) { #fname, (NSFuncPtr*) &fname },
+Index: src/EmbedGtkTools.h
+===================================================================
+--- mozilla/embedding/browser/gtk/src.orig/EmbedGtkTools.h
++++ mozilla/embedding/browser/gtk/src/EmbedGtkTools.h
+@@ -61,9 +61,13 @@
+ GtkWindow*
+ GetGtkWindowForDOMWindow(nsIDOMWindow* aDOMWindow);
+ 
+ nsresult
+ GetContentViewer(nsIWebBrowser *webBrowser, nsIContentViewer **aViewer);
+ 
+ GtkWidget* GetAnyLiveWidget(void);
+ 
++nsresult GetDOMWindowByNode (nsIDOMNode *aNode, nsIDOMWindow * *aDOMWindow);
++
++nsresult DoCommand(nsISupports *aContext, const char *aCommand, PRInt32 aCount = 0);
++
+ #endif /* __EmbedTools_h */
+Index: src/EmbedGtkTools.cpp
+===================================================================
+--- mozilla/embedding/browser/gtk/src.orig/EmbedGtkTools.cpp
++++ mozilla/embedding/browser/gtk/src/EmbedGtkTools.cpp
+@@ -35,16 +35,22 @@
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "EmbedGtkTools.h"
+ #include "nsServiceManagerUtils.h"
+ #include "EmbedPrivate.h"
++#include "nsIWebBrowser.h"
++#include "nsPIDOMWindow.h"
++#include "nsIDOMDocument.h"
++#include "nsIDOMDocumentView.h"
++#include "nsIDOMAbstractView.h"
++#include "nsICommandManager.h"
+ 
+ GtkWidget * GetGtkWidgetForDOMWindow(nsIDOMWindow* aDOMWindow)
+ {
+   nsCOMPtr<nsIWindowWatcher> wwatch = do_GetService("@mozilla.org/embedcomp/window-watcher;1");
+   nsCOMPtr<nsIWebBrowserChrome> chrome;
+   if (wwatch) {
+     if (!aDOMWindow) {
+       nsCOMPtr <nsIDOMWindow> DOMWindow;
+@@ -104,8 +110,62 @@
+   for (int i = 0; i < count; i++) {
+     EmbedPrivate *tmpPrivate = static_cast<EmbedPrivate *>
+       (EmbedPrivate::sWindowList->ElementAt(i));
+     ret = GTK_WIDGET(tmpPrivate->mOwningWidget);
+   }
+   return ret;
+ }
+ 
++nsresult
++GetDOMWindowByNode(nsIDOMNode *aNode, nsIDOMWindow * *aDOMWindow)
++{
++  nsresult rv;
++  nsCOMPtr<nsIDOMDocument> nodeDoc;
++  rv = aNode->GetOwnerDocument(getter_AddRefs(nodeDoc));
++  NS_ENSURE_SUCCESS(rv, rv);
++  nsCOMPtr<nsIDOMDocumentView> docView = do_QueryInterface(nodeDoc, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
++  nsCOMPtr<nsIDOMAbstractView> absView;
++  NS_ENSURE_SUCCESS(rv, rv);
++  rv = docView->GetDefaultView(getter_AddRefs(absView));
++  NS_ENSURE_SUCCESS(rv, rv);
++  nsCOMPtr<nsIDOMWindow> window = do_QueryInterface(absView, &rv);
++  NS_ENSURE_SUCCESS(rv, rv);
++  *aDOMWindow = window;
++  NS_IF_ADDREF(*aDOMWindow);
++  return rv;
++}
++
++nsresult
++DoCommand(nsISupports *aContext, const char *aCommand, PRInt32 aCount)
++{
++  nsCOMPtr<nsIDOMWindow> DOMWindow = do_QueryInterface(aContext);
++  if (!DOMWindow) {
++    nsCOMPtr<nsIWebBrowser> webBrowser = do_QueryInterface(aContext);
++    if (webBrowser)
++      webBrowser->GetContentDOMWindow(getter_AddRefs(DOMWindow));
++  }
++  if (!DOMWindow) {
++    nsCOMPtr<nsIDOMNode> node = do_QueryInterface(aContext);
++    if (node)
++    GetDOMWindowByNode(node, getter_AddRefs(DOMWindow));
++  }
++
++  nsCOMPtr<nsPIDOMWindow> window(do_QueryInterface(DOMWindow));
++  NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
++
++  nsCOMPtr<nsICommandManager> cmdMgr(do_GetInterface(window->GetDocShell()));
++  NS_ENSURE_TRUE(cmdMgr, NS_ERROR_FAILURE);
++
++  nsresult rv = NS_OK;
++  if (!aCount) {
++    PRBool enabled = PR_FALSE;
++    rv = cmdMgr->IsCommandEnabled(aCommand, DOMWindow, &enabled);
++    if (enabled)
++      return NS_OK;
++    return NS_ERROR_FAILURE;
++  }
++  for (int i = 0; i < aCount && NS_SUCCEEDED(rv); i++)
++    rv = cmdMgr->DoCommand(aCommand, nsnull, DOMWindow);
++  return rv;
++}
++
