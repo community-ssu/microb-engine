@@ -1,0 +1,49 @@
+--- /home/petejc/src/microb-engine/scratch_build/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-04-24 12:19:02.000000000 -0700
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-05-26 10:23:54.000000000 -0700
+@@ -179,6 +179,7 @@
+   PRInt32 mSelectPopupCount;
+   PRInt32 mSelectNavCount;
+   PRInt32 mSelectMultiCount;
++  PRInt32 mLastTextControlPosition;
+   nsCOMPtr<nsIContent> mLastContent;
+ };
+ 
+--- /home/petejc/src/microb-engine/scratch_build/build-tree/mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-05-26 10:08:40.000000000 -0700
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-05-26 11:14:01.000000000 -0700
+@@ -70,6 +70,7 @@
+   mSelectMultiCount = 0;
+   mSelectControlSelected = PR_FALSE;
+   mSelectNavCount = 0;
++  mLastTextControlPosition = -1;
+ }
+ 
+ // #ifdef DEBUG_romaxa
+@@ -477,6 +478,12 @@
+       }
+     }
+ 
++    if (mLastTextControlPosition != selectionStart) 
++    {
++      mLastTextControlPosition = selectionStart;
++      return NS_OK;
++    } 
++
+     if (textLength != 0 && selectionStart != 0)
+       return NS_OK;
+ 
+@@ -511,7 +518,13 @@
+       }
+     }
+ 
+-    if (textLength  != selectionEnd)
++    if (mLastTextControlPosition != selectionEnd) 
++    {
++      mLastTextControlPosition = selectionEnd;
++      return NS_OK;
++    } 
++
++    if (textLength != selectionEnd)
+       return NS_OK;
+ 
+     aEvent->StopPropagation();
+

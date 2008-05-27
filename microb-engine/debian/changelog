@@ -1,3 +1,10 @@
+microb-engine (1.0.4-70) unstable; urgency=low
+
+  * Fixes: NB#78144 [SNAV] Can't move cursor to the beginning or end of an
+    input field
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Tue, 27 May 2008 03:43:49 -0400
+
 microb-engine (1.0.4-69) unstable; urgency=low
 
   * Fixes: NB#79937 Zooming in or out makes panning noticeably slower
