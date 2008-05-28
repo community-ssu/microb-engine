@@ -104,3 +104,7 @@ lowmem/LowMemoryManageImprovements.diff
 #not_sorted/UseMaemoSQLite3.diff
 BMO_attached/020_attachment.cgi?id=320289.diff
 
+BMO_attached/030_attachment.cgi?id=297001.diff
+BMO_attached/040_attachment.cgi?id=303172.diff
+BMO_attached/050_attachment.cgi?id=322579.diff
+
