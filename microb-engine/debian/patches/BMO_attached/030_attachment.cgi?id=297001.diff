@@ -1,0 +1,51 @@
+Index: content/base/src/nsGenericElement.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/content/base/src/nsGenericElement.cpp,v
+retrieving revision 3.621
+diff -u -8 -p -r3.621 nsGenericElement.cpp
+--- mozilla/content/base/src/nsGenericElement.cpp	10 Jan 2008 15:48:26 -0000	3.621
++++ mozilla/content/base/src/nsGenericElement.cpp	14 Jan 2008 19:06:04 -0000
+@@ -3445,35 +3445,37 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(
+       cb.NoteXPCOMChild(slots->mAttributeMap.get());
+       if (tmp->IsNodeOfType(nsINode::eXUL))
+         cb.NoteXPCOMChild(slots->mControllers);
+     }
+   }
+ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+ 
+ 
+-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsGenericElement)
++NS_INTERFACE_MAP_BEGIN(nsGenericElement)
++  NS_INTERFACE_MAP_ENTRY_CYCLE_COLLECTION(nsGenericElement)
+   NS_INTERFACE_MAP_ENTRY(nsIContent)
+   NS_INTERFACE_MAP_ENTRY(nsINode)
+   NS_INTERFACE_MAP_ENTRY(nsPIDOMEventTarget)
++  // nsNodeSH::PreCreate() depends on the identity pointer being the
++  // same as nsINode (which nsIContent inherits), so if you change the
++  // below line, make sure nsNodeSH::PreCreate() still does the right
++  // thing!
++  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIContent)
++  NS_INTERFACE_MAP_ENTRY_CYCLE_COLLECTION_ISUPPORTS(nsGenericElement)
+   NS_INTERFACE_MAP_ENTRY_TEAROFF(nsIDOM3Node, new nsNode3Tearoff(this))
+   NS_INTERFACE_MAP_ENTRY_TEAROFF(nsIDOMNSElement, new nsNSElementTearoff(this))
+   NS_INTERFACE_MAP_ENTRY_TEAROFF(nsIDOMEventTarget,
+                                  nsDOMEventRTTearoff::Create(this))
+   NS_INTERFACE_MAP_ENTRY_TEAROFF(nsIDOM3EventTarget,
+                                  nsDOMEventRTTearoff::Create(this))
+   NS_INTERFACE_MAP_ENTRY_TEAROFF(nsIDOMNSEventTarget,
+                                  nsDOMEventRTTearoff::Create(this))
+   NS_INTERFACE_MAP_ENTRY_TEAROFF(nsISupportsWeakReference,
+                                  new nsNodeSupportsWeakRefTearoff(this))
+-  // nsNodeSH::PreCreate() depends on the identity pointer being the
+-  // same as nsINode (which nsIContent inherits), so if you change the
+-  // below line, make sure nsNodeSH::PreCreate() still does the right
+-  // thing!
+-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIContent)
+ NS_INTERFACE_MAP_END
+ 
+ NS_IMPL_CYCLE_COLLECTING_ADDREF_AMBIGUOUS(nsGenericElement, nsIContent)
+ NS_IMPL_CYCLE_COLLECTING_RELEASE_AMBIGUOUS_WITH_DESTROY(nsGenericElement, 
+ 							nsIContent,
+ 							nsNodeUtils::LastRelease(this))
+ 
+ nsresult
