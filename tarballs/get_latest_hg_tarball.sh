@@ -9,7 +9,7 @@ CURDIR=$(pwd)
 OLDVER=$(cat curver)
 
 wget -c $HGURL -O temp.tar.gz
-rm mozilla.tar.gz
+rm -f mozilla.tar.gz
 mv temp.tar.gz mozilla.tar.gz
 echo $MOZCURSIMPDATE > curver
 echo $MOZCURSIMPDATE > deborigver

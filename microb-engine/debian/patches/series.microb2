@@ -95,7 +95,6 @@ cross/010_BUG376279_security_cross_compile.diff
 cross/020_nspr_dpkg_cross.diff
 cross/030_host_libidl_dpkg_cross.diff
 cross/050_uclibc_strings_index.diff
-cross/060_cookie_gcc4.1.2slind.diff
 cross/070_Cross_freetype_config.diff
 
 lowmem/LowMemoryManageImprovements.diff
