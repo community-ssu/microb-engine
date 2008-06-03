@@ -1,3 +1,9 @@
+microb-engine (20080603-3) unstable; urgency=low
+
+  * Fixed installation for run-embed.sh script 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 04 Jun 2008 00:34:08 +0300
+
 microb-engine (20080603-2) unstable; urgency=low
 
   * Rename for run-embed script 

@@ -3,4 +3,4 @@ usr/lib/microb-engine/Test*Embe*
 usr/lib/microb-engine/run-mozilla.sh
 ../resources/share/applications/hildon/TestMozEmbed.desktop usr/share/applications/hildon/
 ../resources/share/dbus-1/services/org.mozilla.mozembed.service usr/share/dbus-1/services/
-../resources/tools/run-embed.sh usr/bin/
+../resources/tools/run-mozembed.sh usr/bin/
