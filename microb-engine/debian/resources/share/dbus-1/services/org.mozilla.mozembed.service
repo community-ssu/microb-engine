@@ -1,3 +1,3 @@
 [D-BUS Service]
 Name=org.mozilla.mozembed
-Exec=/bin/sh /usr/bin/run-embed.sh /usr/share/browser/home_page/index.html
+Exec=/bin/sh /usr/bin/run-mozembed.sh /usr/share/browser/home_page/index.html

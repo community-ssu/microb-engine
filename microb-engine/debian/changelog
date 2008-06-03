@@ -1,3 +1,9 @@
+microb-engine (20080603-2) unstable; urgency=low
+
+  * Rename for run-embed script 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 04 Jun 2008 00:03:25 +0300
+
 microb-engine (20080603-1) unstable; urgency=low
 
   * Update to trunk 20080603 
