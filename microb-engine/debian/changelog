@@ -1,3 +1,9 @@
+microb-engine (20080603-4) unstable; urgency=low
+
+  * Added system prefs extension for using it with hildon gconf
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 04 Jun 2008 13:51:57 +0300
+
 microb-engine (20080603-3) unstable; urgency=low
 
   * Fixed installation for run-embed.sh script 

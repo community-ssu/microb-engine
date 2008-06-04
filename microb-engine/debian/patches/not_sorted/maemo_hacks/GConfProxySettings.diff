@@ -1,0 +1,49 @@
+diff -ruN -p -U5 mozilla/extensions/pref/system-pref/src.orig/nsSystemPref.cpp mozilla/extensions/pref/system-pref/src/nsSystemPref.cpp
+--- mozilla/extensions/pref/system-pref/src.orig/nsSystemPref.cpp	2008-06-04 08:23:17.000000000 +0300
++++ mozilla/extensions/pref/system-pref/src/nsSystemPref.cpp	2008-06-04 13:50:55.000000000 +0300
+@@ -285,11 +285,11 @@ nsSystemPref::ReadSystemPref(const char 
+     if (NS_FAILED(rv))
+         return rv;
+ 
+     SYSPREF_LOG(("about to read aPrefName %s\n", aPrefName));
+ 
+-    prefBranch->UnlockPref(aPrefName);
++    prefBranch->LockPref(aPrefName);
+ 
+     PRInt32 prefType = nsIPrefBranch::PREF_INVALID;
+     nsXPIDLCString strValue;
+     PRInt32 intValue = 0;
+     PRBool boolValue = PR_FALSE;
+@@ -300,10 +300,19 @@ nsSystemPref::ReadSystemPref(const char 
+     switch (prefType) {
+     case nsIPrefBranch::PREF_STRING:
+         mSysPrefService->GetCharPref(aPrefName, getter_Copies(strValue));
+         SYSPREF_LOG(("system value is %s\n", strValue.get()));
+ 
++        if (!nsCString(aPrefName).Equals("network.proxy.autoconfig_url")) {
++            if (StringBeginsWith(strValue, NS_LITERAL_CSTRING("http://")))
++                strValue.Cut(0, 7);
++            else if (StringBeginsWith(strValue, NS_LITERAL_CSTRING("https://")))
++                strValue.Cut(0, 8);
++            else if (StringBeginsWith(strValue, NS_LITERAL_CSTRING("ftp://")))
++                strValue.Cut(0, 6);
++        }
++
+         prefBranch->SetCharPref(aPrefName, strValue.get());
+         break;
+     case nsIPrefBranch::PREF_INT:
+         mSysPrefService->GetIntPref(aPrefName, &intValue);
+         SYSPREF_LOG(("system value is %d\n", intValue));
+@@ -318,11 +327,11 @@ nsSystemPref::ReadSystemPref(const char 
+         break;
+     default:
+         SYSPREF_LOG(("Fail to system value for it\n"));
+         return NS_ERROR_FAILURE;
+     }
+-    prefBranch->LockPref(aPrefName);
++    prefBranch->UnlockPref(aPrefName);
+     return NS_OK;
+ }
+ 
+ //////////////////////////////////////////////////////////////////////
+ // nsSystemPref::UseMozillaPrefs
