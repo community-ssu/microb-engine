@@ -246,14 +246,16 @@ ifeq ($(GCCENV),.cs)
 endif
 endif
 	configopts += --disable-strip --enable-debug --enable-debugger-info-modules
-ifeq ($(nolibxul),y)
+ifeq ($(nolibxul),n)
 bldstr:=$(bldstr)nolibxul-
 	configopts += --disable-libxul
 else
 ifneq (,$(findstring $(GCCENV),.cs))
 ifneq (,$(findstring $(GCCVER),.gcc3.4.4))
+ifeq ($(nolibxul),n)
 bldstr:=$(bldstr)nolibxul-
 	configopts += --disable-libxul
+endif
 endif
 endif
 endif
