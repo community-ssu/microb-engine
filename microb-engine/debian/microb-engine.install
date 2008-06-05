@@ -9,14 +9,17 @@ usr/lib/microb-engine/components/*ssr*.so
 usr/lib/microb-engine/components/*ftv*.so
 usr/lib/microb-engine/components/*fmerge*.so
 usr/lib/microb-engine/components/*gnomevfs*.so
-usr/lib/microb-engine/components/nsExtensionManager.js
 usr/lib/microb-engine/components/nsProxyAutoConfig*.js
-usr/lib/microb-engine/components/*xulappinfo*
-usr/lib/microb-engine/components/nsLivemarkService.js
-usr/lib/microb-engine/components/nsTaggingService.js
+usr/lib/microb-engine/components/nsLivemarkService*.js
+usr/lib/microb-engine/components/nsTaggingService*.js
 usr/lib/microb-engine/*jprof*
 ../patches/*.js usr/lib/microb-engine/components
 usr/lib/microb-engine/regxp*
+
+usr/lib/microb-engine/components/*xulappinfo*
+usr/lib/microb-engine/components/nsExtensionManager.js
+usr/lib/microb-engine/components/nsBlocklistService.js
+usr/lib/microb-engine/components/nsUpdateService.js
 
 usr/lib/microb-engine/components/windowwatcher.xpt
 usr/lib/microb-engine/components/xuldoc.x*
@@ -28,3 +31,11 @@ usr/lib/microb-engine/components/nsLogin*.js
 usr/lib/microb-engine/components/nsContentPrefService*.js
 usr/lib/microb-engine/components/nsDefaultCLH*.js
 usr/lib/microb-engine/components/storage-Legacy*.js
+
+usr/lib/microb-engine/libgkgfx*so
+usr/lib/microb-engine/libgtkxtbin*so
+usr/lib/microb-engine/libmozz*so
+usr/lib/microb-engine/libthebes*so
+usr/lib/microb-engine/libxpcom_core*so
+usr/lib/microb-engine/components/lib*.so
+

@@ -1,3 +1,10 @@
+microb-engine (20080603-5) unstable; urgency=low
+
+  * Add missing xul resources
+  * Add extension manager related applications
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 05 Jun 2008 15:40:55 +0300
+
 microb-engine (20080603-4) unstable; urgency=low
 
   * Added system prefs extension for using it with hildon gconf
