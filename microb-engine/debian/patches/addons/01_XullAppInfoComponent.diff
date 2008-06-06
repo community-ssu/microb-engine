@@ -77,7 +77,7 @@ Index: mozilla/embedding/components/xulappinfo/Makefile.in
 +	-DTOOLKIT_EM_VERSION=$(shell $(PERL) $(topsrcdir)/config/milestone.pl --topsrcdir=$(topsrcdir))
 +
 +DEFINES += -DOS_TARGET=\"$(OS_TARGET)\"
-+DEFINES += -DBUILD_ID=\"$(BUILD_ID)\"
++#DEFINES += -DBUILD_ID=\"$(BUILD_ID)\"
 +ifdef TARGET_XPCOM_ABI
 +DEFINES += \
 +	-DTARGET_XPCOM_ABI=\"$(TARGET_XPCOM_ABI)\" \
