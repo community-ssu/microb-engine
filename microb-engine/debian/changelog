@@ -1,3 +1,9 @@
+microb-engine (20080603-6) unstable; urgency=low
+
+  * Fixed ABI and OS for xulappinfo component 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 06 Jun 2008 15:34:44 +0300
+
 microb-engine (20080603-5) unstable; urgency=low
 
   * Add missing xul resources

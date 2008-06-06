@@ -26,7 +26,7 @@ Index: mozilla/embedding/components/xulappinfo/Makefile.in
 ===================================================================
 --- /dev/null
 +++ mozilla/embedding/components/xulappinfo/Makefile.in
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,72 @@
 +#
 +# ***** BEGIN LICENSE BLOCK *****
 +# Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -76,6 +76,15 @@ Index: mozilla/embedding/components/xulappinfo/Makefile.in
 +	-DMOZ_APP_VERSION=$(MOZ_APP_VERSION) \
 +	-DTOOLKIT_EM_VERSION=$(shell $(PERL) $(topsrcdir)/config/milestone.pl --topsrcdir=$(topsrcdir))
 +
++DEFINES += -DOS_TARGET=\"$(OS_TARGET)\"
++DEFINES += -DBUILD_ID=\"$(BUILD_ID)\"
++ifdef TARGET_XPCOM_ABI
++DEFINES += \
++	-DTARGET_XPCOM_ABI=\"$(TARGET_XPCOM_ABI)\" \
++	-DTARGET_OS_ABI=\"$(OS_TARGET)_$(TARGET_XPCOM_ABI)\" \
++	$(NULL)
++endif
++
 +MODULE		= xulappinfo
 +XPIDL_MODULE	= xulappinfo
 +
@@ -108,12 +117,12 @@ Index: mozilla/embedding/components/xulappinfo/xulappinfo.js
 +{
 +}
 +
-+XULAppInfoService.prototype.vendor = "mozilla.org";
++XULAppInfoService.prototype.vendor = "Mozilla";
 +XULAppInfoService.prototype.ID = "{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}";
-+XULAppInfoService.prototype.OS = "_UNKNOWN";
++#expand XULAppInfoService.prototype.OS = __OS_TARGET__;
 +XULAppInfoService.prototype.inSafeMode = false;
 +XULAppInfoService.prototype.logConsoleErrors = false;
-+XULAppInfoService.prototype.XPCOMABI = "UNKNOWN_XPCOM_ABI";
++#expand XULAppInfoService.prototype.XPCOMABI = __TARGET_XPCOM_ABI__;
 +#expand XULAppInfoService.prototype.name = "__MOZ_APP_DISPLAYNAME__";
 +#expand XULAppInfoService.prototype.version = "__MOZ_APP_VERSION__";
 +#expand XULAppInfoService.prototype.appBuildID = "__BUILD_ID__";
