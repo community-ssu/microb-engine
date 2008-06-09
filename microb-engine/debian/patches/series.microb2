@@ -81,7 +81,6 @@ prettyrssfeed/020_window_title_XMLPrettyPrint.diff
 prettyrssfeed/030_BUG54742rss_add_support.diff
 prettyrssfeed/040_HelperRSS_DOMEvent.diff
 
-addons/01_XullAppInfoComponent.diff
 addons/02_ExtensionManagerInitialize.diff
 
 not_sorted/others/150_BUG347731_MOZILLA_INTERNAL_API.diff

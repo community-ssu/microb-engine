@@ -1,64 +1,28 @@
-# Fixes to the extension manager functionality.
-Index: mozilla/toolkit/xre/nsEmbedFunctions.cpp
+# https://bugzilla.mozilla.org/show_bug.cgi?id=408925
+Index: EmbedPrivate.cpp
 ===================================================================
---- mozilla.orig/toolkit/xre/nsEmbedFunctions.cpp
-+++ mozilla/toolkit/xre/nsEmbedFunctions.cpp
-@@ -61,20 +61,35 @@
- }
- 
- nsresult
- XRE_LockProfileDirectory(nsILocalFile* aDirectory,
-                          nsISupports* *aLockObject)
+RCS file: /cvsroot/mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp,v
+retrieving revision 1.93
+diff -p -U 8 -r1.93 mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
+--- mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp	30 Jan 2008 04:28:26 -0000	1.93
++++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp	9 Jun 2008 14:56:25 -0000
+@@ -132,17 +132,18 @@ GTKEmbedDirectoryProvider::GetFile(const
  {
-   nsCOMPtr<nsIProfileLock> lock;
+   if (EmbedPrivate::sAppFileLocProvider) {
+     nsresult rv = EmbedPrivate::sAppFileLocProvider->GetFile(aKey, aPersist,
+                                                              aResult);
+     if (NS_SUCCEEDED(rv))
+       return rv;
+   }
  
--  nsresult rv = NS_LockProfilePath(aDirectory, nsnull, nsnull,
-+  nsresult rv = NS_LockProfilePath(aDirectory, aDirectory, nsnull,
-                                    getter_AddRefs(lock));
--  if (NS_SUCCEEDED(rv))
--    NS_ADDREF(*aLockObject = lock);
-+
-+  NS_ENSURE_SUCCESS(rv, NS_ERROR_OUT_OF_MEMORY);
-+  NS_ADDREF(*aLockObject = lock);
-+
-+  nsCOMPtr<nsILocalFile> profD;
-+  rv = lock->GetDirectory(getter_AddRefs(profD));
-+  NS_ENSURE_SUCCESS(rv, rv);
-+
-+  nsCOMPtr<nsILocalFile> profLD;
-+  rv = lock->GetLocalDirectory(getter_AddRefs(profLD));
-+  NS_ENSURE_SUCCESS(rv, rv);
-+
-+  if (!gDirServiceProvider)
-+   new nsXREDirProvider;
-+
-+  if (gDirServiceProvider)
-+		rv = gDirServiceProvider->SetProfile(profD, profLD);
+-  if (EmbedPrivate::sProfileDir && !strcmp(aKey, NS_APP_USER_PROFILE_50_DIR)) {
++  if (EmbedPrivate::sProfileDir && (!strcmp(aKey, NS_APP_USER_PROFILE_50_DIR)
++                                 || !strcmp(aKey, NS_APP_PROFILE_DIR_STARTUP))) {
+     *aPersist = PR_TRUE;
+     return EmbedPrivate::sProfileDir->Clone(aResult);
+   }
  
-   return rv;
+   return NS_ERROR_FAILURE;
  }
  
- static nsStaticModuleInfo *sCombined;
- static PRInt32 sInitCounter;
- 
- nsresult
-@@ -94,17 +109,18 @@
-   if (++sInitCounter > 1) // XXXbsmedberg is this really the right solution?
-     return NS_OK;
- 
-   if (!aAppDirectory)
-     aAppDirectory = aLibXULDirectory;
- 
-   nsresult rv;
- 
--  new nsXREDirProvider; // This sets gDirServiceProvider
-+  if (!gDirServiceProvider)
-+    new nsXREDirProvider; // This sets gDirServiceProvider
-   if (!gDirServiceProvider)
-     return NS_ERROR_OUT_OF_MEMORY;
- 
-   rv = gDirServiceProvider->Initialize(aAppDirectory, aLibXULDirectory,
-                                        aAppDirProvider);
-   if (NS_FAILED(rv))
-     return rv;
- 
+ NS_IMETHODIMP

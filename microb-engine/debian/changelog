@@ -1,3 +1,9 @@
+microb-engine (20080603-8) unstable; urgency=low
+
+  * Fixed Extension manager initialization 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 09 Jun 2008 18:18:57 +0300
+
 microb-engine (20080603-7) unstable; urgency=low
 
   * Open XRE symbols 
