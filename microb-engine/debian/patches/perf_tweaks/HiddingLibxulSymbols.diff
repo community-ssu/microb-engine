@@ -3,7 +3,7 @@ Index: mozilla/toolkit/library/libxul-export.map
 ===================================================================
 --- /dev/null
 +++ mozilla/toolkit/library/libxul-export.map
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,29 @@
 +{
 +  global:
 +	_GLOBAL_OFFSET_TABLE_;
@@ -30,6 +30,7 @@ Index: mozilla/toolkit/library/libxul-export.map
 +   _ZNK12nsIPresShell18GetRootScrollFrameE;
 +   gtk_moz_*;
 +   *gfx*;
++   *XRE*;
 +  local: *;
 +};
 Index: mozilla/toolkit/library/libxul-rules.mk

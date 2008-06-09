@@ -1,3 +1,9 @@
+microb-engine (20080603-7) unstable; urgency=low
+
+  * Open XRE symbols 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 09 Jun 2008 14:46:03 +0300
+
 microb-engine (20080603-6) unstable; urgency=low
 
   * Fixed ABI and OS for xulappinfo component 
