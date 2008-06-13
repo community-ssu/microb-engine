@@ -1,0 +1,29 @@
+Index: mozilla/xpfe/appshell/src/nsXULWindow.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/xpfe/appshell/src/nsXULWindow.cpp,v
+retrieving revision 1.179
+diff -u -8 -p -r1.179 mozilla/xpfe/appshell/src/nsXULWindow.cpp
+--- mozilla/xpfe/appshell/src/nsXULWindow.cpp	2 May 2008 11:32:52 -0000	1.179
++++ mozilla/xpfe/appshell/src/nsXULWindow.cpp	13 Jun 2008 17:55:28 -0000
+@@ -393,18 +393,19 @@ NS_IMETHODIMP nsXULWindow::ShowModal()
+   if (appShellService)
+       appShellService->TopLevelWindowIsModal(
+                          static_cast<nsIXULWindow*>(this), PR_TRUE);
+ 
+   nsCOMPtr<nsIJSContextStack> stack(do_GetService("@mozilla.org/js/xpc/ContextStack;1"));
+   if (stack && NS_SUCCEEDED(stack->Push(nsnull))) {
+     nsIThread *thread = NS_GetCurrentThread();
+     while (mContinueModalLoop) {
+-      if (!NS_ProcessNextEvent(thread))
+-        break;
++      NS_ProcessNextEvent(thread, PR_FALSE);
++//      if (!NS_ProcessNextEvent(thread))
++//        break;
+     }
+     JSContext* cx;
+     stack->Pop(&cx);
+     NS_ASSERTION(cx == nsnull, "JSContextStack mismatch");
+   }
+ 
+   mContinueModalLoop = PR_FALSE;
+   window->SetModal(PR_FALSE);
