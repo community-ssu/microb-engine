@@ -1,3 +1,9 @@
+microb-engine (20080603-10) unstable; urgency=low
+
+  * Temporary fix for broken event processing in modal xul dialogs 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 13 Jun 2008 21:03:33 +0300
+
 microb-engine (20080603-9) unstable; urgency=low
 
   * Removed conflicting gtkmozembed header exporting
