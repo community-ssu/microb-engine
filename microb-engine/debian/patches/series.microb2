@@ -29,7 +29,7 @@ gtkmozembed/BugXXXExtensionsComponentsRegistering.diff
 #gtkmozembed/Bug349382.TestEmbedPrompter.diff
 #gtkmozembed/Bug349382.TestEmbedPrompter.moz.diff
 #gtkmozembed/020_nsWindowCreator2_iface.diff
-gtkmozembed/drop_conflicting_gtkmozembed_header_exporting.diff
+#gtkmozembed/drop_conflicting_gtkmozembed_header_exporting.diff
 
 microbfootprint/010_MICROB_xslt_xpath_disable_lp0.diff
 microbfootprint/020_MICROB_non_conf_components_disable.diff
