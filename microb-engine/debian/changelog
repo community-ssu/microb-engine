@@ -1,3 +1,9 @@
+microb-engine (20080603-12) unstable; urgency=low
+
+  * Add xulrunner-stub  for fennec package build
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 16 Jun 2008 08:19:36 +0300
+
 microb-engine (20080603-11) unstable; urgency=low
 
   * Disable bad patch 
