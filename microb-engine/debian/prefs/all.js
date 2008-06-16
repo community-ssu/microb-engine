@@ -975,7 +975,7 @@ pref("roaming.default.files", "bookmarks.html,abook.mab,cookies.txt");
 pref("roaming.showInitialWarning", true);
 
 // whether use prefs from system
-pref("config.use_system_prefs", false);
+pref("config.use_system_prefs", true);
 
 // if the system has enabled accessibility
 pref("config.use_system_prefs.accessibility", false);
