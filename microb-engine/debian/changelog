@@ -1,3 +1,9 @@
+microb-engine (20080616-2) unstable; urgency=low
+
+  * Fixed bug 429387, perf improvement for arm linux kernel 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 16 Jun 2008 10:53:10 +0300
+
 microb-engine (20080616-1) unstable; urgency=low
 
   * Updated to trunk 20080616, http://hg.mozilla.org/index.cgi/mozilla-central/file/be010ac940e0 

@@ -214,6 +214,7 @@ ifneq (,$(findstring $(DEB_HOST_ARCH),arm armel))
 ifeq ($(vfp),y)
 	optimize_add += -mfpu=vfp -mfloat-abi=softfp
 endif
+configopts += --with-arm-kuser
 #	optimize_add += -march=armv6
 #	optimize_add += -DJS_THREADED_INTERP=0
 #	optimize_add += -DENABLE_FAST_PATH_ALWAYS=1 -DENABLE_XFT_FAST_PATH_ALWAYS=1
