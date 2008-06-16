@@ -1,3 +1,9 @@
+microb-engine (20080616-3) unstable; urgency=low
+
+  * Fixed conflict of microb-xulrunner and microb-engine-dev packages
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 16 Jun 2008 13:09:03 +0300
+
 microb-engine (20080616-2) unstable; urgency=low
 
   * Fixed bug 429387, perf improvement for arm linux kernel 
