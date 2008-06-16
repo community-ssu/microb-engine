@@ -104,7 +104,6 @@ lowmem/LowMemoryManageImprovements.diff
 
 # update microb-engine
 #not_sorted/UseMaemoSQLite3.diff
-BMO_attached/020_attachment.cgi?id=320289.diff
 
 #Startup perf
 BMO_attached/030_attachment.cgi?id=297001.diff
