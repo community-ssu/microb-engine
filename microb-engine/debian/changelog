@@ -1,3 +1,9 @@
+microb-engine (20080616-4) unstable; urgency=low
+
+  * Fixed chrome resources for fennec browser 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 16 Jun 2008 13:36:27 +0300
+
 microb-engine (20080616-3) unstable; urgency=low
 
   * Fixed conflict of microb-xulrunner and microb-engine-dev packages
