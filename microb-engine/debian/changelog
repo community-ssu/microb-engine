@@ -1,3 +1,9 @@
+microb-engine (20080616-7) unstable; urgency=low
+
+  * Fixed properly bug 437018
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 17 Jun 2008 13:46:14 +0300
+
 microb-engine (20080616-6) unstable; urgency=low
 
   * Switch to use system pref extension 

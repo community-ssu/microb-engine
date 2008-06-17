@@ -1,154 +1,96 @@
-Index: src/EmbedWindowCreator.cpp
+Index: src/EmbedPrivate.cpp
 ===================================================================
-RCS file: /cvsroot/mozilla/embedding/browser/gtk/src/EmbedWindowCreator.cpp,v
-retrieving revision 1.14
-diff -u -8 -p -r1.14 EmbedWindowCreator.cpp
---- mozilla/embedding/browser/gtk/src/EmbedWindowCreator.cpp	11 Jan 2008 22:16:15 -0000	1.14
-+++ mozilla/embedding/browser/gtk/src/EmbedWindowCreator.cpp	14 Jun 2008 09:16:44 -0000
-@@ -34,38 +34,87 @@
-  * the terms of any one of the MPL, the GPL or the LGPL.
-  *
-  * ***** END LICENSE BLOCK ***** */
+RCS file: /cvsroot/mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp,v
+retrieving revision 1.93
+diff -p -u -5 -r1.93 EmbedPrivate.cpp
+--- mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp	30 Jan 2008 04:28:26 -0000	1.93
++++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp	17 Jun 2008 08:06:06 -0000
+@@ -486,10 +487,11 @@ EmbedPrivate::ApplyChromeMask()
  
- #include "EmbedWindowCreator.h"
- #include "EmbedPrivate.h"
+ void
+ EmbedPrivate::SetChromeMask(PRUint32 aChromeMask)
+ {
+    mChromeMask = aChromeMask;
++   mIsChrome = (mChromeMask & nsIWebBrowserChrome::CHROME_OPENAS_CHROME);
+ 
+    ApplyChromeMask();
+ }
+ 
+ 
+Index: src/EmbedWindow.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/embedding/browser/gtk/src/EmbedWindow.cpp,v
+retrieving revision 1.44
+diff -p -u -5 -r1.44 EmbedWindow.cpp
+--- mozilla/embedding/browser/gtk/src/EmbedWindow.cpp	30 Jan 2008 04:28:26 -0000	1.44
++++ mozilla/embedding/browser/gtk/src/EmbedWindow.cpp	17 Jun 2008 10:22:31 -0000
+@@ -40,10 +40,11 @@
+ 
+ #include "nsCWebBrowser.h"
+ #include "nsIComponentManager.h"
+ #include "nsIDocShellTreeItem.h"
+ #include "nsIWidget.h"
++#include "nsThreadUtils.h"
+ 
  #include "EmbedWindow.h"
+ #include "EmbedPrivate.h"
+ #include "EmbedPrompter.h"
  
-+#include "nsIXULWindow.h"
-+#include "nsAppShellCID.h"
-+#include "nsWidgetsCID.h"
-+#include "nsIAppShellService.h"
-+#include "nsIWidget.h"
-+#include "nsIWidget.h"
-+#include "nsServiceManagerUtils.h"
-+#include "nsIInterfaceRequestorUtils.h"
-+
- // in order to create orphaned windows
- #include "gtkmozembedprivate.h"
+@@ -73,11 +74,12 @@ EmbedWindow::Init(EmbedPrivate *aOwner)
+     return NS_ERROR_FAILURE;
  
-+NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
-+
- EmbedWindowCreator::EmbedWindowCreator(void)
- {
+   mWebBrowser->SetContainerWindow(static_cast<nsIWebBrowserChrome *>(this));
+   
+   nsCOMPtr<nsIDocShellTreeItem> item = do_QueryInterface(mWebBrowser);
+-  item->SetItemType(nsIDocShellTreeItem::typeContentWrapper);
++  item->SetItemType(mOwner->mIsChrome ? nsIDocShellTreeItem::typeChromeWrapper
++                                      : nsIDocShellTreeItem::typeContentWrapper);
+ 
+   return NS_OK;
  }
  
- EmbedWindowCreator::~EmbedWindowCreator()
- {
+ nsresult
+@@ -201,18 +203,30 @@ EmbedWindow::SizeBrowserTo(PRInt32 aCX, 
+   g_signal_emit(G_OBJECT(mOwner->mOwningWidget),
+                 moz_embed_signals[SIZE_TO], 0, aCX, aCY);
+   return NS_OK;
  }
  
--NS_IMPL_ISUPPORTS1(EmbedWindowCreator, nsIWindowCreator)
-+NS_IMPL_ISUPPORTS2(EmbedWindowCreator, nsIWindowCreator, nsIWindowCreator2)
- 
- NS_IMETHODIMP
- EmbedWindowCreator::CreateChromeWindow(nsIWebBrowserChrome *aParent,
- 				       PRUint32 aChromeFlags,
- 				       nsIWebBrowserChrome **_retval)
- {
-+  PRBool cancel;
-+  return CreateChromeWindow2(aParent, aChromeFlags, 0, 0, &cancel, _retval);
++static gboolean
++ProcessEvents(void *data)
++{
++    return TRUE;
 +}
 +
-+NS_IMETHODIMP
-+EmbedWindowCreator::CreateChromeWindow2(nsIWebBrowserChrome *aParent,
-+                                        PRUint32 aChromeFlags,
-+                                        PRUint32 aContextFlags,
-+                                        nsIURI *aURI,
-+                                        PRBool *aCancel,
-+                                        nsIWebBrowserChrome **_retval)
-+{
-+
-   NS_ENSURE_ARG_POINTER(_retval);
- 
-   GtkMozEmbed *newEmbed = nsnull;
- 
-+  if (aChromeFlags & nsIWebBrowserChrome::CHROME_OPENAS_CHROME) {
-+//  if (aChromeFlags & nsIWebBrowserChrome::CHROME_OPENAS_DIALOG) {
-+    nsCOMPtr<nsIAppShellService> appShell(do_GetService(NS_APPSHELLSERVICE_CONTRACTID));
-+    if (!appShell)
-+        return NS_ERROR_FAILURE;
-+
-+    nsCOMPtr<nsIXULWindow> newWindow;
-+    nsCOMPtr<nsIAppShell> mAppShell = do_GetService(kAppShellCID);
-+
-+    appShell->CreateTopLevelWindow(0, 0, aChromeFlags,
-+                                   nsIAppShellService::SIZE_TO_CONTENT,
-+                                   nsIAppShellService::SIZE_TO_CONTENT,
-+                                   mAppShell, getter_AddRefs(newWindow));
-+
-+    // if anybody gave us anything to work with, use it
-+    if (newWindow) {
-+        newWindow->SetContextFlags(aContextFlags);
-+        nsCOMPtr<nsIInterfaceRequestor> thing(do_QueryInterface(newWindow));
-+        if (thing)
-+            CallGetInterface(thing.get(), _retval);
-+    }
-+
-+    return NS_OK;
-+  }
-+
-   // No parent?  Ask via the singleton object instead.
-   if (!aParent) {
-     gtk_moz_embed_single_create_window(&newEmbed,
- 				       (guint)aChromeFlags);
-   }
-   else {
-     // Find the EmbedPrivate object for this web browser chrome object.
-     EmbedPrivate *embedPrivate = EmbedPrivate::FindPrivateForBrowser(aParent);
-@@ -98,9 +147,11 @@ EmbedWindowCreator::CreateChromeWindow(n
-   *_retval = static_cast<nsIWebBrowserChrome *>(newEmbedPrivate->mWindow);
-   
-   if (*_retval) {
-     NS_ADDREF(*_retval);
-     return NS_OK;
-   }
- 
-   return NS_ERROR_FAILURE;
-+
- }
-+
-Index: src/EmbedWindowCreator.h
-===================================================================
-RCS file: /cvsroot/mozilla/embedding/browser/gtk/src/EmbedWindowCreator.h,v
-retrieving revision 1.7
-diff -u -8 -p -r1.7 EmbedWindowCreator.h
---- mozilla/embedding/browser/gtk/src/EmbedWindowCreator.h	18 Dec 2007 17:42:44 -0000	1.7
-+++ mozilla/embedding/browser/gtk/src/EmbedWindowCreator.h	13 Jun 2008 13:39:36 -0000
-@@ -34,21 +34,23 @@
-  * the terms of any one of the MPL, the GPL or the LGPL.
-  *
-  * ***** END LICENSE BLOCK ***** */
- 
- #ifndef __EmbedWindowCreator_h
- #define __EmbedWindowCreator_h
- 
- #include <nsIWindowCreator.h>
-+#include "nsIWindowCreator2.h"
- 
--class EmbedWindowCreator : public nsIWindowCreator
-+class EmbedWindowCreator : public nsIWindowCreator2
+ NS_IMETHODIMP
+ EmbedWindow::ShowAsModal(void)
  {
-  public:
-   EmbedWindowCreator();
-   virtual ~EmbedWindowCreator();
+   mIsModal = PR_TRUE;
+   GtkWidget *toplevel;
+   toplevel = gtk_widget_get_toplevel(GTK_WIDGET(mOwner->mOwningWidget));
+   gtk_grab_add(toplevel);
+-  gtk_main();
++  nsIThread *thread = NS_GetCurrentThread();
++  gulong nativeSource = g_timeout_add(100, ProcessEvents, NULL);
++  while (mIsModal) {
++    if (!NS_ProcessNextEvent(thread))
++      break;
++  }
++  g_source_remove(nativeSource);
+   return NS_OK;
+ }
  
-   NS_DECL_ISUPPORTS
-   NS_DECL_NSIWINDOWCREATOR
-+  NS_DECL_NSIWINDOWCREATOR2
-   
- };
+ NS_IMETHODIMP
+ EmbedWindow::IsWindowModal(PRBool *_retval)
+@@ -227,11 +241,10 @@ EmbedWindow::ExitModalEventLoop(nsresult
+   if (mIsModal) {
+     GtkWidget *toplevel;
+     toplevel = gtk_widget_get_toplevel(GTK_WIDGET(mOwner->mOwningWidget));
+     gtk_grab_remove(toplevel);
+     mIsModal = PR_FALSE;
+-    gtk_main_quit();
+   }
+   return NS_OK;
+ }
  
- #endif /* __EmbedWindowCreator_h */
---- mozilla/embedding/browser/gtk/src/Makefile.in.orig	2008-06-16 10:18:41.000000000 +0300
-+++ mozilla/embedding/browser/gtk/src/Makefile.in	2008-06-16 15:01:53.000000000 +0300
-@@ -64,10 +64,11 @@ REQUIRES	= xpcom \
- 		  embed_base \
- 		  windowwatcher \
- 		  profdirserviceprovider \
- 		  xulapp \
- 		  extensions \
-+		  appshell \
- 		  $(NULL)
- 
- ifdef ACCESSIBILITY
- REQUIRES        += accessibility
- endif
+ // nsIWebBrowserChromeFocus
