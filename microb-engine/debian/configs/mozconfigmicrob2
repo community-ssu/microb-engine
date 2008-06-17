@@ -52,7 +52,7 @@ ac_add_options --disable-safe-browsing
 
 #ac_add_options --enable-native-uconv # MOZ converters, required for libc with stripped gconv
 ac_add_options --disable-native-uconv # required 325_BUG_native_uconv_XML.dpatch 330_BUG_native_iconv.fix.dpatch
-#ac_add_options --enable-plugins # Flash/Media/Default....
+ac_add_options --enable-plugins # Flash/Media/Default....
 ac_add_options --enable-rdf # Required for extensions manager
 ac_add_options --disable-plaintext-editor-only # Enable RICH EDIT
 ac_add_options --enable-xpfe-components # Will add only directory+ftp viewer with profile minimal
