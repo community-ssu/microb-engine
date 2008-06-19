@@ -73,7 +73,6 @@ zooming/020_Bug70843.RestoreZoomState.diff
 zooming/030_TrueZoomMode.diff
 
 xpinstaller/01_ConfirmNoXul.diff
-xpinstaller/02_ExtensionMgrWithoutPlugins.diff
 xpinstaller/04_ChromeRegistrationWithRDFwithoutXUL.diff
 xpinstaller/05_BUG437018_AllowFullWidgetReparent.diff
 

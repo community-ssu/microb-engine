@@ -1,3 +1,9 @@
+microb-engine (20080616-9) unstable; urgency=low
+
+  * Disabled wrong patch (broken plugins view in EM) 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 19 Jun 2008 14:23:04 +0300
+
 microb-engine (20080616-8) unstable; urgency=low
 
   * Enable NPAPI plugins support 
