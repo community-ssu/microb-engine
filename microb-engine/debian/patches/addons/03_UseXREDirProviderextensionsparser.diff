@@ -1,0 +1,20 @@
+--- mozilla/toolkit/xre/nsXREDirProvider.cpp.orig	2008-06-16 09:16:18.000000000 +0300
++++ mozilla/toolkit/xre/nsXREDirProvider.cpp	2008-06-19 21:02:43.000000000 +0300
+@@ -554,10 +554,17 @@ nsXREDirProvider::LoadBundleDirectories(
+     LoadPlatformDirectory(mXULAppDir, mAppBundleDirectories);
+ 
+     LoadAppBundleDirs();
+   }
+ 
++  if (!mProfileDir) {
++    nsCOMPtr<nsIDirectoryServiceProvider2> app(do_QueryInterface(mAppProvider));
++    PRBool persist;
++    if (app)
++        app->GetFile(NS_APP_USER_PROFILE_50_DIR, &persist, getter_AddRefs(mProfileDir));
++  }
++
+   if (mProfileDir && !gSafeMode) {
+     nsCOMPtr<nsIFile> extensionsINI;
+     mProfileDir->Clone(getter_AddRefs(extensionsINI));
+     if (!extensionsINI)
+       return;
