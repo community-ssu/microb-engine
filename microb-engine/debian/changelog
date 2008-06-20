@@ -1,3 +1,9 @@
+microb-engine (20080616-13) unstable; urgency=low
+
+  * Update to trunk 2008-06-20
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 20 Jun 2008 22:17:39 +0300
+
 microb-engine (20080616-12) unstable; urgency=low
 
   * Better fix for bug 408925 

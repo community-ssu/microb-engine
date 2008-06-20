@@ -318,7 +318,8 @@ endif
 # shared library versions, option 1
 version=$(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2 | cut -d ':' -f 2 | cut -d '-' -f 1)
 packagename=$(shell dpkg-parsechangelog | grep ^Source:.* | cut -d ' ' -f 2)
-MOZ_VERSION=1.0.1
+MOZ_VERSION=3.0
+MOZ_MILESTONE=1.9
 
 major=2
 
@@ -369,7 +370,9 @@ ifeq ($(cross_compile),y)
 	echo "LIBIDL_CONFIG=$(prefix)/$(DEB_HOST_GNU_TYPE)/include/cross-scripts/libIDL-config-2" >> $(builddir)/mozconfig
 	echo "HOST_LIBIDL_CONFIG=$(prefix)/bin/libIDL-config-2" >> $(builddir)/mozconfig
 endif
-	echo "1900000000" >> $(builddir)/config/build_number
+	#echo "1900000000" >> $(builddir)/config/build_number
+	echo $(MOZ_MILESTONE) > $(builddir)/config/milestone.txt
+	echo $(MOZ_VERSION) > $(builddir)/browser/config/version.txt
 	#Small hack touch $(builddir)/toolkit/empty-file
 	touch $(builddir)/toolkit/empty-file
 	echo "MOZ_APP_VERSION=$(MOZ_VERSION)" >> $(builddir)/mozconfig
