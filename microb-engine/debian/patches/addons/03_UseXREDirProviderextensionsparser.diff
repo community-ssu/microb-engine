@@ -1,20 +1,35 @@
+# https://bugzilla.mozilla.org/show_bug.cgi?id=408925
 --- mozilla/toolkit/xre/nsXREDirProvider.cpp.orig	2008-06-16 09:16:18.000000000 +0300
-+++ mozilla/toolkit/xre/nsXREDirProvider.cpp	2008-06-19 21:02:43.000000000 +0300
-@@ -554,10 +554,17 @@ nsXREDirProvider::LoadBundleDirectories(
-     LoadPlatformDirectory(mXULAppDir, mAppBundleDirectories);
++++ mozilla/toolkit/xre/nsXREDirProvider.cpp	2008-06-20 08:28:21.000000000 +0300
+@@ -122,10 +122,18 @@ nsXREDirProvider::Initialize(nsIFile *aX
  
-     LoadAppBundleDirs();
-   }
+   mAppProvider = aAppProvider;
+   mXULAppDir = aXULAppDir;
+   mGREDir = aGREDir;
  
 +  if (!mProfileDir) {
-+    nsCOMPtr<nsIDirectoryServiceProvider2> app(do_QueryInterface(mAppProvider));
-+    PRBool persist;
-+    if (app)
-+        app->GetFile(NS_APP_USER_PROFILE_50_DIR, &persist, getter_AddRefs(mProfileDir));
++    nsCOMPtr<nsIDirectoryServiceProvider2> appP2(do_QueryInterface(mAppProvider));
++    if (appP2) {
++      PRBool per;
++      appP2->GetFile(NS_APP_USER_PROFILE_50_DIR, &per, getter_AddRefs(mProfileDir));
++    }
 +  }
 +
-   if (mProfileDir && !gSafeMode) {
-     nsCOMPtr<nsIFile> extensionsINI;
-     mProfileDir->Clone(getter_AddRefs(extensionsINI));
-     if (!extensionsINI)
-       return;
+   return NS_OK;
+ }
+ 
+ nsresult
+ nsXREDirProvider::SetProfile(nsIFile* aDir, nsIFile* aLocalDir)
+@@ -140,10 +148,12 @@ nsXREDirProvider::SetProfile(nsIFile* aD
+ 
+   rv = EnsureDirectoryExists(aLocalDir);
+   if (NS_FAILED(rv))
+     return rv;
+ 
++  NS_IF_RELEASE(mProfileDir);
++
+   mProfileDir = aDir;
+   mProfileLocalDir = aLocalDir;
+   return NS_OK;
+ }
+ 

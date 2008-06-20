@@ -1,3 +1,9 @@
+microb-engine (20080616-12) unstable; urgency=low
+
+  * Better fix for bug 408925 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 20 Jun 2008 08:31:56 +0300
+
 microb-engine (20080616-11) unstable; urgency=low
 
   * Reuse XREDir provider extensions.ini parser 
