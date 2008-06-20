@@ -1,0 +1,189 @@
+? obj-i686-pc-mingw32
+? svgfonts.diff
+Index: mozilla/content/base/src/nsGkAtomList.h
+===================================================================
+--- mozilla.orig/content/base/src/nsGkAtomList.h
++++ mozilla/content/base/src/nsGkAtomList.h
+@@ -941,16 +941,17 @@
+ GK_ATOM(altGlyphDef, "altGlyphDef")
+ GK_ATOM(altGlyphItem, "altGlyphItem")
+ GK_ATOM(amplitude, "amplitude")
+ GK_ATOM(animate, "animate")
+ GK_ATOM(animateColor, "animateColor")
+ GK_ATOM(animateMotion, "animateMotion")
+ GK_ATOM(animateTransform, "animateTransform")
+ GK_ATOM(arithmetic, "arithmetic")
++GK_ATOM(ascent, "ascent")
+ GK_ATOM(atop, "atop")
+ GK_ATOM(azimuth, "azimuth")
+ GK_ATOM(B, "B")
+ GK_ATOM(baseFrequency, "baseFrequency")
+ GK_ATOM(baseline_shift, "baseline-shift")
+ GK_ATOM(bias, "bias")
+ GK_ATOM(clip_path, "clip-path")
+ GK_ATOM(clip_rule, "clip-rule")
+@@ -964,16 +965,17 @@
+ GK_ATOM(cx, "cx")
+ GK_ATOM(cy, "cy")
+ GK_ATOM(d, "d")
+ GK_ATOM(darken, "darken")
+ GK_ATOM(defs, "defs")
+ GK_ATOM(definition_src, "definition-src")
+ GK_ATOM(deg, "deg")
+ GK_ATOM(desc, "desc")
++GK_ATOM(descent, "descent")
+ GK_ATOM(diffuseConstant, "diffuseConstant")
+ GK_ATOM(dilate, "dilate")
+ GK_ATOM(direction, "direction")
+ GK_ATOM(disable, "disable")
+ GK_ATOM(discrete, "discrete")
+ GK_ATOM(divisor, "divisor")
+ GK_ATOM(dominant_baseline, "dominant-baseline")
+ GK_ATOM(duplicate, "duplicate")
+@@ -1042,16 +1044,17 @@
+ GK_ATOM(glyph, "glyph")
+ GK_ATOM(glyphRef, "glyphRef")
+ GK_ATOM(glyph_orientation_horizontal, "glyph-orientation-horizontal")
+ GK_ATOM(glyph_orientation_vertical, "glyph-orientation-vertical")
+ GK_ATOM(grad, "grad")
+ GK_ATOM(gradientTransform, "gradientTransform")
+ GK_ATOM(gradientUnits, "gradientUnits")
+ GK_ATOM(hkern, "hkern")
++GK_ATOM(horiz_adv_x, "horiz-adv-x")
+ GK_ATOM(hueRotate, "hueRotate")
+ GK_ATOM(identity, "identity")
+ GK_ATOM(image_rendering, "image-rendering")
+ GK_ATOM(in, "in")
+ GK_ATOM(in2, "in2")
+ GK_ATOM(intercept, "intercept")
+ GK_ATOM(k1, "k1")
+ GK_ATOM(k2, "k2")
+@@ -1076,16 +1079,17 @@
+ GK_ATOM(markerHeight, "markerHeight")
+ GK_ATOM(markerUnits, "markerUnits")
+ GK_ATOM(markerWidth, "markerWidth")
+ GK_ATOM(mask, "mask")
+ GK_ATOM(maskContentUnits, "maskContentUnits")
+ GK_ATOM(maskUnits, "maskUnits")
+ GK_ATOM(matrix, "matrix")
+ GK_ATOM(metadata, "metadata")
++GK_ATOM(missing_glyph, "missing-glyph")
+ GK_ATOM(missingGlyph, "missingGlyph")
+ GK_ATOM(mm, "mm")
+ GK_ATOM(mpath, "mpath")
+ GK_ATOM(noStitch, "noStitch")
+ GK_ATOM(numOctaves, "numOctaves")
+ GK_ATOM(multiply, "multiply")
+ GK_ATOM(objectBoundingBox, "objectBoundingBox")
+ GK_ATOM(offset, "offset")
+@@ -1171,17 +1175,19 @@
+ GK_ATOM(targetY, "targetY")
+ GK_ATOM(text_anchor, "text-anchor")
+ GK_ATOM(text_decoration, "text-decoration")
+ GK_ATOM(text_rendering, "text-rendering")
+ GK_ATOM(textPath, "textPath")
+ GK_ATOM(tref, "tref")
+ GK_ATOM(tspan, "tspan")
+ GK_ATOM(turbulence, "turbulence")
++GK_ATOM(unicode, "unicode")
+ GK_ATOM(unicode_bidi, "unicode-bidi")
++GK_ATOM(units_per_em, "units-per-em")
+ GK_ATOM(userSpaceOnUse, "userSpaceOnUse")
+ GK_ATOM(view, "view")
+ GK_ATOM(viewBox, "viewBox")
+ GK_ATOM(vkern, "vkern")
+ GK_ATOM(word_spacing, "word-spacing")
+ GK_ATOM(x, "x")
+ GK_ATOM(x1, "x1")
+ GK_ATOM(x2, "x2")
+Index: mozilla/layout/svg/base/src/nsSVGGlyphFrame.cpp
+===================================================================
+--- mozilla.orig/layout/svg/base/src/nsSVGGlyphFrame.cpp
++++ mozilla/layout/svg/base/src/nsSVGGlyphFrame.cpp
+@@ -49,16 +49,18 @@
+ #include "nsSVGPathElement.h"
+ #include "nsSVGPoint.h"
+ #include "nsSVGRect.h"
+ #include "nsDOMError.h"
+ #include "gfxContext.h"
+ #include "gfxMatrix.h"
+ #include "gfxPlatform.h"
+ #include "gfxTextRunWordCache.h"
++#include "nsIDOMDocument.h"
++#include "nsSVGPathDataParser.h"
+ 
+ struct CharacterPosition {
+   gfxPoint pos;
+   gfxFloat angle;
+   PRBool draw;
+ };
+   
+ /**
+@@ -224,16 +226,19 @@
+ #define CLAMP_MIN_SIZE 8
+ #define CLAMP_MAX_SIZE 200
+ #define PRECISE_SIZE   200
+ 
+ NS_IMETHODIMP
+ nsSVGGlyphFrame::DidSetStyleContext()
+ {
+   nsSVGGlyphFrameBase::DidSetStyleContext();
++
++  mSVGFont = nsnull;
++
+   ClearTextRun();
+   NotifyGlyphMetricsChange();
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsSVGGlyphFrame::SetSelected(nsPresContext* aPresContext,
+@@ -1206,16 +1211,47 @@
+   // Since SVG has its own scaling, we really don't want
+   // fonts in SVG to respond to the browser's "TextZoom"
+   // (Ctrl++,Ctrl+-)
+   nsPresContext *presContext = PresContext();
+   float textZoom = presContext->TextZoom();
+   double size =
+     presContext->AppUnitsToFloatCSSPixels(fontData->mSize) / textZoom;
+ 
++  // check if this is an SVG font
++  nsAutoString family;
++  font.GetFirstFamily(family);
++  nsCOMPtr<nsIDOMDocument> domDoc =
++    do_QueryInterface(mContent->GetCurrentDoc());
++  nsCOMPtr<nsIDOMNodeList> svgFonts;
++  domDoc->GetElementsByTagNameNS(NS_LITERAL_STRING("http://www.w3.org/2000/svg"),
++                                 NS_LITERAL_STRING("font-face"),
++                                 getter_AddRefs(svgFonts));
++  if (svgFonts) {
++    PRUint32 numFonts;
++    svgFonts->GetLength(&numFonts);
++    for (PRUint32 i = 0; i < numFonts; i++) {
++      nsCOMPtr<nsIDOMNode> node;
++      svgFonts->Item(i, getter_AddRefs(node));
++      nsCOMPtr<nsIContent> element = do_QueryInterface(node);
++      if (element) {
++        nsAutoString name;
++        element->GetAttr(kNameSpaceID_None, nsGkAtoms::font_family, name);
++        if (name.Equals(family)) {
++          if (element->GetParent() &&
++              element->GetParent()->Tag() == nsGkAtoms::font) {
++            mSVGFont = do_GetWeakReference(element->GetParent());
++            mSize = size;
++          }
++        }
++      }
++    }
++  }
++
++
+   double textRunSize;
+   if (mTextRun) {
+     textRunSize = mTextRun->GetFontGroup()->GetStyle()->size;
+   } else {
+     nsAutoString text;
+     if (!GetCharacterData(text))
+       return PR_FALSE;
+ 

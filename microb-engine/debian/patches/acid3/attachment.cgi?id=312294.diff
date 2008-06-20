@@ -1,0 +1,117 @@
+# https://bugzilla.mozilla.org/show_bug.cgi?id=118704
+Index: mozilla/content/html/content/src/nsHTMLTitleElement.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/content/html/content/src/nsHTMLTitleElement.cpp,v
+retrieving revision 1.52
+diff -u -p -d -8 -r1.52 nsHTMLTitleElement.cpp
+--- mozilla/content/html/content/src/nsHTMLTitleElement.cpp	20 Aug 2007 22:55:07 -0000	1.52
++++ mozilla/content/html/content/src/nsHTMLTitleElement.cpp	28 Mar 2008 16:11:07 -0000
+@@ -33,24 +33,26 @@
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ #include "nsIDOMHTMLTitleElement.h"
+ #include "nsIDOMEventTarget.h"
+ #include "nsGenericHTMLElement.h"
+ #include "nsStyleConsts.h"
++#include "nsStubMutationObserver.h"
+ #include "nsPresContext.h"
+ #include "nsIDOMText.h"
+ #include "nsIDocument.h"
+ #include "nsIDOMHTMLDocument.h"
+ 
+ 
+ class nsHTMLTitleElement : public nsGenericHTMLElement,
+-                           public nsIDOMHTMLTitleElement
++                           public nsIDOMHTMLTitleElement,
++                           public nsStubMutationObserver
+ {
+ public:
+   nsHTMLTitleElement(nsINodeInfo *aNodeInfo);
+   virtual ~nsHTMLTitleElement();
+ 
+   // nsISupports
+   NS_DECL_ISUPPORTS_INHERITED
+ 
+@@ -61,40 +63,45 @@ public:
+   NS_FORWARD_NSIDOMELEMENT(nsGenericHTMLElement::)
+ 
+   // nsIDOMHTMLElement
+   NS_FORWARD_NSIDOMHTMLELEMENT(nsGenericHTMLElement::)
+ 
+   // nsIDOMHTMLTitleElement
+   NS_DECL_NSIDOMHTMLTITLEELEMENT
+ 
++  // nsIMutationObserver
++  NS_DECL_NSIMUTATIONOBSERVER_CHARACTERDATACHANGED
++
+   virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const;
+ };
+ 
+ 
+ NS_IMPL_NS_NEW_HTML_ELEMENT(Title)
+ 
+ 
+ nsHTMLTitleElement::nsHTMLTitleElement(nsINodeInfo *aNodeInfo)
+   : nsGenericHTMLElement(aNodeInfo)
+ {
++  AddMutationObserver(this);
+ }
+ 
+ nsHTMLTitleElement::~nsHTMLTitleElement()
+ {
+ }
+ 
+ 
+ NS_IMPL_ADDREF_INHERITED(nsHTMLTitleElement, nsGenericElement) 
+ NS_IMPL_RELEASE_INHERITED(nsHTMLTitleElement, nsGenericElement) 
+ 
+ 
+ // QueryInterface implementation for nsHTMLTitleElement
+ NS_HTML_CONTENT_INTERFACE_TABLE_HEAD(nsHTMLTitleElement, nsGenericHTMLElement)
+-  NS_INTERFACE_TABLE_INHERITED1(nsHTMLTitleElement, nsIDOMHTMLTitleElement)
++  NS_INTERFACE_TABLE_INHERITED2(nsHTMLTitleElement, nsIDOMHTMLTitleElement,
++                                                    nsIMutationObserver)
+ NS_HTML_CONTENT_INTERFACE_TABLE_TAIL_CLASSINFO(HTMLTitleElement)
+ 
+ 
+ NS_IMPL_ELEMENT_CLONE(nsHTMLTitleElement)
+ 
+ 
+ NS_IMETHODIMP 
+ nsHTMLTitleElement::GetText(nsAString& aTitle)
+@@ -102,16 +109,28 @@ nsHTMLTitleElement::GetText(nsAString& a
+   nsContentUtils::GetNodeTextContent(this, PR_FALSE, aTitle);
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP 
+ nsHTMLTitleElement::SetText(const nsAString& aTitle)
+ {
+-  nsCOMPtr<nsIDOMHTMLDocument> htmlDoc(do_QueryInterface(GetCurrentDoc()));
+-
+-  if (htmlDoc) {
+-    htmlDoc->SetTitle(aTitle);
+-  }   
++  /* Don't worry. document title will change, magically. */
+ 
+   return nsContentUtils::SetNodeTextContent(this, aTitle, PR_TRUE);
+ }
++
++void
++nsHTMLTitleElement::CharacterDataChanged(nsIDocument* aDocument,
++                                         nsIContent* aContent,
++                                         CharacterDataChangeInfo* aInfo)
++{
++  if (nsContentUtils::IsInSameAnonymousTree(this, aContent)) {
++    nsAutoString title(EmptyString());
++    GetText(title);
++
++    /* set document title. */
++    nsCOMPtr<nsIDOMHTMLDocument> htmlDoc(do_QueryInterface(GetCurrentDoc()));
++    if (htmlDoc)
++      htmlDoc->SetTitle(title);
++  }
++}

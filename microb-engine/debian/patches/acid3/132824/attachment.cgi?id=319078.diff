@@ -1,0 +1,54 @@
+diff -r 2f79800c3bcb content/base/src/nsNodeIterator.cpp
+--- a/content/base/src/nsNodeIterator.cpp	Fri May 02 11:19:18 2008 -0400
++++ b/content/base/src/nsNodeIterator.cpp	Fri May 02 16:56:10 2008 -0400
+@@ -330,6 +330,23 @@
+     return NS_OK;
+ }
+ 
++/* readonly attribute nsIDOMNode referenceNode; */
++NS_IMETHODIMP nsNodeIterator::GetReferenceNode(nsIDOMNode * *aRefNode)
++{
++    if (mPointer.mNode)
++        return CallQueryInterface(mPointer.mNode, aRefNode);
++
++    *aRefNode = nsnull;
++    return NS_OK;
++}
++
++/* readonly attribute boolean pointerBeforeReferenceNode; */
++NS_IMETHODIMP nsNodeIterator::GetPointerBeforeReferenceNode(PRBool *aBeforeNode)
++{
++    *aBeforeNode = mPointer.mBeforeNode;
++    return NS_OK;
++}
++
+ /*
+  * nsNodeIterator helper functions
+  */
+diff -r 2f79800c3bcb content/base/src/nsNodeIterator.h
+--- a/content/base/src/nsNodeIterator.h	Fri May 02 11:19:18 2008 -0400
++++ b/content/base/src/nsNodeIterator.h	Fri May 02 16:56:10 2008 -0400
+@@ -85,10 +85,10 @@
+         void adjustAfterRemoval(nsINode *aRoot, nsINode *aContainer, nsIContent *aChild, PRInt32 aIndexInContainer);
+         void clear() { mNode = nsnull; }
+         nsCOMPtr<nsINode> mNode;
++        PRBool mBeforeNode;
+     private:
+         PRBool moveForward(nsINode *aRoot, nsINode *aParent, PRInt32 aChildNum);
+         void moveBackward(nsINode *aParent, PRInt32 aChildNum);
+-        PRBool mBeforeNode;
+     };
+ 
+     PRBool mDetached;
+diff -r 2f79800c3bcb dom/public/idl/traversal/nsIDOMNodeIterator.idl
+--- a/dom/public/idl/traversal/nsIDOMNodeIterator.idl	Fri May 02 11:19:18 2008 -0400
++++ b/dom/public/idl/traversal/nsIDOMNodeIterator.idl	Fri May 02 16:56:10 2008 -0400
+@@ -56,4 +56,8 @@
+   nsIDOMNode         previousNode()
+                                         raises(DOMException);
+   void               detach();
++
++  // Webkit extensions, convenient for debugging.
++  readonly attribute nsIDOMNode referenceNode;
++  readonly attribute boolean    pointerBeforeReferenceNode;
+ };

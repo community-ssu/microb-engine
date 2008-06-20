@@ -1,0 +1,395 @@
+Implement media queries, part 3: infrastructure for dynamic change handling at the rule processor and style set level.  (Bug 156716)
+
+diff --git a/layout/style/nsCSSRuleProcessor.cpp b/layout/style/nsCSSRuleProcessor.cpp
+--- a/layout/style/nsCSSRuleProcessor.cpp
++++ b/layout/style/nsCSSRuleProcessor.cpp
+@@ -726,18 +726,19 @@ RuleCascadeData::AttributeListFor(nsIAto
+   return entry->mSelectors;
+ }
+ 
+ // -------------------------------
+ // CSS Style rule processor implementation
+ //
+ 
+ nsCSSRuleProcessor::nsCSSRuleProcessor(const nsCOMArray<nsICSSStyleSheet>& aSheets)
+-  : mSheets(aSheets),
+-    mRuleCascades(nsnull)
++  : mSheets(aSheets)
++  , mRuleCascades(nsnull)
++  , mLastPresContext(nsnull)
+ {
+   for (PRInt32 i = mSheets.Count() - 1; i >= 0; --i)
+     mSheets[i]->AddRuleProcessor(this);
+ }
+ 
+ nsCSSRuleProcessor::~nsCSSRuleProcessor()
+ {
+   for (PRInt32 i = mSheets.Count() - 1; i >= 0; --i)
+@@ -2049,16 +2050,26 @@ nsCSSRuleProcessor::HasAttributeDependen
+       entry->mSelectors->EnumerateForwards(AttributeEnumFunc, &data);
+     }
+   }
+ 
+   *aResult = data.change;
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsCSSRuleProcessor::MediumFeaturesChanged(nsPresContext* aPresContext,
++                                          PRBool* aRulesChanged)
++{
++  RuleCascadeData *old = mRuleCascades;
++  RefreshRuleCascade(aPresContext);
++  *aRulesChanged = (old != mRuleCascades);
++  return NS_OK;
++}
++
+ nsresult
+ nsCSSRuleProcessor::ClearRuleCascades()
+ {
+   RuleCascadeData *data = mRuleCascades;
+   mRuleCascades = nsnull;
+   while (data) {
+     RuleCascadeData *next = data->mNext;
+     delete data;
+@@ -2311,41 +2322,65 @@ FillWeightArray(PLDHashTable *table, PLD
+   data->mWeightArray[data->mIndex++] = entry->data;
+ 
+   return PL_DHASH_NEXT;
+ }
+ 
+ RuleCascadeData*
+ nsCSSRuleProcessor::GetRuleCascade(nsPresContext* aPresContext)
+ {
++  // If anything changes about the presentation context, we will be
++  // notified.  Otherwise, our cache is valid if mLastPresContext
++  // matches aPresContext.  (The only rule processors used for multiple
++  // pres contexts are for XBL.  These rule processors are probably less
++  // likely to have @media rules, and thus the cache is pretty likely to
++  // hit instantly even when we're switching between pres contexts.)
++
++  if (!mRuleCascades || aPresContext != mLastPresContext) {
++    RefreshRuleCascade(aPresContext);
++  }
++  mLastPresContext = aPresContext;
++
++  return mRuleCascades;
++}
++
++void
++nsCSSRuleProcessor::RefreshRuleCascade(nsPresContext* aPresContext)
++{
+   // Having RuleCascadeData objects be per-medium works for now since
+   // nsCSSRuleProcessor objects are per-document.  (For a given set
+   // of stylesheets they can vary based on medium (@media) or document
+   // (@-moz-document).)  Things will get a little more complicated if
+   // we implement media queries, though.
+ 
+   RuleCascadeData **cascadep = &mRuleCascades;
+   RuleCascadeData *cascade;
+   while ((cascade = *cascadep)) {
+-    if (cascade->mCacheKey.Matches(aPresContext))
+-      return cascade;
++    if (cascade->mCacheKey.Matches(aPresContext)) {
++      // Ensure that the current one is always mRuleCascades.
++      *cascadep = cascade->mNext;
++      cascade->mNext = mRuleCascades;
++      mRuleCascades = cascade;
++
++      return;
++    }
+     cascadep = &cascade->mNext;
+   }
+ 
+   if (mSheets.Count() != 0) {
+     nsAutoPtr<RuleCascadeData> newCascade(
+       new RuleCascadeData(aPresContext->Medium(),
+                           eCompatibility_NavQuirks == aPresContext->CompatibilityMode()));
+     if (newCascade) {
+       CascadeEnumData data(aPresContext, newCascade->mCacheKey,
+                            newCascade->mRuleHash.Arena());
+       if (!data.mRulesByWeight.ops)
+-        return nsnull;
++        return; /* out of memory */
+       if (!mSheets.EnumerateForwards(CascadeSheetRulesInto, &data))
+-        return nsnull;
++        return; /* out of memory */
+ 
+       // Sort the hash table of per-weight linked lists by weight.
+       PRUint32 weightCount = data.mRulesByWeight.entryCount;
+       nsAutoArrayPtr<PerWeightData> weightArray(new PerWeightData[weightCount]);
+       FillWeightArrayData fwData(weightArray);
+       PL_DHashTableEnumerate(&data.mRulesByWeight, FillWeightArray, &fwData);
+       NS_QuickSort(weightArray, weightCount, sizeof(PerWeightData),
+                    CompareWeightData, nsnull);
+@@ -2357,19 +2392,21 @@ nsCSSRuleProcessor::GetRuleCascade(nsPre
+       while (i > 0) {
+         --i;
+         // and the secondary sort is by order.  mRules are already backwards.
+         RuleValue *ruleValue = weightArray[i].mRules;
+         do {
+           // Calling |AddRule| reuses mNext!
+           RuleValue *next = ruleValue->mNext;
+           if (!AddRule(ruleValue, newCascade))
+-            return nsnull;
++            return; /* out of memory */
+           ruleValue = next;
+         } while (ruleValue);
+       }
+ 
+-      *cascadep = newCascade;
++      // Ensure that the current one is always mRuleCascades.
++      newCascade->mNext = mRuleCascades;
++      mRuleCascades = newCascade;
+       cascade = newCascade.forget();
+     }
+   }
+-  return cascade;
++  return;
+ }
+diff --git a/layout/style/nsCSSRuleProcessor.h b/layout/style/nsCSSRuleProcessor.h
+--- a/layout/style/nsCSSRuleProcessor.h
++++ b/layout/style/nsCSSRuleProcessor.h
+@@ -79,18 +79,26 @@ public:
+   NS_IMETHOD RulesMatching(PseudoRuleProcessorData* aData);
+ 
+   NS_IMETHOD HasStateDependentStyle(StateRuleProcessorData* aData,
+                                     nsReStyleHint* aResult);
+ 
+   NS_IMETHOD HasAttributeDependentStyle(AttributeRuleProcessorData* aData,
+                                         nsReStyleHint* aResult);
+ 
++  NS_IMETHOD MediumFeaturesChanged(nsPresContext* aPresContext,
++                                   PRBool* aRulesChanged);
++
+ protected:
+   RuleCascadeData* GetRuleCascade(nsPresContext* aPresContext);
++  void RefreshRuleCascade(nsPresContext* aPresContext);
+ 
+   // The sheet order here is the same as in nsStyleSet::mSheets
+   nsCOMArray<nsICSSStyleSheet> mSheets;
+ 
++  // active first, then cached (most recent first)
+   RuleCascadeData* mRuleCascades;
++
++  // The last pres context for which GetRuleCascades was called.
++  nsPresContext *mLastPresContext;
+ };
+ 
+ #endif /* nsCSSRuleProcessor_h_ */
+diff --git a/layout/style/nsHTMLCSSStyleSheet.cpp b/layout/style/nsHTMLCSSStyleSheet.cpp
+--- a/layout/style/nsHTMLCSSStyleSheet.cpp
++++ b/layout/style/nsHTMLCSSStyleSheet.cpp
+@@ -361,16 +361,18 @@ public:
+ 
+   NS_IMETHOD RulesMatching(PseudoRuleProcessorData* aData);
+ 
+   NS_IMETHOD HasStateDependentStyle(StateRuleProcessorData* aData,
+                                     nsReStyleHint* aResult);
+ 
+   NS_IMETHOD HasAttributeDependentStyle(AttributeRuleProcessorData* aData,
+                                         nsReStyleHint* aResult);
++  NS_IMETHOD MediumFeaturesChanged(nsPresContext* aPresContext,
++                                  PRBool* aResult);
+ 
+ #ifdef DEBUG
+   virtual void List(FILE* out = stdout, PRInt32 aIndent = 0) const;
+ #endif
+ 
+ private: 
+   // These are not supported and are not implemented! 
+   HTMLCSSStyleSheetImpl(const HTMLCSSStyleSheetImpl& aCopy); 
+@@ -487,16 +489,23 @@ NS_IMETHODIMP
+ NS_IMETHODIMP
+ HTMLCSSStyleSheetImpl::HasAttributeDependentStyle(AttributeRuleProcessorData* aData,
+                                                   nsReStyleHint* aResult)
+ {
+   *aResult = nsReStyleHint(0);
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++HTMLCSSStyleSheetImpl::MediumFeaturesChanged(nsPresContext* aPresContext,
++                                             PRBool* aRulesChanged)
++{
++  *aRulesChanged = PR_FALSE;
++  return NS_OK;
++}
+ 
+ 
+ NS_IMETHODIMP 
+ HTMLCSSStyleSheetImpl::Reset(nsIURI* aURL)
+ {
+   NS_IF_RELEASE(mURL);
+   mURL = aURL;
+   NS_ADDREF(mURL);
+diff --git a/layout/style/nsHTMLStyleSheet.cpp b/layout/style/nsHTMLStyleSheet.cpp
+--- a/layout/style/nsHTMLStyleSheet.cpp
++++ b/layout/style/nsHTMLStyleSheet.cpp
+@@ -557,16 +557,24 @@ nsHTMLStyleSheet::HasAttributeDependentS
+     *aResult = eReStyle_Self;
+     return NS_OK;
+   }
+ 
+   *aResult = nsReStyleHint(0);
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsHTMLStyleSheet::MediumFeaturesChanged(nsPresContext* aPresContext,
++                                        PRBool* aRulesChanged)
++{
++  *aRulesChanged = PR_FALSE;
++  return NS_OK;
++}
++
+ 
+ NS_IMETHODIMP
+ nsHTMLStyleSheet::RulesMatching(PseudoRuleProcessorData* aData)
+ {
+   nsIAtom* pseudoTag = aData->mPseudoTag;
+   if (pseudoTag == nsCSSAnonBoxes::tableCol) {
+     nsRuleWalker *ruleWalker = aData->mRuleWalker;
+     if (ruleWalker) {
+diff --git a/layout/style/nsHTMLStyleSheet.h b/layout/style/nsHTMLStyleSheet.h
+--- a/layout/style/nsHTMLStyleSheet.h
++++ b/layout/style/nsHTMLStyleSheet.h
+@@ -78,16 +78,18 @@ public:
+ 
+   // nsIStyleRuleProcessor API
+   NS_IMETHOD RulesMatching(ElementRuleProcessorData* aData);
+   NS_IMETHOD RulesMatching(PseudoRuleProcessorData* aData);
+   NS_IMETHOD HasStateDependentStyle(StateRuleProcessorData* aData,
+                                     nsReStyleHint* aResult);
+   NS_IMETHOD HasAttributeDependentStyle(AttributeRuleProcessorData* aData,
+                                         nsReStyleHint* aResult);
++  NS_IMETHOD MediumFeaturesChanged(nsPresContext* aPresContext,
++                                   PRBool* aRulesChanged);
+ 
+   nsresult Init(nsIURI* aURL, nsIDocument* aDocument);
+   nsresult Reset(nsIURI* aURL);
+   nsresult GetLinkColor(nscolor& aColor);
+   nsresult GetActiveLinkColor(nscolor& aColor);
+   nsresult GetVisitedLinkColor(nscolor& aColor);
+   nsresult SetLinkColor(nscolor aColor);
+   nsresult SetActiveLinkColor(nscolor aColor);
+diff --git a/layout/style/nsIStyleRuleProcessor.h b/layout/style/nsIStyleRuleProcessor.h
+--- a/layout/style/nsIStyleRuleProcessor.h
++++ b/layout/style/nsIStyleRuleProcessor.h
+@@ -235,14 +235,22 @@ public:
+   /**
+    * Return how (as described by nsReStyleHint) style can depend on the
+    * presence or value of the given attribute for the given content
+    * node.  This test is used for optimization only, and may err on the
+    * side of reporting more dependencies than really exist.
+    */
+   NS_IMETHOD HasAttributeDependentStyle(AttributeRuleProcessorData* aData,
+                                         nsReStyleHint* aResult) = 0;
++
++  /**
++   * Do any processing that needs to happen as a result of a change in
++   * the characteristics of the medium, and return whether this rule
++   * processor's rules have changed (e.g., because of media queries).
++   */
++  NS_IMETHOD MediumFeaturesChanged(nsPresContext* aPresContext,
++                                   PRBool* aRulesChanged) = 0;
+ };
+ 
+ NS_DEFINE_STATIC_IID_ACCESSOR(nsIStyleRuleProcessor,
+                               NS_ISTYLE_RULE_PROCESSOR_IID)
+ 
+ #endif /* nsIStyleRuleProcessor_h___ */
+diff --git a/layout/style/nsStyleSet.cpp b/layout/style/nsStyleSet.cpp
+--- a/layout/style/nsStyleSet.cpp
++++ b/layout/style/nsStyleSet.cpp
+@@ -17,16 +17,17 @@
+  * The Initial Developer of the Original Code is
+  * Netscape Communications Corporation.
+  * Portions created by the Initial Developer are Copyright (C) 1998
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
+  *   Daniel Glazman <glazman@netscape.com>
+  *   Brian Ryner    <bryner@brianryner.com>
++ *   L. David Baron <dbaron@dbaron.org>, Mozilla Corporation
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either of the GNU General Public License Version 2 or later (the "GPL"),
+  * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+@@ -949,8 +950,27 @@ nsStyleSet::HasAttributeDependentStyle(n
+     AttributeData data(aPresContext, aContent, aAttribute, aModType,
+                        aStateMask);
+     WalkRuleProcessors(SheetHasAttributeStyle, &data);
+     result = data.mHint;
+   }
+ 
+   return result;
+ }
++
++PRBool
++nsStyleSet::MediumFeaturesChanged(nsPresContext* aPresContext)
++{
++  // We can't use WalkRuleProcessors without a content node.
++  // XXX We don't notify mBindingManager.  Should we?
++  PRBool stylesChanged = PR_FALSE;
++  for (PRUint32 i = 0; i < NS_ARRAY_LENGTH(mRuleProcessors); ++i) {
++    nsIStyleRuleProcessor *processor = mRuleProcessors[i];
++    if (!processor) {
++      continue;
++    }
++    PRBool thisChanged = PR_FALSE;
++    processor->MediumFeaturesChanged(aPresContext, &thisChanged);
++    stylesChanged = stylesChanged || thisChanged;
++  }
++
++  return stylesChanged;
++}
+diff --git a/layout/style/nsStyleSet.h b/layout/style/nsStyleSet.h
+--- a/layout/style/nsStyleSet.h
++++ b/layout/style/nsStyleSet.h
+@@ -17,16 +17,17 @@
+  * The Initial Developer of the Original Code is
+  * Netscape Communications Corporation.
+  * Portions created by the Initial Developer are Copyright (C) 1998
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
+  *   Daniel Glazman <glazman@netscape.com>
+  *   Brian Ryner    <bryner@brianryner.com>
++ *   L. David Baron <dbaron@dbaron.org>, Mozilla Corporation
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either of the GNU General Public License Version 2 or later (the "GPL"),
+  * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+@@ -137,16 +138,23 @@ class nsStyleSet
+                                        PRInt32         aStateMask);
+ 
+   // Test if style is dependent on the presence of an attribute.
+   nsReStyleHint HasAttributeDependentStyle(nsPresContext* aPresContext,
+                                            nsIContent*    aContent,
+                                            nsIAtom*       aAttribute,
+                                            PRInt32        aModType,
+                                            PRUint32       aStateMask);
++
++  /*
++   * Do any processing that needs to happen as a result of a change in
++   * the characteristics of the medium, and return whether style rules
++   * may have changed as a result.
++   */
++  PRBool MediumFeaturesChanged(nsPresContext* aPresContext);
+ 
+   // APIs for registering objects that can supply additional
+   // rules during processing.
+   void SetBindingManager(nsBindingManager* aBindingManager)
+   {
+     mBindingManager = aBindingManager;
+   }
+ 

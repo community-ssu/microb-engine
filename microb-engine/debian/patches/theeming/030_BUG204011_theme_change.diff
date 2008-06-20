@@ -4,11 +4,11 @@ Index: mozilla/widget/src/gtk2/nsWindow.h
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.h
 +++ mozilla/widget/src/gtk2/nsWindow.h
-@@ -348,16 +348,17 @@
-    nsresult            UpdateTranslucentWindowAlphaInternal(const nsRect& aRect,
-                                                             PRUint8* aAlphas, PRInt32 aStride);
- 
+@@ -367,16 +367,17 @@
      gfxASurface       *GetThebesSurface();
+ 
+     static already_AddRefed<gfxASurface> GetSurfaceForGdkDrawable(GdkDrawable* aDrawable,
+                                                                   const nsSize& aSize);
  
  #ifdef ACCESSIBILITY
      static PRBool      sAccessibilityEnabled;
@@ -22,7 +22,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.h
      void              *SetupPluginPort(void);
      nsresult           SetWindowIconList(const nsCStringArray &aIconList);
      void               SetDefaultIcon(void);
-@@ -462,17 +463,16 @@
+@@ -482,17 +483,16 @@
          *flag |= mask;
      }
  
@@ -44,7 +44,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -245,16 +245,17 @@
+@@ -248,16 +248,17 @@
  static nsWindow         *gPluginFocusWindow    = NULL;
  
  static nsCOMPtr<nsIRollupListener> gRollupListener;
@@ -62,7 +62,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  static PRBool       gKeyEventCommitted = PR_FALSE;
  static PRBool       gKeyEventChanged = PR_FALSE;
  static PRBool       gIMESuppressCommit = PR_FALSE;
-@@ -317,16 +318,17 @@
+@@ -320,16 +321,17 @@
      mRetryPointerGrab    = PR_FALSE;
      mRetryKeyboardGrab   = PR_FALSE;
      mActivatePending     = PR_FALSE;
@@ -80,7 +80,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
          initialize_prefs();
      }
  
-@@ -425,16 +427,25 @@
+@@ -428,16 +430,25 @@
  
      LOG(("nsWindow::Destroy [%p]\n", (void *)this));
      mIsDestroyed = PR_TRUE;
@@ -106,7 +106,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
              gRollupListener->Rollup(nsnull);
          gRollupWindow = nsnull;
          gRollupListener = nsnull;
-@@ -3184,16 +3195,18 @@
+@@ -3288,16 +3299,18 @@
                                 "notify::gtk-theme-name",
                                 G_CALLBACK(theme_changed_cb), this);
          g_signal_connect_after(default_settings,
@@ -125,7 +125,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
                           G_CALLBACK(enter_notify_event_cb), NULL);
          g_signal_connect_after(G_OBJECT(mContainer), "leave_notify_event",
                           G_CALLBACK(leave_notify_event_cb), NULL);
-@@ -4753,22 +4766,35 @@
+@@ -4851,22 +4864,35 @@
      if (!window)
          return FALSE;
  

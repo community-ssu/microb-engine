@@ -114,3 +114,34 @@ BMO_attached/050_attachment.cgi?id=322579.diff
 # Workarround for hildon gconf proxy settings
 not_sorted/maemo_hacks/GConfProxySettings.diff
 
+
+
+acid3/attachment.cgi?id=312294.diff
+
+# Seems applied: acid3/attachment.cgi?id=323763.diff
+
+# Problems: acid3/attachment.cgi?id=275753.diff
+
+acid3/attachment.cgi?id=320264.diff
+
+acid3/attachment.cgi?id=320744.diff
+
+acid3/attachment.cgi?id=324804.diff
+
+acid3/attachment.cgi?id=251426.diff
+
+# Problems nsINodeIterator.h missing: acid3/attachment.cgi?id=320745.diff
+
+acid3/132824/attachment.cgi?id=316943.diff
+acid3/132824/attachment.cgi?id=319078.diff
+
+acid3/156716/1.attachment.cgi?id=325868.diff
+acid3/156716/2.attachment.cgi?id=325869.diff
+acid3/156716/3.attachment.cgi?id=325870.diff
+acid3/156716/4.attachment.cgi?id=325871.diff
+acid3/156716/5.attachment.cgi?id=325872.diff
+acid3/156716/6.attachment.cgi?id=325873.diff
+acid3/156716/7.attachment.cgi?id=325875.diff
+acid3/156716/8.attachment.cgi?id=325876.diff
+acid3/156716/9.attachment.cgi?id=325877.diff
+

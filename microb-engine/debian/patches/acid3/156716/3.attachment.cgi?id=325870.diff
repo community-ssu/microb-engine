@@ -1,0 +1,1925 @@
+Implement Media Queries.  (Bug 156716)
+
+Index: mozilla/content/base/src/nsGkAtomList.h
+===================================================================
+--- mozilla.orig/content/base/src/nsGkAtomList.h
++++ mozilla/content/base/src/nsGkAtomList.h
+@@ -99,16 +99,17 @@
+ GK_ATOM(_and, "and")
+ GK_ATOM(any, "any")
+ GK_ATOM(applet, "applet")
+ GK_ATOM(applyImports, "apply-imports")
+ GK_ATOM(applyTemplates, "apply-templates")
+ GK_ATOM(archive, "archive")
+ GK_ATOM(area, "area")
+ GK_ATOM(ascending, "ascending")
++GK_ATOM(aspectRatio, "aspect-ratio")
+ GK_ATOM(assign, "assign")
+ GK_ATOM(attribute, "attribute")
+ GK_ATOM(attributeSet, "attribute-set")
+ GK_ATOM(aural, "aural")
+ GK_ATOM(_auto, "auto")
+ GK_ATOM(autocheck, "autocheck")
+ GK_ATOM(autocomplete, "autocomplete")
+ GK_ATOM(autorepeatbutton, "autorepeatbutton")
+@@ -194,16 +195,17 @@
+ GK_ATOM(codebase, "codebase")
+ GK_ATOM(codetype, "codetype")
+ GK_ATOM(col, "col")
+ GK_ATOM(colgroup, "colgroup")
+ GK_ATOM(colGroupList, "ColGroup-list")
+ GK_ATOM(collapse, "collapse")
+ GK_ATOM(collapsed, "collapsed")
+ GK_ATOM(color, "color")
++GK_ATOM(colorIndex, "color-index")
+ GK_ATOM(cols, "cols")
+ GK_ATOM(colspan, "colspan")
+ GK_ATOM(column, "column")
+ GK_ATOM(columns, "columns")
+ GK_ATOM(combobox, "combobox")
+ GK_ATOM(command, "command")
+ GK_ATOM(commands, "commands")
+ GK_ATOM(commandset, "commandset")
+@@ -258,16 +260,19 @@
+ GK_ATOM(defaultvalue, "defaultvalue")
+ GK_ATOM(defer, "defer")
+ GK_ATOM(del, "del")
+ GK_ATOM(descendant, "descendant")
+ GK_ATOM(descendantOrSelf, "descendant-or-self")
+ GK_ATOM(descending, "descending")
+ GK_ATOM(description, "description")
+ GK_ATOM(destructor, "destructor")
++GK_ATOM(deviceAspectRatio, "device-aspect-ratio")
++GK_ATOM(deviceHeight, "device-height")
++GK_ATOM(deviceWidth, "device-width")
+ GK_ATOM(dfn, "dfn")
+ GK_ATOM(dialog, "dialog")
+ GK_ATOM(difference, "difference")
+ GK_ATOM(digit, "digit")
+ GK_ATOM(dir, "dir")
+ GK_ATOM(disableOutputEscaping, "disable-output-escaping")
+ GK_ATOM(disabled, "disabled")
+ GK_ATOM(display, "display")
+@@ -506,16 +511,17 @@
+ GK_ATOM(min, "min")
+ GK_ATOM(minheight, "minheight")
+ GK_ATOM(minpos, "minpos")
+ GK_ATOM(minusSign, "minus-sign")
+ GK_ATOM(minwidth, "minwidth")
+ GK_ATOM(mod, "mod")
+ GK_ATOM(mode, "mode")
+ GK_ATOM(modifiers, "modifiers")
++GK_ATOM(monochrome, "monochrome")
+ GK_ATOM(mousedown, "mousedown")
+ GK_ATOM(mousemove, "mousemove")
+ GK_ATOM(mouseout, "mouseout")
+ GK_ATOM(mouseover, "mouseover")
+ GK_ATOM(mousethrough, "mousethrough")
+ GK_ATOM(mouseup, "mouseup")
+ GK_ATOM(moz_opaque, "moz-opaque")
+ GK_ATOM(msthemecompatible, "msthemecompatible")
+@@ -599,16 +605,17 @@
+ GK_ATOM(onfocus, "onfocus")
+ GK_ATOM(onget, "onget")
+ GK_ATOM(oninput, "oninput")
+ GK_ATOM(onkeydown, "onkeydown")
+ GK_ATOM(onkeypress, "onkeypress")
+ GK_ATOM(onkeyup, "onkeyup")
+ GK_ATOM(onLoad, "onLoad")
+ GK_ATOM(onload, "onload")
++GK_ATOM(only, "only")               // this one is not an event
+ GK_ATOM(onmousedown, "onmousedown")
+ GK_ATOM(onmousemove, "onmousemove")
+ GK_ATOM(onmouseout, "onmouseout")
+ GK_ATOM(onmouseover, "onmouseover")
+ GK_ATOM(onmouseup, "onmouseup")
+ GK_ATOM(ononline, "ononline")
+ GK_ATOM(onoffline, "onoffline")
+ GK_ATOM(onoverflow, "onoverflow")
+@@ -633,16 +640,17 @@
+ GK_ATOM(onunload, "onunload")
+ GK_ATOM(open, "open")
+ GK_ATOM(optgroup, "optgroup")
+ GK_ATOM(option, "option")
+ GK_ATOM(_or, "or")
+ GK_ATOM(order, "order")
+ GK_ATOM(ordinal, "ordinal")
+ GK_ATOM(orient, "orient")
++GK_ATOM(orientation, "orientation")
+ GK_ATOM(otherwise, "otherwise")
+ GK_ATOM(output, "output")
+ GK_ATOM(overflow, "overflow")
+ GK_ATOM(overflowList, "Overflow-list")
+ GK_ATOM(overflowchanged, "overflowchanged")
+ GK_ATOM(overflowContainersList, "OverflowContainers-list")
+ GK_ATOM(overflowOutOfFlowList, "OverflowOutOfFlow-list")
+ GK_ATOM(overlay, "overlay")
+@@ -716,16 +724,17 @@
+ GK_ATOM(rel, "rel")
+ GK_ATOM(removeelement, "removeelement")
+ GK_ATOM(repeat, "repeat")
+ GK_ATOM(replace, "replace")
+ GK_ATOM(reset, "reset")
+ GK_ATOM(resizeafter, "resizeafter")
+ GK_ATOM(resizebefore, "resizebefore")
+ GK_ATOM(resizer, "resizer")
++GK_ATOM(resolution, "resolution")
+ GK_ATOM(resource, "resource")
+ GK_ATOM(resources, "resources")
+ GK_ATOM(result, "result")
+ GK_ATOM(resultPrefix, "result-prefix")
+ GK_ATOM(rev, "rev")
+ GK_ATOM(reverse, "reverse")
+ GK_ATOM(right, "right")
+ GK_ATOM(rightmargin, "rightmargin")
+@@ -735,16 +744,17 @@
+ GK_ATOM(row, "row")
+ GK_ATOM(rows, "rows")
+ GK_ATOM(rowspan, "rowspan")
+ GK_ATOM(rtl, "rtl")
+ GK_ATOM(rule, "rule")
+ GK_ATOM(rules, "rules")
+ GK_ATOM(s, "s")
+ GK_ATOM(samp, "samp")
++GK_ATOM(scan, "scan")
+ GK_ATOM(scheme, "scheme")
+ GK_ATOM(scope, "scope")
+ GK_ATOM(screen, "screen")
+ GK_ATOM(screenX, "screenX")
+ GK_ATOM(screenY, "screenY")
+ GK_ATOM(script, "script")
+ GK_ATOM(scriptEnabledBeforePrintPreview, "scriptEnabledBeforePrintPreview")
+ GK_ATOM(scrollbar, "scrollbar")
+Index: mozilla/dom/locales/en-US/chrome/layout/css.properties
+===================================================================
+--- mozilla.orig/dom/locales/en-US/chrome/layout/css.properties
++++ mozilla/dom/locales/en-US/chrome/layout/css.properties
+@@ -122,8 +122,13 @@
+ PEEndOfDeclEOF=end of declaration
+ PEImportantEOF=important
+ PEExpectedImportant=Expected 'important' but found '%1$S'.
+ PEBadDeclEnd=Expected ';' to terminate declaration but found '%1$S'.
+ PEBadDeclOrRuleEnd2=Expected ';' or '}' to terminate declaration but found '%1$S'.
+ PEInaccessibleProperty2=Cannot specify value for internal property.
+ PECommentEOF=end of comment
+ SEUnterminatedString=Found unclosed string '%1$S'.
++PEMQExpectedExpressionStart=Expected '(' to start media query expression but found '%1$S'.
++PEMQExpressionEOF=contents of media query expression
++PEMQExpectedFeatureName=Expected media feature name but found '%1$S'.
++PEMQExpectedFeatureNameEnd=Expected ':' or ')' after media feature name but found '%1$S'.
++PEMQExpectedFeatureValue=Found invalid value for media feature.
+Index: mozilla/layout/base/nsStyleConsts.h
+===================================================================
+--- mozilla.orig/layout/base/nsStyleConsts.h
++++ mozilla/layout/base/nsStyleConsts.h
+@@ -732,9 +732,21 @@
+ 
+ // color-interpolation and color-interpolation-filters
+ #define NS_STYLE_COLOR_INTERPOLATION_AUTO           0
+ #define NS_STYLE_COLOR_INTERPOLATION_SRGB           1
+ #define NS_STYLE_COLOR_INTERPOLATION_LINEARRGB      2
+ 
+ #endif // MOZ_SVG
+ 
++/*****************************************************************************
++ * Constants for media features.                                             *
++ *****************************************************************************/
++
++// orientation
++#define NS_STYLE_ORIENTATION_PORTRAIT           0
++#define NS_STYLE_ORIENTATION_LANDSCAPE          1
++
++// scan
++#define NS_STYLE_SCAN_PROGRESSIVE               0
++#define NS_STYLE_SCAN_INTERLACE                 1
++
+ #endif /* nsStyleConsts_h___ */
+Index: mozilla/layout/style/Makefile.in
+===================================================================
+--- mozilla.orig/layout/style/Makefile.in
++++ mozilla/layout/style/Makefile.in
+@@ -145,16 +145,17 @@
+ 		nsDOMCSSDeclaration.cpp \
+ 		nsDOMCSSRGBColor.cpp \
+ 		nsDOMCSSRect.cpp \
+ 		nsDOMCSSValueList.cpp \
+ 		nsHTMLCSSStyleSheet.cpp \
+ 		nsHTMLStyleSheet.cpp \
+ 		nsInspectorCSSUtils.cpp \
+ 		nsLayoutStylesheetCache.cpp \
++		nsMediaFeatures.cpp \
+ 		nsROCSSPrimitiveValue.cpp \
+ 		nsRuleNode.cpp \
+ 		nsStyleContext.cpp \
+ 		nsStyleCoord.cpp \
+ 		nsStyleSet.cpp \
+ 		nsStyleStruct.cpp \
+ 		nsStyleUtil.cpp \
+ 		$(NULL)
+Index: mozilla/layout/style/nsCSSDeclaration.h
+===================================================================
+--- mozilla.orig/layout/style/nsCSSDeclaration.h
++++ mozilla/layout/style/nsCSSDeclaration.h
+@@ -153,21 +153,23 @@
+ private:
+   // Not implemented, and not supported.
+   nsCSSDeclaration& operator=(const nsCSSDeclaration& aCopy);
+   PRBool operator==(const nsCSSDeclaration& aCopy) const;
+ 
+   static void AppendImportanceToString(PRBool aIsImportant, nsAString& aString);
+   // return whether there was a value in |aValue| (i.e., it had a non-null unit)
+   PRBool   AppendValueToString(nsCSSProperty aProperty, nsAString& aResult) const;
++public:
+   // return whether there was a value in |aValue| (i.e., it had a non-null unit)
+   static PRBool AppendCSSValueToString(nsCSSProperty aProperty,
+                                        const nsCSSValue& aValue,
+                                        nsAString& aResult);
+ 
++private:
+   // May be called only for properties whose type is eCSSType_Value.
+   nsresult GetValueOrImportantValue(nsCSSProperty aProperty, nsCSSValue& aValue) const;
+ 
+   void   PropertyIsSet(PRInt32 & aPropertyIndex, PRInt32 aIndex, PRUint32 & aSet, PRUint32 aValue) const;
+   PRBool TryBorderShorthand(nsAString & aString, PRUint32 aPropertiesSet,
+                             PRInt32 aBorderTopWidth,
+                             PRInt32 aBorderTopStyle,
+                             PRInt32 aBorderTopColor,
+Index: mozilla/layout/style/nsCSSKeywordList.h
+===================================================================
+--- mozilla.orig/layout/style/nsCSSKeywordList.h
++++ mozilla/layout/style/nsCSSKeywordList.h
+@@ -286,16 +286,17 @@
+ CSS_KEY(highlighttext, highlighttext)
+ CSS_KEY(hiragana, hiragana)
+ CSS_KEY(hiragana-iroha, hiragana_iroha)
+ CSS_KEY(horizontal, horizontal)
+ CSS_KEY(hz, hz)
+ CSS_KEY(icon, icon)
+ CSS_KEY(ignore, ignore)
+ CSS_KEY(in, in)
++CSS_KEY(interlace, interlace)
+ CSS_KEY(inactive, inactive)
+ CSS_KEY(inactiveborder, inactiveborder)
+ CSS_KEY(inactivecaption, inactivecaption)
+ CSS_KEY(inactivecaptiontext, inactivecaptiontext)
+ CSS_KEY(infobackground, infobackground)
+ CSS_KEY(infotext, infotext)
+ CSS_KEY(inherit, inherit)
+ CSS_KEY(inline, inline)
+@@ -367,16 +368,17 @@
+ CSS_KEY(padding-box, padding_box)
+ CSS_KEY(pc, pc)
+ CSS_KEY(physical, physical)
+ CSS_KEY(pointer, pointer)
+ CSS_KEY(portrait, portrait)
+ CSS_KEY(pre, pre)
+ CSS_KEY(pre-wrap, pre_wrap)
+ CSS_KEY(progress, progress)
++CSS_KEY(progressive, progressive)
+ CSS_KEY(pt, pt)
+ CSS_KEY(px, px)
+ CSS_KEY(rad, rad)
+ CSS_KEY(read-only, read_only)
+ CSS_KEY(read-write, read_write)
+ CSS_KEY(relative, relative)
+ CSS_KEY(repeat, repeat)
+ CSS_KEY(repeat-x, repeat_x)
+Index: mozilla/layout/style/nsCSSParser.cpp
+===================================================================
+--- mozilla.orig/layout/style/nsCSSParser.cpp
++++ mozilla/layout/style/nsCSSParser.cpp
+@@ -78,16 +78,72 @@
+ #include "nsIMediaList.h"
+ #include "nsILookAndFeel.h"
+ #include "nsStyleUtil.h"
+ #include "nsIPrincipal.h"
+ 
+ #include "prprf.h"
+ #include "math.h"
+ 
++// Flags for ParseVariant method
++#define VARIANT_KEYWORD         0x000001  // K
++#define VARIANT_LENGTH          0x000002  // L
++#define VARIANT_PERCENT         0x000004  // P
++#define VARIANT_COLOR           0x000008  // C eCSSUnit_Color, eCSSUnit_String (e.g.  "red")
++#define VARIANT_URL             0x000010  // U
++#define VARIANT_NUMBER          0x000020  // N
++#define VARIANT_INTEGER         0x000040  // I
++#define VARIANT_ANGLE           0x000080  // G
++#define VARIANT_FREQUENCY       0x000100  // F
++#define VARIANT_TIME            0x000200  // T
++#define VARIANT_STRING          0x000400  // S
++#define VARIANT_COUNTER         0x000800  //
++#define VARIANT_ATTR            0x001000  //
++#define VARIANT_IDENTIFIER      0x002000  // D
++#define VARIANT_AUTO            0x010000  // A
++#define VARIANT_INHERIT         0x020000  // H eCSSUnit_Initial, eCSSUnit_Inherit
++#define VARIANT_NONE            0x040000  // O
++#define VARIANT_NORMAL          0x080000  // M
++#define VARIANT_SYSFONT         0x100000  // eCSSUnit_System_Font
++
++// Common combinations of variants
++#define VARIANT_AL   (VARIANT_AUTO | VARIANT_LENGTH)
++#define VARIANT_LP   (VARIANT_LENGTH | VARIANT_PERCENT)
++#define VARIANT_AH   (VARIANT_AUTO | VARIANT_INHERIT)
++#define VARIANT_AHLP (VARIANT_AH | VARIANT_LP)
++#define VARIANT_AHI  (VARIANT_AH | VARIANT_INTEGER)
++#define VARIANT_AHK  (VARIANT_AH | VARIANT_KEYWORD)
++#define VARIANT_AHKLP (VARIANT_AHLP | VARIANT_KEYWORD)
++#define VARIANT_AUK  (VARIANT_AUTO | VARIANT_URL | VARIANT_KEYWORD)
++#define VARIANT_AHUK (VARIANT_AH | VARIANT_URL | VARIANT_KEYWORD)
++#define VARIANT_AHL  (VARIANT_AH | VARIANT_LENGTH)
++#define VARIANT_AHKL (VARIANT_AHK | VARIANT_LENGTH)
++#define VARIANT_HK   (VARIANT_INHERIT | VARIANT_KEYWORD)
++#define VARIANT_HKF  (VARIANT_HK | VARIANT_FREQUENCY)
++#define VARIANT_HKL  (VARIANT_HK | VARIANT_LENGTH)
++#define VARIANT_HKLP (VARIANT_HK | VARIANT_LP)
++#define VARIANT_HKLPO (VARIANT_HKLP | VARIANT_NONE)
++#define VARIANT_HL   (VARIANT_INHERIT | VARIANT_LENGTH)
++#define VARIANT_HI   (VARIANT_INHERIT | VARIANT_INTEGER)
++#define VARIANT_HLP  (VARIANT_HL | VARIANT_PERCENT)
++#define VARIANT_HLPN (VARIANT_HLP | VARIANT_NUMBER)
++#define VARIANT_HLPO (VARIANT_HLP | VARIANT_NONE)
++#define VARIANT_HTP  (VARIANT_INHERIT | VARIANT_TIME | VARIANT_PERCENT)
++#define VARIANT_HMK  (VARIANT_HK | VARIANT_NORMAL)
++#define VARIANT_HMKI (VARIANT_HMK | VARIANT_INTEGER)
++#define VARIANT_HC   (VARIANT_INHERIT | VARIANT_COLOR)
++#define VARIANT_HCK  (VARIANT_HK | VARIANT_COLOR)
++#define VARIANT_HUO  (VARIANT_INHERIT | VARIANT_URL | VARIANT_NONE)
++#define VARIANT_AHUO (VARIANT_AUTO | VARIANT_HUO)
++#define VARIANT_HPN  (VARIANT_INHERIT | VARIANT_PERCENT | VARIANT_NUMBER)
++#define VARIANT_HOK  (VARIANT_HK | VARIANT_NONE)
++#define VARIANT_HN   (VARIANT_INHERIT | VARIANT_NUMBER)
++#define VARIANT_HON  (VARIANT_HN | VARIANT_NONE)
++#define VARIANT_HOS  (VARIANT_INHERIT | VARIANT_NONE | VARIANT_STRING)
++
+ //----------------------------------------------------------------------
+ 
+ // Your basic top-down recursive descent style parser
+ class CSSParserImpl : public nsICSSParser {
+ public:
+   CSSParserImpl();
+   virtual ~CSSParserImpl();
+ 
+@@ -210,18 +266,20 @@
+   PRBool PushGroup(nsICSSGroupRule* aRule);
+   void PopGroup(void);
+ 
+   PRBool ParseRuleSet(nsresult& aErrorCode, RuleAppendFunc aAppendFunc, void* aProcessData);
+   PRBool ParseAtRule(nsresult& aErrorCode, RuleAppendFunc aAppendFunc, void* aProcessData);
+   PRBool ParseCharsetRule(nsresult& aErrorCode, RuleAppendFunc aAppendFunc, void* aProcessData);
+   PRBool ParseImportRule(nsresult& aErrorCode, RuleAppendFunc aAppendFunc, void* aProcessData);
+   PRBool GatherURL(nsresult& aErrorCode, nsString& aURL);
++  // Callers must clear or throw out aMedia if GatherMedia returns false.
+   PRBool GatherMedia(nsresult& aErrorCode, nsMediaList* aMedia,
+                      PRUnichar aStopSymbol);
++  PRBool ParseMediaQueryExpression(nsresult& aErrorCode, nsMediaQuery* aQuery);
+   PRBool ProcessImport(nsresult& aErrorCode,
+                        const nsString& aURLSpec,
+                        nsMediaList* aMedia,
+                        RuleAppendFunc aAppendFunc,
+                        void* aProcessData);
+   PRBool ParseGroupRule(nsresult& aErrorCode, nsICSSGroupRule* aRule, RuleAppendFunc aAppendFunc, void* aProcessData);
+   PRBool ParseMediaRule(nsresult& aErrorCode, RuleAppendFunc aAppendFunc, void* aProcessData);
+   PRBool ParseMozDocumentRule(nsresult& aErrorCode, RuleAppendFunc aAppendFunc, void* aProcessData);
+@@ -1041,16 +1099,20 @@
+ {
+   // fake base URL since media lists don't have URLs in them
+   nsresult rv = InitScanner(aBuffer, aURL, aLineNumber, aURL, nsnull);
+   if (NS_FAILED(rv)) {
+     return rv;
+   }
+ 
+   if (!GatherMedia(rv, aMediaList, PRUnichar(0)) && !mHTMLMediaMode) {
++    // XXX Instead of clearing here, should we have been parsing into a
++    // fresh media list in the first place?
++    aMediaList->Clear();
++    aMediaList->SetNonEmpty(); // don't match anything
+     OUTPUT_ERROR();
+   }
+   CLEAR_ERROR();
+   ReleaseScanner();
+   return rv;
+ }
+ 
+ NS_IMETHODIMP
+@@ -1320,53 +1382,266 @@
+     aURL = mToken.mIdent;
+     if (ExpectSymbol(aErrorCode, ')', PR_TRUE)) {
+       return PR_TRUE;
+     }
+   }
+   return PR_FALSE;
+ }
+ 
++// Callers must clear or throw out aMedia if GatherMedia returns false.
+ PRBool CSSParserImpl::GatherMedia(nsresult& aErrorCode,
+                                   nsMediaList* aMedia,
+                                   PRUnichar aStopSymbol)
+ {
++  // "If the comma-separated list is the empty list it is assumed to
++  // specify the media query ‘all’."  (css3-mediaqueries, section
++  // "Media Queries")
++  if (!GetToken(aErrorCode, PR_TRUE)) {
++    // expected termination by EOF
++    if (aStopSymbol == PRUnichar(0))
++      return PR_TRUE;
++
++    // unexpected termination by EOF; if we were looking for a
++    // semicolon, return true anyway, for the same reason this is
++    // done by ExpectSymbol().
++    REPORT_UNEXPECTED_EOF(PEGatherMediaEOF);
++    return aStopSymbol == PRUnichar(';');
++  }
++
++  if (eCSSToken_Symbol == mToken.mType &&
++      mToken.mSymbol == aStopSymbol) {
++    UngetToken();
++    return PR_TRUE;
++  }
++  UngetToken();
++  aMedia->SetNonEmpty();
++
+   for (;;) {
+-    if (!GetToken(aErrorCode, PR_TRUE)) {
+-      REPORT_UNEXPECTED_EOF(PEGatherMediaEOF);
+-      break;
++    nsAutoPtr<nsMediaQuery> queryHolder(new nsMediaQuery);
++    if (!queryHolder) {
++      aErrorCode = NS_ERROR_OUT_OF_MEMORY;
++      return PR_FALSE;
+     }
+-    if (eCSSToken_Ident != mToken.mType) {
+-      REPORT_UNEXPECTED_TOKEN(PEGatherMediaNotIdent);
+-      UngetToken();
+-      break;
++    nsMediaQuery *query = queryHolder;
++
++    if (ExpectSymbol(aErrorCode, '(', PR_TRUE)) {
++      // we got an expression without a media type
++      UngetToken(); // so ParseMediaQueryExpression can handle it
++      query->SetType(nsGkAtoms::all);
++      query->SetTypeOmitted();
++      // Just parse the first expression here.
++      if (!ParseMediaQueryExpression(aErrorCode, query)) {
++        OUTPUT_ERROR();
++        query->SetHadUnknownExpression();
++      }
++    } else {
++      nsCOMPtr<nsIAtom> mediaType;
++      PRBool gotNotOrOnly = PR_FALSE;
++      for (;;) {
++        if (!GetToken(aErrorCode, PR_TRUE)) {
++          REPORT_UNEXPECTED_EOF(PEGatherMediaEOF);
++          return PR_FALSE;
++        }
++        if (eCSSToken_Ident != mToken.mType) {
++          REPORT_UNEXPECTED_TOKEN(PEGatherMediaNotIdent);
++          UngetToken();
++          return PR_FALSE;
++        }
++        // case insensitive from CSS - must be lower cased
++        ToLowerCase(mToken.mIdent);
++        mediaType = do_GetAtom(mToken.mIdent);
++        if (gotNotOrOnly ||
++            (mediaType != nsGkAtoms::_not && mediaType != nsGkAtoms::only))
++          break;
++        gotNotOrOnly = PR_TRUE;
++        if (mediaType == nsGkAtoms::_not)
++          query->SetNegated();
++        else
++          query->SetHasOnly();
++      }
++      query->SetType(mediaType);
+     }
+-    ToLowerCase(mToken.mIdent);  // case insensitive from CSS - must be lower cased
+-    nsCOMPtr<nsIAtom> medium = do_GetAtom(mToken.mIdent);
+-    aMedia->AppendAtom(medium);
+ 
+-    if (!GetToken(aErrorCode, PR_TRUE)) {
+-      if (aStopSymbol == PRUnichar(0))
++    // In terms of error handling, it doesn't really matter when we
++    // append this, since aMedia's contents get dropped entirely
++    // whenever there is an error.
++    nsresult rv = aMedia->AppendQuery(query);
++    if (NS_FAILED(rv)) {
++      aErrorCode = rv;
++      return PR_FALSE;
++    }
++    queryHolder.forget(); // aMedia now owns query
++
++    for (;;) {
++      if (!GetToken(aErrorCode, PR_TRUE)) {
++        // expected termination by EOF
++        if (aStopSymbol == PRUnichar(0))
++          return PR_TRUE;
++
++        // unexpected termination by EOF; if we were looking for a
++        // semicolon, return true anyway, for the same reason this is
++        // done by ExpectSymbol().
++        REPORT_UNEXPECTED_EOF(PEGatherMediaEOF);
++        return aStopSymbol == PRUnichar(';');
++      }
++
++      if (eCSSToken_Symbol == mToken.mType &&
++          mToken.mSymbol == aStopSymbol) {
++        UngetToken();
+         return PR_TRUE;
+-      REPORT_UNEXPECTED_EOF(PEGatherMediaEOF);
+-      break;
++      }
++      if (eCSSToken_Symbol == mToken.mType && mToken.mSymbol == ',') {
++        // Done with the expressions for this query
++        break;
++      }
++      if (eCSSToken_Ident != mToken.mType ||
++          !mToken.mIdent.LowerCaseEqualsLiteral("and")) {
++        REPORT_UNEXPECTED_TOKEN(PEGatherMediaNotComma);
++        UngetToken();
++        return PR_FALSE;
++      }
++      if (!ParseMediaQueryExpression(aErrorCode, query)) {
++        OUTPUT_ERROR();
++        query->SetHadUnknownExpression();
++      }
+     }
++  }
++  NS_NOTREACHED("unreachable code");
++  return PR_FALSE; // keep the compiler happy
++}
+ 
+-    if (eCSSToken_Symbol == mToken.mType &&
+-        mToken.mSymbol == aStopSymbol) {
+-      UngetToken();
+-      return PR_TRUE;
+-    } else if (eCSSToken_Symbol != mToken.mType ||
+-               mToken.mSymbol != ',') {
+-      REPORT_UNEXPECTED_TOKEN(PEGatherMediaNotComma);
+-      UngetToken();
++PRBool CSSParserImpl::ParseMediaQueryExpression(nsresult& aErrorCode, nsMediaQuery* aQuery)
++{
++  if (!ExpectSymbol(aErrorCode, '(', PR_TRUE)) {
++    REPORT_UNEXPECTED_TOKEN(PEMQExpectedExpressionStart);
++    return PR_FALSE;
++  }
++  if (! GetToken(aErrorCode, PR_TRUE)) {
++    REPORT_UNEXPECTED_EOF(PEMQExpressionEOF);
++    return PR_FALSE;
++  }
++  if (eCSSToken_Ident != mToken.mType) {
++    REPORT_UNEXPECTED_TOKEN(PEMQExpectedFeatureName);
++    SkipUntil(aErrorCode, ')');
++    return PR_FALSE;
++  }
++
++  nsMediaExpression *expr = aQuery->NewExpression();
++  if (!expr) {
++    aErrorCode = NS_ERROR_OUT_OF_MEMORY;
++    SkipUntil(aErrorCode, ')');
++    return PR_FALSE;
++  }
++
++  // case insensitive from CSS - must be lower cased
++  ToLowerCase(mToken.mIdent);
++  const PRUnichar *featureString;
++  if (StringBeginsWith(mToken.mIdent, NS_LITERAL_STRING("min-"))) {
++    expr->mRange = nsMediaExpression::eMin;
++    featureString = mToken.mIdent.get() + 4;
++  } else if (StringBeginsWith(mToken.mIdent, NS_LITERAL_STRING("max-"))) {
++    expr->mRange = nsMediaExpression::eMax;
++    featureString = mToken.mIdent.get() + 4;
++  } else {
++    expr->mRange = nsMediaExpression::eEqual;
++    featureString = mToken.mIdent.get();
++  }
++
++  nsCOMPtr<nsIAtom> mediaFeatureAtom = do_GetAtom(featureString);
++  const nsMediaFeature *feature = nsMediaFeatures::features;
++  for (; feature->mName; ++feature) {
++    if (*(feature->mName) == mediaFeatureAtom) {
+       break;
+     }
+   }
+-  return PR_FALSE;
++  if (!feature->mName ||
++      (expr->mRange != nsMediaExpression::eEqual &&
++       feature->mRangeType != nsMediaFeature::eMinMaxAllowed)) {
++    REPORT_UNEXPECTED_TOKEN(PEMQExpectedFeatureName);
++    SkipUntil(aErrorCode, ')');
++    return PR_FALSE;
++  }
++  expr->mFeature = feature;
++
++  if (! GetToken(aErrorCode, PR_TRUE)) {
++    REPORT_UNEXPECTED_EOF(PEMQExpressionEOF);
++    return PR_FALSE;
++  }
++  if (eCSSToken_Symbol != mToken.mType ||
++      (mToken.mSymbol != PRUnichar(':') && mToken.mSymbol != PRUnichar(')'))) {
++    REPORT_UNEXPECTED_TOKEN(PEMQExpectedFeatureNameEnd);
++    SkipUntil(aErrorCode, ')');
++    return PR_FALSE;
++  }
++
++  if (mToken.mSymbol == PRUnichar(')')) {
++    // All query expressions can be given without a value.
++    expr->mValue.Reset();
++    return PR_TRUE;
++  }
++
++  PRBool rv;
++  switch (feature->mValueType) {
++    case nsMediaFeature::eLength:
++      rv = ParsePositiveVariant(aErrorCode, expr->mValue,
++                                VARIANT_LENGTH, nsnull);
++      break;
++    case nsMediaFeature::eInteger:
++      rv = ParsePositiveVariant(aErrorCode, expr->mValue,
++                                VARIANT_INTEGER, nsnull);
++      break;
++    case nsMediaFeature::eIntRatio:
++      {
++        // XXX This allows whitespace around the '/'.  The spec isn't
++        // clear on whether we should.
++        nsRefPtr<nsCSSValue::Array> a = nsCSSValue::Array::Create(2);
++        if (!a) {
++          aErrorCode = NS_ERROR_OUT_OF_MEMORY;
++          SkipUntil(aErrorCode, ')');
++          return PR_FALSE;
++        }
++        expr->mValue.SetArrayValue(a, eCSSUnit_Array);
++        // We don't bother with ParsePositiveVariant since we have to
++        // check for != 0 as well; no need to worry about the UngetToken
++        // since we're throwing out up to the next ')' anyway.
++        rv = ParseVariant(aErrorCode, a->Item(0), VARIANT_INTEGER, nsnull) &&
++             a->Item(0).GetIntValue() > 0 &&
++             ExpectSymbol(aErrorCode, '/', PR_TRUE) &&
++             ParseVariant(aErrorCode, a->Item(1), VARIANT_INTEGER, nsnull) &&
++             a->Item(1).GetIntValue() > 0;
++      }
++      break;
++    case nsMediaFeature::eResolution:
++      rv = GetToken(aErrorCode, PR_TRUE) && mToken.IsDimension() &&
++           mToken.mIntegerValid && mToken.mNumber > 0.0f;
++      if (rv) {
++        // No worries about whether unitless zero is allowed, since the
++        // value must be positive (and we checked that above).
++        NS_ASSERTION(!mToken.mIdent.IsEmpty(), "IsDimension lied");
++        if (mToken.mIdent.LowerCaseEqualsLiteral("dpi")) {
++          expr->mValue.SetFloatValue(mToken.mNumber, eCSSUnit_Inch);
++        } else if (mToken.mIdent.LowerCaseEqualsLiteral("dpcm")) {
++          expr->mValue.SetFloatValue(mToken.mNumber, eCSSUnit_Centimeter);
++        } else {
++          rv = PR_FALSE;
++        }
++      }
++      break;
++    case nsMediaFeature::eEnumerated:
++      rv = ParseVariant(aErrorCode, expr->mValue, VARIANT_KEYWORD,
++                        feature->mKeywordTable);
++      break;
++  }
++  if (!rv) {
++    REPORT_UNEXPECTED(PEMQExpectedFeatureValue);
++    return PR_FALSE;
++  }
++
++  return ExpectSymbol(aErrorCode, ')', PR_TRUE);
+ }
+ 
+ // Parse a CSS2 import rule: "@import STRING | URL [medium [, medium]]"
+ PRBool CSSParserImpl::ParseImportRule(nsresult& aErrorCode, RuleAppendFunc aAppendFunc, void* aData)
+ {
+   nsCOMPtr<nsMediaList> media = new nsMediaList();
+   if (!media) {
+     aErrorCode = NS_ERROR_OUT_OF_MEMORY;
+@@ -3623,72 +3898,16 @@
+         *aChanged = PR_TRUE;
+       delete *dest;
+       *dest = *source;
+       *source = nsnull;
+     } break;
+   }
+ }
+ 
+-// Flags for ParseVariant method
+-#define VARIANT_KEYWORD         0x000001  // K
+-#define VARIANT_LENGTH          0x000002  // L
+-#define VARIANT_PERCENT         0x000004  // P
+-#define VARIANT_COLOR           0x000008  // C eCSSUnit_Color, eCSSUnit_String (e.g.  "red")
+-#define VARIANT_URL             0x000010  // U
+-#define VARIANT_NUMBER          0x000020  // N
+-#define VARIANT_INTEGER         0x000040  // I
+-#define VARIANT_ANGLE           0x000080  // G
+-#define VARIANT_FREQUENCY       0x000100  // F
+-#define VARIANT_TIME            0x000200  // T
+-#define VARIANT_STRING          0x000400  // S
+-#define VARIANT_COUNTER         0x000800  // 
+-#define VARIANT_ATTR            0x001000  //
+-#define VARIANT_IDENTIFIER      0x002000  // D
+-#define VARIANT_AUTO            0x010000  // A
+-#define VARIANT_INHERIT         0x020000  // H eCSSUnit_Initial, eCSSUnit_Inherit
+-#define VARIANT_NONE            0x040000  // O
+-#define VARIANT_NORMAL          0x080000  // M
+-#define VARIANT_SYSFONT         0x100000  // eCSSUnit_System_Font
+-
+-// Common combinations of variants
+-#define VARIANT_AL   (VARIANT_AUTO | VARIANT_LENGTH)
+-#define VARIANT_LP   (VARIANT_LENGTH | VARIANT_PERCENT)
+-#define VARIANT_AH   (VARIANT_AUTO | VARIANT_INHERIT)
+-#define VARIANT_AHLP (VARIANT_AH | VARIANT_LP)
+-#define VARIANT_AHI  (VARIANT_AH | VARIANT_INTEGER)
+-#define VARIANT_AHK  (VARIANT_AH | VARIANT_KEYWORD)
+-#define VARIANT_AHKLP (VARIANT_AHLP | VARIANT_KEYWORD)
+-#define VARIANT_AUK  (VARIANT_AUTO | VARIANT_URL | VARIANT_KEYWORD)
+-#define VARIANT_AHUK (VARIANT_AH | VARIANT_URL | VARIANT_KEYWORD)
+-#define VARIANT_AHL  (VARIANT_AH | VARIANT_LENGTH)
+-#define VARIANT_AHKL (VARIANT_AHK | VARIANT_LENGTH)
+-#define VARIANT_HK   (VARIANT_INHERIT | VARIANT_KEYWORD)
+-#define VARIANT_HKF  (VARIANT_HK | VARIANT_FREQUENCY)
+-#define VARIANT_HKL  (VARIANT_HK | VARIANT_LENGTH)
+-#define VARIANT_HKLP (VARIANT_HK | VARIANT_LP)
+-#define VARIANT_HKLPO (VARIANT_HKLP | VARIANT_NONE)
+-#define VARIANT_HL   (VARIANT_INHERIT | VARIANT_LENGTH)
+-#define VARIANT_HI   (VARIANT_INHERIT | VARIANT_INTEGER)
+-#define VARIANT_HLP  (VARIANT_HL | VARIANT_PERCENT)
+-#define VARIANT_HLPN (VARIANT_HLP | VARIANT_NUMBER)
+-#define VARIANT_HLPO (VARIANT_HLP | VARIANT_NONE)
+-#define VARIANT_HTP  (VARIANT_INHERIT | VARIANT_TIME | VARIANT_PERCENT)
+-#define VARIANT_HMK  (VARIANT_HK | VARIANT_NORMAL)
+-#define VARIANT_HMKI (VARIANT_HMK | VARIANT_INTEGER)
+-#define VARIANT_HC   (VARIANT_INHERIT | VARIANT_COLOR)
+-#define VARIANT_HCK  (VARIANT_HK | VARIANT_COLOR)
+-#define VARIANT_HUO  (VARIANT_INHERIT | VARIANT_URL | VARIANT_NONE)
+-#define VARIANT_AHUO (VARIANT_AUTO | VARIANT_HUO)
+-#define VARIANT_HPN  (VARIANT_INHERIT | VARIANT_PERCENT | VARIANT_NUMBER)
+-#define VARIANT_HOK  (VARIANT_HK | VARIANT_NONE)
+-#define VARIANT_HN   (VARIANT_INHERIT | VARIANT_NUMBER)
+-#define VARIANT_HON  (VARIANT_HN | VARIANT_NONE)
+-#define VARIANT_HOS  (VARIANT_INHERIT | VARIANT_NONE | VARIANT_STRING)
+-
+ static const nsCSSProperty kBorderTopIDs[] = {
+   eCSSProperty_border_top_width,
+   eCSSProperty_border_top_style,
+   eCSSProperty_border_top_color
+ };
+ static const nsCSSProperty kBorderRightIDs[] = {
+   eCSSProperty_border_right_width_value,
+   eCSSProperty_border_right_style_value,
+Index: mozilla/layout/style/nsCSSRuleProcessor.cpp
+===================================================================
+--- mozilla.orig/layout/style/nsCSSRuleProcessor.cpp
++++ mozilla/layout/style/nsCSSRuleProcessor.cpp
+@@ -2311,16 +2311,18 @@
+ nsCSSRuleProcessor::GetRuleCascade(nsPresContext* aPresContext)
+ {
+   // Having RuleCascadeData objects be per-medium works for now since
+   // nsCSSRuleProcessor objects are per-document.  (For a given set
+   // of stylesheets they can vary based on medium (@media) or document
+   // (@-moz-document).)  Things will get a little more complicated if
+   // we implement media queries, though.
+ 
++  // FIXME: per-medium caching is now invalid; fix using boundary
++  // conditions per feature
+   RuleCascadeData **cascadep = &mRuleCascades;
+   RuleCascadeData *cascade;
+   nsIAtom *medium = aPresContext->Medium();
+   while ((cascade = *cascadep)) {
+     if (cascade->mMedium == medium)
+       return cascade;
+     cascadep = &cascade->mNext;
+   }
+Index: mozilla/layout/style/nsCSSStyleSheet.cpp
+===================================================================
+--- mozilla.orig/layout/style/nsCSSStyleSheet.cpp
++++ mozilla/layout/style/nsCSSStyleSheet.cpp
+@@ -70,16 +70,18 @@
+ #include "nsICSSLoaderObserver.h"
+ #include "nsINameSpaceManager.h"
+ #include "nsXMLNameSpaceMap.h"
+ #include "nsCOMPtr.h"
+ #include "nsContentUtils.h"
+ #include "nsIJSContextStack.h"
+ #include "nsIScriptSecurityManager.h"
+ #include "mozAutoDocUpdate.h"
++#include "nsCSSDeclaration.h"
++#include "nsRuleNode.h"
+ 
+ // -------------------------------
+ // Style Rule List for the DOM
+ //
+ class CSSRuleListImpl : public nsIDOMCSSRuleList
+ {
+ public:
+   CSSRuleListImpl(nsCSSStyleSheet *aStyleSheet);
+@@ -158,47 +160,298 @@
+         result = NS_OK; // per spec: "Return Value ... null if ... not a valid index."
+       }
+     }
+   }
+   
+   return result;
+ }
+ 
++template <class Numeric>
++PRInt32 DoCompare(Numeric a, Numeric b)
++{
++  if (a == b)
++    return 0;
++  if (a < b)
++    return -1;
++  return 1;
++}
++
++PRBool
++nsMediaExpression::Matches(nsPresContext *aPresContext,
++                           const nsCSSValue& aActualValue) const
++{
++  const nsCSSValue& actual = aActualValue;
++  const nsCSSValue& required = mValue;
++
++  // If we don't have the feature, the match fails.
++  if (actual.GetUnit() == eCSSUnit_Null) {
++    return PR_FALSE;
++  }
++
++  // If the expression had no value to match, the match succeeds,
++  // unless the value is an integer 0.
++  if (required.GetUnit() == eCSSUnit_Null) {
++    return actual.GetUnit() != eCSSUnit_Integer ||
++           actual.GetIntValue() != 0;
++  }
++
++  NS_ASSERTION(mFeature->mRangeType == nsMediaFeature::eMinMaxAllowed ||
++               mRange == nsMediaExpression::eEqual, "yikes");
++  PRInt32 cmp; // -1 (actual < required)
++               //  0 (actual == required)
++               //  1 (actual > required)
++  switch (mFeature->mValueType) {
++    case nsMediaFeature::eLength:
++      {
++        NS_ASSERTION(actual.IsLengthUnit(), "bad actual value");
++        NS_ASSERTION(required.IsLengthUnit(), "bad required value");
++        nscoord actualCoord = nsRuleNode::CalcLengthWithInitialFont(
++                                aPresContext, actual);
++        nscoord requiredCoord = nsRuleNode::CalcLengthWithInitialFont(
++                                  aPresContext, required);
++        cmp = DoCompare(actualCoord, requiredCoord);
++      }
++      break;
++    case nsMediaFeature::eInteger:
++      {
++        NS_ASSERTION(actual.GetUnit() == eCSSUnit_Integer,
++                     "bad actual value");
++        NS_ASSERTION(required.GetUnit() == eCSSUnit_Integer,
++                     "bad required value");
++        cmp = DoCompare(actual.GetIntValue(), required.GetIntValue());
++      }
++      break;
++    case nsMediaFeature::eIntRatio:
++      {
++        NS_ASSERTION(actual.GetUnit() == eCSSUnit_Array &&
++                     actual.GetArrayValue()->Item(0).GetUnit() ==
++                       eCSSUnit_Integer &&
++                     actual.GetArrayValue()->Item(1).GetUnit() ==
++                       eCSSUnit_Integer,
++                     "bad actual value");
++        NS_ASSERTION(required.GetUnit() == eCSSUnit_Array &&
++                     required.GetArrayValue()->Item(0).GetUnit() ==
++                       eCSSUnit_Integer &&
++                     required.GetArrayValue()->Item(1).GetUnit() ==
++                       eCSSUnit_Integer,
++                     "bad required value");
++        // Convert to PRInt64 so we can multiply without worry
++        PRInt64 actualNum = actual.GetArrayValue()->Item(0).GetIntValue(),
++                actualDen = actual.GetArrayValue()->Item(1).GetIntValue(),
++                requiredNum = required.GetArrayValue()->Item(0).GetIntValue(),
++                requiredDen = required.GetArrayValue()->Item(1).GetIntValue();
++        cmp = DoCompare(actualNum * requiredDen, requiredNum * actualDen);
++      }
++      break;
++    case nsMediaFeature::eResolution:
++      {
++        NS_ASSERTION(actual.GetUnit() == eCSSUnit_Inch ||
++                     actual.GetUnit() == eCSSUnit_Centimeter,
++                     "bad actual value");
++        NS_ASSERTION(required.GetUnit() == eCSSUnit_Inch ||
++                     required.GetUnit() == eCSSUnit_Centimeter,
++                     "bad required value");
++        float actualDPI = actual.GetFloatValue();
++        if (actual.GetUnit() == eCSSUnit_Centimeter)
++          actualDPI = actualDPI * 2.54f;
++        float requiredDPI = required.GetFloatValue();
++        if (required.GetUnit() == eCSSUnit_Centimeter)
++          requiredDPI = requiredDPI * 2.54f;
++        cmp = DoCompare(actualDPI, requiredDPI);
++      }
++      break;
++    case nsMediaFeature::eEnumerated:
++      {
++        NS_ASSERTION(actual.GetUnit() == eCSSUnit_Enumerated,
++                     "bad actual value");
++        NS_ASSERTION(required.GetUnit() == eCSSUnit_Enumerated,
++                     "bad required value");
++        NS_ASSERTION(mFeature->mRangeType == nsMediaFeature::eMinMaxNotAllowed,
++                     "bad range"); // we asserted above about mRange
++        // We don't really need DoCompare, but it doesn't hurt (and
++        // maybe the compiler will condense this case with eInteger).
++        cmp = DoCompare(actual.GetIntValue(), required.GetIntValue());
++      }
++      break;
++  }
++  switch (mRange) {
++    case nsMediaExpression::eMin:
++      return cmp != -1;
++    case nsMediaExpression::eMax:
++      return cmp != 1;
++    case nsMediaExpression::eEqual:
++      return cmp == 0;
++  }
++  NS_NOTREACHED("unexpected mRange");
++  return PR_FALSE;
++}
++
++void
++nsMediaQuery::AppendToString(nsAString& aString) const
++{
++  nsAutoString buffer;
++
++  NS_ASSERTION(!mNegated || !mHasOnly, "can't have not and only");
++  NS_ASSERTION(!mTypeOmitted || (!mNegated && !mHasOnly),
++               "can't have not or only when type is omitted");
++  if (!mTypeOmitted) {
++    if (mNegated) {
++      aString.AppendLiteral("not ");
++    } else if (mHasOnly) {
++      aString.AppendLiteral("only ");
++    }
++    mMediaType->ToString(buffer);
++    aString.Append(buffer);
++    buffer.Truncate();
++  }
++
++  if (mHadUnknownExpression) {
++    // FIXME: I heard anne mention there was something specific we
++    // should do here.
++    if (!mTypeOmitted)
++      aString.AppendLiteral(" and ");
++    aString.AppendLiteral("(unknown-expression)");
++  } else {
++    for (PRUint32 i = 0, i_end = mExpressions.Length(); i < i_end; ++i) {
++      if (i > 0 || !mTypeOmitted)
++        aString.AppendLiteral(" and ");
++      aString.AppendLiteral("(");
++
++      const nsMediaExpression &expr = mExpressions[i];
++      if (expr.mRange == nsMediaExpression::eMin) {
++        aString.AppendLiteral("min-");
++      } else if (expr.mRange == nsMediaExpression::eMax) {
++        aString.AppendLiteral("max-");
++      }
++
++      const nsMediaFeature *feature = expr.mFeature;
++      (*feature->mName)->ToString(buffer);
++      aString.Append(buffer);
++      buffer.Truncate();
++
++      if (expr.mValue.GetUnit() != eCSSUnit_Null) {
++        aString.AppendLiteral(": ");
++        switch (feature->mValueType) {
++          case nsMediaFeature::eLength:
++            NS_ASSERTION(expr.mValue.IsLengthUnit(), "bad unit");
++            nsCSSDeclaration::AppendCSSValueToString(eCSSProperty_width,
++                                                     expr.mValue, aString);
++            break;
++          case nsMediaFeature::eInteger:
++            NS_ASSERTION(expr.mValue.GetUnit() == eCSSUnit_Integer,
++                         "bad unit");
++            nsCSSDeclaration::AppendCSSValueToString(eCSSProperty_z_index,
++                                                     expr.mValue, aString);
++            break;
++          case nsMediaFeature::eIntRatio:
++            {
++              NS_ASSERTION(expr.mValue.GetUnit() == eCSSUnit_Array,
++                           "bad unit");
++              nsCSSValue::Array *array = expr.mValue.GetArrayValue();
++              NS_ASSERTION(array->Item(0).GetUnit() == eCSSUnit_Integer,
++                           "bad unit");
++              NS_ASSERTION(array->Item(1).GetUnit() == eCSSUnit_Integer,
++                           "bad unit");
++              nsCSSDeclaration::AppendCSSValueToString(eCSSProperty_z_index,
++                                                       array->Item(0), aString);
++              aString.AppendLiteral("/");
++              nsCSSDeclaration::AppendCSSValueToString(eCSSProperty_z_index,
++                                                       array->Item(1), aString);
++            }
++            break;
++          case nsMediaFeature::eResolution:
++            buffer.AppendFloat(expr.mValue.GetFloatValue());
++            aString.Append(buffer);
++            buffer.Truncate();
++            if (expr.mValue.GetUnit() == eCSSUnit_Inch) {
++              aString.AppendLiteral("dpi");
++            } else {
++              NS_ASSERTION(expr.mValue.GetUnit() == eCSSUnit_Centimeter,
++                           "bad unit");
++              aString.AppendLiteral("dpcm");
++            }
++            break;
++          case nsMediaFeature::eEnumerated:
++            NS_ASSERTION(expr.mValue.GetUnit() == eCSSUnit_Enumerated,
++                         "bad unit");
++            AppendASCIItoUTF16(
++                nsCSSProps::ValueToKeyword(expr.mValue.GetIntValue(),
++                                           feature->mKeywordTable),
++                aString);
++            break;
++        }
++      }
++
++      aString.AppendLiteral(")");
++    }
++  }
++}
++
++nsMediaQuery*
++nsMediaQuery::Clone() const
++{
++  nsAutoPtr<nsMediaQuery> result(new nsMediaQuery(*this));
++  NS_ENSURE_TRUE(result &&
++                   result->mExpressions.Length() == mExpressions.Length(),
++                 nsnull);
++  return result.forget();
++}
++
++PRBool
++nsMediaQuery::Matches(nsPresContext* aPresContext) const
++{
++  if (mHadUnknownExpression)
++    return mNegated; // FIXME: Editor's draft says PR_FALSE, but that
++                     // disagrees with Acid3 and is likely to change.
++
++  PRBool match =
++    mMediaType == aPresContext->Medium() || mMediaType == nsGkAtoms::all;
++  for (PRUint32 i = 0, i_end = mExpressions.Length(); match && i < i_end; ++i) {
++    const nsMediaExpression &expr = mExpressions[i];
++    nsCSSValue actual;
++    nsresult rv = (expr.mFeature->mGetter)(aPresContext, actual);
++    NS_ENSURE_SUCCESS(rv, PR_FALSE); // any better ideas?
++    match = expr.Matches(aPresContext, actual);
++  }
++
++  return match == !mNegated;
++}
++
+ NS_INTERFACE_MAP_BEGIN(nsMediaList)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMMediaList)
+   NS_INTERFACE_MAP_ENTRY(nsISupports)
+   NS_INTERFACE_MAP_ENTRY_CONTENT_CLASSINFO(MediaList)
+ NS_INTERFACE_MAP_END
+ 
+ NS_IMPL_ADDREF(nsMediaList)
+ NS_IMPL_RELEASE(nsMediaList)
+ 
+ 
+ nsMediaList::nsMediaList()
+-  : mStyleSheet(nsnull)
++  : mIsEmpty(PR_TRUE)
++  , mStyleSheet(nsnull)
+ {
+ }
+ 
+ nsMediaList::~nsMediaList()
+ {
+ }
+ 
+ nsresult
+ nsMediaList::GetText(nsAString& aMediaText)
+ {
+   aMediaText.Truncate();
+ 
+-  for (PRInt32 i = 0, i_end = mArray.Count(); i < i_end; ++i) {
+-    nsIAtom* medium = mArray[i];
+-    NS_ENSURE_TRUE(medium, NS_ERROR_FAILURE);
+-
+-    nsAutoString buffer;
+-    medium->ToString(buffer);
+-    aMediaText.Append(buffer);
++  for (PRInt32 i = 0, i_end = mArray.Length(); i < i_end; ++i) {
++    nsMediaQuery* query = mArray[i];
++    NS_ENSURE_TRUE(query, NS_ERROR_FAILURE);
++
++    query->AppendToString(aMediaText);
++
+     if (i + 1 < i_end) {
+       aMediaText.AppendLiteral(", ");
+     }
+   }
+ 
+   return NS_OK;
+ }
+ 
+@@ -219,47 +472,47 @@
+     domSheet->GetOwnerNode(getter_AddRefs(node));
+     htmlMode = !!node;
+   }
+ 
+   return parser->ParseMediaList(nsString(aMediaText), nsnull, 0,
+                                 this, htmlMode);
+ }
+ 
+-/*
+- * aMatch is true when we contain the desired medium or contain the
+- * "all" medium or contain no media at all, which is the same as
+- * containing "all"
+- */
+ PRBool
+ nsMediaList::Matches(nsPresContext* aPresContext)
+ {
+-  if (-1 != mArray.IndexOf(aPresContext->Medium()) ||
+-      -1 != mArray.IndexOf(nsGkAtoms::all))
+-    return PR_TRUE;
+-  return mArray.Count() == 0;
++  for (PRInt32 i = 0, i_end = mArray.Length(); i < i_end; ++i) {
++    if (mArray[i]->Matches(aPresContext)) {
++      return PR_TRUE;
++    }
++  }
++  return mIsEmpty;
+ }
+ 
+ nsresult
+ nsMediaList::SetStyleSheet(nsICSSStyleSheet *aSheet)
+ {
+   NS_ASSERTION(aSheet == mStyleSheet || !aSheet || !mStyleSheet,
+                "multiple style sheets competing for one media list");
+   mStyleSheet = static_cast<nsCSSStyleSheet*>(aSheet);
+   return NS_OK;
+ }
+ 
+ nsresult
+ nsMediaList::Clone(nsMediaList** aResult)
+ {
+   nsRefPtr<nsMediaList> result = new nsMediaList();
+-  if (!result)
+-    return NS_ERROR_OUT_OF_MEMORY;
+-  if (!result->mArray.AppendObjects(mArray))
++  if (!result || !result->mArray.AppendElements(mArray.Length()))
+     return NS_ERROR_OUT_OF_MEMORY;
++  for (PRInt32 i = 0, i_end = mArray.Length(); i < i_end; ++i) {
++    if (!(result->mArray[i] = mArray[i]->Clone())) {
++      return NS_ERROR_OUT_OF_MEMORY;
++    }
++  }
+   NS_ADDREF(*aResult = result);
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsMediaList::GetMediaText(nsAString& aMediaText)
+ {
+   return GetText(aMediaText);
+@@ -305,26 +558,30 @@
+   return rv;
+ }
+                                
+ NS_IMETHODIMP
+ nsMediaList::GetLength(PRUint32* aLength)
+ {
+   NS_ENSURE_ARG_POINTER(aLength);
+ 
+-  *aLength = mArray.Count();
++  *aLength = mArray.Length();
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsMediaList::Item(PRUint32 aIndex, nsAString& aReturn)
+ {
+   PRInt32 index = aIndex;
+   if (0 <= index && index < Count()) {
+-    MediumAt(aIndex)->ToString(aReturn);
++    nsMediaQuery* query = mArray[index];
++    NS_ENSURE_TRUE(query, NS_ERROR_FAILURE);
++
++    aReturn.Truncate();
++    query->AppendToString(aReturn);
+   } else {
+     SetDOMStringToNull(aReturn);
+   }
+ 
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+@@ -362,48 +619,62 @@
+ }
+ 
+ nsresult
+ nsMediaList::Delete(const nsAString& aOldMedium)
+ {
+   if (aOldMedium.IsEmpty())
+     return NS_ERROR_DOM_NOT_FOUND_ERR;
+ 
+-  nsCOMPtr<nsIAtom> old = do_GetAtom(aOldMedium);
+-  NS_ENSURE_TRUE(old, NS_ERROR_OUT_OF_MEMORY);
+-
+-  PRInt32 indx = mArray.IndexOf(old);
++  for (PRInt32 i = 0, i_end = mArray.Length(); i < i_end; ++i) {
++    nsMediaQuery* query = mArray[i];
++    NS_ENSURE_TRUE(query, NS_ERROR_FAILURE);
+ 
+-  if (indx < 0) {
+-    return NS_ERROR_DOM_NOT_FOUND_ERR;
++    nsAutoString buf;
++    query->AppendToString(buf);
++    if (buf == aOldMedium) {
++      mArray.RemoveElementAt(i);
++      return NS_OK;
++    }
+   }
+ 
+-  mArray.RemoveObjectAt(indx);
+-
+-  return NS_OK;
++  return NS_ERROR_DOM_NOT_FOUND_ERR;
+ }
+ 
+ nsresult
+ nsMediaList::Append(const nsAString& aNewMedium)
+ {
+   if (aNewMedium.IsEmpty())
+     return NS_ERROR_DOM_NOT_FOUND_ERR;
+ 
+-  nsCOMPtr<nsIAtom> media = do_GetAtom(aNewMedium);
+-  NS_ENSURE_TRUE(media, NS_ERROR_OUT_OF_MEMORY);
++  Delete(aNewMedium);
+ 
+-  PRInt32 indx = mArray.IndexOf(media);
+-
+-  if (indx >= 0) {
+-    mArray.RemoveObjectAt(indx);
++  nsresult rv = NS_OK;
++  nsTArray<nsAutoPtr<nsMediaQuery> > buf;
++#ifdef DEBUG
++  PRBool ok =
++#endif
++    mArray.SwapElements(buf);
++  NS_ASSERTION(ok, "SwapElements should never fail when neither array "
++                   "is an auto array");
++  SetText(aNewMedium);
++  if (mArray.Length() == 1) {
++    nsMediaQuery *query = mArray[0].forget();
++    if (!buf.AppendElement(query)) {
++      delete query;
++      rv = NS_ERROR_OUT_OF_MEMORY;
++    }
+   }
+-
+-  mArray.AppendObject(media);
+-
+-  return NS_OK;
++#ifdef DEBUG
++  ok =
++#endif
++    mArray.SwapElements(buf);
++  NS_ASSERTION(ok, "SwapElements should never fail when neither array "
++                   "is an auto array");
++  return rv;
+ }
+ 
+ // -------------------------------
+ // Imports Collection for the DOM
+ //
+ class CSSImportsCollectionImpl : public nsIDOMStyleSheetList
+ {
+ public:
+Index: mozilla/layout/style/nsIMediaList.h
+===================================================================
+--- mozilla.orig/layout/style/nsIMediaList.h
++++ mozilla/layout/style/nsIMediaList.h
+@@ -16,16 +16,17 @@
+  * The Original Code is mozilla.org code.
+  *
+  * The Initial Developer of the Original Code is
+  * Boris Zbarsky <bzbarsky@mit.edu>.
+  * Portions created by the Initial Developer are Copyright (C) 2001
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
++ *   L. David Baron <dbaron@dbaron.org>, Mozilla Corporation
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either of the GNU General Public License Version 2 or later (the "GPL"),
+  * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+@@ -41,49 +42,123 @@
+  * @media rules
+  */
+ 
+ #ifndef nsIMediaList_h_
+ #define nsIMediaList_h_
+ 
+ #include "nsIDOMMediaList.h"
+ #include "nsAString.h"
+-#include "nsCOMArray.h"
++#include "nsTArray.h"
+ #include "nsIAtom.h"
++#include "nsMediaFeatures.h"
++#include "nsCSSValue.h"
++
+ class nsPresContext;
+ class nsICSSStyleSheet;
+ class nsCSSStyleSheet;
+ 
++struct nsMediaExpression {
++  enum Range { eMin, eMax, eEqual };
++
++  const nsMediaFeature *mFeature;
++  Range mRange;
++  nsCSSValue mValue;
++
++  // aActualValue must be obtained from mFeature->mGetter
++  PRBool Matches(nsPresContext* aPresContext,
++                 const nsCSSValue& aActualValue) const;
++};
++
++class nsMediaQuery {
++public:
++  nsMediaQuery()
++    : mNegated(PR_FALSE)
++    , mHasOnly(PR_FALSE)
++    , mTypeOmitted(PR_FALSE)
++    , mHadUnknownExpression(PR_FALSE)
++  {
++  }
++
++private:
++  // for Clone only
++  nsMediaQuery(const nsMediaQuery& aOther)
++    : mNegated(aOther.mNegated)
++    , mHasOnly(aOther.mHasOnly)
++    , mTypeOmitted(aOther.mTypeOmitted)
++    , mHadUnknownExpression(aOther.mHadUnknownExpression)
++    , mMediaType(aOther.mMediaType)
++    // Clone checks the result of this deep copy for allocation failure
++    , mExpressions(aOther.mExpressions)
++  {
++  }
++
++public:
++
++  void SetNegated()                     { mNegated = PR_TRUE; }
++  void SetHasOnly()                     { mHasOnly = PR_TRUE; }
++  void SetTypeOmitted()                 { mTypeOmitted = PR_TRUE; }
++  void SetHadUnknownExpression()        { mHadUnknownExpression = PR_TRUE; }
++  void SetType(nsIAtom* aMediaType)     { mMediaType = aMediaType; }
++
++  // Return a new nsMediaExpression in the array for the caller to fill
++  // in.  The caller must either fill it in completely, or call
++  // SetHadUnknownExpression on this nsMediaQuery.
++  // Returns null on out-of-memory.
++  nsMediaExpression* NewExpression()    { return mExpressions.AppendElement(); }
++
++  void AppendToString(nsAString& aString) const;
++
++  nsMediaQuery* Clone() const;
++
++  // Does this query apply to the presentation?
++  PRBool Matches(nsPresContext* aPresContext) const;
++
++private:
++  PRPackedBool mNegated;
++  PRPackedBool mHasOnly; // only needed for serialization
++  PRPackedBool mTypeOmitted; // only needed for serialization
++  PRPackedBool mHadUnknownExpression;
++  nsCOMPtr<nsIAtom> mMediaType;
++  nsTArray<nsMediaExpression> mExpressions;
++};
++
+ class nsMediaList : public nsIDOMMediaList {
+ public:
+   nsMediaList();
+ 
+   NS_DECL_ISUPPORTS
+ 
+   NS_DECL_NSIDOMMEDIALIST
+ 
+   nsresult GetText(nsAString& aMediaText);
+   nsresult SetText(const nsAString& aMediaText);
+   PRBool Matches(nsPresContext* aPresContext);
+   nsresult SetStyleSheet(nsICSSStyleSheet* aSheet);
+-  nsresult AppendAtom(nsIAtom* aMediumAtom) {
+-    return mArray.AppendObject(aMediumAtom) ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
++  nsresult AppendQuery(nsMediaQuery *aQuery) {
++    // Takes ownership of aQuery
++    return mArray.AppendElement(aQuery) ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
+   }
+ 
+   nsresult Clone(nsMediaList** aResult);
+ 
+-  PRInt32 Count() { return mArray.Count(); }
+-  nsIAtom* MediumAt(PRInt32 aIndex) { return mArray[aIndex]; }
+-  void Clear() { mArray.Clear(); }
++  PRInt32 Count() { return mArray.Length(); }
++  nsMediaQuery* MediumAt(PRInt32 aIndex) { return mArray[aIndex]; }
++  void Clear() { mArray.Clear(); mIsEmpty = PR_TRUE; }
++  // a media list with no items may not represent the lack of a media
++  // list; it could represent the empty string or something with parser
++  // errors, which means that the media list should never match
++  void SetNonEmpty() { mIsEmpty = PR_FALSE; }
+ 
+ protected:
+   ~nsMediaList();
+ 
+   nsresult Delete(const nsAString & aOldMedium);
+   nsresult Append(const nsAString & aOldMedium);
+ 
+-  nsCOMArray<nsIAtom> mArray;
++  nsTArray<nsAutoPtr<nsMediaQuery> > mArray;
++  PRBool mIsEmpty;
+   // not refcounted; sheet will let us know when it goes away
+   // mStyleSheet is the sheet that needs to be dirtied when this medialist
+   // changes
+   nsCSSStyleSheet*         mStyleSheet;
+ };
+ #endif /* !defined(nsIMediaList_h_) */
+Index: mozilla/layout/style/nsMediaFeatures.cpp
+===================================================================
+--- /dev/null
++++ mozilla/layout/style/nsMediaFeatures.cpp
+@@ -0,0 +1,327 @@
++/* vim: set shiftwidth=4 tabstop=8 autoindent cindent expandtab: */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is nsMediaFeatures.
++ *
++ * The Initial Developer of the Original Code is the Mozilla Foundation.
++ * Portions created by the Initial Developer are Copyright (C) 2008
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   L. David Baron <dbaron@dbaron.org>, Mozilla Corporation (original author)
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either the GNU General Public License Version 2 or later (the "GPL"), or
++ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include "nsMediaFeatures.h"
++#include "nsGkAtoms.h"
++#include "nsCSSKeywords.h"
++#include "nsStyleConsts.h"
++#include "nsPresContext.h"
++#include "nsIDeviceContext.h"
++#include "nsCSSValue.h"
++
++static const PRInt32 kOrientationKeywords[] = {
++  eCSSKeyword_portrait,                 NS_STYLE_ORIENTATION_PORTRAIT,
++  eCSSKeyword_landscape,                NS_STYLE_ORIENTATION_LANDSCAPE,
++  eCSSKeyword_UNKNOWN,                  -1
++};
++
++static const PRInt32 kScanKeywords[] = {
++  eCSSKeyword_progressive,              NS_STYLE_SCAN_PROGRESSIVE,
++  eCSSKeyword_interlace,                NS_STYLE_SCAN_INTERLACE,
++  eCSSKeyword_UNKNOWN,                  -1
++};
++
++PR_STATIC_CALLBACK(nsresult)
++GetWidth(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    nscoord width = aPresContext->GetVisibleArea().width;
++    float pixelWidth = aPresContext->AppUnitsToFloatCSSPixels(width);
++    aResult.SetFloatValue(pixelWidth, eCSSUnit_Pixel);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetHeight(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    nscoord height = aPresContext->GetVisibleArea().height;
++    float pixelHeight = aPresContext->AppUnitsToFloatCSSPixels(height);
++    aResult.SetFloatValue(pixelHeight, eCSSUnit_Pixel);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetDeviceWidth(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    // XXX: I'm not sure if this is really the right thing for print:
++    // do we want to include unprintable areas / page margins?
++    nsIDeviceContext *dx = aPresContext->DeviceContext();
++    nscoord width, height;
++    dx->GetDeviceSurfaceDimensions(width, height);
++    float pixelWidth = aPresContext->AppUnitsToFloatCSSPixels(width);
++    aResult.SetFloatValue(pixelWidth, eCSSUnit_Pixel);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetDeviceHeight(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    // XXX: I'm not sure if this is really the right thing for print:
++    // do we want to include unprintable areas / page margins?
++    nsIDeviceContext *dx = aPresContext->DeviceContext();
++    nscoord width, height;
++    dx->GetDeviceSurfaceDimensions(width, height);
++    float pixelHeight = aPresContext->AppUnitsToFloatCSSPixels(height);
++    aResult.SetFloatValue(pixelHeight, eCSSUnit_Pixel);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetOrientation(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    nsSize size = aPresContext->GetVisibleArea().Size();
++    PRInt32 orientation;
++    if (size.width > size.height) {
++        orientation = NS_STYLE_ORIENTATION_LANDSCAPE;
++    } else {
++        // Per spec, square viewports should be 'portrait'
++        orientation = NS_STYLE_ORIENTATION_PORTRAIT;
++    }
++
++    aResult.SetIntValue(orientation, eCSSUnit_Enumerated);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetAspectRatio(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    nsRefPtr<nsCSSValue::Array> a = nsCSSValue::Array::Create(2);
++    NS_ENSURE_TRUE(a, NS_ERROR_OUT_OF_MEMORY);
++
++    nsSize size = aPresContext->GetVisibleArea().Size();
++    a->Item(0).SetIntValue(size.width, eCSSUnit_Integer);
++    a->Item(1).SetIntValue(size.height, eCSSUnit_Integer);
++
++    aResult.SetArrayValue(a, eCSSUnit_Array);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetDeviceAspectRatio(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    nsRefPtr<nsCSSValue::Array> a = nsCSSValue::Array::Create(2);
++    NS_ENSURE_TRUE(a, NS_ERROR_OUT_OF_MEMORY);
++
++    // XXX: I'm not sure if this is really the right thing for print:
++    // do we want to include unprintable areas / page margins?
++    nsIDeviceContext *dx = aPresContext->DeviceContext();
++    nscoord width, height;
++    dx->GetDeviceSurfaceDimensions(width, height);
++    a->Item(0).SetIntValue(width, eCSSUnit_Integer);
++    a->Item(1).SetIntValue(height, eCSSUnit_Integer);
++
++    aResult.SetArrayValue(a, eCSSUnit_Array);
++    return NS_OK;
++}
++
++
++PR_STATIC_CALLBACK(nsresult)
++GetColor(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    // FIXME:  This implementation is bogus.  nsThebesDeviceContext
++    // doesn't provide reliable information (should be fixed in bug
++    // 424386).
++    // FIXME: On a monochrome device, return 0!
++    nsIDeviceContext *dx = aPresContext->DeviceContext();
++    PRUint32 depth;
++    dx->GetDepth(depth);
++    // Some graphics backends may claim 32-bit depth when it's really 24
++    // (because they're counting the Alpha component).
++    if (depth == 32) {
++        depth = 24;
++    }
++    // The spec says to use bits *per color component*, so divide by 3,
++    // and round down, since the spec says to use the smallest when the
++    // color components differ.
++    depth /= 3;
++    aResult.SetIntValue(PRInt32(depth), eCSSUnit_Integer);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetColorIndex(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    // We should return zero if the device does not use a color lookup
++    // table.  Stuart says that our handling of displays with 8-bit
++    // color is bad enough that we never change the lookup table to
++    // match what we're trying to display, so perhaps we should always
++    // return zero.  Given that we there isn't any better information
++    // exposed,
++    aResult.SetIntValue(0, eCSSUnit_Integer);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetMonochrome(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    // For color devices we should return 0.
++    // FIXME: On a monochrome device, return the actual color depth, not
++    // 0!
++    aResult.SetIntValue(0, eCSSUnit_Integer);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetResolution(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    // XXX: The spec isn't clear whether this is CSS pixels or device
++    // pixels.  For now, do device pixels.
++    nsIDeviceContext *dx = aPresContext->DeviceContext();
++    float dpi = float(dx->AppUnitsPerInch()) / float(dx->AppUnitsPerDevPixel());
++    aResult.SetFloatValue(dpi, eCSSUnit_Inch);
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetScan(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    // Since Gecko doesn't support the 'tv' media type, the 'scan'
++    // feature is never present.
++    aResult.Reset();
++    return NS_OK;
++}
++
++PR_STATIC_CALLBACK(nsresult)
++GetGrid(nsPresContext* aPresContext, nsCSSValue& aResult)
++{
++    // Gecko doesn't support grid devices (e.g., ttys), so the 'grid'
++    // feature is always 0.
++    aResult.SetIntValue(0, eCSSUnit_Integer);
++    return NS_OK;
++}
++
++/* static */ const nsMediaFeature
++nsMediaFeatures::features[] = {
++    {
++        &nsGkAtoms::width,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eLength,
++        nsnull,
++        GetWidth
++    },
++    {
++        &nsGkAtoms::height,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eLength,
++        nsnull,
++        GetHeight
++    },
++    {
++        &nsGkAtoms::deviceWidth,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eLength,
++        nsnull,
++        GetDeviceWidth
++    },
++    {
++        &nsGkAtoms::deviceHeight,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eLength,
++        nsnull,
++        GetDeviceHeight
++    },
++    {
++        &nsGkAtoms::orientation,
++        nsMediaFeature::eMinMaxNotAllowed,
++        nsMediaFeature::eEnumerated,
++        kOrientationKeywords,
++        GetOrientation
++    },
++    {
++        &nsGkAtoms::aspectRatio,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eIntRatio,
++        nsnull,
++        GetAspectRatio
++    },
++    {
++        &nsGkAtoms::deviceAspectRatio,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eIntRatio,
++        nsnull,
++        GetDeviceAspectRatio
++    },
++    {
++        &nsGkAtoms::color,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eInteger,
++        nsnull,
++        GetColor
++    },
++    {
++        &nsGkAtoms::colorIndex,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eInteger,
++        nsnull,
++        GetColorIndex
++    },
++    {
++        &nsGkAtoms::monochrome,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eInteger,
++        nsnull,
++        GetMonochrome
++    },
++    {
++        &nsGkAtoms::resolution,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eResolution,
++        nsnull,
++        GetResolution
++    },
++    {
++        &nsGkAtoms::scan,
++        nsMediaFeature::eMinMaxNotAllowed,
++        nsMediaFeature::eEnumerated,
++        kScanKeywords,
++        GetScan
++    },
++    {
++        &nsGkAtoms::grid,
++        nsMediaFeature::eMinMaxNotAllowed,
++        nsMediaFeature::eInteger,
++        nsnull,
++        GetGrid
++    },
++    // Null-mName terminator:
++    {
++        nsnull,
++        nsMediaFeature::eMinMaxAllowed,
++        nsMediaFeature::eInteger,
++        nsnull,
++        nsnull
++    },
++};
+Index: mozilla/layout/style/nsMediaFeatures.h
+===================================================================
+--- /dev/null
++++ mozilla/layout/style/nsMediaFeatures.h
+@@ -0,0 +1,88 @@
++/* vim: set shiftwidth=4 tabstop=8 autoindent cindent expandtab: */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is nsMediaFeatures.
++ *
++ * The Initial Developer of the Original Code is the Mozilla Foundation.
++ * Portions created by the Initial Developer are Copyright (C) 2008
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   L. David Baron <dbaron@dbaron.org>, Mozilla Corporation (original author)
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either the GNU General Public License Version 2 or later (the "GPL"), or
++ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++#ifndef nsMediaFeatures_h_
++#define nsMediaFeatures_h_
++
++#include "nscore.h"
++
++class nsIAtom;
++class nsPresContext;
++class nsCSSValue;
++
++typedef nsresult
++(* PR_CALLBACK nsMediaFeatureValueGetter)(nsPresContext* aPresContext,
++                                          nsCSSValue& aResult);
++
++struct nsMediaFeature {
++    nsIAtom **mName; // extra indirection to point to nsGkAtoms members
++
++    enum RangeType { eMinMaxAllowed, eMinMaxNotAllowed };
++    RangeType mRangeType;
++
++    enum ValueType {
++        // All value types allow eCSSUnit_Null to indicate that no value
++        // was given (in addition to the types listed below).
++        eLength,     // values are such that nsCSSValue::IsLengthUnit() is true
++        eInteger,    // values are eCSSUnit_Integer
++        eIntRatio,   // values are eCSSUnit_Array of two eCSSUnit_Integer
++        eResolution, // values are in eCSSUnit_Inch (for dpi) or
++                     //   eCSSUnit_Centimeter (for dpcm)
++        eEnumerated  // values are eCSSUnit_Enumerated (uses keyword table)
++
++        // Note that a number of pieces of code (both for parsing and
++        // for matching of valueless expressions) assume that all numeric
++        // value types cannot be negative.  The parsing code also does
++        // not allow zeros in eIntRatio types.
++    };
++    ValueType mValueType;
++
++    // The same format as the keyword tables in nsCSSProps.
++    const PRInt32* mKeywordTable;
++
++    // A function that returns the current value for this feature for a
++    // given presentation.  If it returns eCSSUnit_Null, the feature is
++    // not present.
++    nsMediaFeatureValueGetter mGetter;
++};
++
++class nsMediaFeatures {
++public:
++    // Terminated with an entry whose mName is null.
++    static const nsMediaFeature features[];
++};
++
++#endif /* !defined(nsMediaFeatures_h_) */
+Index: mozilla/layout/style/nsRuleNode.cpp
+===================================================================
+--- mozilla.orig/layout/style/nsRuleNode.cpp
++++ mozilla/layout/style/nsRuleNode.cpp
+@@ -264,16 +264,26 @@
+                           nsPresContext* aPresContext,
+                           PRBool& aInherited)
+ {
+   NS_ASSERTION(aStyleContext, "Must have style data");
+ 
+   return CalcLengthWith(aValue, -1, nsnull, aStyleContext, aPresContext, aInherited);
+ }
+ 
++/* static */ nscoord
++nsRuleNode::CalcLengthWithInitialFont(nsPresContext* aPresContext,
++                                      const nsCSSValue& aValue)
++{
++  nsStyleFont defaultFont(aPresContext);
++  PRBool inherited;
++  return CalcLengthWith(aValue, -1, &defaultFont, nsnull, aPresContext,
++                        inherited);
++}
++
+ #define SETCOORD_NORMAL                 0x01   // N
+ #define SETCOORD_AUTO                   0x02   // A
+ #define SETCOORD_INHERIT                0x04   // H
+ #define SETCOORD_PERCENT                0x08   // P
+ #define SETCOORD_FACTOR                 0x10   // F
+ #define SETCOORD_LENGTH                 0x20   // L
+ #define SETCOORD_INTEGER                0x40   // I
+ #define SETCOORD_ENUMERATED             0x80   // E
+Index: mozilla/layout/style/nsRuleNode.h
+===================================================================
+--- mozilla.orig/layout/style/nsRuleNode.h
++++ mozilla/layout/style/nsRuleNode.h
+@@ -718,11 +718,15 @@
+    * the children, destroys any that are unmarked, and clears marks,
+    * returning true if the node on which it was called was destroyed.
+    */
+   NS_HIDDEN_(void) Mark();
+   NS_HIDDEN_(PRBool) Sweep();
+ 
+   static PRBool
+     HasAuthorSpecifiedRules(nsStyleContext* aStyleContext, PRUint32 ruleTypeMask);
++
++  // Expose this so media queries can use it
++  static nscoord CalcLengthWithInitialFont(nsPresContext* aPresContext,
++                                           const nsCSSValue& aValue);
+ };
+ 
+ #endif

@@ -1,0 +1,51 @@
+Make ParsePositiveVariant restrict integers too, which affects existing call for -moz-column-count.  (Bug 156716)
+
+diff --git a/layout/style/nsCSSParser.cpp b/layout/style/nsCSSParser.cpp
+--- a/layout/style/nsCSSParser.cpp
++++ b/layout/style/nsCSSParser.cpp
+@@ -3873,17 +3873,22 @@ PRBool CSSParserImpl::ParsePositiveVaria
+         return PR_FALSE; 
+       } 
+     } 
+     else if(aValue.GetUnit() == eCSSUnit_Percent) { 
+       if (aValue.GetPercentValue() < 0) { 
+         UngetToken();
+         return PR_FALSE; 
+       } 
+-    } 
++    } else if (aValue.GetUnit() == eCSSUnit_Integer) {
++      if (aValue.GetIntValue() < 0) { 
++        UngetToken();
++        return PR_FALSE; 
++      } 
++    }
+     return PR_TRUE; 
+   } 
+   return PR_FALSE; 
+ } 
+ 
+ // Assigns to aValue iff it returns PR_TRUE.
+ PRBool CSSParserImpl::ParseVariant(nsresult& aErrorCode, nsCSSValue& aValue,
+                                    PRInt32 aVariantMask,
+diff --git a/layout/style/test/property_database.js b/layout/style/test/property_database.js
+--- a/layout/style/test/property_database.js
++++ b/layout/style/test/property_database.js
+@@ -310,17 +310,17 @@ var gCSSProperties = {
+ 	},
+ 	"-moz-column-count": {
+ 		domProp: "MozColumnCount",
+ 		inherited: false,
+ 		type: CSS_TYPE_LONGHAND,
+ 		initial_values: [ "auto" ],
+ 		other_values: [ "1", "0", "17" ],
+ 		invalid_values: [
+-			// "-1", unclear: see http://lists.w3.org/Archives/Public/www-style/2007Apr/0030
++			"-1", //unclear: see http://lists.w3.org/Archives/Public/www-style/2007Apr/0030
+ 			"3px"
+ 		]
+ 	},
+ 	"-moz-column-gap": {
+ 		domProp: "MozColumnGap",
+ 		inherited: false,
+ 		type: CSS_TYPE_LONGHAND,
+ 		initial_values: [ "normal", "1em" ],

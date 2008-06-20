@@ -1,0 +1,57 @@
+Index: content/base/src/nsRange.cpp
+===================================================================
+RCS file: /cvsroot/mozilla/content/base/src/nsRange.cpp,v
+retrieving revision 1.217
+diff -p -u -8 -r1.217 nsRange.cpp
+--- mozilla/content/base/src/nsRange.cpp	6 Nov 2006 23:52:30 -0000	1.217
++++ mozilla/content/base/src/nsRange.cpp	14 Jan 2007 05:46:39 -0000
+@@ -1571,22 +1571,48 @@ nsresult nsRange::InsertNode(nsIDOMNode*
+   
+   nsCOMPtr<nsIDOMNode> tResultNode;
+   return tStartContainer->InsertBefore(aN, tChildNode, getter_AddRefs(tResultNode));
+ }
+ 
+ nsresult nsRange::SurroundContents(nsIDOMNode* aNewParent)
+ {
+   VALIDATE_ACCESS(aNewParent);
++
++  // Check node type.
++  PRUint16 nodeType;
++  nsresult res = aNewParent->GetNodeType(&nodeType);
++  NS_ENSURE_SUCCESS(res, res);
++  switch (nodeType) {
++    case nsIDOMNode::ATTRIBUTE_NODE:
++    case nsIDOMNode::ENTITY_NODE:
++    case nsIDOMNode::DOCUMENT_TYPE_NODE:
++    case nsIDOMNode::DOCUMENT_NODE:
++    case nsIDOMNode::DOCUMENT_FRAGMENT_NODE:
++    case nsIDOMNode::NOTATION_NODE:
++      return NS_ERROR_DOM_RANGE_INVALID_NODE_TYPE_ERR;
++
++    case nsIDOMNode::TEXT_NODE:
++    case nsIDOMNode::CDATA_SECTION_NODE:
++    case nsIDOMNode::PROCESSING_INSTRUCTION_NODE:
++    case nsIDOMNode::COMMENT_NODE:
++      return NS_ERROR_DOM_HIERARCHY_REQUEST_ERR;
++  }
++
++  // Owner documents must match.
++  nsCOMPtr<nsINode> container = do_QueryInterface(aNewParent);
++  if (!container->HasSameOwnerDoc(mStartParent) && container->GetOwnerDoc()) {
++    return NS_ERROR_DOM_WRONG_DOCUMENT_ERR;
++  }
+   
+   // Extract the contents within the range.
+ 
+   nsCOMPtr<nsIDOMDocumentFragment> docFrag;
+ 
+-  nsresult res = ExtractContents(getter_AddRefs(docFrag));
++  res = ExtractContents(getter_AddRefs(docFrag));
+ 
+   if (NS_FAILED(res)) return res;
+   if (!docFrag) return NS_ERROR_FAILURE;
+ 
+   // Spec says we need to remove all of aNewParent's
+   // children prior to insertion.
+ 
+   nsCOMPtr<nsIDOMNodeList> children;

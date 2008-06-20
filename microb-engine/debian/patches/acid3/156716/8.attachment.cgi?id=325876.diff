@@ -1,0 +1,32 @@
+When propagating flushes up to the parent document, promote style flushes into layout flushes, since media queries mean that to get the correct style we need our container to be the correct size.  (Bug 156716)
+
+diff --git a/content/base/src/nsDocument.cpp b/content/base/src/nsDocument.cpp
+--- a/content/base/src/nsDocument.cpp
++++ b/content/base/src/nsDocument.cpp
+@@ -4962,18 +4962,25 @@ nsDocument::FlushPendingNotifications(mo
+     return;
+   }
+ 
+   // If we have a parent we must flush the parent too to ensure that our
+   // container is reflown if its size was changed.  But if it's not safe to
+   // flush ourselves, then don't flush the parent, since that can cause things
+   // like resizes of our frame's widget, which we can't handle while flushing
+   // is unsafe.
++  // Since media queries mean that a size change of our container can
++  // affect style, we need to promote a style flush on ourself to a
++  // layout flush on our parent, since we need our container to be the
++  // correct size to determine the correct style.
+   if (mParentDocument && IsSafeToFlush()) {
+-    mParentDocument->FlushPendingNotifications(aType);
++    mozFlushType parentType = aType;
++    if (aType == Flush_Style)
++      parentType = Flush_Layout;
++    mParentDocument->FlushPendingNotifications(parentType);
+   }
+ 
+   nsPresShellIterator iter(this);
+   nsCOMPtr<nsIPresShell> shell;
+   while ((shell = iter.GetNextShell())) {
+     shell->FlushPendingNotifications(aType);
+   }
+ }
