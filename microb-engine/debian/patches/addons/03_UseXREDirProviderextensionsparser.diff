@@ -20,16 +20,3 @@
  
  nsresult
  nsXREDirProvider::SetProfile(nsIFile* aDir, nsIFile* aLocalDir)
-@@ -140,10 +148,12 @@ nsXREDirProvider::SetProfile(nsIFile* aD
- 
-   rv = EnsureDirectoryExists(aLocalDir);
-   if (NS_FAILED(rv))
-     return rv;
- 
-+  NS_IF_RELEASE(mProfileDir);
-+
-   mProfileDir = aDir;
-   mProfileLocalDir = aLocalDir;
-   return NS_OK;
- }
- 
