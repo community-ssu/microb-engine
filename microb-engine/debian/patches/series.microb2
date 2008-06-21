@@ -110,6 +110,7 @@ BMO_attached/050_attachment.cgi?id=322579.diff
 
 #JS Perf
 #BMO_attached/060_attachment.cgi?id=320027.diff
+BMO_attached/070_DOMSVGDocument.diff
 
 # Workarround for hildon gconf proxy settings
 not_sorted/maemo_hacks/GConfProxySettings.diff
