@@ -21,6 +21,9 @@ usr/lib/microb-engine/components/nsExtensionManager.js
 usr/lib/microb-engine/components/nsBlocklistService.js
 usr/lib/microb-engine/components/nsUpdateService.js
 
+usr/lib/microb-engine/components/nsAddonRepository.js
+usr/lib/microb-engine/components/nsURLFormatter.js
+
 usr/lib/microb-engine/components/windowwatcher.xpt
 usr/lib/microb-engine/components/xuldoc.x*
 usr/lib/microb-engine/components/widget.xpt
