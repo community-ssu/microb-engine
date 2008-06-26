@@ -1,3 +1,9 @@
+microb-engine (20080616-16) unstable; urgency=low
+
+  * Updated to trunk 20080626 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 26 Jun 2008 22:38:16 +0300
+
 microb-engine (20080616-15) unstable; urgency=low
 
   * Added nsIAddonRepository component, search components service

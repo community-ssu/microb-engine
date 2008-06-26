@@ -4,7 +4,7 @@ Index: mozilla/toolkit/components/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/Makefile.in
 +++ mozilla/toolkit/components/Makefile.in
-@@ -108,17 +108,19 @@
+@@ -105,17 +105,19 @@
  endif # MOZ_XUL
  
  ifdef MOZ_SUITE
@@ -20,7 +20,7 @@ Index: mozilla/toolkit/components/Makefile.in
  endif # MOZ_SUITE
  endif # MOZ_THUNDERBIRD
  
- ifndef MOZ_SUITE
- # XXX Suite doesn't want these just yet
+ ifndef SUITE_USING_XPFE_DM
  ifdef MOZ_RDF
  DIRS +=	downloads
+ endif
