@@ -1,0 +1,311 @@
+b=436932, add imageRenderingQuality property to 2D canvas
+
+Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/nsCanvasRenderingContext2D.cpp
++++ mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
+@@ -357,17 +357,18 @@
+     // VC6 sucks
+ #define STYLE_MAX 3
+ 
+     nsresult SetStyleFromVariant(nsIVariant* aStyle, PRInt32 aWhichStyle);
+     void StyleColorToString(const nscolor& aColor, nsAString& aStr);
+ 
+     void DirtyAllStyles();
+     void ApplyStyle(PRInt32 aWhichStyle);
+-    
++    void ApplyQualityHints();
++
+     // If aPrincipal is not subsumed by this canvas element, then
+     // we make the canvas write-only so bad guys can't extract the pixel
+     // data.  If forceWriteOnly is set, we force write only to be set
+     // and ignore aPrincipal.  (This is used for when the original data came
+     // from a <canvas> that had write-only set.)
+     void DoDrawImageSecurityCheck(nsIPrincipal* aPrincipal,
+                                   PRBool forceWriteOnly);
+ 
+@@ -422,29 +423,37 @@
+      * text. Will query for the fourth, optional argument.
+      */
+     nsresult drawText(const nsAString& text,
+                       float x,
+                       float y,
+                       float maxWidth,
+                       TextDrawOperation op);
+  
++    typedef enum {
++        Auto,
++        OptimizeSpeed,
++        OptimizeQuality
++    } ImageRenderingQuality;
++
+     // style handling
+     PRInt32 mLastStyle;
+     PRPackedBool mDirtyStyle[STYLE_MAX];
+ 
+     // state stack handling
+     class ContextState {
+     public:
+         ContextState() : globalAlpha(1.0),
++                         imageRenderingQuality(Auto),
+                          textAlign(TEXT_ALIGN_START),
+                          textBaseline(TEXT_BASELINE_ALPHABETIC) { }
+ 
+         ContextState(const ContextState& other)
+             : globalAlpha(other.globalAlpha),
++              imageRenderingQuality(other.imageRenderingQuality),
+               font(other.font),
+               fontGroup(other.fontGroup),
+               textAlign(other.textAlign),
+               textBaseline(other.textBaseline)
+         {
+             for (int i = 0; i < STYLE_MAX; i++) {
+                 colorStyles[i] = other.colorStyles[i];
+                 gradientStyles[i] = other.gradientStyles[i];
+@@ -473,16 +482,17 @@
+         nsString font;
+         nsRefPtr<gfxFontGroup> fontGroup;
+         TextAlign textAlign;
+         TextBaseline textBaseline;
+ 
+         nscolor colorStyles[STYLE_MAX];
+         nsCOMPtr<nsCanvasGradient> gradientStyles[STYLE_MAX];
+         nsCOMPtr<nsCanvasPattern> patternStyles[STYLE_MAX];
++        nsCanvasRenderingContext2D::ImageRenderingQuality imageRenderingQuality;
+     };
+ 
+     nsTArray<ContextState> mStyleStack;
+ 
+     inline ContextState& CurrentState() {
+         return mStyleStack[mSaveCount];
+     }
+ 
+@@ -723,21 +733,23 @@
+     nsCanvasPattern* pattern = CurrentState().patternStyles[aWhichStyle];
+     if (pattern) {
+         if (!mCanvasElement)
+             return;
+ 
+         DoDrawImageSecurityCheck(pattern->Principal(),
+                                  pattern->GetForceWriteOnly());
+         pattern->Apply(mCairo);
++        ApplyQualityHints();
+         return;
+     }
+ 
+     if (CurrentState().gradientStyles[aWhichStyle]) {
+         CurrentState().gradientStyles[aWhichStyle]->Apply(mCairo);
++        ApplyQualityHints();
+         return;
+     }
+ 
+     SetCairoColor(CurrentState().colorStyles[aWhichStyle]);
+ }
+ 
+ nsresult
+ nsCanvasRenderingContext2D::Redraw()
+@@ -2530,16 +2542,19 @@
+     cairo_pattern_set_matrix(pat, &surfMat);
+ 
+     old_path = cairo_copy_path(mCairo);
+     cairo_save(mCairo);
+     cairo_translate(mCairo, dx, dy);
+     cairo_new_path(mCairo);
+     cairo_rectangle(mCairo, 0, 0, dw, dh);
+     cairo_set_source(mCairo, pat);
++
++    ApplyQualityHints();
++
+     cairo_clip(mCairo);
+     cairo_paint_with_alpha(mCairo, CurrentState().globalAlpha);
+     cairo_restore(mCairo);
+ 
+ #if 1
+     // XXX cairo bug workaround; force a clip update on mCairo.
+     // Otherwise, a pixman clip gets left around somewhere, and pixman
+     // (Render) does source clipping as well -- so we end up
+@@ -3057,16 +3072,67 @@
+     jsval *retvalPtr;
+     ncc->GetRetValPtr(&retvalPtr);
+     *retvalPtr = OBJECT_TO_JSVAL(result);
+     ncc->SetReturnValueWasSet(PR_TRUE);
+ 
+     return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsCanvasRenderingContext2D::GetImageRenderingQuality(nsAString& value)
++{
++    switch (CurrentState().imageRenderingQuality) {
++        case OptimizeQuality:
++            value.AssignLiteral("optimizeQuality");
++            break;
++        case OptimizeSpeed:
++            value.AssignLiteral("optimizeSpeed");
++            break;
++        default:
++        case Auto:
++            value.AssignLiteral("auto");
++            break;
++    }
++
++    return NS_OK;
++}
++
++NS_IMETHODIMP
++nsCanvasRenderingContext2D::SetImageRenderingQuality(const nsAString& value)
++{
++    ImageRenderingQuality irq;
++    if (value.EqualsLiteral("auto"))
++        irq = Auto;
++    else if (value.EqualsLiteral("optimizeQuality"))
++        irq = OptimizeQuality;
++    else if (value.EqualsLiteral("optimizeSpeed"))
++        irq = OptimizeSpeed;
++    else
++        return NS_ERROR_DOM_SYNTAX_ERR;
++
++    if (CurrentState().imageRenderingQuality != irq) {
++        CurrentState().imageRenderingQuality = irq;
++        DirtyAllStyles();
++    }
++
++    return NS_OK;
++}
++
++void
++nsCanvasRenderingContext2D::ApplyQualityHints()
++{
++    if (CurrentState().imageRenderingQuality == OptimizeSpeed)
++        cairo_pattern_set_filter (cairo_get_source(mCairo), CAIRO_FILTER_FAST);
++    else if (CurrentState().imageRenderingQuality == OptimizeQuality)
++        cairo_pattern_set_filter (cairo_get_source(mCairo), CAIRO_FILTER_BEST);
++    else
++        cairo_pattern_set_filter (cairo_get_source(mCairo), CAIRO_FILTER_GOOD);
++}
++
+ // void putImageData (in ImageData d, in float x, in float y);
+ NS_IMETHODIMP
+ nsCanvasRenderingContext2D::PutImageData()
+ {
+     nsresult rv;
+ 
+     if (!mValid)
+         return NS_ERROR_FAILURE;
+Index: mozilla/content/canvas/test/Makefile.in
+===================================================================
+--- mozilla.orig/content/canvas/test/Makefile.in
++++ mozilla/content/canvas/test/Makefile.in
+@@ -481,16 +481,17 @@
+ 	test_2d.imageData.put.type.onepixel.html \
+ 	test_2d.imageData.put.type.extra.html \
+ 	test_2d.imageData.put.type.missing.html \
+ 	test_2d.imageData.put.type.invalidsize.html \
+ 	test_2d.imageData.put.type.invalidvalues.html \
+ 	test_2d.imageData.put.unchanged.html \
+ 	test_2d.imageData.put.unaffected.html \
+ 	test_2d.imageData.put.path.html \
++	test_2d.imageRenderingQuality.html \
+ 	test_bug397524.html \
+ 	test_bug405982.html \
+ 	image_transparent50.png \
+ 	image_redtransparent.png \
+ 	image_yellow.png \
+ 	image_green-16x16.png \
+ 	image_red-16x16.png \
+ 	image_green-1x1.png \
+Index: mozilla/content/canvas/test/test_2d.imageRenderingQuality.html
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/test/test_2d.imageRenderingQuality.html
+@@ -0,0 +1,65 @@
++<!DOCTYPE HTML>
++<html>
++<head>
++<title>Canvas test: 2d.imageRenderingQuality</title>
++<script src="/MochiKit/MochiKit.js"></script>
++<script src="/tests/SimpleTest/SimpleTest.js"></script>
++<script type="text/javascript">
++
++var _deferred = false;
++
++function setup() {
++  var c2 = document.getElementById("c2");
++  var cx2 = c2.getContext("2d");
++
++  cx2.fillStyle = "red";
++  cx2.fillRect(0, 0, 2, 2);
++
++  cx2.fillStyle = "rgb(0,255,0)";
++  cx2.fillRect(0, 0, 1, 1);
++}
++
++function f() {
++  setup();
++
++  var c = document.getElementById("c");
++  var c2 = document.getElementById("c2");
++
++  var cx = c.getContext("2d");
++
++  ok(cx.imageRenderingQuality == "auto", "initial imageRenderingQuality is auto");
++
++  // check that imageRenderingQuality is part of the context
++  cx.save();
++  cx.imageRenderingQuality = "optimizeSpeed";
++  ok(cx.imageRenderingQuality == "optimizeSpeed", "imageRenderingQuality is optimizeSpeed after setting");
++  cx.restore();
++  ok(cx.imageRenderingQuality == "auto", "imageRenderingQuality is auto after restore");
++
++  // check that optimizeSpeed works
++  cx.imageRenderingQuality = "optimizeSpeed";
++
++  cx.scale(10,10);
++  cx.drawImage(c2, 0, 0);
++
++  // this should be all red
++  var data = cx.getImageData(9, 9, 1, 1);
++  var pixels = data.data;
++  ok (pixels[0] == 0 &&
++      pixels[1] == 255 &&
++      pixels[2] == 0 &&
++      pixels[3] == 255,
++      "pixel is " + pixels.toSource() + " (expected [0,255,0,255])");
++
++  if (!_deferred) SimpleTest.finish();
++}
++
++SimpleTest.waitForExplicitFinish();
++MochiKit.DOM.addLoadEvent(f);
++</script>
++</head>
++<body>
++<canvas id="c" width="10" height="10"></canvas><br>
++<canvas style="visibility: hidden" id="c2" width="2" height="2"></canvas>
++</body>
++</html>
+Index: mozilla/dom/public/idl/canvas/nsIDOMCanvasRenderingContext2D.idl
+===================================================================
+--- mozilla.orig/dom/public/idl/canvas/nsIDOMCanvasRenderingContext2D.idl
++++ mozilla/dom/public/idl/canvas/nsIDOMCanvasRenderingContext2D.idl
+@@ -153,16 +153,20 @@
+   // pixel manipulation
+   // ImageData getImageData (in float x, in float y, in float width, in float height);
+   // void putImageData (in ImageData d, in float x, in float y);
+   // ImageData = { width: #, height: #, data: [r, g, b, a, ...] }
+ 
+   void getImageData();
+   void putImageData();
+ 
++  // image rendering quality hint, similar to SVG CSS 'image-rendering' property.
++  // 'auto', 'optimizeSpeed', 'optimizeQuality'.  Default 'auto'.
++  attribute DOMString imageRenderingQuality;
++
+   /**
+    * Renders a region of a window into the canvas.  The contents of
+    * the window's viewport are rendered, ignoring viewport clipping
+    * and scrolling.
+    *
+    * @param x
+    * @param y
+    * @param w

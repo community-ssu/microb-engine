@@ -1,3 +1,10 @@
+microb-engine (20080616-17) unstable; urgency=low
+
+  * Fixed bug https://bugzilla.mozilla.org/show_bug.cgi?id=436932
+  * Enable SVG support
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 27 Jun 2008 12:02:24 +0300
+
 microb-engine (20080616-16) unstable; urgency=low
 
   * Updated to trunk 20080626 
