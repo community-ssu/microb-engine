@@ -538,7 +538,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/Makefile.in
 +++ mozilla/widget/src/gtk2/Makefile.in
-@@ -94,31 +94,46 @@
+@@ -94,27 +94,41 @@
  		nsAppShell.cpp \
  		nsWidgetFactory.cpp \
  		nsToolkit.cpp \
@@ -553,13 +553,9 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  		nsNativeKeyBindings.cpp \
  		nsScreenGtk.cpp \
  		nsScreenManagerGtk.cpp \
- 		nsDeviceContextSpecG.cpp \
- 		nsPrintOptionsGTK.cpp \
  		nsImageToPixbuf.cpp \
  		nsAccessibilityHelper.cpp \
  		nsIdleServiceGTK.cpp \
- 		nsPrintDialogGTK.cpp \
- 		nsPrintSettingsGTK.cpp \
  		$(NULL)
  
 +ifndef MOZ_NO_GTKSOUND
@@ -579,16 +575,15 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 +		nsFilePicker.cpp \
 +		$(NULL)
 +endif
-+
- # build our subdirs, too
- ifdef ACCESSIBILITY
- REQUIRES	+= accessibility
- endif
  
- SHARED_LIBRARY_LIBS = ../xpwidgets/libxpwidgets_s.a
- 
- EXTRA_DSO_LDOPTS += \
-@@ -146,17 +161,17 @@
+ ifdef NS_PRINTING
+ CPPSRCS		+= \
+ 		nsDeviceContextSpecG.cpp \
+ 		nsPrintOptionsGTK.cpp \
+ 		nsPrintDialogGTK.cpp \
+ 		nsPrintSettingsGTK.cpp \
+ 		$(NULL)
+@@ -152,17 +166,17 @@
  DEFINES		+= -DNATIVE_THEME_SUPPORT
  endif
  
@@ -632,12 +627,12 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  #include "nsBidiKeyboard.h"
  #include "nsNativeKeyBindings.h"
  #include "nsScreenManagerGtk.h"
+ 
+ #ifdef NS_PRINTING
  #include "nsPrintOptionsGTK.h"
  #include "nsPrintSession.h"
  #include "nsDeviceContextSpecG.h"
- #include "nsIPrefService.h"
- #include "nsIPrefBranch.h"
-@@ -81,30 +87,35 @@
+@@ -85,33 +91,38 @@
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsWindow)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsChildWindow)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsLookAndFeel)
@@ -653,16 +648,19 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsSound)
 +#endif
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsScreenManagerGtk)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsDeviceContextSpecGTK)
  #ifdef NATIVE_THEME_SUPPORT
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsNativeThemeGTK)
  #endif
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsImageToPixbuf)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsIdleServiceGTK)
+ 
+ #ifdef NS_PRINTING
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsDeviceContextSpecGTK)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintOptionsGTK, Init)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsPrinterEnumeratorGTK)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintSession, Init)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsImageToPixbuf)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsIdleServiceGTK)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintDialogServiceGTK, Init)
+ #endif
  
 +#ifndef MOZ_NO_FILEPICKER
  static NS_IMETHODIMP
@@ -673,7 +671,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
    if (aOuter != nsnull) {
      return NS_ERROR_NO_AGGREGATION;
    }
-@@ -128,16 +139,17 @@
+@@ -135,16 +146,17 @@
    }
  
    if (!picker) {
@@ -691,7 +689,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  {
      nsresult rv;
  
-@@ -191,40 +203,46 @@
+@@ -198,40 +210,46 @@
      { "Gtk2 AppShell",
        NS_APPSHELL_CID,
        "@mozilla.org/widget/appshell/gtk;1",
@@ -738,10 +736,10 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
      NS_BIDIKEYBOARD_CID,
      "@mozilla.org/widget/bidikeyboard;1",
      nsBidiKeyboardConstructor },
-@@ -280,18 +298,22 @@
-     NS_PRINTDIALOGSERVICE_CID,
-     NS_PRINTDIALOGSERVICE_CONTRACTID,
-     nsPrintDialogServiceGTKConstructor },
+@@ -289,18 +307,22 @@
+     NS_IDLE_SERVICE_CID,
+     "@mozilla.org/widget/idleservice;1",
+     nsIdleServiceGTKConstructor },
  };
  
  PR_STATIC_CALLBACK(void)

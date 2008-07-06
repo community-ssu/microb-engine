@@ -1,9 +1,9 @@
 #Bug 376533  uClibc strings/index and childiterator.index conficts
---- mozilla/layout/base/nsChildIterator.h.orig	2007-04-03 11:55:10.000000000 +0300
-+++ mozilla/layout/base/nsChildIterator.h	2007-04-03 12:02:42.454772750 +0300
-@@ -39,20 +39,24 @@
- /*
-  * used by nsCSSFrameConstructor to determine and iterate the child list
+Index: mozilla/layout/base/nsChildIterator.h
+===================================================================
+--- mozilla.orig/layout/base/nsChildIterator.h
++++ mozilla/layout/base/nsChildIterator.h
+@@ -41,16 +41,20 @@
   * used to construct frames (normal children or something from XBL)
   */
  
@@ -22,7 +22,5 @@
   * node APIs, since it handles XBL-generated anonymous content as
   * well.
   */
- class ChildIterator
+ class NS_STACK_CLASS ChildIterator
  {
- protected:
-   nsCOMPtr<nsIContent> mContent;

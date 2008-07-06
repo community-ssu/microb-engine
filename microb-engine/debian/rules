@@ -352,7 +352,7 @@ unpack-stamp:
 	rm -rf $(btree)/mozilla && tar -zxvf $(CURDIR)/tarballs/$(srcdir).tar.gz -C $(btree) > /dev/null && if [ -d $(btree)/mozilla ]; then echo 'Mozilla is root folder ;)';else mv $(btree)/mozilla* $(btree)/mozilla; fi
 	tar -zxvf $(CURDIR)/tarballs/mozilla-nss-nspr.tar.gz -C $(btree) > /dev/null
 	cp -rf  $(CURDIR)/debian/resources/branding $(builddir)/
-	if [ $(CURDIR)/trunkupdates/series ]; then cd $(builddir) && for str in `cat $(CURDIR)/trunkupdates/series`;do echo; echo Applying trunk update: $$str...; echo; patch -p1 < $(CURDIR)/trunkupdates/$$str; done; fi
+	if [ $(CURDIR)/trunkupdates/series ]; then cd $(builddir) && for str in `cat $(CURDIR)/trunkupdates/series`;do echo; echo Applying trunk update: $$str...; echo; patch -p1 < $(CURDIR)/trunkupdates/$$str && perl $(CURDIR)/debian/resources/tools/hg_patch_rename.pl $(CURDIR)/trunkupdates/$$str; done; fi
 	cd $(builddir) && cp -rf $(CURDIR)/trunkupdates/bin/mozilla/* .
 	touch unpack-stamp
 
