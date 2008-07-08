@@ -1,33 +1,175 @@
-#https://bugzilla.mozilla.org/show_bug.cgi?id=216462
-Index: mozilla/Makefile.in
+Index: mozilla/configure.in
 ===================================================================
---- mozilla.orig/Makefile.in
-+++ mozilla/Makefile.in
-@@ -63,16 +63,20 @@
- 	$(NULL)
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -5675,16 +5675,27 @@
+   if test "$MOZ_SVG"; then
+     AC_DEFINE(MOZ_SVG_FOREIGNOBJECT)
+   else
+     MOZ_SVG_FOREIGNOBEJCT=
+   fi
+ fi
  
- ifdef MOZ_MEMORY
- tier_base_dirs += memory/jemalloc
+ dnl ========================================================
++dnl SMIL
++dnl ========================================================
++MOZ_ARG_ENABLE_BOOL(smil,
++[  --enable-smil            Enable SMIL animation support],
++    MOZ_SMIL=1,
++    MOZ_SMIL= )
++if test -n "$MOZ_SMIL"; then
++  AC_DEFINE(MOZ_SMIL)
++fi
++
++dnl ========================================================
+ dnl Installer
+ dnl ========================================================
+ case "$target_os" in
+     aix*|solaris*|linux*|msvc*|mks*|cygwin*|mingw*|os2*|wince*)
+         MOZ_INSTALLER=1
+         ;;
+ esac
+ 
+@@ -7966,16 +7977,17 @@
+ AC_SUBST(MOZ_AUTH_EXTENSION)
+ AC_SUBST(MOZ_MATHML)
+ AC_SUBST(MOZ_PERMISSIONS)
+ AC_SUBST(MOZ_XTF)
+ AC_SUBST(MOZ_NO_INSPECTOR_APIS)
+ AC_SUBST(MOZ_PREF_EXTENSIONS)
+ AC_SUBST(MOZ_SVG)
+ AC_SUBST(MOZ_SVG_FOREIGNOBJECT)
++AC_SUBST(MOZ_SMIL)
+ AC_SUBST(MOZ_XSLT_STANDALONE)
+ AC_SUBST(MOZ_JS_LIBS)
+ AC_SUBST(MOZ_PSM)
+ AC_SUBST(MOZ_DEBUG)
+ AC_SUBST(MOZ_DEBUG_MODULES)
+ AC_SUBST(MOZ_PROFILE_MODULES)
+ AC_SUBST(MOZ_DEBUG_ENABLE_DEFS)
+ AC_SUBST(MOZ_DEBUG_DISABLE_DEFS)
+Index: mozilla/config/autoconf.mk.in
+===================================================================
+--- mozilla.orig/config/autoconf.mk.in
++++ mozilla/config/autoconf.mk.in
+@@ -244,16 +244,17 @@
+ MOZ_PERMISSIONS = @MOZ_PERMISSIONS@
+ MOZ_XTF = @MOZ_XTF@
+ MOZ_NO_INSPECTOR_APIS = @MOZ_NO_INSPECTOR_APIS@
+ MOZ_SVG = @MOZ_SVG@
+ MOZ_SVG_FOREIGNOBJECT = @MOZ_SVG_FOREIGNOBJECT@
+ MOZ_LIBART_CFLAGS = @MOZ_LIBART_CFLAGS@
+ MOZ_ENABLE_CANVAS = @MOZ_ENABLE_CANVAS@
+ MOZ_CAIRO_CFLAGS = @MOZ_CAIRO_CFLAGS@
++MOZ_SMIL = @MOZ_SMIL@
+ MOZ_XSLT_STANDALONE = @MOZ_XSLT_STANDALONE@
+ 
+ MOZ_PREF_EXTENSIONS = @MOZ_PREF_EXTENSIONS@
+ 
+ MOZ_CAIRO_LIBS = @MOZ_CAIRO_LIBS@
+ 
+ MOZ_ENABLE_GNOMEUI = @MOZ_ENABLE_GNOMEUI@
+ MOZ_GNOMEUI_CFLAGS = @MOZ_GNOMEUI_CFLAGS@
+Index: mozilla/content/Makefile.in
+===================================================================
+--- mozilla.orig/content/Makefile.in
++++ mozilla/content/Makefile.in
+@@ -48,16 +48,20 @@
+ ifdef MOZ_SVG
+ DIRS		+= svg
  endif
  
- include $(topsrcdir)/$(MOZ_BUILD_APP)/build.mk
+ ifdef MOZ_XTF
+ DIRS            += xtf
+ endif
  
 +ifdef MOZ_SMIL
 +DIRS		+= smil
 +endif
 +
- TIERS += testharness
- 
- # test harnesses
- ifdef ENABLE_TESTS
- tier_testharness_dirs += tools/test-harness
+ ifdef MOZ_MATHML
+ DIRS            += mathml
  endif
  
- GARBAGE_DIRS += dist _javagen _profile _tests staticlib
-Index: mozilla/smil/Makefile.in
+ DIRS           += events
+ 
+ ifdef ENABLE_TESTS
+ TOOL_DIRS += test
+Index: mozilla/content/base/src/nsGenericElement.cpp
+===================================================================
+--- mozilla.orig/content/base/src/nsGenericElement.cpp
++++ mozilla/content/base/src/nsGenericElement.cpp
+@@ -1374,16 +1374,23 @@
+            NS_SVG_TestFeature(aFeature)) {
+     if (aVersion.IsEmpty() ||
+         PL_strcmp(v, "1.0") == 0 ||
+         PL_strcmp(v, "1.1") == 0) {
+       *aReturn = PR_TRUE;
+     }
+   }
+ #endif /* MOZ_SVG */
++#ifdef MOZ_SMIL
++  else if (PL_strcasecmp(f, "TimeControl") == 0) {
++    if (aVersion.IsEmpty() || PL_strcmp(v, "1.0") == 0) {
++      *aReturn = PR_TRUE;
++    }
++  }
++#endif /* MOZ_SMIL */
+   else {
+     nsCOMPtr<nsIDOMNSFeatureFactory> factory =
+       GetDOMFeatureFactory(aFeature, aVersion);
+ 
+     if (factory) {
+       factory->HasFeature(aObject, aFeature, aVersion, aReturn);
+     }
+   }
+Index: mozilla/content/base/src/nsGkAtomList.h
+===================================================================
+--- mozilla.orig/content/base/src/nsGkAtomList.h
++++ mozilla/content/base/src/nsGkAtomList.h
+@@ -1189,16 +1189,38 @@
+ GK_ATOM(y, "y")
+ GK_ATOM(y1, "y1")
+ GK_ATOM(y2, "y2")
+ GK_ATOM(yChannelSelector, "yChannelSelector")
+ GK_ATOM(z, "z")
+ GK_ATOM(zoomAndPan, "zoomAndPan")
+ #endif
+ 
++#ifdef MOZ_SMIL
++GK_ATOM(accumulate, "accumulate")
++GK_ATOM(additive, "additive")
++GK_ATOM(attributeName, "attributeName")
++GK_ATOM(attributeType, "attributeType")
++GK_ATOM(begin, "begin")
++GK_ATOM(by, "by")
++GK_ATOM(calcMode, "calcMode")
++GK_ATOM(dur, "dur")
++GK_ATOM(freeze, "freeze")
++GK_ATOM(keySplines, "keySplines")
++GK_ATOM(keyTimes, "keyTimes")
++GK_ATOM(paced, "paced")
++GK_ATOM(remove, "remove")
++GK_ATOM(repeatCount, "repeatCount")
++GK_ATOM(repeatDur, "repeatDur")
++GK_ATOM(restart, "restart")
++GK_ATOM(spline, "spline")
++GK_ATOM(to, "to")
++GK_ATOM(whennotactive, "whenNotActive")
++#endif
++
+ #ifdef MOZ_MATHML
+ GK_ATOM(MOZcolumnalign, "-moz-math-columnalign")
+ GK_ATOM(MOZcolumnline, "-moz-math-columnline") // different from columnlines_
+ GK_ATOM(MOZfontsize, "-moz-math-font-size") // different from fontsize_
+ GK_ATOM(MOZfontstyle, "-moz-math-font-style") // different from fontstyle_
+ GK_ATOM(MOZrowalign, "-moz-math-rowalign")
+ GK_ATOM(MOZrowline, "-moz-math-rowline") // different from rowlines_
+ GK_ATOM(abs_, "abs")
+Index: mozilla/content/smil/Makefile.in
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/Makefile.in
++++ mozilla/content/smil/Makefile.in
 @@ -0,0 +1,48 @@
 +#
 +# ***** BEGIN LICENSE BLOCK *****
@@ -77,10 +219,10 @@ Index: mozilla/smil/Makefile.in
 +
 +include $(topsrcdir)/config/rules.mk
 +
-Index: mozilla/smil/public/Makefile.in
+Index: mozilla/content/smil/public/Makefile.in
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/Makefile.in
++++ mozilla/content/smil/public/Makefile.in
 @@ -0,0 +1,64 @@
 +#
 +# ***** BEGIN LICENSE BLOCK *****
@@ -146,10 +288,10 @@ Index: mozilla/smil/public/Makefile.in
 +
 +include $(topsrcdir)/config/rules.mk
 +
-Index: mozilla/smil/public/nsISMILAnimationController.h
+Index: mozilla/content/smil/public/nsISMILAnimationController.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILAnimationController.h
++++ mozilla/content/smil/public/nsISMILAnimationController.h
 @@ -0,0 +1,78 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -229,10 +371,10 @@ Index: mozilla/smil/public/nsISMILAnimationController.h
 +
 +#endif // __NS_ISMILANIMATIONCONTROLLER_H__
 +
-Index: mozilla/smil/public/nsISMILAnimationFunction.h
+Index: mozilla/content/smil/public/nsISMILAnimationFunction.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILAnimationFunction.h
++++ mozilla/content/smil/public/nsISMILAnimationFunction.h
 @@ -0,0 +1,109 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -343,10 +485,10 @@ Index: mozilla/smil/public/nsISMILAnimationFunction.h
 +
 +#endif //__NS_ISMILANIMATIONFUNCTION_H__
 +
-Index: mozilla/smil/public/nsISMILAnimationObserver.h
+Index: mozilla/content/smil/public/nsISMILAnimationObserver.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILAnimationObserver.h
++++ mozilla/content/smil/public/nsISMILAnimationObserver.h
 @@ -0,0 +1,66 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -414,10 +556,10 @@ Index: mozilla/smil/public/nsISMILAnimationObserver.h
 +
 +#endif // __NS_ISMILANIMATIONOBSERVER_H__
 +
-Index: mozilla/smil/public/nsISMILAnimationRegistry.h
+Index: mozilla/content/smil/public/nsISMILAnimationRegistry.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILAnimationRegistry.h
++++ mozilla/content/smil/public/nsISMILAnimationRegistry.h
 @@ -0,0 +1,158 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -577,10 +719,10 @@ Index: mozilla/smil/public/nsISMILAnimationRegistry.h
 +
 +#endif // __NS_ISMILANIMATIONREGISTRY_H__
 +
-Index: mozilla/smil/public/nsISMILAttr.h
+Index: mozilla/content/smil/public/nsISMILAttr.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILAttr.h
++++ mozilla/content/smil/public/nsISMILAttr.h
 @@ -0,0 +1,121 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -703,10 +845,10 @@ Index: mozilla/smil/public/nsISMILAttr.h
 +
 +#endif // __NS_ISMILATTR_H__
 +
-Index: mozilla/smil/public/nsISMILComposable.h
+Index: mozilla/content/smil/public/nsISMILComposable.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILComposable.h
++++ mozilla/content/smil/public/nsISMILComposable.h
 @@ -0,0 +1,142 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -850,10 +992,10 @@ Index: mozilla/smil/public/nsISMILComposable.h
 +
 +#endif // __NS_ISMILCOMPOSABLE_H__
 +
-Index: mozilla/smil/public/nsISMILTimeClient.h
+Index: mozilla/content/smil/public/nsISMILTimeClient.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILTimeClient.h
++++ mozilla/content/smil/public/nsISMILTimeClient.h
 @@ -0,0 +1,108 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -963,10 +1105,10 @@ Index: mozilla/smil/public/nsISMILTimeClient.h
 +
 +#endif // __NS_ISMILTIMECLIENT_H__
 +
-Index: mozilla/smil/public/nsISMILTimeContainer.h
+Index: mozilla/content/smil/public/nsISMILTimeContainer.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILTimeContainer.h
++++ mozilla/content/smil/public/nsISMILTimeContainer.h
 @@ -0,0 +1,130 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1098,10 +1240,10 @@ Index: mozilla/smil/public/nsISMILTimeContainer.h
 +
 +#endif // __NS_ISMILTIMECONTAINER_H__
 +
-Index: mozilla/smil/public/nsISMILTimedElement.h
+Index: mozilla/content/smil/public/nsISMILTimedElement.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILTimedElement.h
++++ mozilla/content/smil/public/nsISMILTimedElement.h
 @@ -0,0 +1,157 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1260,10 +1402,10 @@ Index: mozilla/smil/public/nsISMILTimedElement.h
 +
 +#endif // __NS_ISMILTIMEDELEMENT_H__
 +
-Index: mozilla/smil/public/nsISMILType.h
+Index: mozilla/content/smil/public/nsISMILType.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsISMILType.h
++++ mozilla/content/smil/public/nsISMILType.h
 @@ -0,0 +1,169 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1434,10 +1576,10 @@ Index: mozilla/smil/public/nsISMILType.h
 +
 +#endif
 +
-Index: mozilla/smil/public/nsSMILFloatType.h
+Index: mozilla/content/smil/public/nsSMILFloatType.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsSMILFloatType.h
++++ mozilla/content/smil/public/nsSMILFloatType.h
 @@ -0,0 +1,70 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1509,10 +1651,10 @@ Index: mozilla/smil/public/nsSMILFloatType.h
 +
 +#endif
 +
-Index: mozilla/smil/public/nsSMILNullType.h
+Index: mozilla/content/smil/public/nsSMILNullType.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsSMILNullType.h
++++ mozilla/content/smil/public/nsSMILNullType.h
 @@ -0,0 +1,71 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1585,10 +1727,10 @@ Index: mozilla/smil/public/nsSMILNullType.h
 +
 +#endif
 +
-Index: mozilla/smil/public/nsSMILValue.h
+Index: mozilla/content/smil/public/nsSMILValue.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/public/nsSMILValue.h
++++ mozilla/content/smil/public/nsSMILValue.h
 @@ -0,0 +1,117 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1707,10 +1849,10 @@ Index: mozilla/smil/public/nsSMILValue.h
 +
 +#endif
 +
-Index: mozilla/smil/src/Makefile.in
+Index: mozilla/content/smil/src/Makefile.in
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/Makefile.in
++++ mozilla/content/smil/src/Makefile.in
 @@ -0,0 +1,85 @@
 +#
 +# ***** BEGIN LICENSE BLOCK *****
@@ -1797,10 +1939,10 @@ Index: mozilla/smil/src/Makefile.in
 +
 +DEFINES += -D_IMPL_NS_LAYOUT
 +
-Index: mozilla/smil/src/nsSMILAnimationController.cpp
+Index: mozilla/content/smil/src/nsSMILAnimationController.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILAnimationController.cpp
++++ mozilla/content/smil/src/nsSMILAnimationController.cpp
 @@ -0,0 +1,407 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -2209,10 +2351,10 @@ Index: mozilla/smil/src/nsSMILAnimationController.cpp
 +  }
 +}
 +
-Index: mozilla/smil/src/nsSMILAnimationFunction.cpp
+Index: mozilla/content/smil/src/nsSMILAnimationFunction.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILAnimationFunction.cpp
++++ mozilla/content/smil/src/nsSMILAnimationFunction.cpp
 @@ -0,0 +1,1170 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -3384,10 +3526,10 @@ Index: mozilla/smil/src/nsSMILAnimationFunction.cpp
 +  mHasChanged = PR_TRUE;
 +}
 +
-Index: mozilla/smil/src/nsSMILAnimationRegistry.cpp
+Index: mozilla/content/smil/src/nsSMILAnimationRegistry.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILAnimationRegistry.cpp
++++ mozilla/content/smil/src/nsSMILAnimationRegistry.cpp
 @@ -0,0 +1,295 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -3684,10 +3826,10 @@ Index: mozilla/smil/src/nsSMILAnimationRegistry.cpp
 +    observer->EndSample();
 +}
 +
-Index: mozilla/smil/src/nsSMILAnimationRegistry.h
+Index: mozilla/content/smil/src/nsSMILAnimationRegistry.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILAnimationRegistry.h
++++ mozilla/content/smil/src/nsSMILAnimationRegistry.h
 @@ -0,0 +1,103 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -3792,10 +3934,10 @@ Index: mozilla/smil/src/nsSMILAnimationRegistry.h
 +
 +#endif // __NS_SMILANIMATIONREGISTRY_H__
 +
-Index: mozilla/smil/src/nsSMILCompositor.cpp
+Index: mozilla/content/smil/src/nsSMILCompositor.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILCompositor.cpp
++++ mozilla/content/smil/src/nsSMILCompositor.cpp
 @@ -0,0 +1,144 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -3941,10 +4083,10 @@ Index: mozilla/smil/src/nsSMILCompositor.cpp
 +  return (a && b) ? a->CompareTo(*b) : (a) ? 1 : (b) ? -1 : 0;
 +}
 +
-Index: mozilla/smil/src/nsSMILCompositor.h
+Index: mozilla/content/smil/src/nsSMILCompositor.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILCompositor.h
++++ mozilla/content/smil/src/nsSMILCompositor.h
 @@ -0,0 +1,79 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4025,10 +4167,10 @@ Index: mozilla/smil/src/nsSMILCompositor.h
 +
 +#endif // __NS_SMILCOMPOSITOR_H__
 +
-Index: mozilla/smil/src/nsSMILEnum.cpp
+Index: mozilla/content/smil/src/nsSMILEnum.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILEnum.cpp
++++ mozilla/content/smil/src/nsSMILEnum.cpp
 @@ -0,0 +1,95 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4125,10 +4267,10 @@ Index: mozilla/smil/src/nsSMILEnum.cpp
 +  return NS_ERROR_FAILURE;
 +}
 +
-Index: mozilla/smil/src/nsSMILEnum.h
+Index: mozilla/content/smil/src/nsSMILEnum.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILEnum.h
++++ mozilla/content/smil/src/nsSMILEnum.h
 @@ -0,0 +1,69 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4199,10 +4341,10 @@ Index: mozilla/smil/src/nsSMILEnum.h
 +
 +#endif //__NS_SMILENUM_H__
 +
-Index: mozilla/smil/src/nsSMILFloatType.cpp
+Index: mozilla/content/smil/src/nsSMILFloatType.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILFloatType.cpp
++++ mozilla/content/smil/src/nsSMILFloatType.cpp
 @@ -0,0 +1,116 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4320,10 +4462,10 @@ Index: mozilla/smil/src/nsSMILFloatType.cpp
 +  return NS_OK;
 +}
 +
-Index: mozilla/smil/src/nsSMILInstanceTime.cpp
+Index: mozilla/content/smil/src/nsSMILInstanceTime.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILInstanceTime.cpp
++++ mozilla/content/smil/src/nsSMILInstanceTime.cpp
 @@ -0,0 +1,68 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4393,10 +4535,10 @@ Index: mozilla/smil/src/nsSMILInstanceTime.cpp
 +  return aElement1->Time().CompareTo(aElement2->Time());
 +}
 +
-Index: mozilla/smil/src/nsSMILInstanceTime.h
+Index: mozilla/content/smil/src/nsSMILInstanceTime.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILInstanceTime.h
++++ mozilla/content/smil/src/nsSMILInstanceTime.h
 @@ -0,0 +1,107 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4505,10 +4647,10 @@ Index: mozilla/smil/src/nsSMILInstanceTime.h
 +
 +#endif // __NS_SMILINSTANCETIME_H__
 +
-Index: mozilla/smil/src/nsSMILInterval.cpp
+Index: mozilla/content/smil/src/nsSMILInterval.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILInterval.cpp
++++ mozilla/content/smil/src/nsSMILInterval.cpp
 @@ -0,0 +1,75 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4585,10 +4727,10 @@ Index: mozilla/smil/src/nsSMILInterval.cpp
 +  // XXX notify dependents
 +}
 +
-Index: mozilla/smil/src/nsSMILInterval.h
+Index: mozilla/content/smil/src/nsSMILInterval.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILInterval.h
++++ mozilla/content/smil/src/nsSMILInterval.h
 @@ -0,0 +1,84 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4674,10 +4816,10 @@ Index: mozilla/smil/src/nsSMILInterval.h
 +
 +#endif // __NS_SMILINTERVAL_H__
 +
-Index: mozilla/smil/src/nsSMILKeySpline.cpp
+Index: mozilla/content/smil/src/nsSMILKeySpline.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILKeySpline.cpp
++++ mozilla/content/smil/src/nsSMILKeySpline.cpp
 @@ -0,0 +1,120 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4799,10 +4941,10 @@ Index: mozilla/smil/src/nsSMILKeySpline.cpp
 +  return currentT;
 +}
 +
-Index: mozilla/smil/src/nsSMILKeySpline.h
+Index: mozilla/content/smil/src/nsSMILKeySpline.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILKeySpline.h
++++ mozilla/content/smil/src/nsSMILKeySpline.h
 @@ -0,0 +1,97 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4901,10 +5043,10 @@ Index: mozilla/smil/src/nsSMILKeySpline.h
 +
 +#endif // __NS_SMILKEYSPLINE_H__
 +
-Index: mozilla/smil/src/nsSMILNullType.cpp
+Index: mozilla/content/smil/src/nsSMILNullType.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILNullType.cpp
++++ mozilla/content/smil/src/nsSMILNullType.cpp
 @@ -0,0 +1,88 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4994,10 +5136,10 @@ Index: mozilla/smil/src/nsSMILNullType.cpp
 +  return NS_ERROR_FAILURE;
 +}
 +
-Index: mozilla/smil/src/nsSMILParserUtils.cpp
+Index: mozilla/content/smil/src/nsSMILParserUtils.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILParserUtils.cpp
++++ mozilla/content/smil/src/nsSMILParserUtils.cpp
 @@ -0,0 +1,617 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -5616,10 +5758,10 @@ Index: mozilla/smil/src/nsSMILParserUtils.cpp
 +  return result;
 +}
 +
-Index: mozilla/smil/src/nsSMILParserUtils.h
+Index: mozilla/content/smil/src/nsSMILParserUtils.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILParserUtils.h
++++ mozilla/content/smil/src/nsSMILParserUtils.h
 @@ -0,0 +1,107 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -5728,10 +5870,10 @@ Index: mozilla/smil/src/nsSMILParserUtils.h
 +
 +#endif // __NS_SMILPARSERUTILS_H__
 +
-Index: mozilla/smil/src/nsSMILTimeValue.cpp
+Index: mozilla/content/smil/src/nsSMILTimeValue.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILTimeValue.cpp
++++ mozilla/content/smil/src/nsSMILTimeValue.cpp
 @@ -0,0 +1,114 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -5847,10 +5989,10 @@ Index: mozilla/smil/src/nsSMILTimeValue.cpp
 +  return result;
 +}
 +
-Index: mozilla/smil/src/nsSMILTimeValue.h
+Index: mozilla/content/smil/src/nsSMILTimeValue.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILTimeValue.h
++++ mozilla/content/smil/src/nsSMILTimeValue.h
 @@ -0,0 +1,128 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -5980,10 +6122,10 @@ Index: mozilla/smil/src/nsSMILTimeValue.h
 +
 +#endif // __NS_SMILTIMEVALUE_H__
 +
-Index: mozilla/smil/src/nsSMILTimeValueSpec.cpp
+Index: mozilla/content/smil/src/nsSMILTimeValueSpec.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILTimeValueSpec.cpp
++++ mozilla/content/smil/src/nsSMILTimeValueSpec.cpp
 @@ -0,0 +1,114 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -6099,10 +6241,10 @@ Index: mozilla/smil/src/nsSMILTimeValueSpec.cpp
 +  return rv;
 +}
 +
-Index: mozilla/smil/src/nsSMILTimeValueSpec.h
+Index: mozilla/content/smil/src/nsSMILTimeValueSpec.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILTimeValueSpec.h
++++ mozilla/content/smil/src/nsSMILTimeValueSpec.h
 @@ -0,0 +1,87 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -6191,10 +6333,10 @@ Index: mozilla/smil/src/nsSMILTimeValueSpec.h
 +
 +#endif // __NS_SMILTIMEVALUESPEC_H__
 +
-Index: mozilla/smil/src/nsSMILTimedDocumentRoot.cpp
+Index: mozilla/content/smil/src/nsSMILTimedDocumentRoot.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILTimedDocumentRoot.cpp
++++ mozilla/content/smil/src/nsSMILTimedDocumentRoot.cpp
 @@ -0,0 +1,274 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -6470,10 +6612,10 @@ Index: mozilla/smil/src/nsSMILTimedDocumentRoot.cpp
 +  }
 +}
 +
-Index: mozilla/smil/src/nsSMILTimedDocumentRoot.h
+Index: mozilla/content/smil/src/nsSMILTimedDocumentRoot.h
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILTimedDocumentRoot.h
++++ mozilla/content/smil/src/nsSMILTimedDocumentRoot.h
 @@ -0,0 +1,92 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -6567,10 +6709,10 @@ Index: mozilla/smil/src/nsSMILTimedDocumentRoot.h
 +
 +#endif // __NS_SMILTIMEDDOCUMENTROOT_H__
 +
-Index: mozilla/smil/src/nsSMILTimedElement.cpp
+Index: mozilla/content/smil/src/nsSMILTimedElement.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/smil/src/nsSMILTimedElement.cpp
++++ mozilla/content/smil/src/nsSMILTimedElement.cpp
 @@ -0,0 +1,1256 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -7828,10 +7970,69 @@ Index: mozilla/smil/src/nsSMILTimedElement.cpp
 +    mClient->SampleAt(simpleTime, mSimpleDur, repeatIteration);
 +}
 +
-Index: mozilla/svg/content/src/nsISVGAnimationElement.h
+Index: mozilla/content/svg/content/src/Makefile.in
+===================================================================
+--- mozilla.orig/content/svg/content/src/Makefile.in
++++ mozilla/content/svg/content/src/Makefile.in
+@@ -16,16 +16,17 @@
+ #
+ # The Initial Developer of the Original Code is
+ # Crocodile Clips Ltd.
+ # Portions created by the Initial Developer are Copyright (C) 2001
+ # the Initial Developer. All Rights Reserved.
+ #
+ # Contributor(s):
+ #   Alex Fritze <alex.fritze@crocodile-clips.com>
++#   Chris Double  <chris.double@double.co.nz>
+ #
+ # Alternatively, the contents of this file may be used under the terms of
+ # either of the GNU General Public License Version 2 or later (the "GPL"),
+ # or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ # in which case the provisions of the GPL or the LGPL are applicable instead
+ # of those above. If you wish to allow use of your version of this file only
+ # under the terms of either the GPL or the LGPL, and not to allow others to
+ # use your version of this file under the terms of the MPL, indicate your
+@@ -137,16 +138,26 @@
+ 		nsSVGUseElement.cpp \
+ 		nsSVGValue.cpp \
+ 		$(NULL)
+ 
+ ifdef MOZ_SVG_FOREIGNOBJECT
+ CPPSRCS += nsSVGForeignObjectElement.cpp
+ endif
+ 
++ifdef MOZ_SMIL
++CPPSRCS += nsSVGAnimateElement.cpp \
++           nsSVGAnimateTransformElement.cpp \
++           nsSVGAnimationElement.cpp \
++           nsSVGSetElement.cpp \
++           nsSVGTransformSMILType.cpp \
++           nsSVGTransformSMILAttr.cpp \
++           $(NULL)
++endif
++
+ include $(topsrcdir)/config/config.mk
+ 
+ # we don't want the shared lib, but we want to force the creation of a static lib.
+ FORCE_STATIC_LIB = 1
+ 
+ EXPORTS =  			\
+ 	nsIDOMSVGListener.h \
+ 	nsIDOMSVGZoomListener.h \
+@@ -172,8 +183,9 @@
+ 		-I$(srcdir)/../../../../layout/svg/base/src \
+ 		-I$(srcdir)/../../../../layout/style \
+ 		-I$(srcdir)/../../../events/src \
+ 		-I$(srcdir)/../../../html/content/src \
+ 		-I$(topsrcdir)/content/xbl/src \
+ 		$(NULL)
+ 
+ DEFINES += -D_IMPL_NS_LAYOUT
++
+Index: mozilla/content/svg/content/src/nsISVGAnimationElement.h
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsISVGAnimationElement.h
++++ mozilla/content/svg/content/src/nsISVGAnimationElement.h
 @@ -0,0 +1,64 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -7897,10 +8098,10 @@ Index: mozilla/svg/content/src/nsISVGAnimationElement.h
 +
 +#endif // __NS_ISVGANIMATIONELEMENT__
 +
-Index: mozilla/svg/content/src/nsSVGAnimateElement.cpp
+Index: mozilla/content/svg/content/src/nsSVGAnimateElement.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsSVGAnimateElement.cpp
++++ mozilla/content/svg/content/src/nsSVGAnimateElement.cpp
 @@ -0,0 +1,186 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -8088,10 +8289,10 @@ Index: mozilla/svg/content/src/nsSVGAnimateElement.cpp
 +
 +  return atoms;
 +}
-Index: mozilla/svg/content/src/nsSVGAnimateTransformElement.cpp
+Index: mozilla/content/svg/content/src/nsSVGAnimateTransformElement.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsSVGAnimateTransformElement.cpp
++++ mozilla/content/svg/content/src/nsSVGAnimateTransformElement.cpp
 @@ -0,0 +1,229 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -8322,10 +8523,190 @@ Index: mozilla/svg/content/src/nsSVGAnimateTransformElement.cpp
 +
 +  return atoms;
 +}
-Index: mozilla/svg/content/src/nsSVGAnimationElement.cpp
+Index: mozilla/content/svg/content/src/nsSVGAnimatedTransformList.cpp
+===================================================================
+--- mozilla.orig/content/svg/content/src/nsSVGAnimatedTransformList.cpp
++++ mozilla/content/svg/content/src/nsSVGAnimatedTransformList.cpp
+@@ -33,68 +33,21 @@
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsSVGAnimatedTransformList.h"
+ #include "nsSVGTransformList.h"
+-#include "nsSVGValue.h"
+-#include "nsWeakReference.h"
+ #include "nsContentUtils.h"
+ 
+-////////////////////////////////////////////////////////////////////////
+-// nsSVGAnimatedTransformList
+-
+-class nsSVGAnimatedTransformList : public nsIDOMSVGAnimatedTransformList,
+-                                   public nsSVGValue,
+-                                   public nsISVGValueObserver
+-{  
+-protected:
+-  friend nsresult
+-  NS_NewSVGAnimatedTransformList(nsIDOMSVGAnimatedTransformList** result,
+-                                 nsIDOMSVGTransformList* baseVal);
+-
+-  nsSVGAnimatedTransformList();
+-  ~nsSVGAnimatedTransformList();
+-  void Init(nsIDOMSVGTransformList* baseVal);
+-  
+-public:
+-  // nsISupports interface:
+-  NS_DECL_ISUPPORTS
+-
+-  // nsIDOMSVGAnimatedTransformList interface:
+-  NS_DECL_NSIDOMSVGANIMATEDTRANSFORMLIST
+-
+-  // remainder of nsISVGValue interface:
+-  NS_IMETHOD SetValueString(const nsAString& aValue);
+-  NS_IMETHOD GetValueString(nsAString& aValue);
+-
+-  // nsISVGValueObserver
+-  NS_IMETHOD WillModifySVGObservable(nsISVGValue* observable,
+-                                     modificationType aModType);
+-  NS_IMETHOD DidModifySVGObservable (nsISVGValue* observable,
+-                                     modificationType aModType);
+-  
+-  // nsISupportsWeakReference
+-  // implementation inherited from nsSupportsWeakReference
+-  
+-protected:
+-  nsCOMPtr<nsIDOMSVGTransformList> mBaseVal;
+-};
+-
+-
+ //----------------------------------------------------------------------
+ // Implementation
+ 
+-nsSVGAnimatedTransformList::nsSVGAnimatedTransformList()
+-{
+-}
+-
+ nsSVGAnimatedTransformList::~nsSVGAnimatedTransformList()
+ {
+   if (!mBaseVal) return;
+     nsCOMPtr<nsISVGValue> val = do_QueryInterface(mBaseVal);
+   if (!val) return;
+   val->RemoveObserver(this);
+ }
+ 
+@@ -152,17 +105,17 @@
+   NS_ADDREF(*aBaseVal);
+   return NS_OK;
+ }
+ 
+ /* readonly attribute nsIDOMSVGTransformList animVal; */
+ NS_IMETHODIMP
+ nsSVGAnimatedTransformList::GetAnimVal(nsIDOMSVGTransformList * *aAnimVal)
+ {
+-  *aAnimVal = mBaseVal;
++  *aAnimVal = (mAnimVal) ? mAnimVal : mBaseVal;
+   NS_ADDREF(*aAnimVal);
+   return NS_OK;
+ }
+ 
+ //----------------------------------------------------------------------
+ // nsISVGValueObserver methods
+ 
+ NS_IMETHODIMP
+@@ -176,17 +129,16 @@
+ NS_IMETHODIMP
+ nsSVGAnimatedTransformList::DidModifySVGObservable (nsISVGValue* observable,
+                                                     modificationType aModType)
+ {
+   DidModify(aModType);
+   return NS_OK;
+ }
+ 
+-
+ ////////////////////////////////////////////////////////////////////////
+ // Exported creation functions:
+ 
+ nsresult
+ NS_NewSVGAnimatedTransformList(nsIDOMSVGAnimatedTransformList** result,
+                       nsIDOMSVGTransformList* baseVal)
+ {
+   *result = nsnull;
+Index: mozilla/content/svg/content/src/nsSVGAnimatedTransformList.h
+===================================================================
+--- mozilla.orig/content/svg/content/src/nsSVGAnimatedTransformList.h
++++ mozilla/content/svg/content/src/nsSVGAnimatedTransformList.h
+@@ -36,14 +36,65 @@
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #ifndef __NS_SVGANIMATEDTRANSFORMLIST_H__
+ #define __NS_SVGANIMATEDTRANSFORMLIST_H__
+ 
+ #include "nsIDOMSVGAnimTransformList.h"
+ #include "nsIDOMSVGTransformList.h"
++#include "nsSVGValue.h"
++
++////////////////////////////////////////////////////////////////////////
++// nsSVGAnimatedTransformList
++
++class nsSVGTransformSMILAttr;
++
++class nsSVGAnimatedTransformList : public nsIDOMSVGAnimatedTransformList,
++                                   public nsSVGValue,
++                                   public nsISVGValueObserver
++{
++protected:
++  friend nsresult
++  NS_NewSVGAnimatedTransformList(nsIDOMSVGAnimatedTransformList** result,
++                                 nsIDOMSVGTransformList* baseVal);
++
++  ~nsSVGAnimatedTransformList();
++  void Init(nsIDOMSVGTransformList* baseVal);
++
++public:
++  // nsISupports interface:
++  NS_DECL_ISUPPORTS
++
++  // nsIDOMSVGAnimatedTransformList interface:
++  NS_DECL_NSIDOMSVGANIMATEDTRANSFORMLIST
++
++  // remainder of nsISVGValue interface:
++  NS_IMETHOD SetValueString(const nsAString& aValue);
++  NS_IMETHOD GetValueString(nsAString& aValue);
++
++  // nsISVGValueObserver
++  NS_IMETHOD WillModifySVGObservable(nsISVGValue* observable,
++                                     modificationType aModType);
++  NS_IMETHOD DidModifySVGObservable (nsISVGValue* observable,
++                                     modificationType aModType);
++
++  // nsISupportsWeakReference
++  // implementation inherited from nsSupportsWeakReference
++
++protected:
++  nsresult
++  ParseValue(const nsAString &aSpec, nsIDOMSVGMatrix** matrix) const;
++
++  PRInt32
++  ParseParameterList(char *paramstr, float *vars, PRInt32 nvars) const;
++
++  friend class nsSVGTransformSMILAttr;
++
++  nsCOMPtr<nsIDOMSVGTransformList> mBaseVal;
++  nsCOMPtr<nsIDOMSVGTransformList> mAnimVal;
++};
+ 
+ nsresult
+ NS_NewSVGAnimatedTransformList(nsIDOMSVGAnimatedTransformList** result,
+                                nsIDOMSVGTransformList* baseVal);
+ 
+ #endif //__NS_SVGANIMATEDTRANSFORMLIST_H__
+Index: mozilla/content/svg/content/src/nsSVGAnimationElement.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsSVGAnimationElement.cpp
++++ mozilla/content/svg/content/src/nsSVGAnimationElement.cpp
 @@ -0,0 +1,351 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -8678,10 +9059,10 @@ Index: mozilla/svg/content/src/nsSVGAnimationElement.cpp
 +  }
 +}
 +
-Index: mozilla/svg/content/src/nsSVGAnimationElement.h
+Index: mozilla/content/svg/content/src/nsSVGAnimationElement.h
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsSVGAnimationElement.h
++++ mozilla/content/svg/content/src/nsSVGAnimationElement.h
 @@ -0,0 +1,105 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -8788,10 +9169,990 @@ Index: mozilla/svg/content/src/nsSVGAnimationElement.h
 +};
 +
 +#endif // __NS_SVGANIMATIONELEMENT_H__
-Index: mozilla/svg/content/src/nsSVGSetElement.cpp
+Index: mozilla/content/svg/content/src/nsSVGElement.cpp
+===================================================================
+--- mozilla.orig/content/svg/content/src/nsSVGElement.cpp
++++ mozilla/content/svg/content/src/nsSVGElement.cpp
+@@ -81,16 +81,17 @@
+ #include "nsIDOMSVGPointList.h"
+ #include "nsIDOMSVGAnimatedPoints.h"
+ #include "nsIDOMSVGPresAspectRatio.h"
+ #include "nsIDOMSVGAnimPresAspRatio.h"
+ #include "nsIDOMSVGTransformList.h"
+ #include "nsIDOMSVGAnimTransformList.h"
+ #include "nsIDOMSVGAnimatedRect.h"
+ #include "nsSVGRect.h"
++#include "nsIFrame.h"
+ #include "prdtoa.h"
+ #include <stdarg.h>
+ 
+ nsSVGEnumMapping nsSVGElement::sSVGUnitTypesMap[] = {
+   {&nsGkAtoms::userSpaceOnUse, nsIDOMSVGUnitTypes::SVG_UNIT_TYPE_USERSPACEONUSE},
+   {&nsGkAtoms::objectBoundingBox, nsIDOMSVGUnitTypes::SVG_UNIT_TYPE_OBJECTBOUNDINGBOX},
+   {nsnull, 0}
+ };
+@@ -1139,16 +1140,29 @@
+   nsAutoString newStr;
+   info.mLengths[aAttrEnum].GetBaseValueString(newStr);
+ 
+   SetAttr(kNameSpaceID_None, *info.mLengthInfo[aAttrEnum].mName,
+           newStr, PR_TRUE);
+ }
+ 
+ void
++nsSVGElement::DidAnimateLength(PRUint8 aAttrEnum)
++{
++  nsIFrame* frame = GetPrimaryFrame();
++
++  if (frame) {
++    LengthAttributesInfo info = GetLengthInfo();
++    frame->AttributeChanged(kNameSpaceID_None,
++                            *info.mLengthInfo[aAttrEnum].mName,
++                            nsIDOMMutationEvent::MODIFICATION);
++  }
++}
++
++void
+ nsSVGElement::GetAnimatedLengthValues(float *aFirst, ...)
+ {
+   LengthAttributesInfo info = GetLengthInfo();
+ 
+   NS_ASSERTION(info.mLengthCount > 0,
+                "GetAnimatedLengthValues on element with no length attribs");
+ 
+   nsSVGSVGElement *ctx = nsnull;
+@@ -1523,8 +1537,37 @@
+       continue;
+     }
+ 
+     nsAutoString value;
+     GetAttr(kNameSpaceID_None, attr, value);
+     AddScriptEventListener(GetEventNameForAttr(attr), value, PR_TRUE);
+   }
+ }
++
++#ifdef MOZ_SMIL
++
++// This should be overridden as necessary, e.g. to ensure some attributes are
++// not animatable
++
++already_AddRefed<nsISMILAttr>
++nsSVGElement::GetAnimAttribute(PRInt32 aNamespaceID, const nsIAtom* aAttribute)
++{
++  NS_ENSURE_TRUE(aAttribute, nsnull);
++
++  nsISMILAttr* result = nsnull;
++
++  // XXX Only lengths are supported at present
++
++  if (aNamespaceID == kNameSpaceID_None) {
++    LengthAttributesInfo info = GetLengthInfo();
++    for (PRUint32 i = 0; i < info.mLengthCount && !result; i++) {
++      if (aAttribute == *info.mLengthInfo[i].mName) {
++        if (NS_FAILED(info.mLengths[i].ToSMILAttr(&result, this)))
++          result = nsnull;
++      }
++    }
++  }
++
++  return result;
++}
++
++#endif // MOZ_SMIL
+Index: mozilla/content/svg/content/src/nsSVGElement.h
+===================================================================
+--- mozilla.orig/content/svg/content/src/nsSVGElement.h
++++ mozilla/content/svg/content/src/nsSVGElement.h
+@@ -49,16 +49,20 @@
+ #include "nsIDOMSVGElement.h"
+ #include "nsGenericElement.h"
+ #include "nsStyledElement.h"
+ #include "nsISVGValue.h"
+ #include "nsISVGValueObserver.h"
+ #include "nsWeakReference.h"
+ #include "nsICSSStyleRule.h"
+ 
++#ifdef MOZ_SMIL
++#include "nsISMILAttr.h"
++#endif
++
+ class nsSVGSVGElement;
+ class nsSVGLength2;
+ class nsSVGNumber2;
+ class nsSVGInteger;
+ class nsSVGAngle;
+ class nsSVGBoolean;
+ class nsSVGEnum;
+ struct nsSVGEnumMapping;
+@@ -132,20 +136,27 @@
+   virtual void DidChangeLength(PRUint8 aAttrEnum, PRBool aDoSetAttr);
+   virtual void DidChangeNumber(PRUint8 aAttrEnum, PRBool aDoSetAttr);
+   virtual void DidChangeInteger(PRUint8 aAttrEnum, PRBool aDoSetAttr);
+   virtual void DidChangeAngle(PRUint8 aAttrEnum, PRBool aDoSetAttr);
+   virtual void DidChangeBoolean(PRUint8 aAttrEnum, PRBool aDoSetAttr);
+   virtual void DidChangeEnum(PRUint8 aAttrEnum, PRBool aDoSetAttr);
+   virtual void DidChangeString(PRUint8 aAttrEnum, PRBool aDoSetAttr);
+ 
++	void DidAnimateLength(PRUint8 aAttrEnum);
++
+   void GetAnimatedLengthValues(float *aFirst, ...);
+   void GetAnimatedNumberValues(float *aFirst, ...);
+   void GetAnimatedIntegerValues(PRInt32 *aFirst, ...);
+ 
++#ifdef MOZ_SMIL
++  virtual already_AddRefed<nsISMILAttr>
++  GetAnimAttribute(PRInt32 aNamespaceID, const nsIAtom* aAttribute);
++#endif
++
+   virtual void RecompileScriptEventListeners();
+ 
+ protected:
+   virtual nsresult BeforeSetAttr(PRInt32 aNamespaceID, nsIAtom* aName,
+                                  const nsAString* aValue, PRBool aNotify);
+   virtual nsresult AfterSetAttr(PRInt32 aNamespaceID, nsIAtom* aName,
+                                 const nsAString* aValue, PRBool aNotify);
+   virtual PRBool ParseAttribute(PRInt32 aNamespaceID, nsIAtom* aAttribute,
+Index: mozilla/content/svg/content/src/nsSVGElementFactory.cpp
+===================================================================
+--- mozilla.orig/content/svg/content/src/nsSVGElementFactory.cpp
++++ mozilla/content/svg/content/src/nsSVGElementFactory.cpp
+@@ -16,16 +16,17 @@
+  *
+  * The Initial Developer of the Original Code is
+  * Crocodile Clips Ltd..
+  * Portions created by the Initial Developer are Copyright (C) 2001
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
+  *   Alex Fritze <alex.fritze@crocodile-clips.com> (original author)
++ *   Chris Double  <chris.double@double.co.nz>
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either of the GNU General Public License Version 2 or later (the "GPL"),
+  * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+@@ -156,16 +157,25 @@
+ NS_NewSVGFEDiffuseLightingElement(nsIContent **aResult, nsINodeInfo *aNodeInfo);
+ nsresult
+ NS_NewSVGFESpecularLightingElement(nsIContent **aResult, nsINodeInfo *aNodeInfo);
+ nsresult
+ NS_NewSVGFEImageElement(nsIContent **aResult, nsINodeInfo *aNodeInfo);
+ nsresult
+ NS_NewSVGFEDisplacementMapElement(nsIContent **aResult, nsINodeInfo *aNodeInfo);
+ 
++#ifdef MOZ_SMIL
++nsresult
++NS_NewSVGAnimateElement(nsIContent **aResult, nsINodeInfo *aNodeInfo);
++nsresult
++NS_NewSVGAnimateTransformElement(nsIContent **aResult, nsINodeInfo *aNodeInfo);
++nsresult
++NS_NewSVGSetElement(nsIContent **aResult, nsINodeInfo *aNodeInfo);
++#endif // MOZ_SMIL
++
+ nsresult
+ NS_NewSVGElement(nsIContent** aResult, nsINodeInfo *aNodeInfo)
+ {
+   NS_PRECONDITION(NS_SVGEnabled(),
+                   "creating an SVG element while SVG disabled");
+ 
+   static const char kSVGStyleSheetURI[] = "resource://gre/res/svg.css";
+ 
+@@ -285,13 +295,21 @@
+   if (name == nsGkAtoms::feDisplacementMap)
+     return NS_NewSVGFEDisplacementMapElement(aResult, aNodeInfo);
+   if (name == nsGkAtoms::pattern)
+     return NS_NewSVGPatternElement(aResult, aNodeInfo);
+   if (name == nsGkAtoms::mask)
+     return NS_NewSVGMaskElement(aResult, aNodeInfo);
+   if (name == nsGkAtoms::svgSwitch)
+     return NS_NewSVGSwitchElement(aResult, aNodeInfo);
++#ifdef MOZ_SMIL
++  if (name == nsGkAtoms::animate)
++    return NS_NewSVGAnimateElement(aResult, aNodeInfo);
++  if (name == nsGkAtoms::animateTransform)
++    return NS_NewSVGAnimateTransformElement(aResult, aNodeInfo);
++  if (name == nsGkAtoms::set)
++    return NS_NewSVGSetElement(aResult, aNodeInfo);
++#endif // MOZ_SMIL
+ 
+   // if we don't know what to create, just create a standard xml element:
+   return NS_NewXMLElement(aResult, aNodeInfo);
+ }
+ 
+Index: mozilla/content/svg/content/src/nsSVGLength2.cpp
+===================================================================
+--- mozilla.orig/content/svg/content/src/nsSVGLength2.cpp
++++ mozilla/content/svg/content/src/nsSVGLength2.cpp
+@@ -36,16 +36,21 @@
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsSVGLength2.h"
+ #include "prdtoa.h"
+ #include "nsTextFormatter.h"
+ #include "nsSVGSVGElement.h"
+ 
++#ifdef MOZ_SMIL
++#include "nsSMILValue.h"
++#include "nsSMILFloatType.h"
++#endif
++
+ NS_IMPL_ADDREF(nsSVGLength2::DOMBaseVal)
+ NS_IMPL_RELEASE(nsSVGLength2::DOMBaseVal)
+ 
+ NS_IMPL_ADDREF(nsSVGLength2::DOMAnimVal)
+ NS_IMPL_RELEASE(nsSVGLength2::DOMAnimVal)
+ 
+ NS_IMPL_ADDREF(nsSVGLength2::DOMAnimatedLength)
+ NS_IMPL_RELEASE(nsSVGLength2::DOMAnimatedLength)
+@@ -331,19 +336,86 @@
+ 
+ void
+ nsSVGLength2::SetBaseValue(float aValue, nsSVGElement *aSVGElement)
+ {
+   mAnimVal = mBaseVal = aValue * GetUnitScaleFactor(aSVGElement);
+   aSVGElement->DidChangeLength(mAttrEnum, PR_TRUE);
+ }
+ 
++void
++nsSVGLength2::SetAnimValue(float aValue, nsSVGElement *aSVGElement)
++{
++  mAnimVal = aValue * GetUnitScaleFactor(aSVGElement);
++  aSVGElement->DidAnimateLength(mAttrEnum);
++}
++
+ nsresult
+ nsSVGLength2::ToDOMAnimatedLength(nsIDOMSVGAnimatedLength **aResult,
+                                   nsSVGElement *aSVGElement)
+ {
+   *aResult = new DOMAnimatedLength(this, aSVGElement);
+   if (!*aResult)
+     return NS_ERROR_OUT_OF_MEMORY;
+ 
+   NS_ADDREF(*aResult);
+   return NS_OK;
+ }
++
++#ifdef MOZ_SMIL
++
++nsresult
++nsSVGLength2::ToSMILAttr(nsISMILAttr **aAttr, nsSVGElement *aSVGElement)
++{
++  *aAttr = new SMILLength(this, aSVGElement);
++  if (!*aAttr)
++    return NS_ERROR_OUT_OF_MEMORY;
++
++  NS_ADDREF(*aAttr);
++  return NS_OK;
++}
++
++/*static*/
++nsSVGLength2::SMILLength nsSVGLength2::SMILLength::sSingleton(nsnull, nsnull);
++
++nsresult
++nsSVGLength2::SMILLength::GetBaseValue(nsSMILValue& aValue)
++{
++  nsSMILValue val(&nsSMILFloatType::sSingleton);
++  val.mU.mDouble = mVal->GetBaseValue(mSVGElement);
++  aValue = val;
++  return NS_OK;
++}
++
++nsresult
++nsSVGLength2::SMILLength::SetAnimValue(const nsSMILValue& aValue)
++{
++  NS_ASSERTION(aValue.mType == &nsSMILFloatType::sSingleton,
++    "Unexpected type to assign animated value");
++  if (aValue.mType == &nsSMILFloatType::sSingleton)
++    mVal->SetAnimValue((float)aValue.mU.mDouble, mSVGElement);
++  return NS_OK;
++}
++
++nsresult
++nsSVGLength2::SMILLength::ValueFromString(const nsAString& aStr,
++                                          nsSMILValue& aValue)
++{
++  nsSVGLength2 tmp;
++  tmp.SetBaseValueString(aStr, mSVGElement, PR_FALSE);
++
++  nsSMILValue val(&nsSMILFloatType::sSingleton);
++  val.mU.mDouble = tmp.GetBaseValue(mSVGElement);
++  aValue = val;
++  return NS_OK;
++}
++
++PRBool
++nsSVGLength2::SMILLength::EqualTarget(const nsISMILAttr &aOther) const
++{
++  if (aOther.mType != &sSingleton)
++    return PR_FALSE;
++
++  SMILLength const *other = static_cast<SMILLength const *>(&aOther);
++  return (mVal == other->mVal);
++}
++
++#endif
+Index: mozilla/content/svg/content/src/nsSVGLength2.h
+===================================================================
+--- mozilla.orig/content/svg/content/src/nsSVGLength2.h
++++ mozilla/content/svg/content/src/nsSVGLength2.h
+@@ -38,16 +38,22 @@
+ #define __NS_SVGLENGTH2_H__
+ 
+ #include "nsIDOMSVGLength.h"
+ #include "nsIDOMSVGAnimatedLength.h"
+ #include "nsSVGUtils.h"
+ #include "nsSVGElement.h"
+ #include "nsDOMError.h"
+ 
++#ifdef MOZ_SMIL
++#include "nsISMILAttr.h"
++#endif
++
++struct nsSMILValue;
++
+ class nsSVGLength2
+ {
+ 
+ public:
+   void Init(PRUint8 aCtxType = nsSVGUtils::XY,
+             PRUint8 aAttrEnum = 0xff,
+             float aValue = 0,
+             PRUint8 aUnitType = nsIDOMSVGLength::SVG_LENGTHTYPE_NUMBER) {
+@@ -78,16 +84,19 @@
+ 
+   float GetBaseValue(nsSVGSVGElement* aCtx)
+     { return mBaseVal / GetUnitScaleFactor(aCtx); }
+   float GetAnimValue(nsSVGSVGElement* aCtx)
+     { return mAnimVal / GetUnitScaleFactor(aCtx); }
+   
+   nsresult ToDOMAnimatedLength(nsIDOMSVGAnimatedLength **aResult,
+                                nsSVGElement* aSVGElement);
++#ifdef MOZ_SMIL
++  nsresult ToSMILAttr(nsISMILAttr **aAttr, nsSVGElement* aSVGElement);
++#endif
+ 
+ private:
+   
+   float mAnimVal;
+   float mBaseVal;
+   PRUint8 mSpecifiedUnitType;
+   PRUint8 mAttrEnum; // element specified tracking for attribute
+   PRUint8 mCtxType; // X, Y or Unspecified
+@@ -98,16 +107,17 @@
+   float GetEmLength(nsSVGElement *aSVGElement) const
+     { return nsSVGUtils::GetFontSize(aSVGElement); }
+   float GetExLength(nsSVGElement *aSVGElement) const
+     { return nsSVGUtils::GetFontXHeight(aSVGElement); }
+   float GetUnitScaleFactor(nsSVGElement *aSVGElement) const;
+   float GetUnitScaleFactor(nsSVGSVGElement *aCtx) const;
+   void SetBaseValue(float aValue, nsSVGElement *aSVGElement);
+   void SetBaseValueInSpecifiedUnits(float aValue, nsSVGElement *aSVGElement);
++  void SetAnimValue(float aValue, nsSVGElement *aSVGElement);
+   void NewValueSpecifiedUnits(PRUint16 aUnitType, float aValue,
+                               nsSVGElement *aSVGElement);
+   void ConvertToSpecifiedUnits(PRUint16 aUnitType, nsSVGElement *aSVGElement);
+   nsresult ToDOMBaseVal(nsIDOMSVGLength **aResult, nsSVGElement* aSVGElement);
+   nsresult ToDOMAnimVal(nsIDOMSVGLength **aResult, nsSVGElement* aSVGElement);
+ 
+   struct DOMBaseVal : public nsIDOMSVGLength
+   {
+@@ -195,11 +205,30 @@
+     nsRefPtr<nsSVGElement> mSVGElement;
+ 
+     NS_IMETHOD GetBaseVal(nsIDOMSVGLength **aBaseVal)
+       { return mVal->ToDOMBaseVal(aBaseVal, mSVGElement); }
+ 
+     NS_IMETHOD GetAnimVal(nsIDOMSVGLength **aAnimVal)
+       { return mVal->ToDOMAnimVal(aAnimVal, mSVGElement); }
+   };
++
++#ifdef MOZ_SMIL
++  struct SMILLength : public nsISMILAttr
++  {
++    SMILLength(nsSVGLength2* aVal, nsSVGElement *aSVGElement)
++      : nsISMILAttr(&sSingleton), mVal(aVal), mSVGElement(aSVGElement) {}
++
++    nsSVGLength2* mVal; // kept alive because it belongs to content
++    nsRefPtr<nsSVGElement> mSVGElement;
++
++    virtual nsresult  GetBaseValue(nsSMILValue& aValue);
++    virtual nsresult  SetAnimValue(const nsSMILValue& aValue);
++    virtual nsresult  ValueFromString(const nsAString& aStr,
++                                      nsSMILValue &aValue);
++    virtual PRBool    EqualTarget(const nsISMILAttr &aOther) const;
++  private:
++    static SMILLength sSingleton; // Type checking only
++  };
++#endif
+ };
+ 
+ #endif
+Index: mozilla/content/svg/content/src/nsSVGSVGElement.cpp
+===================================================================
+--- mozilla.orig/content/svg/content/src/nsSVGSVGElement.cpp
++++ mozilla/content/svg/content/src/nsSVGSVGElement.cpp
+@@ -17,16 +17,17 @@
+  * The Initial Developer of the Original Code is
+  * Crocodile Clips Ltd..
+  * Portions created by the Initial Developer are Copyright (C) 2001
+  * the Initial Developer. All Rights Reserved.
+  *
+  * Contributor(s):
+  *   Alex Fritze <alex.fritze@crocodile-clips.com> (original author)
+  *   Jonathan Watt <jonathan.watt@strath.ac.uk>
++ *   Chris Double  <chris.double@double.co.nz>
+  *
+  * Alternatively, the contents of this file may be used under the terms of
+  * either of the GNU General Public License Version 2 or later (the "GPL"),
+  * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+  * in which case the provisions of the GPL or the LGPL are applicable instead
+  * of those above. If you wish to allow use of your version of this file only
+  * under the terms of either the GPL or the LGPL, and not to allow others to
+  * use your version of this file under the terms of the MPL, indicate your
+@@ -59,16 +60,27 @@
+ #include "nsSVGPreserveAspectRatio.h"
+ #include "nsISVGValueUtils.h"
+ #include "nsDOMError.h"
+ #include "nsISVGChildFrame.h"
+ #include "nsGUIEvent.h"
+ #include "nsSVGUtils.h"
+ #include "nsSVGSVGElement.h"
+ 
++#ifdef MOZ_SMIL
++#include "nsEventDispatcher.h"
++#include "nsISMILAnimationController.h"
++#include "nsISMILAnimationRegistry.h"
++#include "nsISVGAnimationElement.h"
++#include "nsIContentIterator.h"
++
++nsresult NS_NewContentIterator(nsIContentIterator** aInstancePtrResult);
++#endif // MOZ_SMIL
++
++
+ nsSVGElement::LengthInfo nsSVGSVGElement::sLengthInfo[4] =
+ {
+   { &nsGkAtoms::x, 0, nsIDOMSVGLength::SVG_LENGTHTYPE_NUMBER, nsSVGUtils::X },
+   { &nsGkAtoms::y, 0, nsIDOMSVGLength::SVG_LENGTHTYPE_NUMBER, nsSVGUtils::Y },
+   { &nsGkAtoms::width, 100, nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE, nsSVGUtils::X },
+   { &nsGkAtoms::height, 100, nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE, nsSVGUtils::Y },
+ };
+ 
+@@ -97,16 +109,19 @@
+ NS_INTERFACE_MAP_BEGIN(nsSVGSVGElement)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMNode)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMElement)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMSVGElement)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMSVGSVGElement)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMSVGFitToViewBox)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMSVGLocatable)
+   NS_INTERFACE_MAP_ENTRY(nsIDOMSVGZoomAndPan)
++#ifdef MOZ_SMIL
++  NS_INTERFACE_MAP_ENTRY(nsISMILAnimationObserver)
++#endif
+   NS_INTERFACE_MAP_ENTRY_CONTENT_CLASSINFO(SVGSVGElement)
+ NS_INTERFACE_MAP_END_INHERITING(nsSVGSVGElementBase)
+ 
+ //----------------------------------------------------------------------
+ // Implementation
+ 
+ nsSVGSVGElement::nsSVGSVGElement(nsINodeInfo* aNodeInfo)
+   : nsSVGSVGElementBase(aNodeInfo),
+@@ -114,16 +129,19 @@
+     mViewportWidth(0),
+     mViewportHeight(0),
+     mCoordCtxMmPerPx(0),
+     mPreviousTranslate_x(0),
+     mPreviousTranslate_y(0),
+     mPreviousScale(0),
+     mRedrawSuspendCount(0),
+     mDispatchEvent(PR_FALSE)
++#ifdef MOZ_SMIL
++    , mAnimationEnumerationRequired(PR_FALSE)
++#endif
+ {
+ }
+ 
+ nsSVGSVGElement::~nsSVGSVGElement()
+ {
+   if (mPreserveAspectRatio) {
+     NS_REMOVE_SVGVALUE_OBSERVER(mPreserveAspectRatio);
+   }
+@@ -446,51 +464,80 @@
+ 
+   return NS_OK;
+ }
+ 
+ /* void pauseAnimations (); */
+ NS_IMETHODIMP
+ nsSVGSVGElement::PauseAnimations()
+ {
++#ifdef MOZ_SMIL
++  NS_ENSURE_TRUE(mAnimationRegistry,NS_ERROR_FAILURE);
++  mAnimationRegistry->Pause();
++  return NS_OK;
++#else
+   NS_NOTYETIMPLEMENTED("nsSVGSVGElement::PauseAnimations");
+   return NS_ERROR_NOT_IMPLEMENTED;
++#endif
+ }
+ 
+ /* void unpauseAnimations (); */
+ NS_IMETHODIMP
+ nsSVGSVGElement::UnpauseAnimations()
+ {
++#ifdef MOZ_SMIL
++  NS_ENSURE_TRUE(mAnimationRegistry,NS_ERROR_FAILURE);
++  mAnimationRegistry->Unpause();
++  return NS_OK;
++#else
+   NS_NOTYETIMPLEMENTED("nsSVGSVGElement::UnpauseAnimations");
+   return NS_ERROR_NOT_IMPLEMENTED;
++#endif
+ }
+ 
+ /* boolean animationsPaused (); */
+ NS_IMETHODIMP
+ nsSVGSVGElement::AnimationsPaused(PRBool *_retval)
+ {
++#ifdef MOZ_SMIL
++  NS_ENSURE_TRUE(mAnimationRegistry,NS_ERROR_FAILURE);
++  *_retval = mAnimationRegistry->IsPaused();
++  return NS_OK;
++#else
+   NS_NOTYETIMPLEMENTED("nsSVGSVGElement::AnimationsPaused");
+   return NS_ERROR_NOT_IMPLEMENTED;
++#endif
+ }
+ 
+ /* float getCurrentTime (); */
+ NS_IMETHODIMP
+ nsSVGSVGElement::GetCurrentTime(float *_retval)
+ {
++#ifdef MOZ_SMIL
++  NS_ENSURE_TRUE(mAnimationRegistry,NS_ERROR_FAILURE);
++  *_retval = mAnimationRegistry->GetCurrentTime();
++  return NS_OK;
++#else
+   NS_NOTYETIMPLEMENTED("nsSVGSVGElement::GetCurrentTime");
+   return NS_ERROR_NOT_IMPLEMENTED;
++#endif
+ }
+ 
+ /* void setCurrentTime (in float seconds); */
+ NS_IMETHODIMP
+ nsSVGSVGElement::SetCurrentTime(float seconds)
+ {
++#ifdef MOZ_SMIL
++  NS_ENSURE_TRUE(mAnimationRegistry,NS_ERROR_FAILURE);
++  return mAnimationRegistry->SetCurrentTime(seconds);
++#else
+   NS_ENSURE_FINITE(seconds, NS_ERROR_ILLEGAL_VALUE);
+   NS_NOTYETIMPLEMENTED("nsSVGSVGElement::SetCurrentTime");
+   return NS_ERROR_NOT_IMPLEMENTED;
++#endif
+ }
+ 
+ /* nsIDOMNodeList getIntersectionList (in nsIDOMSVGRect rect, in nsIDOMSVGElement referenceElement); */
+ NS_IMETHODIMP
+ nsSVGSVGElement::GetIntersectionList(nsIDOMSVGRect *rect,
+                                      nsIDOMSVGElement *referenceElement,
+                                      nsIDOMNodeList **_retval)
+ {
+@@ -1072,16 +1119,62 @@
+ }
+ 
+ NS_IMETHODIMP_(float)
+ nsSVGSVGElement::GetPreviousScale()
+ {
+   return mPreviousScale;
+ }
+ 
++#ifdef MOZ_SMIL
++nsISMILAnimationRegistry*
++nsSVGSVGElement::GetAnimationRegistry()
++{
++  nsISMILAnimationRegistry* result = nsnull;
++
++  if (mAnimationRegistry) {
++    result = mAnimationRegistry;
++  } else {
++    // We must not be the outermost SVG element, try to find it
++    nsCOMPtr<nsIDOMSVGSVGElement> outerSVGDOM;
++
++    nsresult rv = GetOwnerSVGElement(getter_AddRefs(outerSVGDOM));
++
++    if (NS_SUCCEEDED(rv) && outerSVGDOM) {
++      nsSVGSVGElement *outerSVG =
++        static_cast<nsSVGSVGElement*>(outerSVGDOM.get());
++      result = outerSVG->GetAnimationRegistry();
++    }
++  }
++
++  return result;
++}
++
++NS_IMETHODIMP
++nsSVGSVGElement::EnumerateAnimationNodes()
++{
++  nsresult rv = NS_OK;
++
++  // This operation should be performed from the outermost SVG element
++  nsCOMPtr<nsIDOMSVGSVGElement> outerSVGDOM;
++  rv = GetOwnerSVGElement(getter_AddRefs(outerSVGDOM));
++
++  if (NS_SUCCEEDED(rv) && outerSVGDOM) {
++    nsSVGSVGElement *outerSVG =
++      static_cast<nsSVGSVGElement*>(outerSVGDOM.get());
++    rv = outerSVG->EnumerateAnimationNodes();
++  } else {
++    // We must be the outermost SVG element -- use lazy enumeration
++    mAnimationEnumerationRequired = PR_TRUE;
++  }
++
++  return rv;
++}
++#endif // MOZ_SMIL
++
+ //----------------------------------------------------------------------
+ // nsIContent methods
+ 
+ NS_IMETHODIMP_(PRBool)
+ nsSVGSVGElement::IsAttributeMapped(const nsIAtom* name) const
+ {
+   static const MappedAttributeEntry* const map[] = {
+     sColorMap,
+@@ -1127,16 +1220,32 @@
+   if (aNamespaceID == kNameSpaceID_None && aName == nsGkAtoms::viewBox) {
+     InvalidateTransformNotifyFrame();
+   }
+ 
+   return NS_OK;
+ }
+ 
+ //----------------------------------------------------------------------
++// nsIContent methods:
++
++#ifdef MOZ_SMIL
++nsresult
++nsSVGSVGElement::PostHandleEvent(nsEventChainPostVisitor& aVisitor)
++{
++  if (aVisitor.mEvent->message == NS_SVG_LOAD) {
++    if (mAnimationRegistry)
++      mAnimationRegistry->Start();
++  }
++
++  return nsSVGSVGElementBase::PostHandleEvent(aVisitor);
++}
++#endif
++
++//----------------------------------------------------------------------
+ // nsISVGValueObserver methods:
+ 
+ NS_IMETHODIMP
+ nsSVGSVGElement::WillModifySVGObservable(nsISVGValue* observable,
+                                          nsISVGValue::modificationType aModType)
+ {
+   if (mDispatchEvent) {
+     // Modification isn't due to calling SetCurrent[Scale]Translate, so if
+@@ -1264,16 +1373,84 @@
+                                     viewboxX, viewboxY,
+                                     viewboxWidth, viewboxHeight,
+                                     mPreserveAspectRatio);
+   xform.swap(*_retval);
+ 
+   return NS_OK;
+ }
+ 
++#ifdef MOZ_SMIL
++nsresult
++nsSVGSVGElement::BindToTree(nsIDocument* aDocument,
++                            nsIContent* aParent,
++                            nsIContent* aBindingParent,
++                            PRBool aCompileEventHandlers)
++{
++  nsCOMPtr<nsIDOMSVGSVGElement> outerSVG;
++
++  GetOwnerSVGElement(getter_AddRefs(outerSVG));
++
++  PRBool outermost = (outerSVG == nsnull);
++
++  if (!mAnimationRegistry && outermost) {
++    // We are now the outermost SVG element
++    mAnimationRegistry = NS_NewSMILAnimationRegistry();
++    NS_ENSURE_TRUE(mAnimationRegistry, NS_ERROR_FAILURE);
++    mAnimationRegistry->SetObserver(this);
++  } else if (mAnimationRegistry && !outermost) {
++    mAnimationRegistry = nsnull;
++  }
++
++  nsresult rv = nsSVGSVGElementBase::BindToTree(aDocument, aParent,
++                                                aBindingParent,
++                                                aCompileEventHandlers);
++  NS_ENSURE_SUCCESS(rv,rv);
++
++  nsCOMPtr<nsISMILAnimationController> smilController =
++    GetAnimationController(aDocument, PR_TRUE);
++
++  if (mAnimationRegistry && smilController)
++    rv = mAnimationRegistry->SetController(smilController);
++
++  return rv;
++}
++
++void
++nsSVGSVGElement::UnbindFromTree(PRBool aDeep, PRBool aNullParent)
++{
++  if (mAnimationRegistry)
++    mAnimationRegistry->SetController(nsnull);
++
++  nsSVGSVGElementBase::UnbindFromTree(aDeep, aNullParent);
++}
++
++//----------------------------------------------------------------------
++// nsISMILAnimationObserver
++
++void
++nsSVGSVGElement::StartCompositing()
++{
++  PRUint32 retval;
++  SuspendRedraw(0, &retval);
++
++  if (mAnimationEnumerationRequired) {
++    DoEnumerateAnimationNodes();
++    mAnimationEnumerationRequired = PR_FALSE;
++  }
++}
++
++void
++nsSVGSVGElement::EndCompositing()
++{
++  UnsuspendRedraw(0);
++}
++
++#endif // MOZ_SMIL
++
+ //----------------------------------------------------------------------
+ // implementation helpers
+ 
+ // if an ancestor isn't specified, obtains offset from root frame
+ void nsSVGSVGElement::GetOffsetToAncestor(nsIContent* ancestor,
+                                           float &x, float &y)
+ {
+   x = 0.0f;
+@@ -1442,8 +1619,58 @@
+ }
+ 
+ nsSVGElement::EnumAttributesInfo
+ nsSVGSVGElement::GetEnumInfo()
+ {
+   return EnumAttributesInfo(mEnumAttributes, sEnumInfo,
+                             NS_ARRAY_LENGTH(sEnumInfo));
+ }
++
++#ifdef MOZ_SMIL
++nsISMILAnimationController*
++nsSVGSVGElement::GetAnimationController(nsIDocument* aDocument,
++                                        PRBool aCreate /* = PR_FALSE */)
++{
++  nsISMILAnimationController* result = nsnull;
++
++  NS_ENSURE_TRUE(aDocument, nsnull);
++
++  nsIPresShell* presShell = aDocument->GetPrimaryShell();
++  if (!presShell)
++    return nsnull;
++
++  nsPresContext* context = presShell->GetPresContext();
++  NS_ENSURE_TRUE(context, nsnull);
++
++  nsIAnimationController* controller = context->GetAnimationController();
++
++  if (controller) {
++    nsresult rv = CallQueryInterface(controller, &result);
++    NS_ENSURE_SUCCESS(rv, nsnull);
++  } else if (aCreate) {
++    result = NS_NewSMILAnimationController(aDocument);
++    context->SetAnimationController(result);
++  }
++
++  return result;
++}
++
++void
++nsSVGSVGElement::DoEnumerateAnimationNodes()
++{
++  PRUint16 position = 0;
++  nsCOMPtr<nsIContentIterator> iter;
++  NS_NewContentIterator(getter_AddRefs(iter));
++  iter->Init(static_cast<nsIContent*>(this));
++
++  while (!iter->IsDone()) {
++    nsIContent* content = iter->GetCurrentNode();
++    nsIAtom* tag = content->Tag();
++    if (tag == nsGkAtoms::animate || tag == nsGkAtoms::animateTransform || tag == nsGkAtoms::set) {
++      nsCOMPtr<nsISVGAnimationElement> element( do_QueryInterface(content) );
++      if (element)
++        element->SetDocumentPosition(++position);
++    }
++    iter->Next();
++  }
++}
++#endif // MOZ_SMIL
+Index: mozilla/content/svg/content/src/nsSVGSVGElement.h
+===================================================================
+--- mozilla.orig/content/svg/content/src/nsSVGSVGElement.h
++++ mozilla/content/svg/content/src/nsSVGSVGElement.h
+@@ -44,16 +44,23 @@
+ #include "nsIDOMSVGSVGElement.h"
+ #include "nsIDOMSVGFitToViewBox.h"
+ #include "nsIDOMSVGLocatable.h"
+ #include "nsIDOMSVGZoomAndPan.h"
+ #include "nsIDOMSVGMatrix.h"
+ #include "nsSVGLength2.h"
+ #include "nsSVGEnum.h"
+ 
++#ifdef MOZ_SMIL
++#include "nsISMILAnimationObserver.h"
++
++class nsISMILAnimationController;
++class nsISMILAnimationRegistry;
++#endif
++
+ #define QI_AND_CAST_TO_NSSVGSVGELEMENT(base)                                  \
+   (nsCOMPtr<nsIDOMSVGSVGElement>(do_QueryInterface(base)) ?                   \
+    static_cast<nsSVGSVGElement*>(base.get()) : nsnull)
+ 
+ typedef nsSVGStylableElement nsSVGSVGElementBase;
+ 
+ class svgFloatSize {
+ public:
+@@ -68,16 +75,19 @@
+   float height;
+ };
+ 
+ class nsSVGSVGElement : public nsSVGSVGElementBase,
+                         public nsIDOMSVGSVGElement,
+                         public nsIDOMSVGFitToViewBox,
+                         public nsIDOMSVGLocatable,
+                         public nsIDOMSVGZoomAndPan
++#ifdef MOZ_SMIL
++                        , public nsISMILAnimationObserver
++#endif
+ {
+   friend class nsSVGOuterSVGFrame;
+   friend class nsSVGInnerSVGFrame;
+ 
+ protected:
+   friend nsresult NS_NewSVGSVGElement(nsIContent **aResult,
+                                       nsINodeInfo *aNodeInfo);
+   nsSVGSVGElement(nsINodeInfo* aNodeInfo);
+@@ -124,18 +134,26 @@
+   /**
+    * Retrieve the value of currentScale, currentTranslate.x or
+    * currentTranslate.y prior to the last change made to any one of them.
+    */
+   NS_IMETHOD_(float) GetPreviousTranslate_x();
+   NS_IMETHOD_(float) GetPreviousTranslate_y();
+   NS_IMETHOD_(float) GetPreviousScale();
+ 
++#ifdef MOZ_SMIL
++  NS_IMETHOD_(nsISMILAnimationRegistry*) GetAnimationRegistry();
++  NS_IMETHOD EnumerateAnimationNodes();
++#endif // MOZ_SMIL
++
+   // nsIContent interface
+   NS_IMETHOD_(PRBool) IsAttributeMapped(const nsIAtom* aAttribute) const;
++#ifdef MOZ_SMIL
++  virtual nsresult PostHandleEvent(nsEventChainPostVisitor& aVisitor);
++#endif // MOZ_SMIL
+ 
+   virtual nsresult AfterSetAttr(PRInt32 aNameSpaceID, nsIAtom* aName,
+                                 const nsAString* aValue, PRBool aNotify);
+   virtual nsresult UnsetAttr(PRInt32 aNameSpaceID, nsIAtom* aAttribute,
+                              PRBool aNotify);
+ 
+   // nsISVGValueObserver
+   NS_IMETHOD WillModifySVGObservable(nsISVGValue* observable,
+@@ -152,31 +170,53 @@
+   float GetMMPerPx(PRUint8 mCtxType = 0);
+   already_AddRefed<nsIDOMSVGRect> GetCtxRect();
+ 
+   // public helpers:
+   nsresult GetViewboxToViewportTransform(nsIDOMSVGMatrix **_retval);
+ 
+   virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const;
+ 
++#ifdef MOZ_SMIL
++  // nsISMILAnimationObserver interface
++  virtual void StartSample() {}
++  virtual void StartCompositing();
++  virtual void EndCompositing();
++  virtual void EndSample() {}
++#endif // MOZ_SMIL
++
+   svgFloatSize GetViewportSize() {
+     return svgFloatSize(mViewportWidth, mViewportHeight);
+   }
+ 
+   void SetViewportSize(svgFloatSize& aSize) {
+     mViewportWidth  = aSize.width;
+     mViewportHeight = aSize.height;
+   }
+ 
+ protected:
+   // nsSVGElement overrides
+   PRBool IsEventName(nsIAtom* aName);
+ 
++#ifdef MOZ_SMIL
++  virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
++                              nsIContent* aBindingParent,
++                              PRBool aCompileEventHandlers);
++  virtual void UnbindFromTree(PRBool aDeep = PR_TRUE,
++                              PRBool aNullParent = PR_TRUE);
++#endif // MOZ_SMIL
++
+   // implementation helpers:
+   void GetOffsetToAncestor(nsIContent* ancestor, float &x, float &y);
++#ifdef MOZ_SMIL
++  nsISMILAnimationController*
++  GetAnimationController(nsIDocument* aDocument, PRBool aCreate = PR_FALSE);
++  void DoEnumerateAnimationNodes();
++#endif // MOZ_SMIL
++
+   PRBool IsRoot() {
+     NS_ASSERTION((IsInDoc() && !GetParent()) ==
+                  (GetOwnerDoc() && (GetOwnerDoc()->GetRootContent() == this)),
+                  "Can't determine if we're root");
+     return IsInDoc() && !GetParent();
+   }
+ 
+   // invalidate viewbox -> viewport xform & inform frames
+@@ -216,11 +256,17 @@
+   // members below - see the comment in RecordCurrentScaleTranslate
+   nsCOMPtr<nsIDOMSVGPoint>          mCurrentTranslate;
+   nsCOMPtr<nsIDOMSVGNumber>         mCurrentScale;
+   float                             mPreviousTranslate_x;
+   float                             mPreviousTranslate_y;
+   float                             mPreviousScale;
+   PRInt32                           mRedrawSuspendCount;
+   PRPackedBool                      mDispatchEvent;
++
++#ifdef MOZ_SMIL
++  // animation
++  PRPackedBool                      mAnimationEnumerationRequired;
++  nsCOMPtr<nsISMILAnimationRegistry> mAnimationRegistry;
++#endif // MOZ_SMIL
+ };
+ 
+ #endif
+Index: mozilla/content/svg/content/src/nsSVGSetElement.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsSVGSetElement.cpp
++++ mozilla/content/svg/content/src/nsSVGSetElement.cpp
 @@ -0,0 +1,188 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -8981,10 +10342,10 @@ Index: mozilla/svg/content/src/nsSVGSetElement.cpp
 +
 +  return atoms;
 +}
-Index: mozilla/svg/content/src/nsSVGTransformSMILAttr.cpp
+Index: mozilla/content/svg/content/src/nsSVGTransformSMILAttr.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsSVGTransformSMILAttr.cpp
++++ mozilla/content/svg/content/src/nsSVGTransformSMILAttr.cpp
 @@ -0,0 +1,341 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -9327,10 +10688,10 @@ Index: mozilla/svg/content/src/nsSVGTransformSMILAttr.cpp
 +  return num_args_found;
 +}
 +
-Index: mozilla/svg/content/src/nsSVGTransformSMILAttr.h
+Index: mozilla/content/svg/content/src/nsSVGTransformSMILAttr.h
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsSVGTransformSMILAttr.h
++++ mozilla/content/svg/content/src/nsSVGTransformSMILAttr.h
 @@ -0,0 +1,85 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -9417,10 +10778,10 @@ Index: mozilla/svg/content/src/nsSVGTransformSMILAttr.h
 +
 +};
 +
-Index: mozilla/svg/content/src/nsSVGTransformSMILType.cpp
+Index: mozilla/content/svg/content/src/nsSVGTransformSMILType.cpp
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsSVGTransformSMILType.cpp
++++ mozilla/content/svg/content/src/nsSVGTransformSMILType.cpp
 @@ -0,0 +1,312 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -9734,10 +11095,10 @@ Index: mozilla/svg/content/src/nsSVGTransformSMILType.cpp
 +
 +  return NS_OK;
 +}
-Index: mozilla/svg/content/src/nsSVGTransformSMILType.h
+Index: mozilla/content/svg/content/src/nsSVGTransformSMILType.h
 ===================================================================
 --- /dev/null
-+++ mozilla/svg/content/src/nsSVGTransformSMILType.h
++++ mozilla/content/svg/content/src/nsSVGTransformSMILType.h
 @@ -0,0 +1,72 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -9811,10 +11172,82 @@ Index: mozilla/svg/content/src/nsSVGTransformSMILType.h
 +
 +  PRUint16                    mTransformType;
 +};
-Index: mozilla/public/idl/smil/Makefile.in
+Index: mozilla/content/xml/document/src/nsXMLContentSink.cpp
+===================================================================
+--- mozilla.orig/content/xml/document/src/nsXMLContentSink.cpp
++++ mozilla/content/xml/document/src/nsXMLContentSink.cpp
+@@ -1155,18 +1155,21 @@
+     	  NotifyAppend(content, numFlushed);
+     }
+     mNotifyLevel = stackLen - 1;
+   }
+   DidAddContent();
+ 
+ #ifdef MOZ_SVG
+   if (mDocument &&
+-      content->GetNameSpaceID() == kNameSpaceID_SVG &&
+-      content->HasAttr(kNameSpaceID_None, nsGkAtoms::onload)) {
++      content->GetNameSpaceID() == kNameSpaceID_SVG
++#ifndef MOZ_SMIL
++      && content->HasAttr(kNameSpaceID_None, nsGkAtoms::onload)
++#endif
++    ) {
+     FlushTags();
+ 
+     nsEvent event(PR_TRUE, NS_SVG_LOAD);
+     event.eventStructType = NS_SVG_EVENT;
+     event.flags |= NS_EVENT_FLAG_CANT_BUBBLE;
+ 
+     // Do we care about forcing presshell creation if it hasn't happened yet?
+     // That is, should this code flush or something?  Does it really matter?
+Index: mozilla/dom/public/nsDOMClassInfoID.h
+===================================================================
+--- mozilla.orig/dom/public/nsDOMClassInfoID.h
++++ mozilla/dom/public/nsDOMClassInfoID.h
+@@ -236,16 +236,20 @@
+   eDOMClassInfo_BeforeUnloadEvent_id,
+ 
+ #ifdef MOZ_SVG
+   // The SVG document
+   eDOMClassInfo_SVGDocument_id,
+ 
+   // SVG element classes
+   eDOMClassInfo_SVGAElement_id,
++#ifdef MOZ_SMIL
++  eDOMClassInfo_SVGAnimateElement_id,
++  eDOMClassInfo_SVGAnimateTransformElement_id,
++#endif // MOZ_SMIL
+   eDOMClassInfo_SVGCircleElement_id,
+   eDOMClassInfo_SVGClipPathElement_id,
+   eDOMClassInfo_SVGDefsElement_id,
+   eDOMClassInfo_SVGDescElement_id,
+   eDOMClassInfo_SVGEllipseElement_id,
+   eDOMClassInfo_SVGFEBlendElement_id,
+   eDOMClassInfo_SVGFEColorMatrixElement_id,
+   eDOMClassInfo_SVGFEComponentTransferElement_id,
+Index: mozilla/dom/public/idl/Makefile.in
+===================================================================
+--- mozilla.orig/dom/public/idl/Makefile.in
++++ mozilla/dom/public/idl/Makefile.in
+@@ -60,10 +60,14 @@
+ 	storage                                 \
+ 	json                                    \
+ 	offline
+ 
+ ifdef MOZ_SVG
+ DIRS += svg
+ endif
+ 
++ifdef MOZ_SMIL
++DIRS += smil
++endif
++
+ include $(topsrcdir)/config/rules.mk
+ 
+Index: mozilla/dom/public/idl/smil/Makefile.in
 ===================================================================
 --- /dev/null
-+++ mozilla/public/idl/smil/Makefile.in
++++ mozilla/dom/public/idl/smil/Makefile.in
 @@ -0,0 +1,54 @@
 +#!nmake
 +#
@@ -9870,10 +11303,10 @@ Index: mozilla/public/idl/smil/Makefile.in
 +		$(NULL)
 +
 +include $(topsrcdir)/config/rules.mk
-Index: mozilla/public/idl/smil/nsIDOMElementTimeControl.idl
+Index: mozilla/dom/public/idl/smil/nsIDOMElementTimeControl.idl
 ===================================================================
 --- /dev/null
-+++ mozilla/public/idl/smil/nsIDOMElementTimeControl.idl
++++ mozilla/dom/public/idl/smil/nsIDOMElementTimeControl.idl
 @@ -0,0 +1,59 @@
 +/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -9934,10 +11367,50 @@ Index: mozilla/public/idl/smil/nsIDOMElementTimeControl.idl
 +          // raises (nsIDOMDOMException)
 +};
 +
-Index: mozilla/public/idl/svg/nsIDOMSVGAnimateElement.idl
+Index: mozilla/dom/public/idl/svg/Makefile.in
+===================================================================
+--- mozilla.orig/dom/public/idl/svg/Makefile.in
++++ mozilla/dom/public/idl/svg/Makefile.in
+@@ -16,16 +16,17 @@
+ # The Original Code is Crocodile Clips Ltd code.
+ #
+ # The Initial Developer of the Original Code is
+ # Crocodile Clips Ltd.
+ # Portions created by the Initial Developer are Copyright (C) 2001
+ # the Initial Developer. All Rights Reserved.
+ #
+ # Contributor(s):
++#   Chris Double  <chris.double@double.co.nz>
+ #
+ # Alternatively, the contents of this file may be used under the terms of
+ # either of the GNU General Public License Version 2 or later (the "GPL"),
+ # or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ # in which case the provisions of the GPL or the LGPL are applicable instead
+ # of those above. If you wish to allow use of your version of this file only
+ # under the terms of either the GPL or the LGPL, and not to allow others to
+ # use your version of this file under the terms of the MPL, indicate your
+@@ -122,9 +123,17 @@
+ 		nsIDOMSVGURIReference.idl \
+ 		nsIDOMSVGUnitTypes.idl \
+ 		nsIDOMSVGUseElement.idl \
+ 		nsIDOMSVGViewSpec.idl \
+ 		nsIDOMSVGZoomAndPan.idl \
+ 		nsIDOMSVGZoomEvent.idl \
+ 		$(NULL)
+ 
++ifdef MOZ_SMIL
++XPIDLSRCS += nsIDOMSVGAnimateElement.idl \
++             nsIDOMSVGAnimateTransformElement.idl \
++             nsIDOMSVGAnimationElement.idl \
++             nsIDOMSVGSetElement.idl \
++             $(NULL)
++endif
++
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/dom/public/idl/svg/nsIDOMSVGAnimateElement.idl
 ===================================================================
 --- /dev/null
-+++ mozilla/public/idl/svg/nsIDOMSVGAnimateElement.idl
++++ mozilla/dom/public/idl/svg/nsIDOMSVGAnimateElement.idl
 @@ -0,0 +1,42 @@
 +/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -9981,10 +11454,10 @@ Index: mozilla/public/idl/svg/nsIDOMSVGAnimateElement.idl
 +[scriptable, uuid(0c4297e8-68d0-471d-a933-64132ccc5b97)]
 +interface nsIDOMSVGAnimateElement : nsIDOMSVGAnimationElement {};
 +
-Index: mozilla/public/idl/svg/nsIDOMSVGAnimateTransformElement.idl
+Index: mozilla/dom/public/idl/svg/nsIDOMSVGAnimateTransformElement.idl
 ===================================================================
 --- /dev/null
-+++ mozilla/public/idl/svg/nsIDOMSVGAnimateTransformElement.idl
++++ mozilla/dom/public/idl/svg/nsIDOMSVGAnimateTransformElement.idl
 @@ -0,0 +1,42 @@
 +/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -10028,10 +11501,10 @@ Index: mozilla/public/idl/svg/nsIDOMSVGAnimateTransformElement.idl
 +[scriptable, uuid(735e0f75-c6aa-4aee-bcd2-46426d6ac90c)]
 +interface nsIDOMSVGAnimateTransformElement : nsIDOMSVGAnimationElement {};
 +
-Index: mozilla/public/idl/svg/nsIDOMSVGAnimationElement.idl
+Index: mozilla/dom/public/idl/svg/nsIDOMSVGAnimationElement.idl
 ===================================================================
 --- /dev/null
-+++ mozilla/public/idl/svg/nsIDOMSVGAnimationElement.idl
++++ mozilla/dom/public/idl/svg/nsIDOMSVGAnimationElement.idl
 @@ -0,0 +1,63 @@
 +/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -10096,10 +11569,10 @@ Index: mozilla/public/idl/svg/nsIDOMSVGAnimationElement.idl
 +          // raises (nsIDOMDOMException)
 +};
 +
-Index: mozilla/public/idl/svg/nsIDOMSVGSetElement.idl
+Index: mozilla/dom/public/idl/svg/nsIDOMSVGSetElement.idl
 ===================================================================
 --- /dev/null
-+++ mozilla/public/idl/svg/nsIDOMSVGSetElement.idl
++++ mozilla/dom/public/idl/svg/nsIDOMSVGSetElement.idl
 @@ -0,0 +1,42 @@
 +/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -10143,10 +11616,116 @@ Index: mozilla/public/idl/svg/nsIDOMSVGSetElement.idl
 +[scriptable, uuid(b6c27cdc-4d8b-4343-8ccb-3b68adb1052a)]
 +interface nsIDOMSVGSetElement : nsIDOMSVGAnimationElement {};
 +
-Index: mozilla/base/nsIAnimationController.h
+Index: mozilla/dom/src/base/nsDOMClassInfo.cpp
+===================================================================
+--- mozilla.orig/dom/src/base/nsDOMClassInfo.cpp
++++ mozilla/dom/src/base/nsDOMClassInfo.cpp
+@@ -361,16 +361,22 @@
+ #include "nsIDOMSVGAnimatedLengthList.h"
+ #include "nsIDOMSVGAnimatedNumber.h"
+ #include "nsIDOMSVGAnimatedNumberList.h"
+ #include "nsIDOMSVGAnimatedPathData.h"
+ #include "nsIDOMSVGAnimatedPoints.h"
+ #include "nsIDOMSVGAnimPresAspRatio.h"
+ #include "nsIDOMSVGAnimatedRect.h"
+ #include "nsIDOMSVGAnimatedString.h"
++#ifdef MOZ_SMIL
++#include "nsIDOMSVGAnimateElement.h"
++#include "nsIDOMSVGAnimateTransformElement.h"
++#include "nsIDOMSVGAnimationElement.h"
++#include "nsIDOMElementTimeControl.h"
++#endif // MOZ_SMIL
+ #include "nsIDOMSVGAnimTransformList.h"
+ #include "nsIDOMSVGCircleElement.h"
+ #include "nsIDOMSVGClipPathElement.h"
+ #include "nsIDOMSVGDefsElement.h"
+ #include "nsIDOMSVGDescElement.h"
+ #include "nsIDOMSVGDocument.h"
+ #include "nsIDOMSVGElement.h"
+ #include "nsIDOMSVGEllipseElement.h"
+@@ -906,16 +912,22 @@
+ #ifdef MOZ_SVG
+   // SVG document
+   NS_DEFINE_CLASSINFO_DATA(SVGDocument, nsDocumentSH,
+                            DOCUMENT_SCRIPTABLE_FLAGS)
+ 
+   // SVG element classes
+   NS_DEFINE_CLASSINFO_DATA(SVGAElement, nsElementSH,
+                            ELEMENT_SCRIPTABLE_FLAGS)
++#ifdef MOZ_SMIL
++  NS_DEFINE_CLASSINFO_DATA(SVGAnimateElement, nsElementSH,
++                           ELEMENT_SCRIPTABLE_FLAGS)
++  NS_DEFINE_CLASSINFO_DATA(SVGAnimateTransformElement, nsElementSH,
++                           ELEMENT_SCRIPTABLE_FLAGS)
++#endif // MOZ_SMIL
+   NS_DEFINE_CLASSINFO_DATA(SVGCircleElement, nsElementSH,
+                            ELEMENT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(SVGClipPathElement, nsElementSH,
+                            ELEMENT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(SVGDefsElement, nsElementSH,
+                            ELEMENT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(SVGDescElement, nsElementSH,
+                            ELEMENT_SCRIPTABLE_FLAGS)
+@@ -2642,16 +2654,33 @@
+ 
+   // SVG element classes
+ 
+   DOM_CLASSINFO_MAP_BEGIN(SVGAElement, nsIDOMSVGAElement)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMSVGAElement)
+     DOM_CLASSINFO_SVG_GRAPHIC_ELEMENT_MAP_ENTRIES
+   DOM_CLASSINFO_MAP_END
+ 
++#ifdef MOZ_SMIL
++  DOM_CLASSINFO_MAP_BEGIN(SVGAnimateElement, nsIDOMSVGAnimateElement)
++    DOM_CLASSINFO_MAP_ENTRY(nsIDOMSVGAnimationElement)
++    DOM_CLASSINFO_MAP_ENTRY(nsIDOMSVGAnimateElement)
++    DOM_CLASSINFO_MAP_ENTRY(nsIDOMElementTimeControl)
++    DOM_CLASSINFO_SVG_ELEMENT_MAP_ENTRIES
++  DOM_CLASSINFO_MAP_END
++
++  DOM_CLASSINFO_MAP_BEGIN(SVGAnimateTransformElement,
++                          nsIDOMSVGAnimateTransformElement)
++    DOM_CLASSINFO_MAP_ENTRY(nsIDOMSVGAnimationElement)
++    DOM_CLASSINFO_MAP_ENTRY(nsIDOMSVGAnimateTransformElement)
++    DOM_CLASSINFO_MAP_ENTRY(nsIDOMElementTimeControl)
++    DOM_CLASSINFO_SVG_ELEMENT_MAP_ENTRIES
++  DOM_CLASSINFO_MAP_END
++#endif // MOZ_SMIL
++
+   DOM_CLASSINFO_MAP_BEGIN(SVGCircleElement, nsIDOMSVGCircleElement)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMSVGCircleElement)
+     DOM_CLASSINFO_SVG_GRAPHIC_ELEMENT_MAP_ENTRIES
+   DOM_CLASSINFO_MAP_END
+ 
+   DOM_CLASSINFO_MAP_BEGIN(SVGClipPathElement, nsIDOMSVGClipPathElement)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMSVGClipPathElement)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMSVGLocatable)
+Index: mozilla/layout/base/Makefile.in
+===================================================================
+--- mozilla.orig/layout/base/Makefile.in
++++ mozilla/layout/base/Makefile.in
+@@ -93,16 +93,17 @@
+ 		nsBidiPresUtils.h \
+ 		nsCSSFrameConstructor.h \
+ 		nsChangeHint.h \
+ 		nsCompatibility.h \
+ 		nsDisplayList.h \
+ 		nsFrameManager.h \
+ 		nsFrameManagerBase.h \
+ 		nsFrameTraversal.h \
++		nsIAnimationController.h \
+ 		nsICaret.h \
+ 		nsIDocumentViewer.h \
+ 		nsIFrameTraversal.h \
+ 		nsIImageMap.h \
+ 		nsILayoutDebugger.h \
+ 		nsILayoutHistoryState.h \
+ 		nsIPercentHeightObserver.h  \
+ 		nsIPresShell.h \
+Index: mozilla/layout/base/nsIAnimationController.h
 ===================================================================
 --- /dev/null
-+++ mozilla/base/nsIAnimationController.h
++++ mozilla/layout/base/nsIAnimationController.h
 @@ -0,0 +1,64 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -10212,29 +11791,240 @@ Index: mozilla/base/nsIAnimationController.h
 +
 +#endif // __NS_IANIMATIONCONTROLLER_H__
 +
-Index: mozilla/build/Makefile.in
+Index: mozilla/layout/base/nsPresContext.cpp
 ===================================================================
---- mozilla.orig/build/Makefile.in
-+++ mozilla/build/Makefile.in
-@@ -53,16 +53,21 @@
- ifeq (WINNT,$(OS_ARCH))
- DIRS = win32
+--- mozilla.orig/layout/base/nsPresContext.cpp
++++ mozilla/layout/base/nsPresContext.cpp
+@@ -68,16 +68,17 @@
+ #include "nsXPIDLString.h"
+ #include "nsIWeakReferenceUtils.h"
+ #include "nsCSSRendering.h"
+ #include "prprf.h"
+ #include "nsContentPolicyUtils.h"
+ #include "nsIDOMDocument.h"
+ #include "nsAutoPtr.h"
+ #include "nsEventStateManager.h"
++#include "nsIAnimationController.h"
+ #include "nsThreadUtils.h"
+ #include "nsFrameManager.h"
+ #include "nsLayoutUtils.h"
+ #include "nsIViewManager.h"
+ #include "nsCSSFrameConstructor.h"
+ #include "nsStyleChangeList.h"
+ #include "nsRuleNode.h"
+ 
+@@ -279,16 +280,20 @@
+   nsContentUtils::UnregisterPrefCallback("layout.full.true.zoom.mode",
+                                          nsPresContext::PrefChangedCallback,
+                                          this);
+ 
+ 
+   NS_IF_RELEASE(mDeviceContext);
+   NS_IF_RELEASE(mLookAndFeel);
+   NS_IF_RELEASE(mLangGroup);
++
++#ifdef MOZ_SMIL
++	NS_IF_RELEASE(mAnimationController);
++#endif
+ }
+ 
+ NS_IMPL_CYCLE_COLLECTION_CLASS(nsPresContext)
+ 
+ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsPresContext)
+    NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIObserver)
+    NS_INTERFACE_MAP_ENTRY(nsIObserver)
+ NS_INTERFACE_MAP_END
+@@ -1076,16 +1081,34 @@
+     if (doc) {
+       nsIContent *rootContent = doc->GetRootContent();
+       if (rootContent) {
+         SetImgAnimations(rootContent, aMode);
+       }
+     }
+   }
+ 
++#ifdef MOZ_SMIL
++  if (mAnimationController) {
++    switch (aMode)
++    {
++      case imgIContainer::kNormalAnimMode:
++      case imgIContainer::kLoopOnceAnimMode:
++        if (mImageAnimationMode == imgIContainer::kDontAnimMode)
++          mAnimationController->Resume();
++        break;
++
++      case imgIContainer::kDontAnimMode:
++        if (mImageAnimationMode != imgIContainer::kDontAnimMode)
++          mAnimationController->Pause();
++        break;
++    }
++  }
++#endif // MOZ_SMIL
++
+   mImageAnimationMode = aMode;
+ }
+ 
+ void
+ nsPresContext::SetImageAnimationModeExternal(PRUint16 aMode)
+ {
+   SetImageAnimationModeInternal(aMode);
+ }
+@@ -1479,16 +1502,31 @@
+         }
+         return PR_TRUE;
+       }
+     }
+   }
+   return PR_FALSE;
+ }
+ 
++#ifdef MOZ_SMIL
++void
++nsPresContext::SetAnimationController(nsIAnimationController* aController)
++{
++    NS_IF_ADDREF(aController);
++    nsIAnimationController* temp = mAnimationController;
++    mAnimationController = aController;
++    if (mAnimationController &&
++        mImageAnimationMode == imgIContainer::kDontAnimMode) {
++      mAnimationController->Pause();
++    }
++    NS_IF_RELEASE(temp);
++}
++#endif // MOZ_SMIL
++
+ #ifdef MOZ_REFLOW_PERF
+ void
+ nsPresContext::CountReflows(const char * aName, nsIFrame * aFrame)
+ {
+   if (mShell) {
+     mShell->CountReflows(aName, aFrame);
+   }
+ }
+Index: mozilla/layout/base/nsPresContext.h
+===================================================================
+--- mozilla.orig/layout/base/nsPresContext.h
++++ mozilla/layout/base/nsPresContext.h
+@@ -76,16 +76,17 @@
+ class nsIContent;
+ class nsIFontMetrics;
+ class nsIFrame;
+ class nsFrameManager;
+ class nsIImage;
+ class nsILinkHandler;
+ class nsStyleContext;
+ class nsIAtom;
++class nsIAnimationController;
+ class nsIEventStateManager;
+ class nsIURI;
+ class nsILookAndFeel;
+ class nsICSSPseudoComparator;
+ class nsIAtom;
+ struct nsStyleBackground;
+ template <class T> class nsRunnableMethod;
+ class nsIRunnable;
+@@ -745,16 +746,26 @@
+                               mType == eContext_PrintPreview); }
+ 
+   // Is this presentation in a chrome docshell?
+   PRBool IsChrome() const;
+ 
+   // Public API for native theme code to get style internals.
+   virtual PRBool HasAuthorSpecifiedRules(nsIFrame *aFrame, PRUint32 ruleTypeMask) const;
+ 
++#ifdef MOZ_SMIL
++  nsIAnimationController* GetAnimationController()
++  {
++    return mAnimationController;
++  }
++
++  void SetAnimationController(nsIAnimationController* aController);
++#endif // MOZ_SMIL
++
++
+   // Is it OK to let the page specify colors and backgrounds?
+   PRBool UseDocumentColors() const {
+     return GetCachedBoolPref(kPresContext_UseDocumentColors) || IsChrome();
+   }
+ 
+   PRBool           SupressingResizeReflow() const { return mSupressResizeReflow; }
+ 
+ protected:
+@@ -804,16 +815,20 @@
+ 
+   PRInt32               mCurAppUnitsPerDevPixel;
+   PRInt32               mAutoQualityMinFontSizePixelsPref;
+ 
+ #ifdef IBMBIDI
+   nsBidiPresUtils*      mBidiUtils;
+ #endif
+ 
++#ifdef MOZ_SMIL
++  nsIAnimationController* mAnimationController; // [STRONG]
++#endif
++
+   nsCOMPtr<nsITheme> mTheme;
+   nsCOMPtr<nsILanguageAtomService> mLangService;
+   nsCOMPtr<nsIPrintSettings> mPrintSettings;
+   nsCOMPtr<nsITimer>    mPrefChangedTimer;
+ 
+   nsPropertyTable       mPropertyTable;
+ 
+   nsLanguageSpecificTransformType mLanguageSpecificTransformType;
+Index: mozilla/layout/build/Makefile.in
+===================================================================
+--- mozilla.orig/layout/build/Makefile.in
++++ mozilla/layout/build/Makefile.in
+@@ -197,16 +197,22 @@
+ ifdef MOZ_SVG
+ SHARED_LIBRARY_LIBS += \
+ 		../svg/base/src/$(LIB_PREFIX)gksvgbase_s.$(LIB_SUFFIX) \
+ 		$(DEPTH)/content/svg/document/src/$(LIB_PREFIX)gkconsvgdoc_s.$(LIB_SUFFIX) \
+ 		$(DEPTH)/content/svg/content/src/$(LIB_PREFIX)gkcontentsvg_s.$(LIB_SUFFIX) \
+ 		$(NULL)
  endif
- 
- DIRS += pgo
- 
- include $(topsrcdir)/config/rules.mk
  
 +ifdef MOZ_SMIL
 +SHARED_LIBRARY_LIBS += \
 +		$(DEPTH)/content/smil/src/$(LIB_PREFIX)gkconsmil_s.$(LIB_SUFFIX) \
 +		$(NULL)
 +endif
- 
- ifeq ($(USE_SHORT_LIBNAME), 1)
- PROGRAM = $(MOZ_APP_NAME)$(BIN_SUFFIX)
++
+ ifdef MOZ_PLAINTEXT_EDITOR_ONLY
+ DEFINES += -DMOZILLA_PLAINTEXT_EDITOR_ONLY
  else
- PROGRAM = $(MOZ_APP_NAME)-bin$(BIN_SUFFIX)
+ SHARED_LIBRARY_LIBS += \
+ 	$(DEPTH)/editor/libeditor/html/$(LIB_PREFIX)htmleditor_s.$(LIB_SUFFIX) \
+ 	$(DEPTH)/editor/txtsvc/src/$(LIB_PREFIX)txtsvc_s.$(LIB_SUFFIX) \
+ 	$(NULL)
  endif
+Index: mozilla/toolkit/toolkit-makefiles.sh
+===================================================================
+--- mozilla.orig/toolkit/toolkit-makefiles.sh
++++ mozilla/toolkit/toolkit-makefiles.sh
+@@ -1069,16 +1069,25 @@
+     content/svg/content/src/Makefile
+     dom/public/idl/svg/Makefile
+     layout/svg/Makefile
+     layout/svg/base/Makefile
+     layout/svg/base/src/Makefile
+   "
+ fi
  
- ifeq ($(MOZ_BUILD_APP),camino)
++# smil
++if [ "$MOZ_SMIL" ]; then
++    MAKEFILES_content="$MAKEFILES_content
++	content/smil/Makefile
++	content/smil/public/Makefile
++	content/smil/src/Makefile
++"
++fi
++
+ if [ "$MOZ_XTF" ]; then
+   add_makefiles "
+     content/xtf/Makefile
+     content/xtf/public/Makefile
+     content/xtf/src/Makefile
+   "
+ fi
+ 

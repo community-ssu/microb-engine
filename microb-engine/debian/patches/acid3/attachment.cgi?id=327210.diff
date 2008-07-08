@@ -1,0 +1,947 @@
+diff --git a/intl/uconv/native/nsWinCEUConvService.cpp b/intl/uconv/native/nsWinCEUConvService.cpp
+--- a/intl/uconv/native/nsWinCEUConvService.cpp
++++ b/intl/uconv/native/nsWinCEUConvService.cpp
+@@ -92,16 +92,18 @@ public:
+                      PRInt32 * aSrcLength, 
+                      PRUnichar * aDest, 
+                      PRInt32 * aDestLength);
+   
+   NS_IMETHOD GetMaxLength(const char * aSrc, 
+                           PRInt32 aSrcLength, 
+                           PRInt32 * aDestLength);
+   NS_IMETHOD Reset();
++
++  NS_IMETHOD SetInputErrorBehavior(PRInt32 aBehavior);
+   
+   // Encoder methods:
+   
+   NS_IMETHOD Convert(const PRUnichar * aSrc, 
+                      PRInt32 * aSrcLength, 
+                      char * aDest, 
+                      PRInt32 * aDestLength);
+   
+@@ -307,16 +309,22 @@ WinCEUConvAdapter::GetMaxLength(const ch
+ }
+ 
+ NS_IMETHODIMP
+ WinCEUConvAdapter::Reset()
+ {
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++WinCEUConvAdapter::SetInputErrorBehavior(PRInt32 aBehavior)
++{
++  return NS_OK;
++}
++
+ // Encoder methods:
+ 
+ NS_IMETHODIMP
+ WinCEUConvAdapter::Convert(const PRUnichar * aSrc, 
+                            PRInt32 * aSrcLength, 
+                            char * aDest, 
+                            PRInt32 * aDestLength)
+ {
+diff --git a/intl/uconv/public/nsIUnicodeDecoder.h b/intl/uconv/public/nsIUnicodeDecoder.h
+--- a/intl/uconv/public/nsIUnicodeDecoder.h
++++ b/intl/uconv/public/nsIUnicodeDecoder.h
+@@ -163,13 +163,18 @@ public:
+   NS_IMETHOD GetMaxLength(const char * aSrc, PRInt32 aSrcLength, 
+       PRInt32 * aDestLength) = 0;
+ 
+   /**
+    * Resets the charset converter so it may be recycled for a completely 
+    * different and urelated buffer of data.
+    */
+   NS_IMETHOD Reset() = 0;
++
++  /**
++   * Specify what to do when a character cannot be mapped into unicode
++   */
++  NS_IMETHOD SetInputErrorBehavior(PRInt32 aBehavior) = 0;
+ };
+ 
+ NS_DEFINE_STATIC_IID_ACCESSOR(nsIUnicodeDecoder, NS_IUNICODEDECODER_IID)
+ 
+ #endif /* nsIUnicodeDecoder_h___ */
+diff --git a/intl/uconv/ucvja/nsJapaneseToUnicode.cpp b/intl/uconv/ucvja/nsJapaneseToUnicode.cpp
+--- a/intl/uconv/ucvja/nsJapaneseToUnicode.cpp
++++ b/intl/uconv/ucvja/nsJapaneseToUnicode.cpp
+@@ -148,16 +148,18 @@ NS_IMETHODIMP nsShiftJISToUnicode::Conve
+                      case 0xfd:
+                      case 0xfe:
+                      case 0xff:
+                        *dest++ = (PRUnichar) 0xf8f1 + 
+                                    (*src - (unsigned char)(0xfd));
+                        break;
+ 
+                      default:
++                       if (mErrBehavior == kOnError_Signal)
++                         goto error_invalidchar;
+                        *dest++ = 0x30FB;
+                    }
+                    if(dest >= destEnd)
+                      goto error1;
+                  } else {
+                    *dest++ = mData; // JIS 0201
+                    if(dest >= destEnd)
+                      goto error1;
+@@ -173,48 +175,60 @@ NS_IMETHODIMP nsShiftJISToUnicode::Conve
+               goto error1;
+           }
+           break;
+ 
+           case 1: // Index to table
+           {
+             PRUint8 off = sbIdx[*src];
+             if(0xFF == off) {
++               if (mErrBehavior == kOnError_Signal)
++                 goto error_invalidchar;
+                *dest++ = 0x30FB;
+             } else {
+                PRUnichar ch = gJapaneseMap[mData+off];
+-               if(ch == 0xfffd) 
++               if(ch == 0xfffd) {
++                 if (mErrBehavior == kOnError_Signal)
++                   goto error_invalidchar;
+                  ch = 0x30fb;
++               }
+                *dest++ = ch;
+             }
+             mState = 0;
+             if(dest >= destEnd)
+               goto error1;
+           }
+           break;
+ 
+           case 2: // EUDC
+           {
+             PRUint8 off = sbIdx[*src];
+             if(0xFF == off) {
++               if (mErrBehavior == kOnError_Signal)
++                 goto error_invalidchar;
++
+                *dest++ = 0x30fb;
+             } else {
+                *dest++ = mData + off;
+             }
+             mState = 0;
+             if(dest >= destEnd)
+               goto error1;
+           }
+           break;
+ 
+        }
+        src++;
+    }
+    *aDestLen = dest - aDest;
+    return NS_OK;
++error_invalidchar:
++   *aDestLen = dest-aDest;
++   *aSrcLen = src - (const unsigned char*)aSrc;
++   return NS_ERROR_ILLEGAL_INPUT;
+ error1:
+    *aDestLen = dest-aDest;
+    src++;
+    if ((mState == 0) && (src == srcEnd)) {
+      return NS_OK;
+    }
+    *aSrcLen = src - (const unsigned char*)aSrc;
+    return NS_OK_UDEC_MOREOUTPUT;
+@@ -298,16 +312,18 @@ NS_IMETHODIMP nsEUCJPToUnicodeV2::Conver
+                if( 0x8e == *src) {
+                  // JIS 0201
+                  mState = 2; // JIS0201
+                } else if(0x8f == *src) {
+                  // JIS 0212
+                  mState = 3; // JIS0212
+                } else {
+                  // others 
++                if (mErrBehavior == kOnError_Signal)
++                  goto error_invalidchar;
+                  *dest++ = 0xFFFD;
+                  if(dest >= destEnd)
+                    goto error1;
+                }
+             }
+           } else {
+             // ASCII
+             *dest++ = (PRUnichar) *src;
+@@ -315,16 +331,18 @@ NS_IMETHODIMP nsEUCJPToUnicodeV2::Conver
+               goto error1;
+           }
+           break;
+ 
+           case 1: // Index to table
+           {
+             PRUint8 off = sbIdx[*src];
+             if(0xFF == off) {
++              if (mErrBehavior == kOnError_Signal)
++                goto error_invalidchar;
+               *dest++ = 0xFFFD;
+                // if the first byte is valid for EUC-JP but the second 
+                // is not while being a valid US-ASCII(i.e. < 0xc0), save it
+                // instead of eating it up !
+                if ( ! (*src & 0xc0)  )
+                  *dest++ = (PRUnichar) *src;;
+             } else {
+                *dest++ = gJapaneseMap[mData+off];
+@@ -335,16 +353,18 @@ NS_IMETHODIMP nsEUCJPToUnicodeV2::Conver
+           }
+           break;
+ 
+           case 2: // JIS 0201
+           {
+             if((0xA1 <= *src) && (*src <= 0xDF)) {
+               *dest++ = (0xFF61-0x00A1) + *src;
+             } else {
++              if (mErrBehavior == kOnError_Signal)
++                goto error_invalidchar;
+               *dest++ = 0xFFFD;             
+               // if 0x8e is not followed by a valid JIS X 0201 byte
+               // but by a valid US-ASCII, save it instead of eating it up.
+               if ( (PRUint8)*src < (PRUint8)0x7f )
+                  *dest++ = (PRUnichar) *src;
+             }
+             mState = 0;
+             if(dest >= destEnd)
+@@ -367,38 +387,46 @@ NS_IMETHODIMP nsEUCJPToUnicodeV2::Conver
+               mState = 5; // error
+             }
+           }
+           break;
+           case 4:
+           {
+             PRUint8 off = sbIdx[*src];
+             if(0xFF == off) {
++              if (mErrBehavior == kOnError_Signal)
++                goto error_invalidchar;
+                *dest++ = 0xFFFD;
+             } else {
+                *dest++ = gJapaneseMap[mData+off];
+             }
+             mState = 0;
+             if(dest >= destEnd)
+               goto error1;
+           }
+           break;
+           case 5: // two bytes undefined
+           {
++            if (mErrBehavior == kOnError_Signal)
++              goto error_invalidchar;
+             *dest++ = 0xFFFD;
+             mState = 0;
+             if(dest >= destEnd)
+               goto error1;
+           }
+           break;
+        }
+        src++;
+    }
+    *aDestLen = dest - aDest;
+    return NS_OK;
++error_invalidchar:
++   *aDestLen = dest-aDest;
++   *aSrcLen = src - (const unsigned char*)aSrc;
++   return NS_ERROR_ILLEGAL_INPUT;
+ error1:
+    *aDestLen = dest-aDest;
+    src++;
+    if ((mState == 0) && (src == srcEnd)) {
+      return NS_OK;
+    } 
+    *aSrcLen = src - (const unsigned char*)aSrc;
+    return NS_OK_UDEC_MOREOUTPUT;
+@@ -541,16 +569,18 @@ NS_IMETHODIMP nsISO2022JPToUnicodeV2::Co
+                 *dest++ = 0xFFFD;
+               }
+               mRunLength = 0;
+             } else if ('J' == *src)  {
+               mState = mState_JISX0201_1976Roman;
+               if (mRunLength == 0 && mLastLegalState != mState_ASCII) {
+                 if((dest+1) >= destEnd)
+                   goto error1;
++                if (mErrBehavior == kOnError_Signal)
++                  goto error2;
+                 *dest++ = 0xFFFD;
+               }
+               mRunLength = 0;
+             } else if ('I' == *src)  {
+               mState = mState_JISX0201_1976Kana;
+               mRunLength = 0;
+             } else  {
+               if((dest+3) >= destEnd)
+diff --git a/intl/uconv/util/nsUCSupport.cpp b/intl/uconv/util/nsUCSupport.cpp
+--- a/intl/uconv/util/nsUCSupport.cpp
++++ b/intl/uconv/util/nsUCSupport.cpp
+@@ -46,16 +46,17 @@
+ #define DEFAULT_BUFFER_CAPACITY 16
+ 
+ // XXX review the buffer growth limitation code
+ 
+ //----------------------------------------------------------------------
+ // Class nsBasicDecoderSupport [implementation]
+ 
+ nsBasicDecoderSupport::nsBasicDecoderSupport() 
++  : mErrBehavior(kOnError_Recover)
+ {
+ }
+ 
+ nsBasicDecoderSupport::~nsBasicDecoderSupport() 
+ {
+ }
+ 
+ //----------------------------------------------------------------------
+@@ -66,16 +67,23 @@ NS_IMPL_RELEASE(nsBasicDecoderSupport)
+ #ifdef NS_DEBUG
+ NS_IMPL_QUERY_INTERFACE2(nsBasicDecoderSupport, nsIUnicodeDecoder, nsIBasicDecoder)
+ #else
+ NS_IMPL_QUERY_INTERFACE1(nsBasicDecoderSupport, nsIUnicodeDecoder)
+ #endif
+ 
+ //----------------------------------------------------------------------
+ // Interface nsIUnicodeDecoder [implementation]
++
++NS_IMETHODIMP
++nsBasicDecoderSupport::SetInputErrorBehavior(PRInt32 aBehavior)
++{
++  mErrBehavior = aBehavior;
++  return NS_OK;
++}
+ 
+ //----------------------------------------------------------------------
+ // Class nsBufferDecoderSupport [implementation]
+ 
+ nsBufferDecoderSupport::nsBufferDecoderSupport(PRUint32 aMaxLengthFactor) 
+   : nsBasicDecoderSupport(),
+     mMaxLengthFactor(aMaxLengthFactor)
+ {
+@@ -138,16 +146,23 @@ NS_IMETHODIMP nsBufferDecoderSupport::Co
+     PRInt32 buffLen = mBufferLength;  // initial buffer length
+     FillBuffer(&src, srcEnd - src);
+ 
+     // convert that buffer
+     bcr = mBufferLength;
+     bcw = destEnd - dest;
+     res = ConvertNoBuff(mBuffer, &bcr, dest, &bcw);
+     dest += bcw;
++
++    // Detect invalid input character
++    if (res == NS_ERROR_ILLEGAL_INPUT) {
++      if (mErrBehavior == kOnError_Signal) {
++        break;
++      }
++    }
+ 
+     if ((res == NS_OK_UDEC_MOREINPUT) && (bcw == 0)) {
+         res = NS_ERROR_UNEXPECTED;
+ #if defined(DEBUG_yokoyama) || defined(DEBUG_ftang)
+         NS_ASSERTION(0, "This should not happen. Internal buffer may be corrupted.");
+ #endif
+         break;
+     } else {
+@@ -232,17 +247,18 @@ NS_IMETHODIMP nsTableDecoderSupport::Con
+ NS_IMETHODIMP nsTableDecoderSupport::ConvertNoBuff(const char * aSrc, 
+                                                    PRInt32 * aSrcLength, 
+                                                    PRUnichar * aDest, 
+                                                    PRInt32 * aDestLength)
+ {
+   return nsUnicodeDecodeHelper::ConvertByTable(aSrc, aSrcLength,
+                                                aDest, aDestLength,
+                                                mScanClass, 
+-                                               mShiftInTable, mMappingTable);
++                                               mShiftInTable, mMappingTable,
++                                               mErrBehavior == kOnError_Signal ? PR_TRUE : PR_FALSE);
+ }
+ 
+ //----------------------------------------------------------------------
+ // Class nsMultiTableDecoderSupport [implementation]
+ 
+ nsMultiTableDecoderSupport::nsMultiTableDecoderSupport(
+                             PRInt32 aTableCount,
+                             const uRange * aRangeArray, 
+@@ -268,17 +284,18 @@ NS_IMETHODIMP nsMultiTableDecoderSupport
+                                                         PRInt32 * aSrcLength, 
+                                                         PRUnichar * aDest, 
+                                                         PRInt32 * aDestLength)
+ {
+   return nsUnicodeDecodeHelper::ConvertByMultiTable(aSrc, aSrcLength, 
+                                                     aDest, aDestLength, 
+                                                     mTableCount, mRangeArray,
+                                                     mScanClassArray,
+-                                                    mMappingTable);
++                                                    mMappingTable,
++                                                    mErrBehavior == kOnError_Signal ? PR_TRUE : PR_FALSE);
+ }
+ 
+ //----------------------------------------------------------------------
+ // Class nsOneByteDecoderSupport [implementation]
+ 
+ nsOneByteDecoderSupport::nsOneByteDecoderSupport(
+                          uMappingTable  * aMappingTable) 
+ : nsBasicDecoderSupport()
+@@ -304,17 +321,18 @@ NS_IMETHODIMP nsOneByteDecoderSupport::C
+                        mMappingTable, mFastTable, ONE_BYTE_TABLE_SIZE);
+     if (NS_FAILED(res)) return res;
+     mFastTableCreated = PR_TRUE;
+   }
+ 
+   return nsUnicodeDecodeHelper::ConvertByFastTable(aSrc, aSrcLength, 
+                                                    aDest, aDestLength, 
+                                                    mFastTable,
+-                                                   ONE_BYTE_TABLE_SIZE);
++                                                   ONE_BYTE_TABLE_SIZE,
++                                                   mErrBehavior == kOnError_Signal ? PR_TRUE : PR_FALSE);
+ }
+ 
+ NS_IMETHODIMP nsOneByteDecoderSupport::GetMaxLength(const char * aSrc, 
+                                                     PRInt32 aSrcLength, 
+                                                     PRInt32 * aDestLength)
+ {
+   // single byte to Unicode converter
+   *aDestLength = aSrcLength;
+diff --git a/intl/uconv/util/nsUCSupport.h b/intl/uconv/util/nsUCSupport.h
+--- a/intl/uconv/util/nsUCSupport.h
++++ b/intl/uconv/util/nsUCSupport.h
+@@ -105,16 +105,21 @@ public:
+ 
+   /**
+    * Class destructor.
+    */
+   virtual ~nsBasicDecoderSupport();
+ 
+   //--------------------------------------------------------------------
+   // Interface nsIUnicodeDecoder [declaration]
++
++  NS_IMETHOD SetInputErrorBehavior(PRInt32 aBehavior);
++
++protected:
++  PRInt32   mErrBehavior;
+ };
+ 
+ //----------------------------------------------------------------------
+ // Class nsBufferDecoderSupport [declaration]
+ 
+ /**
+  * Support class for the Unicode decoders. 
+  *
+@@ -131,17 +136,17 @@ protected:
+   /**
+    * Internal buffer for partial conversions.
+    */
+   char *    mBuffer;
+   PRInt32   mBufferCapacity;
+   PRInt32   mBufferLength;
+ 
+   PRUint32  mMaxLengthFactor;
+-  
++
+   /**
+    * Convert method but *without* the buffer management stuff.
+    */
+   NS_IMETHOD ConvertNoBuff(const char * aSrc, PRInt32 * aSrcLength, 
+       PRUnichar * aDest, PRInt32 * aDestLength) = 0;
+ 
+   void FillBuffer(const char ** aSrc, PRInt32 aSrcLength);
+   void DoubleBuffer();
+diff --git a/intl/uconv/util/nsUnicodeDecodeHelper.cpp b/intl/uconv/util/nsUnicodeDecodeHelper.cpp
+--- a/intl/uconv/util/nsUnicodeDecodeHelper.cpp
++++ b/intl/uconv/util/nsUnicodeDecodeHelper.cpp
+@@ -44,17 +44,18 @@
+ // Class nsUnicodeDecodeHelper [implementation]
+ nsresult nsUnicodeDecodeHelper::ConvertByTable(
+                                      const char * aSrc, 
+                                      PRInt32 * aSrcLength, 
+                                      PRUnichar * aDest, 
+                                      PRInt32 * aDestLength, 
+                                      uScanClassID aScanClass,
+                                      uShiftInTable * aShiftInTable, 
+-                                     uMappingTable  * aMappingTable)
++                                     uMappingTable  * aMappingTable,
++                                     PRBool aErrorSignal)
+ {
+   const char * src = aSrc;
+   PRInt32 srcLen = *aSrcLength;
+   PRUnichar * dest = aDest;
+   PRUnichar * destEnd = aDest + *aDestLength;
+ 
+   PRUnichar med;
+   PRInt32 bcr; // byte count for read
+@@ -77,16 +78,20 @@ nsresult nsUnicodeDecodeHelper::ConvertB
+       break;
+     }
+ 
+     if (!uMapCode((uTable*) aMappingTable, static_cast<PRUint16>(med), reinterpret_cast<PRUint16*>(dest))) {
+       if (med < 0x20) {
+         // somehow some table miss the 0x00 - 0x20 part
+         *dest = med;
+       } else {
++        if (aErrorSignal) {
++          res = NS_ERROR_ILLEGAL_INPUT;
++          break;
++        }
+         // Unicode replacement value for unmappable chars
+         *dest = 0xfffd;
+       }
+     }
+ 
+     src += bcr;
+     srcLen -= bcr;
+     dest++;
+@@ -102,17 +107,18 @@ nsresult nsUnicodeDecodeHelper::ConvertB
+ nsresult nsUnicodeDecodeHelper::ConvertByMultiTable(
+                                      const char * aSrc, 
+                                      PRInt32 * aSrcLength, 
+                                      PRUnichar * aDest, 
+                                      PRInt32 * aDestLength, 
+                                      PRInt32 aTableCount, 
+                                      const uRange * aRangeArray, 
+                                      uScanClassID * aScanClassArray,
+-                                     uMappingTable ** aMappingTable)
++                                     uMappingTable ** aMappingTable,
++                                     PRBool aErrorSignal)
+ {
+   PRUint8 * src = (PRUint8 *)aSrc;
+   PRInt32 srcLen = *aSrcLength;
+   PRUnichar * dest = aDest;
+   PRUnichar * destEnd = aDest + *aDestLength;
+ 
+   PRUnichar med;
+   PRInt32 bcr; // byte count for read
+@@ -138,17 +144,18 @@ nsresult nsUnicodeDecodeHelper::ConvertB
+                           static_cast<PRUint16>(med), 
+                           reinterpret_cast<PRUint16*>(dest)); 
+         } // if (uScan ... )
+       } // if Range
+     } // for loop
+ 
+     if(passRangeCheck && (! passScan))
+     {
+-      res = NS_OK_UDEC_MOREINPUT;
++      if (res != NS_ERROR_ILLEGAL_INPUT)
++        res = NS_OK_UDEC_MOREINPUT;
+       break;
+     }
+     if(! done)
+     {
+       bcr = 1;
+       if ((PRUint8)*src < 0x20) {
+         // somehow some table miss the 0x00 - 0x20 part
+         *dest = *src;
+@@ -177,17 +184,25 @@ nsresult nsUnicodeDecodeHelper::ConvertB
+                    break; 
+                  }
+                }
+                break;
+             }
+           }
+         }
+         // treat it as NSBR if bcr == 1 and it is 0xa0
+-        *dest = ((1==bcr)&&(*src == (PRUint8)0xa0 )) ? 0x00a0 : 0xfffd;
++        if ((1==bcr)&&(*src == (PRUint8)0xa0 )) {
++          *dest = 0x00a0;
++        } else {
++          if (aErrorSignal) {
++            res = NS_ERROR_ILLEGAL_INPUT;
++            break;
++          }
++          *dest = 0xfffd;
++        }
+       }
+     }
+ 
+     src += bcr;
+     srcLen -= bcr;
+     dest++;
+   } // while
+ 
+@@ -199,32 +214,40 @@ nsresult nsUnicodeDecodeHelper::ConvertB
+ }
+ 
+ nsresult nsUnicodeDecodeHelper::ConvertByFastTable(
+                                      const char * aSrc, 
+                                      PRInt32 * aSrcLength, 
+                                      PRUnichar * aDest, 
+                                      PRInt32 * aDestLength, 
+                                      const PRUnichar * aFastTable, 
+-                                     PRInt32 aTableSize)
++                                     PRInt32 aTableSize,
++                                     PRBool aErrorSignal)
+ {
+   PRUint8 * src = (PRUint8 *)aSrc;
+   PRUint8 * srcEnd = src;
+   PRUnichar * dest = aDest;
+ 
+   nsresult res;
+   if (*aSrcLength > *aDestLength) {
+     srcEnd += (*aDestLength);
+     res = NS_PARTIAL_MORE_OUTPUT;
+   } else {
+     srcEnd += (*aSrcLength);
+     res = NS_OK;
+   }
+ 
+-  for (; src<srcEnd;) *dest++ = aFastTable[*src++];
++  for (; src<srcEnd;) {
++    *dest = aFastTable[*src++];
++    if (*dest == 0xfffb && aErrorSignal) {
++      res = NS_ERROR_ILLEGAL_INPUT;
++      break;
++    }
++    dest++;
++  }
+ 
+   *aSrcLength = src - (PRUint8 *)aSrc;
+   *aDestLength  = dest - aDest;
+   return res;
+ }
+ 
+ nsresult nsUnicodeDecodeHelper::CreateFastTable(
+                                      uMappingTable  * aMappingTable,
+diff --git a/intl/uconv/util/nsUnicodeDecodeHelper.h b/intl/uconv/util/nsUnicodeDecodeHelper.h
+--- a/intl/uconv/util/nsUnicodeDecodeHelper.h
++++ b/intl/uconv/util/nsUnicodeDecodeHelper.h
+@@ -52,32 +52,33 @@ public:
+ public:
+   /**
+    * Converts data using a lookup table and optional shift table
+    */
+   static nsresult ConvertByTable(const char * aSrc, PRInt32 * aSrcLength, 
+                                  PRUnichar * aDest, PRInt32 * aDestLength,
+                                  uScanClassID aScanClass,
+                                  uShiftInTable * aShiftInTable,
+-                                 uMappingTable  * aMappingTable);
++                                 uMappingTable  * aMappingTable,
++                                 PRBool aErrorSignal = PR_FALSE);
+ 
+   /**
+    * Converts data using a set of lookup tables.
+    */
+   static nsresult ConvertByMultiTable(const char * aSrc, PRInt32 * aSrcLength,
+       PRUnichar * aDest, PRInt32 * aDestLength, PRInt32 aTableCount, 
+       const uRange * aRangeArray, uScanClassID * aScanClassArray,
+-      uMappingTable ** aMappingTable);
++      uMappingTable ** aMappingTable, PRBool aErrorSignal = PR_FALSE);
+ 
+   /**
+    * Converts data using a fast lookup table.
+    */
+   static nsresult ConvertByFastTable(const char * aSrc, PRInt32 * aSrcLength, 
+       PRUnichar * aDest, PRInt32 * aDestLength, const PRUnichar * aFastTable, 
+-      PRInt32 aTableSize);
++      PRInt32 aTableSize, PRBool aErrorSignal);
+ 
+   /**
+    * Create a cache-like fast lookup table from a normal one.
+    */
+   static nsresult CreateFastTable(uMappingTable * aMappingTable,
+       PRUnichar * aFastTable,  PRInt32 aTableSize);
+ };
+ 
+diff --git a/parser/htmlparser/src/nsExpatDriver.cpp b/parser/htmlparser/src/nsExpatDriver.cpp
+--- a/parser/htmlparser/src/nsExpatDriver.cpp
++++ b/parser/htmlparser/src/nsExpatDriver.cpp
+@@ -883,19 +883,20 @@ AppendErrorPointer(const PRInt32 aColNum
+     }
+   }
+   aSourceString.Append(PRUnichar('^'));
+ 
+   return NS_OK;
+ }
+ 
+ nsresult
+-nsExpatDriver::HandleError()
++nsExpatDriver::HandleError(PRInt32 code)
+ {
+-  PRInt32 code = XML_GetErrorCode(mExpatParser);
++  if (code == XML_ERROR_NONE)
++    code = XML_GetErrorCode(mExpatParser);
+   NS_ASSERTION(code > XML_ERROR_NONE, "unexpected XML error code");
+ 
+   // Map Expat error code to an error string
+   // XXX Deal with error returns.
+   nsAutoString description;
+   nsParserMsgUtils::GetLocalizedStringByID(XMLPARSER_PROPERTIES, code,
+                                            description);
+ 
+@@ -1068,16 +1069,20 @@ nsExpatDriver::ConsumeToken(nsScanner& a
+   aScanner.EndReading(end);
+ 
+   PR_LOG(gExpatDriverLog, PR_LOG_DEBUG,
+          ("Remaining in expat's buffer: %i, remaining in scanner: %i.",
+           mExpatBuffered, Distance(start, end)));
+ 
+   PRBool flush = mIsFinalChunk;
+ 
++  if (aScanner.HasInvalidCharacter()) {
++    MaybeStopParser(NS_ERROR_HTMLPARSER_STOPPARSING);
++  }
++
+   // We want to call Expat if we have more buffers, or if we know there won't
+   // be more buffers (and so we want to flush the remaining data), or if we're
+   // currently blocked and there's data in Expat's buffer.
+   while (start != end || flush ||
+          (BlockedOrInterrupted() && mExpatBuffered > 0)) {
+     PRBool noMoreBuffers = start == end && mIsFinalChunk;
+     PRBool blocked = BlockedOrInterrupted();
+ 
+@@ -1161,17 +1166,18 @@ nsExpatDriver::ConsumeToken(nsScanner& a
+ 
+       aScanner.SetPosition(currentExpatPosition, PR_TRUE);
+       aScanner.Mark();
+ 
+       return mInternalState;
+     }
+ 
+     if (NS_FAILED(mInternalState)) {
+-      if (XML_GetErrorCode(mExpatParser) != XML_ERROR_NONE) {
++      if (XML_GetErrorCode(mExpatParser) != XML_ERROR_NONE ||
++          aScanner.HasInvalidCharacter()) {
+         NS_ASSERTION(mInternalState == NS_ERROR_HTMLPARSER_STOPPARSING,
+                      "Unexpected error");
+ 
+         // Look for the next newline after the last one we consumed
+         nsScannerIterator lastLine = currentExpatPosition;
+         while (lastLine != end) {
+           length = PRUint32(lastLine.size_forward());
+           PRUint32 endOffset = 0;
+@@ -1184,17 +1190,20 @@ nsExpatDriver::ConsumeToken(nsScanner& a
+           if (endOffset < length) {
+             // We found a newline.
+             break;
+           }
+ 
+           lastLine.advance(length);
+         }
+ 
+-        HandleError();
++        if (aScanner.HasInvalidCharacter())
++          HandleError(XML_ERROR_INCORRECT_ENCODING);
++        else
++          HandleError();
+       }
+ 
+       return mInternalState;
+     }
+ 
+     // Either we have more buffers, or we were blocked (and we'll flush in the
+     // next iteration), or we should have emptied Expat's buffer.
+     NS_ASSERTION(!noMoreBuffers || blocked ||
+diff --git a/parser/htmlparser/src/nsExpatDriver.h b/parser/htmlparser/src/nsExpatDriver.h
+--- a/parser/htmlparser/src/nsExpatDriver.h
++++ b/parser/htmlparser/src/nsExpatDriver.h
+@@ -119,17 +119,17 @@ private:
+    * @param aIsFinal whether there will definitely not be any more new buffers
+    *                 passed in to ParseBuffer
+    * @param aConsumed [out] the number of PRUnichars that Expat consumed. This
+    *                        doesn't include the PRUnichars that Expat stored in
+    *                        its buffer but didn't parse yet.
+    */
+   void ParseBuffer(const PRUnichar *aBuffer, PRUint32 aLength, PRBool aIsFinal,
+                    PRUint32 *aConsumed);
+-  nsresult HandleError();
++  nsresult HandleError(PRInt32 code = XML_ERROR_NONE);
+ 
+   void MaybeStopParser(nsresult aState);
+ 
+   PRBool BlockedOrInterrupted()
+   {
+     return mInternalState == NS_ERROR_HTMLPARSER_BLOCK ||
+            mInternalState == NS_ERROR_HTMLPARSER_INTERRUPTED;
+   }
+diff --git a/parser/htmlparser/src/nsScanner.cpp b/parser/htmlparser/src/nsScanner.cpp
+--- a/parser/htmlparser/src/nsScanner.cpp
++++ b/parser/htmlparser/src/nsScanner.cpp
+@@ -85,17 +85,18 @@ const int   kBufsize=64;
+  *  This short cut was added for Javascript.
+  *
+  *  @update  gess 5/12/98
+  *  @param   aMode represents the parser mode (nav, other)
+  *  @return  
+  */
+ nsScanner::nsScanner(const nsAString& anHTMLString, const nsACString& aCharset,
+                      PRInt32 aSource)
+-  : mParser(nsnull)
++  : mParser(nsnull),
++    mHasInvalidCharacter(PR_FALSE)
+ {
+   MOZ_COUNT_CTOR(nsScanner);
+ 
+   mSlidingBuffer = nsnull;
+   mCountRemaining = 0;
+   mFirstNonWhitespacePosition = -1;
+   AppendToBuffer(anHTMLString);
+   mSlidingBuffer->BeginReading(mCurrentPosition);
+@@ -111,17 +112,18 @@ nsScanner::nsScanner(const nsAString& an
+  *  can still provide data to the scanner via append.
+  *
+  *  @update  gess 5/12/98
+  *  @param   aFilename --
+  *  @return  
+  */
+ nsScanner::nsScanner(nsString& aFilename,PRBool aCreateStream,
+                      const nsACString& aCharset, PRInt32 aSource)
+-  : mFilename(aFilename), mParser(nsnull)
++  : mFilename(aFilename), mParser(nsnull),
++    mHasInvalidCharacter(PR_FALSE)
+ {
+   MOZ_COUNT_CTOR(nsScanner);
+   NS_ASSERTION(!aCreateStream, "This is always true.");
+ 
+   mSlidingBuffer = nsnull;
+ 
+   // XXX This is a big hack.  We need to initialize the iterators to something.
+   // What matters is that mCurrentPosition == mEndPosition, so that our methods
+@@ -183,16 +185,21 @@ nsresult nsScanner::SetDocumentCharset(c
+   nsIUnicodeDecoder * decoder = nsnull;
+   res = nsParser::GetCharsetConverterManager()->
+     GetUnicodeDecoderRaw(mCharset.get(), &decoder);
+   if(NS_SUCCEEDED(res) && (nsnull != decoder))
+   {
+      NS_IF_RELEASE(mUnicodeDecoder);
+ 
+      mUnicodeDecoder = decoder;
++
++     // We need detect conversion error of character to support XML
++     // encoding error.
++     decoder->SetInputErrorBehavior(nsIUnicodeDecoder::kOnError_Signal);
++     mHasInvalidCharacter = PR_FALSE;
+   }
+ 
+   return res;
+ }
+ 
+ 
+ /**
+  *  default destructor
+@@ -320,16 +327,17 @@ nsresult nsScanner::Append(const char* a
+           break;
+         }
+ 
+         unichars[unicharLength++] = (PRUnichar)0xFFFD;
+         unichars = unichars + unicharLength;
+         unicharLength = unicharBufLen - (++totalChars);
+ 
+         mUnicodeDecoder->Reset();
++        mHasInvalidCharacter = PR_TRUE;
+ 
+         if(((PRUint32) (srcLength + 1)) > aLen) {
+           srcLength = aLen;
+         }
+         else {
+           ++srcLength;
+         }
+ 
+diff --git a/parser/htmlparser/src/nsScanner.h b/parser/htmlparser/src/nsScanner.h
+--- a/parser/htmlparser/src/nsScanner.h
++++ b/parser/htmlparser/src/nsScanner.h
+@@ -310,32 +310,38 @@ class nsScanner {
+         return mFirstNonWhitespacePosition;
+       }
+ 
+       void SetParser(nsParser *aParser)
+       {
+         mParser = aParser;
+       }
+ 
++      PRBool HasInvalidCharacter()
++      {
++        return mHasInvalidCharacter;
++      }
++
+   protected:
+ 
+       void AppendToBuffer(nsScannerString::Buffer *, nsIRequest *aRequest);
+       void AppendToBuffer(const nsAString& aStr)
+       {
+         AppendToBuffer(nsScannerString::AllocBufferFromString(aStr), nsnull);
+       }
+ 
+       nsScannerString*             mSlidingBuffer;
+       nsScannerIterator            mCurrentPosition; // The position we will next read from in the scanner buffer
+       nsScannerIterator            mMarkPosition;    // The position last marked (we may rewind to here)
+       nsScannerIterator            mEndPosition;     // The current end of the scanner buffer
+       nsString        mFilename;
+       PRUint32        mCountRemaining; // The number of bytes still to be read
+                                        // from the scanner buffer
+       PRPackedBool    mIncremental;
++      PRPackedBool    mHasInvalidCharacter;
+       PRInt32         mFirstNonWhitespacePosition;
+       PRInt32         mCharsetSource;
+       nsCString       mCharset;
+       nsIUnicodeDecoder *mUnicodeDecoder;
+       nsParser        *mParser;
+ };
+ 
+ #endif
+diff --git a/parser/htmlparser/tests/mochitest/Makefile.in b/parser/htmlparser/tests/mochitest/Makefile.in
+--- a/parser/htmlparser/tests/mochitest/Makefile.in
++++ b/parser/htmlparser/tests/mochitest/Makefile.in
+@@ -46,18 +46,20 @@ include $(topsrcdir)/config/rules.mk
+ 
+ _TEST_FILES =	parser_datreader.js \
+ 		parser_web_testrunner.js \
+ 		html5lib_tree_dat1.txt \
+ 		html5lib_tree_dat2.txt \
+ 		html5lib_tree_dat3.txt \
+ 		html5_tree_construction_exceptions.js \
+ 		test_html5_tree_construction.html \
++		test_bug174351.html \
+ 	 	test_bug339350.xhtml \
+ 		test_bug358797.html \
+ 		test_bug396568.html \
+ 		test_bug418464.html \
+ 		test_compatmode.html \
+ 		regressions.txt \
++		invalidchar.xml \
+ 		$(NULL)
+ 
+ libs:: $(_TEST_FILES)
+ 	$(INSTALL) $(foreach f,$^,"$f") $(DEPTH)/_tests/testing/mochitest/tests/$(relativesrcdir)
+diff --git a/parser/htmlparser/tests/mochitest/invalidchar.xml b/parser/htmlparser/tests/mochitest/invalidchar.xml
+new file mode 100644
+--- /dev/null
++++ b/parser/htmlparser/tests/mochitest/invalidchar.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<root>
++ <fail> This is an invalid byte in UTF-8: ¿ </fail>
++</root>
+diff --git a/parser/htmlparser/tests/mochitest/test_bug174351.html b/parser/htmlparser/tests/mochitest/test_bug174351.html
+new file mode 100644
+--- /dev/null
++++ b/parser/htmlparser/tests/mochitest/test_bug174351.html
+@@ -0,0 +1,32 @@
++<!DOCTYPE HTML>
++<html>
++<!--
++https://bugzilla.mozilla.org/show_bug.cgi?id=174351
++-->
++<head>
++  <title>Test for Bug 174351</title>
++  <script type="text/javascript" src="/MochiKit/MochiKit.js"></script>
++  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
++  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
++</head>
++<body>
++<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=174351">Mozilla Bug 174351</a>
++<p id="display"></p>
++<div id="content" style="display: none">
++
++</div>
++<pre id="test">
++<script class="testbody" type="text/javascript">
++  var iframe = document.createElement('iframe');
++  iframe.src = "invalidchar.xml";
++  iframe.onload = function () {
++    var doc = document.getElementById('test').childNodes[1].contentDocument;
++    ok(doc.documentElement.tagName != "root", "Since XML has invalid enconding, must throw error");
++  };
++
++  document.getElementById('test').appendChild(iframe);
++</script>
++</pre>
++</body>
++</html>
++
