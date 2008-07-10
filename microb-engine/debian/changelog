@@ -1,3 +1,9 @@
+microb-engine (20080616-22) unstable; urgency=low
+
+  *  Unknown Protocol fix is included. 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 10 Jul 2008 10:48:05 +0300
+
 microb-engine (20080616-21) unstable; urgency=low
 
   * Fixed some acid3 tests, now it is 89/100 
