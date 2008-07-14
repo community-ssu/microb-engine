@@ -13,14 +13,14 @@ Index: mozilla/extensions/ftv/Makefile.in
 +include $(DEPTH)/config/autoconf.mk
 +
 +MODULE	= ftv
-+XPI_NAME = ftv
++#XPI_NAME = ftv
 +
 +ifdef MOZ_XUL_APP
-+INSTALL_EXTENSION_ID = ftv@extensions.mozilla.org
-+DIST_FILES = install.rdf
-+NO_JAR_AUTO_REG        = 1
-+USE_EXTENSION_MANIFEST = 1
-+XPI_PKGNAME            = ftv-$(MOZ_APP_VERSION)
++#INSTALL_EXTENSION_ID = ftv@extensions.mozilla.org
++#DIST_FILES = install.rdf
++#NO_JAR_AUTO_REG        = 1
++#USE_EXTENSION_MANIFEST = 1
++#XPI_PKGNAME            = ftv-$(MOZ_APP_VERSION)
 +
 +# We should really pull FIREFOX_VERSION and THUNDERBIRD_VERSION from
 +# browser/config/version.txt mail/config/version.txt but we can't be assured
@@ -136,7 +136,7 @@ Index: mozilla/extensions/ftv/public/Makefile.in
 +include $(DEPTH)/config/autoconf.mk
 +
 +MODULE		= ftv
-+XPI_NAME	= ftv
++#XPI_NAME	= ftv
 +
 +XPIDLSRCS	= nsIFitToView.idl
 +
@@ -416,7 +416,7 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +#include "nsIDOMNSHTMLElement.h"
 +#include "nsIDOMNode.h"
 +#include "nsIDOMNodeList.h"
-+#include "nsIDOMTextRectangle.h"
++#include "nsIDOMClientRect.h"
 +#include "nsIDOMWindow.h"
 +#include "nsIDOMWindowCollection.h"
 +#include "nsIDocument.h"
@@ -562,7 +562,7 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  nsRect rect(0,0,0,0);
 +  nsCOMPtr<nsIDOMNSElement> nsdel = do_QueryInterface(element, &rv);
 +  nsCOMPtr<nsIDOMElement> ndel = do_QueryInterface(element, &rv);
-+  nsCOMPtr<nsIDOMTextRectangle> domrect;
++  nsCOMPtr<nsIDOMClientRect> domrect;
 +  nsdel->GetBoundingClientRect(getter_AddRefs(domrect));
 +  float pleft,pright,ptop,pbottom;
 +  domrect->GetLeft(&pleft);
@@ -635,7 +635,7 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  nsCOMPtr<nsIDOMNSElement> nsdel = do_QueryInterface(del, &rv);
 +  nsRect wrect(0,0,0,0);
 +  {
-+    nsCOMPtr<nsIDOMTextRectangle> domrect;
++    nsCOMPtr<nsIDOMClientRect> domrect;
 +    nsdel->GetBoundingClientRect(getter_AddRefs(domrect));
 +    float pleft,pright,ptop,pbottom;
 +    domrect->GetLeft(&pleft);

@@ -82,7 +82,7 @@ ac_add_options --disable-xpfe-browser
    #* Should be enabled in Micro base
 ac_add_options --enable-necko-protocols="about data http file res ftp"
 ac_add_options --enable-chrome-format=flat
-ac_add_options --enable-extensions="xml-rpc gnomevfs" # ftv spatialnavigation"
+ac_add_options --enable-extensions="xml-rpc gnomevfs ftv" # spatialnavigation"
 ac_add_options --enable-image-decoders="png gif jpeg bmp"
 #ac_add_options --enable-image-encoders="jpeg" #Disabling of this required 010_XULRunner_minimal_linking.diff patch
 
