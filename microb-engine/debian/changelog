@@ -1,3 +1,9 @@
+microb-engine (20080616-25) unstable; urgency=low
+
+  * Removed xpi_name from ftv component 
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Mon, 14 Jul 2008 17:16:47 -0400
+
 microb-engine (20080616-24) unstable; urgency=low
 
   * FTV enabling for trunk

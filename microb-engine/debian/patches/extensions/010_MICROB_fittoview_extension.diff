@@ -243,7 +243,7 @@ Index: mozilla/extensions/ftv/src/Makefile.in
 +include $(DEPTH)/config/autoconf.mk
 +
 +MODULE		= ftv
-+XPI_NAME	= ftv
++#XPI_NAME	= ftv
 +LIBRARY_NAME    = ftv
 +ifneq ($(OS_ARCH),WINNT)
 +SHORT_LIBNAME = ftv
