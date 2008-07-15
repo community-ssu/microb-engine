@@ -1,3 +1,9 @@
+microb-engine (20080616-28) unstable; urgency=low
+
+  * Enable necko disk cache by configure option 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 15 Jul 2008 13:23:47 +0300
+
 microb-engine (20080616-27) unstable; urgency=low
 
   * Fixed broken png/jpeg decoding when lcms disabled 

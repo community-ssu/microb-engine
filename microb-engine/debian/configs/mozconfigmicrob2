@@ -98,6 +98,7 @@ ac_add_options --enable-places
 ac_add_options --enable-canvas
 ac_add_options --enable-svg
 ac_add_options --enable-smil
+ac_add_options --enable-necko-disk-cache
 
 ac_add_options --enable-pref-extensions
 
