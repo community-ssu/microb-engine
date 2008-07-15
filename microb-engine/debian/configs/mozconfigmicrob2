@@ -77,7 +77,7 @@ ac_add_options --disable-contextmenu
 #ac_add_options --disable-toolkitcomps
 ac_add_options --disable-fastfind
 ac_add_options --disable-jarmodule
-#ac_add_options --disable-lcms
+ac_add_options --disable-lcms
 ac_add_options --disable-moz-mork
 #ac_add_options --disable-xpfe-browser
 #ac_add_options --disable-downloadmgr
