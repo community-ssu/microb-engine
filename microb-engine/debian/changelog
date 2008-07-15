@@ -1,3 +1,9 @@
+microb-engine (20080616-31) unstable; urgency=low
+
+  * Disable optimization options, because it makes gmail loading slower. (4 seconds) 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 15 Jul 2008 17:47:41 +0300
+
 microb-engine (20080616-30) unstable; urgency=low
 
   * Removed binary files from debian sources 

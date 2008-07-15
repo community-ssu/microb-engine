@@ -313,7 +313,13 @@ ifeq ($(canvas),y)
 	configopts += --enable-canvas
 endif
 
+ifeq ($(debug),y)
 	configopts += --enable-optimize=\"$(CFLAGS) $(optimize_add) \"
+else
+ifeq ($(logging),y)
+	configopts += --enable-optimize=\"$(CFLAGS) $(optimize_add) \"
+endif
+endif
 
 # shared library versions, option 1
 version=$(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2 | cut -d ':' -f 2 | cut -d '-' -f 1)
@@ -371,7 +377,7 @@ ifeq ($(cross_compile),y)
 	echo "HOST_LIBIDL_CONFIG=$(prefix)/bin/libIDL-config-2" >> $(builddir)/mozconfig
 endif
 	#echo "1900000000" >> $(builddir)/config/build_number
-	echo $(MOZ_MILESTONE) > $(builddir)/config/milestone.txt
+	#echo $(MOZ_MILESTONE) > $(builddir)/config/milestone.txt
 	echo $(MOZ_VERSION) > $(builddir)/browser/config/version.txt
 	#Small hack touch $(builddir)/toolkit/empty-file
 	touch $(builddir)/toolkit/empty-file
