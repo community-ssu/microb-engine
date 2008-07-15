@@ -4,7 +4,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -2107,35 +2107,35 @@
+@@ -2110,35 +2110,35 @@
  
      if ((NS_SUCCEEDED(result) && focusRingWidth != 1 && focusRingWidth <= 4 ) || focusRingOnAnything) {
        PRUint32 index = 0;
@@ -48,7 +48,7 @@ Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp
 +++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp
-@@ -169,17 +169,17 @@
+@@ -171,17 +171,17 @@
          aColor = GDK_COLOR_TO_NS_RGB(mStyle->bg[GTK_STATE_NORMAL]);
          break;
      case eColor_captiontext:
@@ -67,7 +67,7 @@ Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
      case eColor_highlighttext:
          // text of selected item
          aColor = GDK_COLOR_TO_NS_RGB(mStyle->text[GTK_STATE_SELECTED]);
-@@ -213,16 +213,20 @@
+@@ -215,16 +215,20 @@
          aColor = sMenuText;
          break;
      case eColor_scrollbar:
@@ -88,7 +88,7 @@ Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
      case eColor_buttontext:
          // text on push buttons
          aColor = sButtonText;
-@@ -296,16 +300,20 @@
+@@ -298,16 +302,20 @@
          aColor = GDK_COLOR_TO_NS_RGB(mStyle->text[GTK_STATE_ACTIVE]);
          break;
      case eColor__moz_menuhover:
@@ -104,8 +104,8 @@ Index: mozilla/widget/src/gtk2/nsLookAndFeel.cpp
      case eColor__moz_oddtreerow:
          aColor = sOddCellBackground;
          break;
+     case eColor__moz_nativehyperlinktext:
+         aColor = sNativeHyperLinkText;
+         break;
      default:
          /* default color is BLACK */
-         aColor = 0;
-         res    = NS_ERROR_FAILURE;
-         break;

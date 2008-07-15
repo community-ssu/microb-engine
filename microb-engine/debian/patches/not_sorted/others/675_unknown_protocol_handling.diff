@@ -1,5 +1,8 @@
 # Setting dialog title as "Unknown Protocol" if the URL scheme is unsupported.
 # Fixed bug#65361:invalid_protocol is not shown in most variants.
+# This is wrong, nsIExternalProtocolService need to be implemented for maemo or
+# toolkit/system/gnome module enabled + each application enable "/desktop/gnome/url-handlers/[protocol]/command" gconf keys
+# also see https://bugzilla.mozilla.org/show_bug.cgi?id=33282
 --- mozilla/docshell/base/nsDocShell.cpp.orig	2007-09-11 14:57:12.000000000 +0300
 +++ mozilla/docshell/base/nsDocShell.cpp	2007-09-11 14:57:21.000000000 +0300
 @@ -3019,8 +3019,12 @@

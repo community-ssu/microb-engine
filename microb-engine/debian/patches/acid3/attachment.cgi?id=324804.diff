@@ -182,7 +182,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
    if (EnsureEmptyMiscContainer()) {
      MiscContainer* cont = GetMiscContainer();
      NS_ADDREF(cont->mCSSStyleRule = aValue);
-@@ -320,125 +323,123 @@
+@@ -320,134 +323,131 @@
      }
      case eAtom:
      {
@@ -266,9 +266,17 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
      case eSVGValue:
      {
        GetMiscContainer()->mSVGValue->GetValueString(aResult);
-+      break;
+       break;
      }
  #endif
+     case eFloatValue:
+     {
+       nsAutoString str;
+       str.AppendFloat(GetFloatValue());
+       aResult = str;
+ 
+       break;
+     }
 +    default:
 +    {
 +      MiscContainer* cont = GetMiscContainer();
@@ -366,7 +374,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
      }
    }
  
-@@ -490,27 +491,38 @@
+@@ -499,27 +499,38 @@
  
        return 0;
      }
@@ -406,7 +414,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
      {
        return NS_PTR_TO_INT32(cont->mCSSStyleRule);
      }
-@@ -533,45 +545,56 @@
+@@ -542,45 +553,56 @@
      {
        NS_NOTREACHED("unknown type stored in MiscContainer");
        return 0;
@@ -465,7 +473,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
      {
        return thisCont->mCSSStyleRule == otherCont->mCSSStyleRule;
      }
-@@ -727,19 +750,21 @@
+@@ -736,19 +758,21 @@
  }
  
  void
@@ -474,9 +482,8 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
    nsAString::const_iterator iter, end;
    aValue.BeginReading(iter);
    aValue.EndReading(end);
--
 +  PRBool hasSpace = PR_FALSE;
-+
+ 
    // skip initial whitespace
    while (iter != end && nsContentUtils::IsHTMLWhitespace(*iter)) {
 +    hasSpace = PR_TRUE;
@@ -488,7 +495,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
      return;
    }
  
-@@ -753,21 +778,23 @@
+@@ -762,21 +786,23 @@
    nsCOMPtr<nsIAtom> classAtom = do_GetAtom(Substring(start, iter));
    if (!classAtom) {
      Reset();
@@ -514,7 +521,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
    }
  
    if (!EnsureEmptyAtomArray()) {
-@@ -777,17 +804,17 @@
+@@ -786,17 +812,17 @@
    nsCOMArray<nsIAtom>* array = GetAtomArrayValue();
    
    if (!array->AppendObject(classAtom)) {
@@ -533,7 +540,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
  
      classAtom = do_GetAtom(Substring(start, iter));
  
-@@ -795,18 +822,19 @@
+@@ -804,18 +830,19 @@
        Reset();
        return;
      }
@@ -554,7 +561,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
  {
    PRUint32 len = aValue.Length();
    // Don't bother with atoms if it's an empty string since
-@@ -829,27 +857,26 @@
+@@ -838,27 +865,26 @@
    while (aTable->tag) {
      if (aCaseSensitive ? aValue.EqualsASCII(aTable->tag) :
                           aValue.LowerCaseEqualsASCII(aTable->tag)) {
@@ -584,7 +591,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
      aTable++;
    }
  
-@@ -858,60 +885,53 @@
+@@ -867,60 +893,53 @@
  
  PRBool
  nsAttrValue::ParseSpecialIntValue(const nsAString& aString,
@@ -659,7 +666,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
  nsAttrValue::ParseColor(const nsAString& aString, nsIDocument* aDocument)
  {
    nsAutoString colorStr(aString);
-@@ -940,36 +960,71 @@
+@@ -949,31 +968,65 @@
      }
      colorStr.Cut(0, 1);
      if (!NS_HexToRGB(colorStr, &color)) {
@@ -724,6 +731,18 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
 +  }
 +}
 +
+ PRBool nsAttrValue::ParseFloatValue(const nsAString& aString)
+ {
+   ResetIfSet();
+ 
+   PRInt32 ec;
+   float val = PromiseFlatString(aString).ToFloat(&ec);
+   if (NS_FAILED(ec)) {
+     return PR_FALSE;
+@@ -982,16 +1035,17 @@
+   return PR_TRUE;
+ }
+ 
  PRBool
  nsAttrValue::EnsureEmptyMiscContainer()
  {
@@ -738,7 +757,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
          break;
        }
        case eAtomArray:
-@@ -995,25 +1050,27 @@
+@@ -1017,25 +1071,27 @@
  
      cont = new MiscContainer;
      NS_ENSURE_TRUE(cont, PR_FALSE);
@@ -766,7 +785,7 @@ Index: mozilla/content/base/src/nsAttrValue.cpp
      // should already be reset
      return PR_FALSE;
    }
-@@ -1025,8 +1082,116 @@
+@@ -1047,8 +1103,116 @@
    }
  
    MiscContainer* cont = GetMiscContainer();
@@ -913,7 +932,7 @@ Index: mozilla/content/base/src/nsAttrValue.h
   */
  class nsCheapString : public nsString {
  public:
-@@ -101,36 +94,35 @@
+@@ -101,37 +94,36 @@
    static nsresult Init();
    static void Shutdown();
  
@@ -934,6 +953,7 @@ Index: mozilla/content/base/src/nsAttrValue.h
  #ifdef MOZ_SVG
      ,eSVGValue =    0x12
  #endif
+     ,eFloatValue  = 0x13
    };
  
    ValueType Type() const;
@@ -952,7 +972,7 @@ Index: mozilla/content/base/src/nsAttrValue.h
    void SwapValueWith(nsAttrValue& aOther);
  
    void ToString(nsAString& aResult) const;
-@@ -154,17 +146,19 @@
+@@ -156,17 +148,19 @@
    // Returns the number of atoms we have; 0 if we have none.  It's OK
    // to call this without checking the type first; it handles that.
    PRInt32 GetAtomCount() const;
@@ -973,7 +993,7 @@ Index: mozilla/content/base/src/nsAttrValue.h
     * array which contains the given atom.
     */
    PRBool Contains(nsIAtom* aValue, nsCaseTreatment aCaseSensitive) const;
-@@ -217,74 +211,89 @@
+@@ -219,30 +213,29 @@
  
    /**
     * Parse a string value into an integer.
@@ -1006,7 +1026,9 @@ Index: mozilla/content/base/src/nsAttrValue.h
     * @param aDocument the document (to find out whether we're in quirks mode)
     * @return whether the value could be parsed
     */
-   PRBool ParseColor(const nsAString& aString, nsIDocument* aDocument);
+@@ -256,47 +249,63 @@
+    */
+   PRBool ParseFloatValue(const nsAString& aString);
  
  private:
    // These have to be the same as in ValueType
@@ -1035,6 +1057,7 @@ Index: mozilla/content/base/src/nsAttrValue.h
  #ifdef MOZ_SVG
        nsISVGValue* mSVGValue;
  #endif
+       float mFloatValue;
      };
    };
  
@@ -1046,6 +1069,7 @@ Index: mozilla/content/base/src/nsAttrValue.h
 +                                 const nsAString* aStringValue);
 +  void SetMiscAtomOrString(const nsAString* aValue);
 +  void ResetMiscAtomOrString();
+   inline void SetFloatValue(float aValue);
    inline void ResetIfSet();
  
    inline void* GetPtr() const;
@@ -1070,7 +1094,7 @@ Index: mozilla/content/base/src/nsAttrValue.h
  
  /**
   * Implementation of inline methods
-@@ -296,35 +305,32 @@
+@@ -308,35 +317,32 @@
    NS_PRECONDITION(Type() == eAtom, "wrong type");
    return reinterpret_cast<nsIAtom*>(GetPtr());
  }
@@ -1110,7 +1134,7 @@ Index: mozilla/content/base/src/nsAttrValue.h
    NS_PRECONDITION(Type() == eAtomArray, "wrong type");
    return GetMiscContainer()->mAtomArray;
  }
-@@ -355,62 +361,68 @@
+@@ -374,26 +380,46 @@
  nsAttrValue::SetPtrValueAndType(void* aValue, ValueBaseType aType)
  {
    NS_ASSERTION(!(NS_PTR_TO_INT32(aValue) & ~NS_ATTRVALUE_POINTERVALUE_MASK),
@@ -1128,6 +1152,9 @@ Index: mozilla/content/base/src/nsAttrValue.h
 -    PRInt32 tmp = aValue * NS_ATTRVALUE_INTEGERTYPE_MULTIPLIER;
 -    NS_ASSERTION(tmp / NS_ATTRVALUE_INTEGERTYPE_MULTIPLIER == aValue,
 -                 "Integer too big to fit");
+-  }
+-#endif
+-  mBits = (aValue * NS_ATTRVALUE_INTEGERTYPE_MULTIPLIER) | aType;
 +  if (EnsureEmptyMiscContainer()) {
 +    MiscContainer* cont = GetMiscContainer();
 +    switch (aType) {
@@ -1154,14 +1181,16 @@ Index: mozilla/content/base/src/nsAttrValue.h
 +    }
 +    cont->mType = aType;
 +    SetMiscAtomOrString(aStringValue);
-   }
--#endif
--  mBits = (aValue * NS_ATTRVALUE_INTEGERTYPE_MULTIPLIER) | aType;
++	}
  }
  
  inline void
- nsAttrValue::ResetIfSet()
+ nsAttrValue::SetFloatValue(float aValue)
  {
+   if (EnsureEmptyMiscContainer()) {
+     MiscContainer* cont = GetMiscContainer();
+     cont->mFloatValue = aValue;
+@@ -406,39 +432,25 @@
    if (mBits) {
      Reset();
    }
@@ -1228,10 +1257,10 @@ Index: mozilla/content/base/test/Makefile.in
 ===================================================================
 --- mozilla.orig/content/base/test/Makefile.in
 +++ mozilla/content/base/test/Makefile.in
-@@ -76,16 +76,17 @@
- 
+@@ -77,16 +77,17 @@
  _TEST_FILES = 	test_bug5141.html \
  		test_bug51034.html \
+ 		test_bug199959.html \
  		test_bug218236.html \
  		file_bug218236_multipart.txt \
  		file_bug218236_multipart.txt^headers^ \
@@ -1246,16 +1275,17 @@ Index: mozilla/content/base/test/Makefile.in
  		test_bug330925.xhtml \
  		test_bug337631.html \
  		test_bug338541.xhtml \
-@@ -178,16 +179,17 @@
- 		file_bug428847-1.xhtml \
+@@ -180,16 +181,17 @@
  		file_bug428847-2.xhtml \
  		test_bug425201.html \
  		test_bug431833.html \
  		test_bug438519.html \
+ 		test_bug444722.html \
  		test_text_replaceWholeText.html \
  		test_text_wholeText.html \
  		wholeTexty-helper.xml \
 +		test_bug433533.html \
+ 		test_bug444030.xhtml \
  		$(NULL)
  
  libs:: $(_TEST_FILES)
@@ -1263,7 +1293,6 @@ Index: mozilla/content/base/test/Makefile.in
  
  check::
  	@$(EXIT_ON_ERROR) \
- 	for f in $(subst .cpp,,$(CPP_UNIT_TESTS)); do \
 Index: mozilla/content/html/content/src/nsHTMLTableCellElement.cpp
 ===================================================================
 --- mozilla.orig/content/html/content/src/nsHTMLTableCellElement.cpp

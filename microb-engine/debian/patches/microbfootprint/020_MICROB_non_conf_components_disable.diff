@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4743,16 +4743,21 @@
+@@ -4773,16 +4773,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
  if test "$MOZ_ENABLE_GTK2"
  then
      PKG_CHECK_MODULES(MOZ_GTK2, gtk+-2.0 >= $GTK2_VERSION gtk+-unix-print-2.0 gdk-x11-2.0 glib-2.0 gobject-2.0)
-@@ -4799,17 +4804,16 @@
+@@ -4829,17 +4834,16 @@
  AC_SUBST(GTK_CONFIG)
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  if test "$MOZ_ENABLE_GTK2"
  then
      AC_DEFINE(MOZ_X11)
-@@ -5983,22 +5987,164 @@
+@@ -6027,22 +6031,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7399,35 +7545,54 @@
+@@ -7454,35 +7600,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7700,16 +7865,21 @@
+@@ -7755,16 +7920,21 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8025,16 +8195,22 @@
+@@ -8083,16 +8253,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -322,7 +322,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -153,16 +153,27 @@
+@@ -154,16 +154,27 @@
  MOZ_PROFILESHARING = @MOZ_PROFILESHARING@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@
@@ -347,9 +347,9 @@ Index: mozilla/config/autoconf.mk.in
  MOZ_MORKREADER = @MOZ_MORKREADER@
  MOZ_NO_XPCOM_OBSOLETE = @MOZ_NO_XPCOM_OBSOLETE@
  MOZ_NO_FAST_LOAD = @MOZ_NO_FAST_LOAD@
+ MOZ_MEDIA = @MOZ_MEDIA@
  NS_PRINTING = @NS_PRINTING@
  MOZ_CRASHREPORTER = @MOZ_CRASHREPORTER@
- MOZ_MOCHITEST = @MOZ_MOCHITEST@
 Index: mozilla/chrome/src/nsChromeProtocolHandler.cpp
 ===================================================================
 --- mozilla.orig/chrome/src/nsChromeProtocolHandler.cpp
@@ -783,7 +783,7 @@ Index: mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp
  NS_IMPL_ISUPPORTS2(nsXPLookAndFeel, nsILookAndFeel, nsIObserver)
  
  nsLookAndFeelIntPref nsXPLookAndFeel::sIntPrefs[] =
-@@ -580,27 +582,29 @@
+@@ -581,27 +583,29 @@
    if (aID == eColor_TextSelectBackgroundAttention) {
      // This makes the selection stand out when typeaheadfind is on
      // Used with nsISelectionController::SELECTION_ATTENTION
@@ -821,7 +821,7 @@ Index: mozilla/toolkit/components/Makefile.in
  srcdir    = @srcdir@
  VPATH   = @srcdir@
  
- include $(DEPTH)/config/autoconf.mk
+ include $(topsrcdir)/config/config.mk
  
  # These component dirs are built for all apps (including suite)
  
@@ -1111,7 +1111,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  
  #ifdef MOZ_PLACES
  #define PLACES_MODULES \
-@@ -262,17 +280,17 @@
+@@ -268,17 +286,17 @@
      MODULE(nsUConvModule)                    \
      MODULE(nsI18nModule)                     \
      MODULE(nsChardetModule)                  \
@@ -1130,7 +1130,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      MODULE(nsParserModule)                   \
      GFX_MODULES                              \
      WIDGET_MODULES                           \
-@@ -287,22 +305,22 @@
+@@ -293,22 +311,22 @@
      OJI_MODULES                              \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \
@@ -1517,7 +1517,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -57,19 +57,21 @@
+@@ -58,19 +58,21 @@
  
  #ifdef MOZ_ENABLE_GLITZ
  #include "gfxGlitzSurface.h"
@@ -1539,7 +1539,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  static void do_gdk_pixmap_unref (void *data)
  {
      GdkPixmap *pmap = (GdkPixmap*)data;
-@@ -257,16 +259,17 @@
+@@ -264,16 +266,17 @@
      g_object_unref (context);
  
      if (sDPI <= 0) {
@@ -1557,7 +1557,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  
      Atom edidAtom, iccAtom;
      Display *dpy = GDK_DISPLAY();
-@@ -383,8 +386,10 @@
+@@ -390,8 +393,10 @@
              }
  #endif
  
@@ -1778,7 +1778,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
  /*  int number_passes;   NOT USED  */
    png_uint_32 width, height;
    int bit_depth, color_type, interlace_type, compression_type, filter_type;
-   int channels;
+   unsigned int channels;
 @@ -526,21 +535,23 @@
    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
      png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, NULL);
@@ -1891,13 +1891,13 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
 +#endif
  
    if (interlace_type == PNG_INTERLACE_ADAM7) {
-     decoder->interlacebuf = (PRUint8 *)nsMemory::Alloc(channels * width * height);
+     if (height < INT_MAX / (width * channels))
+       decoder->interlacebuf = (PRUint8 *)nsMemory::Alloc(channels * width * height);
      if (!decoder->interlacebuf) {
        longjmp(decoder->mPNG->jmpbuf, 5); // NS_ERROR_OUT_OF_MEMORY
      }
    }
-   
-@@ -717,30 +743,32 @@
+@@ -718,30 +744,32 @@
  
      // we're thebes. we can write stuff directly to the data
      PRUint8 *imageData;
@@ -2778,7 +2778,7 @@ Index: mozilla/toolkit/components/build/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/build/Makefile.in
 +++ mozilla/toolkit/components/build/Makefile.in
-@@ -118,19 +118,21 @@
+@@ -120,19 +120,21 @@
  	-I$(srcdir)/../parentalcontrols/src \
  	$(NULL)
  REQUIRES += parentalcontrols
@@ -2800,7 +2800,7 @@ Index: mozilla/toolkit/components/build/Makefile.in
  SHARED_LIBRARY_LIBS += ../alerts/src/mac/$(LIB_PREFIX)alerts_s.$(LIB_SUFFIX)
  SHARED_LIBRARY_LIBS += ../alerts/src/mac/growl/$(LIB_PREFIX)growl_s.$(LIB_SUFFIX)
  endif
-@@ -140,17 +142,19 @@
+@@ -142,17 +144,19 @@
  EXTRA_DSO_LDOPTS += $(ZLIB_LIBS)
  REQUIRES += url-classifier
  endif
@@ -2932,7 +2932,7 @@ Index: mozilla/xpfe/components/build/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/components/build/Makefile.in
 +++ mozilla/xpfe/components/build/Makefile.in
-@@ -67,21 +67,23 @@
+@@ -69,21 +69,23 @@
  ifdef MOZ_PERF_METRICS
  SHARED_LIBRARY_LIBS += $(DEPTH)/modules/libutil/src/$(LIB_PREFIX)mozutil_s.$(LIB_SUFFIX)
  endif

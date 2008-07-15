@@ -1,11 +1,8 @@
-Index: content/base/src/Makefile.in
+Index: mozilla/content/base/src/Makefile.in
 ===================================================================
-RCS file: /cvsroot/mozilla/content/base/src/Makefile.in,v
-retrieving revision 1.126
-diff -u -8 -p -r1.126 Makefile.in
---- mozilla/content/base/src/Makefile.in	11 Apr 2008 17:29:06 -0000	1.126
-+++ mozilla/content/base/src/Makefile.in	22 Apr 2008 04:12:12 -0000
-@@ -141,16 +141,17 @@ CPPSRCS		= \
+--- mozilla.orig/content/base/src/Makefile.in
++++ mozilla/content/base/src/Makefile.in
+@@ -141,16 +141,17 @@
  		nsLineBreaker.cpp \
  		nsLoadListenerProxy.cpp \
  		nsMappedAttributeElement.cpp \
@@ -21,9 +18,9 @@ diff -u -8 -p -r1.126 Makefile.in
  		nsPlainTextSerializer.cpp \
  		nsPropertyTable.cpp \
  		nsRange.cpp \
+ 		nsReferencedElement.cpp \
  		nsScriptElement.cpp \
- 		nsScriptEventManager.cpp \
-@@ -158,16 +159,17 @@ CPPSRCS		= \
+@@ -159,16 +160,17 @@
  		nsStubDocumentObserver.cpp \
  		nsStubImageDecoderObserver.cpp \
  		nsStubMutationObserver.cpp \
@@ -41,13 +38,10 @@ diff -u -8 -p -r1.126 Makefile.in
  
  GQI_SRCS = contentbase.gqi
  
-Index: content/base/src/nsDocument.cpp
+Index: mozilla/content/base/src/nsDocument.cpp
 ===================================================================
-RCS file: /cvsroot/mozilla/content/base/src/nsDocument.cpp,v
-retrieving revision 3.819
-diff -u -8 -p -r3.819 nsDocument.cpp
---- mozilla/content/base/src/nsDocument.cpp	14 Apr 2008 23:59:22 -0000	3.819
-+++ mozilla/content/base/src/nsDocument.cpp	22 Apr 2008 04:12:12 -0000
+--- mozilla.orig/content/base/src/nsDocument.cpp
++++ mozilla/content/base/src/nsDocument.cpp
 @@ -80,16 +80,17 @@
  #include "nsNodeUtils.h"
  #include "nsLayoutUtils.h" // for GetFrameForPoint
@@ -66,7 +60,7 @@ diff -u -8 -p -r3.819 nsDocument.cpp
  #include "nsDOMError.h"
  #include "nsIPresShell.h"
  #include "nsPresContext.h"
-@@ -3658,17 +3659,29 @@ nsDocument::CreateRange(nsIDOMRange** aR
+@@ -4193,17 +4194,29 @@
  
  NS_IMETHODIMP
  nsDocument::CreateNodeIterator(nsIDOMNode *aRoot,
@@ -97,12 +91,10 @@ diff -u -8 -p -r3.819 nsDocument.cpp
                               nsIDOMNodeFilter *aFilter,
                               PRBool aEntityReferenceExpansion,
                               nsIDOMTreeWalker **_retval)
-Index: content/base/src/nsNodeIterator.cpp
+Index: mozilla/content/base/src/nsNodeIterator.cpp
 ===================================================================
-RCS file: content/base/src/nsNodeIterator.cpp
-diff -N content/base/src/nsNodeIterator.cpp
---- mozilla//dev/null	1 Jan 1970 00:00:00 -0000
-+++ mozilla/content/base/src/nsNodeIterator.cpp	22 Apr 2008 04:12:12 -0000
+--- /dev/null
++++ mozilla/content/base/src/nsNodeIterator.cpp
 @@ -0,0 +1,346 @@
 +/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 + *
@@ -168,7 +160,7 @@ diff -N content/base/src/nsNodeIterator.cpp
 +                                         PRBool aBeforeNode) :
 +    mNode(aNode),
 +    mBeforeNode(aBeforeNode)
-+{ 
++{
 +}
 +
 +PRBool nsNodeIterator::NodePointer::moveToNext(nsINode *aRoot) {
@@ -450,12 +442,10 @@ diff -N content/base/src/nsNodeIterator.cpp
 +    mPointer.adjustAfterRemoval(mRoot, container, aChild, aIndexInContainer);
 +    mWorkingPointer.adjustAfterRemoval(mRoot, container, aChild, aIndexInContainer);
 +}
-Index: content/base/src/nsNodeIterator.h
+Index: mozilla/content/base/src/nsNodeIterator.h
 ===================================================================
-RCS file: content/base/src/nsNodeIterator.h
-diff -N content/base/src/nsNodeIterator.h
---- mozilla//dev/null	1 Jan 1970 00:00:00 -0000
-+++ mozilla/content/base/src/nsNodeIterator.h	22 Apr 2008 04:12:13 -0000
+--- /dev/null
++++ mozilla/content/base/src/nsNodeIterator.h
 @@ -0,0 +1,107 @@
 +/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 + *
@@ -495,7 +485,7 @@ diff -N content/base/src/nsNodeIterator.h
 + * the terms of any one of the MPL, the GPL or the LGPL.
 + *
 + * ***** END LICENSE BLOCK ***** */
-+ 
++
 +/*
 + * Implementation of DOM Traversal's nsIDOMNodeIterator
 + */
@@ -564,12 +554,10 @@ diff -N content/base/src/nsNodeIterator.h
 +
 +#endif
 +
-Index: content/base/src/nsTraversal.cpp
+Index: mozilla/content/base/src/nsTraversal.cpp
 ===================================================================
-RCS file: content/base/src/nsTraversal.cpp
-diff -N content/base/src/nsTraversal.cpp
---- mozilla//dev/null	1 Jan 1970 00:00:00 -0000
-+++ mozilla/content/base/src/nsTraversal.cpp	22 Apr 2008 04:12:13 -0000
+--- /dev/null
++++ mozilla/content/base/src/nsTraversal.cpp
 @@ -0,0 +1,122 @@
 +/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 + *
@@ -693,12 +681,10 @@ diff -N content/base/src/nsTraversal.cpp
 +    *_filtered = nsIDOMNodeFilter::FILTER_ACCEPT;
 +    return NS_OK;
 +}
-Index: content/base/src/nsTraversal.h
+Index: mozilla/content/base/src/nsTraversal.h
 ===================================================================
-RCS file: content/base/src/nsTraversal.h
-diff -N content/base/src/nsTraversal.h
---- mozilla//dev/null	1 Jan 1970 00:00:00 -0000
-+++ mozilla/content/base/src/nsTraversal.h	22 Apr 2008 04:12:13 -0000
+--- /dev/null
++++ mozilla/content/base/src/nsTraversal.h
 @@ -0,0 +1,79 @@
 +/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 + *
@@ -738,7 +724,7 @@ diff -N content/base/src/nsTraversal.h
 + * the terms of any one of the MPL, the GPL or the LGPL.
 + *
 + * ***** END LICENSE BLOCK ***** */
-+ 
++
 +/*
 + * Implementation of DOM Traversal's nsIDOMTreeWalker
 + */
@@ -779,14 +765,11 @@ diff -N content/base/src/nsTraversal.h
 +
 +#endif
 +
-Index: content/base/src/nsTreeWalker.cpp
+Index: mozilla/content/base/src/nsTreeWalker.cpp
 ===================================================================
-RCS file: /cvsroot/mozilla/content/base/src/nsTreeWalker.cpp,v
-retrieving revision 1.24
-diff -u -8 -p -r1.24 nsTreeWalker.cpp
---- mozilla/content/base/src/nsTreeWalker.cpp	9 Feb 2008 18:05:13 -0000	1.24
-+++ mozilla/content/base/src/nsTreeWalker.cpp	22 Apr 2008 04:12:13 -0000
-@@ -79,24 +79,20 @@ NS_NewTreeWalker(nsIDOMNode *aRoot,
+--- mozilla.orig/content/base/src/nsTreeWalker.cpp
++++ mozilla/content/base/src/nsTreeWalker.cpp
+@@ -79,24 +79,20 @@
  
      return CallQueryInterface(walker, aInstancePtrResult);
  }
@@ -812,7 +795,7 @@ diff -u -8 -p -r1.24 nsTreeWalker.cpp
  }
  
  /*
-@@ -568,73 +564,16 @@ nsTreeWalker::ChildOf(nsINode* aNode,
+@@ -568,73 +564,16 @@
          }
      }
  
@@ -886,13 +869,10 @@ diff -u -8 -p -r1.24 nsTreeWalker.cpp
   * @param aIndexPos position in mPossibleIndexes that contains the possible.
   *                  index
   * @returns         resulting index
-Index: content/base/src/nsTreeWalker.h
+Index: mozilla/content/base/src/nsTreeWalker.h
 ===================================================================
-RCS file: /cvsroot/mozilla/content/base/src/nsTreeWalker.h,v
-retrieving revision 1.12
-diff -u -8 -p -r1.12 nsTreeWalker.h
---- mozilla/content/base/src/nsTreeWalker.h	9 Feb 2008 18:05:14 -0000	1.12
-+++ mozilla/content/base/src/nsTreeWalker.h	22 Apr 2008 04:12:13 -0000
+--- mozilla.orig/content/base/src/nsTreeWalker.h
++++ mozilla/content/base/src/nsTreeWalker.h
 @@ -40,44 +40,41 @@
  /*
   * Implementation of DOM Traversal's nsIDOMTreeWalker
@@ -940,7 +920,7 @@ diff -u -8 -p -r1.12 nsTreeWalker.h
       * The array contains casted PRInt32's
       */
      nsAutoVoidArray mPossibleIndexes;
-@@ -146,25 +143,16 @@ private:
+@@ -146,25 +143,16 @@
       */
      nsresult ChildOf(nsINode* aNode,
                       PRInt32 childNum,
@@ -966,21 +946,18 @@ diff -u -8 -p -r1.12 nsTreeWalker.h
       * @param aIndexPos position in mPossibleIndexes that contains the possible.
       *                  index
       * @returns         resulting index
-Index: dom/public/nsDOMClassInfoID.h
+Index: mozilla/dom/public/nsDOMClassInfoID.h
 ===================================================================
-RCS file: /cvsroot/mozilla/dom/public/nsDOMClassInfoID.h,v
-retrieving revision 1.35
-diff -u -8 -p -r1.35 nsDOMClassInfoID.h
---- mozilla/dom/public/nsDOMClassInfoID.h	12 Mar 2008 00:51:12 -0000	1.35
-+++ mozilla/dom/public/nsDOMClassInfoID.h	22 Apr 2008 04:12:15 -0000
-@@ -419,16 +419,19 @@ enum nsDOMClassInfoID {
- 
-   // Data Events
-   eDOMClassInfo_DataContainerEvent_id,
- 
-   // event used for cross-domain message-passing and for server-sent events in
-   // HTML5
-   eDOMClassInfo_MessageEvent_id,
+--- mozilla.orig/dom/public/nsDOMClassInfoID.h
++++ mozilla/dom/public/nsDOMClassInfoID.h
+@@ -432,16 +432,19 @@
+ #if defined(MOZ_MEDIA)
+   eDOMClassInfo_HTMLVideoElement_id,
+   eDOMClassInfo_HTMLSourceElement_id,
+   eDOMClassInfo_ProgressEvent_id,
+   eDOMClassInfo_HTMLMediaError_id,
+   eDOMClassInfo_HTMLAudioElement_id,
+ #endif
  
 +  // DOM Traversal NodeIterator class
 +  eDOMClassInfo_NodeIterator_id,
@@ -993,14 +970,11 @@ diff -u -8 -p -r1.35 nsDOMClassInfoID.h
   * nsIClassInfo helper macros
   */
  
-Index: dom/src/base/nsDOMClassInfo.cpp
+Index: mozilla/dom/src/base/nsDOMClassInfo.cpp
 ===================================================================
-RCS file: /cvsroot/mozilla/dom/src/base/nsDOMClassInfo.cpp,v
-retrieving revision 1.541
-diff -u -8 -p -r1.541 nsDOMClassInfo.cpp
---- mozilla/dom/src/base/nsDOMClassInfo.cpp	18 Mar 2008 20:42:19 -0000	1.541
-+++ mozilla/dom/src/base/nsDOMClassInfo.cpp	22 Apr 2008 04:12:16 -0000
-@@ -320,16 +320,17 @@
+--- mozilla.orig/dom/src/base/nsDOMClassInfo.cpp
++++ mozilla/dom/src/base/nsDOMClassInfo.cpp
+@@ -328,16 +328,17 @@
  #include "nsIDOMCSSMozDocumentRule.h"
  #include "nsIDOMCSSPrimitiveValue.h"
  #include "nsIDOMCSSStyleRule.h"
@@ -1018,17 +992,17 @@ diff -u -8 -p -r1.541 nsDOMClassInfo.cpp
  #include "nsIDOMCRMFObject.h"
  #include "nsIDOMPkcs11.h"
  #include "nsIControllers.h"
-@@ -1227,16 +1228,20 @@ static nsDOMClassInfoData sClassInfoData
-                            DEFAULT_SCRIPTABLE_FLAGS |
-                            WINDOW_SCRIPTABLE_FLAGS)
- 
-   NS_DEFINE_CLASSINFO_DATA(DataContainerEvent, nsDOMGenericSH,
+@@ -1261,16 +1262,20 @@
+                            ELEMENT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(ProgressEvent, nsDOMGenericSH,
                             DOM_DEFAULT_SCRIPTABLE_FLAGS)
- 
-   NS_DEFINE_CLASSINFO_DATA(MessageEvent, nsDOMGenericSH,
+   NS_DEFINE_CLASSINFO_DATA(HTMLMediaError, nsDOMGenericSH,
                             DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(HTMLAudioElement, nsHTMLElementSH,
+                            ELEMENT_SCRIPTABLE_FLAGS)
+ #endif
 +
-+  // DOM Traversal NodeIterator class  
++  // DOM Traversal NodeIterator class
 +  NS_DEFINE_CLASSINFO_DATA(NodeIterator, nsDOMGenericSH,
 +                           DOM_DEFAULT_SCRIPTABLE_FLAGS)
  };
@@ -1039,7 +1013,7 @@ diff -u -8 -p -r1.541 nsDOMClassInfo.cpp
    PRInt32 mDOMClassInfoID;
    const char *mContractID;
  };
-@@ -2466,16 +2471,20 @@ nsDOMClassInfo::Init()
+@@ -2508,16 +2513,20 @@
      DOM_CLASSINFO_MAP_ENTRY(nsIDOMNSRGBAColor)
    DOM_CLASSINFO_MAP_END
  

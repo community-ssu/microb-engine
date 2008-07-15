@@ -1,3 +1,11 @@
+microb-engine (20080616-26) unstable; urgency=low
+
+  * Updated to trunk 20080715
+  * Add comment to not_sorted/others/675_unknown_protocol_handling.diff,
+     because it wrong
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 15 Jul 2008 08:36:42 +0300
+
 microb-engine (20080616-25) unstable; urgency=low
 
   * Removed xpi_name from ftv component 
