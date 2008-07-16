@@ -47,8 +47,8 @@
 // SYNTAX HINTS:  dashes are delimiters.  Use underscores instead.
 //  The first character after a period must be alphabetic.
 
-pref("keyword.URL", "http://www.google.com/search?ie=UTF-8&oe=utf-8&q=");
-pref("keyword.enabled", false);
+pref("keyword.URL", "http://www.google.com/search?ie=UTF-8&oe=UTF-8&btnI=I%27m+Feeling+Lucky&q=");
+pref("keyword.enabled", true);
 pref("general.useragent.locale", "chrome://global/locale/intl.properties");
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
@@ -58,7 +58,7 @@ pref("general.warnOnAboutConfig", true);
 // maximum number of dated backups to keep at any time
 pref("browser.bookmarks.max_backups",       5);
 
-pref("browser.cache.disk.enable",           true);
+pref("browser.cache.disk.enable",           false);
 pref("browser.cache.disk.capacity",         51200);
 pref("browser.cache.memory.enable",         true);
 //pref("browser.cache.memory.capacity",     -1);
@@ -81,7 +81,7 @@ pref("offline-apps.quota.warn",        51200);
 
 // Fastback caching - if this pref is negative, then we calculate the number
 // of content viewers to cache based on the amount of available memory.
-pref("browser.sessionhistory.max_total_viewers", -1);
+pref("browser.sessionhistory.max_total_viewers", 2);
 
 pref("browser.display.use_document_fonts",  1);  // 0 = never, 1 = quick, 2 = always
 pref("browser.display.use_document_colors", true);
@@ -93,7 +93,7 @@ pref("browser.display.force_inline_alttext", false); // true = force ALT text fo
 // 1 = use external leading only when font provides, 
 // 2 = add extra leading both internal leading and external leading are zero
 pref("browser.display.normal_lineheight_calc_control", 2);
-pref("browser.display.show_image_placeholders", true); // true = show image placeholders while image is loaded and when image is broken
+pref("browser.display.show_image_placeholders", false); // true = show image placeholders while image is loaded and when image is broken
 // min font device pixel size at which to turn on high quality
 pref("browser.display.auto_quality_min_font_size", 20);
 pref("browser.anchor_color",                "#0000EE");
@@ -101,7 +101,7 @@ pref("browser.active_color",                "#EE0000");
 pref("browser.visited_color",               "#551A8B");
 pref("browser.underline_anchors",           true);
 pref("browser.blink_allowed",               true);
-pref("browser.enable_automatic_image_resizing", false);
+pref("browser.enable_automatic_image_resizing", true);
 
 // See http://whatwg.org/specs/web-apps/current-work/#ping
 pref("browser.send_pings", false);
@@ -111,8 +111,8 @@ pref("browser.send_pings.require_same_host", false);  // only send pings to the 
 pref("browser.display.use_focus_colors",    false);
 pref("browser.display.focus_background_color", "#117722");
 pref("browser.display.focus_text_color",     "#ffffff");
-pref("browser.display.focus_ring_width",     1);
-pref("browser.display.focus_ring_on_anything", false);
+pref("browser.display.focus_ring_width",     2);
+pref("browser.display.focus_ring_on_anything", true);
 
 pref("browser.helperApps.alwaysAsk.force",  false);
 pref("browser.helperApps.neverAsk.saveToDisk", "");
@@ -209,7 +209,7 @@ pref("application.use_ns_plugin_finder", false);
 // URI fixup prefs
 pref("browser.fixup.alternate.enabled", true);
 pref("browser.fixup.alternate.prefix", "www.");
-pref("browser.fixup.alternate.suffix", ".com");
+pref("browser.fixup.alternate.suffix", ".com .org .net");
 pref("browser.fixup.hide_user_pass", true);
 
 // Print header customization
@@ -456,7 +456,7 @@ pref("capability.policy.default.Clipboard.paste", "noAccess");
 // Scripts & Windows prefs
 pref("dom.disable_image_src_set",           false);
 pref("dom.disable_window_flip",             false);
-pref("dom.disable_window_move_resize",      false);
+pref("dom.disable_window_move_resize",      true);
 pref("dom.disable_window_status_change",    false);
 
 pref("dom.disable_window_open_feature.titlebar",    false);
@@ -576,21 +576,21 @@ pref("network.http.max-connections-per-server", 15);
 // if network.http.keep-alive is true, and if NOT connecting via a proxy, then
 // a new connection will only be attempted if the number of active persistent
 // connections to the server is less then max-persistent-connections-per-server.
-pref("network.http.max-persistent-connections-per-server", 6);
+pref("network.http.max-persistent-connections-per-server", 4);
 
 // if network.http.keep-alive is true, and if connecting via a proxy, then a
 // new connection will only be attempted if the number of active persistent
 // connections to the proxy is less then max-persistent-connections-per-proxy.
-pref("network.http.max-persistent-connections-per-proxy", 8);
+pref("network.http.max-persistent-connections-per-proxy", 2);
 
 // amount of time (in seconds) to suspend pending requests, before spawning a
 // new connection, once the limit on the number of persistent connections per
 // host has been reached.  however, a new connection will not be created if
 // max-connections or max-connections-per-server has also been reached.
-pref("network.http.request.max-start-delay", 10);
+pref("network.http.request.max-start-delay", 3);
 
 // Headers
-pref("network.http.accept.default", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+pref("network.http.accept.default", "text/html,application/xhtml+xml,application/xml,application/atom+xml,application/rss+xml;q=0.9,*/*;q=0.8");
 pref("network.http.sendRefererHeader",      2); // 0=don't send any, 1=send only on clicks, 2=send on image requests as well
 
 // Controls whether we send HTTPS referres to other HTTPS sites.
@@ -607,6 +607,7 @@ pref("network.http.accept-encoding" ,"gzip,deflate");
 pref("network.http.pipelining"      , false);
 pref("network.http.pipelining.ssl"  , false); // disable pipelining over SSL
 pref("network.http.proxy.pipelining", false);
+pref("network.http.pipelining.firstrequest", true);
 
 // Max number of requests in the pipeline
 pref("network.http.pipelining.maxrequests" , 4);
@@ -826,7 +827,7 @@ pref("intl.charsetmenu.browser.cache.size", 5);
 pref("intl.charset.detector",               "chrome://global/locale/intl.properties");
 pref("intl.charset.default",                "chrome://global-platform/locale/intl.properties");
 pref("intl.ellipsis",                       "chrome://global-platform/locale/intl.properties");
-pref("intl.locale.matchOS",                 false);
+pref("intl.locale.matchOS",                 true);
 // fallback charset list for Unicode conversion (converting from Unicode)
 // currently used for mail send only to handle symbol characters (e.g Euro, trademark, smartquotes)
 // for ISO-8859-1
@@ -1045,7 +1046,7 @@ pref("roaming.default.files", "bookmarks.html,abook.mab,cookies.txt");
 pref("roaming.showInitialWarning", true);
 
 // whether use prefs from system
-pref("config.use_system_prefs", false);
+pref("config.use_system_prefs", true);
 
 // if the system has enabled accessibility
 pref("config.use_system_prefs.accessibility", false);
@@ -1070,7 +1071,7 @@ pref("editor.resizing.preserve_ratio",       true);
 pref("editor.positioning.offset",            0);
 
 pref("dom.max_chrome_script_run_time", 20);
-pref("dom.max_script_run_time", 10);
+pref("dom.max_script_run_time", 40);
 
 pref("svg.enabled", true);
 
@@ -1264,27 +1265,27 @@ pref("font.default.tr", "serif");
 pref("font.size.variable.tr", 16);
 pref("font.size.fixed.tr", 12);
 
-pref("font.default.x-baltic", "serif");
+pref("font.default.x-baltic", "SwissA");
 pref("font.size.variable.x-baltic", 16);
 pref("font.size.fixed.x-baltic", 12);
 
-pref("font.default.x-central-euro", "serif");
+pref("font.default.x-central-euro", "SwissA");
 pref("font.size.variable.x-central-euro", 16);
 pref("font.size.fixed.x-central-euro", 12);
 
-pref("font.default.x-cyrillic", "serif");
+pref("font.default.x-cyrillic", "SwissA");
 pref("font.size.variable.x-cyrillic", 16);
 pref("font.size.fixed.x-cyrillic", 12);
 
-pref("font.default.x-unicode", "serif");
+pref("font.default.x-unicode", "SwissA");
 pref("font.size.variable.x-unicode", 16);
 pref("font.size.fixed.x-unicode", 12);
 
-pref("font.default.x-user-def", "serif");
+pref("font.default.x-user-def", "SwissA");
 pref("font.size.variable.x-user-def", 16);
 pref("font.size.fixed.x-user-def", 12);
 
-pref("font.default.x-western", "serif");
+pref("font.default.x-western", "SwissA");
 pref("font.size.variable.x-western", 16);
 pref("font.size.fixed.x-western", 12);
 
@@ -1385,3 +1386,30 @@ pref("browser.zoom.full", false);
 pref("zoom.minPercent", 30);
 pref("zoom.maxPercent", 300);
 pref("toolkit.zoomManager.zoomValues", ".3,.5,.67,.8,.9,1,1.1,1.2,1.33,1.5,1.7,2,2.4,3");
+
+
+pref("content.max.tokenizing.time", 100000);
+pref("content.notify.backoffcount", -1);
+pref("content.notify.ontimer", false);
+pref("content.switch.threshold", 500000);
+pref("nglayout.initialpaint.delay", -3);
+pref("nglayout.frame.constructor.signals", 5);
+pref("content.perf.interrupts.count", 3);
+
+pref("layout.xml.prettyprint", true);
+pref("browser.sessionhistory.max_entries", 31);
+
+pref("dom.window.useragent.policy", true);
+pref("ua.policy.mail.google.com", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.4.0) Gecko/20070423 Firefox/0.8");
+
+pref("capability.policy.policynames", "mousedown");
+pref("capability.policy.mousedown.sites", "http://mail.google.com http://aa.com");
+pref("capability.policy.mousedown.HTMLDocument.mousedown", "noAccess");
+pref("dom.jsevent.renamer", 1);
+pref("dom.window.jsevents.policy", true);
+pref("jsevent.renamer.mousedown", "click");
+
+pref("extensions.update.enabled", false);
+pref("extensions.checkCompatibility", false);
+pref("general.useragent.extra.gecko", "Gecko/2008052201");
+
