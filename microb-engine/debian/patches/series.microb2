@@ -83,10 +83,6 @@ not_sorted/maemo_hacks/GConfProxySettings.diff
 #Canvas
 BMO_attached/080_attachment.cgi?id=323966.diff
 
-zooming/010_MBUG_42865_zoom_navigation_fix.diff
-zooming/020_Bug70843.RestoreZoomState.diff
-zooming/030_TrueZoomMode.diff
-
 arm/Bug339782.additional.fix.diff
 arm/random_to_urandom.diff
 arm/Bug405992.atomic.nspr.diff
@@ -99,11 +95,8 @@ perf_tweaks/hacks/030_content_rocket_parsing.diff
 perf_tweaks/hacks/040_netwerk_buffer_count.diff
 perf_tweaks/HiddingLibxulSymbols.diff
 
-#perf_tweaks/JSBreakExperimental.diff
 #perf_tweaks/gmail_performance.diff
 perf_tweaks/css_erros_parsing_disable.diff
-
-perf_tweaks/FontsRenderingHacks.diff
 
 #Startup perf
 BMO_attached/030_attachment.cgi?id=297001.diff
@@ -113,6 +106,13 @@ BMO_attached/050_attachment.cgi?id=322579.diff
 #JS Perf
 #BMO_attached/060_attachment.cgi?id=320027.diff
 
+#perf_tweaks/JSBreakExperimental.diff
+
+#perf_tweaks/FontsRenderingHacks.diff
+
+#zooming/010_MBUG_42865_zoom_navigation_fix.diff
+#zooming/020_Bug70843.RestoreZoomState.diff
+#zooming/030_TrueZoomMode.diff
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail
