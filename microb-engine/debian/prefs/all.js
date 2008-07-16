@@ -58,7 +58,7 @@ pref("general.warnOnAboutConfig", true);
 // maximum number of dated backups to keep at any time
 pref("browser.bookmarks.max_backups",       5);
 
-pref("browser.cache.disk.enable",           false);
+pref("browser.cache.disk.enable",           true);
 pref("browser.cache.disk.capacity",         51200);
 pref("browser.cache.memory.enable",         true);
 //pref("browser.cache.memory.capacity",     -1);
@@ -576,21 +576,21 @@ pref("network.http.max-connections-per-server", 15);
 // if network.http.keep-alive is true, and if NOT connecting via a proxy, then
 // a new connection will only be attempted if the number of active persistent
 // connections to the server is less then max-persistent-connections-per-server.
-pref("network.http.max-persistent-connections-per-server", 4);
+pref("network.http.max-persistent-connections-per-server", 6);
 
 // if network.http.keep-alive is true, and if connecting via a proxy, then a
 // new connection will only be attempted if the number of active persistent
 // connections to the proxy is less then max-persistent-connections-per-proxy.
-pref("network.http.max-persistent-connections-per-proxy", 2);
+pref("network.http.max-persistent-connections-per-proxy", 8);
 
 // amount of time (in seconds) to suspend pending requests, before spawning a
 // new connection, once the limit on the number of persistent connections per
 // host has been reached.  however, a new connection will not be created if
 // max-connections or max-connections-per-server has also been reached.
-pref("network.http.request.max-start-delay", 3);
+pref("network.http.request.max-start-delay", 5);
 
 // Headers
-pref("network.http.accept.default", "text/html,application/xhtml+xml,application/xml,application/atom+xml,application/rss+xml;q=0.9,*/*;q=0.8");
+pref("network.http.accept.default", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 pref("network.http.sendRefererHeader",      2); // 0=don't send any, 1=send only on clicks, 2=send on image requests as well
 
 // Controls whether we send HTTPS referres to other HTTPS sites.

@@ -1,3 +1,9 @@
+microb-engine (20080616-33) unstable; urgency=low
+
+  * Fixed default preferences, enabled disk cache
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 16 Jul 2008 15:09:39 +0300
+
 microb-engine (20080616-32) unstable; urgency=low
 
   * Updated patchset
