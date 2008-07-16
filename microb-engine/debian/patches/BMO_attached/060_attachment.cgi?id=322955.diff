@@ -1,6 +1,6 @@
-diff -r 8431fe70105a m/js/src/jsstr.c
---- m/js/src/jsstr.cpp	Thu Apr 17 07:21:25 2008 -0400
-+++ m/js/src/jsstr.cpp	Thu May 08 12:10:46 2008 -0700
+diff -r 332113424cb8 mozilla/js/src/jsstr.c
+--- mozilla/js/src/jsstr.c	Thu May 29 11:26:41 2008 -0400
++++ mozilla/js/src/jsstr.c	Thu May 29 13:11:04 2008 -0400
 @@ -966,13 +966,40 @@ js_BoyerMooreHorspool(const jschar *text
      return -1;
  }
@@ -82,14 +82,14 @@ diff -r 8431fe70105a m/js/src/jsstr.c
  
      if (JS_TypeOfValue(cx, vp[3]) == JSTYPE_FUNCTION) {
          lambda = JSVAL_TO_OBJECT(vp[3]);
-@@ -1603,6 +1611,49 @@ str_replace(JSContext *cx, uintN argc, j
+@@ -1603,6 +1611,50 @@ str_replace(JSContext *cx, uintN argc, j
       * to match in a "flat" sense (without regular expression metachars having
       * special meanings) UNLESS the first arg is a RegExp object.
       */
 +    v = JS_ARGV(cx, vp)[0];
-+    if (JSVAL_IS_STRING(v) && repstr != NULL && argc < 3) {
-+        jschar *text, *pat, *reptext;
-+        size_t textlen, patlen, replen, charsindex;
++    if (JSVAL_IS_STRING(v) && repstr && argc < 3) {
++        jschar *pat, *text, *reptext;
++        size_t patlen, textlen, replen;
 +        jsint found;
 +
 +        str = JSVAL_TO_STRING(v);
@@ -100,13 +100,14 @@ diff -r 8431fe70105a m/js/src/jsstr.c
 +
 +        JSSTRING_CHARS_AND_LENGTH(repstr, reptext, replen);
 +
-+        chars = NULL;
-+        charsindex = 0;
-+
-+        found = patlen ? str_indexOf_helper(text, textlen, pat, patlen, 0) : 0;
-+        if (found < 0) {
-+            *vp = vp[1]; /* Return original value if pattern wasn't found. */
-+            return JS_TRUE;
++        if (patlen) {
++            found = str_indexOf_helper(text, textlen, pat, patlen, 0);
++            if (found < 0) {
++                *vp = vp[1];
++                return JS_TRUE;
++            }
++        } else {
++            found = 0;
 +        }
 +
 +        length = textlen + replen - patlen;
@@ -114,10 +115,10 @@ diff -r 8431fe70105a m/js/src/jsstr.c
 +        if (!chars)
 +            return JS_FALSE;
 +        
-+        js_strncpy(chars, text, found);              /* Prefix. */
-+        js_strncpy(chars + found, reptext, replen);  /* Replacement text. */
++        js_strncpy(chars, text, found);              /* prefix */
++        js_strncpy(chars + found, reptext, replen);  /* replacement text */
 +        js_strncpy(chars + found + replen, text + found + patlen,
-+                   textlen - found - patlen);        /* Suffix. */
++                   textlen - found - patlen);        /* suffix */
 +
 +        str = js_NewString(cx, chars, length);
 +        if (!str) {
