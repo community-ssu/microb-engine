@@ -1,6 +1,6 @@
-diff -r 332113424cb8 mozilla/js/src/jsstr.c
---- mozilla/js/src/jsstr.c	Thu May 29 11:26:41 2008 -0400
-+++ mozilla/js/src/jsstr.c	Thu May 29 13:11:04 2008 -0400
+diff -r 332113424cb8 mozilla/js/src/jsstr.cpp
+--- mozilla/js/src/jsstr.cpp	Thu May 29 11:26:41 2008 -0400
++++ mozilla/js/src/jsstr.cpp	Thu May 29 13:11:04 2008 -0400
 @@ -966,13 +966,40 @@ js_BoyerMooreHorspool(const jschar *text
      return -1;
  }
