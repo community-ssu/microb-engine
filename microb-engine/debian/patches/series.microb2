@@ -83,10 +83,9 @@ not_sorted/maemo_hacks/GConfProxySettings.diff
 #Canvas
 BMO_attached/080_attachment.cgi?id=323966.diff
 
-arm/Bug339782.additional.fix.diff
 arm/random_to_urandom.diff
-arm/Bug405992.atomic.nspr.diff
-arm/Bug385583.nspr.jmp_buf.eabi.diff
+#arm/Bug405992.atomic.nspr.diff
+#arm/Bug385583.nspr.jmp_buf.eabi.diff
 
 perf_tweaks/suspend/010_NativeSuspendImplementation.diff
 perf_tweaks/hacks/010_layout_state_listener.diff
