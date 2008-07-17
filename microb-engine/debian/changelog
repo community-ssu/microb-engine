@@ -1,3 +1,9 @@
+microb-engine (20080616-43) unstable; urgency=low
+
+  * Adding powered by mozilla logo
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 17 Jul 2008 16:57:40 +0300
+
 microb-engine (20080616-42) unstable; urgency=low
 
   * Fixed bug 445745 
@@ -8,7 +14,7 @@ microb-engine (20080616-41) unstable; urgency=low
 
   * Adding about:system module. 
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 17 Jul 2008 16:28:59 +0300
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 17 Jul 2008 16:28:59 +0300
 
 microb-engine (20080616-40) unstable; urgency=low
 
