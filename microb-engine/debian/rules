@@ -14,17 +14,15 @@ logging:=n
 debug:=n
 perfmetr:=n
 jprof:=n
-vfp:=y
+vfp:=n
 oprof:=n
-microbembed:=n
-microbembedlibxul:=n
 nolibxul:=n
 MOZCONFIG_NAME:=configs/mozconfig
 MOZCONFIG_LEV:=microb2
 syscairo:=n
 svgport:=n
 canvas:=n
-jemalloc:=y
+jemalloc:=n
 
 DH_ALWAYS_EXCLUDE=CVS:.svn
 
@@ -143,18 +141,6 @@ ifneq (,$(findstring patches,$(DEB_BUILD_OPTIONS)))
 	series_file:=series.$(shell echo $(DEB_BUILD_OPTIONS) | sed -e 's/.*patches=\([0-9a-zA-Z]\+\).*/\1/')
 endif
 
-ifneq (,$(findstring microbembed,$(DEB_BUILD_OPTIONS)))
-microbembed:=y
-else
-microbembed:=$(microbembed)
-endif
-
-ifneq (,$(findstring microbembedlibxul,$(DEB_BUILD_OPTIONS)))
-microbembedlibxul:=y
-else
-microbembedlibxul:=$(microbembedlibxul)
-endif
-
 ifneq (,$(findstring nolibxul,$(DEB_BUILD_OPTIONS)))
 nolibxul:=y
 else
@@ -172,7 +158,7 @@ optimize_add = $(CFLAGS)
 endif
 
 ifneq (,$(findstring vfp,$(DEB_BUILD_OPTIONS)))
-vfp:=y
+vfp:=n
 else
 vfp:=$(vfp)
 endif
@@ -191,19 +177,8 @@ else
 logging:=$(logging)
 endif
 
-ifeq ($(static),y)
-	configopts += --disable-shared --enable-static --enable-js-static-build
-else
-	configopts += --disable-static --enable-shared --disable-js-static-build
-endif
-
 ifeq ($(perfmetr),y)
 	configopts += --enable-reflow-perf --enable-perf-metrics
-endif
-
-ifeq ($(microbembedlibxul),n)
-configopts += --enable-microbembeddyn
-bldstr:=$(bldstr)edyn-
 endif
 
 buildobjdir = "@TOPSRCDIR@/../obj-"$(bldstr)build$(MOZCONFIG_LEV)
@@ -230,12 +205,12 @@ bldstr:=$(bldstr)$(DEB_HOST_ARCH)-
 
 ifeq ($(TABLET),.tablet)
 bldstr:=$(bldstr)sb-
-	configopts += --enable-moz-hildon
+#	configopts += --enable-moz-hildon
 endif
 
 	configopts += --disable-install-strip
 
-ifneq ($(nojemalloc),y)
+ifneq ($(jemalloc),y)
 	configopts += --disable-jemalloc
 endif
 
@@ -275,7 +250,7 @@ else
 endif
 
 ifeq ($(GCCENV),.cs)
-	optimize_add +=  -finline-functions -fno-unit-at-a-time
+#	optimize_add +=  -finline-functions -fno-unit-at-a-time
 endif
 
 ifeq ($(jprof),y)
@@ -313,13 +288,13 @@ ifeq ($(canvas),y)
 	configopts += --enable-canvas
 endif
 
-ifeq ($(debug),y)
+#ifeq ($(debug),y)
+#	configopts += --enable-optimize=\"$(CFLAGS) $(optimize_add) \"
+#else
+#ifeq ($(logging),y)
 	configopts += --enable-optimize=\"$(CFLAGS) $(optimize_add) \"
-else
-ifeq ($(logging),y)
-	configopts += --enable-optimize=\"$(CFLAGS) $(optimize_add) \"
-endif
-endif
+#endif
+#endif
 
 # shared library versions, option 1
 version=$(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2 | cut -d ':' -f 2 | cut -d '-' -f 1)

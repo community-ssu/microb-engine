@@ -1,3 +1,10 @@
+microb-engine (20080616-36) unstable; urgency=low
+
+  * Cleanup and fix for configuration options
+    Fixed back debug symbols for engine libraries
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 17 Jul 2008 06:53:22 +0300
+
 microb-engine (20080616-35) unstable; urgency=low
 
   * Disable NSS NSPR extracting on top of HG main tree
