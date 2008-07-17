@@ -10,6 +10,7 @@ buildconfig/016_nsCaretXUL.diff
 buildconfig/017_BUG434075.diff
 buildconfig/018_AutoConfig_basic_profile.diff
 buildconfig/020_cs2007_rpath_wr.diff
+buildconfig/021_445745.buidlfix.diff
 
 branding/010_MICROB_paths_and_names.diff
 branding/020_BUG349921_toolkit_branding.diff
