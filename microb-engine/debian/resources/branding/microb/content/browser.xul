@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE window [
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+%brandDTD;
+]>
+
+<window id="main-window"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        contenttitlesetting="true"
+        title="Extensions Window"
+        titlemodifier="Extensions Window"
+        titlemenuseparator=""
+        windowtype="navigator:browser"
+        screenX="4" screenY="4"
+        persist="screenX screenY width height sizemode">
+
+    <toolbarpalette id="BrowserToolbarPalette">
+    </toolbarpalette>
+</window>

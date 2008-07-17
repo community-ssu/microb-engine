@@ -1424,8 +1424,8 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  
  gfxPlatform *gPlatform = nsnull;
  int gGlitzState = -1;
- static cmsHPROFILE gCMSOutputProfile = nsnull;
-@@ -433,16 +435,17 @@ gfxPlatform::IsCMSEnabled()
+ 
+@@ -464,16 +466,17 @@ gfxPlatform::IsCMSEnabled()
              if (NS_SUCCEEDED(rv)) {
                  sEnabled = enabled;
              }
@@ -1443,7 +1443,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  
  cmsHPROFILE
  gfxPlatform::GetCMSOutputProfile()
-@@ -536,8 +539,9 @@ gfxPlatform::GetCMSRGBATransform()
+@@ -575,8 +578,9 @@ gfxPlatform::GetCMSRGBATransform()
  
          gCMSRGBATransform = cmsCreateTransform(inProfile, TYPE_RGBA_8,
                                                 outProfile, TYPE_RGBA_8,
@@ -1588,9 +1588,9 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
      static cmsHPROFILE GetCMSOutputProfile();
  
      /**
-      * Return sRGB -> output device transform.
+      * Return the sRGB ICC profile.
       */
-@@ -229,18 +230,21 @@ public:
+@@ -234,18 +235,21 @@ public:
       * Return output -> sRGB device transform.
       */
      static cmsHTRANSFORM GetCMSInverseRGBTransform();
@@ -1827,7 +1827,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
 +#endif
  
    if (interlace_type == PNG_INTERLACE_ADAM7) {
-     if (height < INT_MAX / (width * channels))
+     if (height < PR_INT32_MAX / (width * channels))
        decoder->interlacebuf = (PRUint8 *)nsMemory::Alloc(channels * width * height);
      if (!decoder->interlacebuf) {
        longjmp(decoder->mPNG->jmpbuf, 5); // NS_ERROR_OUT_OF_MEMORY

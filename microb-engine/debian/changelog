@@ -1,3 +1,10 @@
+microb-engine (20080616-38) unstable; urgency=low
+
+  * Updated to trun 2008-07-17
+    Probably fixed crash in jslock
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 17 Jul 2008 14:25:17 +0300
+
 microb-engine (20080616-37) unstable; urgency=low
 
   * Fixed x86 build flags for gcc 3.4.4 

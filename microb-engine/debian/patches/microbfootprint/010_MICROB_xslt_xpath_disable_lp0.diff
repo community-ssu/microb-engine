@@ -9,7 +9,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4331,16 +4331,18 @@
+@@ -4331,16 +4331,18 @@ MOZ_IPCD=
  MOZ_JAVAXPCOM=
  MOZ_JSDEBUGGER=1
  MOZ_JSLOADER=1
@@ -28,7 +28,7 @@ Index: mozilla/configure.in
  MOZ_NO_INSPECTOR_APIS=
  MOZ_NO_XPCOM_OBSOLETE=
  MOZ_NO_FAST_LOAD=
-@@ -7481,16 +7483,42 @@
+@@ -7481,16 +7483,42 @@ else
      PKG_CHECK_MODULES(LCMS, lcms >= $LCMS_VERSION)
  fi
  
@@ -75,7 +75,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -196,16 +196,18 @@
+@@ -196,16 +196,18 @@ ENABLE_STRIP	= @ENABLE_STRIP@
  PKG_SKIP_STRIP	= @PKG_SKIP_STRIP@
  
  ClientWallet=1
@@ -124,7 +124,7 @@ Index: mozilla/layout/build/Makefile.in
 ===================================================================
 --- mozilla.orig/layout/build/Makefile.in
 +++ mozilla/layout/build/Makefile.in
-@@ -120,33 +120,44 @@
+@@ -120,34 +120,45 @@ SHARED_LIBRARY_LIBS = \
  	../xul/base/src/$(LIB_PREFIX)gkxulbase_s.$(LIB_SUFFIX) \
  	$(DEPTH)/content/base/src/$(LIB_PREFIX)gkconbase_s.$(LIB_SUFFIX) \
  	$(DEPTH)/content/canvas/src/$(LIB_PREFIX)gkconcvs_s.$(LIB_SUFFIX) \
@@ -146,6 +146,7 @@ Index: mozilla/layout/build/Makefile.in
  	$(DEPTH)/dom/src/jsurl/$(LIB_PREFIX)jsurl_s.$(LIB_SUFFIX) \
  	$(DEPTH)/dom/src/storage/$(LIB_PREFIX)jsdomstorage_s.$(LIB_SUFFIX) \
  	$(DEPTH)/dom/src/offline/$(LIB_PREFIX)jsdomoffline_s.$(LIB_SUFFIX) \
+  	$(DEPTH)/dom/src/geolocation/$(LIB_PREFIX)jsdomgeolocation_s.$(LIB_SUFFIX) \
  	$(DEPTH)/editor/libeditor/text/$(LIB_PREFIX)texteditor_s.$(LIB_SUFFIX) \
  	$(DEPTH)/editor/libeditor/base/$(LIB_PREFIX)editorbase_s.$(LIB_SUFFIX) \
  	$(NULL)
@@ -173,7 +174,7 @@ Index: mozilla/layout/build/Makefile.in
  
  ifdef NS_PRINTING
  SHARED_LIBRARY_LIBS += \
-@@ -247,20 +258,16 @@
+@@ -248,20 +259,16 @@ LOCAL_INCLUDES	+= -I$(srcdir)/../base \
  		   -I$(srcdir)/../tables \
  		   -I$(srcdir)/../style \
  		   -I$(srcdir)/../xul/content/src \
@@ -194,7 +195,7 @@ Index: mozilla/layout/build/Makefile.in
  		   -I$(topsrcdir)/view/src \
  		   -I$(topsrcdir)/dom/src/base \
  		   -I$(topsrcdir)/dom/src/json \
-@@ -270,16 +277,30 @@
+@@ -272,16 +279,30 @@ LOCAL_INCLUDES	+= -I$(srcdir)/../base \
  		   -I. \
  		   -I$(topsrcdir)/editor/libeditor/base \
  		   -I$(topsrcdir)/editor/libeditor/text \
@@ -249,7 +250,7 @@ Index: mozilla/layout/build/nsLayoutStatics.cpp
  #include "nsCSSRuleProcessor.h"
  #include "nsXMLHttpRequest.h"
  #include "nsIFocusEventSuppressor.h"
-@@ -206,21 +208,23 @@
+@@ -206,21 +208,23 @@ nsLayoutStatics::Initialize()
    nsTextServicesDocument::RegisterAtoms();
  #endif
  
@@ -273,7 +274,7 @@ Index: mozilla/layout/build/nsLayoutStatics.cpp
    }
  
  #ifndef DEBUG_CC
-@@ -253,17 +257,19 @@
+@@ -253,17 +257,19 @@ nsLayoutStatics::Initialize()
  
  void
  nsLayoutStatics::Shutdown()
@@ -325,13 +326,13 @@ Index: mozilla/layout/build/nsLayoutModule.cpp
  // view stuff
  #include "nsViewsCID.h"
  #include "nsViewManager.h"
-@@ -262,33 +267,39 @@
- static void Shutdown();
- 
+@@ -264,33 +269,39 @@ static void Shutdown();
  #ifdef MOZ_XTF
  #include "nsIXTFService.h"
  #include "nsIXMLContentBuilder.h"
  #endif
+ 
+ #include "nsGeolocation.h"
  
  // Transformiix
 -/* {0C351177-0159-4500-86B0-A219DFDE4258} */
@@ -370,7 +371,7 @@ Index: mozilla/layout/build/nsLayoutModule.cpp
  
  //-----------------------------------------------------------------------------
  
-@@ -1281,37 +1292,40 @@
+@@ -1282,37 +1293,40 @@ static const nsModuleComponentInfo gComp
      nsnull,
      CreatePluginDocument },
  
