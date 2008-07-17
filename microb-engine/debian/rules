@@ -250,7 +250,9 @@ else
 endif
 
 ifeq ($(GCCENV),.cs)
-#	optimize_add +=  -finline-functions -fno-unit-at-a-time
+ifneq (,$(findstring $(DEB_HOST_ARCH),i386))
+	optimize_add +=  -finline-functions -fno-unit-at-a-time
+endif
 endif
 
 ifeq ($(jprof),y)
