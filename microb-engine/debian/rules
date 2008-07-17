@@ -356,7 +356,7 @@ unpack-stamp:
 	if [ -d $(CURDIR)/tarballs ]; then echo 'Tarballs is here ;)';else tar -xvvzf ../microb-engine_$(version)*.tar.gz -C ./; mv $$(find -name "tarballs" -type d) ./; rm -rf microb-engine_*; fi
 	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(MOZCONFIG_LEV)
 	rm -rf $(btree)/mozilla && tar -zxvf $(CURDIR)/tarballs/$(srcdir).tar.gz -C $(btree) > /dev/null && if [ -d $(btree)/mozilla ]; then echo 'Mozilla is root folder ;)';else mv $(btree)/mozilla* $(btree)/mozilla; fi
-	tar -zxvf $(CURDIR)/tarballs/mozilla-nss-nspr.tar.gz -C $(btree) > /dev/null
+	#tar -zxvf $(CURDIR)/tarballs/mozilla-nss-nspr.tar.gz -C $(btree) > /dev/null
 	cp -rf  $(CURDIR)/debian/resources/branding $(builddir)/
 	if [ $(CURDIR)/trunkupdates/series ]; then cd $(builddir) && for str in `cat $(CURDIR)/trunkupdates/series`;do echo; echo Applying trunk update: $$str...; echo; patch -p1 < $(CURDIR)/trunkupdates/$$str && perl $(CURDIR)/debian/resources/tools/hg_patch_rename.pl $(CURDIR)/trunkupdates/$$str; done; fi
 	cd $(builddir) && cp -rf $(CURDIR)/trunkupdates/bin/mozilla/* .

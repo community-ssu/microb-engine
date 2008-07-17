@@ -1,3 +1,10 @@
+microb-engine (20080616-35) unstable; urgency=low
+
+  * Disable NSS NSPR extracting on top of HG main tree
+    possible fixed problem with PR_Lock called from Javascript
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 17 Jul 2008 06:29:05 +0300
+
 microb-engine (20080616-34) unstable; urgency=low
 
   * Disable some untested patches 
