@@ -1,0 +1,25 @@
+diff -ruN mozilla.orig/toolkit/content/about.xhtml mozilla/toolkit/content/about.xhtml
+--- mozilla.orig/toolkit/content/about.xhtml	2008-07-17 16:13:28.000000000 +0300
++++ mozilla/toolkit/content/about.xhtml	2008-07-17 16:16:18.000000000 +0300
+@@ -75,6 +75,7 @@
+     -->
+     <li>&about.buildconfig.beforeLink; <a href="about:buildconfig">&about.buildconfig.linkTitle;</a> &about.buildconfig.afterLink;</li>
+      <li>&about.config.beforeLink; <a href="about:config">&about.config.linkTitle;</a>&about.config.afterLink;</li>
++    <li>&about.system.beforeLink; <a href="about:system">&about.system.linkTitle;</a>&about.system.afterLink;</li>
+     <script type="application/javascript">
+       // get release notes URL from prefs
+       try {
+diff -ruN mozilla.orig/toolkit/locales/en-US/chrome/global/about.dtd mozilla/toolkit/locales/en-US/chrome/global/about.dtd
+--- mozilla.orig/toolkit/locales/en-US/chrome/global/about.dtd	2008-07-17 16:13:28.000000000 +0300
++++ mozilla/toolkit/locales/en-US/chrome/global/about.dtd	2008-07-17 16:14:24.000000000 +0300
+@@ -16,6 +16,10 @@
+ <!ENTITY about.config.linkTitle "internal settings">
+ <!ENTITY about.config.afterLink " (unsupported).">
+ 
++<!ENTITY about.system.beforeLink "Baseline">
++<!ENTITY about.system.linkTitle "version information">
++<!ENTITY about.system.afterLink "for this product.">
++
+ <!ENTITY about.buildconfig.beforeLink "See the">
+ <!ENTITY about.buildconfig.linkTitle  "build configuration">
+ <!ENTITY about.buildconfig.afterLink  "used for this version.">

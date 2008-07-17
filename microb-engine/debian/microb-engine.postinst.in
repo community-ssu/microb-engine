@@ -17,8 +17,15 @@ set -e
 # the debian-policy package
 #
 
+PKGVERSION=@PACKAGEVERSION@
+PKGNAME=@PACKAGENAME@
+ABOUTSYSTEMSCRIPT=/var/lib/browser-data/build-about-system.sh
+
 case "$1" in
     configure)
+    if [ -x $ABOUTSYSTEMSCRIPT ]; then
+	    $ABOUTSYSTEMSCRIPT add $PKGNAME $PKGVERSION
+    fi
     # Temporary hack while not used new microb component
     ;;
     abort-upgrade|abort-remove|abort-deconfigure)

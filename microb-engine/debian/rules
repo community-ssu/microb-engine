@@ -301,6 +301,7 @@ endif
 # shared library versions, option 1
 version=$(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2 | cut -d ':' -f 2 | cut -d '-' -f 1)
 packagename=$(shell dpkg-parsechangelog | grep ^Source:.* | cut -d ' ' -f 2)
+PKGVERSION      := $(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2)
 MOZ_VERSION=3.0
 MOZ_MILESTONE=1.9
 
@@ -342,6 +343,11 @@ unpack-stamp:
 configure: configure-stamp
 configure-stamp: patch-stamp
 	dh_testdir
+
+	for f in `find debian/ -name "[^c]*.in"`; do \
+		sed -e "s/@PACKAGEVERSION@/${PKGVERSION}/g" -e "s/@PACKAGENAME@/${packagename}/g"  $$f > `echo $$f | sed -e "s/\.in//"`; \
+ 	done
+       
 	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(MOZCONFIG_LEV)
 	#if ! test -e /usr/include/X11; then cd /usr/include && ln -s ../X11R6/include/X11; fi
 	cd $(builddir) && $(PRE_CONF_SCRIPT) rm -f ./.mozconfig && cp $(CURDIR)/debian/$(MOZCONFIG_NAME)$(MOZCONFIG_LEV) ./mozconfig
