@@ -3148,3 +3148,49 @@ Index: mozilla/embedding/browser/gtk/src/EmbedWindow.h
    nsString                 mLinkMessage;
  
    nsCOMPtr<nsIBaseWindow>  mBaseWindow; // [OWNER]
+--- mozilla/gfx/thebes/src/gfxPlatform.cpp.orig	2008-07-17 15:55:03.000000000 +0300
++++ mozilla/gfx/thebes/src/gfxPlatform.cpp	2008-07-17 16:13:56.000000000 +0300
+@@ -183,20 +183,21 @@ gfxPlatform::Shutdown()
+ {
+     // These may be called before the corresponding subsystems have actually
+     // started up. That's OK, they can handle it.
+     gfxTextRunCache::Shutdown();
+     gfxTextRunWordCache::Shutdown();
+     gfxFontCache::Shutdown();
+ #if defined(XP_MACOSX)
+     gfxQuartzFontCache::Shutdown();
+ #endif
+ 
++#ifndef MOZ_NO_LCMS
+     // Free the various non-null transforms and loaded profiles
+     if (gCMSRGBTransform) {
+         cmsDeleteTransform(gCMSRGBTransform);
+         gCMSRGBTransform = nsnull;
+     }
+     if (gCMSInverseRGBTransform) {
+         cmsDeleteTransform(gCMSInverseRGBTransform);
+         gCMSInverseRGBTransform = nsnull;
+     }
+     if (gCMSRGBATransform) {
+@@ -208,20 +209,21 @@ gfxPlatform::Shutdown()
+ 
+         // handle the aliased case
+         if (gCMSsRGBProfile == gCMSOutputProfile)
+             gCMSsRGBProfile = nsnull;
+         gCMSOutputProfile = nsnull;
+     }
+     if (gCMSsRGBProfile) {
+         cmsCloseProfile(gCMSsRGBProfile);
+         gCMSsRGBProfile = nsnull;
+     }
++#endif /* MOZ_NO_LCMS */
+     
+     delete gPlatform;
+     gPlatform = nsnull;
+ }
+ 
+ gfxPlatform::~gfxPlatform()
+ {
+     // The cairo folks think we should only clean up in debug builds,
+     // but we're generally in the habit of trying to shut down as
+     // cleanly as possible even in production code, so call this
