@@ -1,5 +1,5 @@
 browser.jar:
-% content branding %content/branding/ xpcnativewrappers=yes
+% content branding %content/branding/ xpcnativewrappers=yes contentaccessible=yes
   content/branding/about.png                     (about.png)
   content/branding/feed.gif                      (feed.gif)
   content/branding/config.html                   (config.html)
