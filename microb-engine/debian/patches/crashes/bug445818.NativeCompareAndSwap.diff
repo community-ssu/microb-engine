@@ -1,0 +1,15 @@
+--- mozilla/js/src/jslock.cpp.orig	2008-07-18 21:03:27.000000000 +0300
++++ mozilla/js/src/jslock.cpp	2008-07-18 21:55:58.000000000 +0300
+@@ -182,11 +182,11 @@ NativeCompareAndSwap(jsword *w, jsword o
+ typedef int (__kernel_cmpxchg_t)(int oldval, int newval, volatile int *ptr);
+ #define __kernel_cmpxchg (*(__kernel_cmpxchg_t *)0xffff0fc0)
+ 
+ JS_STATIC_ASSERT(sizeof(jsword) == sizeof(int));
+ 
+-static JS_INLINE int
++static int __attribute__ ((noinline))
+ NativeCompareAndSwap(jsword *w, jsword ov, jsword nv)
+ {
+     volatile int *vp = (volatile int*)w;
+     return !__kernel_cmpxchg(ov, nv, vp);
+ }
