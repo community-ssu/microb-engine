@@ -1,3 +1,9 @@
+microb-engine (20080616-48) unstable; urgency=low
+
+  * updated ThinUnlock/Lock functions 
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Fri, 18 Jul 2008 16:44:24 -0400
+
 microb-engine (20080616-47) unstable; urgency=low
 
   * Path to patch for microb2 

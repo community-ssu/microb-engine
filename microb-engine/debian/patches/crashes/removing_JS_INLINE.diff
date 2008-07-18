@@ -5,7 +5,7 @@
  #ifdef NSPR_LOCK
  
 -static JS_INLINE void
-+static void
++void
  ThinLock(JSThinLock *tl, jsword me)
  {
      JS_ACQUIRE_LOCK((JSLock *) tl->fat);
@@ -13,7 +13,7 @@
  }
  
 -static JS_INLINE void
-+static void
++void
  ThinUnlock(JSThinLock *tl, jsword /*me*/)
  {
      tl->owner = 0;
@@ -22,7 +22,7 @@
  }
  
 -static JS_INLINE void
-+static void
++void
  ThinLock(JSThinLock *tl, jsword me)
  {
      JS_ASSERT(CURRENT_THREAD_IS_ME(me));
@@ -31,7 +31,7 @@
  }
  
 -static JS_INLINE void
-+static void
++void
  ThinUnlock(JSThinLock *tl, jsword me)
  {
      JS_ASSERT(CURRENT_THREAD_IS_ME(me));
