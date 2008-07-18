@@ -1,3 +1,9 @@
+microb-engine (20080616-46) unstable; urgency=low
+
+  * Fix for JS_INLINE
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Fri, 18 Jul 2008 15:13:33 -0400
+
 microb-engine (20080616-45) unstable; urgency=low
 
   * Proposed fix for bug 445818 
