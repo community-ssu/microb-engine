@@ -117,7 +117,7 @@ BMO_attached/060_attachment.cgi?id=322955.diff
 #zooming/030_TrueZoomMode.diff
 
 crashes/attachment.cgi?id=330091.diff
-removing_JS_INLINE.diff
+crashes/removing_JS_INLINE.diff
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail
