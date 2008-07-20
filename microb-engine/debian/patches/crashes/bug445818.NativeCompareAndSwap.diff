@@ -1,15 +1,72 @@
 --- mozilla/js/src/jslock.cpp.orig	2008-07-18 21:03:27.000000000 +0300
-+++ mozilla/js/src/jslock.cpp	2008-07-18 21:55:58.000000000 +0300
-@@ -182,11 +182,11 @@ NativeCompareAndSwap(jsword *w, jsword o
++++ mozilla/js/src/jslock.cpp	2008-07-20 09:27:19.000000000 +0300
+@@ -182,11 +182,13 @@ NativeCompareAndSwap(jsword *w, jsword o
  typedef int (__kernel_cmpxchg_t)(int oldval, int newval, volatile int *ptr);
  #define __kernel_cmpxchg (*(__kernel_cmpxchg_t *)0xffff0fc0)
  
  JS_STATIC_ASSERT(sizeof(jsword) == sizeof(int));
  
 -static JS_INLINE int
-+static int __attribute__ ((noinline))
++static
++ __attribute__ ((noinline))
++int
  NativeCompareAndSwap(jsword *w, jsword ov, jsword nv)
  {
      volatile int *vp = (volatile int*)w;
      return !__kernel_cmpxchg(ov, nv, vp);
  }
+@@ -908,18 +910,22 @@ js_CleanupLocks()
+ #endif /* !NSPR_LOCK */
+ }
+ 
+ #ifdef NSPR_LOCK
+ 
+-static JS_INLINE void
++static
++ __attribute__ ((noinline))
++void
+ ThinLock(JSThinLock *tl, jsword me)
+ {
+     JS_ACQUIRE_LOCK((JSLock *) tl->fat);
+     tl->owner = me;
+ }
+ 
+-static JS_INLINE void
++static
++__attribute__ ((noinline))
++void
+ ThinUnlock(JSThinLock *tl, jsword /*me*/)
+ {
+     tl->owner = 0;
+     JS_RELEASE_LOCK((JSLock *) tl->fat);
+ }
+@@ -1039,11 +1045,13 @@ js_Dequeue(JSThinLock *tl)
+     if (!NativeCompareAndSwap(&tl->owner, o, 0)) /* release it */
+         JS_ASSERT(0);
+     js_ResumeThread(tl);
+ }
+ 
+-static JS_INLINE void
++static
++__attribute__ ((noinline))
++void
+ ThinLock(JSThinLock *tl, jsword me)
+ {
+     JS_ASSERT(CURRENT_THREAD_IS_ME(me));
+     if (NativeCompareAndSwap(&tl->owner, 0, me))
+         return;
+@@ -1053,11 +1061,13 @@ ThinLock(JSThinLock *tl, jsword me)
+     else
+         JS_ASSERT(0);
+ #endif
+ }
+ 
+-static JS_INLINE void
++static
++__attribute__ ((noinline))
++void
+ ThinUnlock(JSThinLock *tl, jsword me)
+ {
+     JS_ASSERT(CURRENT_THREAD_IS_ME(me));
+ 
+     /*
