@@ -119,6 +119,8 @@ BMO_attached/060_attachment.cgi?id=322955.diff
 #crashes/bug445818.crash.diff
 crashes/arm-kuser_disable2.diff
 
+not_sorted/002_drawingMissingGlyphs.diff
+
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail
 #$ acid3/attachment.cgi?id=312294.diff
