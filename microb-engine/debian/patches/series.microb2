@@ -100,6 +100,11 @@ perf_tweaks/HiddingLibxulSymbols.diff
 #perf_tweaks/gmail_performance.diff
 perf_tweaks/css_erros_parsing_disable.diff
 
+# Borders
+perf_tweaks/attachment.cgi?id=328620.diff
+perf_tweaks/attachment.cgi?id=329699.diff
+perf_tweaks/attachment.cgi?id=330443.diff
+
 #Startup perf
 BMO_attached/030_attachment.cgi?id=297001.diff
 BMO_attached/040_attachment.cgi?id=303172.diff

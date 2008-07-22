@@ -1,0 +1,444 @@
+# http://people.mozilla.com/~vladimir/misc/borderbench.html
+# https://bugzilla.mozilla.org/attachment.cgi?id=313474
+# https://bugzilla.mozilla.org/attachment.cgi?id=313479
+# https://bugzilla.mozilla.org/attachment.cgi?id=328311
+# https://bugzilla.mozilla.org/attachment.cgi?id=328183
+diff -r f67345f105b8 layout/base/nsCSSRenderingBorders.cpp
+--- a/layout/base/nsCSSRenderingBorders.cpp	Mon Jul 14 16:23:38 2008 -0700
++++ b/layout/base/nsCSSRenderingBorders.cpp	Fri Jul 18 17:17:13 2008 -0700
+@@ -206,6 +206,9 @@ nsCSSBorderRenderer::nsCSSBorderRenderer
+   mInnerRect.Inset(mBorderWidths[0], mBorderWidths[1], mBorderWidths[2], mBorderWidths[3]);
+ 
+   ComputeBorderCornerDimensions(mOuterRect, mInnerRect, mBorderRadii, &mBorderCornerDimensions);
++
++  mOneUnitBorder = CheckFourFloatsEqual(mBorderWidths, 1.0);
++  mNoBorderRadius = AllCornersZeroSize(mBorderRadii);
+ }
+ 
+ void
+@@ -320,9 +323,29 @@ nsCSSBorderRenderer::AreBorderSideFinalS
+   return PR_TRUE;
+ }
+ 
++PRBool
++nsCSSBorderRenderer::IsSolidCornerStyle(PRUint8 aStyle, gfxCorner::Corner aCorner)
++{
++  switch (aStyle) {
++    case NS_STYLE_BORDER_STYLE_DOTTED:
++    case NS_STYLE_BORDER_STYLE_DASHED:
++    case NS_STYLE_BORDER_STYLE_SOLID:
++      return PR_TRUE;
++
++    case NS_STYLE_BORDER_STYLE_GROOVE:
++    case NS_STYLE_BORDER_STYLE_RIDGE:
++    case NS_STYLE_BORDER_STYLE_INSET:
++    case NS_STYLE_BORDER_STYLE_OUTSET:
++      return (aCorner == gfxCorner::TOP_LEFT || aCorner == gfxCorner::BOTTOM_RIGHT);
++
++    case NS_STYLE_BORDER_STYLE_DOUBLE:
++    default:
++      return PR_FALSE;
++  }
++}
+ 
+ void
+-nsCSSBorderRenderer::DoCornerClipSubPath(PRUint8 aCorner)
++nsCSSBorderRenderer::DoCornerSubPath(PRUint8 aCorner)
+ {
+   gfxPoint offset(0.0, 0.0);
+ 
+@@ -491,65 +514,97 @@ nsCSSBorderRenderer::FillSolidBorder(con
+ {
+   mContext->SetColor(aColor);
+ 
+-  mContext->NewPath();
+-
+-  // If there is no border radius, and all the border sizes are the
+-  // same, stroke a rectangle instead of calling Fill.
+-  if (AllCornersZeroSize(aBorderRadii) &&
++  if (!AllCornersZeroSize(aBorderRadii)) {
++    // we have a border radius; so do rounded rects.
++    gfxCornerSizes innerRadii;
++    ComputeInnerRadii(aBorderRadii, aBorderSizes, &innerRadii);
++
++    mContext->NewPath();
++
++    // do the outer border
++    mContext->RoundedRectangle(aOuterRect, aBorderRadii, PR_TRUE);
++
++    // then do the inner border CCW
++    mContext->RoundedRectangle(aInnerRect, innerRadii, PR_FALSE);
++
++    mContext->Fill();
++
++    return;
++  }
++
++  if (aSides == SIDE_BITS_ALL &&
+       CheckFourFloatsEqual(aBorderSizes, aBorderSizes[0]))
+   {
+-    if (aSides == SIDE_BITS_ALL) {
+-      gfxRect r(aOuterRect);
+-      r.Inset(aBorderSizes[0] / 2.0);
+-
+-      mContext->SetLineWidth(aBorderSizes[0]);
+-
+-      mContext->Rectangle(r);
+-      mContext->Stroke();
+-
+-      return;
++    gfxRect r(aOuterRect);
++    r.Inset(aBorderSizes[0] / 2.0);
++    mContext->SetLineWidth(aBorderSizes[0]);
++
++    mContext->NewPath();
++    mContext->Rectangle(r);
++    mContext->Stroke();
++
++    return;
++  }
++
++  gfxRect r[4];
++
++  // compute base rects for each side
++  if (aSides & SIDE_BIT_TOP) {
++    r[NS_SIDE_TOP].pos = aOuterRect.TopLeft();
++    r[NS_SIDE_TOP].size.width = aOuterRect.size.width;
++    r[NS_SIDE_TOP].size.height = aBorderSizes[NS_SIDE_TOP];
++  }
++
++  if (aSides & SIDE_BIT_BOTTOM) {
++    r[NS_SIDE_BOTTOM].pos = aOuterRect.BottomLeft();
++    r[NS_SIDE_BOTTOM].pos.y -= aBorderSizes[NS_SIDE_BOTTOM];
++    r[NS_SIDE_BOTTOM].size.width = aOuterRect.size.width;
++    r[NS_SIDE_BOTTOM].size.height = aBorderSizes[NS_SIDE_BOTTOM];
++  }
++
++  if (aSides & SIDE_BIT_LEFT) {
++    r[NS_SIDE_LEFT].pos = aOuterRect.TopLeft();
++    r[NS_SIDE_LEFT].size.width = aBorderSizes[NS_SIDE_LEFT];
++    r[NS_SIDE_LEFT].size.height = aOuterRect.size.height;
++  }
++
++  if (aSides & SIDE_BIT_RIGHT) {
++    r[NS_SIDE_RIGHT].pos = aOuterRect.TopRight();
++    r[NS_SIDE_RIGHT].pos.x -= aBorderSizes[NS_SIDE_RIGHT];
++    r[NS_SIDE_RIGHT].size.width = aBorderSizes[NS_SIDE_RIGHT];
++    r[NS_SIDE_RIGHT].size.height = aOuterRect.size.height;
++  }
++
++  // then fix up corners
++  if ((aSides & (SIDE_BIT_TOP | SIDE_BIT_LEFT)) == (SIDE_BIT_TOP | SIDE_BIT_LEFT)) {
++    // adjust the left's top down a bit
++    r[NS_SIDE_LEFT].pos.y += aBorderSizes[NS_SIDE_TOP];
++    r[NS_SIDE_LEFT].size.height -= aBorderSizes[NS_SIDE_TOP];
++  }
++
++  if ((aSides & (SIDE_BIT_TOP | SIDE_BIT_RIGHT)) == (SIDE_BIT_TOP | SIDE_BIT_RIGHT)) {
++    // adjust the top's left a bit
++    r[NS_SIDE_TOP].size.width -= aBorderSizes[NS_SIDE_RIGHT];
++  }
++
++  if ((aSides & (SIDE_BIT_BOTTOM | SIDE_BIT_RIGHT)) == (SIDE_BIT_BOTTOM | SIDE_BIT_RIGHT)) {
++    // adjust the right's bottom a bit
++    r[NS_SIDE_RIGHT].size.height -= aBorderSizes[NS_SIDE_BOTTOM];
++  }
++
++  if ((aSides & (SIDE_BIT_BOTTOM | SIDE_BIT_LEFT)) == (SIDE_BIT_BOTTOM | SIDE_BIT_LEFT)) {
++    // adjust the bottom's left a bit
++    r[NS_SIDE_BOTTOM].pos.x += aBorderSizes[NS_SIDE_LEFT];
++    r[NS_SIDE_BOTTOM].size.width -= aBorderSizes[NS_SIDE_LEFT];
++  }
++
++  for (PRUint32 i = 0; i < 4; i++) {
++    if (aSides & (1 << i)) {
++      mContext->NewPath();
++      mContext->Rectangle(r[i]);
++      mContext->Fill();
+     }
+-
+-    if (aBorderSizes[0] == 1.0 && aColor.a == 1.0) {
+-      if (aSides == (SIDE_BIT_TOP | SIDE_BIT_LEFT)) {
+-          mContext->SetLineWidth(1.0);
+-
+-          gfxRect r(aOuterRect);
+-          r.Inset(0.5, 0.0, 0.0, 0.5);
+-
+-          mContext->MoveTo(r.BottomLeft());
+-          mContext->LineTo(r.TopLeft());
+-          mContext->LineTo(r.TopRight());
+-          mContext->Stroke();
+-          return;
+-        }
+-
+-      if (aSides == (SIDE_BIT_BOTTOM | SIDE_BIT_RIGHT)) {
+-        mContext->SetLineWidth(1.0);
+-
+-        gfxRect r(aOuterRect);
+-        r.Inset(0.0, 0.5, 0.5, 0.0);
+-
+-        mContext->MoveTo(r.BottomLeft());
+-        mContext->LineTo(r.BottomRight());
+-        mContext->LineTo(r.TopRight());
+-        mContext->Stroke();
+-        return;
+-      }
+-    }
+-  }
+-
+-  // we weren't able to render using stroke; do paths and fill.
+-  gfxCornerSizes innerRadii;
+-  ComputeInnerRadii(aBorderRadii, aBorderSizes, &innerRadii);
+-
+-  // do the outer border
+-  mContext->RoundedRectangle(aOuterRect, aBorderRadii, PR_TRUE);
+-
+-  // then do the inner border CCW
+-  mContext->RoundedRectangle(aInnerRect, innerRadii, PR_FALSE);
+-
+-  mContext->Fill();
++  }
+ }
+ 
+ gfxRGBA
+@@ -699,12 +754,11 @@ nsCSSBorderRenderer::DrawBorderSides(PRI
+   // If the border width is 1, we need to change the borderRenderStyle
+   // a bit to make sure that we get the right colors -- e.g. 'ridge'
+   // with a 1px border needs to look like solid, not like 'outset'.
+-  if (CheckFourFloatsEqual(mBorderWidths, 1.0)) {
+-    if (borderRenderStyle == NS_STYLE_BORDER_STYLE_RIDGE ||
+-        borderRenderStyle == NS_STYLE_BORDER_STYLE_GROOVE ||
+-        borderRenderStyle == NS_STYLE_BORDER_STYLE_DOUBLE)
+-      borderRenderStyle = NS_STYLE_BORDER_STYLE_SOLID;
+-  }
++  if (mOneUnitBorder &&
++      (borderRenderStyle == NS_STYLE_BORDER_STYLE_RIDGE ||
++       borderRenderStyle == NS_STYLE_BORDER_STYLE_GROOVE ||
++       borderRenderStyle == NS_STYLE_BORDER_STYLE_DOUBLE))
++    borderRenderStyle = NS_STYLE_BORDER_STYLE_SOLID;
+ 
+   switch (borderRenderStyle) {
+     case NS_STYLE_BORDER_STYLE_SOLID:
+@@ -933,6 +987,8 @@ nsCSSBorderRenderer::DrawBorders()
+ 
+   // Examine the border style to figure out if we can draw it in one
+   // go or not.
++  PRBool tlBordersSame = AreBorderSideFinalStylesSame(SIDE_BIT_TOP | SIDE_BIT_LEFT);
++  PRBool brBordersSame = AreBorderSideFinalStylesSame(SIDE_BIT_BOTTOM | SIDE_BIT_RIGHT);
+   PRBool allBordersSame = AreBorderSideFinalStylesSame(SIDE_BITS_ALL);
+   if (allBordersSame &&
+       mCompositeColors[0] == NULL &&
+@@ -950,7 +1006,7 @@ nsCSSBorderRenderer::DrawBorders()
+   // If we have composite colors -and- border radius,
+   // then use separate corners so we get OPERATOR_ADD for the corners.
+   // Otherwise, we'll get artifacts as we draw stacked 1px-wide curves.
+-  if (allBordersSame && mCompositeColors[0] != nsnull && !AllCornersZeroSize(mBorderRadii))
++  if (allBordersSame && mCompositeColors[0] != nsnull && !mNoBorderRadius)
+     forceSeparateCorners = PR_TRUE;
+ 
+   // round mOuterRect and mInnerRect; they're already an integer
+@@ -1002,11 +1058,12 @@ nsCSSBorderRenderer::DrawBorders()
+     mContext->SetMatrix(mat);
+   }
+ 
+-  // clip to mOuterRect to define the boundaries of our rendering
+-  mContext->NewPath();
+-  mContext->Rectangle(mOuterRect);
+-
++  // Only do this clip if we have to clip out a gap; otherwise,
++  // intersecting with this clip is pretty expensive.
+   if (mGapRect) {
++    mContext->NewPath();
++    mContext->Rectangle(mOuterRect);
++
+     // draw the rectangle backwards, so that we get it
+     // clipped out via the winding rule
+     mContext->MoveTo(mGapRect->pos);
+@@ -1014,9 +1071,10 @@ nsCSSBorderRenderer::DrawBorders()
+     mContext->LineTo(mGapRect->pos + mGapRect->size);
+     mContext->LineTo(mGapRect->pos + gfxSize(mGapRect->size.width, 0.0));
+     mContext->ClosePath();
+-  }
+-
+-  mContext->Clip();
++
++    mContext->Clip();
++  }
++
+ 
+   if (allBordersSame && !forceSeparateCorners) {
+     /* Draw everything in one go */
+@@ -1025,24 +1083,66 @@ nsCSSBorderRenderer::DrawBorders()
+   } else {
+     /* We have more than one pass to go.  Draw the corners separately from the sides. */
+ 
++    /*
++     * If we have a 1px-wide border, the corners are going to be
++     * negligible, so don't bother doing anything fancy.  Just extend
++     * the top and bottom borders to the right 1px and the left border
++     * to the bottom 1px.  We do this by twiddling the corner dimensions,
++     * which causes the right to happen later on.  Only do this if we have
++     * a 1.0 unit border all around and no border radius.
++     */
++
++    for (int corner = 0; corner < gfxCorner::NUM_CORNERS; corner++) {
++      const PRIntn sides[2] = { corner, PREV_SIDE(corner) };
++
++      if (!IsZeroSize(mBorderRadii[corner]))
++        continue;
++
++      if (mBorderWidths[sides[0]] == 1.0 && mBorderWidths[sides[1]] == 1.0) {
++        if (corner == gfxCorner::TOP_LEFT || corner == gfxCorner::TOP_RIGHT)
++          mBorderCornerDimensions[corner].width = 0.0;
++        else
++          mBorderCornerDimensions[corner].height = 0.0;
++      }
++    }
++
+     // First, the corners
+     for (int corner = 0; corner < gfxCorner::NUM_CORNERS; corner++) {
++      // if there's no corner, don't do all this work for it
++      if (IsZeroSize(mBorderCornerDimensions[corner]))
++        continue;
++
+       const PRIntn sides[2] = { corner, PREV_SIDE(corner) };
+       PRIntn sideBits = (1 << sides[0]) | (1 << sides[1]);
+ 
++      PRBool simpleCornerStyle = mCompositeColors[sides[0]] == NULL &&
++                                 mCompositeColors[sides[1]] == NULL &&
++                                 AreBorderSideFinalStylesSame(sideBits);
++
++      // If we don't have anything complex going on in this corner,
++      // then we can just fill the corner with a solid color, and avoid
++      // the potentially expensive clip.
++      if (simpleCornerStyle &&
++          IsZeroSize(mBorderRadii[corner]) &&
++          IsSolidCornerStyle(mBorderStyles[sides[0]], corner))
++      {
++        mContext->NewPath();
++        DoCornerSubPath(corner);
++        mContext->SetColor(gfxRGBA(mBorderColors[sides[0]]));
++        mContext->Fill();
++        continue;
++      }
++
+       mContext->Save();
+ 
+       // clip to the corner
+       mContext->NewPath();
+-      DoCornerClipSubPath(corner);
++      DoCornerSubPath(corner);
+       mContext->Clip();
+ 
+-      if (dashedSides == 0 &&
+-          mCompositeColors[sides[0]] == NULL &&
+-          mCompositeColors[sides[1]] == NULL &&
+-          AreBorderSideFinalStylesSame(sideBits))
+-      {
+-        // we don't need a group for this corner, the sides are the same.
++      if (simpleCornerStyle) {
++        // we don't need a group for this corner, the sides are the same,
++        // but we weren't able to render just a solid block for the corner.
+         DrawBorderSides(sideBits);
+       } else {
+         // Sides are different.  We need to draw using OPERATOR_ADD to
+@@ -1085,22 +1185,62 @@ nsCSSBorderRenderer::DrawBorders()
+       SN();
+     }
+ 
++    // in the case of a single-unit border, we already munged the
++    // corners up above; so we can just draw the top left and bottom
++    // right sides separately, if they're the same.
++    PRIntn alreadyDrawnSides = 0;
++    if (mOneUnitBorder) {
++      if (tlBordersSame) {
++        DrawBorderSides(SIDE_BIT_TOP | SIDE_BIT_LEFT);
++        alreadyDrawnSides |= (SIDE_BIT_TOP | SIDE_BIT_LEFT);
++      }
++
++      if (brBordersSame) {
++        DrawBorderSides(SIDE_BIT_BOTTOM | SIDE_BIT_RIGHT);
++        alreadyDrawnSides |= (SIDE_BIT_BOTTOM | SIDE_BIT_RIGHT);
++      }
++    }
++
+     // We're done with the corners, now draw the sides.
+     NS_FOR_CSS_SIDES (side) {
++      // if we drew it above, skip it
++      if (alreadyDrawnSides & (1 << side))
++        continue;
++
++      // If there's no border on this side, skip it
++      if (mBorderWidths[side] == 0.0 ||
++          mBorderStyles[side] == NS_STYLE_BORDER_STYLE_HIDDEN ||
++          mBorderStyles[side] == NS_STYLE_BORDER_STYLE_NONE)
++        continue;
++
++
++      if (dashedSides & (1 << side)) {
++        // Dashed sides will always draw just the part ignoring the
++        // corners for the side, so no need to clip.
++        DrawDashedSide (side);
++
++        SN("---------------- (d)");
++        continue;
++      }
++
++      // Undashed sides will currently draw the entire side,
++      // including parts that would normally be covered by a corner,
++      // so we need to clip.
++      //
++      // XXX Optimization -- it would be good to make this work like
++      // DrawDashedSide, and have a DrawOneSide function that just
++      // draws one side and not the corners, because then we can
++      // avoid the potentially expensive clip.
+       mContext->Save();
+       mContext->NewPath();
+       DoSideClipWithoutCornersSubPath(side);
+       mContext->Clip();
+ 
+-      if (dashedSides & (1 << side)) {
+-        DrawDashedSide (side);
+-        SN("---------------- (d)");
+-      } else {
+-        DrawBorderSides(1 << side);
+-        SN("---------------- (*)");
+-      }
++      DrawBorderSides(1 << side);
+ 
+       mContext->Restore();
++
++      SN("---------------- (*)");
+     }
+   }
+ }
+diff -r f67345f105b8 layout/base/nsCSSRenderingBorders.h
+--- a/layout/base/nsCSSRenderingBorders.h	Mon Jul 14 16:23:38 2008 -0700
++++ b/layout/base/nsCSSRenderingBorders.h	Fri Jul 18 17:17:13 2008 -0700
+@@ -127,18 +127,24 @@ struct nsCSSBorderRenderer {
+   const gfxRect* mGapRect;
+ 
+   // calculated values
++  PRPackedBool mOneUnitBorder : 1;
++  PRPackedBool mNoBorderRadius : 1;
++
+   gfxCornerSizes mBorderCornerDimensions;
+ 
+   // For all the sides in the bitmask, would they be rendered
+   // in an identical color and style?
+   PRBool AreBorderSideFinalStylesSame(PRUint8 aSides);
+ 
++  // For the given style, is the given corner a solid color?
++  PRBool IsSolidCornerStyle(PRUint8 aStyle, gfxCorner::Corner aCorner);
++
+   //
+   // Path generation functions
+   //
+ 
+-  // add the path for drawing the given corners to the context
+-  void DoCornerClipSubPath(PRUint8 aCorner);
++  // add the path for drawing the given corner to the context
++  void DoCornerSubPath(PRUint8 aCorner);
+   // add the path for drawing the given side without any adjacent corners to the context
+   void DoSideClipWithoutCornersSubPath(PRUint8 aSide);
+ 
