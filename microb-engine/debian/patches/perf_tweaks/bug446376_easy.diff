@@ -1,0 +1,100 @@
+# temporary fix for bug 446376
+# we have to fix clipping properly and replace this fix
+diff -ruN -p -B -U5 mozilla/layout/generic.orig/nsImageFrame.cpp mozilla/layout/generic/nsImageFrame.cpp
+--- mozilla/layout/generic.orig/nsImageFrame.cpp	2008-06-16 09:16:18.000000000 +0300
++++ mozilla/layout/generic/nsImageFrame.cpp	2008-07-22 01:15:20.000000000 +0300
+@@ -1146,43 +1146,61 @@ static void PaintDebugImageMap(nsIFrame*
+ class nsDisplayImage : public nsDisplayItem {
+ public:
+   nsDisplayImage(nsImageFrame* aFrame, imgIContainer* aImage)
+     : nsDisplayItem(aFrame), mImage(aImage) {
+     MOZ_COUNT_CTOR(nsDisplayImage);
++    mDirtyRegion.SetEmpty();
+   }
+   virtual ~nsDisplayImage() {
+     MOZ_COUNT_DTOR(nsDisplayImage);
+   }
++  virtual PRBool OptimizeVisibility(nsDisplayListBuilder* aBuilder,
++                                    nsRegion* aVisibleRegion);
+   virtual void Paint(nsDisplayListBuilder* aBuilder, nsIRenderingContext* aCtx,
+      const nsRect& aDirtyRect);
+   NS_DISPLAY_DECL_NAME("Image")
+ private:
+   nsCOMPtr<imgIContainer> mImage;
++  nsRegion                mDirtyRegion;
+ };
+ 
++PRBool
++nsDisplayImage::OptimizeVisibility(nsDisplayListBuilder* aBuilder,
++                                   nsRegion* aVisibleRegion) {
++  if (!nsDisplayItem::OptimizeVisibility(aBuilder, aVisibleRegion))
++    return PR_FALSE;
++  mDirtyRegion = *aVisibleRegion;
++  return PR_TRUE;
++}
++
+ void
+ nsDisplayImage::Paint(nsDisplayListBuilder* aBuilder,
+      nsIRenderingContext* aCtx, const nsRect& aDirtyRect) {
+   static_cast<nsImageFrame*>(mFrame)->
+-    PaintImage(*aCtx, aBuilder->ToReferenceFrame(mFrame), aDirtyRect, mImage);
++    PaintImage(*aCtx, aBuilder->ToReferenceFrame(mFrame),
++               mDirtyRegion.IsEmpty() ? nsRegion(aDirtyRect) : mDirtyRegion, mImage);
+ }
+ 
+ void
+ nsImageFrame::PaintImage(nsIRenderingContext& aRenderingContext, nsPoint aPt,
+-                         const nsRect& aDirtyRect, imgIContainer* aImage)
++                         const nsRegion& aDirtyRegion, imgIContainer* aImage)
+ {
+   // Render the image into our content area (the area inside
+   // the borders and padding)
+   NS_ASSERTION(GetInnerArea().width == mComputedSize.width, "bad width");
+   nsRect inner = GetInnerArea() + aPt;
+-  nsRect clip;
+-  clip.IntersectRect(inner, aDirtyRect);
+ 
+   nsRect dest(inner.TopLeft(), mComputedSize);
+   dest.y -= GetContinuationOffset();
+ 
+-  nsLayoutUtils::DrawImage(&aRenderingContext, aImage, dest, clip);
++  nsRegionRectIterator ri (aDirtyRegion);
++  const nsRect* subRect;
++  while ((subRect = ri.Next ())) {
++    nsRect clip;
++    clip.IntersectRect(inner, *subRect);
++    nsLayoutUtils::DrawImage(&aRenderingContext, aImage, dest, clip);
++  }
+ 
+   nsPresContext* presContext = PresContext();
+   nsImageMap* map = GetImageMap(presContext);
+   if (nsnull != map) {
+     aRenderingContext.PushState();
+diff -ruN -p -B -U5 mozilla/layout/generic.orig/nsImageFrame.h mozilla/layout/generic/nsImageFrame.h
+--- mozilla/layout/generic.orig/nsImageFrame.h	2008-06-16 09:16:18.000000000 +0300
++++ mozilla/layout/generic/nsImageFrame.h	2008-07-22 01:16:16.000000000 +0300
+@@ -50,10 +50,11 @@
+ #include "nsIObserver.h"
+ 
+ #include "nsTransform2D.h"
+ #include "imgIRequest.h"
+ #include "nsStubImageDecoderObserver.h"
++#include "nsRegion.h"
+ 
+ class nsIFrame;
+ class nsImageMap;
+ class nsIURI;
+ class nsILoadGroup;
+@@ -216,11 +217,11 @@ protected:
+                       nsIRenderingContext& aRenderingContext,
+                       const nsString&      aAltText,
+                       const nsRect&        aRect);
+ 
+   void PaintImage(nsIRenderingContext& aRenderingContext, nsPoint aPt,
+-                  const nsRect& aDirtyRect, imgIContainer* aImage);
++                  const nsRegion& aDirtyRegion, imgIContainer* aImage);
+                   
+ protected:
+   friend class nsImageListener;
+   nsresult OnStartContainer(imgIRequest *aRequest, imgIContainer *aImage);
+   nsresult OnDataAvailable(imgIRequest *aRequest,
