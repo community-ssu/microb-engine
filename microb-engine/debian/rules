@@ -253,6 +253,9 @@ ifeq ($(GCCENV),.cs)
 ifneq (,$(findstring $(DEB_HOST_ARCH),i386))
 	optimize_add +=  -finline-functions -fno-unit-at-a-time
 endif
+ifeq ($(nolibxul),y)
+	optimize_add +=  -finline-functions -fno-unit-at-a-time -O1
+endif
 endif
 
 ifeq ($(jprof),y)
