@@ -121,6 +121,7 @@ BMO_attached/060_attachment.cgi?id=322955.diff
 #zooming/020_Bug70843.RestoreZoomState.diff
 #zooming/030_TrueZoomMode.diff
 
+perf_tweaks/enable_16bpp_format.diff
 crashes/attachment.cgi?id=330650.diff
 
 perf_tweaks/bug446376_easy.diff
