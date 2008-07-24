@@ -1,3 +1,9 @@
+microb-engine (20080616-57) unstable; urgency=low
+
+  * Fixed bug 446376 for Tiled background 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 24 Jul 2008 08:48:24 +0300
+
 microb-engine (20080616-56) unstable; urgency=low
 
   * Enable 16bpp format 

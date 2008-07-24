@@ -1,0 +1,15 @@
+--- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2008-07-22 17:18:50.000000000 +0300
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2008-07-23 06:17:02.000000000 +0300
+@@ -1740,11 +1740,11 @@ nsWindow::OnExposeEvent(GtkWidget *aWidg
+         // Instead of just doing PushGroup we're going to do a little dance
+         // to ensure that GDK creates the pixmap, so it doesn't go all
+         // XGetGeometry on us in gdk_pixmap_foreign_new_for_display when we
+         // paint native themes
+         GdkDrawable* d = GDK_DRAWABLE(mDrawingarea->inner_window);
+-        gint depth = gdk_drawable_get_depth(d);
++        gint depth = 24; //gdk_drawable_get_depth(d);
+         bufferPixmap = gdk_pixmap_new(d, boundsRect.width, boundsRect.height, depth);
+         if (bufferPixmap) {
+             bufferPixmapSurface = GetSurfaceForGdkDrawable(GDK_DRAWABLE(bufferPixmap),
+                                                            boundsRect.Size());
+             if (bufferPixmapSurface && bufferPixmapSurface->CairoStatus()) {

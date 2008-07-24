@@ -98,3 +98,74 @@ diff -ruN -p -B -U5 mozilla/layout/generic.orig/nsImageFrame.h mozilla/layout/ge
    friend class nsImageListener;
    nsresult OnStartContainer(imgIRequest *aRequest, imgIContainer *aImage);
    nsresult OnDataAvailable(imgIRequest *aRequest,
+--- mozilla/layout/generic/nsHTMLFrame.cpp.orig	2008-06-16 09:16:18.000000000 +0300
++++ mozilla/layout/generic/nsHTMLFrame.cpp	2008-07-24 04:58:21.000000000 +0300
+@@ -61,10 +61,12 @@
+ #include "nsIScrollableFrame.h"
+ #include "nsIScrollableView.h"
+ #include "nsIDocShell.h"
+ #include "nsICanvasFrame.h"
+ 
++#include "nsRegion.h"
++
+ #ifdef DEBUG_rods
+ //#define DEBUG_CANVAS_FOCUS
+ #endif
+ 
+ // Interface IDs
+@@ -355,34 +357,54 @@ nsRect CanvasFrame::CanvasArea() const
+ class nsDisplayCanvasBackground : public nsDisplayBackground {
+ public:
+   nsDisplayCanvasBackground(nsIFrame *aFrame)
+     : nsDisplayBackground(aFrame)
+   {
++    mDirtyRegion.SetEmpty();
+   }
+ 
+   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder)
+   {
+     CanvasFrame* frame = static_cast<CanvasFrame*>(mFrame);
+     return frame->CanvasArea() + aBuilder->ToReferenceFrame(mFrame);
+   }
+ 
++  virtual PRBool OptimizeVisibility(nsDisplayListBuilder* aBuilder,
++                                    nsRegion* aVisibleRegion)
++  {
++    if (!nsDisplayItem::OptimizeVisibility(aBuilder, aVisibleRegion))
++      return PR_FALSE;
++    mDirtyRegion = *aVisibleRegion;
++    return PR_TRUE;
++  }
++
+   virtual void Paint(nsDisplayListBuilder* aBuilder,
+                      nsIRenderingContext* aCtx, const nsRect& aDirtyRect)
+   {
+     CanvasFrame* frame = static_cast<CanvasFrame*>(mFrame);
+     nsPoint offset = aBuilder->ToReferenceFrame(mFrame);
+     nsRect bgClipRect = frame->CanvasArea() + offset;
++
++    if (mDirtyRegion.IsEmpty())
++      mDirtyRegion = nsRegion(aDirtyRect);
++
++    nsRegionRectIterator ri (mDirtyRegion);
++    const nsRect* subRect;
++    while ((subRect = ri.Next ())) {
+     nsCSSRendering::PaintBackground(mFrame->PresContext(), *aCtx, mFrame,
+-                                    aDirtyRect,
++                                    *subRect,
+                                     nsRect(offset, mFrame->GetSize()),
+                                     *mFrame->GetStyleBorder(),
+                                     *mFrame->GetStylePadding(),
+                                     mFrame->HonorPrintBackgroundSettings(),
+                                     &bgClipRect);
++    }
+   }
+ 
+   NS_DISPLAY_DECL_NAME("CanvasBackground")
++private:
++  nsRegion                mDirtyRegion;
+ };
+ 
+ /**
+  * A display item to paint the focus ring for the document.
+  *
