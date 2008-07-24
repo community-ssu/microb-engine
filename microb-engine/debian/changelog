@@ -1,3 +1,9 @@
+microb-engine (20080616-61) unstable; urgency=low
+
+  * Fixed password manager 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 24 Jul 2008 20:21:17 +0300
+
 microb-engine (20080616-60) unstable; urgency=low
 
   * Fixed missing password manager resource 
