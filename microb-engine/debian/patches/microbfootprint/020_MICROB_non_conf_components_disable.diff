@@ -3203,3 +3203,29 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  
      GdkWindow *innerWindow = get_inner_gdk_window(aWidget->window, aX, aY,
                                                    &retx, &rety);
+--- mozilla/gfx/thebes/src/gfxPlatform.cpp.orig	2008-08-04 14:15:42.000000000 +0300
++++ mozilla/gfx/thebes/src/gfxPlatform.cpp	2008-08-04 14:16:48.000000000 +0300
+@@ -484,10 +484,11 @@ gfxPlatform::GetRenderingIntent()
+     /* -2 means that we haven't tried querying the pref service yet. */
+     static int sIntent = -2;
+ 
+     if (sIntent == -2) {
+ 
++#ifndef MOZ_NO_LCMS
+         /* Try to query the pref system for a rendering intent. */
+         nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+         if (prefs) {
+             PRInt32 pIntent;
+             nsresult rv = prefs->GetIntPref("gfx.color_management.rendering_intent", 
+@@ -505,10 +506,11 @@ gfxPlatform::GetRenderingIntent()
+         }
+ 
+         /* If we didn't get a valid intent from prefs, use the default. */
+         if (sIntent == -2) 
+             sIntent = INTENT_DEFAULT;
++#endif
+     }
+     return sIntent;
+ }
+ 
+ 

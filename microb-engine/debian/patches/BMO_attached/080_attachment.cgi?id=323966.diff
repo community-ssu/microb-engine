@@ -309,3 +309,27 @@ Index: mozilla/dom/public/idl/canvas/nsIDOMCanvasRenderingContext2D.idl
     * @param x
     * @param y
     * @param w
+--- mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp.orig	2008-08-04 14:07:38.000000000 +0300
++++ mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp	2008-08-04 15:00:45.000000000 +0300
+@@ -3159,16 +3159,18 @@ nsCanvasRenderingContext2D::SetImageRend
+ }
+ 
+ void
+ nsCanvasRenderingContext2D::ApplyQualityHints()
+ {
++    nsRefPtr<gfxPattern> pat = new gfxPattern(mSurface);
+     if (CurrentState().imageRenderingQuality == OptimizeSpeed)
+-        cairo_pattern_set_filter (cairo_get_source(mCairo), CAIRO_FILTER_FAST);
++        pat->SetFilter(0);
+     else if (CurrentState().imageRenderingQuality == OptimizeQuality)
+-        cairo_pattern_set_filter (cairo_get_source(mCairo), CAIRO_FILTER_BEST);
++        pat->SetFilter(2);
+     else
+-        cairo_pattern_set_filter (cairo_get_source(mCairo), CAIRO_FILTER_GOOD);
++        pat->SetFilter(1);
++    mThebes->SetPattern(pat);
+ }
+ 
+ // void putImageData (in ImageData d, in float x, in float y);
+ NS_IMETHODIMP
+ nsCanvasRenderingContext2D::PutImageData()

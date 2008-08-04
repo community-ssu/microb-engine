@@ -377,6 +377,7 @@ endif
 build: unpack-stamp patch-stamp configure-stamp build-stamp
 build-stamp:
 	dh_testdir
+	find $(builddir)/branding -xtype f -name Makefile -exec rm -rf {} \;
 	cd $(builddir) && $(envflags) $(MAKE) -f client.mk build
 	touch build-stamp
 
