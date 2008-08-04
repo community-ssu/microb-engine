@@ -1,3 +1,9 @@
+microb-engine (20080616-64) unstable; urgency=low
+
+  * Disable media and ogg support by config 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 04 Aug 2008 17:33:18 +0300
+
 microb-engine (20080616-63) unstable; urgency=low
 
   * Fixed compilation problems

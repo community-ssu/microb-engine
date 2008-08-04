@@ -33,6 +33,7 @@ ac_add_options --disable-js-binary
 
    #* Missing environment
 ac_add_options --disable-crashreporter --disable-mochitest --disable-dbus
+ac_add_options --disable-ogg
 
 
    #* Micro Base
