@@ -1,11 +1,8 @@
-Index: content/base/src/nsGenericElement.cpp
+Index: mozilla/content/base/src/nsGenericElement.cpp
 ===================================================================
-RCS file: /cvsroot/mozilla/content/base/src/nsGenericElement.cpp,v
-retrieving revision 3.621
-diff -u -8 -p -r3.621 nsGenericElement.cpp
---- mozilla/content/base/src/nsGenericElement.cpp	10 Jan 2008 15:48:26 -0000	3.621
-+++ mozilla/content/base/src/nsGenericElement.cpp	14 Jan 2008 19:06:04 -0000
-@@ -3445,35 +3445,37 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(
+--- mozilla.orig/content/base/src/nsGenericElement.cpp
++++ mozilla/content/base/src/nsGenericElement.cpp
+@@ -3626,37 +3626,39 @@
        cb.NoteXPCOMChild(slots->mAttributeMap.get());
        if (tmp->IsNodeOfType(nsINode::eXUL))
          cb.NoteXPCOMChild(slots->mControllers);
@@ -36,6 +33,8 @@ diff -u -8 -p -r3.621 nsGenericElement.cpp
                                   nsDOMEventRTTearoff::Create(this))
    NS_INTERFACE_MAP_ENTRY_TEAROFF(nsISupportsWeakReference,
                                   new nsNodeSupportsWeakRefTearoff(this))
+   NS_INTERFACE_MAP_ENTRY_TEAROFF(nsIDOMNodeSelector,
+                                  new nsNodeSelectorTearoff(this))
 -  // nsNodeSH::PreCreate() depends on the identity pointer being the
 -  // same as nsINode (which nsIContent inherits), so if you change the
 -  // below line, make sure nsNodeSH::PreCreate() still does the right

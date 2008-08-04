@@ -4,18 +4,17 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
 ===================================================================
 --- mozilla.orig/content/canvas/src/nsCanvasRenderingContext2D.cpp
 +++ mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
-@@ -357,17 +357,18 @@
-     // VC6 sucks
- #define STYLE_MAX 3
+@@ -343,16 +343,17 @@
+         STYLE_MAX
+     };
  
-     nsresult SetStyleFromVariant(nsIVariant* aStyle, PRInt32 aWhichStyle);
+     nsresult SetStyleFromVariant(nsIVariant* aStyle, Style aWhichStyle);
      void StyleColorToString(const nscolor& aColor, nsAString& aStr);
  
      void DirtyAllStyles();
-     void ApplyStyle(PRInt32 aWhichStyle);
--    
+     void ApplyStyle(Style aWhichStyle);
 +    void ApplyQualityHints();
-+
+     
      // If aPrincipal is not subsumed by this canvas element, then
      // we make the canvas write-only so bad guys can't extract the pixel
      // data.  If forceWriteOnly is set, we force write only to be set
@@ -23,15 +22,14 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
      // from a <canvas> that had write-only set.)
      void DoDrawImageSecurityCheck(nsIPrincipal* aPrincipal,
                                    PRBool forceWriteOnly);
- 
-@@ -422,29 +423,37 @@
-      * text. Will query for the fourth, optional argument.
+@@ -412,33 +413,41 @@
       */
-     nsresult drawText(const nsAString& text,
-                       float x,
-                       float y,
-                       float maxWidth,
-                       TextDrawOperation op);
+     nsresult DrawOrMeasureText(const nsAString& text,
+                                float x,
+                                float y,
+                                float maxWidth,
+                                TextDrawOperation op,
+                                float* aWidth);
   
 +    typedef enum {
 +        Auto,
@@ -40,7 +38,11 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
 +    } ImageRenderingQuality;
 +
      // style handling
-     PRInt32 mLastStyle;
+     /*
+      * The previous set style. Is equal to STYLE_MAX when there is no valid
+      * previous style.
+      */
+     Style mLastStyle;
      PRPackedBool mDirtyStyle[STYLE_MAX];
  
      // state stack handling
@@ -62,7 +64,7 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
              for (int i = 0; i < STYLE_MAX; i++) {
                  colorStyles[i] = other.colorStyles[i];
                  gradientStyles[i] = other.gradientStyles[i];
-@@ -473,16 +482,17 @@
+@@ -467,16 +476,17 @@
          nsString font;
          nsRefPtr<gfxFontGroup> fontGroup;
          TextAlign textAlign;
@@ -80,7 +82,7 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
          return mStyleStack[mSaveCount];
      }
  
-@@ -723,21 +733,23 @@
+@@ -715,21 +725,23 @@
      nsCanvasPattern* pattern = CurrentState().patternStyles[aWhichStyle];
      if (pattern) {
          if (!mCanvasElement)
@@ -88,43 +90,41 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
  
          DoDrawImageSecurityCheck(pattern->Principal(),
                                   pattern->GetForceWriteOnly());
-         pattern->Apply(mCairo);
+         pattern->Apply(mThebes);
 +        ApplyQualityHints();
          return;
      }
  
      if (CurrentState().gradientStyles[aWhichStyle]) {
-         CurrentState().gradientStyles[aWhichStyle]->Apply(mCairo);
+         CurrentState().gradientStyles[aWhichStyle]->Apply(mThebes);
 +        ApplyQualityHints();
          return;
      }
  
-     SetCairoColor(CurrentState().colorStyles[aWhichStyle]);
+     SetThebesColor(CurrentState().colorStyles[aWhichStyle]);
  }
  
  nsresult
  nsCanvasRenderingContext2D::Redraw()
-@@ -2530,16 +2542,19 @@
-     cairo_pattern_set_matrix(pat, &surfMat);
+@@ -2573,16 +2585,17 @@
+     pattern = new gfxPattern(imgsurf);
+     pattern->SetMatrix(matrix);
  
-     old_path = cairo_copy_path(mCairo);
-     cairo_save(mCairo);
-     cairo_translate(mCairo, dx, dy);
-     cairo_new_path(mCairo);
-     cairo_rectangle(mCairo, 0, 0, dw, dh);
-     cairo_set_source(mCairo, pat);
-+
+     path = mThebes->CopyPath();
+ 
+     mThebes->Save();
+     mThebes->Translate(gfxPoint(dx, dy));
+     mThebes->SetPattern(pattern);
 +    ApplyQualityHints();
-+
-     cairo_clip(mCairo);
-     cairo_paint_with_alpha(mCairo, CurrentState().globalAlpha);
-     cairo_restore(mCairo);
+     mThebes->Clip(gfxRect(0, 0, dw, dh));
+     mThebes->Paint(CurrentState().globalAlpha);
+     mThebes->Restore();
  
  #if 1
-     // XXX cairo bug workaround; force a clip update on mCairo.
+     // XXX cairo bug workaround; force a clip update on mThebes.
      // Otherwise, a pixman clip gets left around somewhere, and pixman
      // (Render) does source clipping as well -- so we end up
-@@ -3057,16 +3072,67 @@
+@@ -3100,16 +3113,67 @@
      jsval *retvalPtr;
      ncc->GetRetValPtr(&retvalPtr);
      *retvalPtr = OBJECT_TO_JSVAL(result);
@@ -196,7 +196,7 @@ Index: mozilla/content/canvas/test/Makefile.in
 ===================================================================
 --- mozilla.orig/content/canvas/test/Makefile.in
 +++ mozilla/content/canvas/test/Makefile.in
-@@ -481,16 +481,17 @@
+@@ -482,16 +482,17 @@
  	test_2d.imageData.put.type.onepixel.html \
  	test_2d.imageData.put.type.extra.html \
  	test_2d.imageData.put.type.missing.html \

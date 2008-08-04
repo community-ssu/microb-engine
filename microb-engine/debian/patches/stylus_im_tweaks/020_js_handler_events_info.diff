@@ -4,11 +4,11 @@ Index: mozilla/content/events/src/nsEventListenerManager.cpp
 ===================================================================
 --- mozilla.orig/content/events/src/nsEventListenerManager.cpp
 +++ mozilla/content/events/src/nsEventListenerManager.cpp
-@@ -1198,16 +1198,18 @@
-             nsEventDispatcher::CreateEvent(aPresContext, aEvent,
+@@ -1176,16 +1176,18 @@
                                             EmptyString(), aDOMEvent);
            }
            if (*aDOMEvent) {
+             nsRefPtr<nsIDOMEventListener> kungFuDeathGrip = ls->mListener;
              if (useTypeInterface) {
                DispatchToInterface(*aDOMEvent, ls->mListener,
                                    dispData->method, *typeData->iid);
@@ -27,7 +27,7 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
 ===================================================================
 --- mozilla.orig/content/events/src/nsDOMEvent.cpp
 +++ mozilla/content/events/src/nsDOMEvent.cpp
-@@ -289,16 +289,23 @@
+@@ -352,16 +352,23 @@
      *aEventPhase = nsIDOMEvent::BUBBLING_PHASE;
    } else {
      *aEventPhase = 0;

@@ -55,7 +55,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -53,24 +53,26 @@
+@@ -53,24 +53,24 @@
  MOZ_APP_DISPLAYNAME = @MOZ_APP_DISPLAYNAME@
  MOZ_APP_VERSION = @MOZ_APP_VERSION@
  
@@ -76,13 +76,11 @@ Index: mozilla/config/autoconf.mk.in
 -sdkdir		= $(libdir)/$(MOZ_APP_NAME)-devel-$(MOZ_APP_VERSION)
 +installdir	= $(libdir)/$(MOZ_APP_NAME)
 +sdkdir		= $(libdir)/$(MOZ_APP_NAME)-devel
-+mozappdir	= $(libdir)/$(MOZ_APP_NAME)
-+mredir		= $(libdir)/mre/mre
  
  DIST		= $(DEPTH)/dist
  LIBXUL_SDK      = @LIBXUL_SDK@
  
+ L10NBASEDIR     = @L10NBASEDIR@
+ 
  ifdef LIBXUL_SDK
  LIBXUL_DIST = $(LIBXUL_SDK)
- else
- LIBXUL_DIST = $(DIST)

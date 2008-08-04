@@ -10,7 +10,6 @@ buildconfig/016_nsCaretXUL.diff
 buildconfig/017_BUG434075.diff
 buildconfig/018_AutoConfig_basic_profile.diff
 buildconfig/020_cs2007_rpath_wr.diff
-buildconfig/021_445745.buidlfix.diff
 buildconfig/022_geolocation_nolibxul.diff
 
 branding/010_MICROB_paths_and_names.diff
@@ -100,11 +99,6 @@ perf_tweaks/HiddingLibxulSymbols.diff
 #perf_tweaks/gmail_performance.diff
 perf_tweaks/css_erros_parsing_disable.diff
 
-# Borders
-perf_tweaks/attachment.cgi?id=328620.diff
-perf_tweaks/attachment.cgi?id=329699.diff
-perf_tweaks/attachment.cgi?id=330443.diff
-
 #Startup perf
 BMO_attached/030_attachment.cgi?id=297001.diff
 BMO_attached/040_attachment.cgi?id=303172.diff
@@ -122,8 +116,6 @@ BMO_attached/060_attachment.cgi?id=322955.diff
 #zooming/030_TrueZoomMode.diff
 
 perf_tweaks/enable_16bpp_format.diff
-#perf_tweaks/bug386440_prop2.diff
-crashes/attachment.cgi?id=330650.diff
 
 perf_tweaks/bug446376_easy.diff
 

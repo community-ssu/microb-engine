@@ -1,3 +1,9 @@
+microb-engine (20080616-62) unstable; urgency=low
+
+  * Updated to trunk 2008-08-04, 16350:d3f02cb5bc65
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 04 Aug 2008 14:02:41 +0300
+
 microb-engine (20080616-61) unstable; urgency=low
 
   * Fixed password manager 

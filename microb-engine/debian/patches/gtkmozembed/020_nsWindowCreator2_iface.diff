@@ -1,11 +1,11 @@
-Index: src/EmbedPrivate.cpp
+Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
 ===================================================================
-RCS file: /cvsroot/mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp,v
-retrieving revision 1.93
-diff -p -u -5 -r1.93 EmbedPrivate.cpp
---- mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp	30 Jan 2008 04:28:26 -0000	1.93
-+++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp	17 Jun 2008 08:06:06 -0000
-@@ -486,10 +487,11 @@ EmbedPrivate::ApplyChromeMask()
+--- mozilla.orig/embedding/browser/gtk/src/EmbedPrivate.cpp
++++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
+@@ -488,16 +488,17 @@
+    }
+ }
+ 
  
  void
  EmbedPrivate::SetChromeMask(PRUint32 aChromeMask)
@@ -17,17 +17,20 @@ diff -p -u -5 -r1.93 EmbedPrivate.cpp
  }
  
  
-Index: src/EmbedWindow.cpp
+ /* static */
+ void
+ EmbedPrivate::PushStartup(void)
+Index: mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
 ===================================================================
-RCS file: /cvsroot/mozilla/embedding/browser/gtk/src/EmbedWindow.cpp,v
-retrieving revision 1.44
-diff -p -u -5 -r1.44 EmbedWindow.cpp
---- mozilla/embedding/browser/gtk/src/EmbedWindow.cpp	30 Jan 2008 04:28:26 -0000	1.44
-+++ mozilla/embedding/browser/gtk/src/EmbedWindow.cpp	17 Jun 2008 10:22:31 -0000
-@@ -40,10 +40,11 @@
+--- mozilla.orig/embedding/browser/gtk/src/EmbedWindow.cpp
++++ mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
+@@ -38,16 +38,17 @@
+  *
+  * ***** END LICENSE BLOCK ***** */
  
  #include "nsCWebBrowser.h"
  #include "nsIComponentManager.h"
+ #include "nsComponentManagerUtils.h"
  #include "nsIDocShellTreeItem.h"
  #include "nsIWidget.h"
 +#include "nsThreadUtils.h"
@@ -36,7 +39,13 @@ diff -p -u -5 -r1.44 EmbedWindow.cpp
  #include "EmbedPrivate.h"
  #include "EmbedPrompter.h"
  
-@@ -73,11 +74,12 @@ EmbedWindow::Init(EmbedPrivate *aOwner)
+ GtkWidget *EmbedWindow::sTipWindow = nsnull;
+ 
+ EmbedWindow::EmbedWindow(void)
+@@ -71,17 +72,18 @@
+   // create our nsIWebBrowser object and set up some basic defaults.
+   mWebBrowser = do_CreateInstance(NS_WEBBROWSER_CONTRACTID);
+   if (!mWebBrowser)
      return NS_ERROR_FAILURE;
  
    mWebBrowser->SetContainerWindow(static_cast<nsIWebBrowserChrome *>(this));
@@ -50,7 +59,13 @@ diff -p -u -5 -r1.44 EmbedWindow.cpp
  }
  
  nsresult
-@@ -201,18 +203,30 @@ EmbedWindow::SizeBrowserTo(PRInt32 aCX, 
+ EmbedWindow::CreateWindow(void)
+ {
+   nsresult rv;
+@@ -199,24 +201,36 @@
+ NS_IMETHODIMP
+ EmbedWindow::SizeBrowserTo(PRInt32 aCX, PRInt32 aCY)
+ {
    g_signal_emit(G_OBJECT(mOwner->mOwningWidget),
                  moz_embed_signals[SIZE_TO], 0, aCX, aCY);
    return NS_OK;
@@ -82,7 +97,13 @@ diff -p -u -5 -r1.44 EmbedWindow.cpp
  
  NS_IMETHODIMP
  EmbedWindow::IsWindowModal(PRBool *_retval)
-@@ -227,11 +241,10 @@ EmbedWindow::ExitModalEventLoop(nsresult
+ {
+   *_retval = mIsModal;
+   return NS_OK;
+@@ -225,17 +239,16 @@
+ NS_IMETHODIMP
+ EmbedWindow::ExitModalEventLoop(nsresult aStatus)
+ {
    if (mIsModal) {
      GtkWidget *toplevel;
      toplevel = gtk_widget_get_toplevel(GTK_WIDGET(mOwner->mOwningWidget));
@@ -94,3 +115,6 @@ diff -p -u -5 -r1.44 EmbedWindow.cpp
  }
  
  // nsIWebBrowserChromeFocus
+ 
+ NS_IMETHODIMP
+ EmbedWindow::FocusNextElement()
