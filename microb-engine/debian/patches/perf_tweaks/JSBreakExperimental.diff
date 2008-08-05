@@ -84,7 +84,7 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
  
  // The accumulated operation weight before we call MaybeGC
 -const PRUint32 MAYBE_GC_OPERATION_WEIGHT = 5000 * JS_OPERATION_WEIGHT_BASE;
-+const PRUint32 MAYBE_GC_OPERATION_WEIGHT = 500 * JS_OPERATION_WEIGHT_BASE;
++const PRUint32 MAYBE_GC_OPERATION_WEIGHT = 1000 * JS_OPERATION_WEIGHT_BASE;
  
  static void
  MaybeGC(JSContext *cx)
