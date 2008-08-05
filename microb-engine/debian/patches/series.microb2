@@ -107,7 +107,7 @@ BMO_attached/050_attachment.cgi?id=322579.diff
 #JS Perf
 BMO_attached/060_attachment.cgi?id=322955.diff
 
-#perf_tweaks/JSBreakExperimental.diff
+perf_tweaks/JSBreakExperimental.diff
 
 #perf_tweaks/FontsRenderingHacks.diff
 
@@ -119,6 +119,7 @@ perf_tweaks/enable_16bpp_format.diff
 
 perf_tweaks/bug446376_easy.diff
 
+not_sorted/others/400_bigger_ua_string_length_61630.diff
 not_sorted/002_drawingMissingGlyphs.diff
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************

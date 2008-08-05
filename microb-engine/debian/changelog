@@ -1,3 +1,9 @@
+microb-engine (20080616-65) unstable; urgency=low
+
+  * Fixed responsive UI while JS running 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue,  5 Aug 2008 03:13:24 +0300
+
 microb-engine (20080616-64) unstable; urgency=low
 
   * Disable media and ogg support by config 
