@@ -1,4 +1,3 @@
-buildconfig/004_BUG393707.fast.build.fix.diff
 buildconfig/006_Toolkit_NoPlacesNoRDF.diff
 buildconfig/007_BUILD_CONFIG_xul_manual_enable.diff
 buildconfig/008_BrowserNotUsedHeaders.diff

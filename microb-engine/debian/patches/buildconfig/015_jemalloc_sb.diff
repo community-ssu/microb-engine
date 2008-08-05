@@ -1,3 +1,4 @@
+# compile workarround for cs3.4.4 
 Index: mozilla/memory/jemalloc/Makefile.in
 ===================================================================
 --- mozilla.orig/memory/jemalloc/Makefile.in

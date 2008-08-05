@@ -1,3 +1,4 @@
+# Bug 445934  Layout linking broken in NS_OSSO disable-libxul configuration
 --- mozilla/layout/build/Makefile.in.orig	2008-07-17 23:15:17.000000000 +0300
 +++ mozilla/layout/build/Makefile.in	2008-07-18 09:29:42.000000000 +0300
 @@ -238,10 +238,14 @@ ifdef MOZ_ENABLE_GTK2
