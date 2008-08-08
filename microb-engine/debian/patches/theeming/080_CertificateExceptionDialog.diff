@@ -1,0 +1,91 @@
+--- mozilla/dom/locales/en-US/chrome/netErrorApp.dtd.orig	2008-08-07 11:46:09.000000000 +0300
++++ mozilla/dom/locales/en-US/chrome/netErrorApp.dtd	2008-08-06 15:13:12.000000000 +0300
+@@ -1,9 +1,13 @@
+ <!-- Error messages that are likely to be overridden by applications go in this
+      file, all messages that likely don't need to tie into app-specific UI
+      should go into netError.dtd -->
+ 
+ <!ENTITY securityOverride.linkText "Or you can add an exception…">
++<!ENTITY securityOverride.getMeOutOfHereButton "Get me out of here!">
++<!ENTITY securityOverride.exceptionButtonLabel "Add Exception…">
+ <!ENTITY securityOverride.warningText "
+ <p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p>
+-<p>If you still wish to add an exception for this site, you can do so in your advanced encryption settings.</p>
++
++<xul:button xmlns:xul='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul' id='getMeOutOfHereButton' label='&securityOverride.getMeOutOfHereButton;'/>
++<xul:button xmlns:xul='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul' id='exceptionDialogButton' label='&securityOverride.exceptionButtonLabel;'/>
+ ">
+--- mozilla/security/manager/pki/resources/content/exceptionDialog.js.orig	2008-08-07 11:42:34.000000000 +0300
++++ mozilla/security/manager/pki/resources/content/exceptionDialog.js	2008-08-06 15:16:09.000000000 +0300
+@@ -75,35 +75,38 @@ function initExceptionDialog() {
+   gDialog = document.documentElement;
+   gBundleBrand = srGetStrBundle("chrome://branding/locale/brand.properties");
+   gPKIBundle = srGetStrBundle("chrome://pippki/locale/pippki.properties");
+ 
+   var brandName = gBundleBrand.GetStringFromName("brandShortName");
+   
+   setText("warningText", gPKIBundle.formatStringFromName("addExceptionBrandedWarning2",
+                                                          [brandName], 1));
+   gDialog.getButton("extra1").disabled = true;
+   
+-  var args = window.arguments;
+-  if (args && args[0]) {
+-    if (args[0].location) {
+-      // We were pre-seeded with a location.
+-      document.getElementById("locationTextBox").value = args[0].location;
++  var args = window.arguments[0];
++  var paramBlock = args.QueryInterface(Components.interfaces.nsIDialogParamBlock);
++  var prefetchCert = paramBlock.GetInt(1);
++  var location = paramBlock.GetString(0);
++  if (paramBlock) {
++    if (location) {
++      // Pre-seeded with a location.
++      document.getElementById('locationTextBox').value = location;
+       document.getElementById('checkCertButton').disabled = false;
+       
+       // We can optionally pre-fetch the certificate too
+-      if (args[0].prefetchCert)
++      if (prefetchCert)
+         checkCert();
+     }
+-    
+-    // Set out parameter to false by default
+-    args[0].exceptionAdded = false; 
+   }
++    
++  // Set out parameter "exceptionAdded" to false by default
++  paramBlock.SetInt(0, 0);
+ }
+ 
+ // returns true if found and global status could be set
+ function findRecentBadCert(uri) {
+   try {
+     var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
+                          .getService(Components.interfaces.nsIRecentBadCertsService);
+     if (!recentCertsSvc)
+       return false;
+ 
+@@ -342,16 +345,20 @@ function addException() {
+   
+   var permanentCheckbox = document.getElementById("permanent");
+ 
+   var uri = getURI();
+   overrideService.rememberValidityOverride(
+     uri.asciiHost, uri.port,
+     gCert,
+     flags,
+     !permanentCheckbox.checked);
+   
+-  var args = window.arguments;
+-  if (args && args[0])
+-    args[0].exceptionAdded = true;
++  var args = window.arguments[0];
++  var paramBlock = args.QueryInterface(Components.interfaces.nsIDialogParamBlock);
++  if (args && paramBlock)
++  {
++    // Set the exceptionAdded to true
++    paramBlock.SetInt(0, 1);
++  }
+   
+   gDialog.acceptDialog();
+ }

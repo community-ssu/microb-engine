@@ -53,6 +53,7 @@ theeming/030_BUG204011_theme_change.diff
 theeming/040_disable_F6_focus.diff
 theeming/060_Theeming_NO_XUL.diff
 theeming/070_RadioCheckButtonsHildons.diff
+theeming/080_CertificateExceptionDialog.diff
 
 xpinstaller/01_ConfirmNoXul.diff
 xpinstaller/04_ChromeRegistrationWithRDFwithoutXUL.diff

@@ -33,7 +33,7 @@ ac_add_options --disable-js-binary
 
    #* Missing environment
 ac_add_options --disable-crashreporter --disable-mochitest
-ac_add_options --disable-dbus
+#ac_add_options --disable-dbus
 ac_add_options --disable-ogg
 
 
@@ -62,7 +62,7 @@ ac_add_options --enable-xpfe-components # Will add only directory+ftp viewer wit
 #ac_add_options --enable-postscript # + 133512 bytes + printing support
 #ac_add_options --enable-oji # Java Plugin
 #ac_add_options --enable-mathml --enable-view-source
-#ac_add_options --enable-dbus # Is it usefull?
+ac_add_options --enable-dbus # Is it usefull?
 
    #* Not Official disables/enables
 ac_add_options --disable-xinerama # ???
@@ -91,7 +91,7 @@ ac_add_options --enable-jarmodule
    #* Should be enabled in Micro base
 ac_add_options --enable-necko-protocols="about data http file res ftp"
 ac_add_options --enable-chrome-format=flat
-ac_add_options --enable-extensions="gnomevfs ftv" # spatialnavigation"
+#ac_add_options --enable-extensions="gnomevfs ftv" # spatialnavigation"
 ac_add_options --enable-image-decoders="png gif jpeg bmp"
 ac_add_options --enable-image-encoders="png jpeg" #Disabling of this required 010_XULRunner_minimal_linking.diff patch
 
