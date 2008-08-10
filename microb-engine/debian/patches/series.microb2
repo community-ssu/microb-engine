@@ -102,10 +102,8 @@ perf_tweaks/css_erros_parsing_disable.diff
 #Startup perf
 BMO_attached/030_attachment.cgi?id=297001.diff
 BMO_attached/040_attachment.cgi?id=303172.diff
-BMO_attached/050_attachment.cgi?id=322579.diff
 
 #JS Perf
-BMO_attached/060_attachment.cgi?id=322955.diff
 
 perf_tweaks/JSBreakExperimental.diff
 
@@ -121,6 +119,10 @@ perf_tweaks/bug446376_easy.diff
 
 not_sorted/others/400_bigger_ua_string_length_61630.diff
 not_sorted/002_drawingMissingGlyphs.diff
+
+#qt/010_attachment.cgi?id=333090.diff
+#qt/020_attachment.cgi?id=333029.diff
+#qt/030_nonconf.diff
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail

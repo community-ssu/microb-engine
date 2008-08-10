@@ -3,7 +3,7 @@ Index: mozilla/toolkit/library/libxul-export.map
 ===================================================================
 --- /dev/null
 +++ mozilla/toolkit/library/libxul-export.map
-@@ -0,0 +1,29 @@
+@@ -0,0 +1,30 @@
 +{
 +  global:
 +	_GLOBAL_OFFSET_TABLE_;
@@ -31,6 +31,7 @@ Index: mozilla/toolkit/library/libxul-export.map
 +   gtk_moz_*;
 +   *gfx*;
 +   *XRE*;
++   *QGecko*;
 +  local: *;
 +};
 Index: mozilla/toolkit/library/libxul-rules.mk

@@ -1,33 +1,8 @@
---- mozilla/configure.in.orig	2008-05-20 19:56:39.000000000 +0300
-+++ mozilla/configure.in	2008-05-20 20:57:55.000000000 +0300
-@@ -938,21 +938,21 @@ MOZ_JPEG_CFLAGS=
- MOZ_JPEG_LIBS='$(call EXPAND_LIBNAME_PATH,mozjpeg,$(DEPTH)/jpeg)'
- MOZ_ZLIB_CFLAGS=
- MOZ_ZLIB_LIBS='$(call EXPAND_LIBNAME_PATH,mozz,$(DEPTH)/modules/zlib/src)'
- MOZ_BZ2_CFLAGS=
- MOZ_BZ2_LIBS='$(call EXPAND_LIBNAME_PATH,bz2,$(DEPTH)/modules/libbz2/src)'
- MOZ_PNG_CFLAGS=
- MOZ_PNG_LIBS='$(call EXPAND_LIBNAME_PATH,mozpng,$(DEPTH)/modules/libimg/png)'
- 
- MOZ_JS_LIBS='-L$(LIBXUL_DIST)/bin -lmozjs'
- DYNAMIC_XPCOM_LIBS='-L$(LIBXUL_DIST)/bin -lxpcom -lxpcom_core'
--MOZ_FIX_LINK_PATHS='-Wl,-rpath-link,$(LIBXUL_DIST)/bin'
-+MOZ_FIX_LINK_PATHS='-Wl,-rpath-link,$(LIBXUL_DIST)/bin:/lib:/usr/lib:/usr/local/lib:/usr/X11R6/lib'
- XPCOM_FROZEN_LDOPTS='-L$(LIBXUL_DIST)/bin -lxpcom'
- LIBXUL_LIBS='$(XPCOM_FROZEN_LDOPTS) -lxul'
- XPCOM_GLUE_LDOPTS='$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue_s.$(LIB_SUFFIX) $(XPCOM_FROZEN_LDOPTS)'
- XPCOM_STANDALONE_GLUE_LDOPTS='$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue.$(LIB_SUFFIX)'
- 
- MOZ_COMPONENT_NSPR_LIBS='-L$(LIBXUL_DIST)/bin $(NSPR_LIBS)'
- MOZ_XPCOM_OBSOLETE_LIBS='-L$(LIBXUL_DIST)/lib -lxpcom_compat'
- 
- USE_DEPENDENT_LIBS=1
- 
---- mozilla/security/nss/cmd/platlibs.mk.orig	2008-02-25 23:32:33.000000000 +0200
-+++ mozilla/security/nss/cmd/platlibs.mk	2008-05-20 20:58:42.000000000 +0300
-@@ -237,21 +237,21 @@ EXTRA_LIBS += \
- 	$(NULL)
- 
+Index: mozilla/security/nss/cmd/platlibs.mk
+===================================================================
+--- mozilla.orig/security/nss/cmd/platlibs.mk
++++ mozilla/security/nss/cmd/platlibs.mk
+@@ -239,17 +239,17 @@
  ifeq ($(OS_ARCH), AIX) 
  EXTRA_SHARED_LIBS += -brtl 
  endif
@@ -46,5 +21,3 @@
  EXTRA_SHARED_LIBS += -Wl,-rpath-link,$(DIST)/lib
  endif
  endif
- endif
- 

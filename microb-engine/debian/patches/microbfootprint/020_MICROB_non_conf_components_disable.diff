@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4788,16 +4788,21 @@
+@@ -4809,16 +4809,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -26,10 +26,10 @@ Index: mozilla/configure.in
  fi
  
  if test "$COMPILE_ENVIRONMENT"; then
- if test "$MOZ_ENABLE_GTK2"
- then
-     PKG_CHECK_MODULES(MOZ_GTK2, gtk+-2.0 >= $GTK2_VERSION gtk+-unix-print-2.0 gdk-x11-2.0 glib-2.0 gobject-2.0)
-@@ -4844,17 +4849,16 @@
+   if test "$MOZ_ENABLE_GTK2"; then
+     if test "$MOZ_X11"; then
+       GDK_PACKAGES=gdk-x11-2.0
+@@ -4872,17 +4877,16 @@
  AC_SUBST(GTK_CONFIG)
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
@@ -44,10 +44,10 @@ Index: mozilla/configure.in
  
  AC_SUBST(MOC)
  
- if test "$MOZ_ENABLE_GTK2"
- then
-     AC_DEFINE(MOZ_X11)
-@@ -6061,22 +6065,164 @@
+ AC_SUBST(MOZ_DFB)
+ AC_SUBST(MOZ_X11)
+ 
+@@ -6113,22 +6117,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7503,35 +7649,54 @@
+@@ -7555,35 +7701,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7804,16 +7969,21 @@
+@@ -7856,16 +8021,21 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8133,16 +8303,22 @@
+@@ -8185,16 +8355,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -322,7 +322,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -155,16 +155,27 @@
+@@ -158,16 +158,27 @@
  MOZ_PROFILESHARING = @MOZ_PROFILESHARING@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@
@@ -538,7 +538,8 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/Makefile.in
 +++ mozilla/widget/src/gtk2/Makefile.in
-@@ -94,26 +94,41 @@
+@@ -96,18 +96,16 @@
+ 		nsWindow.cpp \
  		nsAppShell.cpp \
  		nsWidgetFactory.cpp \
  		nsToolkit.cpp \
@@ -546,8 +547,6 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  		nsCommonWidget.cpp \
  		nsLookAndFeel.cpp \
  		nsGtkKeyUtils.cpp \
- 		nsClipboard.cpp \
--		nsDragService.cpp \
 -		nsFilePicker.cpp \
 -		nsSound.cpp \
  		nsNativeKeyBindings.cpp \
@@ -557,15 +556,27 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  		nsAccessibilityHelper.cpp \
  		$(NULL)
  
+ ifdef NS_OSSO
+@@ -124,19 +122,35 @@
+ 		nsPrintOptionsGTK.cpp \
+ 		nsPrintDialogGTK.cpp \
+ 		nsPrintSettingsGTK.cpp \
+ 		$(NULL)
+ endif
+ 
+ ifdef MOZ_X11
+ CPPSRCS += 	nsClipboard.cpp \
++		$(NULL)
++ifndef MOZ_NO_DRAGSERVICE
++CPPSRCS		+= \
+ 		nsDragService.cpp \
+ 		$(NULL)
+ endif
++endif
++
 +ifndef MOZ_NO_GTKSOUND
 +CPPSRCS		+= \
 +		nsSound.cpp \
-+		$(NULL)
-+endif
-+
-+ifndef MOZ_NO_DRAGSERVICE
-+CPPSRCS		+= \
-+		nsDragService.cpp \
 +		$(NULL)
 +endif
 +
@@ -574,16 +585,15 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 +		nsFilePicker.cpp \
 +		$(NULL)
 +endif
-+
- ifdef NS_OSSO
- CPPSRCS         += nsIdleServiceOSSO.cpp
- else
- CPPSRCS         += nsIdleServiceGTK.cpp
+ 
+ # build our subdirs, too
+ ifdef ACCESSIBILITY
+ REQUIRES	+= accessibility
  endif
  
- ifdef NS_PRINTING
- CPPSRCS		+= \
-@@ -156,17 +171,17 @@
+ SHARED_LIBRARY_LIBS = ../xpwidgets/libxpwidgets_s.a
+ 
+@@ -168,17 +182,17 @@
  DEFINES		+= -DNATIVE_THEME_SUPPORT
  endif
  
@@ -606,17 +616,18 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWidgetFactory.cpp
 +++ mozilla/widget/src/gtk2/nsWidgetFactory.cpp
-@@ -42,19 +42,25 @@
- #include "nsAppShellSingleton.h"
+@@ -43,20 +43,26 @@
  #include "nsBaseWidget.h"
  #include "nsLookAndFeel.h"
  #include "nsWindow.h"
  #include "nsTransferable.h"
- #include "nsClipboardHelper.h"
  #include "nsHTMLFormatConverter.h"
+ #ifdef MOZ_X11
+ #include "nsClipboardHelper.h"
  #include "nsClipboard.h"
 +#ifndef MOZ_NO_DRAGSERVICE
  #include "nsDragService.h"
+ #endif
 +#endif
 +#ifndef MOZ_NO_FILEPICKER
  #include "nsFilePicker.h"
@@ -632,17 +643,18 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  #include "nsPrintOptionsGTK.h"
  #include "nsPrintSession.h"
  #include "nsDeviceContextSpecG.h"
-@@ -90,18 +96,22 @@
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsWindow)
+@@ -93,19 +99,23 @@
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsChildWindow)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsLookAndFeel)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsTransferable)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsBidiKeyboard)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboardHelper)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsHTMLFormatConverter)
+ #ifdef MOZ_X11
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboardHelper)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsClipboard, Init)
 +#ifndef MOZ_NO_DRAGSERVICE
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsDragService)
+ #endif
 +#endif
 +#ifndef MOZ_NO_GTKSOUND
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsSound)
@@ -653,9 +665,9 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  #endif
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsImageToPixbuf)
  
- #ifdef NS_OSSO
+ #if defined(NS_OSSO)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsIdleServiceOSSO)
-@@ -112,16 +122,17 @@
+@@ -116,16 +126,17 @@
  #ifdef NS_PRINTING
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsDeviceContextSpecGTK)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintOptionsGTK, Init)
@@ -673,7 +685,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
    if (aOuter != nsnull) {
      return NS_ERROR_NO_AGGREGATION;
    }
-@@ -145,16 +156,17 @@
+@@ -149,16 +160,17 @@
    }
  
    if (!picker) {
@@ -691,7 +703,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  {
      nsresult rv;
  
-@@ -208,40 +220,46 @@
+@@ -212,42 +224,48 @@
      { "Gtk2 AppShell",
        NS_APPSHELL_CID,
        "@mozilla.org/widget/appshell/gtk;1",
@@ -716,6 +728,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
      NS_TRANSFERABLE_CID,
      "@mozilla.org/widget/transferable;1",
      nsTransferableConstructor },
+ #ifdef MOZ_X11
    { "Gtk Clipboard",
      NS_CLIPBOARD_CID,
      "@mozilla.org/widget/clipboard;1",
@@ -729,6 +742,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
      NS_DRAGSERVICE_CID,
      "@mozilla.org/widget/dragservice;1",
      nsDragServiceConstructor },
+ #endif
 +#endif
    { "HTML Format Converter",
      NS_HTMLFORMATCONVERTER_CID,
@@ -738,9 +752,9 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
      NS_BIDIKEYBOARD_CID,
      "@mozilla.org/widget/bidikeyboard;1",
      nsBidiKeyboardConstructor },
-@@ -307,18 +325,22 @@
+@@ -313,18 +331,22 @@
      nsIdleServiceGTKConstructor },
- #endif //NS_OSSO
+ #endif
  
  };
  
@@ -1046,7 +1060,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
  COMPONENT_LIBS += \
  	xmlextras \
  	$(NULL)
-@@ -342,8 +339,27 @@
+@@ -344,8 +341,27 @@
  
  ifneq (,$(filter layout-debug,$(MOZ_EXTENSIONS)))
  COMPONENT_LIBS += gkdebug
@@ -1213,7 +1227,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  #include "nsIExtensionManager.h"
  #include "nsIFastLoadService.h" // for PLATFORM_FASL_SUFFIX
  #include "nsIGenericFactory.h"
-@@ -1119,25 +1121,27 @@
+@@ -1121,25 +1123,27 @@
    {
      nsXREDirProvider dirProvider;
      dirProvider.Initialize(nsnull, gAppData->xreDirectory);
@@ -1241,7 +1255,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  // here, or in a native resource file.
  static void
  DumpHelp()
-@@ -3047,35 +3051,39 @@
+@@ -3053,35 +3057,39 @@
            gDoMigration = PR_FALSE;
            nsCOMPtr<nsIProfileMigrator> pm
              (do_CreateInstance(NS_PROFILEMIGRATOR_CONTRACTID));
@@ -1281,7 +1295,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  
  #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
          nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
-@@ -3090,40 +3098,48 @@
+@@ -3096,40 +3104,48 @@
            NS_ENSURE_TRUE(em, 1);
  
            ar = CheckArg("install-global-extension", PR_TRUE);
@@ -1330,7 +1344,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
          if (noEMRestart && *noEMRestart && *noEMRestart == '1') {
            if (upgraded || needsRestart) {
              NS_WARNING("EM tried to force us to restart twice! Forcefully preventing that.");
-@@ -3161,18 +3177,20 @@
+@@ -3167,18 +3183,20 @@
            // Prepare Cocoa's form of Apple Event handling.
            SetupMacApplicationDelegate();
  #endif
@@ -1376,7 +1390,7 @@ Index: mozilla/toolkit/toolkit-tiers.mk
  tier_gecko_dirs += \
  		js/src/xpconnect \
  		intl/chardet \
-@@ -88,20 +90,25 @@
+@@ -90,20 +92,25 @@
  endif
  
  ifdef MOZ_IPCD
@@ -1463,10 +1477,34 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  gfxPlatform::~gfxPlatform()
  {
      // The cairo folks think we should only clean up in debug builds,
-@@ -503,16 +507,17 @@
+@@ -477,16 +481,17 @@
+ PRBool
+ gfxPlatform::GetRenderingIntent()
+ {
+     /* -2 means that we haven't tried querying the pref service yet. */
+     static int sIntent = -2;
+ 
+     if (sIntent == -2) {
+ 
++#ifndef MOZ_NO_LCMS
+         /* Try to query the pref system for a rendering intent. */
+         nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+         if (prefs) {
+             PRInt32 pIntent;
+             nsresult rv = prefs->GetIntPref("gfx.color_management.rendering_intent", 
+                                             &pIntent);
+             if (NS_SUCCEEDED(rv)) {
+               
+@@ -498,21 +503,23 @@
+                 else
+                     sIntent = -1;
+             }
+         }
+ 
          /* If we didn't get a valid intent from prefs, use the default. */
          if (sIntent == -2) 
              sIntent = INTENT_DEFAULT;
++#endif
      }
      return sIntent;
  }
@@ -1481,7 +1519,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  
  cmsHPROFILE
  gfxPlatform::GetCMSOutputProfile()
-@@ -614,8 +619,9 @@
+@@ -614,8 +621,9 @@
  
          gCMSRGBATransform = cmsCreateTransform(inProfile, TYPE_RGBA_8,
                                                 outProfile, TYPE_RGBA_8,
@@ -1555,11 +1593,11 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -58,19 +58,21 @@
+@@ -73,19 +73,21 @@
+ #endif
  
- #ifdef MOZ_ENABLE_GLITZ
- #include "gfxGlitzSurface.h"
- #include "glitz-glx.h"
+ #ifdef MOZ_DFB
+ #include "gfxDirectFBSurface.h"
  #endif
  
  #include <fontconfig/fontconfig.h>
@@ -1570,15 +1608,15 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  #include "lcms.h"
 +#endif
  
+ #ifndef MOZ_PANGO
+ #include <ft2build.h>
+ #include FT_FREETYPE_H
+ #endif
+ 
  PRInt32 gfxPlatformGtk::sDPI = -1;
  gfxFontconfigUtils *gfxPlatformGtk::sFontconfigUtils = nsnull;
- 
- static cairo_user_data_key_t cairo_gdk_pixmap_key;
- static void do_gdk_pixmap_unref (void *data)
- {
-     GdkPixmap *pmap = (GdkPixmap*)data;
-@@ -264,16 +266,17 @@
-     g_object_unref (context);
+@@ -546,16 +548,17 @@
+ #endif
  
      if (sDPI <= 0) {
  	// Fall back to something sane
@@ -1590,27 +1628,16 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  cmsHPROFILE
  gfxPlatformGtk::GetPlatformCMSOutputProfile()
  {
+ #ifdef MOZ_X11
      const char EDID1_ATOM_NAME[] = "XFree86_DDC_EDID1_RAWDATA";
      const char ICC_PROFILE_ATOM_NAME[] = "_ICC_PROFILE";
  
      Atom edidAtom, iccAtom;
-     Display *dpy = GDK_DISPLAY();
-@@ -390,8 +393,10 @@
-             }
- #endif
- 
-             return profile;
-         }
-     }
-     return nsnull;
- }
-+#endif
-+
 Index: mozilla/gfx/thebes/public/gfxPlatform.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatform.h
 +++ mozilla/gfx/thebes/public/gfxPlatform.h
-@@ -222,16 +222,17 @@
+@@ -223,16 +223,17 @@
       * valid rendering intent as defined in modules/lcms/include/lcms.h, that
       * value is returned. Otherwise, -1 is returned and the embedded intent
       * should be used.
@@ -1628,7 +1655,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
      /**
       * Return the sRGB ICC profile.
       */
-@@ -246,18 +247,21 @@
+@@ -247,18 +248,21 @@
       * Return output -> sRGB device transform.
       */
      static cmsHTRANSFORM GetCMSInverseRGBTransform();
@@ -1654,8 +1681,8 @@ Index: mozilla/gfx/thebes/public/gfxPlatformGtk.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatformGtk.h
 +++ mozilla/gfx/thebes/public/gfxPlatformGtk.h
-@@ -81,13 +81,15 @@
-     }
+@@ -103,13 +103,15 @@
+     GdkDrawable *GetGdkDrawable(gfxASurface *target);
  
  protected:
      static void InitDPI();
@@ -3185,7 +3212,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2699,16 +2699,17 @@
+@@ -2871,16 +2871,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer
@@ -3203,29 +3230,3 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  
      GdkWindow *innerWindow = get_inner_gdk_window(aWidget->window, aX, aY,
                                                    &retx, &rety);
---- mozilla/gfx/thebes/src/gfxPlatform.cpp.orig	2008-08-04 14:15:42.000000000 +0300
-+++ mozilla/gfx/thebes/src/gfxPlatform.cpp	2008-08-04 14:16:48.000000000 +0300
-@@ -484,10 +484,11 @@ gfxPlatform::GetRenderingIntent()
-     /* -2 means that we haven't tried querying the pref service yet. */
-     static int sIntent = -2;
- 
-     if (sIntent == -2) {
- 
-+#ifndef MOZ_NO_LCMS
-         /* Try to query the pref system for a rendering intent. */
-         nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
-         if (prefs) {
-             PRInt32 pIntent;
-             nsresult rv = prefs->GetIntPref("gfx.color_management.rendering_intent", 
-@@ -505,10 +506,11 @@ gfxPlatform::GetRenderingIntent()
-         }
- 
-         /* If we didn't get a valid intent from prefs, use the default. */
-         if (sIntent == -2) 
-             sIntent = INTENT_DEFAULT;
-+#endif
-     }
-     return sIntent;
- }
- 
- 
