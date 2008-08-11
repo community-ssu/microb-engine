@@ -254,3 +254,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/passwordmgr*
 usr/lib/microb-engine/chrome/pippki.manifest
 usr/lib/microb-engine/chrome/pippki/content/pippki/pippki.js
 usr/lib/microb-engine/chrome/pippki/content/pippki/exceptionDialog.*
+usr/lib/microb-engine/chrome/pippki/content/pippki/viewCertDetails.*
+usr/lib/microb-engine/chrome/pippki/content/pippki/certViewer.xul
+usr/lib/microb-engine/chrome/pippki/content/pippki/certDump.xul
+
