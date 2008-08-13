@@ -1,3 +1,15 @@
+diff -ruN mozilla.orig/configure.in mozilla/configure.in
+--- mozilla.orig/configure.in   2008-08-13 14:49:40.000000000 +0300
++++ mozilla/configure.in        2008-08-13 14:50:56.000000000 +0300
+@@ -965,7 +965,7 @@
+
+ MOZ_JS_LIBS='-L$(LIBXUL_DIST)/bin -lmozjs'
+ DYNAMIC_XPCOM_LIBS='-L$(LIBXUL_DIST)/bin -lxpcom -lxpcom_core'
+-MOZ_FIX_LINK_PATHS='-Wl,-rpath-link,$(LIBXUL_DIST)/bin -Wl,-rpath-link,$(PREFIX)/lib'
++MOZ_FIX_LINK_PATHS='-Wl,-rpath-link,$(LIBXUL_DIST)/bin:/lib:/usr/lib:/usr/local/lib:/usr/X11R6/lib'
+ XPCOM_FROZEN_LDOPTS='-L$(LIBXUL_DIST)/bin -lxpcom'
+ LIBXUL_LIBS='$(XPCOM_FROZEN_LDOPTS) -lxul'
+ XPCOM_GLUE_LDOPTS='$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue_s.$(LIB_SUFFIX) $(XPCOM_FROZEN_LDOPTS)'
 Index: mozilla/security/nss/cmd/platlibs.mk
 ===================================================================
 --- mozilla.orig/security/nss/cmd/platlibs.mk

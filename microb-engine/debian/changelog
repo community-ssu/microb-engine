@@ -1,3 +1,9 @@
+microb-engine (20080616-69) unstable; urgency=low
+
+  * Fixed rpath problem 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Wed, 13 Aug 2008 14:53:10 +0300
+
 microb-engine (20080616-68) unstable; urgency=low
 
   * Fixed compilation problem
