@@ -1633,6 +1633,14 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
      const char ICC_PROFILE_ATOM_NAME[] = "_ICC_PROFILE";
  
      Atom edidAtom, iccAtom;
+@@ -690,6 +690,7 @@
+
+     return nsnull;
+ }
++#endif
+
+
+ #ifndef MOZ_PANGO
 Index: mozilla/gfx/thebes/public/gfxPlatform.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatform.h
