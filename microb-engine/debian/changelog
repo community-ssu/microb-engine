@@ -1,3 +1,9 @@
+microb-engine (20080616-70) unstable; urgency=low
+
+  * Included netError.dtd from overrides.
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 14 Aug 2008 16:47:47 +0300
+
 microb-engine (20080616-69) unstable; urgency=low
 
   * Fixed rpath problem 

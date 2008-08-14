@@ -8,6 +8,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/global/css.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/xbl.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/xul.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout_errors.properties
+usr/lib/microb-engine/chrome/en-US/locale/en-US/global/settingsChange.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/netError.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/netErrorApp.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/global.dtd

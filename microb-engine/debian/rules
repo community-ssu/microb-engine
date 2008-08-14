@@ -484,6 +484,7 @@ endif
 	chmod a-x ./debian/tmp/usr/lib/microb-engine/README.txt
 	chmod a-x ./debian/tmp/usr/lib/microb-engine/LICENSE
 	find ./debian/tmp/usr/lib
+	cp $(builddir)/browser/locales/en-US/chrome/overrides/*.* $(CURDIR)/debian/tmp/usr/lib/microb-engine/chrome/en-US/locale/en-US/global/
 	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
 	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CURDIR)/debian/tmp/usr/include/microb-engine/
 	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/include/nspr $(CURDIR)/debian/tmp/usr/include/microb-engine/
