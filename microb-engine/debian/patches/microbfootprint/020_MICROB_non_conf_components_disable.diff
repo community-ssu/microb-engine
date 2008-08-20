@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4809,16 +4809,21 @@
+@@ -4780,16 +4780,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,8 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4872,17 +4877,16 @@
- AC_SUBST(GTK_CONFIG)
+@@ -4883,17 +4888,16 @@
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
  
@@ -38,16 +37,17 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_ENABLE_PHOTON)
  AC_SUBST(MOZ_ENABLE_COCOA)
  AC_SUBST(MOZ_ENABLE_GLITZ)
+ AC_SUBST(MOZ_ENABLE_QT)
 -AC_SUBST(MOZ_ENABLE_XREMOTE)
  AC_SUBST(MOZ_GTK2_CFLAGS)
  AC_SUBST(MOZ_GTK2_LIBS)
+ AC_SUBST(MOZ_QT_CFLAGS)
+ AC_SUBST(MOZ_QT_LIBS)
  
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
- AC_SUBST(MOZ_X11)
- 
-@@ -6113,22 +6117,164 @@
+@@ -6047,22 +6051,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7555,35 +7701,54 @@
+@@ -7499,35 +7645,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7856,16 +8021,21 @@
+@@ -7800,16 +7965,21 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8185,16 +8355,22 @@
+@@ -8089,16 +8259,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -322,7 +322,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -158,16 +158,27 @@
+@@ -152,16 +152,27 @@
  MOZ_PROFILESHARING = @MOZ_PROFILESHARING@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@
@@ -809,7 +809,7 @@ Index: mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp
  
    if (NS_SUCCEEDED(NativeGetColor(aID, aColor))) {
 +#ifndef MOZ_NO_LCMS
-     if (gfxPlatform::IsCMSEnabled() && !IsSpecialColor(aID, aColor)) {
+     if ((gfxPlatform::GetCMSMode() == eCMSMode_All) && !IsSpecialColor(aID, aColor)) {
        cmsHTRANSFORM transform = gfxPlatform::GetCMSInverseRGBTransform();
        if (transform) {
          PRUint8 color[3];
@@ -1060,7 +1060,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
  COMPONENT_LIBS += \
  	xmlextras \
  	$(NULL)
-@@ -344,8 +341,27 @@
+@@ -355,8 +352,27 @@
  
  ifneq (,$(filter layout-debug,$(MOZ_EXTENSIONS)))
  COMPONENT_LIBS += gkdebug
@@ -1092,7 +1092,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
 ===================================================================
 --- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
 +++ mozilla/toolkit/library/nsStaticXULComponents.cpp
-@@ -202,16 +202,34 @@
+@@ -204,16 +204,34 @@
  #endif
  
  #ifdef MOZ_STORAGE
@@ -1127,7 +1127,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  
  #ifdef MOZ_PLACES
  #define PLACES_MODULES \
-@@ -268,17 +286,17 @@
+@@ -273,17 +291,17 @@
      MODULE(nsUConvModule)                    \
      MODULE(nsI18nModule)                     \
      MODULE(nsChardetModule)                  \
@@ -1146,7 +1146,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      MODULE(nsParserModule)                   \
      GFX_MODULES                              \
      WIDGET_MODULES                           \
-@@ -293,22 +311,22 @@
+@@ -298,22 +316,22 @@
      OJI_MODULES                              \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \
@@ -1207,7 +1207,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
 ===================================================================
 --- mozilla.orig/toolkit/xre/nsAppRunner.cpp
 +++ mozilla/toolkit/xre/nsAppRunner.cpp
-@@ -66,17 +66,19 @@
+@@ -71,17 +71,19 @@
  #include "prenv.h"
  
  #include "nsIAppShellService.h"
@@ -1227,7 +1227,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  #include "nsIExtensionManager.h"
  #include "nsIFastLoadService.h" // for PLATFORM_FASL_SUFFIX
  #include "nsIGenericFactory.h"
-@@ -1121,25 +1123,27 @@
+@@ -1126,25 +1128,27 @@
    {
      nsXREDirProvider dirProvider;
      dirProvider.Initialize(nsnull, gAppData->xreDirectory);
@@ -1255,7 +1255,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  // here, or in a native resource file.
  static void
  DumpHelp()
-@@ -3053,35 +3057,39 @@
+@@ -3072,35 +3076,39 @@
            gDoMigration = PR_FALSE;
            nsCOMPtr<nsIProfileMigrator> pm
              (do_CreateInstance(NS_PROFILEMIGRATOR_CONTRACTID));
@@ -1295,7 +1295,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  
  #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
          nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
-@@ -3096,40 +3104,48 @@
+@@ -3115,40 +3123,48 @@
            NS_ENSURE_TRUE(em, 1);
  
            ar = CheckArg("install-global-extension", PR_TRUE);
@@ -1344,7 +1344,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
          if (noEMRestart && *noEMRestart && *noEMRestart == '1') {
            if (upgraded || needsRestart) {
              NS_WARNING("EM tried to force us to restart twice! Forcefully preventing that.");
-@@ -3167,18 +3183,20 @@
+@@ -3186,18 +3202,20 @@
            // Prepare Cocoa's form of Apple Event handling.
            SetupMacApplicationDelegate();
  #endif
@@ -1421,7 +1421,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatform.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatform.cpp
-@@ -58,17 +58,19 @@
+@@ -60,17 +60,19 @@
  #include "nsIPref.h"
  #include "nsServiceManagerUtils.h"
  
@@ -1441,7 +1441,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  gfxPlatform *gPlatform = nsnull;
  int gGlitzState = -1;
  
-@@ -183,16 +185,17 @@
+@@ -195,16 +197,17 @@
      // started up. That's OK, they can handle it.
      gfxTextRunCache::Shutdown();
      gfxTextRunWordCache::Shutdown();
@@ -1459,7 +1459,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
      if (gCMSInverseRGBTransform) {
          cmsDeleteTransform(gCMSInverseRGBTransform);
          gCMSInverseRGBTransform = nsnull;
-@@ -208,16 +211,17 @@
+@@ -220,16 +223,17 @@
          if (gCMSsRGBProfile == gCMSOutputProfile)
              gCMSsRGBProfile = nsnull;
          gCMSOutputProfile = nsnull;
@@ -1477,7 +1477,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  gfxPlatform::~gfxPlatform()
  {
      // The cairo folks think we should only clean up in debug builds,
-@@ -477,16 +481,17 @@
+@@ -491,16 +495,17 @@
  PRBool
  gfxPlatform::GetRenderingIntent()
  {
@@ -1491,11 +1491,11 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
          nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
          if (prefs) {
              PRInt32 pIntent;
-             nsresult rv = prefs->GetIntPref("gfx.color_management.rendering_intent", 
-                                             &pIntent);
+             nsresult rv = prefs->GetIntPref(CMIntentPrefName, &pIntent);
              if (NS_SUCCEEDED(rv)) {
                
-@@ -498,21 +503,23 @@
+                 /* If the pref is within range, use it as an override. */
+@@ -511,21 +516,23 @@
                  else
                      sIntent = -1;
              }
@@ -1519,16 +1519,24 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  
  cmsHPROFILE
  gfxPlatform::GetCMSOutputProfile()
-@@ -614,8 +621,9 @@
+@@ -638,16 +645,17 @@
  
          gCMSRGBATransform = cmsCreateTransform(inProfile, TYPE_RGBA_8,
                                                 outProfile, TYPE_RGBA_8,
-                                                INTENT_PERCEPTUAL, 0);
+                                                INTENT_PERCEPTUAL, cmsFLAGS_FLOATSHAPER);
      }
  
      return gCMSRGBATransform;
  }
 +#endif /* MOZ_NO_LCMS */
+ 
+ static void MigratePrefs()
+ {
+ 
+     /* Load the pref service. If we don't get it die quietly since this isn't
+        critical code. */
+     nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+     if (!prefs)
 Index: mozilla/gfx/thebes/src/gfxContext.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxContext.cpp
@@ -1563,7 +1571,7 @@ Index: mozilla/gfx/thebes/src/gfxContext.cpp
  gfxContext::SetColor(const gfxRGBA& c)
  {
 +#ifndef MOZ_NO_LCMS
-     if (gfxPlatform::IsCMSEnabled()) {
+     if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
          cmsHTRANSFORM transform = gfxPlatform::GetCMSRGBTransform();
          if (transform) {
  #ifdef IS_LITTLE_ENDIAN
@@ -1593,7 +1601,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -73,19 +73,21 @@
+@@ -75,19 +75,21 @@
  #endif
  
  #ifdef MOZ_DFB
@@ -1615,7 +1623,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  
  PRInt32 gfxPlatformGtk::sDPI = -1;
  gfxFontconfigUtils *gfxPlatformGtk::sFontconfigUtils = nsnull;
-@@ -546,16 +548,17 @@
+@@ -544,16 +546,17 @@
  #endif
  
      if (sDPI <= 0) {
@@ -1633,19 +1641,29 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
      const char ICC_PROFILE_ATOM_NAME[] = "_ICC_PROFILE";
  
      Atom edidAtom, iccAtom;
-@@ -690,6 +690,7 @@
-
+@@ -673,16 +676,17 @@
+ 
+             return profile;
+         }
+     }
+ #endif
+ 
      return nsnull;
  }
 +#endif
-
-
+ 
+ 
  #ifndef MOZ_PANGO
+ FT_Library
+ gfxPlatformGtk::GetFTLibrary()
+ {
+     return gPlatformFTLibrary;
+ }
 Index: mozilla/gfx/thebes/public/gfxPlatform.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatform.h
 +++ mozilla/gfx/thebes/public/gfxPlatform.h
-@@ -223,16 +223,17 @@
+@@ -230,16 +230,17 @@
       * valid rendering intent as defined in modules/lcms/include/lcms.h, that
       * value is returned. Otherwise, -1 is returned and the embedded intent
       * should be used.
@@ -1663,7 +1681,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
      /**
       * Return the sRGB ICC profile.
       */
-@@ -247,18 +248,21 @@
+@@ -254,18 +255,21 @@
       * Return output -> sRGB device transform.
       */
      static cmsHTRANSFORM GetCMSInverseRGBTransform();
@@ -1832,9 +1850,9 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
    png_uint_32 width, height;
    int bit_depth, color_type, interlace_type, compression_type, filter_type;
    unsigned int channels;
-@@ -527,16 +533,17 @@
-     png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, NULL);
-     png_set_expand(png_ptr);
+@@ -544,16 +550,17 @@
+     else
+        png_set_expand(png_ptr);
    }
  
    if (bit_depth == 16)
@@ -1842,7 +1860,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
  
    PRUint32 inType, intent, pIntent;
 +#ifndef MOZ_NO_LCMS
-   if (gfxPlatform::IsCMSEnabled()) {
+   if (gfxPlatform::GetCMSMode() != eCMSMode_Off) {
      intent = gfxPlatform::GetRenderingIntent();
      decoder->mInProfile = PNGGetColorProfile(png_ptr, info_ptr,
                                               color_type, &inType, &pIntent);
@@ -1850,16 +1868,13 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
      if (intent == -1)
        intent = pIntent;
    }
-@@ -557,19 +564,22 @@
-   } else {
-     png_set_gray_to_rgb(png_ptr);
-     if (gfxPlatform::IsCMSEnabled()) {
+@@ -582,17 +589,19 @@
+     if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
        if (color_type & PNG_COLOR_MASK_ALPHA || num_trans)
          decoder->mTransform = gfxPlatform::GetCMSRGBATransform();
        else
          decoder->mTransform = gfxPlatform::GetCMSRGBTransform();
      }
-+
    }
  
 -  if (!decoder->mTransform) {
@@ -1874,7 +1889,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
        }
        png_set_gamma(png_ptr, 2.2, aGamma);
      }
-@@ -644,24 +654,26 @@
+@@ -667,24 +676,26 @@
      png_set_progressive_frame_fn(png_ptr, frame_info_callback, NULL);
    
    if (png_get_first_frame_is_hidden(png_ptr, info_ptr)) {
@@ -1901,7 +1916,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
        longjmp(decoder->mPNG->jmpbuf, 5); // NS_ERROR_OUT_OF_MEMORY
      }
    }
-@@ -722,30 +734,32 @@
+@@ -745,30 +756,32 @@
  
      // we're thebes. we can write stuff directly to the data
      PRUint8 *imageData;
@@ -2019,7 +2034,8 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
  
  
  /** imgIDecoder methods **/
-@@ -330,16 +334,17 @@
+@@ -329,16 +333,17 @@
+     if (jpeg_read_header(&mInfo, TRUE) == JPEG_SUSPENDED) {
        PR_LOG(gJPEGDecoderAccountingLog, PR_LOG_DEBUG,
               ("} (JPEG_SUSPENDED)"));
        return NS_OK; /* I/O suspension */
@@ -2027,17 +2043,16 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
  
      JOCTET  *profile;
      PRUint32 profileLength;
- 
 +#ifndef MOZ_NO_LCMS
-     if (gfxPlatform::IsCMSEnabled() &&
+     eCMSMode cmsMode = gfxPlatform::GetCMSMode();
+ 
+     if ((cmsMode != eCMSMode_Off) &&
          read_icc_profile(&mInfo, &profile, &profileLength) &&
          (mInProfile = cmsOpenProfileFromMem(profile, profileLength)) != NULL) {
        free(profile);
  
        PRUint32 profileSpace = cmsGetColorSpace(mInProfile);
-       PRBool mismatch = PR_FALSE;
- 
-@@ -421,17 +426,19 @@
+@@ -422,17 +427,19 @@
          }
        } else {
  #ifdef DEBUG_tor
@@ -2058,7 +2073,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
          break;
        case JCS_CMYK:
        case JCS_YCCK:
-@@ -542,17 +549,21 @@
+@@ -543,17 +550,21 @@
      /* Step 5: Start decompressor */
      if (jpeg_start_decompress(&mInfo) == FALSE) {
        PR_LOG(gJPEGDecoderAccountingLog, PR_LOG_DEBUG,
@@ -2067,12 +2082,12 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
      }
  
      /* Force to use our YCbCr to Packed RGB converter when possible */
--    if (!mTransform && !gfxPlatform::IsCMSEnabled() &&
+-    if (!mTransform && (gfxPlatform::GetCMSMode() == eCMSMode_Off) &&
 +    if (
 +#ifndef MOZ_NO_LCMS
-+    !mTransform &&
++				!mTransform &&
 +#endif
-+    !gfxPlatform::IsCMSEnabled() &&
++				(gfxPlatform::GetCMSMode() == eCMSMode_Off) &&
          mInfo.jpeg_color_space == JCS_YCbCr && mInfo.out_color_space == JCS_RGB) {
        /* Special case for the most common case: transform from YCbCr direct into packed ARGB */
        mInfo.out_color_components = 4; /* Packed ARGB pixels are always 4 bytes...*/
@@ -2081,7 +2096,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
  
      /* If this is a progressive JPEG ... */
      mState = mInfo.buffered_image ? JPEG_DECOMPRESS_PROGRESSIVE : JPEG_DECOMPRESS_SEQUENTIAL;
-@@ -721,46 +732,51 @@
+@@ -722,46 +733,51 @@
        }
  
        /* Request one scanline.  Returns 0 or 1 scanlines. */    
@@ -2118,7 +2133,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
            sampleRow += mInfo.output_width;
          }
 +#ifndef MOZ_NO_LCMS
-         if (gfxPlatform::IsCMSEnabled()) {
+         if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
            /* No embedded ICC profile - treat as sRGB */
            cmsHTRANSFORM transform = gfxPlatform::GetCMSRGBTransform();
            if (transform) {
@@ -2210,7 +2225,7 @@ Index: mozilla/modules/libpr0n/decoders/gif/nsGIFDecoder2.cpp
  {
    // Apply CMS transformation if enabled and available
 +#ifndef MOZ_NO_LCMS
-   if (gfxPlatform::IsCMSEnabled()) {
+   if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
      cmsHTRANSFORM transform = gfxPlatform::GetCMSRGBTransform();
      if (transform)
        cmsDoTransform(transform, aColormap, aColormap, aColors);
@@ -3011,14 +3026,14 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 ===================================================================
 --- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 +++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
-@@ -5999,19 +5999,20 @@
+@@ -6021,19 +6021,20 @@
                                  state, value);
    },
  
    /**
     * See nsIXPIProgressDialog.idl
     */
-   onProgress: function(index, value, maxValue) {
+   onProgress: function ItemDownloadTransaction_onProgress(index, value, maxValue) {
      this._manager.onProgress(this._downloads[index].addon, value, maxValue);
 -  },
 -
@@ -3069,7 +3084,7 @@ Index: mozilla/gfx/thebes/src/gfxPattern.cpp
  gfxPattern::AddColorStop(gfxFloat offset, const gfxRGBA& c)
  {
 +#ifndef MOZ_NO_LCMS
-     if (gfxPlatform::IsCMSEnabled()) {
+     if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
          cmsHTRANSFORM transform = gfxPlatform::GetCMSRGBTransform();
          if (transform) {
  #ifdef IS_LITTLE_ENDIAN
@@ -3220,7 +3235,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2871,16 +2871,17 @@
+@@ -2873,16 +2873,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer

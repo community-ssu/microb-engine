@@ -2,10 +2,10 @@ Index: mozilla/content/base/src/nsGenericElement.cpp
 ===================================================================
 --- mozilla.orig/content/base/src/nsGenericElement.cpp
 +++ mozilla/content/base/src/nsGenericElement.cpp
-@@ -3626,37 +3626,39 @@
-       cb.NoteXPCOMChild(slots->mAttributeMap.get());
-       if (tmp->IsNodeOfType(nsINode::eXUL))
+@@ -4102,37 +4102,39 @@
          cb.NoteXPCOMChild(slots->mControllers);
+       cb.NoteXPCOMChild(
+         static_cast<nsIDOMNodeList*>(slots->mChildrenList.get()));
      }
    }
  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END

@@ -1,3 +1,9 @@
+microb-engine (20080820-1) unstable; urgency=low
+
+  * Updated to trunk 20080820 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Wed, 20 Aug 2008 18:36:13 +0300
+
 microb-engine (20080616-70) unstable; urgency=low
 
   * Included netError.dtd from overrides.
