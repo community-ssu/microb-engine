@@ -186,14 +186,14 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
 +    mThebes->SetPattern(pat);
 +}
 +
- // void putImageData (in ImageData d, in float x, in float y);
- NS_IMETHODIMP
- nsCanvasRenderingContext2D::PutImageData()
- {
-     nsresult rv;
+ extern "C" {
+ #include "jstypes.h"
+ JS_FRIEND_API(JSBool)
+ js_ArrayToJSUint8Buffer(JSContext *cx, JSObject *obj, jsuint offset, jsuint count,
+                         JSUint8 *dest);
+ }
  
-     if (!mValid)
-         return NS_ERROR_FAILURE;
+ // void putImageData (in ImageData d, in float x, in float y);
 Index: mozilla/content/canvas/test/test_2d.imageRenderingQuality.html
 ===================================================================
 --- /dev/null

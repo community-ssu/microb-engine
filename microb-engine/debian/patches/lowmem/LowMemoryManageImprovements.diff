@@ -1,6 +1,11 @@
---- mozilla/xpcom/base/nsMemoryImpl.cpp.orig	2006-11-22 19:51:59.000000000 +0200
-+++ mozilla/xpcom/base/nsMemoryImpl.cpp	2008-02-26 09:07:15.000000000 +0200
-@@ -49,10 +49,19 @@
+Index: mozilla/xpcom/base/nsMemoryImpl.cpp
+===================================================================
+--- mozilla.orig/xpcom/base/nsMemoryImpl.cpp
++++ mozilla/xpcom/base/nsMemoryImpl.cpp
+@@ -46,16 +46,25 @@
+ #include "prmem.h"
+ #include "prcvar.h"
+ #include "pratom.h"
  
  #include "nsAlgorithm.h"
  #include "nsAutoLock.h"
@@ -19,8 +24,14 @@
  #if defined(XP_WIN)
  #include <windows.h>
  #define NS_MEMORY_FLUSHER
+ #elif defined (NS_OSSO)
+ #include <osso-mem.h>
  #else
-@@ -179,24 +187,42 @@ nsMemoryImpl::HeapMinimize(PRBool aImmed
+ // Need to implement the nsIMemory::IsLowMemory() predicate
+@@ -178,40 +187,50 @@
+ nsMemoryImpl::HeapMinimize(PRBool aImmediate)
+ {
+     return FlushMemory(NS_LITERAL_STRING("heap-minimize").get(), aImmediate);
  }
  
  NS_IMETHODIMP
@@ -38,17 +49,27 @@
      MEMORYSTATUS stat;
      GlobalMemoryStatus(&stat);
      *result = ((float)stat.dwAvailPageFile / stat.dwTotalPageFile) < 0.1;
- #else
--    *result = PR_FALSE;
+ #elif defined(NS_OSSO)
+-    osso_mem_usage_t usage;
+-    osso_mem_get_usage(&usage);
+-    
+-    // According to the docs, low memory limit isn't set if it is
+-    // zero, or if it is greater than 100%.
+-    if (usage.low == 0 || usage.low > usage.total)
+-      *result = PR_FALSE;
+-    else
+-      *result = (PRBool) usage.low <= usage.used;
 +    int fd = open (kHighMark, O_RDONLY);
 +    if (fd == -1) {
 +        *result = PR_FALSE;
 +        return NS_OK;
-+    }
++     }
 +    int c = 0;
 +    read (fd, &c, 1);
 +    close (fd);
 +    *result = (c == '1');
+ #else
+     *result = PR_FALSE;
  #endif
      return NS_OK;
  }
@@ -64,7 +85,13 @@
  nsMemoryImpl::InitFlusher()
  {
  #ifdef NS_MEMORY_FLUSHER
-@@ -269,10 +295,13 @@ nsMemoryImpl::FlushEvent::Run()
+     return sGlobalMemoryFlusher.Init();
+ #else
+     return NS_OK;
+@@ -278,16 +297,19 @@
+ nsMemoryImpl::FlushEvent::Run()
+ {
+     sGlobalMemory.RunFlushers(mReason);
      return NS_OK;
  }
  
@@ -78,9 +105,17 @@
  nsMemoryImpl::sFlushEvent;
  
  XPCOM_API(void*)
---- mozilla/xpcom/base/nsIMemory.idl.orig	2006-11-22 19:51:59.000000000 +0200
-+++ mozilla/xpcom/base/nsIMemory.idl	2008-02-26 08:53:34.000000000 +0200
-@@ -124,7 +124,14 @@ interface nsIMemory : nsISupports
+ NS_Alloc(PRSize size)
+ {
+     void* result = MALLOC1(size);
+Index: mozilla/xpcom/base/nsIMemory.idl
+===================================================================
+--- mozilla.orig/xpcom/base/nsIMemory.idl
++++ mozilla/xpcom/base/nsIMemory.idl
+@@ -121,10 +121,17 @@
+     void heapMinimize(in boolean immediate);
+ 
+     /**
       * This predicate can be used to determine if we're in a low-memory
       * situation (what constitutes low-memory is platform dependent). This
       * can be used to trigger the memory pressure observers.
@@ -95,9 +130,14 @@
 +
  };
  
---- mozilla/xpcom/base/nsMemoryImpl.h.orig	2006-11-22 19:51:59.000000000 +0200
-+++ mozilla/xpcom/base/nsMemoryImpl.h	2008-02-26 09:05:16.000000000 +0200
-@@ -69,8 +69,10 @@ protected:
+Index: mozilla/xpcom/base/nsMemoryImpl.h
+===================================================================
+--- mozilla.orig/xpcom/base/nsMemoryImpl.h
++++ mozilla/xpcom/base/nsMemoryImpl.h
+@@ -66,11 +66,13 @@
+     struct FlushEvent : public nsIRunnable {
+         NS_DECL_ISUPPORTS_INHERITED
+         NS_DECL_NSIRUNNABLE
          const PRUnichar* mReason;
      };
  
@@ -108,11 +148,11 @@
  };
  
  #endif // nsMemoryImpl_h__
---- mozilla/xpcom/ds/nsRecyclingAllocator.cpp.orig	2006-05-10 20:30:09.000000000 +0300
-+++ mozilla/xpcom/ds/nsRecyclingAllocator.cpp	2008-02-26 10:36:58.000000000 +0200
-@@ -321,16 +321,23 @@ nsRecyclingAllocatorImpl::Init(size_t nb
- }
- 
+Index: mozilla/xpcom/ds/nsRecyclingAllocator.cpp
+===================================================================
+--- mozilla.orig/xpcom/ds/nsRecyclingAllocator.cpp
++++ mozilla/xpcom/ds/nsRecyclingAllocator.cpp
+@@ -323,14 +323,21 @@
  NS_IMETHODIMP
  nsRecyclingAllocatorImpl::HeapMinimize(PRBool immediate)
  {

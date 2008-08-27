@@ -7,9 +7,9 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4780,16 +4780,21 @@
+@@ -4784,16 +4784,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
-     TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit'
+     TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
      CFLAGS="$CFLAGS $TK_CFLAGS"
      CXXFLAGS="$CXXFLAGS $TK_CFLAGS"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4883,17 +4888,16 @@
+@@ -4887,17 +4892,16 @@
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
  
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6047,22 +6051,164 @@
+@@ -6051,22 +6055,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7499,35 +7645,54 @@
+@@ -7503,35 +7649,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7800,16 +7965,21 @@
+@@ -7804,16 +7969,21 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8089,16 +8259,22 @@
+@@ -8093,16 +8263,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -1255,7 +1255,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  // here, or in a native resource file.
  static void
  DumpHelp()
-@@ -3072,35 +3076,39 @@
+@@ -3070,35 +3074,39 @@
            gDoMigration = PR_FALSE;
            nsCOMPtr<nsIProfileMigrator> pm
              (do_CreateInstance(NS_PROFILEMIGRATOR_CONTRACTID));
@@ -1295,7 +1295,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  
  #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
          nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
-@@ -3115,40 +3123,48 @@
+@@ -3113,40 +3121,48 @@
            NS_ENSURE_TRUE(em, 1);
  
            ar = CheckArg("install-global-extension", PR_TRUE);
@@ -1344,7 +1344,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
          if (noEMRestart && *noEMRestart && *noEMRestart == '1') {
            if (upgraded || needsRestart) {
              NS_WARNING("EM tried to force us to restart twice! Forcefully preventing that.");
-@@ -3186,18 +3202,20 @@
+@@ -3184,18 +3200,20 @@
            // Prepare Cocoa's form of Apple Event handling.
            SetupMacApplicationDelegate();
  #endif
@@ -2993,13 +2993,13 @@ Index: mozilla/xpfe/Makefile.in
  endif
 +endif
  
- ifndef MOZ_XUL_APP
- DIRS += global communicator
- endif
- 
  # Because of our great use of encapsulation, there are
  # some header file in xpfe/components that are required
  # by layout and the dom.  This MOZ_XPFE_COMPONENTS, if 
+ # unset, allows us to only export - not build - this 
+ # stuff.
+ ifdef MOZ_XPFE_COMPONENTS
+ DIRS     += components
 Index: mozilla/embedding/browser/build/Makefile.in
 ===================================================================
 --- mozilla.orig/embedding/browser/build/Makefile.in
