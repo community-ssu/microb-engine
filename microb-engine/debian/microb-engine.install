@@ -35,6 +35,10 @@ usr/lib/microb-engine/components/nsContentPrefService*.js
 usr/lib/microb-engine/components/nsDefaultCLH*.js
 usr/lib/microb-engine/components/storage-Legacy*.js
 
+usr/lib/microb-engine/components/FeedWriter.js
+usr/lib/microb-engine/components/FeedConverter.js
+usr/lib/microb-engine/components/FeedProcessor.js
+
 usr/lib/microb-engine/libgkgfx*so
 usr/lib/microb-engine/libgtkxtbin*so
 usr/lib/microb-engine/libmozz*so

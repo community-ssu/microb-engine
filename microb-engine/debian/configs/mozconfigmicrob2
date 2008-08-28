@@ -47,7 +47,7 @@ ac_add_options --disable-updater # ???
 #ac_add_options --disable-jsloader # Runtime loading JS Components
 ac_add_options --disable-xmlextras # Seems it not used anymore
 #ac_add_options --disable-places # If no RDF and no places then required 006_Toolkit_NoPlacesNoRDF.diff
-ac_add_options --disable-feeds
+ac_add_options --enable-feeds
 #ac_add_options --disable-permissions # ???
 ac_add_options --disable-url-classifier
 ac_add_options --disable-safe-browsing
