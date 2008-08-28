@@ -17,12 +17,12 @@ Index: mozilla/widget/src/gtk2/nsWindow.h
  
  private:
      void               GetToplevelWidget(GtkWidget **aWidget);
+     GtkWidget         *GetMozContainerWidget();
      void               GetContainerWindow(nsWindow  **aWindow);
      void               SetUrgencyHint(GtkWidget *top_window, PRBool state);
      void              *SetupPluginPort(void);
      nsresult           SetWindowIconList(const nsCStringArray &aIconList);
-     void               SetDefaultIcon(void);
-@@ -497,17 +498,16 @@
+@@ -498,17 +499,16 @@
          *flag |= mask;
      }
  
@@ -106,7 +106,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
              gRollupListener->Rollup(nsnull);
          gRollupWindow = nsnull;
          gRollupListener = nsnull;
-@@ -3463,16 +3474,18 @@
+@@ -3482,16 +3493,18 @@
                                 "notify::gtk-theme-name",
                                 G_CALLBACK(theme_changed_cb), this);
          g_signal_connect_after(default_settings,
@@ -125,7 +125,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
                           G_CALLBACK(enter_notify_event_cb), NULL);
          g_signal_connect_after(G_OBJECT(mContainer), "leave_notify_event",
                           G_CALLBACK(leave_notify_event_cb), NULL);
-@@ -5112,22 +5125,35 @@
+@@ -5137,22 +5150,35 @@
      if (!window)
          return FALSE;
  
@@ -161,5 +161,5 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  // These are all of our drag and drop operations
  
  void
- nsWindow::InitDragEvent(nsMouseEvent &aEvent)
+ nsWindow::InitDragEvent(nsDragEvent &aEvent)
  {
