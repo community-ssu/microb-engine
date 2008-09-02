@@ -259,6 +259,7 @@ usr/lib/microb-engine/chrome/pippki/content/pippki/exceptionDialog.*
 usr/lib/microb-engine/chrome/pippki/content/pippki/viewCertDetails.*
 usr/lib/microb-engine/chrome/pippki/content/pippki/certViewer.xul
 usr/lib/microb-engine/chrome/pippki/content/pippki/certDump.xul
+usr/lib/microb-engine/chrome/pippki/content/pippki/certerror.*
 
 usr/lib/microb-engine/chrome/toolkit.manifest
 usr/lib/microb-engine/chrome/toolkit/content/feeds/*
