@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4784,16 +4784,21 @@
+@@ -4785,16 +4785,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4887,17 +4892,16 @@
+@@ -4888,17 +4893,16 @@
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
  
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6051,22 +6055,164 @@
+@@ -6057,22 +6061,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7503,35 +7649,54 @@
+@@ -7509,35 +7655,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7804,16 +7969,21 @@
+@@ -7810,16 +7975,21 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8093,16 +8263,22 @@
+@@ -8099,16 +8269,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -799,11 +799,11 @@ Index: mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp
  NS_IMPL_ISUPPORTS2(nsXPLookAndFeel, nsILookAndFeel, nsIObserver)
  
  nsLookAndFeelIntPref nsXPLookAndFeel::sIntPrefs[] =
-@@ -589,27 +591,29 @@
-   if (aID == eColor_TextHighlightBackground) {
-     // This makes the matched text stand out when findbar highlighting is on
+@@ -597,27 +599,29 @@
+   if (aID == eColor_TextHighlightForeground) {
+     // The foreground color for the matched text in findbar highlighting
      // Used with nsISelectionController::SELECTION_FIND
-     aColor = NS_RGB(0xf0, 0xe0, 0x20);
+     aColor = NS_RGB(0x00, 0x00, 0x00);
      return NS_OK;
    }
  
@@ -833,7 +833,7 @@ Index: mozilla/toolkit/components/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/Makefile.in
 +++ mozilla/toolkit/components/Makefile.in
-@@ -41,38 +41,45 @@
+@@ -41,37 +41,44 @@
  srcdir    = @srcdir@
  VPATH   = @srcdir@
  
@@ -855,7 +855,6 @@ Index: mozilla/toolkit/components/Makefile.in
  
  # These component dirs are built only for XUL apps
  
- ifdef MOZ_XUL_APP
  DIRS += \
  	apppicker \
  	filepicker \
@@ -880,7 +879,7 @@ Index: mozilla/toolkit/components/Makefile.in
  
  ifdef MOZ_FEEDS
  DIRS += feeds
-@@ -105,39 +112,48 @@
+@@ -104,39 +111,48 @@
  endif # MOZ_XUL
  
  ifdef MOZ_SUITE
@@ -918,18 +917,18 @@ Index: mozilla/toolkit/components/Makefile.in
  
 +ifndef MOZ_NO_COMMANDLINE
 +DIRS += \
-+ 	commandlines \
-+ 	$(NULL)
++	commandlines \
++	$(NULL)
 +endif
 +
  EXTRA_PP_COMPONENTS = nsDefaultCLH.js
- 
- endif # MOZ_XUL_APP
  
  ifeq ($(MOZ_BUILD_APP),camino)
  DIRS += autocomplete/public
  DIRS += downloads/public
  endif
+ 
+ include $(topsrcdir)/config/rules.mk
 Index: mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
 ===================================================================
 --- mozilla.orig/toolkit/components/build/nsToolkitCompsModule.cpp
@@ -1227,7 +1226,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  #include "nsIExtensionManager.h"
  #include "nsIFastLoadService.h" // for PLATFORM_FASL_SUFFIX
  #include "nsIGenericFactory.h"
-@@ -1126,25 +1128,27 @@
+@@ -1136,25 +1138,27 @@
    {
      nsXREDirProvider dirProvider;
      dirProvider.Initialize(nsnull, gAppData->xreDirectory);
@@ -1255,7 +1254,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  // here, or in a native resource file.
  static void
  DumpHelp()
-@@ -3070,35 +3074,39 @@
+@@ -3081,35 +3085,39 @@
            gDoMigration = PR_FALSE;
            nsCOMPtr<nsIProfileMigrator> pm
              (do_CreateInstance(NS_PROFILEMIGRATOR_CONTRACTID));
@@ -1295,7 +1294,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  
  #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
          nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
-@@ -3113,40 +3121,48 @@
+@@ -3124,40 +3132,48 @@
            NS_ENSURE_TRUE(em, 1);
  
            ar = CheckArg("install-global-extension", PR_TRUE);
@@ -1344,7 +1343,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
          if (noEMRestart && *noEMRestart && *noEMRestart == '1') {
            if (upgraded || needsRestart) {
              NS_WARNING("EM tried to force us to restart twice! Forcefully preventing that.");
-@@ -3184,18 +3200,20 @@
+@@ -3195,18 +3211,20 @@
            // Prepare Cocoa's form of Apple Event handling.
            SetupMacApplicationDelegate();
  #endif
@@ -1814,13 +1813,13 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
  {
    mFrame = do_CreateInstance("@mozilla.org/gfx/image/frame;2");
    if (!mFrame)
-@@ -367,16 +371,17 @@
-   if (mError) {
-     *_retval = 0;
-     rv = NS_ERROR_FAILURE;
+@@ -386,16 +390,17 @@
+     }
+     png_set_gamma(png_ptr, 2.2, aGamma);
    }
+   else
+     png_set_gamma(png_ptr, 2.2, 0.45455);
  
-   return rv;
  }
  
 +#ifndef MOZ_NO_LCMS
@@ -1832,7 +1831,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
    cmsHPROFILE profile = nsnull;
    *intent = INTENT_PERCEPTUAL; // Our default
  
-@@ -487,16 +492,17 @@
+@@ -491,16 +496,17 @@
          *inType = TYPE_RGBA_8;
        else
          *inType = TYPE_RGB_8;
@@ -1850,7 +1849,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
    png_uint_32 width, height;
    int bit_depth, color_type, interlace_type, compression_type, filter_type;
    unsigned int channels;
-@@ -544,16 +550,17 @@
+@@ -547,16 +553,17 @@
      else
         png_set_expand(png_ptr);
    }
@@ -1868,28 +1867,39 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
      if (intent == -1)
        intent = pIntent;
    }
-@@ -582,17 +589,19 @@
+@@ -575,26 +582,29 @@
+       dwFlags |= cmsFLAGS_FLOATSHAPER;
+ 
+     decoder->mTransform = cmsCreateTransform(decoder->mInProfile,
+                                              inType,
+                                              gfxPlatform::GetCMSOutputProfile(),
+                                              outType,
+                                              intent,
+                                              dwFlags);
+-  } else {
++  } else
++#endif /* MOZ_NO_LCMS */
++  {
+     png_set_gray_to_rgb(png_ptr);
+     PNGDoGammaCorrection(png_ptr, info_ptr);
+-
++#ifndef MOZ_NO_LCMS
      if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
        if (color_type & PNG_COLOR_MASK_ALPHA || num_trans)
          decoder->mTransform = gfxPlatform::GetCMSRGBATransform();
        else
          decoder->mTransform = gfxPlatform::GetCMSRGBTransform();
      }
++#endif
    }
  
--  if (!decoder->mTransform) {
-+  if (!decoder->mTransform)
-+#endif /* MOZ_NO_LCMS */
-+  {
-     png_set_gray_to_rgb(png_ptr);
-     if (png_get_gAMA(png_ptr, info_ptr, &aGamma)) {
-       if ((aGamma <= 0.0) || (aGamma > 21474.83)) {
-         aGamma = 0.45455;
-         png_set_gAMA(png_ptr, info_ptr, aGamma);
-       }
-       png_set_gamma(png_ptr, 2.2, aGamma);
-     }
-@@ -667,24 +676,26 @@
+   /* let libpng expand interlaced images */
+   if (interlace_type == PNG_INTERLACE_ADAM7) {
+     /* number_passes = */
+     png_set_interlace_handling(png_ptr);
+   }
+ 
+@@ -659,24 +669,26 @@
      png_set_progressive_frame_fn(png_ptr, frame_info_callback, NULL);
    
    if (png_get_first_frame_is_hidden(png_ptr, info_ptr)) {
@@ -1916,7 +1926,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
        longjmp(decoder->mPNG->jmpbuf, 5); // NS_ERROR_OUT_OF_MEMORY
      }
    }
-@@ -745,30 +756,32 @@
+@@ -737,30 +749,32 @@
  
      // we're thebes. we can write stuff directly to the data
      PRUint8 *imageData;
@@ -2284,7 +2294,7 @@ Index: mozilla/caps/src/nsScriptSecurityManager.cpp
  PRBool nsScriptSecurityManager::sStrictFileOriginPolicy = PR_TRUE;
  
  // Info we need about the JSClasses used by XPConnects wrapped
-@@ -2896,29 +2900,31 @@
+@@ -2769,29 +2773,31 @@
      {
          nsCOMPtr<nsIFile> systemCertFile;
          nsCOMPtr<nsIProperties> directoryService =
@@ -3235,7 +3245,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2873,16 +2873,17 @@
+@@ -2892,16 +2892,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer

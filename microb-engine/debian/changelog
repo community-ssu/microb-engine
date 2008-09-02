@@ -1,3 +1,9 @@
+microb-engine (20080902-1) unstable; urgency=low
+
+  * Updated to trunk 20080902
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue,  2 Sep 2008 18:45:13 +0300
+
 microb-engine (20080820-6) unstable; urgency=low
 
   * Added certerror* files for certificates 
