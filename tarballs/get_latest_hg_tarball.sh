@@ -37,3 +37,5 @@ rm -f mozilla.tar.gz
 mv temp.tar.gz mozilla.tar.gz
 echo $MOZCURSIMPDATE > curver
 echo $MOZCURSIMPDATE > deborigver
+echo "" > ../microb-engine/trunkupdates/series
+svn rm ../microb-engine/trunkupdates/*.diff
