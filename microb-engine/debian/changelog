@@ -12,7 +12,7 @@ microb-engine (20080820-6) unstable; urgency=low
 
 microb-engine (20080820-5) unstable; urgency=low
 
-   * Fixed bug#87981 
+   * Fixes: NB#87981 
 
  -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue,  2 Sep 2008 16:48:12 +0300
 
