@@ -1,3 +1,9 @@
+microb-engine (20080820-5) unstable; urgency=low
+
+   * Fixed bug#87981 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue,  2 Sep 2008 16:48:12 +0300
+
 microb-engine (20080820-4) unstable; urgency=low
 
   * Updated to trunk 20080828 

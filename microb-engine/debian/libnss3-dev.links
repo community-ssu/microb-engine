@@ -1,0 +1,7 @@
+usr/lib/microb-engine/libnssdbm3.so usr/lib/microb-engine-devel/sdk/lib/libnssdbm3.so
+usr/lib/microb-engine/libsmime3.so usr/lib/microb-engine-devel/sdk/lib/libsmime3.so
+usr/lib/microb-engine/libssl3.so usr/lib/microb-engine-devel/sdk/lib/libssl3.so
+usr/lib/microb-engine/libsoftokn3.so usr/lib/microb-engine-devel/sdk/lib/libsoftokn3.so
+usr/lib/microb-engine/libnss3.so usr/lib/microb-engine-devel/sdk/lib/libnss3.so
+usr/lib/microb-engine/libfreebl3.so usr/lib/microb-engine-devel/sdk/lib/libfreebl3.so
+usr/lib/microb-engine/libnssutil3.so usr/lib/microb-engine-devel/sdk/lib/libnssutil3.so
