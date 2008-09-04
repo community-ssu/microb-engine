@@ -1,3 +1,10 @@
+microb-engine (20080902-3) unstable; urgency=low
+
+  * Fixed Build bustage
+  * Fixes: NB#87980 Auhentication dialog does not remember user and password typed
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 04 Sep 2008 21:46:49 +0300
+
 microb-engine (20080902-2) unstable; urgency=low
 
   * Updated to latest trunk 71479935c4af 

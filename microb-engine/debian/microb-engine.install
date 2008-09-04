@@ -34,6 +34,7 @@ usr/lib/microb-engine/components/nsLogin*.js
 usr/lib/microb-engine/components/nsContentPrefService*.js
 usr/lib/microb-engine/components/nsDefaultCLH*.js
 usr/lib/microb-engine/components/storage-Legacy*.js
+usr/lib/microb-engine/components/storage-mozStorage*.js
 
 usr/lib/microb-engine/components/FeedWriter.js
 usr/lib/microb-engine/components/FeedConverter.js
