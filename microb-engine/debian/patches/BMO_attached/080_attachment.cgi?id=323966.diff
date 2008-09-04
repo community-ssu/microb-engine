@@ -281,11 +281,11 @@ Index: mozilla/dom/public/idl/canvas/nsIDOMCanvasRenderingContext2D.idl
 +  // 'auto', 'optimizeSpeed', 'optimizeQuality'.  Default 'auto'.
 +  attribute DOMString imageRenderingQuality;
 +
+   // ImageData createImageData(in float w, in float h);
+   void createImageData();
+ 
    /**
     * Renders a region of a window into the canvas.  The contents of
     * the window's viewport are rendered, ignoring viewport clipping
     * and scrolling.
     *
-    * @param x
-    * @param y
-    * @param w

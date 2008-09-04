@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4785,16 +4785,21 @@
+@@ -4783,16 +4783,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4888,17 +4893,16 @@
+@@ -4886,17 +4891,16 @@
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
  
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6057,22 +6061,164 @@
+@@ -6045,22 +6049,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7509,35 +7655,54 @@
+@@ -7497,35 +7643,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7810,16 +7975,21 @@
+@@ -7798,16 +7963,21 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8099,16 +8269,22 @@
+@@ -8087,16 +8257,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -322,7 +322,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -152,16 +152,27 @@
+@@ -151,16 +151,27 @@
  MOZ_PROFILESHARING = @MOZ_PROFILESHARING@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@
@@ -2853,12 +2853,12 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
 ===================================================================
 --- mozilla.orig/xpfe/components/build/nsModule.cpp
 +++ mozilla/xpfe/components/build/nsModule.cpp
-@@ -58,17 +58,17 @@
+@@ -54,17 +54,17 @@
  #endif
  
- #if defined(XP_WIN)
- #include "nsWindowsHooks.h"
- #endif // Windows
+ #if !defined(MOZ_PLACES)
+ #include "nsGlobalHistory.h"
+ #endif
  
  #endif // MOZ_SUITE
  
@@ -2872,7 +2872,7 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  
  #if !defined(MOZ_PLACES)
  // {9491C382-E3C4-11D2-BDBE-0050040A9B44}
-@@ -80,17 +80,17 @@
+@@ -76,17 +76,17 @@
  #endif
  
  #ifdef MOZ_RDF
@@ -2891,12 +2891,12 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(RelatedLinksHandlerImpl, Init)
  #ifdef SUITE_USING_XPFE_DM
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsDownloadManager, Init)
-@@ -102,17 +102,17 @@
+@@ -94,17 +94,17 @@
  #endif
  
- #if defined(XP_WIN)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsWindowsHooks)
- #endif // Windows
+ #if !defined(MOZ_PLACES)
+ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsGlobalHistory, Init)
+ #endif
  
  #endif // MOZ_SUITE
  
@@ -2910,12 +2910,12 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  static NS_METHOD
  RegisterProc(nsIComponentManager *aCompMgr,
               nsIFile *aPath,
-@@ -178,30 +178,30 @@
- 
- #ifdef XP_WIN
-     { NS_IWINDOWSHOOKS_CLASSNAME, NS_IWINDOWSHOOKS_CID,
-       NS_IWINDOWSHOOKS_CONTRACTID, nsWindowsHooksConstructor },
- #endif // XP_WIN
+@@ -165,30 +165,30 @@
+     { "Global History", NS_GLOBALHISTORY_CID, NS_GLOBALHISTORY_DATASOURCE_CONTRACTID,
+       nsGlobalHistoryConstructor },
+     { "Global History", NS_GLOBALHISTORY_CID, NS_GLOBALHISTORY_AUTOCOMPLETE_CONTRACTID,
+       nsGlobalHistoryConstructor },
+ #endif
  
  #endif // MOZ_SUITE
  
@@ -2943,7 +2943,7 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
    { "Browser Content Handler",
      NS_BROWSERCONTENTHANDLER_CID,
      NS_CONTENT_HANDLER_CONTRACTID_PREFIX"application/vnd.mozilla.xul+xml",
-@@ -298,12 +298,12 @@
+@@ -285,12 +285,12 @@
    },
    { "Chrome Startup Handler",
      NS_CHROMESTARTUPHANDLER_CID,
