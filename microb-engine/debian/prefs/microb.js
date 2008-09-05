@@ -35,3 +35,4 @@ pref("xpinstall.whitelist.add.103", "addons.mozilla.org");
 pref("keyword.enabled", true);
 pref("keyword.URL", "chrome://browser-region/locale/region.properties");
 pref("general.skins.selectedSkin", "classic/1.0");
+pref("snav.keyCode.modifier", 0);

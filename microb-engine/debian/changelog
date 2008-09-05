@@ -1,3 +1,9 @@
+microb-engine (20080902-6) unstable; urgency=low
+
+  * Fixed keykode modifier problem for snav 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 05 Sep 2008 15:23:53 +0300
+
 microb-engine (20080902-5) unstable; urgency=low
 
   * Added old spatialnavigation module (probably fixed bugs 87978) 
