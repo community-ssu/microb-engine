@@ -1,3 +1,10 @@
+microb-engine (20080902-4) unstable; urgency=low
+
+  * Sqlite library moved to libnss3 package (libsoftokn.so depends on it)
+  * Fixes: NB#88108
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 05 Sep 2008 14:03:51 +0300
+
 microb-engine (20080902-3) unstable; urgency=low
 
   * Fixed Build bustage

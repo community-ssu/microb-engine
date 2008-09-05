@@ -5,3 +5,4 @@ usr/lib/microb-engine/libssl3.so
 usr/lib/microb-engine/libfreebl3.so
 usr/lib/microb-engine/libnssdbm3*so
 usr/lib/microb-engine/libnssutil3*so
+usr/lib/microb-engine/libsqlite3*so

@@ -1,7 +1,6 @@
 usr/lib/microb-engine/libxpcom.so
 usr/lib/microb-engine/libmozjs.so
 usr/lib/microb-engine/libxul.so
-usr/lib/microb-engine/libsqlite3*so
 usr/lib/microb-engine/libjemalloc*so
 usr/lib/microb-engine/components/*.xpt
 usr/lib/microb-engine/components/*snav*.so
