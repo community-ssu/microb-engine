@@ -120,6 +120,9 @@ not_sorted/002_drawingMissingGlyphs.diff
 #qt/020_attachment.cgi?id=333029.diff
 qt/030_nonconf.diff
 
+# Old spatial navigation module (until trunk version http://hg.mozilla.org/mozilla-central/file/ec658a5f3699/toolkit/spatial-navigation/SpatialNavigation.js not fixed)
+extensions/040_OldSpatialNavigationModule.diff
+
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail
 #$ acid3/attachment.cgi?id=312294.diff

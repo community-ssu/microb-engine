@@ -1,3 +1,9 @@
+microb-engine (20080902-5) unstable; urgency=low
+
+  * Added old spatialnavigation module (probably fixed bugs 87978) 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 05 Sep 2008 15:00:20 +0300
+
 microb-engine (20080902-4) unstable; urgency=low
 
   * Sqlite library moved to libnss3 package (libsoftokn.so depends on it)
