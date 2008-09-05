@@ -1,42 +1,7 @@
 diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/Makefile.in mozilla/extensions/spatialnavigation/Makefile.in
 --- mozilla/extensions/spatialnavigation.orig/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/Makefile.in	2005-08-16 22:28:00.000000000 +0300
-@@ -0,0 +1,71 @@
-+# ***** BEGIN LICENSE BLOCK *****
-+# Version: MPL 1.1/GPL 2.0/LGPL 2.1
-+#
-+# The contents of this file are subject to the Mozilla Public License Version
-+# 1.1 (the "License"); you may not use this file except in compliance with
-+# the License. You may obtain a copy of the License at
-+# http://www.mozilla.org/MPL/
-+#
-+# Software distributed under the License is distributed on an "AS IS" basis,
-+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-+# for the specific language governing rights and limitations under the
-+# License.
-+#
-+# The Original Code is Spatial Navigation
-+#
-+# The Initial Developer of the Original Code is
-+# Douglas F. Turner II
-+# Portions created by the Initial Developer are Copyright (C) 2004
-+# the Initial Developer. All Rights Reserved.
-+#
-+# Contributor(s):
-+#
-+# Alternatively, the contents of this file may be used under the terms of
-+# either the GNU General Public License Version 2 or later (the "GPL"), or
-+# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
-+# in which case the provisions of the GPL or the LGPL are applicable instead
-+# of those above. If you wish to allow use of your version of this file only
-+# under the terms of either the GPL or the LGPL, and not to allow others to
-+# use your version of this file under the terms of the MPL, indicate your
-+# decision by deleting the provisions above and replace them with the notice
-+# and other provisions required by the GPL or the LGPL. If you do not delete
-+# the provisions above, a recipient may use your version of this file under
-+# the terms of any one of the MPL, the GPL or the LGPL.
-+#
-+# ***** END LICENSE BLOCK *****
++++ mozilla/extensions/spatialnavigation/Makefile.in	2008-09-05 23:48:17.000000000 +0300
+@@ -0,0 +1,37 @@
 +
 +DEPTH=../..
 +topsrcdir=@top_srcdir@
@@ -46,14 +11,14 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/Makefile.in mozill
 +include $(DEPTH)/config/autoconf.mk
 +
 +MODULE	= snav
++#XPI_NAME = snav
 +
 +ifdef MOZ_XUL_APP
-+XPI_NAME = snav
-+INSTALL_EXTENSION_ID = spatial-navigation@extensions.mozilla.org
-+DIST_FILES = install.rdf
-+NO_JAR_AUTO_REG        = 1
-+USE_EXTENSION_MANIFEST = 1
-+XPI_PKGNAME            = snav-$(MOZ_APP_VERSION)
++#INSTALL_EXTENSION_ID = snav@extensions.mozilla.org
++#DIST_FILES = install.rdf
++#NO_JAR_AUTO_REG        = 1
++#USE_EXTENSION_MANIFEST = 1
++#XPI_PKGNAME            = snav-$(MOZ_APP_VERSION)
 +
 +# We should really pull FIREFOX_VERSION and THUNDERBIRD_VERSION from
 +# browser/config/version.txt mail/config/version.txt but we can't be assured
@@ -70,12 +35,13 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/Makefile.in mozill
 +endif
 +endif
 +
-+DIRS    = public src
++DIRS    = src
++DIRS   += public
 +
 +include $(topsrcdir)/config/rules.mk
 diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/install.rdf mozilla/extensions/spatialnavigation/install.rdf
 --- mozilla/extensions/spatialnavigation.orig/install.rdf	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/install.rdf	2005-08-16 22:28:00.000000000 +0300
++++ mozilla/extensions/spatialnavigation/install.rdf	2008-09-05 23:10:59.000000000 +0300
 @@ -0,0 +1,40 @@
 +<?xml version="1.0"?>
 +
@@ -84,7 +50,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/install.rdf mozill
 +<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 +     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
 +  <Description about="urn:mozilla:install-manifest">
-+    <em:id>spatial-navigation@extensions.mozilla.org</em:id>
++    <em:id>fit-to-view@extensions.mozilla.org</em:id>
 +    <em:version>@EXTENSION_VERSION@</em:version>
 +
 +#ifdef EM_ABI
@@ -108,7 +74,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/install.rdf mozill
 +        <em:maxVersion>@THUNDERBIRD_VERSION@</em:maxVersion>
 +      </Description>
 +    </em:targetApplication>
-+    
++
 +    <!-- front-end metadata -->
 +    <em:name>Spatial Navigation</em:name>
 +    <em:description>Navigate between links using the arrow keys in addition to the tab key.</em:description>
@@ -117,57 +83,10 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/install.rdf mozill
 +    <em:homepageURL>http://www.mozilla.org/access/keyboard/snav/</em:homepageURL>
 +  </Description>
 +</RDF>
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/makefiles.sh mozilla/extensions/spatialnavigation/makefiles.sh
---- mozilla/extensions/spatialnavigation.orig/makefiles.sh	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/makefiles.sh	2007-05-23 23:08:51.000000000 +0300
-@@ -0,0 +1,43 @@
-+#! /bin/sh
-+# ***** BEGIN LICENSE BLOCK *****
-+# Version: MPL 1.1/GPL 2.0/LGPL 2.1
-+#
-+# The contents of this file are subject to the Mozilla Public License Version
-+# 1.1 (the "License"); you may not use this file except in compliance with
-+# the License. You may obtain a copy of the License at
-+# http://www.mozilla.org/MPL/
-+#
-+# Software distributed under the License is distributed on an "AS IS" basis,
-+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-+# for the specific language governing rights and limitations under the
-+# License.
-+#
-+# The Original Code is Mozilla Build System
-+#
-+# The Initial Developer of the Original Code is
-+# Ben Turner <mozilla@songbirdnest.com>
-+#
-+# Portions created by the Initial Developer are Copyright (C) 2007
-+# the Initial Developer. All Rights Reserved.
-+#
-+# Contributor(s):
-+#
-+# Alternatively, the contents of this file may be used under the terms of
-+# either the GNU General Public License Version 2 or later (the "GPL"), or
-+# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
-+# in which case the provisions of the GPL or the LGPL are applicable instead
-+# of those above. If you wish to allow use of your version of this file only
-+# under the terms of either the GPL or the LGPL, and not to allow others to
-+# use your version of this file under the terms of the MPL, indicate your
-+# decision by deleting the provisions above and replace them with the notice
-+# and other provisions required by the GPL or the LGPL. If you do not delete
-+# the provisions above, a recipient may use your version of this file under
-+# the terms of any one of the MPL, the GPL or the LGPL.
-+#
-+# ***** END LICENSE BLOCK *****
-+
-+add_makefiles "
-+  extensions/spatialnavigation/Makefile
-+  extensions/spatialnavigation/public/Makefile
-+  extensions/spatialnavigation/src/Makefile
-+"
 diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/public/Makefile.in mozilla/extensions/spatialnavigation/public/Makefile.in
 --- mozilla/extensions/spatialnavigation.orig/public/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/public/Makefile.in	2005-06-28 17:33:28.000000000 +0300
-@@ -0,0 +1,55 @@
++++ mozilla/extensions/spatialnavigation/public/Makefile.in	2008-09-05 23:45:19.000000000 +0300
+@@ -0,0 +1,49 @@
 +# ***** BEGIN LICENSE BLOCK *****
 +# Version: MPL 1.1/GPL 2.0/LGPL 2.1
 +#
@@ -212,20 +131,14 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/public/Makefile.in
 +include $(DEPTH)/config/autoconf.mk
 +
 +MODULE=snav
-+XPIDL_MODULE=snav
 +
-+ifdef MOZ_XUL_APP
-+XPI_NAME = snav
-+endif
-+
-+XPIDLSRCS = nsISpatialNavigation.idl \
-+            $(NULL)
++XPIDLSRCS = nsISpatialNavigation.idl
 +
 +include $(topsrcdir)/config/rules.mk
 +
 diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/public/nsISpatialNavigation.idl mozilla/extensions/spatialnavigation/public/nsISpatialNavigation.idl
 --- mozilla/extensions/spatialnavigation.orig/public/nsISpatialNavigation.idl	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/public/nsISpatialNavigation.idl	2005-06-03 21:34:43.000000000 +0300
++++ mozilla/extensions/spatialnavigation/public/nsISpatialNavigation.idl	2008-09-05 23:11:00.000000000 +0300
 @@ -0,0 +1,54 @@
 +/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -281,9 +194,122 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/public/nsISpatialN
 +  
 +  readonly attribute nsIDOMWindow attachedWindow;
 +};
+diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/Makefile.in mozilla/extensions/spatialnavigation/src/Makefile.in
+--- mozilla/extensions/spatialnavigation.orig/src/Makefile.in	1970-01-01 02:00:00.000000000 +0200
++++ mozilla/extensions/spatialnavigation/src/Makefile.in	2008-09-05 23:48:19.000000000 +0300
+@@ -0,0 +1,109 @@
++# vim:set ts=8 sw=8 sts=8 noet:
++# ***** BEGIN LICENSE BLOCK *****
++# Version: MPL 1.1/GPL 2.0/LGPL 2.1
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License. You may obtain a copy of the License at
++# http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Original Code is the Mozilla Browser code.
++#
++# The Initial Developer of the Original Code is Google Inc.
++# Portions created by the Initial Developer are Copyright (C) 2005
++# the Initial Developer. All Rights Reserved.
++#
++# Contributor(s):
++#  Darin Fisher <darin@meer.net>
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 2 or later (the "GPL"), or
++# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++# in which case the provisions of the GPL or the LGPL are applicable instead
++# of those above. If you wish to allow use of your version of this file only
++# under the terms of either the GPL or the LGPL, and not to allow others to
++# use your version of this file under the terms of the MPL, indicate your
++# decision by deleting the provisions above and replace them with the notice
++# and other provisions required by the GPL or the LGPL. If you do not delete
++# the provisions above, a recipient may use your version of this file under
++# the terms of any one of the MPL, the GPL or the LGPL.
++#
++# ***** END LICENSE BLOCK *****
++
++DEPTH		= ../../..
++topsrcdir	= @top_srcdir@
++srcdir		= @srcdir@
++VPATH		= @srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++MODULE		= snav
++LIBRARY_NAME    = snav
++ifneq ($(OS_ARCH),WINNT)
++SHORT_LIBNAME = snav
++endif
++FORCE_SHARED_LIB = 1
++IS_COMPONENT = 1
++
++REQUIRES = \
++	xpcom \
++	string \
++	pref \
++	js \
++	dom \
++	dom_base \
++	gfx \
++	thebes \
++	layout \
++	content \
++	widget \
++	locale \
++	necko \
++	docshell \
++	unicharutil \
++	view \
++	webshell \
++	windowwatcher \
++	webbrwsr \
++	 $(NULL)
++
++CPPSRCS  = \
++	nsRect.cpp \
++	nsSpatialNavigation.cpp \
++	nsSpatialNavigationUtils.cpp \
++	nsSpatialNavigationService.cpp \
++	$(NULL)
++
++
++EXTRA_DSO_LDOPTS = \
++	$(XPCOM_GLUE_LDOPTS) \
++	$(NSPR_LIBS) \
++	$(NULL)
++
++EXTRA_DSO_LDOPTS += $(MOZ_COMPONENT_LIBS)
++
++EXPORT_RESOURCE = \
++	$(NULL)
++
++
++ifdef MOZ_XUL_APP
++ifdef TARGET_XPCOM_ABI
++FINAL_TARGET=$(DIST)/xpi-stage/$(XPI_NAME)/platform/$(OS_TARGET)_$(TARGET_XPCOM_ABI)
++endif
++endif
++
++DEFINES += -D_IMPL_NS_GFX
++
++#EXTRA_COMPONENTS = $(srcdir)/SimpleTest.js
++
++include $(topsrcdir)/config/rules.mk
++
++ifdef GNU_CC
++CFLAGS   += -fno-unit-at-a-time
++CXXFLAGS += -fno-unit-at-a-time
++endif
 diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp mozilla/extensions/spatialnavigation/src/nsRect.cpp
 --- mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsRect.cpp	2008-09-05 14:54:39.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsRect.cpp	2008-09-05 23:11:00.000000000 +0300
 @@ -0,0 +1,220 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -507,7 +533,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp moz
 +}
 diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigation.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
 --- mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigation.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-09-05 14:45:42.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-09-05 23:48:34.000000000 +0300
 @@ -0,0 +1,1376 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -1887,7 +1913,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationPrivate.h mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
 --- mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationPrivate.h	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-09-05 14:48:11.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-09-05 23:11:00.000000000 +0300
 @@ -0,0 +1,298 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -2189,7 +2215,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationService.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp
 --- mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationService.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp	2008-09-05 14:41:23.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp	2008-09-05 23:11:00.000000000 +0300
 @@ -0,0 +1,332 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -2525,7 +2551,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +NS_IMPL_NSGETMODULE(SpatialNavigationModule, components)
 diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationUtils.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
 --- mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationUtils.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-09-05 14:54:22.000000000 +0300
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-09-05 23:11:00.000000000 +0300
 @@ -0,0 +1,1146 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -3673,547 +3699,3 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  else
 +    contentWindow->ScrollBy(0, gScrollOffset);
 +}
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/test/Spatial_Navigation_Test_Cases.html mozilla/extensions/spatialnavigation/test/Spatial_Navigation_Test_Cases.html
---- mozilla/extensions/spatialnavigation.orig/test/Spatial_Navigation_Test_Cases.html	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/test/Spatial_Navigation_Test_Cases.html	2005-05-13 22:42:15.000000000 +0300
-@@ -0,0 +1,272 @@
-+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-+<html>
-+<head>
-+  <meta http-equiv="content-type"
-+ content="text/html; charset=ISO-8859-1">
-+  <title>Spatial Navigation Test Cases</title>
-+</head>
-+<body>
-+<div style="margin-left: 40px; text-align: center;">
-+<h1 style="text-align: left;"><a name="mozTocId276802" class="mozTocH1"></a>Spatial
-+Navigation Fun</h1>
-+<h2 style="text-align: left;"><br>
-+</h2>
-+<div style="text-align: left;"><br>
-+</div>
-+<br>
-+<br>
-+<h2 style="text-align: left;"><a name="mozTocId192805" class="mozTocH2"></a>3x3
-+Centered Table Test</h2>
-+</div>
-+<table
-+ style="text-align: left; width: 100%; margin-left: auto; margin-right: auto;"
-+ border="1" cellpadding="2" cellspacing="2">
-+  <tbody>
-+    <tr>
-+      <td style="vertical-align: top; text-align: center;"><a href="a">test</a></td>
-+      <td style="vertical-align: top; text-align: center;"><a href="a">test</a></td>
-+      <td style="vertical-align: top; text-align: center;"><a href="a">test</a></td>
-+    </tr>
-+    <tr>
-+      <td style="vertical-align: top; text-align: center;"><a href="a">test</a></td>
-+      <td style="vertical-align: top; text-align: center;"><a href="a">test</a></td>
-+      <td style="vertical-align: top; text-align: center;"><a href="a">test</a></td>
-+    </tr>
-+    <tr>
-+      <td style="vertical-align: top; text-align: center;"><a href="a">test</a></td>
-+      <td style="vertical-align: top; text-align: center;"><a href="a">test</a></td>
-+      <td style="vertical-align: top; text-align: center;"><a href="a">test</a></td>
-+    </tr>
-+  </tbody>
-+</table>
-+<div style="margin-left: 40px; text-align: center;"><br>
-+<br>
-+<div style="text-align: left;">
-+<h2><a name="mozTocId557796" class="mozTocH2"></a>Vertical Sine Test</h2>
-+<br>
-+</div>
-+<div style="text-align: left;"><a href="a">test<br>
-+</a>
-+<div style="margin-left: 40px;"><a href="a">test<br>
-+</a></div>
-+<div style="margin-left: 80px;"><a href="a">test<br>
-+</a></div>
-+<div style="margin-left: 40px;"><a href="a">test<br>
-+</a></div>
-+<a href="a">test<br>
-+</a>
-+<div style="margin-left: 40px;"><a href="a">test<br>
-+</a></div>
-+<div style="margin-left: 80px;"><a href="a">test<br>
-+</a></div>
-+<div style="margin-left: 40px;"><a href="a">test<br>
-+</a></div>
-+<a href="a">test<br>
-+</a>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
-+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
-+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
-+&nbsp;&nbsp;&nbsp; <a href="a">test<br>
-+</a><br>
-+<br>
-+<br>
-+<h2><a name="mozTocId261391" class="mozTocH2"></a>Increasing sentence
-+length</h2>
-+<br>
-+<a href="a">H</a><br>
-+<a href="p">Ho<br>
-+</a><a href="p">How<br>
-+</a><a href="p">How <br>
-+</a><a href="p">How N</a><br>
-+<a href="p">How No</a><br>
-+<a href="p">How Now</a><br>
-+<a href="p">How Now </a><br>
-+<a href="p">How Now B</a><br>
-+<a href="p">How Now Br</a><br>
-+<a href="p">How Now Bro</a><br>
-+<a href="p">How Now Brow</a><br>
-+<a href="p">How Now Brown</a><br>
-+<a href="p">How Now Brown </a><br>
-+<a href="p">How Now Brown C</a><br>
-+<a href="p">How Now Brown Co</a><br>
-+<a href="p">How Now Brown Cow</a><br>
-+<br>
-+<h2><a name="mozTocId100946" class="mozTocH2"></a>Split sentence<br>
-+</h2>
-+<br>
-+<a href="p">H</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-+&nbsp;
-+<a href="p">ow Now Brown Cow</a><br>
-+<a href="p">Ho</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp;&nbsp;&nbsp;&nbsp; <a href="p">w
-+Now Brown Cow</a><br>
-+<a href="p">How</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="p">Now Brown Cow</a><br>
-+<a href="p">How N</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp; <a
-+ href="p">ow Brown Cow</a><br>
-+<a href="p">How No</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;
-+&nbsp; &nbsp; &nbsp;&nbsp; <a href="p">w Brown Cow</a><br>
-+<a href="p">How Now </a>&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <a href="p">Brown Cow</a><br>
-+<a href="p">How Now B</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <a href="p">rown Cow</a><br>
-+<a href="p">How Now Br</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <a href="p">own Cow</a><br>
-+<a href="p">How Now Bro</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <a href="p">wn Cow</a><br>
-+<a href="p">How Now Brow</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-+<a href="p">n Cow</a><br>
-+<a href="p">How Now Brown</a> &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp; <a href="p">Cow</a><br>
-+<a href="p">How Now Brown C</a> &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <a href="p">ow</a><br>
-+<a href="p">How Now Brown Co</a> &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; <a href="p">w</a><br>
-+<a href="p">How Now Brown Cow</a><br>
-+<br>
-+<br>
-+<h2>Line Wrap Test</h2>
-+<br>
-+<table style="text-align: left; width: 393px; height: 72px;" border="1"
-+ cellpadding="2" cellspacing="2">
-+  <tbody>
-+    <tr>
-+      <td style="vertical-align: top;"><span class="huge"><a href="a">Which
-+of the following constanst do you like the most, one is g, one is pi,
-+and the other is e. </a><br>
-+      </span></td>
-+      <td style="vertical-align: top;"><a href="a">3.14</a><br>
-+      <a href="a">2.71</a><br>
-+      <a href="a">6.67</a><br>
-+      </td>
-+    </tr>
-+  </tbody>
-+</table>
-+<br>
-+<h2><a name="mozTocId625391" class="mozTocH2"></a>Javascript Hover Test</h2>
-+When going from any link to the following link, you should NOT get an
-+alert dialog.&nbsp; However, if you mouse over this link, you should
-+see a dialog.<br>
-+<br>
-+<a href="a" onmouseover='alert("onMouseOver")'
-+ onmouseout='alert("onMouseOut")'>Test</a><br>
-+<br>
-+<h2><a name="mozTocId272030" class="mozTocH2"></a>Overlapped Anchors</h2>
-+<br>
-+<table style="text-align: left; width: 100%;" border="1" cellpadding="2"
-+ cellspacing="2">
-+  <tbody>
-+    <tr>
-+      <td style="vertical-align: top;">
-+      <div style="text-align: left;"><a href="a"><img
-+ src="mozilla-star.png"
-+ title="" alt="" style="border: 0px solid ; width: 57px; height: 57px;"></a><a
-+ href="a"><img
-+ src="mozilla-star.png"
-+ title="" alt="" style="border: 0px solid ; width: 57px; height: 57px;"
-+ hspace="0"></a><br>
-+      </div>
-+      <br>
-+      <br>
-+      <br>
-+      <br>
-+      </td>
-+    </tr>
-+  </tbody>
-+</table>
-+<br>
-+<br>
-+<h2><a name="mozTocId16012" class="mozTocH2"></a>Area Tag (Rect)<br>
-+</h2>
-+<br>
-+<br>
-+<img src="mozilla-star.png" title="" alt=""
-+ style="width: 513px; height: 513px;"><br>
-+<br>
-+<h2><a name="mozTocId922752" class="mozTocH2"></a>Area Tag (Circle)<br>
-+</h2>
-+<br>
-+<br>
-+<img
-+ src="mozilla-star.png"
-+ title="" alt="" style="width: 513px; height: 513px;"><br>
-+<br>
-+<h2><a name="mozTocId216319" class="mozTocH2"></a>Area Tag (Polygon)<br>
-+</h2>
-+<br>
-+<br>
-+<img
-+ src="mozilla-star.png"
-+ title="" alt="" style="height: 513px; width: 513px;"><br>
-+<br>
-+<br>
-+<a href="http://www.visa.com/globalgateway/gg_map.html">A
-+nice poly test case</a>
-+<br>
-+<h2>FrameSets</h2>
-+<br>
-+<frameset cols="25%,25%,*"> 
-+<frame src="links.html" /> 
-+<frame src="links.html" />
-+<frame src="links.html" />
-+</frameset>
-+<br>
-+<br>
-+<h2>IFrames</h2>
-+<br>
-+<iframe src="links.html"></iframe> <br>
-+<br>
-+<br>
-+<h2>DIVs</h2>
-+<br>
-+<div id=v>
-+<a href="a">a</a>
-+<div id="Div1">
-+<a href="a">a</a>
-+</div>
-+<a href="a">a</a>
-+</div>
-+<br>
-+<br>
-+</div>
-+</div>
-+<a href="last">last</a>
-+
-+
-+<p>
-+<p> A select example
-+<FORM ACTION="SelectExample" METHOD="POST">
-+<SELECT NAME="parameter" SIZE=1>
-+	<OPTION VALUE="value1" SELECTED> first setting </OPTION>
-+	<OPTION VALUE="value2"> second setting </OPTION>
-+</SELECT>
-+<INPUT TYPE="Submit" NAME="Submit" VALUE="Evaluate"> 
-+</FORM>
-+<p>
-+<p> A option example
-+
-+<FORM ACTION="OptionExample" METHOD="POST">
-+<SELECT NAME="a" SIZE=10>
-+<OPTION>a
-+<OPTION>b
-+<OPTION>c
-+<OPTION>d
-+<OPTION>e
-+<OPTION>f
-+<OPTION>g
-+</SELECT> 
-+<p>
-+
-+
-+</body>
-+</html>
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/test/a.html mozilla/extensions/spatialnavigation/test/a.html
---- mozilla/extensions/spatialnavigation.orig/test/a.html	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/test/a.html	2005-05-13 22:42:15.000000000 +0300
-@@ -0,0 +1,2 @@
-+<iframe src="links.html"></iframe> <br>
-+<a href="a">a</a>
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/test/links.html mozilla/extensions/spatialnavigation/test/links.html
---- mozilla/extensions/spatialnavigation.orig/test/links.html	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/test/links.html	2005-05-13 22:42:15.000000000 +0300
-@@ -0,0 +1,9 @@
-+<html>
-+<head></head>
-+<body>
-+<p>
-+<a href="a">a</a>
-+<a href="a">a</a>
-+<a href="a">a</a>
-+</body>
-+</html>
-Binary files mozilla/extensions/spatialnavigation.orig/test/mozilla-star.png and mozilla/extensions/spatialnavigation/test/mozilla-star.png differ
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/test/prefs.txt mozilla/extensions/spatialnavigation/test/prefs.txt
---- mozilla/extensions/spatialnavigation.orig/test/prefs.txt	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/test/prefs.txt	2006-08-28 23:12:30.000000000 +0300
-@@ -0,0 +1,107 @@
-+///////////////////////////////////////////////////////////
-+// snav.enabled
-+///////////////////////////////////////////////////////////
-+
-+
-+///////////////////////////////////////////////////////////
-+// snav.ignoreTextFields
-+///////////////////////////////////////////////////////////
-+
-+ This preference when enabled will ensure that text fields
-+and inputs retain focus even if spatial navigation was
-+requested.
-+
-+Default: TRUE
-+  
-+///////////////////////////////////////////////////////////
-+// snav.directionalBias
-+///////////////////////////////////////////////////////////
-+
-+When calculating distances between elements on the screen,
-+elements may be given a bias if the elements are in the
-+direction of navigation.  The bias is a given by a fraction
-+such that:
-+
-+  bias distance = true distance / directional bias
-+
-+DEFAULT: 3
-+
-+///////////////////////////////////////////////////////////
-+// snav.disableJS
-+///////////////////////////////////////////////////////////
-+
-+Disable onFocus event that an element may receive during
-+spatial navigation.  On some pages we have found that the
-+page decides to move the focus as if the targeted content
-+was clicked.  This may lead to an undesirable behavior.
-+
-+DEFAULT:  TRUE
-+
-+///////////////////////////////////////////////////////////
-+// snav.rectFudge
-+///////////////////////////////////////////////////////////
-+
-+To reduce the chance that a element overlaps with another
-+element, we reduce the elements height and width by this
-+value.  
-+
-+DEFAULT: 20
-+
-+///////////////////////////////////////////////////////////
-+// snav.keyCode.left
-+///////////////////////////////////////////////////////////
-+
-+This preference is the key code which corresponds to the
-+left direction.
-+
-+DEFAULT:  DOM_VK_LEFT
-+SEE:      nsIDOMKeyEvent
-+
-+///////////////////////////////////////////////////////////
-+// snav.keyCode.right
-+///////////////////////////////////////////////////////////
-+
-+This preference is the key code which corresponds to the
-+right direction.
-+
-+DEFAULT:  DOM_VK_RIGHT
-+SEE:      nsIDOMKeyEvent
-+
-+
-+///////////////////////////////////////////////////////////
-+// snav.keyCode.up
-+///////////////////////////////////////////////////////////
-+
-+This preference is the key code which corresponds to the
-+up direction.
-+
-+DEFAULT:  DOM_VK_UP
-+SEE:      nsIDOMKeyEvent
-+
-+///////////////////////////////////////////////////////////
-+// snav.keyCode.down
-+///////////////////////////////////////////////////////////
-+
-+This preference is the key code which corresponds to the
-+down direction.
-+
-+DEFAULT:  DOM_VK_DOWN
-+SEE:      nsIDOMKeyEvent
-+
-+///////////////////////////////////////////////////////////
-+// snav.keyCode.modifier
-+///////////////////////////////////////////////////////////
-+
-+This preference is the key code which corresponds to the
-+required modifier keys.  These values are given as follows:
-+
-+    NONE           = 0  
-+    SHIFT          = 0x00100000
-+    CONTROL        = 0x00001100
-+    ALT            = 0x00000012
-+
-+
-+DEFAULT:  ALT | SHIFT
-+
-+
-+
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/Makefile.in mozilla/extensions/spatialnavigation/src/Makefile.in
---- mozilla/extensions/spatialnavigation.orig/src/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/Makefile.in	2008-09-05 14:53:41.000000000 +0300
-@@ -0,0 +1,133 @@
-+# ***** BEGIN LICENSE BLOCK *****
-+# Version: MPL 1.1/GPL 2.0/LGPL 2.1
-+#
-+# The contents of this file are subject to the Mozilla Public License Version
-+# 1.1 (the "License"); you may not use this file except in compliance with
-+# the License. You may obtain a copy of the License at
-+# http://www.mozilla.org/MPL/
-+#
-+# Software distributed under the License is distributed on an "AS IS" basis,
-+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-+# for the specific language governing rights and limitations under the
-+# License.
-+#
-+# The Original Code is Spatial Navigation
-+#
-+# The Initial Developer of the Original Code is
-+# Douglas F. Turner II
-+# Portions created by the Initial Developer are Copyright (C) 2004
-+# the Initial Developer. All Rights Reserved.
-+#
-+# Contributor(s):
-+#
-+# Alternatively, the contents of this file may be used under the terms of
-+# either the GNU General Public License Version 2 or later (the "GPL"), or
-+# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
-+# in which case the provisions of the GPL or the LGPL are applicable instead
-+# of those above. If you wish to allow use of your version of this file only
-+# under the terms of either the GPL or the LGPL, and not to allow others to
-+# use your version of this file under the terms of the MPL, indicate your
-+# decision by deleting the provisions above and replace them with the notice
-+# and other provisions required by the GPL or the LGPL. If you do not delete
-+# the provisions above, a recipient may use your version of this file under
-+# the terms of any one of the MPL, the GPL or the LGPL.
-+#
-+# ***** END LICENSE BLOCK *****
-+
-+
-+DEPTH=../../..
-+topsrcdir=@top_srcdir@
-+srcdir=@srcdir@
-+VPATH=@srcdir@
-+
-+include $(DEPTH)/config/autoconf.mk
-+
-+MODULE       = snav
-+LIBRARY_NAME = snav
-+IS_COMPONENT = 1
-+
-+ifdef IS_COMPONENT
-+DEFINES += -DDYN_SNAV
-+FORCE_SHARED_LIB = 1
-+else
-+LIBXUL_LIBRARY  = 1
-+FORCE_STATIC_LIB = 1
-+endif
-+
-+ifdef MINIMO
-+MODULE_NAME  = snav
-+EXPORT_LIBRARY = 1
-+else
-+ifdef MOZ_XUL_APP
-+XPI_NAME     = snav
-+endif
-+endif
-+
-+REQUIRES = \
-+	xpcom \
-+	string \
-+	pref \
-+	js \
-+	dom \
-+	dom_base \
-+	gfx \
-+	thebes \
-+	layout \
-+	content \
-+	widget \
-+	locale \
-+	necko \
-+	docshell \
-+	unicharutil \
-+	view \
-+	webshell \
-+	windowwatcher \
-+	webbrwsr \
-+	 $(NULL)
-+
-+CPPSRCS  = \
-+	nsSpatialNavigation.cpp \
-+	nsSpatialNavigationUtils.cpp \
-+	nsSpatialNavigationService.cpp \
-+	$(NULL)
-+
-+
-+# This is just terrible... we need nsRect to be able to
-+# interact with the layout.  However, we can't link to get
-+# this class in GFX in a static build (GFX is linked into
-+# the application and symbols are not expored from
-+# applications).  
-+#
-+# nsFont.cpp is required because one of our #includes brings
-+# in nsFont.h. This class requires nsFont::Equals() be
-+# defined.  We do not use this class anywhere in this
-+# extension.
-+
-+ifndef MINIMO
-+DEFINES += -D_IMPL_NS_GFX
-+CPPSRCS += nsRect.cpp
-+endif
-+
-+EXTRA_DSO_LDOPTS += \
-+	$(XPCOM_GLUE_LDOPTS) \
-+	$(XPCOM_FROZEN_LDOPTS) \
-+	$(LIBS_DIR) \
-+	$(EXTRA_DSO_LIBS) \
-+	$(MOZ_UNICHARUTIL_LIBS) \
-+	$(MOZ_COMPONENT_LIBS)  \
-+	$(NULL)
-+
-+include $(topsrcdir)/config/config.mk
-+
-+ifdef MOZ_XUL_APP
-+ifdef TARGET_XPCOM_ABI
-+FINAL_TARGET=$(DIST)/xpi-stage/$(XPI_NAME)/platform/$(OS_TARGET)_$(TARGET_XPCOM_ABI)
-+endif
-+endif
-+
-+include $(topsrcdir)/config/rules.mk
-+ifdef GNU_CC
-+CFLAGS   += -fno-unit-at-a-time
-+CXXFLAGS += -fno-unit-at-a-time
-+endif
-+
