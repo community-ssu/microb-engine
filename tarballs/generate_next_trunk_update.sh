@@ -17,13 +17,12 @@ fi
 
 hg pull -R $HG_LREPO
 hg update -R $HG_LREPO
-CUR_REV=$(cat bonsai.date)
+CUR_REV=$(tail -n 1 ../microb-engine/trunkupdates/series | sed 's/^.*://' | sed 's/.diff$//')
 LAST_REV=$(hg log --limit 1 -R $HG_LREPO | grep '^changeset' | sed 's/\:/\ /g' | awk '{print $3}')
 echo "hg diff -R $HG_LREPO -r $CUR_REV > $CUR_REV:$LAST_REV.diff"
 if [ "$CUR_REV" != "$LAST_REV" ];then
 hg diff -R $HG_LREPO -r $CUR_REV > ../microb-engine/trunkupdates/$CUR_REV:$LAST_REV.diff
 echo "$CUR_REV:$LAST_REV.diff" >> ../microb-engine/trunkupdates/series
 svn add ../microb-engine/trunkupdates/$CUR_REV:$LAST_REV.diff
-echo "$LAST_REV" > bonsai.date
 fi
 echo $HG_REPO
