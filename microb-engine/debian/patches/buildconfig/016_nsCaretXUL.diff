@@ -1,4 +1,4 @@
-# No bug, need to create
+# https://bugzilla.mozilla.org/show_bug.cgi?id=453826
 --- mozilla/layout/base/nsCaret.cpp.orig	2008-04-09 09:16:09.000000000 +0300
 +++ mozilla/layout/base/nsCaret.cpp	2008-04-10 17:03:40.000000000 +0300
 @@ -986,10 +986,11 @@ PRBool nsCaret::MustDrawCaret(PRBool aIg

@@ -3,7 +3,6 @@ buildconfig/007_BUILD_CONFIG_xul_manual_enable.diff
 buildconfig/008_BrowserNotUsedHeaders.diff
 buildconfig/009_BrowserLibregTiers.diff
 buildconfig/011_BuildWithGCC3.4.4.diff
-buildconfig/012_CastError.diff
 buildconfig/015_jemalloc_sb.diff
 buildconfig/016_nsCaretXUL.diff
 buildconfig/020_cs2007_rpath_wr.diff
@@ -122,6 +121,11 @@ qt/030_nonconf.diff
 
 # Old spatial navigation module (until trunk version http://hg.mozilla.org/mozilla-central/file/ec658a5f3699/toolkit/spatial-navigation/SpatialNavigation.js not fixed)
 extensions/040_OldSpatialNavigationModule.diff
+
+# Latest tracemonkey update
+arm/tt_latest.diff
+
+BMO_attached/090_bug428988_pressure.diff
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail

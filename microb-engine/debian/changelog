@@ -1,3 +1,11 @@
+microb-engine (20080902-9) unstable; urgency=low
+
+  * Updated to latest trunk 2008-09-06
+  * Updated to latest tracemonkey
+  * Added pressure value to mouse events
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 06 Sep 2008 15:32:35 +0300
+
 microb-engine (20080902-8) unstable; urgency=low
 
   * Fixed snav installation

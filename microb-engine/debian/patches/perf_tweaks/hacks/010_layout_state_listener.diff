@@ -27,7 +27,7 @@ Index: mozilla/docshell/base/nsDocShell.cpp
 ===================================================================
 --- mozilla.orig/docshell/base/nsDocShell.cpp
 +++ mozilla/docshell/base/nsDocShell.cpp
-@@ -9290,16 +9290,27 @@
+@@ -9495,16 +9495,27 @@
          return PR_FALSE;
      }
      
@@ -59,7 +59,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -4257,16 +4257,20 @@
+@@ -4327,16 +4327,20 @@
    }
    
    mPaintingSuppressed = PR_FALSE;
@@ -84,15 +84,15 @@ Index: mozilla/layout/base/nsCSSFrameConstructor.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsCSSFrameConstructor.cpp
 +++ mozilla/layout/base/nsCSSFrameConstructor.cpp
-@@ -1848,24 +1848,28 @@
+@@ -1804,24 +1804,28 @@
    , mGfxScrollFrame(nsnull)
    , mPageSequenceFrame(nsnull)
    , mUpdateCount(0)
    , mQuotesDirty(PR_FALSE)
    , mCountersDirty(PR_FALSE)
-   , mInitialContainingBlockIsAbsPosContainer(PR_FALSE)
    , mIsDestroyingFrameTree(PR_FALSE)
    , mRebuildAllStyleData(PR_FALSE)
+   , mHasRootAbsPosContainingBlock(PR_FALSE)
 +  , mIsFirstRestylePaint(PR_TRUE)
  {
    if (!gGotXBLFormPrefs) {
@@ -113,7 +113,7 @@ Index: mozilla/layout/base/nsCSSFrameConstructor.cpp
  #ifdef DEBUG
    static PRBool gFirstTime = PR_TRUE;
    if (gFirstTime) {
-@@ -13545,17 +13549,30 @@
+@@ -13323,17 +13327,30 @@
  {
    if (!mConstructor)
      return NS_OK;  // event was revoked
@@ -149,15 +149,15 @@ Index: mozilla/layout/base/nsCSSFrameConstructor.h
 ===================================================================
 --- mozilla.orig/layout/base/nsCSSFrameConstructor.h
 +++ mozilla/layout/base/nsCSSFrameConstructor.h
-@@ -1177,16 +1177,18 @@
-   nsQuoteList         mQuoteList;
+@@ -1184,16 +1184,18 @@
    nsCounterManager    mCounterManager;
    PRUint16            mUpdateCount;
    PRPackedBool        mQuotesDirty : 1;
    PRPackedBool        mCountersDirty : 1;
-   PRPackedBool        mInitialContainingBlockIsAbsPosContainer : 1;
    PRPackedBool        mIsDestroyingFrameTree : 1;
    PRPackedBool        mRebuildAllStyleData : 1;
+   // This is true if mDocElementContainingBlock supports absolute positioning
+   PRPackedBool        mHasRootAbsPosContainingBlock : 1;
 +  PRPackedBool        mIsFirstRestylePaint : 1;
 +  PRUint16            mIsPaintSignalsCount;
  
