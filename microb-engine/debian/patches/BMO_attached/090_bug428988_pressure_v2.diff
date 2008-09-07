@@ -1,0 +1,636 @@
+# https://bugzilla.mozilla.org/show_bug.cgi?id=428988
+Index: mozilla/widget/src/gtk2/nsWindow.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp
++++ mozilla/widget/src/gtk2/nsWindow.cpp
+@@ -2096,17 +2096,17 @@
+     LOG(("OnLeaveNotify: %p\n", (void *)this));
+ 
+     nsEventStatus status;
+     DispatchEvent(&event, status);
+ }
+ 
+ #ifdef MOZ_DFB
+ void
+-nsWindow::OnMotionNotifyEvent(GtkWidget *aWidget, GdkEventMotion *aEvent)
++nsWindow::OnMotionNotifyEvent(GtkWidget *aWidget, GdkEventMotion *aEvent, float aPressure)
+ {
+     int cursorX = (int) aEvent->x_root;
+     int cursorY = (int) aEvent->y_root;
+ 
+     D_DEBUG_AT( ns_Window, "%s( %4d,%4d - [%d] )\n", __FUNCTION__, cursorX, cursorY, mDFBCursorCount );
+ 
+     D_ASSUME( mDFBLayer != NULL );
+ 
+@@ -2132,16 +2132,19 @@
+ 
+ 
+     // when we receive this, it must be that the gtk dragging is over,
+     // it is dropped either in or out of mozilla, clear the flag
+     sIsDraggingOutOf = PR_FALSE;
+ 
+     nsMouseEvent event(PR_TRUE, NS_MOUSE_MOVE, this, nsMouseEvent::eReal);
+ 
++    // should we move this into !synthEvent?
++    event.pressure = aPressure;
++
+     nsRect windowRect;
+     ScreenToWidget(nsRect(nscoord(cursorX), nscoord(cursorY), 1, 1), windowRect);
+ 
+     event.refPoint.x = windowRect.x;
+     event.refPoint.y = windowRect.y;
+ 
+     event.isShift   = (aEvent->state & GDK_SHIFT_MASK)
+         ? PR_TRUE : PR_FALSE;
+@@ -2152,17 +2155,17 @@
+ 
+     event.time = aEvent->time;
+ 
+     nsEventStatus status;
+     DispatchEvent(&event, status);
+ }
+ #else
+ void
+-nsWindow::OnMotionNotifyEvent(GtkWidget *aWidget, GdkEventMotion *aEvent)
++nsWindow::OnMotionNotifyEvent(GtkWidget *aWidget, GdkEventMotion *aEvent, float aPressure)
+ {
+     // when we receive this, it must be that the gtk dragging is over,
+     // it is dropped either in or out of mozilla, clear the flag
+     sIsDraggingOutOf = PR_FALSE;
+ 
+     // see if we can compress this event
+     // XXXldb Why skip every other motion event when we have multiple,
+     // but not more than that?
+@@ -2180,16 +2183,18 @@
+     if (gPluginFocusWindow && gPluginFocusWindow != this) {
+         nsRefPtr<nsWindow> kungFuDeathGrip = gPluginFocusWindow;
+         gPluginFocusWindow->LoseNonXEmbedPluginFocus();
+     }
+ #endif /* MOZ_X11 */
+ 
+     nsMouseEvent event(PR_TRUE, NS_MOUSE_MOVE, this, nsMouseEvent::eReal);
+ 
++    event.pressure = aPressure;
++
+     if (synthEvent) {
+ #ifdef MOZ_X11
+         event.refPoint.x = nscoord(xevent.xmotion.x);
+         event.refPoint.y = nscoord(xevent.xmotion.y);
+ 
+         event.isShift   = (xevent.xmotion.state & GDK_SHIFT_MASK)
+             ? PR_TRUE : PR_FALSE;
+         event.isControl = (xevent.xmotion.state & GDK_CONTROL_MASK)
+@@ -2272,17 +2277,17 @@
+         break;
+         // default is one click
+     default:
+         aEvent.clickCount = 1;
+     }
+ }
+ 
+ void
+-nsWindow::OnButtonPressEvent(GtkWidget *aWidget, GdkEventButton *aEvent)
++nsWindow::OnButtonPressEvent(GtkWidget *aWidget, GdkEventButton *aEvent, float aPressure)
+ {
+     nsEventStatus status;
+ 
+     // If you double click in GDK, it will actually generate a single
+     // click event before sending the double click event, and this is
+     // different than the DOM spec.  GDK puts this in the queue
+     // programatically, so it's safe to assume that if there's a
+     // double click in the queue, it was generated so we can just drop
+@@ -2324,16 +2329,17 @@
+     case 3:
+         domButton = nsMouseEvent::eRightButton;
+         break;
+     // These are mapped to horizontal scroll
+     case 6:
+     case 7:
+         {
+             nsMouseScrollEvent event(PR_TRUE, NS_MOUSE_SCROLL, this);
++            event.pressure = aPressure;
+             event.scrollFlags = nsMouseScrollEvent::kIsHorizontal;
+             event.refPoint.x = nscoord(aEvent->x);
+             event.refPoint.y = nscoord(aEvent->y);
+             event.delta = (aEvent->button == 6) ? -2 : 2;
+ 
+             event.isShift   = (aEvent->state & GDK_SHIFT_MASK) != 0;
+             event.isControl = (aEvent->state & GDK_CONTROL_MASK) != 0;
+             event.isAlt     = (aEvent->state & GDK_MOD1_MASK) != 0;
+@@ -2354,31 +2360,33 @@
+         return;
+     default:
+         return;
+     }
+ 
+     nsMouseEvent event(PR_TRUE, NS_MOUSE_BUTTON_DOWN, this, nsMouseEvent::eReal);
+     event.button = domButton;
+     InitButtonEvent(event, aEvent);
++    event.pressure = aPressure;
+ 
+     DispatchEvent(&event, status);
+ 
+     // right menu click on linux should also pop up a context menu
+     if (domButton == nsMouseEvent::eRightButton &&
+         NS_LIKELY(!mIsDestroyed)) {
+         nsMouseEvent contextMenuEvent(PR_TRUE, NS_CONTEXTMENU, this,
+                                       nsMouseEvent::eReal);
+         InitButtonEvent(contextMenuEvent, aEvent);
++        event.pressure = aPressure;
+         DispatchEvent(&contextMenuEvent, status);
+     }
+ }
+ 
+ void
+-nsWindow::OnButtonReleaseEvent(GtkWidget *aWidget, GdkEventButton *aEvent)
++nsWindow::OnButtonReleaseEvent(GtkWidget *aWidget, GdkEventButton *aEvent, float aPressure)
+ {
+     PRUint16 domButton;
+     mLastButtonReleaseTime = aEvent->time;
+ 
+     switch (aEvent->button) {
+     case 1:
+         domButton = nsMouseEvent::eLeftButton;
+         break;
+@@ -2390,16 +2398,17 @@
+         break;
+     default:
+         return;
+     }
+ 
+     nsMouseEvent event(PR_TRUE, NS_MOUSE_BUTTON_UP, this, nsMouseEvent::eReal);
+     event.button = domButton;
+     InitButtonEvent(event, aEvent);
++    event.pressure = aPressure;
+ 
+     nsEventStatus status;
+     DispatchEvent(&event, status);
+ }
+ 
+ void
+ nsWindow::OnContainerFocusInEvent(GtkWidget *aWidget, GdkEventFocus *aEvent)
+ {
+@@ -3518,16 +3527,18 @@
+                                "notify::gtk-theme-name",
+                                G_CALLBACK(theme_changed_cb), this);
+         g_signal_connect_after(default_settings,
+                                "notify::gtk-font-name",
+                                G_CALLBACK(theme_changed_cb), this);
+     }
+ 
+     if (mContainer) {
++        gtk_widget_set_extension_events (GTK_WIDGET(mContainer),
++                                         GDK_EXTENSION_EVENTS_ALL);
+         g_signal_connect(G_OBJECT(mContainer), "style_set",
+                          G_CALLBACK(theme_changed_cb), this);
+         g_signal_connect_after(G_OBJECT(mContainer), "size_allocate",
+                                G_CALLBACK(size_allocate_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "expose_event",
+                          G_CALLBACK(expose_event_cb), NULL);
+         g_signal_connect_after(G_OBJECT(mContainer), "enter_notify_event",
+                          G_CALLBACK(enter_notify_event_cb), NULL);
+@@ -4111,17 +4122,18 @@
+         return;
+ 
+     gint retval;
+     retval = gdk_pointer_grab(mDrawingarea->inner_window, TRUE,
+                               (GdkEventMask)(GDK_BUTTON_PRESS_MASK |
+                                              GDK_BUTTON_RELEASE_MASK |
+                                              GDK_ENTER_NOTIFY_MASK |
+                                              GDK_LEAVE_NOTIFY_MASK |
+-                                             GDK_POINTER_MOTION_MASK),
++                                             GDK_POINTER_MOTION_MASK |
++                                             GDK_POINTER_MOTION_HINT_MASK),
+                               (GdkWindow *)NULL, NULL, GDK_CURRENT_TIME);
+ 
+     if (retval != GDK_GRAB_SUCCESS) {
+         LOG(("GrabPointer: pointer grab failed\n"));
+         mRetryPointerGrab = PR_TRUE;
+     }
+ }
+ 
+@@ -4935,47 +4947,66 @@
+     }
+     return window;
+ }
+ 
+ /* static */
+ gboolean
+ motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event)
+ {
++    static gdouble pressure = 0;
++    if (event->axes) {
++      gdk_event_get_axis ((GdkEvent*)event, GDK_AXIS_PRESSURE, &pressure);
++      return FALSE;
++    }
++
+     nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);
+     if (!window)
+         return FALSE;
+ 
+-    window->OnMotionNotifyEvent(widget, event);
++    window->OnMotionNotifyEvent(widget, event, pressure);
++    gdk_event_request_motions(event);
+ 
+     return TRUE;
+ }
+ 
+ /* static */
+ gboolean
+ button_press_event_cb(GtkWidget *widget, GdkEventButton *event)
+ {
++    static gdouble pressure = 0;
++    if (event->axes) {
++      gdk_event_get_axis ((GdkEvent*)event, GDK_AXIS_PRESSURE, &pressure);
++      return FALSE;
++    }
++
+     nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);
+     if (!window)
+         return FALSE;
+ 
+-    window->OnButtonPressEvent(widget, event);
++    window->OnButtonPressEvent(widget, event, pressure);
+ 
+     return TRUE;
+ }
+ 
+ /* static */
+ gboolean
+ button_release_event_cb(GtkWidget *widget, GdkEventButton *event)
+ {
++    static gdouble pressure = 0;
++    if (event->axes) {
++      gdk_event_get_axis ((GdkEvent*)event, GDK_AXIS_PRESSURE, &pressure);
++      return FALSE;
++    }
++
+     nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);
+     if (!window)
+         return FALSE;
+ 
+-    window->OnButtonReleaseEvent(widget, event);
++    window->OnButtonReleaseEvent(widget, event, pressure);
+ 
+     return TRUE;
+ }
+ 
+ /* static */
+ gboolean
+ focus_in_event_cb(GtkWidget *widget, GdkEventFocus *event)
+ {
+Index: mozilla/content/base/src/nsGenericElement.cpp
+===================================================================
+--- mozilla.orig/content/base/src/nsGenericElement.cpp
++++ mozilla/content/base/src/nsGenericElement.cpp
+@@ -3476,19 +3476,23 @@
+   NS_PRECONDITION(aTarget, "Must have target");
+   NS_PRECONDITION(aSourceEvent, "Must have source event");
+   NS_PRECONDITION(aStatus, "Null out param?");
+ 
+   nsMouseEvent event(NS_IS_TRUSTED_EVENT(aSourceEvent), NS_MOUSE_CLICK,
+                      aSourceEvent->widget, nsMouseEvent::eReal);
+   event.refPoint = aSourceEvent->refPoint;
+   PRUint32 clickCount = 1;
++  float  pressure = 0;
++
+   if (aSourceEvent->eventStructType == NS_MOUSE_EVENT) {
+     clickCount = static_cast<nsMouseEvent*>(aSourceEvent)->clickCount;
++    pressure   = static_cast<nsMouseEvent*>(aSourceEvent)->pressure;
+   }
++  event.pressure = pressure;
+   event.clickCount = clickCount;
+   event.isShift = aSourceEvent->isShift;
+   event.isControl = aSourceEvent->isControl;
+   event.isAlt = aSourceEvent->isAlt;
+   event.isMeta = aSourceEvent->isMeta;
+ 
+   return DispatchEvent(aPresContext, &event, aTarget, aFullDispatch, aStatus);
+ }
+Index: mozilla/content/events/src/nsDOMEvent.cpp
+===================================================================
+--- mozilla.orig/content/events/src/nsDOMEvent.cpp
++++ mozilla/content/events/src/nsDOMEvent.cpp
+@@ -787,16 +787,17 @@
+         new nsMouseEvent(PR_FALSE, msg, nsnull, oldMouseEvent->reason);
+       NS_ENSURE_TRUE(mouseEvent, NS_ERROR_OUT_OF_MEMORY);
+       isInputEvent = PR_TRUE;
+       mouseEvent->clickCount = oldMouseEvent->clickCount;
+       mouseEvent->acceptActivation = oldMouseEvent->acceptActivation;
+       mouseEvent->context = oldMouseEvent->context;
+       mouseEvent->relatedTarget = oldMouseEvent->relatedTarget;
+       mouseEvent->button = oldMouseEvent->button;
++      mouseEvent->pressure = oldMouseEvent->pressure;
+       newEvent = mouseEvent;
+       break;
+     }
+     case NS_DRAG_EVENT:
+     {
+       nsDragEvent* oldDragEvent = static_cast<nsDragEvent*>(mEvent);
+       nsDragEvent* dragEvent =
+         new nsDragEvent(PR_FALSE, msg, nsnull);
+Index: mozilla/content/events/src/nsDOMMouseEvent.cpp
+===================================================================
+--- mozilla.orig/content/events/src/nsDOMMouseEvent.cpp
++++ mozilla/content/events/src/nsDOMMouseEvent.cpp
+@@ -244,19 +244,51 @@
+ {
+   NS_ENSURE_ARG_POINTER(aWhich);
+   PRUint16 button;
+   (void) GetButton(&button);
+   *aWhich = button + 1;
+   return NS_OK;
+ }
+ 
++
++nsDOMMouseWithPressureEvent::nsDOMMouseWithPressureEvent(nsPresContext* aPresContext,
++                                                         nsInputEvent* aEvent)
++  : nsDOMMouseEvent(aPresContext, aEvent)
++{
++}
++
++nsDOMMouseWithPressureEvent::~nsDOMMouseWithPressureEvent()
++{
++}
++
++NS_IMPL_ADDREF_INHERITED(nsDOMMouseWithPressureEvent, nsDOMMouseEvent)
++NS_IMPL_RELEASE_INHERITED(nsDOMMouseWithPressureEvent, nsDOMMouseEvent)
++
++NS_INTERFACE_MAP_BEGIN(nsDOMMouseWithPressureEvent)
++  NS_INTERFACE_MAP_ENTRY(nsIDOMMouseWithPressureEvent)
++  NS_INTERFACE_MAP_ENTRY_CONTENT_CLASSINFO(MouseWithPressureEvent)
++NS_INTERFACE_MAP_END_INHERITING(nsDOMMouseEvent)
++
++NS_IMETHODIMP
++nsDOMMouseWithPressureEvent::GetPressure(float* aPressure)
++{
++  NS_ENSURE_ARG_POINTER(aPressure);
++  *aPressure = ((nsMouseEvent*)mEvent)->pressure;
++  return NS_OK;
++}
++
+ nsresult NS_NewDOMMouseEvent(nsIDOMEvent** aInstancePtrResult,
+                              nsPresContext* aPresContext,
+                              nsInputEvent *aEvent) 
+ {
++#define HAS_MOUSE_PRESSURE
++#ifdef HAS_MOUSE_PRESSURE
++  nsDOMMouseWithPressureEvent* it = new nsDOMMouseWithPressureEvent(aPresContext, aEvent);
++#else
+   nsDOMMouseEvent* it = new nsDOMMouseEvent(aPresContext, aEvent);
++#endif
+   if (nsnull == it) {
+     return NS_ERROR_OUT_OF_MEMORY;
+   }
+ 
+   return CallQueryInterface(it, aInstancePtrResult);
+ }
+Index: mozilla/content/events/src/nsDOMMouseEvent.h
+===================================================================
+--- mozilla.orig/content/events/src/nsDOMMouseEvent.h
++++ mozilla/content/events/src/nsDOMMouseEvent.h
+@@ -35,16 +35,17 @@
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #ifndef nsDOMMouseEvent_h__
+ #define nsDOMMouseEvent_h__
+ 
+ #include "nsIDOMMouseEvent.h"
++#include "nsIDOMMouseWithPressureEvent.h"
+ #include "nsDOMUIEvent.h"
+ 
+ class nsIContent;
+ class nsIScrollableView;
+ class nsEvent;
+ 
+ class nsDOMMouseEvent : public nsIDOMMouseEvent,
+                         public nsDOMUIEvent
+@@ -60,13 +61,32 @@
+   
+   // Forward to base class
+   NS_FORWARD_TO_NSDOMUIEVENT
+ 
+   // Specific implementation for a mouse event.
+   NS_IMETHOD GetWhich(PRUint32 *aWhich);
+ };
+ 
++class nsDOMMouseWithPressureEvent: public nsIDOMMouseWithPressureEvent, public nsDOMMouseEvent
++{
++public:
++  nsDOMMouseWithPressureEvent(nsPresContext* aPresContext, nsInputEvent* aEvent);
++  virtual ~nsDOMMouseWithPressureEvent();
++
++  NS_DECL_ISUPPORTS_INHERITED
++
++  // nsIDOMMouseWithPressureEvent Interface
++  NS_DECL_NSIDOMMOUSEWITHPRESSUREEVENT
++
++  // Forward to base class
++  NS_FORWARD_NSIDOMMOUSEEVENT(nsDOMMouseEvent::)
++
++  // Forward to base class
++  NS_FORWARD_TO_NSDOMUIEVENT
++
++};
++
+ #define NS_FORWARD_TO_NSDOMMOUSEEVENT         \
+   NS_FORWARD_NSIDOMMOUSEEVENT(nsDOMMouseEvent::) \
+   NS_FORWARD_TO_NSDOMUIEVENT
+ 
+ #endif // nsDOMMouseEvent_h__
+Index: mozilla/dom/public/nsDOMClassInfoID.h
+===================================================================
+--- mozilla.orig/dom/public/nsDOMClassInfoID.h
++++ mozilla/dom/public/nsDOMClassInfoID.h
+@@ -78,16 +78,17 @@
+   // StyleSheet classes
+   eDOMClassInfo_DocumentStyleSheetList_id,
+ 
+   // Event classes
+   eDOMClassInfo_Event_id,
+   eDOMClassInfo_MutationEvent_id,
+   eDOMClassInfo_UIEvent_id,
+   eDOMClassInfo_MouseEvent_id,
++  eDOMClassInfo_MouseWithPressureEvent_id,
+   eDOMClassInfo_MouseScrollEvent_id,
+   eDOMClassInfo_DragEvent_id,
+   eDOMClassInfo_KeyboardEvent_id,
+   eDOMClassInfo_PopupBlockedEvent_id,
+ 
+   // HTML classes
+   eDOMClassInfo_HTMLDocument_id,
+   eDOMClassInfo_HTMLOptionsCollection_id,
+Index: mozilla/dom/public/idl/events/Makefile.in
+===================================================================
+--- mozilla.orig/dom/public/idl/events/Makefile.in
++++ mozilla/dom/public/idl/events/Makefile.in
+@@ -53,16 +53,17 @@
+ 	nsIDOMEventListener.idl			\
+ 	nsIDOM3DocumentEvent.idl		\
+ 	nsIDOM3EventTarget.idl			\
+ 	nsIDOMEventGroup.idl			\
+ 	nsIDOMCustomEvent.idl			\
+ 	nsIDOMMouseEvent.idl			\
+ 	nsIDOMMouseScrollEvent.idl      \
+ 	nsIDOMUIEvent.idl			\
++	nsIDOMMouseWithPressureEvent.idl        \
+ 	nsIDOMProgressEvent.idl			\
+ 	$(NULL)
+ 
+ XPIDLSRCS =					\
+ 	nsIDOMNSEvent.idl			\
+ 	nsIDOMDataContainerEvent.idl	\
+ 	nsIDOMKeyEvent.idl			\
+ 	nsIDOMMutationEvent.idl			\
+Index: mozilla/dom/src/base/nsDOMClassInfo.cpp
+===================================================================
+--- mozilla.orig/dom/src/base/nsDOMClassInfo.cpp
++++ mozilla/dom/src/base/nsDOMClassInfo.cpp
+@@ -227,16 +227,17 @@
+ #include "nsIDOMComment.h"
+ #include "nsIDOMCDATASection.h"
+ #include "nsIDOMProcessingInstruction.h"
+ #include "nsIDOMNotation.h"
+ #include "nsIDOMNSEvent.h"
+ #include "nsIDOMDataContainerEvent.h"
+ #include "nsIDOMKeyEvent.h"
+ #include "nsIDOMMouseEvent.h"
++#include "nsIDOMMouseWithPressureEvent.h"
+ #include "nsIDOMMouseScrollEvent.h"
+ #include "nsIDOMDragEvent.h"
+ #include "nsIDOMCommandEvent.h"
+ #include "nsIDOMPopupBlockedEvent.h"
+ #include "nsIDOMBeforeUnloadEvent.h"
+ #include "nsIDOMMutationEvent.h"
+ #include "nsIDOMSmartCardEvent.h"
+ #include "nsIDOMXULCommandEvent.h"
+@@ -648,16 +649,18 @@
+   NS_DEFINE_CLASSINFO_DATA(Event, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(MutationEvent, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(UIEvent, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(MouseEvent, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
++  NS_DEFINE_CLASSINFO_DATA(MouseWithPressureEvent, nsDOMGenericSH,
++                           DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(MouseScrollEvent, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(DragEvent, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(KeyboardEvent, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(PopupBlockedEvent, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+@@ -2118,16 +2121,21 @@
+     DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
+   DOM_CLASSINFO_MAP_END
+ 
+   DOM_CLASSINFO_MAP_BEGIN(MouseEvent, nsIDOMMouseEvent)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMMouseEvent)
+     DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
+   DOM_CLASSINFO_MAP_END
+ 
++  DOM_CLASSINFO_MAP_BEGIN(MouseWithPressureEvent, nsIDOMMouseWithPressureEvent)
++    DOM_CLASSINFO_MAP_ENTRY(nsIDOMMouseWithPressureEvent)
++    DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
++  DOM_CLASSINFO_MAP_END
++
+   DOM_CLASSINFO_MAP_BEGIN(MouseScrollEvent, nsIDOMMouseScrollEvent)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMMouseScrollEvent)
+     DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
+   DOM_CLASSINFO_MAP_END
+ 
+   DOM_CLASSINFO_MAP_BEGIN(DragEvent, nsIDOMDragEvent)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMDragEvent)
+     DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
+Index: mozilla/widget/public/nsGUIEvent.h
+===================================================================
+--- mozilla.orig/widget/public/nsGUIEvent.h
++++ mozilla/widget/public/nsGUIEvent.h
+@@ -654,22 +654,25 @@
+ /**
+  * Mouse event
+  */
+ 
+ class nsMouseEvent_base : public nsInputEvent
+ {
+ public:
+   nsMouseEvent_base(PRBool isTrusted, PRUint32 msg, nsIWidget *w, PRUint8 type)
+-  : nsInputEvent(isTrusted, msg, w, type), button(0) {}
++  : nsInputEvent(isTrusted, msg, w, type), button(0), pressure(0) {}
+ 
+   /// The possible related target
+   nsCOMPtr<nsISupports> relatedTarget;
+ 
+   PRInt16               button;
++
++  // Finger or touch pressure of event
++  float                 pressure;
+ };
+ 
+ class nsMouseEvent : public nsMouseEvent_base
+ {
+ public:
+   enum buttonType  { eLeftButton = 0, eMiddleButton = 1, eRightButton = 2 };
+   enum reasonType  { eReal, eSynthesized };
+   enum contextType { eNormal, eContextMenuKey };
+Index: mozilla/dom/public/idl/events/nsIDOMMouseWithPressureEvent.idl
+===================================================================
+--- /dev/null
++++ mozilla/dom/public/idl/events/nsIDOMMouseWithPressureEvent.idl
+@@ -0,0 +1,51 @@
++/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is mozilla.org code.
++ *
++ * The Initial Developer of the Original Code is
++ * Netscape Communications Corporation.
++ * Portions created by the Initial Developer are Copyright (C) 2000
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Doug Turner <dougt@mozilla.com> (original author)
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either of the GNU General Public License Version 2 or later (the "GPL"),
++ * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include "nsIDOMMouseEvent.idl"
++
++/**
++ * The nsIDOMMouseEventPressure interface extends nsIDOMMouseEvent
++ * by providing pressure information related to the mouse event.
++ */
++
++[scriptable, uuid(25e47b17-a0df-4ac1-aa1b-fda7d5701447)]
++interface nsIDOMMouseWithPressureEvent : nsIDOMMouseEvent
++{
++  readonly attribute float pressure;
++};
++
