@@ -1,3 +1,10 @@
+microb-engine (20080902-10) unstable; urgency=low
+
+  * Added pressure support for GtkEvent on maemo
+  * Bug 428988
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sun, 07 Sep 2008 13:47:22 -0400
+
 microb-engine (20080902-9) unstable; urgency=low
 
   * Updated to latest trunk 2008-09-06
