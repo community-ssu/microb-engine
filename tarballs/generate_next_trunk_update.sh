@@ -18,6 +18,9 @@ fi
 hg pull -R $HG_LREPO
 hg update -R $HG_LREPO
 CUR_REV=$(tail -n 1 ../microb-engine/trunkupdates/series | sed 's/^.*://' | sed 's/.diff$//')
+if [ "$CUR_REV" == "" ];then
+  CUR_REV=$(cat bonsai.date)
+fi
 LAST_REV=$(hg log --limit 1 -R $HG_LREPO | grep '^changeset' | sed 's/\:/\ /g' | awk '{print $3}')
 echo "hg diff -R $HG_LREPO -r $CUR_REV > $CUR_REV:$LAST_REV.diff"
 if [ "$CUR_REV" != "$LAST_REV" ];then
