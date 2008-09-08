@@ -85,7 +85,7 @@ arm/random_to_urandom.diff
 #arm/Bug385583.nspr.jmp_buf.eabi.diff
 
 perf_tweaks/suspend/010_NativeSuspendImplementation.diff
-perf_tweaks/hacks/010_layout_state_listener.diff
+#perf_tweaks/hacks/010_layout_state_listener.diff
 perf_tweaks/hacks/020_minimize_paint_delay_hack.diff
 perf_tweaks/hacks/030_content_rocket_parsing.diff
 perf_tweaks/hacks/040_netwerk_buffer_count.diff

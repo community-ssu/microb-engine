@@ -38,14 +38,14 @@ Index: mozilla/toolkit/library/libxul-rules.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-rules.mk
 +++ mozilla/toolkit/library/libxul-rules.mk
-@@ -89,14 +89,17 @@
+@@ -90,14 +90,17 @@
+ EXTRA_DSO_LDOPTS += -lmozglitzagl -framework OpenGL -framework AGL
+ endif
  endif
  
  ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
  EXTRA_DSO_LDOPTS += $(MOZ_PANGO_LIBS)
  endif
- 
- EXTRA_DSO_LDOPTS += $(MOZ_CAIRO_LIBS)
  
 +# Hack for Maemo: exporting only limited set of symbols for Linux
 +EXTRA_DSO_LDOPTS += -Wl,--version-script=$(srcdir)/libxul-export.map

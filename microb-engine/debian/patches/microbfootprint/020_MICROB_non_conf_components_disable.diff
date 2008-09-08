@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4783,16 +4783,21 @@
+@@ -4795,16 +4795,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4886,17 +4891,16 @@
+@@ -4898,17 +4903,16 @@
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
  
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6045,22 +6049,164 @@
+@@ -6057,22 +6061,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7497,35 +7643,54 @@
+@@ -7509,35 +7655,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7798,16 +7963,21 @@
+@@ -7810,16 +7975,21 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8087,16 +8257,22 @@
+@@ -8099,16 +8269,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -322,7 +322,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -151,16 +151,27 @@
+@@ -147,16 +147,27 @@
  MOZ_PROFILESHARING = @MOZ_PROFILESHARING@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@
@@ -799,7 +799,7 @@ Index: mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp
  NS_IMPL_ISUPPORTS2(nsXPLookAndFeel, nsILookAndFeel, nsIObserver)
  
  nsLookAndFeelIntPref nsXPLookAndFeel::sIntPrefs[] =
-@@ -597,27 +599,29 @@
+@@ -602,27 +604,29 @@
    if (aID == eColor_TextHighlightForeground) {
      // The foreground color for the matched text in findbar highlighting
      // Used with nsISelectionController::SELECTION_FIND
@@ -1028,7 +1028,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-config.mk
 +++ mozilla/toolkit/library/libxul-config.mk
-@@ -103,30 +103,27 @@
+@@ -107,30 +107,27 @@
  
  # component libraries
  COMPONENT_LIBS += \
@@ -1059,7 +1059,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
  COMPONENT_LIBS += \
  	xmlextras \
  	$(NULL)
-@@ -355,8 +352,27 @@
+@@ -359,8 +356,27 @@
  
  ifneq (,$(filter layout-debug,$(MOZ_EXTENSIONS)))
  COMPONENT_LIBS += gkdebug
@@ -1174,7 +1174,7 @@ Index: mozilla/toolkit/library/libxul-rules.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-rules.mk
 +++ mozilla/toolkit/library/libxul-rules.mk
-@@ -35,21 +35,26 @@
+@@ -35,22 +35,27 @@
  # the terms of any one of the MPL, the GPL or the LGPL.
  #
  # ***** END LICENSE BLOCK *****
@@ -1186,6 +1186,7 @@ Index: mozilla/toolkit/library/libxul-rules.mk
 -	$(LCMS_LIBS) \
  	$(MOZ_JS_LIBS) \
  	$(NSS_LIBS) \
+ 	$(MOZ_CAIRO_LIBS) \
  	$(NULL)
  
 +ifndef MOZ_NO_LCMS
@@ -1746,7 +1747,7 @@ Index: mozilla/dom/src/base/nsLocation.cpp
  #include "prmem.h"
  #include "nsCOMPtr.h"
  #include "nsEscape.h"
-@@ -320,21 +322,23 @@
+@@ -319,21 +321,23 @@
  
    // It is valid for docshell to return a null URI. Don't try to fixup
    // if this happens.

@@ -3,7 +3,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -419,16 +419,23 @@
+@@ -422,16 +422,23 @@
  // microseconds.  When this bound is exceeded and reflow commands are
  // still queued up, a reflow event is posted.  The idea is for reflow
  // to not hog the processor beyond the time specifed in
@@ -27,7 +27,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
  
  /**A block of memory that the stack will 
   * chop up and hand out
-@@ -1148,21 +1155,16 @@
+@@ -1163,21 +1170,16 @@
    PRPackedBool      mPaintingSuppressed;  // For all documents we initially lock down painting.
                                            // We will refuse to paint the document until either
                                            // (a) our timer fires or (b) all frames are constructed.
@@ -49,7 +49,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
  #ifdef MOZ_REFLOW_PERF
    ReflowCountMgr * mReflowCountMgr;
  #endif
-@@ -2441,23 +2443,25 @@
+@@ -2493,23 +2495,25 @@
      mPaintSuppressionTimer = do_CreateInstance("@mozilla.org/timer;1");
      if (!mPaintSuppressionTimer)
        // Uh-oh.  We must be out of memory.  No point in keeping painting locked down.
@@ -80,7 +80,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
  
  void
  PresShell::sPaintSuppressionCallback(nsITimer *aTimer, void* aPresShell)
-@@ -4227,17 +4231,17 @@
+@@ -4325,17 +4329,17 @@
      return;
    }
    
@@ -91,11 +91,11 @@ Index: mozilla/layout/base/nsPresShell.cpp
      nsRect rect(nsPoint(0, 0), rootFrame->GetSize());
 -    rootFrame->Invalidate(rect, PR_FALSE);
 +    rootFrame->Invalidate(rect, gPaintDelay < -1 ? PR_TRUE : PR_FALSE);
-     nsCOMPtr<nsISupports> container = mPresContext->GetContainer();
-     nsCOMPtr<nsIDocShell> docShell(do_QueryInterface(container));
-     if (docShell)
-       docShell->FireOnLayoutStateChange(NS_FRAME_FIRST_REFLOW);
    }
  
    // This makes sure to get the same thing that nsPresContext::EnsureVisible()
    // got.
+   nsCOMPtr<nsISupports> container = mPresContext->GetContainer();
+   nsCOMPtr<nsPIDOMWindow> ourWindow = do_GetInterface(container);
+   nsCOMPtr<nsIFocusController> focusController =
+     ourWindow ? ourWindow->GetRootFocusController() : nsnull;
