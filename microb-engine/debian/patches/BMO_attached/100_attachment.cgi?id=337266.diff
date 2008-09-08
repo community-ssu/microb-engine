@@ -1,0 +1,43 @@
+# https://bugzilla.mozilla.org/show_bug.cgi?id=454037
+diff -r 4b3ca87a5a52 js/src/builtins.tbl
+--- a/js/src/builtins.tbl	Sat Sep 06 01:19:29 2008 -0700
++++ b/js/src/builtins.tbl	Sun Sep 07 02:15:49 2008 -0500
+@@ -77,6 +77,7 @@
+ BUILTIN2(StringToNumber,        LO,     LO, F,  jsdouble,  JSContext*, JSString*, 1, 1)
+ BUILTIN2(StringToInt32,         LO,     LO, LO, jsint,     JSContext*, JSString*, 1, 1)
+ BUILTIN2(ParseInt,              LO,     LO, F,  jsdouble,  JSContext*, JSString*, 1, 1)
++BUILTIN1(ParseIntDouble,        F,          F,  jsdouble,  jsdouble, 1, 1)
+ BUILTIN2(ParseFloat,            LO,     LO, F,  jsdouble,  JSContext*, JSString*, 1, 1)
+ BUILTIN3(Any_getelem,           LO, LO, LO, P,  jsval,     JSContext*, JSObject*, JSString*, 0, 0)
+ BUILTIN4(Any_setelem,           LO, LO, LO, LO, LO, bool,  JSContext*, JSObject*, JSString*, jsval, 0, 0)
+diff -r 4b3ca87a5a52 js/src/jsbuiltins.cpp
+--- a/js/src/jsbuiltins.cpp	Sat Sep 06 01:19:29 2008 -0700
++++ b/js/src/jsbuiltins.cpp	Sun Sep 07 02:15:49 2008 -0500
+@@ -404,6 +404,16 @@
+     if (!js_strtointeger(cx, bp, end, &ep, 0, &d) || ep == bp)
+         return js_NaN;
+     return d;
++}
++
++jsdouble FASTCALL
++js_ParseIntDouble(jsdouble d)
++{
++    if (!JSDOUBLE_IS_FINITE(d))
++    {
++        return js_NaN;
++    }
++    return floor(d);
+ }
+ 
+ jsval FASTCALL
+diff -r 4b3ca87a5a52 js/src/jstracer.cpp
+--- a/js/src/jstracer.cpp	Sat Sep 06 01:19:29 2008 -0700
++++ b/js/src/jstracer.cpp	Sun Sep 07 02:15:49 2008 -0500
+@@ -4628,6 +4628,7 @@
+         { js_math_random,              F_Math_random,          "R",    "",    INFALLIBLE },
+         { js_math_log,                 F_Math_log,             "",    "d",    INFALLIBLE },
+         { js_num_parseInt,             F_ParseInt,             "C",   "s",    INFALLIBLE },
++        { js_num_parseInt,             F_ParseIntDouble,       "",    "d",    INFALLIBLE },
+         { js_num_parseFloat,           F_ParseFloat,           "C",   "s",    INFALLIBLE },
+         { js_num_toString,             F_NumberToString,       "TC",   "",    FAIL_NULL },
+         { js_obj_hasOwnProperty,       F_Object_p_hasOwnProperty,

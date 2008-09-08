@@ -1,3 +1,9 @@
+microb-engine (20080902-15) unstable; urgency=low
+
+  * Fixed bug 453402 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 08 Sep 2008 20:31:31 +0300
+
 microb-engine (20080902-14) unstable; urgency=low
 
   * Fixed bug 87973 
