@@ -1,3 +1,9 @@
+microb-engine (20080902-13) unstable; urgency=low
+
+  * Fixed low memory patch 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 08 Sep 2008 11:12:23 +0300
+
 microb-engine (20080902-12) unstable; urgency=low
 
   * Reverted last commit

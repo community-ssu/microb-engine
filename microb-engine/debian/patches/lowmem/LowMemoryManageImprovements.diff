@@ -2,32 +2,6 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
 ===================================================================
 --- mozilla.orig/xpcom/base/nsMemoryImpl.cpp
 +++ mozilla/xpcom/base/nsMemoryImpl.cpp
-@@ -46,16 +46,25 @@
- #include "prmem.h"
- #include "prcvar.h"
- #include "pratom.h"
- 
- #include "nsAlgorithm.h"
- #include "nsAutoLock.h"
- #include "nsCOMPtr.h"
- #include "nsString.h"
-+#include <fcntl.h>
-+#include <unistd.h>
-+
-+#ifdef __arm__
-+const char *kHighMark = "/sys/kernel/high_watermark";
-+//const char *kHighMark = "/sys/kernel/low_watermark";
-+#else
-+const char *kHighMark = "/tmp/high_mem.link";
-+#endif
- 
- #if defined(XP_WIN)
- #include <windows.h>
- #define NS_MEMORY_FLUSHER
- #elif defined (NS_OSSO)
- #include <osso-mem.h>
- #include <fcntl.h>
- #include <unistd.h>
 @@ -181,16 +190,20 @@
  nsMemoryImpl::HeapMinimize(PRBool aImmediate)
  {
