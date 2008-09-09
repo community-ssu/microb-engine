@@ -153,7 +153,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 +    static gdouble pressure = 0;
 +    if (event->axes) {
 +      gdk_event_get_axis ((GdkEvent*)event, GDK_AXIS_PRESSURE, &pressure);
-+      return FALSE;
++      //return FALSE;
 +    }
 +
      nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);
@@ -174,7 +174,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 +    static gdouble pressure = 0;
 +    if (event->axes) {
 +      gdk_event_get_axis ((GdkEvent*)event, GDK_AXIS_PRESSURE, &pressure);
-+      return FALSE;
++      //return FALSE;
 +    }
 +
      nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);

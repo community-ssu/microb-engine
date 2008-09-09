@@ -1,3 +1,9 @@
+microb-engine (20080902-17) unstable; urgency=low
+
+  * Fixes: NB#88212	- Stylus interactions don't work
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 09 Sep 2008 14:17:44 +0300
+
 microb-engine (20080902-16) unstable; urgency=low
 
   * Added missing localization patch 
