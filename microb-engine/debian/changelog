@@ -1,3 +1,9 @@
+microb-engine (20080902-20) unstable; urgency=low
+
+  * Fixes: NB#88108 libsqlite3.so needed by libsoftokn3.so
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue,  9 Sep 2008 20:41:21 +0300
+
 microb-engine (20080902-19) unstable; urgency=low
 
   * Added patch to preserve the zoom value.

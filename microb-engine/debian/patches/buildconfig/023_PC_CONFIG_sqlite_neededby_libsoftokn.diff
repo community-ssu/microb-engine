@@ -1,0 +1,11 @@
+#Fixed bug#88108:libsqlite3.so needed by libsoftokn3.so
+diff -ruN mozilla.orig/xulrunner/installer/mozilla-nss.pc.in mozilla/xulrunner/installer/mozilla-nss.pc.in
+--- mozilla.orig/xulrunner/installer/mozilla-nss.pc.in	2008-09-09 18:39:37.000000000 +0300
++++ mozilla/xulrunner/installer/mozilla-nss.pc.in	2008-09-09 18:40:21.000000000 +0300
+@@ -6,5 +6,5 @@
+ Description: Mozilla Network Security Services
+ Version: %MOZILLA_VERSION%
+ Requires: %NSPR_NAME% >= %NSPR_VERSION%
+-Libs: -L${sdkdir}/lib -lnss3 -lnssutil3 -lsmime3 -lssl3 -lsoftokn3
++Libs: -L${sdkdir}/lib -lnss3 -lnssutil3 -lsmime3 -lssl3 -lsoftokn3 -lsqlite3
+ Cflags: -I${includedir}/stable
