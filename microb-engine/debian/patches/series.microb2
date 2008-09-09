@@ -112,6 +112,8 @@ perf_tweaks/enable_16bpp_format.diff
 
 perf_tweaks/bug446376_easy.diff
 
+not_sorted/others/330_MBUG_42865_zoom_navigation_fix.diff
+
 not_sorted/others/400_bigger_ua_string_length_61630.diff
 not_sorted/002_drawingMissingGlyphs.diff
 

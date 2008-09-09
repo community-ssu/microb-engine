@@ -1,6 +1,12 @@
+microb-engine (20080902-19) unstable; urgency=low
+
+  * Added patch to preserve the zoom value.
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue,  9 Sep 2008 18:14:22 +0300
+
 microb-engine (20080902-18) unstable; urgency=low
 
-  * Fixes: NB#88108
+  * Fixes: bug#88108
 
  -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue,  9 Sep 2008 17:13:06 +0300
 
