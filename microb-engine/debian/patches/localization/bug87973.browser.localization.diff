@@ -1,0 +1,10 @@
+--- mozilla/toolkit/toolkit-tiers.mk.orig	2008-09-08 18:16:03.000000000 +0300
++++ mozilla/toolkit/toolkit-tiers.mk	2008-09-08 18:16:23.000000000 +0300
+@@ -286,5 +286,7 @@ tier_toolkit_dirs += $(MOZ_BRANDING_DIRE
+ #tier_toolkit_dirs += modules/libreg
+ #tier_toolkit_dirs += browser
+ endif
+ endif
+ endif
++
++tier_toolkit_dirs	+= browser/locales
