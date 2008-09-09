@@ -5,3 +5,4 @@ usr/lib/microb-engine/libsoftokn3.so usr/lib/microb-engine-devel/sdk/lib/libsoft
 usr/lib/microb-engine/libnss3.so usr/lib/microb-engine-devel/sdk/lib/libnss3.so
 usr/lib/microb-engine/libfreebl3.so usr/lib/microb-engine-devel/sdk/lib/libfreebl3.so
 usr/lib/microb-engine/libnssutil3.so usr/lib/microb-engine-devel/sdk/lib/libnssutil3.so
+usr/lib/microb-engine/libsqlite3.so usr/lib/microb-engine-devel/sdk/lib/libsqlite3.so
