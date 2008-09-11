@@ -9,11 +9,9 @@ ac_add_options --disable-tests
 
 
    #* Toolkit Options for Linux/GTK2
-ac_add_options --enable-default-toolkit=cairo-gtk2
+#ac_add_options --enable-default-toolkit=cairo-gtk2
 
 
-   #* Toolkit Options for Linux/Qt
-#ac_add_options --enable-default-toolkit=cairo-qt
 
 ac_add_options --enable-xft
 ac_add_options --disable-freetype2
@@ -114,3 +112,6 @@ ac_add_options --enable-xul
 #ac_add_options --enable-debug
 #ac_add_options --enable-system-sqlite
 
+   #* Toolkit Options for Linux/Qt
+ac_add_options --enable-default-toolkit=cairo-qt
+ac_add_options --enable-extensions="ftv spatialnavigation"
