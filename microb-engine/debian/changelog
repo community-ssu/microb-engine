@@ -1,3 +1,9 @@
+microb-engine (20080902-25) unstable; urgency=low
+
+  * Removed experimental patch 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Sep 2008 20:08:23 -0400
+
 microb-engine (20080902-24) unstable; urgency=low
 
   * Disable disk cache by default

@@ -131,7 +131,7 @@ BMO_attached/090_bug428988_pressure.diff
 localization/bug87973.browser.localization.diff
 
 BMO_attached/110_bug454756.diff
-BMO_attached/120_attachment.cgi?id=337990.diff
+#BMO_attached/120_attachment.cgi?id=337990.diff
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail
