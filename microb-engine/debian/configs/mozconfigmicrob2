@@ -113,5 +113,7 @@ ac_add_options --enable-xul
 #ac_add_options --enable-system-sqlite
 
    #* Toolkit Options for Linux/Qt
-ac_add_options --enable-default-toolkit=cairo-qt
-ac_add_options --enable-extensions="ftv spatialnavigation"
+#ac_add_options --enable-default-toolkit=cairo-qt
+#ac_add_options --enable-extensions="ftv spatialnavigation"
+#ac_add_options --disable-elf-dynstr-gc
+

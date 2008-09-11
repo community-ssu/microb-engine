@@ -1,3 +1,10 @@
+microb-engine (20080902-24) unstable; urgency=low
+
+  * Disable disk cache by default
+  * Disabled wrong Qt default configuration
+
+ -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Sep 2008 19:47:52 +0300
+
 microb-engine (20080902-23) unstable; urgency=low
 
   * Add experimental fix for bug  Bug 450930 -  Only redraw when necessary
