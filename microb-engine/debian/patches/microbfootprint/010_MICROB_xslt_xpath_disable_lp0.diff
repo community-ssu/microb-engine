@@ -9,7 +9,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4323,16 +4323,18 @@
+@@ -4352,16 +4352,18 @@
  MOZ_IMG_ENCODERS_DEFAULT="png jpeg"
  MOZ_IPCD=
  MOZ_JAVAXPCOM=
@@ -20,7 +20,6 @@ Index: mozilla/configure.in
  MOZ_MATHML=1
 +MOZ_XSLT=1
 +MOZ_XPATH=1
- MOZ_MOCHITEST=1
  MOZ_MORK=1
  MOZ_MORKREADER=
  MOZ_AUTH_EXTENSION=1
@@ -28,7 +27,8 @@ Index: mozilla/configure.in
  MOZ_NO_INSPECTOR_APIS=
  MOZ_NO_XPCOM_OBSOLETE=
  MOZ_NO_FAST_LOAD=
-@@ -7526,16 +7528,42 @@
+ MOZ_OGG=1
+@@ -7534,16 +7536,42 @@
      PKG_CHECK_MODULES(LCMS, lcms >= $LCMS_VERSION)
  fi
  
@@ -75,7 +75,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -196,16 +196,18 @@
+@@ -190,16 +190,18 @@
  PKG_SKIP_STRIP	= @PKG_SKIP_STRIP@
  
  ClientWallet=1

@@ -1,10 +1,8 @@
-buildconfig/006_Toolkit_NoPlacesNoRDF.diff
 buildconfig/007_BUILD_CONFIG_xul_manual_enable.diff
 buildconfig/008_BrowserNotUsedHeaders.diff
 buildconfig/009_BrowserLibregTiers.diff
 buildconfig/011_BuildWithGCC3.4.4.diff
 buildconfig/015_jemalloc_sb.diff
-buildconfig/016_nsCaretXUL.diff
 buildconfig/020_cs2007_rpath_wr.diff
 buildconfig/022_geolocation_nolibxul.diff
 buildconfig/023_PC_CONFIG_sqlite_neededby_libsoftokn.diff
@@ -127,7 +125,6 @@ extensions/040_OldSpatialNavigationModule.diff
 
 # Latest tracemonkey update
 arm/tt_latest.diff
-BMO_attached/100_attachment.cgi?id=337266.diff
 
 BMO_attached/090_bug428988_pressure.diff
 

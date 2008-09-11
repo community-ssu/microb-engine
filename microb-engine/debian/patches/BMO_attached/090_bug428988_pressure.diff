@@ -3,7 +3,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2132,16 +2132,19 @@
+@@ -2137,16 +2137,19 @@
  
  
      // when we receive this, it must be that the gtk dragging is over,
@@ -23,7 +23,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  
      event.isShift   = (aEvent->state & GDK_SHIFT_MASK)
          ? PR_TRUE : PR_FALSE;
-@@ -2180,16 +2183,19 @@
+@@ -2185,16 +2188,19 @@
      if (gPluginFocusWindow && gPluginFocusWindow != this) {
          nsRefPtr<nsWindow> kungFuDeathGrip = gPluginFocusWindow;
          gPluginFocusWindow->LoseNonXEmbedPluginFocus();
@@ -43,7 +43,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
          event.isShift   = (xevent.xmotion.state & GDK_SHIFT_MASK)
              ? PR_TRUE : PR_FALSE;
          event.isControl = (xevent.xmotion.state & GDK_CONTROL_MASK)
-@@ -2239,16 +2245,18 @@
+@@ -2244,16 +2250,18 @@
      DispatchEvent(&event, status);
  }
  #endif
@@ -62,7 +62,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
          nsRect windowRect;
          ScreenToWidget(nsRect(nscoord(aGdkEvent->x_root), nscoord(aGdkEvent->y_root), 1, 1), windowRect);
  
-@@ -2324,16 +2332,17 @@
+@@ -2329,16 +2337,17 @@
      case 3:
          domButton = nsMouseEvent::eRightButton;
          break;
@@ -80,7 +80,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
              event.isShift   = (aEvent->state & GDK_SHIFT_MASK) != 0;
              event.isControl = (aEvent->state & GDK_CONTROL_MASK) != 0;
              event.isAlt     = (aEvent->state & GDK_MOD1_MASK) != 0;
-@@ -3518,16 +3527,18 @@
+@@ -3523,16 +3532,18 @@
                                 "notify::gtk-theme-name",
                                 G_CALLBACK(theme_changed_cb), this);
          g_signal_connect_after(default_settings,
@@ -99,7 +99,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
                           G_CALLBACK(expose_event_cb), NULL);
          g_signal_connect_after(G_OBJECT(mContainer), "enter_notify_event",
                           G_CALLBACK(enter_notify_event_cb), NULL);
-@@ -4111,17 +4122,18 @@
+@@ -4116,17 +4127,18 @@
          return;
  
      gint retval;
@@ -119,7 +119,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
      }
  }
  
-@@ -4935,47 +4947,72 @@
+@@ -4940,47 +4952,72 @@
      }
      return window;
  }
@@ -196,7 +196,7 @@ Index: mozilla/content/base/src/nsGenericElement.cpp
 ===================================================================
 --- mozilla.orig/content/base/src/nsGenericElement.cpp
 +++ mozilla/content/base/src/nsGenericElement.cpp
-@@ -3476,19 +3476,23 @@
+@@ -3435,19 +3435,23 @@
    NS_PRECONDITION(aTarget, "Must have target");
    NS_PRECONDITION(aSourceEvent, "Must have source event");
    NS_PRECONDITION(aStatus, "Null out param?");
@@ -224,7 +224,7 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
 ===================================================================
 --- mozilla.orig/content/events/src/nsDOMEvent.cpp
 +++ mozilla/content/events/src/nsDOMEvent.cpp
-@@ -787,16 +787,17 @@
+@@ -791,16 +791,17 @@
          new nsMouseEvent(PR_FALSE, msg, nsnull, oldMouseEvent->reason);
        NS_ENSURE_TRUE(mouseEvent, NS_ERROR_OUT_OF_MEMORY);
        isInputEvent = PR_TRUE;
@@ -454,12 +454,12 @@ Index: mozilla/dom/src/base/nsDOMClassInfo.cpp
 +
    DOM_CLASSINFO_MAP_BEGIN(MouseScrollEvent, nsIDOMMouseScrollEvent)
      DOM_CLASSINFO_MAP_ENTRY(nsIDOMMouseScrollEvent)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMMouseEvent)
      DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
    DOM_CLASSINFO_MAP_END
  
    DOM_CLASSINFO_MAP_BEGIN(DragEvent, nsIDOMDragEvent)
      DOM_CLASSINFO_MAP_ENTRY(nsIDOMDragEvent)
-     DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
 Index: mozilla/widget/public/nsGUIEvent.h
 ===================================================================
 --- mozilla.orig/widget/public/nsGUIEvent.h

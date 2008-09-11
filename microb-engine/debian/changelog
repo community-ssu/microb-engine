@@ -1,3 +1,9 @@
+microb-engine (20080902-22) unstable; urgency=low
+
+  * Updated to latest trunk 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Sep 2008 15:57:51 +0300
+
 microb-engine (20080902-21) unstable; urgency=low
 
   * Fixed bug 454756 Arm flashplayer does not like DelayedStop and crashes (Block 416953 )  

@@ -16,12 +16,12 @@ Index: mozilla/content/base/src/nsContentList.h
 +#include "nsStringGlue.h"
  #include "nsIDOMHTMLCollection.h"
  #include "nsIDOMNodeList.h"
+ #include "nsINodeList.h"
  #include "nsStubMutationObserver.h"
  #include "nsIAtom.h"
  #include "nsINameSpaceManager.h"
  #include "nsCycleCollectionParticipant.h"
  
- // Magic namespace id that means "match all namespaces".  This is
 Index: mozilla/content/html/content/public/nsIForm.h
 ===================================================================
 --- mozilla.orig/content/html/content/public/nsIForm.h
@@ -49,7 +49,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.cpp
 +++ mozilla/layout/base/nsPresContext.cpp
-@@ -906,17 +906,17 @@
+@@ -915,17 +915,17 @@
          doc->AddCharSetObserver(this);
          UpdateCharSet(doc->GetDocumentCharacterSet());
        }
@@ -72,7 +72,7 @@ Index: mozilla/layout/base/nsPresContext.h
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.h
 +++ mozilla/layout/base/nsPresContext.h
-@@ -38,17 +38,17 @@
+@@ -39,17 +39,17 @@
  /* a presentation of a document, part 1 */
  
  #ifndef nsPresContext_h___
@@ -91,7 +91,7 @@ Index: mozilla/layout/base/nsPresContext.h
  #include "nsIWeakReference.h"
  #include "nsITheme.h"
  #include "nsILanguageAtomService.h"
-@@ -748,17 +748,17 @@
+@@ -790,17 +790,17 @@
    static NS_HIDDEN_(int) PR_CALLBACK PrefChangedCallback(const char*, void*);
  
    NS_HIDDEN_(void) UpdateAfterPreferencesChanged();
