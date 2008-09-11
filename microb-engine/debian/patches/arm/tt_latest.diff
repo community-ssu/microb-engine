@@ -1,6 +1,8 @@
---- mozilla/js/src/jstracer.cpp.orig	2008-09-11 16:18:33.000000000 +0300
-+++ mozilla/js/src/jstracer.cpp	2008-09-11 16:19:12.000000000 +0300
-@@ -2629,18 +2629,16 @@ extern void
+Index: mozilla/js/src/jstracer.cpp
+===================================================================
+--- mozilla.orig/js/src/jstracer.cpp
++++ mozilla/js/src/jstracer.cpp
+@@ -2629,18 +2629,16 @@
  js_InitJIT(JSTraceMonitor *tm)
  {
  #if defined NANOJIT_IA32
@@ -19,7 +21,7 @@
          tm->fragmento = fragmento;
          tm->globalSlots = new (&gc) SlotList();
          tm->globalTypeMap = new (&gc) TypeMap();
-@@ -2705,25 +2703,16 @@ js_FlushJITCache(JSContext* cx)
+@@ -2706,25 +2704,16 @@
      memset(&tm->fcache, 0, sizeof(tm->fcache));
      if (cx->fp) {
          tm->globalShape = OBJ_SHAPE(JS_GetGlobalForObject(cx, cx->fp->scopeChain));
@@ -28,7 +30,7 @@
      }
  }
  
--extern void
+-void
 -js_ShutDownJIT()
 -{
 -    if (oracle) {
