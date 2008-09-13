@@ -488,7 +488,7 @@ endif
 	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
 	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CURDIR)/debian/tmp/usr/include/microb-engine/
 	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/include/nspr $(CURDIR)/debian/tmp/usr/include/microb-engine/
-	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed*; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed* $(CURDIR)/debian/tmp/usr/lib/microb-engine; fi
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed $(CURDIR)/debian/tmp/usr/lib/microb-engine; fi
 	dh_install --sourcedir=$(CURDIR)/debian/tmp --list-missing
 	mv $(CURDIR)/debian/microb-engine-common/usr/lib $(CURDIR)/debian/microb-engine-common/usr/share
 	$(XPT_LINK) only_ship_this.xpt $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/*.xpt

@@ -1,3 +1,9 @@
+microb-engine (20080902-28) unstable; urgency=low
+
+  * Fixed missing TestGtkEmbed file in refui package
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 13 Sep 2008 19:00:58 -0500
+
 microb-engine (20080902-27) unstable; urgency=low
 
   * Updated to trunk 
