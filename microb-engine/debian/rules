@@ -22,7 +22,7 @@ MOZCONFIG_LEV:=microb2
 syscairo:=n
 svgport:=n
 canvas:=n
-jemalloc:=n
+jemalloc:=y
 
 DH_ALWAYS_EXCLUDE=CVS:.svn
 
@@ -252,9 +252,12 @@ endif
 ifeq ($(GCCENV),.cs)
 ifneq (,$(findstring $(DEB_HOST_ARCH),i386))
 	optimize_add +=  -finline-functions -fno-unit-at-a-time
+ifeq ($(nolibxul),y)
+	optimize_add +=  -O1
+endif
 endif
 ifeq ($(nolibxul),y)
-	optimize_add +=  -finline-functions -fno-unit-at-a-time -O1
+	optimize_add +=  -finline-functions -fno-unit-at-a-time
 endif
 endif
 

@@ -1,3 +1,11 @@
+microb-engine (20080902-29) unstable; urgency=low
+
+  * UPdated to trunk 2008-09-14
+  * Fixed bug 450930
+  * Enable jemalloc
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sun, 14 Sep 2008 12:14:13 -0400
+
 microb-engine (20080902-28) unstable; urgency=low
 
   * Fixed missing TestGtkEmbed file in refui package

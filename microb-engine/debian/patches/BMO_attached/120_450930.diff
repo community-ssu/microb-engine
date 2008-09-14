@@ -2,16 +2,19 @@ Index: mozilla/content/base/src/nsContentUtils.cpp
 ===================================================================
 --- mozilla.orig/content/base/src/nsContentUtils.cpp
 +++ mozilla/content/base/src/nsContentUtils.cpp
-@@ -471,16 +471,17 @@
+@@ -469,18 +469,19 @@
+     { &nsGkAtoms::ontimeupdate,                  { NS_TIMEUPDATE, EventNameType_HTML }},
+     { &nsGkAtoms::onended,                       { NS_ENDED, EventNameType_HTML }},
      { &nsGkAtoms::ondataunavailable,             { NS_DATAUNAVAILABLE, EventNameType_HTML }},
      { &nsGkAtoms::oncanshowcurrentframe,         { NS_CANSHOWCURRENTFRAME, EventNameType_HTML }},
      { &nsGkAtoms::oncanplay,                     { NS_CANPLAY, EventNameType_HTML }},
      { &nsGkAtoms::oncanplaythrough,              { NS_CANPLAYTHROUGH, EventNameType_HTML }},
      { &nsGkAtoms::onratechange,                  { NS_RATECHANGE, EventNameType_HTML }},
      { &nsGkAtoms::ondurationchange,              { NS_DURATIONCHANGE, EventNameType_HTML }},
-     { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }},
+-    { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }},
++    { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }}
  #endif //MOZ_MEDIA
-+    { &nsGkAtoms::onMozDOMAfterPaint,            { NS_AFTERPAINT, EventNameType_HTML }}
++    ,{ &nsGkAtoms::onMozDOMAfterPaint,            { NS_AFTERPAINT, EventNameType_HTML }}
    };
  
    sEventTable = new nsDataHashtable<nsISupportsHashKey, EventNameMapping>;
@@ -276,7 +279,7 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.cpp
 ===================================================================
 --- /dev/null
 +++ mozilla/content/events/src/nsDOMNotifyPaintEvent.cpp
-@@ -0,0 +1,141 @@
+@@ -0,0 +1,131 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -331,16 +334,6 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.cpp
 +  {
 +    mEventIsInternal = PR_TRUE;
 +    mEvent->time = PR_Now();
-+  }
-+}
-+
-+nsDOMNotifyPaintEvent::~nsDOMNotifyPaintEvent()
-+{
-+  if (mEventIsInternal) {
-+    if (mEvent->eventStructType == NS_NOTIFYPAINT_EVENT) {
-+      delete static_cast<nsNotifyPaintEvent*>(mEvent);
-+      mEvent = nsnull;
-+    }
 +  }
 +}
 +
@@ -422,7 +415,7 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.h
 ===================================================================
 --- /dev/null
 +++ mozilla/content/events/src/nsDOMNotifyPaintEvent.h
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,63 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -473,7 +466,6 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.h
 +public:
 +  nsDOMNotifyPaintEvent(nsPresContext* aPresContext,
 +                        nsNotifyPaintEvent* aEvent);
-+  ~nsDOMNotifyPaintEvent();
 +
 +  NS_DECL_ISUPPORTS_INHERITED
 +
@@ -981,7 +973,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
 +  mSameDocDirtyRegion.SetEmpty();
 +  mCrossDocDirtyRegion.SetEmpty();
 +  event.target = do_QueryInterface(ourWindow);
-+  nsEventDispatcher::Dispatch(eventTarget, this, &event);
++  nsEventDispatcher::Dispatch(ourWindow, this, &event);
 +}
 +
 +void
@@ -1068,7 +1060,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -4330,17 +4330,17 @@
+@@ -4338,17 +4338,17 @@
      return;
    }
    
@@ -1108,11 +1100,117 @@ Index: mozilla/layout/base/tests/Makefile.in
  
  libs:: $(_TEST_FILES)
  	$(INSTALL) $(foreach f,$^,"$f") $(DEPTH)/_tests/testing/mochitest/tests/$(relativesrcdir)
+Index: mozilla/layout/base/tests/Makefile.in.orig
+===================================================================
+--- /dev/null
++++ mozilla/layout/base/tests/Makefile.in.orig
+@@ -0,0 +1,101 @@
++#
++# ***** BEGIN LICENSE BLOCK *****
++# Version: MPL 1.1/GPL 2.0/LGPL 2.1
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License. You may obtain a copy of the License at
++# http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Original Code is mozilla.org code.
++#
++# The Initial Developer of the Original Code is
++# Netscape Communications Corporation.
++# Portions created by the Initial Developer are Copyright (C) 1998
++# the Initial Developer. All Rights Reserved.
++#
++# Contributor(s):
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either of the GNU General Public License Version 2 or later (the "GPL"),
++# or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++# in which case the provisions of the GPL or the LGPL are applicable instead
++# of those above. If you wish to allow use of your version of this file only
++# under the terms of either the GPL or the LGPL, and not to allow others to
++# use your version of this file under the terms of the MPL, indicate your
++# decision by deleting the provisions above and replace them with the notice
++# and other provisions required by the GPL or the LGPL. If you do not delete
++# the provisions above, a recipient may use your version of this file under
++# the terms of any one of the MPL, the GPL or the LGPL.
++#
++# ***** END LICENSE BLOCK *****
++
++DEPTH		= ../../..
++topsrcdir	= @top_srcdir@
++srcdir		= @srcdir@
++VPATH		= @srcdir@
++relativesrcdir	= layout/base/tests
++
++include $(DEPTH)/config/autoconf.mk
++
++ifeq (0,1) # false, since TestSpaceManager is broken
++
++MOZILLA_INTERNAL_API = 1
++
++REQUIRES	= xpcom \
++		  gfx \
++		  $(NULL)
++
++CPPSRCS		= \
++		TestSpaceManager.cpp \
++		$(NULL)
++
++SIMPLE_PROGRAMS	= $(CPPSRCS:.cpp=$(BIN_SUFFIX))
++
++LOCAL_INCLUDES	= \
++		-I$(srcdir)/../src \
++		$(NULL)
++
++EXTRA_DSO_LIBS	= gkbase_s gkgfx
++
++LIBS		+= \
++		$(LIBS_DIR) \
++		$(EXTRA_DSO_LIBS) \
++		$(MOZ_UNICHARUTIL_LIBS) \
++		$(MOZ_COMPONENT_LIBS) \
++		$(MOZ_JS_LIBS) \
++		$(TK_LIBS) \
++		$(NULL)
++
++endif # false
++
++include $(topsrcdir)/config/rules.mk
++
++DEFINES += -D_IMPL_NS_LAYOUT
++
++_TEST_FILES =	\
++		test_bug66619.html \
++		test_bug386575.xhtml \
++		test_bug388019.html \
++		test_bug394057.html \
++		test_bug396024.html \
++		test_bug399284.html \
++		test_bug399951.html \
++		test_bug404209.xhtml \
++		test_bug416896.html \
++		test_bug420499.xul \
++		test_bug423523.html \
++		test_bug445810.html \
++		test_bug449781.html \
++		$(NULL)
++# test_bug396024.html is currently disabled because it interacts badly with
++# the "You can't print-preview while the page is loading" dialog.
++# (See bug 407080)
++
++libs:: $(_TEST_FILES)
++	$(INSTALL) $(foreach f,$^,"$f") $(DEPTH)/_tests/testing/mochitest/tests/$(relativesrcdir)
 Index: mozilla/layout/base/tests/test_bug450930.html
 ===================================================================
 --- /dev/null
 +++ mozilla/layout/base/tests/test_bug450930.html
-@@ -0,0 +1,178 @@
+@@ -0,0 +1,132 @@
 +<!DOCTYPE HTML>
 +<html>
 +<!--
@@ -1128,8 +1226,7 @@ Index: mozilla/layout/base/tests/test_bug450930.html
 +<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=450930">Mozilla Bug 450930</a>
 +<p id="display">
 +  <div id="d" style="width:400px; height:200px;"></div>
-+  <iframe id="iframe" style="width:400px; height:200px;"
-+   src="data:text/html,<div id='d'>Hello</div><div style='margin-top:500px' id='d2'>Hello</div>"></iframe>
++  <iframe id="iframe" style="width:400px; height:200px;" src="data:text/html,<div id='d'>Hello</div>"></iframe>
 +</p>
 +<div id="content" style="display: none">
 +
@@ -1140,20 +1237,17 @@ Index: mozilla/layout/base/tests/test_bug450930.html
 +/** Test for Bug 450930 **/
 +SimpleTest.waitForExplicitFinish();
 +
-+function flash(doc, name) {
-+  var d = doc.getElementById(name);
-+  d.style.backgroundColor = d.style.backgroundColor == "blue" ? "yellow" : "blue";
-+}
-+
-+function le(v1, v2, s) {
-+  ok(v1 <= v2, s + " (" + v1 + "," + v2 + ")");
++var i = 0;
++function flash(doc) {
++  doc.getElementById('d').style.backgroundColor = i ? "blue" : "yellow";
++  i = 1 - i;
 +}
 +
 +function checkContains(r1, r2, s) {
-+  le(r1.left, r2.left, "Left edges out" + s);
-+  le(r2.right, r1.right, "Right edges out" + s);
-+  le(r1.top, r2.top, "Top edges out" + s);
-+  le(r2.bottom, r1.bottom, "Bottom edges out" + s);
++  ok(r1.left <= r2.left, "Left edges out" + s);
++  ok(r1.right >= r2.right, "Right edges out" + s);
++  ok(r1.top <= r2.top, "Top edges out" + s);
++  ok(r1.bottom >= r2.bottom, "Bottom edges out" + s);
 +}
 +
 +function isRect(r1, r2) {
@@ -1169,57 +1263,17 @@ Index: mozilla/layout/base/tests/test_bug450930.html
 +  return false;
 +}
 +
-+function doesRectContain(r1, r2) {
-+  return r1.left <= r2.left && r2.right <= r1.right &&
-+         r1.top <= r2.top && r2.bottom <= r1.bottom;
-+}
-+
-+function doesRectContainListElement(r, list) {
++function doesRectContainListElement(r, list, s) {
 +  for (var i = 0; i < list.length; ++i) {
-+    if (doesRectContain(r, list[i]))
++    if (checkContains(r, list[i], s))
 +      return true;
 +  }
 +  return false;
 +}
 +
-+function checkGotSubdoc(list) {
++function checkGotSubdoc(list, s) {
 +  var r = document.getElementById("iframe").getBoundingClientRect();
-+  return doesRectContainListElement(r, list);
-+}
-+
-+function runTest3() {
-+  var gotScrolledOutInMainDoc = false;
-+  var gotScrolledOutInSubdoc = false;
-+  var iframe = document.getElementById("iframe");
-+
-+  function listener(event) {
-+    netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-+    if (checkGotSubdoc(event.clientRects))
-+      gotScrolledOutInMainDoc = true;
-+  }
-+
-+  function IFRAMEListener(event) {
-+    if (doesRectContainListElement(
-+          iframe.contentDocument.getElementById("d2").getBoundingClientRect(), event.clientRects))
-+      gotScrolledOutInSubdoc = true;
-+  }
-+
-+  function check() {
-+    ok(!gotScrolledOutInMainDoc, "scrolled-out invalidation should not propagate to main doc");
-+    ok(gotScrolledOutInSubdoc, "scrolled-out invalidation should notify in subdoc");
-+    window.removeEventListener("MozDOMAfterPaint", listener, false);
-+    iframe.contentWindow.removeEventListener("MozDOMAfterPaint", IFRAMEListener, false);
-+    SimpleTest.finish();
-+  }
-+
-+  function triggerPaint() {
-+    window.addEventListener("MozDOMAfterPaint", listener, false);
-+    iframe.contentWindow.addEventListener("MozDOMAfterPaint", IFRAMEListener, false);
-+    setTimeout(check, 100);
-+    document.body.clientLeft;
-+    flash(iframe.contentDocument, 'd2');
-+  }
-+  triggerPaint();
++  return doesRectContainListElement(r, list, s);
 +}
 +
 +function runTest2() {
@@ -1230,29 +1284,27 @@ Index: mozilla/layout/base/tests/test_bug450930.html
 +
 +  function listener(event) {
 +    fired = true;
-+    if (checkGotSubdoc(event.clientRects))
++    if (checkGotSubdoc(event.clientRects, " (iframe, non-privileged)"))
 +      gotSubdocNonprivileged = true;
 +
 +    netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-+    if (checkGotSubdoc(event.clientRects))
++    if (checkGotSubdoc(event.clientRects, " (iframe, privileged)"))
 +      gotSubdocPrivileged = true;
 +  }
 +
 +  function check() {
-+    ok(fired, "Event fired (iframe)");
++    ok(fired, "Event fired (iframe again)");
 +    ok(gotSubdocPrivileged, "Didn't get subdoc invalidation while we were privileged");
 +    ok(!gotSubdocNonprivileged, "Got subdoc invalidation while we were not privileged");
 +    window.removeEventListener("MozDOMAfterPaint", listener, false);
-+    runTest3();
++    SimpleTest.finish();
 +  }
 +
 +  function triggerPaint() {
 +    window.addEventListener("MozDOMAfterPaint", listener, false);
 +    setTimeout(check, 100);
-+    flash(iframe.contentDocument, 'd');
-+    // make sure an event fires; since we're not using a chrome event handler, even though we
-+    // can get privileges we wouldn't get the event
-+    flash(document, 'd');
++    flash(iframe.contentDocument);
++    flash(document);
 +  }
 +  triggerPaint();
 +}
@@ -1280,7 +1332,7 @@ Index: mozilla/layout/base/tests/test_bug450930.html
 +
 +  function triggerPaint() {
 +    window.addEventListener("MozDOMAfterPaint", listener, false);
-+    flash(document, 'd');
++    flash(document);
 +  }
 +  triggerPaint();
 +}
@@ -1520,7 +1572,7 @@ Index: mozilla/layout/generic/nsFrame.cpp
 ===================================================================
 --- mozilla.orig/layout/generic/nsFrame.cpp
 +++ mozilla/layout/generic/nsFrame.cpp
-@@ -3583,51 +3583,50 @@
+@@ -3629,50 +3629,49 @@
  
  PRBool
  nsIFrame::IsLeaf() const
@@ -1551,6 +1603,47 @@ Index: mozilla/layout/generic/nsFrame.cpp
 +  InvalidateInternal(aDamageRect, 0, 0, nsnull, aFlags);
  }
  
+ /**
+  * Helper function that funnels an InvalidateInternal request up to the
+  * parent.  This function is used so that if MOZ_SVG is not defined, we still
+  * have unified control paths in the InvalidateInternal chain.
+  *
+  * @param aDamageRect The rect to invalidate.
+  * @param aX The x offset from the origin of this frame to the rectangle.
+  * @param aY The y offset from the origin of this frame to the rectangle.
+  * @param aImmediate Whether to redraw immediately.
+  * @return None, though this funnels the request up to the parent frame.
+  */
+ void
+ nsIFrame::InvalidateInternalAfterResize(const nsRect& aDamageRect, nscoord aX,
+-                                        nscoord aY, PRBool aImmediate)
++                                        nscoord aY, PRUint32 aFlags)
+ {
+   /* If we're a transformed frame, then we need to apply our transform to the
+    * damage rectangle so that the redraw correctly redraws the transformed
+    * region.  We're moved over aX and aY from our origin, but since this aX
+    * and aY is contained within our border, we need to scoot back by -aX and
+    * -aY to get back to the origin of the transform.
+    *
+    * There's one more problem, though, and that's that we don't know what
+@@ -3687,41 +3686,41 @@
+    */
+   if ((mState & NS_FRAME_MAY_BE_TRANSFORMED) &&
+       GetStyleDisplay()->HasTransform()) {
+     nsRect newDamageRect;
+     newDamageRect.UnionRect(nsDisplayTransform::TransformRect
+                             (aDamageRect, this, nsPoint(-aX, -aY)), aDamageRect);
+     GetParent()->
+       InvalidateInternal(newDamageRect, aX + mRect.x, aY + mRect.y, this,
+-                         aImmediate);
++                         aFlags);
+   }
+   else 
+     GetParent()->
+-      InvalidateInternal(aDamageRect, aX + mRect.x, aY + mRect.y, this, aImmediate);
++      InvalidateInternal(aDamageRect, aX + mRect.x, aY + mRect.y, this, aFlags);
+ }
+ 
  void
  nsIFrame::InvalidateInternal(const nsRect& aDamageRect, nscoord aX, nscoord aY,
 -                             nsIFrame* aForChild, PRBool aImmediate)
@@ -1560,23 +1653,27 @@ Index: mozilla/layout/generic/nsFrame.cpp
    if (nsSVGIntegrationUtils::UsingEffectsForFrame(this)) {
      nsRect r = nsSVGIntegrationUtils::GetInvalidAreaForChangedSource(this,
              aDamageRect + nsPoint(aX, aY));
-     GetParent()->InvalidateInternal(r, mRect.x, mRect.y, this, aImmediate);
+     /* Rectangle is now in our own local space, so aX and aY are effectively
+      * zero.  Thus we'll pretend that the entire time this was in our own
+      * local coordinate space and do any remaining processing.
+      */
+-    InvalidateInternalAfterResize(r, 0, 0, aImmediate);
++    InvalidateInternalAfterResize(r, 0, 0, aFlags);
      return;
    }
  #endif
- 
-   GetParent()->
--    InvalidateInternal(aDamageRect, aX + mRect.x, aY + mRect.y, this, aImmediate);
-+    InvalidateInternal(aDamageRect, aX + mRect.x, aY + mRect.y, this, aFlags);
+   
+-  InvalidateInternalAfterResize(aDamageRect, aX, aY, aImmediate);
++  InvalidateInternalAfterResize(aDamageRect, aX, aY, aFlags);
  }
  
- void
- nsIFrame::InvalidateRectDifference(const nsRect& aR1, const nsRect& aR2)
+ gfxMatrix
+ nsIFrame::GetTransformMatrix(nsIFrame **aOutAncestor)
  {
-   nsRect sizeHStrip, sizeVStrip;
-   nsLayoutUtils::GetRectDifferenceStrips(aR1, aR2, &sizeHStrip, &sizeVStrip);
-   Invalidate(sizeVStrip);
-@@ -3636,23 +3635,26 @@
+   NS_PRECONDITION(aOutAncestor, "Need a place to put the ancestor!");
+ 
+   /* Whether or not we're transformed, the matrix will be relative to our
+@@ -3795,23 +3794,26 @@
  
  void
  nsIFrame::InvalidateOverflowRect()
@@ -1607,7 +1704,7 @@ Index: mozilla/layout/generic/nsFrame.cpp
                  void*    aPropertyValue,
                  void*    aDtorData)
  {
-@@ -4267,17 +4269,17 @@
+@@ -4422,17 +4424,17 @@
  */
    if ( aSelected ){
      AddStateBits(NS_FRAME_SELECTED_CONTENT);
@@ -1733,7 +1830,7 @@ Index: mozilla/layout/generic/nsGfxScrollFrame.cpp
    if (!mInner.mScrolledFrame)
      return 0;
  
-@@ -1807,19 +1818,22 @@
+@@ -1814,19 +1825,22 @@
  NS_IMETHODIMP
  nsGfxScrollFrameInner::ScrollPositionDidChange(nsIScrollableView* aScrollable, nscoord aX, nscoord aY)
  {
@@ -1850,7 +1947,7 @@ Index: mozilla/layout/generic/nsIFrame.h
 ===================================================================
 --- mozilla.orig/layout/generic/nsIFrame.h
 +++ mozilla/layout/generic/nsIFrame.h
-@@ -99,20 +99,21 @@
+@@ -100,20 +100,21 @@
  struct nsPoint;
  struct nsRect;
  struct nsSize;
@@ -1874,7 +1971,7 @@ Index: mozilla/layout/generic/nsIFrame.h
   * The choices are splittable, not splittable at all, and splittable in
   * a non-rectangular fashion. This last type only applies to block-level
   * elements, and indicates whether splitting can be used when doing runaround.
-@@ -1625,51 +1626,61 @@
+@@ -1648,65 +1649,75 @@
     * Does this frame want to capture the mouse when the user clicks in
     * it or its children? If so, return the view which should be
     * targeted for mouse capture. The view need not be this frame's view,
@@ -1937,13 +2034,28 @@ Index: mozilla/layout/generic/nsIFrame.h
 +                                  nsIFrame* aForChild, PRUint32 aFlags);
  
    /**
+    * Helper function that funnels an InvalidateInternal request up to the
+    * parent.  This function is used so that if MOZ_SVG is not defined, we still
+    * have unified control paths in the InvalidateInternal chain.
+    *
+    * @param aDamageRect The rect to invalidate.
+    * @param aX The x offset from the origin of this frame to the rectangle.
+    * @param aY The y offset from the origin of this frame to the rectangle.
+    * @param aImmediate Whether to redraw immediately.
+    * @return None, though this funnels the request up to the parent frame.
+    */
+   void InvalidateInternalAfterResize(const nsRect& aDamageRect, nscoord aX,
+-                                     nscoord aY, PRBool aImmediate);
++                                     nscoord aY, PRUint32 aFlags);
+ 
+   /**
     * Take two rectangles in the coordinate system of this frame which
     * have the same origin and invalidate the difference between them.
     * This is a helper method to be used when a frame is being resized.
     *
     * @param aR1 the first rectangle
     * @param aR2 the second rectangle
-@@ -2147,19 +2158,17 @@
+@@ -2184,19 +2195,17 @@
    nsIFrame*        mNextSibling;  // singly-linked list of frames
    nsFrameState     mState;
    
@@ -2109,7 +2221,7 @@ Index: mozilla/layout/generic/nsTextFrameThebes.cpp
  // static
  nsresult nsBlinkTimer::AddBlinkFrame(nsPresContext* aPresContext, nsIFrame* aFrame)
  {
-@@ -4699,17 +4699,17 @@
+@@ -4695,17 +4695,17 @@
      PRBool willHaveSelectionUnderline =
               aSelected && HasSelectionOverflowingDecorations(PresContext());
      if (didHaveSelectionUnderline != willHaveSelectionUnderline) {
@@ -2261,7 +2373,7 @@ Index: mozilla/layout/svg/base/src/nsSVGForeignObjectFrame.cpp
  // nsISVGChildFrame methods
  
  /**
-@@ -576,17 +578,18 @@
+@@ -590,17 +592,18 @@
    PresContext()->PresShell()->FrameNeedsReflow(kid, aType, NS_FRAME_IS_DIRTY);
  }
  
@@ -2281,7 +2393,7 @@ Index: mozilla/layout/svg/base/src/nsSVGForeignObjectFrame.cpp
    // If we're already scheduled to reflow (i.e. our kid is dirty) we don't
    // want to reflow now or else our presShell will do extra work trying to
    // reflow us a second time. (It will also complain if it finds that a reflow
-@@ -670,37 +673,51 @@
+@@ -684,37 +687,51 @@
    FinishReflowChild(kid, presContext, &reflowState, desiredSize, 0, 0,
                      NS_FRAME_NO_MOVE_FRAME);
    
@@ -2370,7 +2482,7 @@ Index: mozilla/layout/svg/base/src/nsSVGForeignObjectFrame.h
    friend nsIFrame*
    NS_NewSVGForeignObjectFrame(nsIPresShell* aPresShell, nsIContent* aContent, nsStyleContext* aContext);
  protected:
-@@ -90,17 +92,17 @@
+@@ -103,17 +105,17 @@
    virtual PRBool IsFrameOfType(PRUint32 aFlags) const
    {
      return nsSVGForeignObjectFrameBase::IsFrameOfType(aFlags &
@@ -2389,7 +2501,7 @@ Index: mozilla/layout/svg/base/src/nsSVGForeignObjectFrame.h
    }
  #endif
  
-@@ -135,22 +137,27 @@
+@@ -148,22 +150,27 @@
  
  protected:
    // implementation helpers:
@@ -2422,7 +2534,7 @@ Index: mozilla/layout/tables/nsTableCellFrame.cpp
 ===================================================================
 --- mozilla.orig/layout/tables/nsTableCellFrame.cpp
 +++ mozilla/layout/tables/nsTableCellFrame.cpp
-@@ -511,17 +511,17 @@
+@@ -512,17 +512,17 @@
    // Note that in current version, aRange and aSpread are ignored,
    //   only this frame is considered
    nsFrame::SetSelected(aPresContext, aRange, aSelected, aSpread, aType);
@@ -2441,7 +2553,7 @@ Index: mozilla/layout/tables/nsTableCellFrame.cpp
  nsTableCellFrame::GetSkipSides() const
  {
    PRIntn skip = 0;
-@@ -897,17 +897,17 @@
+@@ -928,17 +928,17 @@
      // Don't pass OVERFLOW_INCOMPLETE through tables until they can actually handle it
      //XXX should paginate overflow as overflow, but not in this patch (bug 379349)
      NS_FRAME_SET_INCOMPLETE(aStatus);
@@ -2768,93 +2880,3 @@ Index: mozilla/widget/public/nsGUIEvent.h
    nsPageTransitionEvent(PRBool isTrusted, PRUint32 msg, PRBool p)
      : nsEvent(isTrusted, msg, NS_PAGETRANSITION_EVENT),
        persisted(p)
---- mozilla/content/base/src/nsContentUtils.cpp.orig	2008-09-11 19:14:35.000000000 +0300
-+++ mozilla/content/base/src/nsContentUtils.cpp	2008-09-11 19:18:31.000000000 +0300
-@@ -469,19 +469,19 @@ nsContentUtils::InitializeEventTable() {
-     { &nsGkAtoms::ontimeupdate,                  { NS_TIMEUPDATE, EventNameType_HTML }},
-     { &nsGkAtoms::onended,                       { NS_ENDED, EventNameType_HTML }},
-     { &nsGkAtoms::ondataunavailable,             { NS_DATAUNAVAILABLE, EventNameType_HTML }},
-     { &nsGkAtoms::oncanshowcurrentframe,         { NS_CANSHOWCURRENTFRAME, EventNameType_HTML }},
-     { &nsGkAtoms::oncanplay,                     { NS_CANPLAY, EventNameType_HTML }},
-     { &nsGkAtoms::oncanplaythrough,              { NS_CANPLAYTHROUGH, EventNameType_HTML }},
-     { &nsGkAtoms::onratechange,                  { NS_RATECHANGE, EventNameType_HTML }},
-     { &nsGkAtoms::ondurationchange,              { NS_DURATIONCHANGE, EventNameType_HTML }},
--    { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }},
-+    { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }}
- #endif //MOZ_MEDIA
--    { &nsGkAtoms::onMozDOMAfterPaint,            { NS_AFTERPAINT, EventNameType_HTML }}
-+   ,{ &nsGkAtoms::onMozDOMAfterPaint,            { NS_AFTERPAINT, EventNameType_HTML }}
-   };
- 
-   sEventTable = new nsDataHashtable<nsISupportsHashKey, EventNameMapping>;
-   if (!sEventTable ||
-       !sEventTable->Init(int(NS_ARRAY_LENGTH(eventArray) / 0.75) + 1)) {
-     delete sEventTable;
-     sEventTable = nsnull;
-     return PR_FALSE;
---- mozilla/layout/generic/nsFrame.cpp.orig	2008-09-11 19:14:36.000000000 +0300
-+++ mozilla/layout/generic/nsFrame.cpp	2008-09-11 19:26:33.000000000 +0300
-@@ -3610,17 +3610,17 @@ nsIFrame::InvalidateWithFlags(const nsRe
- void
- nsIFrame::InvalidateInternal(const nsRect& aDamageRect, nscoord aX, nscoord aY,
-                              nsIFrame* aForChild, PRUint32 aFlags)
- {
- #ifdef MOZ_SVG
-   if (nsSVGIntegrationUtils::UsingEffectsForFrame(this)) {
-     nsRect r = nsSVGIntegrationUtils::GetInvalidAreaForChangedSource(this,
-             aDamageRect + nsPoint(aX, aY));
--    GetParent()->InvalidateInternal(r, mRect.x, mRect.y, this, aImmediate);
-+    GetParent()->InvalidateInternal(r, mRect.x, mRect.y, this, aFlags);
-     return;
-   }
- #endif
- 
-   GetParent()->
-     InvalidateInternal(aDamageRect, aX + mRect.x, aY + mRect.y, this, aFlags);
- }
- 
---- mozilla/content/base/src/nsContentUtils.cpp.orig	2008-09-11 19:14:35.000000000 +0300
-+++ mozilla/content/base/src/nsContentUtils.cpp	2008-09-11 19:18:31.000000000 +0300
-@@ -469,19 +469,19 @@ nsContentUtils::InitializeEventTable() {
-     { &nsGkAtoms::ontimeupdate,                  { NS_TIMEUPDATE, EventNameType_HTML }},
-     { &nsGkAtoms::onended,                       { NS_ENDED, EventNameType_HTML }},
-     { &nsGkAtoms::ondataunavailable,             { NS_DATAUNAVAILABLE, EventNameType_HTML }},
-     { &nsGkAtoms::oncanshowcurrentframe,         { NS_CANSHOWCURRENTFRAME, EventNameType_HTML }},
-     { &nsGkAtoms::oncanplay,                     { NS_CANPLAY, EventNameType_HTML }},
-     { &nsGkAtoms::oncanplaythrough,              { NS_CANPLAYTHROUGH, EventNameType_HTML }},
-     { &nsGkAtoms::onratechange,                  { NS_RATECHANGE, EventNameType_HTML }},
-     { &nsGkAtoms::ondurationchange,              { NS_DURATIONCHANGE, EventNameType_HTML }},
--    { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }},
-+    { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }}
- #endif //MOZ_MEDIA
--    { &nsGkAtoms::onMozDOMAfterPaint,            { NS_AFTERPAINT, EventNameType_HTML }}
-+   ,{ &nsGkAtoms::onMozDOMAfterPaint,            { NS_AFTERPAINT, EventNameType_HTML }}
-   };
- 
-   sEventTable = new nsDataHashtable<nsISupportsHashKey, EventNameMapping>;
-   if (!sEventTable ||
-       !sEventTable->Init(int(NS_ARRAY_LENGTH(eventArray) / 0.75) + 1)) {
-     delete sEventTable;
-     sEventTable = nsnull;
-     return PR_FALSE;
---- mozilla/layout/generic/nsFrame.cpp.orig	2008-09-11 19:14:36.000000000 +0300
-+++ mozilla/layout/generic/nsFrame.cpp	2008-09-11 19:26:33.000000000 +0300
-@@ -3610,17 +3610,17 @@ nsIFrame::InvalidateWithFlags(const nsRe
- void
- nsIFrame::InvalidateInternal(const nsRect& aDamageRect, nscoord aX, nscoord aY,
-                              nsIFrame* aForChild, PRUint32 aFlags)
- {
- #ifdef MOZ_SVG
-   if (nsSVGIntegrationUtils::UsingEffectsForFrame(this)) {
-     nsRect r = nsSVGIntegrationUtils::GetInvalidAreaForChangedSource(this,
-             aDamageRect + nsPoint(aX, aY));
--    GetParent()->InvalidateInternal(r, mRect.x, mRect.y, this, aImmediate);
-+    GetParent()->InvalidateInternal(r, mRect.x, mRect.y, this, aFlags);
-     return;
-   }
- #endif
- 
-   GetParent()->
-     InvalidateInternal(aDamageRect, aX + mRect.x, aY + mRect.y, this, aFlags);
- }
- 

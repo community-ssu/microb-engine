@@ -5,6 +5,7 @@ buildconfig/011_BuildWithGCC3.4.4.diff
 buildconfig/015_jemalloc_sb.diff
 buildconfig/020_cs2007_rpath_wr.diff
 buildconfig/023_PC_CONFIG_sqlite_neededby_libsoftokn.diff
+buildconfig/024_bug455204.diff
 
 branding/010_MICROB_paths_and_names.diff
 branding/020_BUG349921_toolkit_branding.diff
@@ -130,7 +131,7 @@ BMO_attached/090_bug428988_pressure.diff
 localization/bug87973.browser.localization.diff
 
 BMO_attached/110_bug454756.diff
-#BMO_attached/120_attachment.cgi?id=337990.diff
+BMO_attached/120_450930.diff
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail

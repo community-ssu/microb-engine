@@ -1,9 +1,8 @@
---- mozilla/toolkit/locales/jar.mn.orig	2008-08-26 13:13:58.000000000 +0300
-+++ mozilla/toolkit/locales/jar.mn	2008-08-26 13:15:36.000000000 +0300
-@@ -109,10 +109,13 @@
-   locale/@AB_CD@/autoconfig/autoconfig.properties   (%chrome/autoconfig/autoconfig.properties)
- #ifdef MOZ_HELP_VIEWER
- % locale help @AB_CD@ %locale/@AB_CD@/help/
+Index: mozilla/toolkit/locales/jar.mn
+===================================================================
+--- mozilla.orig/toolkit/locales/jar.mn
++++ mozilla/toolkit/locales/jar.mn
+@@ -112,8 +112,11 @@
    locale/@AB_CD@/help/help.properties                     (%chrome/mozapps/help/help.properties)
    locale/@AB_CD@/help/help.dtd                            (%chrome/mozapps/help/help.dtd)
    locale/@AB_CD@/help/help-toc.rdf                        (%chrome/mozapps/help/help-toc.rdf)
@@ -11,11 +10,14 @@
  #endif
  % locale places @AB_CD@ %locale/@AB_CD@/places/
    locale/@AB_CD@/places/places.properties                 (%chrome/places/places.properties)
+   locale/@AB_CD@/global/search/search.properties          (%chrome/search/search.properties)
 +% locale feeds @AB_CD@ %locale/@AB_CD@/feeds/
 +  locale/@AB_CD@/feeds/subscribe.properties               (%chrome/feeds/subscribe.properties)
 +  locale/@AB_CD@/feeds/subscribe.dtd                      (%chrome/feeds/subscribe.dtd)
---- mozilla/toolkit/locales/en-US/chrome/feeds/subscribe.dtd.orig	2008-08-26 13:18:51.000000000 +0300
-+++ mozilla/toolkit/locales/en-US/chrome/feeds/subscribe.dtd	2008-08-26 13:18:37.000000000 +0300
+Index: mozilla/toolkit/locales/en-US/chrome/feeds/subscribe.dtd
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/locales/en-US/chrome/feeds/subscribe.dtd
 @@ -0,0 +1,6 @@
 +<!ENTITY feedPage.title
 +  "Viewing Feed">
@@ -23,8 +25,10 @@
 +  "Subscribe Now">
 +<!ENTITY feedLiveBookmarks
 +  "Live Bookmarks">
---- mozilla/toolkit/locales/en-US/chrome/feeds/subscribe.properties.orig	2008-08-26 13:18:43.000000000 +0300
-+++ mozilla/toolkit/locales/en-US/chrome/feeds/subscribe.properties	2008-08-26 13:18:37.000000000 +0300
+Index: mozilla/toolkit/locales/en-US/chrome/feeds/subscribe.properties
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/locales/en-US/chrome/feeds/subscribe.properties
 @@ -0,0 +1,49 @@
 +linkTitleTextFormat=Go to %S
 +addHandler=Add "%S" (%S) as a Feed Reader?
@@ -49,7 +53,7 @@
 +megabyte=MB
 +gigabyte=GB
 +
-+# LOCALIZATION NOTE: The next three strings explains to the user what they're 
++# LOCALIZATION NOTE: The next three strings explains to the user what they're
 +# doing.
 +#   e.g. alwaysUseForVideoPodcasts : "Always use Miro to subscribe to video podcasts."
 +#   %S = application to use (Miro, iTunes, ...)
@@ -57,9 +61,9 @@
 +alwaysUseForAudioPodcasts=Always use %S to subscribe to podcasts.
 +alwaysUseForVideoPodcasts=Always use %S to subscribe to video podcasts.
 +
-+subscribeFeedUsing=Subscribe to this feed using 
-+subscribeAudioPodcastUsing=Subscribe to this podcast using 
-+subscribeVideoPodcastUsing=Subscribe to this video podcast using 
++subscribeFeedUsing=Subscribe to this feed using
++subscribeAudioPodcastUsing=Subscribe to this podcast using
++subscribeVideoPodcastUsing=Subscribe to this video podcast using
 +
 +feedSubscriptionFeed1=This is a "feed" of frequently changing content on this site.
 +feedSubscriptionAudioPodcast1=This is a "podcast" of frequently changing content on this site.
@@ -75,11 +79,11 @@
 +addProtocolHandlerAddButton=Add Application
 +# "%appName has already been added as an application for %protocolType links."
 +protocolHandlerRegistered=%S has already been added as an application for %S links.
---- mozilla/toolkit/components/build/nsToolkitCompsModule.cpp.orig	2008-08-25 14:55:16.000000000 +0300
-+++ mozilla/toolkit/components/build/nsToolkitCompsModule.cpp	2008-08-25 15:05:24.000000000 +0300
-@@ -65,20 +65,22 @@
- #ifdef MOZ_URL_CLASSIFIER
- #include "nsUrlClassifierDBService.h"
+Index: mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
+===================================================================
+--- mozilla.orig/toolkit/components/build/nsToolkitCompsModule.cpp
++++ mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
+@@ -67,16 +67,18 @@
  #include "nsUrlClassifierStreamUpdater.h"
  #include "nsUrlClassifierUtils.h"
  #include "nsUrlClassifierHashCompleter.h"
@@ -98,11 +102,7 @@
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsUserInfo)
  
  #if defined(XP_WIN) && !defined(MOZ_DISABLE_PARENTAL_CONTROLS)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsParentalControlsServiceWin)
- #endif
-@@ -121,20 +123,21 @@ nsUrlClassifierDBServiceConstructor(nsIS
-     /* NS_ADDREF(inst); */
-     rv = inst->QueryInterface(aIID, aResult);
+@@ -123,16 +125,17 @@
      NS_RELEASE(inst);
  
      return rv;
@@ -120,11 +120,7 @@
  {
    { "App Startup Service",
      NS_TOOLKIT_APPSTARTUP_CID,
-     NS_APPSTARTUP_CONTRACTID,
-     nsAppStartupConstructor },
-@@ -196,14 +199,24 @@ static const nsModuleComponentInfo compo
-   { "Url Classifier Hash Completer",
-     NS_URLCLASSIFIERHASHCOMPLETER_CID,
+@@ -198,12 +201,22 @@
      NS_URLCLASSIFIERHASHCOMPLETER_CONTRACTID,
      nsUrlClassifierHashCompleterConstructor },
  #endif
@@ -147,11 +143,11 @@
  };
  
  NS_IMPL_NSGETMODULE(nsToolkitCompsModule, components)
---- mozilla/toolkit/components/build/nsToolkitCompsCID.h.orig	2008-08-25 15:05:34.000000000 +0300
-+++ mozilla/toolkit/components/build/nsToolkitCompsCID.h	2008-08-25 15:08:44.000000000 +0300
-@@ -102,20 +102,29 @@
- 
- #define NS_LIVEMARKSERVICE_CONTRACTID \
+Index: mozilla/toolkit/components/build/nsToolkitCompsCID.h
+===================================================================
+--- mozilla.orig/toolkit/components/build/nsToolkitCompsCID.h
++++ mozilla/toolkit/components/build/nsToolkitCompsCID.h
+@@ -104,16 +104,25 @@
    "@mozilla.org/browser/livemark-service;2"
  
  #define NS_MORKHISTORYIMPORTER_CONTRACTID \
@@ -177,10 +173,10 @@
  
  // {F6D5EBBD-34F4-487d-9D10-3D34123E3EB9}
  #define NS_AUTOCOMPLETECONTROLLER_CID \
- { 0xf6d5ebbd, 0x34f4, 0x487d, { 0x9d, 0x10, 0x3d, 0x34, 0x12, 0x3e, 0x3e, 0xb9 } }
- 
---- mozilla/toolkit/components/feeds/src/nsAboutFeeds.h.orig	2008-08-25 15:09:58.000000000 +0300
-+++ mozilla/toolkit/components/feeds/src/nsAboutFeeds.h	2008-08-25 15:09:25.000000000 +0300
+Index: mozilla/toolkit/components/feeds/src/nsAboutFeeds.h
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/src/nsAboutFeeds.h
 @@ -0,0 +1,60 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* vim:set ts=4 sw=4 sts=4 et cindent: */
@@ -235,15 +231,17 @@
 +
 +  nsAboutFeeds() { }
 +  virtual ~nsAboutFeeds() { }
-+  
++
 +  static NS_METHOD
 +    Create(nsISupports* outer, REFNSIID iid, void** result);
 +protected:
 +};
 +
 +#endif // nsAboutFeeds_h__
---- mozilla/toolkit/components/feeds/src/WebContentConverter.js.orig	2008-08-25 15:09:58.000000000 +0300
-+++ mozilla/toolkit/components/feeds/src/WebContentConverter.js	2008-08-25 15:09:18.000000000 +0300
+Index: mozilla/toolkit/components/feeds/src/WebContentConverter.js
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/src/WebContentConverter.js
 @@ -0,0 +1,949 @@
 +# -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +# ***** BEGIN LICENSE BLOCK *****
@@ -324,14 +322,14 @@
 +  asyncConvertData: function WCC_asyncConvertData() { },
 +  onDataAvailable: function WCC_onDataAvailable() { },
 +  onStopRequest: function WCC_onStopRequest() { },
-+  
++
 +  onStartRequest: function WCC_onStartRequest(request, context) {
-+    var wccr = 
++    var wccr =
 +        Cc[WCCR_CONTRACTID].
 +        getService(Ci.nsIWebContentConverterService);
 +    wccr.loadPreferredHandler(request);
 +  },
-+  
++
 +  QueryInterface: function WCC_QueryInterface(iid) {
 +    if (iid.equals(Ci.nsIStreamConverter) ||
 +        iid.equals(Ci.nsIStreamListener) ||
@@ -347,7 +345,7 @@
 +      throw Cr.NS_ERROR_NO_AGGREGATION;
 +    return new WebContentConverter().QueryInterface(iid);
 +  },
-+    
++
 +  QueryInterface: function WCC_QueryInterface(iid) {
 +    if (iid.equals(Ci.nsIFactory) ||
 +        iid.equals(Ci.nsISupports))
@@ -368,7 +366,7 @@
 +  get name() {
 +    return this._name;
 +  },
-+  
++
 +  /**
 +   * See nsIHandlerApp
 +   */
@@ -404,7 +402,7 @@
 +  getHandlerURI: function SI_getHandlerURI(uri) {
 +    return this._uri.replace(/%s/gi, encodeURIComponent(uri));
 +  },
-+  
++
 +  QueryInterface: function SI_QueryInterface(iid) {
 +    if (iid.equals(Ci.nsIWebContentHandlerInfo) ||
 +        iid.equals(Ci.nsISupports))
@@ -427,7 +425,7 @@
 +  _getFormattedString: function WCCR__getFormattedString(key, params) {
 +    return this.stringBundle.formatStringFromName(key, params, params.length);
 +  },
-+  
++
 +  _getString: function WCCR_getString(key) {
 +    return this.stringBundle.GetStringFromName(key);
 +  },
@@ -435,7 +433,7 @@
 +  _contentTypes: { },
 +
 +  /**
-+   * Track auto handlers for various content types using a content-type to 
++   * Track auto handlers for various content types using a content-type to
 +   * handler map.
 +   */
 +  _autoHandleContentTypes: { },
@@ -443,14 +441,14 @@
 +  /**
 +   * See nsIWebContentConverterService
 +   */
-+  getAutoHandler: 
++  getAutoHandler:
 +  function WCCR_getAutoHandler(contentType) {
 +    contentType = this._resolveContentType(contentType);
 +    if (contentType in this._autoHandleContentTypes)
 +      return this._autoHandleContentTypes[contentType];
 +    return null;
 +  },
-+  
++
 +  /**
 +   * See nsIWebContentConverterService
 +   */
@@ -458,11 +456,11 @@
 +  function WCCR_setAutoHandler(contentType, handler) {
 +    if (handler && !this._typeIsRegistered(contentType, handler.uri))
 +      throw Cr.NS_ERROR_NOT_AVAILABLE;
-+      
++
 +    contentType = this._resolveContentType(contentType);
 +    this._setAutoHandler(contentType, handler);
-+    
-+    var ps = 
++
++    var ps =
 +        Cc["@mozilla.org/preferences-service;1"].
 +        getService(Ci.nsIPrefService);
 +    var autoBranch = ps.getBranch(PREF_CONTENTHANDLERS_AUTO);
@@ -470,21 +468,21 @@
 +      autoBranch.setCharPref(contentType, handler.uri);
 +    else if (autoBranch.prefHasUserValue(contentType))
 +      autoBranch.clearUserPref(contentType);
-+     
++
 +    ps.savePrefFile(null);
 +  },
-+  
++
 +  /**
 +   * Update the internal data structure (not persistent)
 +   */
 +  _setAutoHandler:
 +  function WCCR__setAutoHandler(contentType, handler) {
-+    if (handler) 
++    if (handler)
 +      this._autoHandleContentTypes[contentType] = handler;
 +    else if (contentType in this._autoHandleContentTypes)
 +      delete this._autoHandleContentTypes[contentType];
 +  },
-+  
++
 +  /**
 +   * See nsIWebContentConverterService
 +   */
@@ -492,35 +490,35 @@
 +  function WCCR_getWebContentHandlerByURI(contentType, uri) {
 +    var handlers = this.getContentHandlers(contentType, { });
 +    for (var i = 0; i < handlers.length; ++i) {
-+      if (handlers[i].uri == uri) 
++      if (handlers[i].uri == uri)
 +        return handlers[i];
 +    }
 +    return null;
 +  },
-+  
++
 +  /**
 +   * See nsIWebContentConverterService
 +   */
-+  loadPreferredHandler: 
++  loadPreferredHandler:
 +  function WCCR_loadPreferredHandler(request) {
 +    var channel = request.QueryInterface(Ci.nsIChannel);
 +    var contentType = this._resolveContentType(channel.contentType);
 +    var handler = this.getAutoHandler(contentType);
 +    if (handler) {
 +      request.cancel(Cr.NS_ERROR_FAILURE);
-+      
-+      var webNavigation = 
++
++      var webNavigation =
 +          channel.notificationCallbacks.getInterface(Ci.nsIWebNavigation);
-+      webNavigation.loadURI(handler.getHandlerURI(channel.URI.spec), 
-+                            Ci.nsIWebNavigation.LOAD_FLAGS_NONE, 
++      webNavigation.loadURI(handler.getHandlerURI(channel.URI.spec),
++                            Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
 +                            null, null, null);
-+    }      
++    }
 +  },
-+  
++
 +  /**
 +   * See nsIWebContentConverterService
 +   */
-+  removeProtocolHandler: 
++  removeProtocolHandler:
 +  function WCCR_removeProtocolHandler(aProtocol, aURITemplate) {
 +    var eps = Cc["@mozilla.org/uriloader/external-protocol-service;1"].
 +              getService(Ci.nsIExternalProtocolService);
@@ -539,45 +537,45 @@
 +      } catch (e) { /* it wasn't a web handler */ }
 +    }
 +  },
-+  
++
 +  /**
 +   * See nsIWebContentConverterService
 +   */
-+  removeContentHandler: 
++  removeContentHandler:
 +  function WCCR_removeContentHandler(contentType, uri) {
 +    function notURI(serviceInfo) {
 +      return serviceInfo.uri != uri;
 +    }
-+  
++
 +    if (contentType in this._contentTypes) {
-+      this._contentTypes[contentType] = 
++      this._contentTypes[contentType] =
 +        this._contentTypes[contentType].filter(notURI);
 +    }
 +  },
-+  
++
 +  /**
 +   *
 +   */
-+  _mappings: { 
++  _mappings: {
 +    "application/rss+xml": TYPE_MAYBE_FEED,
 +    "application/atom+xml": TYPE_MAYBE_FEED,
 +  },
-+  
++
 +  /**
-+   * These are types for which there is a separate content converter aside 
++   * These are types for which there is a separate content converter aside
 +   * from our built in generic one. We should not automatically register
 +   * a factory for creating a converter for these types.
 +   */
 +  _blockedTypes: {
 +    "application/vnd.mozilla.maybe.feed": true,
 +  },
-+  
++
 +  /**
 +   * Determines the "internal" content type based on the _mappings.
 +   * @param   contentType
-+   * @returns The resolved contentType value. 
++   * @returns The resolved contentType value.
 +   */
-+  _resolveContentType: 
++  _resolveContentType:
 +  function WCCR__resolveContentType(contentType) {
 +    if (contentType in this._mappings)
 +      return this._mappings[contentType];
@@ -597,7 +595,7 @@
 +      var uri = this._makeURI(aURIString);
 +    } catch (ex) {
 +      // not supposed to throw according to spec
-+      return; 
++      return;
 +    }
 +
 +    // For security reasons we reject non-http(s) urls (see bug 354316),
@@ -617,7 +615,7 @@
 +
 +    // If the uri doesn't contain '%s', it won't be a good handler
 +    if (uri.spec.indexOf("%s") < 0)
-+      throw NS_ERROR_DOM_SYNTAX_ERR; 
++      throw NS_ERROR_DOM_SYNTAX_ERR;
 +
 +    return uri;
 +  },
@@ -650,10 +648,10 @@
 +  /**
 +   * See nsIWebContentHandlerRegistrar
 +   */
-+  registerProtocolHandler: 
++  registerProtocolHandler:
 +  function WCCR_registerProtocolHandler(aProtocol, aURIString, aTitle, aContentWindow) {
 +    LOG("registerProtocolHandler(" + aProtocol + "," + aURIString + "," + aTitle + ")");
-+    
++
 +    // First, check to make sure this isn't already handled internally (we don't
 +    // want to let them take over, say "chrome").
 +    var ios = Cc["@mozilla.org/network/io-service;1"].
@@ -744,7 +742,7 @@
 +   * If a DOM window is provided, then the request came from content, so we
 +   * prompt the user to confirm the registration.
 +   */
-+  registerContentHandler: 
++  registerContentHandler:
 +  function WCCR_registerContentHandler(aContentType, aURIString, aTitle, aContentWindow) {
 +    LOG("registerContentHandler(" + aContentType + "," + aURIString + "," + aTitle + ")");
 +
@@ -757,7 +755,7 @@
 +
 +    if (aContentWindow) {
 +      var uri = this._checkAndGetURI(aURIString, aContentWindow);
-+  
++
 +      var browserWindow = this._getBrowserWindowForContentWindow(aContentWindow);
 +      var browserElement = this._getBrowserForContentWindow(browserWindow, aContentWindow);
 +      var notificationBox = browserWindow.getBrowser().getNotificationBox(browserElement);
@@ -875,7 +873,7 @@
 +  },
 +
 +  /**
-+   * Save Web Content Handler metadata to persistent preferences. 
++   * Save Web Content Handler metadata to persistent preferences.
 +   * @param   contentType
 +   *          The content Type being handled
 +   * @param   uri
@@ -884,20 +882,20 @@
 +   *          The human readable name of the web service
 +   *
 +   * This data is stored under:
-+   * 
++   *
 +   *    browser.contentHandlers.type0 = content/type
 +   *    browser.contentHandlers.uri0 = http://www.foo.com/q=%s
 +   *    browser.contentHandlers.title0 = Foo 2.0alphr
 +   */
-+  _saveContentHandlerToPrefs: 
++  _saveContentHandlerToPrefs:
 +  function WCCR__saveContentHandlerToPrefs(contentType, uri, title) {
-+    var ps = 
++    var ps =
 +        Cc["@mozilla.org/preferences-service;1"].
 +        getService(Ci.nsIPrefService);
 +    var i = 0;
 +    var typeBranch = null;
 +    while (true) {
-+      typeBranch = 
++      typeBranch =
 +        ps.getBranch(PREF_CONTENTHANDLERS_BRANCH + i + ".");
 +      try {
 +        typeBranch.getCharPref("type");
@@ -910,30 +908,30 @@
 +    }
 +    if (typeBranch) {
 +      typeBranch.setCharPref("type", contentType);
-+      var pls = 
++      var pls =
 +          Cc["@mozilla.org/pref-localizedstring;1"].
 +          createInstance(Ci.nsIPrefLocalizedString);
 +      pls.data = uri;
 +      typeBranch.setComplexValue("uri", Ci.nsIPrefLocalizedString, pls);
 +      pls.data = title;
 +      typeBranch.setComplexValue("title", Ci.nsIPrefLocalizedString, pls);
-+    
++
 +      ps.savePrefFile(null);
 +    }
 +  },
-+  
++
 +  /**
-+   * Determines if there is a type with a particular uri registered for the 
++   * Determines if there is a type with a particular uri registered for the
 +   * specified content type already.
 +   * @param   contentType
 +   *          The content type that the uri handles
 +   * @param   uri
-+   *          The uri of the 
++   *          The uri of the
 +   */
 +  _typeIsRegistered: function WCCR__typeIsRegistered(contentType, uri) {
 +    if (!(contentType in this._contentTypes))
 +      return false;
-+      
++
 +    var services = this._contentTypes[contentType];
 +    for (var i = 0; i < services.length; ++i) {
 +      // This uri has already been registered
@@ -942,22 +940,22 @@
 +    }
 +    return false;
 +  },
-+  
++
 +  /**
 +   * Gets a stream converter contract id for the specified content type.
 +   * @param   contentType
 +   *          The source content type for the conversion.
-+   * @returns A contract id to construct a converter to convert between the 
++   * @returns A contract id to construct a converter to convert between the
 +   *          contentType and *\/*.
 +   */
 +  _getConverterContractID: function WCCR__getConverterContractID(contentType) {
 +    const template = "@mozilla.org/streamconv;1?from=%s&to=*/*";
 +    return template.replace(/%s/, contentType);
 +  },
-+  
++
 +  /**
 +   * Register a web service handler for a content type.
-+   * 
++   *
 +   * @param   contentType
 +   *          the content type being handled
 +   * @param   uri
@@ -976,8 +974,8 @@
 +      var pb = Cc["@mozilla.org/preferences-service;1"].
 +               getService(Ci.nsIPrefService).getBranch(null);
 +      pb.setCharPref(PREF_SELECTED_READER, "web");
-+  
-+      var supportsString = 
++
++      var supportsString =
 +        Cc["@mozilla.org/supports-string;1"].
 +        createInstance(Ci.nsISupportsString);
 +        supportsString.data = uri;
@@ -998,50 +996,50 @@
 +   * @param   title
 +   *          The human readable name of the web service
 +   */
-+  _updateContentTypeHandlerMap: 
++  _updateContentTypeHandlerMap:
 +  function WCCR__updateContentTypeHandlerMap(contentType, uri, title) {
 +    if (!(contentType in this._contentTypes))
 +      this._contentTypes[contentType] = [];
 +
 +    // Avoid adding duplicates
-+    if (this._typeIsRegistered(contentType, uri)) 
++    if (this._typeIsRegistered(contentType, uri))
 +      return;
-+    
++
 +    this._contentTypes[contentType].push(new ServiceInfo(contentType, uri, title));
-+    
++
 +    if (!(contentType in this._blockedTypes)) {
 +      var converterContractID = this._getConverterContractID(contentType);
 +      var cr = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
-+      cr.registerFactory(WCC_CLASSID, WCC_CLASSNAME, converterContractID, 
++      cr.registerFactory(WCC_CLASSID, WCC_CLASSNAME, converterContractID,
 +                         WebContentConverterFactory);
 +    }
 +  },
-+  
++
 +  /**
 +   * See nsIWebContentConverterService
 +   */
-+  getContentHandlers: 
++  getContentHandlers:
 +  function WCCR_getContentHandlers(contentType, countRef) {
 +    countRef.value = 0;
 +    if (!(contentType in this._contentTypes))
 +      return [];
-+    
++
 +    var handlers = this._contentTypes[contentType];
 +    countRef.value = handlers.length;
 +    return handlers;
 +  },
-+  
++
 +  /**
 +   * See nsIWebContentConverterService
 +   */
-+  resetHandlersForType: 
++  resetHandlersForType:
 +  function WCCR_resetHandlersForType(contentType) {
 +    // currently unused within the tree, so only useful for extensions; previous
 +    // impl. was buggy (and even infinite-looped!), so I argue that this is a
 +    // definite improvement
 +    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
 +  },
-+  
++
 +  /**
 +   * Registers a handler from the settings on a preferences branch.
 +   *
@@ -1051,10 +1049,10 @@
 +   */
 +  _registerContentHandlerWithBranch: function(branch) {
 +    /**
-+     * Since we support up to six predefined readers, we need to handle gaps 
++     * Since we support up to six predefined readers, we need to handle gaps
 +     * better, since the first branch with user-added values will be .6
-+     * 
-+     * How we deal with that is to check to see if there's no prefs in the 
++     *
++     * How we deal with that is to check to see if there's no prefs in the
 +     * branch and stop cycling once that's true.  This doesn't fix the case
 +     * where a user manually removes a reader, but that's not supported yet!
 +     */
@@ -1075,11 +1073,11 @@
 +  },
 +
 +  /**
-+   * Load the auto handler, content handler and protocol tables from 
++   * Load the auto handler, content handler and protocol tables from
 +   * preferences.
 +   */
 +  _init: function WCCR__init() {
-+    var ps = 
++    var ps =
 +        Cc["@mozilla.org/preferences-service;1"].
 +        getService(Ci.nsIPrefService);
 +
@@ -1105,7 +1103,7 @@
 +      this._registerContentHandlerWithBranch(branch);
 +    }
 +
-+    // We need to do this _after_ registering all of the available handlers, 
++    // We need to do this _after_ registering all of the available handlers,
 +    // so that getWebContentHandlerByURI can return successfully.
 +    try {
 +      var autoBranch = ps.getBranch(PREF_CONTENTHANDLERS_AUTO);
@@ -1129,7 +1127,7 @@
 +   * See nsIObserver
 +   */
 +  observe: function WCCR_observe(subject, topic, data) {
-+    var os = 
++    var os =
 +        Cc["@mozilla.org/observer-service;1"].
 +        getService(Ci.nsIObserverService);
 +    switch (topic) {
@@ -1142,7 +1140,7 @@
 +      break;
 +    }
 +  },
-+  
++
 +  /**
 +   * See nsIFactory
 +   */
@@ -1156,7 +1154,7 @@
 +   * See nsIClassInfo
 +   */
 +  getInterfaces: function WCCR_getInterfaces(countRef) {
-+    var interfaces = 
++    var interfaces =
 +        [Ci.nsIWebContentConverterService, Ci.nsIWebContentHandlerRegistrar,
 +         Ci.nsIObserver, Ci.nsIClassInfo, Ci.nsIFactory, Ci.nsISupports];
 +    countRef.value = interfaces.length;
@@ -1170,12 +1168,12 @@
 +  classID: WCCR_CLASSID,
 +  implementationLanguage: Ci.nsIProgrammingLanguage.JAVASCRIPT,
 +  flags: Ci.nsIClassInfo.DOM_OBJECT,
-+  
++
 +  /**
 +   * See nsISupports
 +   */
 +  QueryInterface: XPCOMUtils.generateQI(
-+     [Ci.nsIWebContentConverterService, 
++     [Ci.nsIWebContentConverterService,
 +      Ci.nsIWebContentHandlerRegistrar,
 +      Ci.nsIObserver,
 +      Ci.nsIClassInfo,
@@ -1194,8 +1192,10 @@
 +
 +#include ../../../../toolkit/content/debug.js
 +
---- mozilla/toolkit/components/feeds/src/nsFeedSniffer.cpp.orig	2008-08-25 15:09:58.000000000 +0300
-+++ mozilla/toolkit/components/feeds/src/nsFeedSniffer.cpp	2008-08-26 14:24:14.000000000 +0300
+Index: mozilla/toolkit/components/feeds/src/nsFeedSniffer.cpp
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/src/nsFeedSniffer.cpp
 @@ -0,0 +1,445 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1288,7 +1288,7 @@
 +    return NS_ERROR_NO_INTERFACE;
 +
 +  nsCAutoString contentEncoding;
-+  httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Content-Encoding"), 
++  httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Content-Encoding"),
 +                                 contentEncoding);
 +  if (!contentEncoding.IsEmpty()) {
 +    nsCOMPtr<nsIStreamConverterService> converterService(do_GetService(NS_STREAMCONVERTERSERVICE_CONTRACTID));
@@ -1296,8 +1296,8 @@
 +      ToLowerCase(contentEncoding);
 +
 +      nsCOMPtr<nsIStreamListener> converter;
-+      rv = converterService->AsyncConvertData(contentEncoding.get(), 
-+                                              "uncompressed", this, nsnull, 
++      rv = converterService->AsyncConvertData(contentEncoding.get(),
++                                              "uncompressed", this, nsnull,
 +                                              getter_AddRefs(converter));
 +      NS_ENSURE_SUCCESS(rv, rv);
 +
@@ -1335,12 +1335,12 @@
 +{
 +  if (!httpChannel)
 +    return PR_FALSE;
-+  
++
 +  nsCAutoString contentDisposition;
-+  nsresult rv = 
++  nsresult rv =
 +    httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("content-disposition"),
 +                                   contentDisposition);
-+  
++
 +  if (NS_SUCCEEDED(rv) && !contentDisposition.IsEmpty()) {
 +    nsCOMPtr<nsIURI> uri;
 +    httpChannel->GetURI(getter_AddRefs(uri));
@@ -1359,7 +1359,7 @@
 +      // value should be treated as "attachment"
 +      // XXXbz this code is duplicated in GetFilenameAndExtensionFromChannel in
 +      // nsExternalHelperAppService.  Factor it out!
-+      if (NS_FAILED(rv) || 
++      if (NS_FAILED(rv) ||
 +          (// Some broken sites just send
 +           // Content-Disposition: ; filename="file"
 +           // screen those out here.
@@ -1374,8 +1374,8 @@
 +        // We have a content-disposition of "attachment" or unknown
 +        return PR_TRUE;
 +    }
-+  } 
-+  
++  }
++
 +  return PR_FALSE;
 +}
 +
@@ -1402,19 +1402,19 @@
 + * it's possible that someone embedded one of these tags inside a document of
 + * another type, e.g. a HTML document, and we don't want to show the preview
 + * page if the document isn't actually a feed.
-+ * 
++ *
 + * @param   start
 + *          The beginning of the data being sniffed
 + * @param   end
 + *          The end of the data being sniffed, right before the substring that
 + *          was found.
-+ * @returns PR_TRUE if the found substring is the documentElement, PR_FALSE 
++ * @returns PR_TRUE if the found substring is the documentElement, PR_FALSE
 + *          otherwise.
 + */
 +static PRBool
 +IsDocumentElement(const char *start, const char* end)
 +{
-+  // For every tag in the buffer, check to see if it's a PI, Doctype or 
++  // For every tag in the buffer, check to see if it's a PI, Doctype or
 +  // comment, our desired substring or something invalid.
 +  while ( (start = FindChar('<', start, end)) ) {
 +    ++start;
@@ -1423,10 +1423,10 @@
 +
 +    // Check to see if the character following the '<' is either '?' or '!'
 +    // (processing instruction or doctype or comment)... these are valid nodes
-+    // to have in the prologue. 
++    // to have in the prologue.
 +    if (*start != '?' && *start != '!')
 +      return PR_FALSE;
-+    
++
 +    // Now advance the iterator until the '>' (We do this because we don't want
 +    // to sniff indicator substrings that are embedded within other nodes, e.g.
 +    // comments: <!-- <rdf:RDF .. > -->
@@ -1450,7 +1450,7 @@
 + *          otherwise.
 + */
 +static PRBool
-+ContainsTopLevelSubstring(const char *dataString, const char *substring) 
++ContainsTopLevelSubstring(const char *dataString, const char *substring)
 +{
 +  if (NULL == dataString)
 +  {
@@ -1467,9 +1467,9 @@
 +}
 +
 +NS_IMETHODIMP
-+nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request, 
-+                                      const PRUint8* data, 
-+                                      PRUint32 length, 
++nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request,
++                                      const PRUint8* data,
++                                      PRUint32 length,
 +                                      nsACString& sniffedType)
 +{
 +  nsCOMPtr<nsIHttpChannel> channel(do_QueryInterface(request));
@@ -1486,10 +1486,10 @@
 +
 +  // We need to find out if this is a load of a view-source document. In this
 +  // case we do not want to override the content type, since the source display
-+  // does not need to be converted from feed format to XUL. More importantly, 
-+  // we don't want to change the content type from something 
-+  // nsContentDLF::CreateInstance knows about (e.g. application/xml, text/html 
-+  // etc) to something that only the application fe knows about (maybe.feed) 
++  // does not need to be converted from feed format to XUL. More importantly,
++  // we don't want to change the content type from something
++  // nsContentDLF::CreateInstance knows about (e.g. application/xml, text/html
++  // etc) to something that only the application fe knows about (maybe.feed)
 +  // thus deactivating syntax highlighting.
 +  nsCOMPtr<nsIURI> originalURI;
 +  channel->GetOriginalURI(getter_AddRefs(originalURI));
@@ -1501,10 +1501,10 @@
 +    return NS_OK;
 +  }
 +
-+  // Check the Content-Type to see if it is set correctly. If it is set to 
++  // Check the Content-Type to see if it is set correctly. If it is set to
 +  // something specific that we think is a reliable indication of a feed, don't
-+  // bother sniffing since we assume the site maintainer knows what they're 
-+  // doing. 
++  // bother sniffing since we assume the site maintainer knows what they're
++  // doing.
 +  nsCAutoString contentType;
 +  channel->GetContentType(contentType);
 +  PRBool noSniff = contentType.EqualsLiteral(TYPE_RSS) ||
@@ -1512,7 +1512,7 @@
 +
 +  // Check to see if this was a feed request from the location bar or from
 +  // the feed: protocol. This is also a reliable indication.
-+  // The value of the header doesn't matter.  
++  // The value of the header doesn't matter.
 +  if (!noSniff) {
 +    nsCAutoString sniffHeader;
 +    nsresult foundHeader =
@@ -1536,20 +1536,20 @@
 +    return NS_OK;
 +  }
 +
-+  // Now we need to potentially decompress data served with 
++  // Now we need to potentially decompress data served with
 +  // Content-Encoding: gzip
 +  nsresult rv = ConvertEncodedData(request, data, length);
 +  if (NS_FAILED(rv))
 +    return rv;
-+  
-+  const char* testData = 
++
++  const char* testData =
 +    mDecodedData.IsEmpty() ? (const char*)data : mDecodedData.get();
 +
 +  // The strategy here is based on that described in:
 +  // http://blogs.msdn.com/rssteam/articles/PublishersGuide.aspx
 +  // for interoperarbility purposes.
 +
-+  // We cap the number of bytes to scan at MAX_BYTES to prevent picking up 
++  // We cap the number of bytes to scan at MAX_BYTES to prevent picking up
 +  // false positives by accidentally reading document content, e.g. a "how to
 +  // make a feed" page.
 +  if (length > MAX_BYTES)
@@ -1612,38 +1612,40 @@
 +
 +NS_IMETHODIMP
 +nsFeedSniffer::OnDataAvailable(nsIRequest* request, nsISupports* context,
-+                               nsIInputStream* stream, PRUint32 offset, 
++                               nsIInputStream* stream, PRUint32 offset,
 +                               PRUint32 count)
 +{
 +  PRUint32 read;
-+  return stream->ReadSegments(AppendSegmentToString, &mDecodedData, count, 
++  return stream->ReadSegments(AppendSegmentToString, &mDecodedData, count,
 +                              &read);
 +}
 +
 +NS_IMETHODIMP
-+nsFeedSniffer::OnStopRequest(nsIRequest* request, nsISupports* context, 
++nsFeedSniffer::OnStopRequest(nsIRequest* request, nsISupports* context,
 +                             nsresult status)
 +{
-+  return NS_OK; 
++  return NS_OK;
 +}
 +
 +NS_METHOD
-+nsFeedSniffer::Register(nsIComponentManager *compMgr, nsIFile *path, 
++nsFeedSniffer::Register(nsIComponentManager *compMgr, nsIFile *path,
 +                        const char *registryLocation,
-+                        const char *componentType, 
++                        const char *componentType,
 +                        const nsModuleComponentInfo *info)
 +{
 +  nsresult rv;
 +  nsCOMPtr<nsICategoryManager> catman = do_GetService(NS_CATEGORYMANAGER_CONTRACTID, &rv);
-+  if (NS_FAILED(rv)) 
++  if (NS_FAILED(rv))
 +    return rv;
 +
-+  return catman->AddCategoryEntry(NS_CONTENT_SNIFFER_CATEGORY, "Feed Sniffer", 
-+                                  NS_FEEDSNIFFER_CONTRACTID, PR_TRUE, PR_TRUE, 
++  return catman->AddCategoryEntry(NS_CONTENT_SNIFFER_CATEGORY, "Feed Sniffer",
++                                  NS_FEEDSNIFFER_CONTRACTID, PR_TRUE, PR_TRUE,
 +                                  nsnull);
 +}
---- mozilla/toolkit/components/feeds/src/nsFeedSniffer.h.orig	2008-08-25 15:09:58.000000000 +0300
-+++ mozilla/toolkit/components/feeds/src/nsFeedSniffer.h	2008-08-25 15:44:17.000000000 +0300
+Index: mozilla/toolkit/components/feeds/src/nsFeedSniffer.h
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/src/nsFeedSniffer.h
 @@ -0,0 +1,70 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -1702,9 +1704,9 @@
 +                                         PRUint32 count,
 +                                         PRUint32* writeCount);
 +
-+  static NS_METHOD Register(nsIComponentManager* compMgr, nsIFile* path, 
++  static NS_METHOD Register(nsIComponentManager* compMgr, nsIFile* path,
 +                            const char* registryLocation,
-+                            const char* componentType, 
++                            const char* componentType,
 +                            const nsModuleComponentInfo *info);
 +
 +protected:
@@ -1715,8 +1717,10 @@
 +  nsCString mDecodedData;
 +};
 +
---- mozilla/toolkit/components/feeds/src/FeedWriter.js.orig	2008-08-25 15:09:58.000000000 +0300
-+++ mozilla/toolkit/components/feeds/src/FeedWriter.js	2008-08-26 13:25:36.000000000 +0300
+Index: mozilla/toolkit/components/feeds/src/FeedWriter.js
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/src/FeedWriter.js
 @@ -0,0 +1,1448 @@
 +# -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +# ***** BEGIN LICENSE BLOCK *****
@@ -1774,7 +1778,7 @@
 +  var shouldLog = false;
 +  try {
 +    shouldLog = prefB.getBoolPref("feeds.log");
-+  } 
++  }
 +  catch (ex) {
 +  }
 +
@@ -1888,18 +1892,18 @@
 +function convertByteUnits(aBytes) {
 +  var units = ["bytes", "kilobyte", "megabyte", "gigabyte"];
 +  let unitIndex = 0;
-+ 
++
 +  // convert to next unit if it needs 4 digits (after rounding), but only if
 +  // we know the name of the next unit
 +  while ((aBytes >= 999.5) && (unitIndex < units.length - 1)) {
 +    aBytes /= 1024;
 +    unitIndex++;
 +  }
-+ 
++
 +  // Get rid of insignificant bits by truncating to 1 or 0 decimal points
 +  // 0 -> 0; 1.2 -> 1.2; 12.3 -> 12.3; 123.4 -> 123; 234.5 -> 235
 +  aBytes = aBytes.toFixed((aBytes > 0) && (aBytes < 100) ? 1 : 0);
-+ 
++
 +  return [aBytes, units[unitIndex]];
 +}
 +
@@ -1935,8 +1939,8 @@
 +  },
 +
 +  /**
-+   * Safely sets the href attribute on an anchor tag, providing the URI 
-+   * specified can be loaded according to rules. 
++   * Safely sets the href attribute on an anchor tag, providing the URI
++   * specified can be loaded according to rules.
 +   * @param   element
 +   *          The element to set a URI attribute on
 +   * @param   attribute
@@ -1944,10 +1948,10 @@
 +   * @param   uri
 +   *          The URI spec to set as the href
 +   */
-+  _safeSetURIAttribute: 
++  _safeSetURIAttribute:
 +  function FW__safeSetURIAttribute(element, attribute, uri) {
 +    var secman = Cc["@mozilla.org/scriptsecuritymanager;1"].
-+                 getService(Ci.nsIScriptSecurityManager);    
++                 getService(Ci.nsIScriptSecurityManager);
 +    const flags = Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL;
 +    try {
 +      secman.checkLoadURIStrWithPrincipal(this._feedPrincipal, uri, flags);
@@ -2013,7 +2017,7 @@
 +  _getFormattedString: function FW__getFormattedString(key, params) {
 +    return this._bundle.formatStringFromName(key, params, params.length);
 +  },
-+  
++
 +  _getString: function FW__getString(key) {
 +    return this._bundle.GetStringFromName(key);
 +  },
@@ -2052,7 +2056,7 @@
 +  },
 +
 +   /**
-+   * Returns a date suitable for displaying in the feed preview. 
++   * Returns a date suitable for displaying in the feed preview.
 +   * If the date cannot be parsed, the return value is "false".
 +   * @param   dateString
 +   *          A date as extracted from a feed entry. (entry.updated)
@@ -2135,16 +2139,16 @@
 +  _setTitleImage: function FW__setTitleImage(container) {
 +    try {
 +      var parts = container.image;
-+      
++
 +      // Set up the title image (supplied by the feed)
 +      var feedTitleImage = this._document.getElementById("feedTitleImage");
-+      this._safeSetURIAttribute(feedTitleImage, "src", 
++      this._safeSetURIAttribute(feedTitleImage, "src",
 +                                parts.getPropertyAsAString("url"));
 +
 +      // Set up the title image link
 +      var feedTitleLink = this._document.getElementById("feedTitleLink");
 +
-+      var titleText = this._getFormattedString("linkTitleTextFormat", 
++      var titleText = this._getFormattedString("linkTitleTextFormat",
 +                                               [parts.getPropertyAsAString("title")]);
 +      this._contentSandbox.feedTitleLink = feedTitleLink;
 +      this._contentSandbox.titleText = titleText;
@@ -2161,7 +2165,7 @@
 +      this._contentSandbox.feedTitleText = null;
 +      this._contentSandbox.titleImageWidth = null;
 +
-+      this._safeSetURIAttribute(feedTitleLink, "href", 
++      this._safeSetURIAttribute(feedTitleLink, "href",
 +                                parts.getPropertyAsAString("link"));
 +    }
 +    catch (e) {
@@ -2248,7 +2252,7 @@
 +      this._contentSandbox.clearDiv =
 +        this._document.createElementNS(HTML_NS, "div");
 +      this._contentSandbox.clearDiv.style.clear = "both";
-+      
++
 +      var codeStr = "feedContent.appendChild(entryContainer); " +
 +                     "feedContent.appendChild(clearDiv);"
 +      Cu.evalInSandbox(codeStr, this._contentSandbox);
@@ -2261,10 +2265,10 @@
 +
 +  /**
 +   * Takes a url to a media item and returns the best name it can come up with.
-+   * Frequently this is the filename portion (e.g. passing in 
++   * Frequently this is the filename portion (e.g. passing in
 +   * http://example.com/foo.mpeg would return "foo.mpeg"), but in more complex
 +   * cases, this will return the entire url (e.g. passing in
-+   * http://example.com/somedirectory/ would return 
++   * http://example.com/somedirectory/ would return
 +   * http://example.com/somedirectory/).
 +   * @param aURL
 +   *        The URL string from which to create a display name
@@ -2299,7 +2303,7 @@
 +    for (var i_enc = 0; i_enc < entry.enclosures.length; ++i_enc) {
 +      var enc = entry.enclosures.queryElementAt(i_enc, Ci.nsIWritablePropertyBag2);
 +
-+      if (!(enc.hasKey("url"))) 
++      if (!(enc.hasKey("url")))
 +        continue;
 +
 +      var enclosureDiv = this._document.createElementNS(HTML_NS, "div");
@@ -2327,7 +2331,7 @@
 +      if (enc.hasKey("length") && /^[0-9]+$/.test(enc.get("length"))) {
 +        var enc_size = convertByteUnits(parseInt(enc.get("length")));
 +
-+        var size_text = this._getFormattedString("enclosureSizeText", 
++        var size_text = this._getFormattedString("enclosureSizeText",
 +                             [enc_size[0], this._getString(enc_size[1])]);
 +      }
 +
@@ -2346,12 +2350,12 @@
 +      if (type_text && size_text)
 +        enclosureDiv.appendChild(this._document.createTextNode( " (" + type_text + ", " + size_text + ")"));
 +
-+      else if (type_text) 
++      else if (type_text)
 +        enclosureDiv.appendChild(this._document.createTextNode( " (" + type_text + ")"))
 +
 +      else if (size_text)
 +        enclosureDiv.appendChild(this._document.createTextNode( " (" + size_text + ")"))
-+ 
++
 +      enclosuresDiv.appendChild(enclosureDiv);
 +    }
 +
@@ -2367,18 +2371,18 @@
 +   *          the feed.
 +   */
 +  _getContainer: function FW__getContainer(result) {
-+    var feedService = 
++    var feedService =
 +        Cc["@mozilla.org/browser/feeds/result-service;1"].
 +        getService(Ci.nsIFeedResultService);
 +
 +    try {
-+      var result = 
++      var result =
 +        feedService.getFeedResult(this._getOriginalURI(this._window));
 +    }
 +    catch (e) {
 +      LOG("Subscribe Preview: feed not available?!");
 +    }
-+    
++
 +    if (result.bozo) {
 +      LOG("Subscribe Preview: feed result is bozo?!");
 +    }
@@ -2394,7 +2398,7 @@
 +  },
 +
 +  /**
-+   * Get the human-readable display name of a file. This could be the 
++   * Get the human-readable display name of a file. This could be the
 +   * application name.
 +   * @param   file
 +   *          A nsIFile to look up the name of
@@ -2419,7 +2423,7 @@
 +      // fall through to the file name
 +    }
 +#endif
-+    var ios = 
++    var ios =
 +        Cc["@mozilla.org/network/io-service;1"].
 +        getService(Ci.nsIIOService);
 +    var url = ios.newFileURI(file).QueryInterface(Ci.nsIURL);
@@ -2556,7 +2560,7 @@
 +
 +        this._contentSandbox.checkbox = checkbox;
 +        this._contentSandbox.label = this._getFormattedString(stringLabel, [handlerName]);
-+        
++
 +        var codeStr = "checkbox.setAttribute('label', label);";
 +        Cu.evalInSandbox(codeStr, this._contentSandbox);
 +      }
@@ -2602,7 +2606,7 @@
 +  },
 +
 +  _setSelectedHandler: function FW__setSelectedHandler(feedType) {
-+    var prefs =   
++    var prefs =
 +        Cc["@mozilla.org/preferences-service;1"].
 +        getService(Ci.nsIPrefBranch);
 +
@@ -2659,7 +2663,7 @@
 +        var liveBookmarksMenuItem = this._document.getElementById("liveBookmarksMenuItem");
 +        if (liveBookmarksMenuItem)
 +          this._safeDoCommand(liveBookmarksMenuItem);
-+      } 
++      }
 +    }
 +  },
 +
@@ -2667,7 +2671,7 @@
 +    var handlersMenuPopup = this._document.getElementById("handlersMenuPopup");
 +    if (!handlersMenuPopup)
 +      return;
-+ 
++
 +    var feedType = this._getFeedType();
 +    var codeStr;
 +
@@ -2712,7 +2716,7 @@
 +    }
 +    this._contentSandbox.handlersMenuPopup = handlersMenuPopup;
 +    this._contentSandbox.selectedAppMenuItem = menuItem;
-+    
++
 +    codeStr += "handlersMenuPopup.appendChild(selectedAppMenuItem); ";
 +
 +    // List the default feed reader
@@ -2844,8 +2848,8 @@
 +
 +  /**
 +   * Returns the original URI object of the feed and ensures that this
-+   * component is only ever invoked from the preview document.  
-+   * @param aWindow 
++   * component is only ever invoked from the preview document.
++   * @param aWindow
 +   *        The window of the document invoking the BrowserFeedWriter
 +   */
 +  _getOriginalURI: function FW__getOriginalURI(aWindow) {
@@ -2989,7 +2993,7 @@
 +    if (selectedItem.id == "chooseApplicationMenuItem") {
 +      if (!this._chooseClientApp())
 +        return;
-+      
++
 +      selectedItem = this._getSelectedItemFromMenulist(handlersMenuList);
 +    }
 +
@@ -3017,12 +3021,12 @@
 +      switch (selectedItem.id) {
 +        case "selectedAppMenuItem":
 +          prefs.setCharPref(getPrefReaderForType(feedType), "client");
-+          prefs.setComplexValue(getPrefAppForType(feedType), Ci.nsILocalFile, 
++          prefs.setComplexValue(getPrefAppForType(feedType), Ci.nsILocalFile,
 +                                this._selectedApp);
 +          break;
 +        case "defaultHandlerMenuItem":
 +          prefs.setCharPref(getPrefReaderForType(feedType), "client");
-+          prefs.setComplexValue(getPrefAppForType(feedType), Ci.nsILocalFile, 
++          prefs.setComplexValue(getPrefAppForType(feedType), Ci.nsILocalFile,
 +                                this._defaultSystemReader);
 +          break;
 +        case "liveBookmarksMenuItem":
@@ -3077,7 +3081,7 @@
 +        case PREF_AUDIO_SELECTED_ACTION:
 +          this._setAlwaysUseCheckedState(feedType);
 +      }
-+    } 
++    }
 +  },
 +
 +  /**
@@ -3166,8 +3170,10 @@
 +
 +function NSGetModule(cm, file)
 +  XPCOMUtils.generateModule([FeedWriter]);
---- mozilla/toolkit/components/feeds/src/GenericFactory.js.orig	2008-08-25 15:09:58.000000000 +0300
-+++ mozilla/toolkit/components/feeds/src/GenericFactory.js	2008-08-25 15:09:18.000000000 +0300
+Index: mozilla/toolkit/components/feeds/src/GenericFactory.js
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/src/GenericFactory.js
 @@ -0,0 +1,63 @@
 +# -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +# ***** BEGIN LICENSE BLOCK *****
@@ -3217,23 +3223,25 @@
 +GenericComponentFactory.prototype = {
 +  _ctor: null,
 +  _params: null,
-+  
++
 +  createInstance: function GCF_createInstance(outer, iid) {
 +    if (outer != null)
 +      throw Cr.NS_ERROR_NO_AGGREGATION;
 +    return (new this._ctor(this._params)).QueryInterface(iid);
 +  },
-+  
++
 +  QueryInterface: function GCF_QueryInterface(iid) {
 +    if (iid.equals(Ci.nsIFactory) ||
-+        iid.equals(Ci.nsISupports)) 
++        iid.equals(Ci.nsISupports))
 +      return this;
 +    throw Cr.NS_ERROR_NO_INTERFACE;
 +  }
 +};
 +
---- mozilla/toolkit/components/feeds/src/FeedConverter.js.orig	2008-08-25 15:09:58.000000000 +0300
-+++ mozilla/toolkit/components/feeds/src/FeedConverter.js	2008-08-25 15:09:18.000000000 +0300
+Index: mozilla/toolkit/components/feeds/src/FeedConverter.js
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/src/FeedConverter.js
 @@ -0,0 +1,691 @@
 +# -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +# ***** BEGIN LICENSE BLOCK *****
@@ -3369,7 +3377,7 @@
 +}
 +
 +function safeGetCharPref(pref, defaultValue) {
-+  var prefs =   
++  var prefs =
 +      Cc["@mozilla.org/preferences-service;1"].
 +      getService(Ci.nsIPrefBranch);
 +  try {
@@ -3387,7 +3395,7 @@
 +   * This is the downloaded text data for the feed.
 +   */
 +  _data: null,
-+  
++
 +  /**
 +   * This is the object listening to the conversion, which is ultimately the
 +   * docshell for the load.
@@ -3398,7 +3406,7 @@
 +   * Records if the feed was sniffed
 +   */
 +  _sniffed: false,
-+  
++
 +  /**
 +   * See nsIStreamConverter.idl
 +   */
@@ -3408,15 +3416,15 @@
 +                                           (sourceType == TYPE_MAYBE_VIDEO) ||
 +                                           (sourceType == TYPE_MAYBE_AUDIO));
 +  },
-+  
++
 +  /**
 +   * See nsIStreamConverter.idl
 +   */
-+  convert: function FC_convert(sourceStream, sourceType, destinationType, 
++  convert: function FC_convert(sourceStream, sourceType, destinationType,
 +                               context) {
 +    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
 +  },
-+  
++
 +  /**
 +   * See nsIStreamConverter.idl
 +   */
@@ -3424,13 +3432,13 @@
 +                                                 listener, context) {
 +    this._listener = listener;
 +  },
-+  
++
 +  /**
 +   * Whether or not the preview page is being forced.
 +   */
 +  _forcePreviewPage: false,
-+  
-+  /** 
++
++  /**
 +   * Release our references to various things once we're done using them.
 +   */
 +  _releaseHandles: function FC__releaseHandles() {
@@ -3438,43 +3446,43 @@
 +    this._request = null;
 +    this._processor = null;
 +  },
-+  
++
 +  /**
 +   * See nsIFeedResultListener.idl
 +   */
 +  handleResult: function FC_handleResult(result) {
 +    // Feeds come in various content types, which our feed sniffer coerces to
-+    // the maybe.feed type. However, feeds are used as a transport for 
++    // the maybe.feed type. However, feeds are used as a transport for
 +    // different data types, e.g. news/blogs (traditional feed), video/audio
-+    // (podcasts) and photos (photocasts, photostreams). Each of these is 
++    // (podcasts) and photos (photocasts, photostreams). Each of these is
 +    // different in that there's a different class of application suitable for
 +    // handling feeds of that type, but without a content-type differentiation
 +    // it is difficult for us to disambiguate.
-+    // 
++    //
 +    // The other problem is that if the user specifies an auto-action handler
-+    // for one feed application, the fact that the content type is shared means 
-+    // that all other applications will auto-load with that handler too, 
-+    // regardless of the content-type. 
++    // for one feed application, the fact that the content type is shared means
++    // that all other applications will auto-load with that handler too,
++    // regardless of the content-type.
 +    //
 +    // This means that content-type alone is not enough to determine whether
 +    // or not a feed should be auto-handled. This means that for feeds we need
-+    // to always use this stream converter, even when an auto-action is 
-+    // specified, not the basic one provided by WebContentConverter. This 
++    // to always use this stream converter, even when an auto-action is
++    // specified, not the basic one provided by WebContentConverter. This
 +    // converter needs to consume all of the data and parse it, and based on
-+    // that determination make a judgement about type. 
++    // that determination make a judgement about type.
 +    //
 +    // Since there are no content types for this content, and I'm not going to
 +    // invent any, the upshot is that while a user can set an auto-handler for
 +    // generic feed content, the system will prevent them from setting an auto-
 +    // handler for other stream types. In those cases, the user will always see
-+    // the preview page and have to select a handler. We can guess and show 
++    // the preview page and have to select a handler. We can guess and show
 +    // a client handler, but will not be able to show web handlers for those
 +    // types.
 +    //
 +    // If this is just a feed, not some kind of specialized application, then
-+    // auto-handlers can be set and we should obey them. 
++    // auto-handlers can be set and we should obey them.
 +    try {
-+      var feedService = 
++      var feedService =
 +          Cc["@mozilla.org/browser/feeds/result-service;1"].
 +          getService(Ci.nsIFeedResultService);
 +      if (!this._forcePreviewPage && result.doc) {
@@ -3486,7 +3494,7 @@
 +            handler = safeGetCharPref(getPrefReaderForType(feed.type), "bookmarks");
 +          switch (handler) {
 +            case "web":
-+              var wccr = 
++              var wccr =
 +                  Cc["@mozilla.org/embeddor.implemented/web-content-handler-registrar;1"].
 +                  getService(Ci.nsIWebContentConverterService);
 +              if ((feed.type == Ci.nsIFeed.TYPE_FEED &&
@@ -3514,8 +3522,8 @@
 +          }
 +        }
 +      }
-+          
-+      var ios = 
++
++      var ios =
 +          Cc["@mozilla.org/network/io-service;1"].
 +          getService(Ci.nsIIOService);
 +      var chromeChannel;
@@ -3528,7 +3536,7 @@
 +        // If there was no automatic handler, or this was a podcast,
 +        // photostream or some other kind of application, we must always
 +        // show the preview page.
-+        
++
 +        // Store the result in the result service so that the display
 +        // page can access it.
 +
@@ -3549,17 +3557,17 @@
 +      this._releaseHandles();
 +    }
 +  },
-+  
++
 +  /**
 +   * See nsIStreamListener.idl
 +   */
-+  onDataAvailable: function FC_onDataAvailable(request, context, inputStream, 
++  onDataAvailable: function FC_onDataAvailable(request, context, inputStream,
 +                                               sourceOffset, count) {
 +    if (this._processor)
 +      this._processor.onDataAvailable(request, context, inputStream,
 +                                      sourceOffset, count);
 +  },
-+  
++
 +  /**
 +   * See nsIRequestObserver.idl
 +   */
@@ -3577,10 +3585,10 @@
 +    }
 +
 +    this._request = request;
-+    
++
 +    // Save and reset the forced state bit early, in case there's some kind of
 +    // error.
-+    var feedService = 
++    var feedService =
 +        Cc["@mozilla.org/browser/feeds/result-service;1"].
 +        getService(Ci.nsIFeedResultService);
 +    this._forcePreviewPage = feedService.forcePreviewPage;
@@ -3592,10 +3600,10 @@
 +        createInstance(Ci.nsIFeedProcessor);
 +    this._processor.listener = this;
 +    this._processor.parseAsync(null, channel.URI);
-+    
++
 +    this._processor.onStartRequest(request, context);
 +  },
-+  
++
 +  /**
 +   * See nsIRequestObserver.idl
 +   */
@@ -3603,7 +3611,7 @@
 +    if (this._processor)
 +      this._processor.onStopRequest(request, context, status);
 +  },
-+  
++
 +  /**
 +   * See nsISupports.idl
 +   */
@@ -3635,26 +3643,26 @@
 +
 +/**
 + * Keeps parsed FeedResults around for use elsewhere in the UI after the stream
-+ * converter completes. 
++ * converter completes.
 + */
 +var FeedResultService = {
-+  
++
 +  /**
 +   * A URI spec -> [nsIFeedResult] hash. We have to keep a list as the
 +   * value in case the same URI is requested concurrently.
 +   */
 +  _results: { },
-+  
++
 +  /**
 +   * See nsIFeedResultService.idl
 +   */
 +  forcePreviewPage: false,
-+  
++
 +  /**
 +   * See nsIFeedResultService.idl
 +   */
 +  addToClientReader: function FRS_addToClientReader(spec, title, subtitle, feedType) {
-+    var prefs =   
++    var prefs =
 +        Cc["@mozilla.org/preferences-service;1"].
 +        getService(Ci.nsIPrefBranch);
 +
@@ -3673,7 +3681,7 @@
 +      // http://foo.com/index.rdf -> feed://foo.com/index.rdf
 +      // other urls: prepend feed: scheme, e.g.
 +      // https://foo.com/index.rdf -> feed:https://foo.com/index.rdf
-+      var ios = 
++      var ios =
 +          Cc["@mozilla.org/network/io-service;1"].
 +          getService(Ci.nsIIOService);
 +      var feedURI = ios.newURI(spec, null, null);
@@ -3684,7 +3692,7 @@
 +      else
 +        spec = "feed:" + spec;
 +
-+      var ss = 
++      var ss =
 +          Cc["@mozilla.org/browser/shell-service;1"].
 +          getService(Ci.nsIShellService);
 +      ss.openApplicationWithURI(clientApp, spec);
@@ -3695,7 +3703,7 @@
 +      LOG("unexpected handler: " + handler);
 +      // fall through
 +    case "bookmarks":
-+      var wm = 
++      var wm =
 +          Cc["@mozilla.org/appshell/window-mediator;1"].
 +          getService(Ci.nsIWindowMediator);
 +      var topWindow = wm.getMostRecentWindow("navigator:browser");
@@ -3703,7 +3711,7 @@
 +      break;
 +    }
 +  },
-+  
++
 +  /**
 +   * See nsIFeedResultService.idl
 +   */
@@ -3711,11 +3719,11 @@
 +    NS_ASSERT(feedResult.uri != null, "null URI!");
 +    NS_ASSERT(feedResult.uri != null, "null feedResult!");
 +    var spec = feedResult.uri.spec;
-+    if(!this._results[spec])  
++    if(!this._results[spec])
 +      this._results[spec] = [];
 +    this._results[spec].push(feedResult);
 +  },
-+  
++
 +  /**
 +   * See nsIFeedResultService.idl
 +   */
@@ -3728,7 +3736,7 @@
 +    }
 +    return null;
 +  },
-+  
++
 +  /**
 +   * See nsIFeedResultService.idl
 +   */
@@ -3744,7 +3752,7 @@
 +        ++deletions;
 +      }
 +    }
-+    
++
 +    // send the holes to the end
 +    resultList.sort();
 +    // and trim the list
@@ -3758,7 +3766,7 @@
 +      throw Cr.NS_ERROR_NO_AGGREGATION;
 +    return this.QueryInterface(iid);
 +  },
-+  
++
 +  QueryInterface: function FRS_QueryInterface(iid) {
 +    if (iid.equals(Ci.nsIFeedResultService) ||
 +        iid.equals(Ci.nsIFactory) ||
@@ -3774,7 +3782,7 @@
 + */
 +function FeedProtocolHandler(scheme) {
 +  this._scheme = scheme;
-+  var ios = 
++  var ios =
 +      Cc["@mozilla.org/network/io-service;1"].
 +      getService(Ci.nsIIOService);
 +  this._http = ios.getProtocolHandler("http");
@@ -3784,19 +3792,19 @@
 +  get scheme() {
 +    return this._scheme;
 +  },
-+  
++
 +  get protocolFlags() {
 +    return this._http.protocolFlags;
 +  },
-+  
++
 +  get defaultPort() {
 +    return this._http.defaultPort;
 +  },
-+  
++
 +  allowPort: function FPH_allowPort(port, scheme) {
 +    return this._http.allowPort(port, scheme);
 +  },
-+  
++
 +  newURI: function FPH_newURI(spec, originalCharset, baseURI) {
 +    // See bug 408599 - feed URIs can be either standard URLs of the form
 +    // feed://example.com, in which case the real protocol is http, or nested
@@ -3815,16 +3823,16 @@
 +        spec.substr(0, feedHttpsSlashes.length) != feedHttpsSlashes)
 +      throw NS_ERROR_MALFORMED_URI;
 +
-+    var uri = 
++    var uri =
 +        Cc["@mozilla.org/network/standard-url;1"].
 +        createInstance(Ci.nsIStandardURL);
 +    uri.init(Ci.nsIStandardURL.URLTYPE_STANDARD, 80, spec, originalCharset,
 +             baseURI);
 +    return uri;
 +  },
-+  
++
 +  newChannel: function FPH_newChannel(aUri) {
-+    var ios = 
++    var ios =
 +        Cc["@mozilla.org/network/io-service;1"].
 +        getService(Ci.nsIIOService);
 +    // feed: URIs either start feed://, in which case the real scheme is http:
@@ -3847,13 +3855,13 @@
 +    channel.originalURI = aUri;
 +    return channel;
 +  },
-+  
++
 +  QueryInterface: function FPH_QueryInterface(iid) {
 +    if (iid.equals(Ci.nsIProtocolHandler) ||
 +        iid.equals(Ci.nsISupports))
 +      return this;
 +    throw Cr.NS_ERROR_NO_INTERFACE;
-+  }  
++  }
 +};
 +
 +var Module = {
@@ -3863,11 +3871,11 @@
 +      return this;
 +    throw Cr.NS_ERROR_NO_INTERFACE;
 +  },
-+  
++
 +  getClassObject: function M_getClassObject(cm, cid, iid) {
 +    if (!iid.equals(Ci.nsIFactory))
 +      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-+    
++
 +    if (cid.equals(FS_CLASSID))
 +      return FeedResultService;
 +    if (cid.equals(FPH_CLASSID))
@@ -3876,13 +3884,13 @@
 +      return new GenericComponentFactory(FeedProtocolHandler, "pcast");
 +    if (cid.equals(FC_CLASSID))
 +      return new GenericComponentFactory(FeedConverter);
-+      
++
 +    throw Cr.NS_ERROR_NO_INTERFACE;
 +  },
-+  
++
 +  registerSelf: function M_registerSelf(cm, file, location, type) {
 +    var cr = cm.QueryInterface(Ci.nsIComponentRegistrar);
-+    
++
 +    cr.registerFactoryLocation(FS_CLASSID, FS_CLASSNAME, FS_CONTRACTID,
 +                               file, location, type);
 +    cr.registerFactoryLocation(FPH_CLASSID, FPH_CLASSNAME, FPH_CONTRACTID,
@@ -3890,31 +3898,31 @@
 +    cr.registerFactoryLocation(PCPH_CLASSID, PCPH_CLASSNAME, PCPH_CONTRACTID,
 +                               file, location, type);
 +
-+    // The feed converter is always attached, since parsing must be done to 
-+    // determine whether or not auto-handling can occur. 
++    // The feed converter is always attached, since parsing must be done to
++    // determine whether or not auto-handling can occur.
 +    const converterPrefix = "@mozilla.org/streamconv;1?from=";
-+    var converterContractID = 
++    var converterContractID =
 +        converterPrefix + TYPE_MAYBE_FEED + "&to=" + TYPE_ANY;
 +    cr.registerFactoryLocation(FC_CLASSID, FC_CLASSNAME, converterContractID,
 +                               file, location, type);
 +
-+    converterContractID = 
++    converterContractID =
 +        converterPrefix + TYPE_MAYBE_VIDEO_FEED + "&to=" + TYPE_ANY;
 +    cr.registerFactoryLocation(FC_CLASSID, FC_CLASSNAME, converterContractID,
 +                               file, location, type);
 +
-+    converterContractID = 
++    converterContractID =
 +        converterPrefix + TYPE_MAYBE_AUDIO_FEED + "&to=" + TYPE_ANY;
 +    cr.registerFactoryLocation(FC_CLASSID, FC_CLASSNAME, converterContractID,
 +                               file, location, type);
 +    },
-+  
++
 +  unregisterSelf: function M_unregisterSelf(cm, location, type) {
 +    var cr = cm.QueryInterface(Ci.nsIComponentRegistrar);
 +    cr.unregisterFactoryLocation(FPH_CLASSID, location);
 +    cr.unregisterFactoryLocation(PCPH_CLASSID, location);
 +  },
-+  
++
 +  canUnload: function M_canUnload(cm) {
 +    return true;
 +  }
@@ -3926,8 +3934,10 @@
 +
 +#include ../../../../toolkit/content/debug.js
 +#include GenericFactory.js
---- mozilla/toolkit/components/feeds/src/nsAboutFeeds.cpp.orig	2008-08-25 15:09:58.000000000 +0300
-+++ mozilla/toolkit/components/feeds/src/nsAboutFeeds.cpp	2008-08-26 15:27:51.000000000 +0300
+Index: mozilla/toolkit/components/feeds/src/nsAboutFeeds.cpp
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/src/nsAboutFeeds.cpp
 @@ -0,0 +1,100 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* vim:set ts=4 sw=4 sts=4 et cindent: */
@@ -4029,9 +4039,10 @@
 +  NS_RELEASE(aboutFeeds);
 +  return rv;
 +}
-
---- mozilla/toolkit/components/feeds/public/nsIFeedResultService.idl.orig	2008-08-26 13:06:13.000000000 +0300
-+++ mozilla/toolkit/components/feeds/public/nsIFeedResultService.idl	2008-08-26 13:06:06.000000000 +0300
+Index: mozilla/toolkit/components/feeds/public/nsIFeedResultService.idl
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/public/nsIFeedResultService.idl
 @@ -0,0 +1,100 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4091,8 +4102,8 @@
 +  attribute boolean forcePreviewPage;
 +
 +  /**
-+   * Adds a URI to the user's specified external feed handler, or live 
-+   * bookmarks. 
++   * Adds a URI to the user's specified external feed handler, or live
++   * bookmarks.
 +   * @param   uri
 +   *          The uri of the feed to add.
 +   * @param   title
@@ -4102,7 +4113,7 @@
 +   * @param   feedType
 +   *          The nsIFeed type of the feed.  See nsIFeed.idl
 +   */
-+  void addToClientReader(in AUTF8String uri, 
++  void addToClientReader(in AUTF8String uri,
 +                         in AString title,
 +                         in AString subtitle,
 +                         in unsigned long feedType);
@@ -4133,8 +4144,10 @@
 +   */
 +  void removeFeedResult(in nsIURI uri);
 +};
---- mozilla/toolkit/components/feeds/public/nsIFeedWriter.idl.orig	2008-08-26 13:47:26.000000000 +0300
-+++ mozilla/toolkit/components/feeds/public/nsIFeedWriter.idl	2008-08-26 13:47:21.000000000 +0300
+Index: mozilla/toolkit/components/feeds/public/nsIFeedWriter.idl
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/public/nsIFeedWriter.idl
 @@ -0,0 +1,68 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4204,11 +4217,11 @@
 +   */
 +  void close();
 +};
---- mozilla/toolkit/components/feeds/public/Makefile.in.orig	2008-08-26 13:06:59.000000000 +0300
-+++ mozilla/toolkit/components/feeds/public/Makefile.in	2008-08-26 14:04:30.000000000 +0300
-@@ -48,13 +48,15 @@ XPIDLSRCS = nsIFeedProcessor.idl \
-             nsIFeedResult.idl \
-             nsIFeedListener.idl \
+Index: mozilla/toolkit/components/feeds/public/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/feeds/public/Makefile.in
++++ mozilla/toolkit/components/feeds/public/Makefile.in
+@@ -50,11 +50,13 @@
              nsIFeed.idl \
              nsIFeedContainer.idl \
              nsIFeedEntry.idl \
@@ -4222,8 +4235,10 @@
              $(NULL)
  
  include $(topsrcdir)/config/rules.mk
---- mozilla/toolkit/components/feeds/content/subscribe.css.orig	2008-08-26 13:44:09.000000000 +0300
-+++ mozilla/toolkit/components/feeds/content/subscribe.css	2008-08-26 14:15:11.000000000 +0300
+Index: mozilla/toolkit/components/feeds/content/subscribe.css
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/content/subscribe.css
 @@ -0,0 +1,155 @@
 +
 +*[hidden] {
@@ -4250,7 +4265,7 @@
 +  background-color: InfoBackground;
 +}
 +
-+#feedHeader {  
++#feedHeader {
 +  margin-top: 4.9em;
 +  margin-bottom: 1em;
 +  -moz-margin-start: 1.4em;
@@ -4364,7 +4379,7 @@
 +.feedEntryContent {
 +  font-size: 110%;
 +}
-+ 
++
 +.link {
 +  color: #0000FF;
 +  text-decoration: underline;
@@ -4380,8 +4395,10 @@
 +  font-weight: normal;
 +}
 +
---- mozilla/toolkit/components/feeds/content/subscribe.js.orig	2008-08-26 10:00:17.000000000 +0300
-+++ mozilla/toolkit/components/feeds/content/subscribe.js	2008-08-26 10:00:41.000000000 +0300
+Index: mozilla/toolkit/components/feeds/content/subscribe.js
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/content/subscribe.js
 @@ -0,0 +1,61 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4426,7 +4443,7 @@
 +   * The nsIFeedWriter object that produces the UI
 +   */
 +  _feedWriter: null,
-+  
++
 +  init: function SH_init() {
 +    this._feedWriter = new BrowserFeedWriter();
 +    this._feedWriter.init(window);
@@ -4439,13 +4456,15 @@
 +  uninit: function SH_uninit() {
 +    this._feedWriter.close();
 +  },
-+  
++
 +  subscribe: function FH_subscribe() {
 +    this._feedWriter.subscribe();
 +  }
 +};
---- mozilla/toolkit/components/feeds/content/subscribe.xhtml.orig	2008-08-26 10:00:17.000000000 +0300
-+++ mozilla/toolkit/components/feeds/content/subscribe.xhtml	2008-08-26 09:11:06.000000000 +0300
+Index: mozilla/toolkit/components/feeds/content/subscribe.xhtml
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/content/subscribe.xhtml
 @@ -0,0 +1,82 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +
@@ -4490,7 +4509,7 @@
 +<!--
 +        <div id="feedSubscribeLine"
 +          ><xul:vbox
-+            ><xul:hbox align="center" 
++            ><xul:hbox align="center"
 +              ><xul:description id="subscribeUsingDescription"
 +              /><xul:menulist id="handlersMenuList" aria-labelledby="subscribeUsingDescription"
 +                ><xul:menupopup menugenerated="true" id="handlersMenuPopup"
@@ -4529,8 +4548,10 @@
 +    </div>
 +  </body>
 +</html>
---- mozilla/toolkit/components/feeds/jar.mn.orig	2008-08-26 13:23:01.000000000 +0300
-+++ mozilla/toolkit/components/feeds/jar.mn	2008-08-26 13:23:30.000000000 +0300
+Index: mozilla/toolkit/components/feeds/jar.mn
+===================================================================
+--- /dev/null
++++ mozilla/toolkit/components/feeds/jar.mn
 @@ -0,0 +1,6 @@
 +toolkit.jar:
 +%  content feeds %content/feeds/ xpcnativewrappers=yes contentaccessible=yes
@@ -4538,11 +4559,11 @@
 +*+ content/feeds/subscribe.js           (content/subscribe.js)
 +*+ content/feeds/subscribe.css          (content/subscribe.css)
 +
---- mozilla/toolkit/components/feeds/src/Makefile.in.orig	2008-08-27 11:06:14.000000000 +0300
-+++ mozilla/toolkit/components/feeds/src/Makefile.in	2008-08-27 11:08:04.000000000 +0300
-@@ -50,18 +50,40 @@ LIBXUL_LIBRARY = 1
- 
- REQUIRES	= \
+Index: mozilla/toolkit/components/feeds/src/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/feeds/src/Makefile.in
++++ mozilla/toolkit/components/feeds/src/Makefile.in
+@@ -52,16 +52,38 @@
  		xpcom \
  		necko \
  		string \
