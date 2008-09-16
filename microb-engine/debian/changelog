@@ -1,3 +1,9 @@
+microb-engine (20080902-30) unstable; urgency=low
+
+  * Updated to trunk 2008-09-16, 1aecd2a9914d
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 16 Sep 2008 08:54:12 -0500
+
 microb-engine (20080902-29) unstable; urgency=low
 
   * UPdated to trunk 2008-09-14

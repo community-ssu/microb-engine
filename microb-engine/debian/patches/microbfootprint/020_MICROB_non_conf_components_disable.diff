@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7507,35 +7653,54 @@
+@@ -7518,35 +7664,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7808,16 +7973,21 @@
+@@ -7819,16 +7984,21 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8096,16 +8266,22 @@
+@@ -8108,16 +8278,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -879,7 +879,7 @@ Index: mozilla/toolkit/components/Makefile.in
  
  ifdef MOZ_FEEDS
  DIRS += feeds
-@@ -108,30 +115,37 @@
+@@ -114,30 +121,37 @@
  DIRS += passwordmgr/public
  else
  DIRS += passwordmgr
@@ -1537,11 +1537,40 @@ Index: mozilla/gfx/thebes/src/gfxContext.cpp
  #include "gfxASurface.h"
  #include "gfxPattern.h"
  #include "gfxPlatform.h"
+@@ -616,26 +618,28 @@
+     return gfxRect(xmin, ymin, xmax - xmin, ymax - ymin);
+ }
+ 
+ // rendering sources
+ 
+ void
+ gfxContext::SetColor(const gfxRGBA& c)
+ {
++#ifndef MOZ_NO_LCMS
+     if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
+ 
+         gfxRGBA cms;
+         gfxPlatform::TransformPixel(c, cms, gfxPlatform::GetCMSRGBTransform());
+ 
+         // Use the original alpha to avoid unnecessary float->byte->float
+         // conversion errors
+         cairo_set_source_rgba(mCairo, cms.r, cms.g, cms.b, c.a);
+     }
+     else
++#endif
+         cairo_set_source_rgba(mCairo, c.r, c.g, c.b, c.a);
+ }
+ 
+ void
+ gfxContext::SetDeviceColor(const gfxRGBA& c)
+ {
+     cairo_set_source_rgba(mCairo, c.r, c.g, c.b, c.a);
+ }
 Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -75,19 +75,21 @@
+@@ -74,19 +74,21 @@
  #endif
  
  #ifdef MOZ_DFB
@@ -1561,14 +1590,14 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  #include FT_FREETYPE_H
  #endif
  
- PRInt32 gfxPlatformGtk::sDPI = -1;
+ double gfxPlatformGtk::sDPI = -1.0;
  gfxFontconfigUtils *gfxPlatformGtk::sFontconfigUtils = nsnull;
-@@ -544,16 +546,17 @@
- #endif
+@@ -504,16 +506,17 @@
+     sDPI = gdk_screen_get_resolution(gdk_screen_get_default());
  
-     if (sDPI <= 0) {
- 	// Fall back to something sane
- 	sDPI = 96;
+     if (sDPI <= 0.0) {
+         // Fall back to something sane
+         sDPI = 96.0;
      }
  }
  
@@ -1581,7 +1610,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
      const char ICC_PROFILE_ATOM_NAME[] = "_ICC_PROFILE";
  
      Atom edidAtom, iccAtom;
-@@ -673,16 +676,17 @@
+@@ -633,16 +636,17 @@
  
              return profile;
          }
@@ -1655,7 +1684,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatformGtk.h
  protected:
      static void InitDPI();
  
-     static PRInt32 sDPI;
+     static double sDPI;
      static gfxFontconfigUtils *sFontconfigUtils;
  
 +#ifndef MOZ_NO_LCMS
@@ -2834,26 +2863,7 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(RelatedLinksHandlerImpl, Init)
  #ifdef SUITE_USING_XPFE_DM
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsDownloadManager, Init)
-@@ -94,17 +94,17 @@
- #endif
- 
- #if !defined(MOZ_PLACES)
- NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsGlobalHistory, Init)
- #endif
- 
- #endif // MOZ_SUITE
- 
--#if (!defined(MOZ_XUL_APP)) && !defined(MOZ_MACBROWSER)
-+#if (!defined(MOZ_XUL_APP)) && !defined(MOZ_MACBROWSER) && !defined(MOZ_NO_XPFE_BROWSER)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsBrowserContentHandler)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsChromeStartupHandler)
- #endif
- 
- 
- static NS_METHOD
- RegisterProc(nsIComponentManager *aCompMgr,
-              nsIFile *aPath,
-@@ -165,30 +165,30 @@
+@@ -159,17 +159,17 @@
      { "Global History", NS_GLOBALHISTORY_CID, NS_GLOBALHISTORY_DATASOURCE_CONTRACTID,
        nsGlobalHistoryConstructor },
      { "Global History", NS_GLOBALHISTORY_CID, NS_GLOBALHISTORY_AUTOCOMPLETE_CONTRACTID,
@@ -2872,34 +2882,6 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
      { "nsBrowserInstance",
        NS_BROWSERINSTANCE_CID,
        NS_BROWSERINSTANCE_CONTRACTID,
-       nsBrowserInstanceConstructor
-     },
- #endif
- 
--#if (!defined(MOZ_XUL_APP)) && !defined(MOZ_MACBROWSER)
-+#if (!defined(MOZ_XUL_APP)) && !defined(MOZ_MACBROWSER) && !defined(MOZ_NO_XPFE_BROWSER)
-   { "Browser Content Handler",
-     NS_BROWSERCONTENTHANDLER_CID,
-     NS_CONTENT_HANDLER_CONTRACTID_PREFIX"text/html",
-     nsBrowserContentHandlerConstructor
-   },
-   { "Browser Content Handler",
-     NS_BROWSERCONTENTHANDLER_CID,
-     NS_CONTENT_HANDLER_CONTRACTID_PREFIX"application/vnd.mozilla.xul+xml",
-@@ -285,12 +285,12 @@
-   },
-   { "Chrome Startup Handler",
-     NS_CHROMESTARTUPHANDLER_CID,
-     NS_CHROMESTARTUPHANDLER_CONTRACTID,
-     nsChromeStartupHandlerConstructor,
-     nsChromeStartupHandler::RegisterProc,
-     nsChromeStartupHandler::UnregisterProc
-   },
--#endif //!defined(MOZ_XUL_APP) && !defined(MOZ_MACBROWSER)
-+#endif //!defined(MOZ_XUL_APP) && !defined(MOZ_MACBROWSER) && !defined(MOZ_NO_XPFE_BROWSER)
- };
- 
- NS_IMPL_NSGETMODULE(application, components)
 Index: mozilla/xpfe/components/build/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/components/build/Makefile.in
@@ -3027,6 +3009,35 @@ Index: mozilla/gfx/thebes/src/gfxPattern.cpp
  
  gfxPattern::gfxPattern(const gfxRGBA& aColor)
  {
+@@ -82,26 +84,28 @@
+ gfxPattern::CairoPattern()
+ {
+     return mPattern;
+ }
+ 
+ void
+ gfxPattern::AddColorStop(gfxFloat offset, const gfxRGBA& c)
+ {
++#ifndef MOZ_NO_LCMS
+     if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
+         gfxRGBA cms;
+         gfxPlatform::TransformPixel(c, cms, gfxPlatform::GetCMSRGBTransform());
+ 
+         // Use the original alpha to avoid unnecessary float->byte->float
+         // conversion errors
+         cairo_pattern_add_color_stop_rgba(mPattern, offset,
+                                           cms.r, cms.g, cms.b, c.a);
+     }
+     else
++#endif
+         cairo_pattern_add_color_stop_rgba(mPattern, offset, c.r, c.g, c.b, c.a);
+ }
+ 
+ void
+ gfxPattern::SetMatrix(const gfxMatrix& matrix)
+ {
+     cairo_matrix_t mat = *reinterpret_cast<const cairo_matrix_t*>(&matrix);
+     cairo_pattern_set_matrix(mPattern, &mat);
 Index: mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/src/EmbedWindow.cpp
@@ -3152,7 +3163,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2897,16 +2897,17 @@
+@@ -2911,16 +2911,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer
@@ -3170,65 +3181,3 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  
      GdkWindow *innerWindow = get_inner_gdk_window(aWidget->window, aX, aY,
                                                    &retx, &rety);
---- mozilla/gfx/thebes/src/gfxContext.cpp.orig	2008-09-11 15:55:16.000000000 +0300
-+++ mozilla/gfx/thebes/src/gfxContext.cpp	2008-09-11 16:30:42.000000000 +0300
-@@ -618,26 +618,28 @@ gfxContext::GetClipExtents()
-     return gfxRect(xmin, ymin, xmax - xmin, ymax - ymin);
- }
- 
- // rendering sources
- 
- void
- gfxContext::SetColor(const gfxRGBA& c)
- {
-+#ifndef MOZ_NO_LCMS
-     if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
- 
-         gfxRGBA cms;
-         gfxPlatform::TransformPixel(c, cms, gfxPlatform::GetCMSRGBTransform());
- 
-         // Use the original alpha to avoid unnecessary float->byte->float
-         // conversion errors
-         cairo_set_source_rgba(mCairo, cms.r, cms.g, cms.b, c.a);
-     }
-     else
-+#endif
-         cairo_set_source_rgba(mCairo, c.r, c.g, c.b, c.a);
- }
- 
- void
- gfxContext::SetDeviceColor(const gfxRGBA& c)
- {
-     cairo_set_source_rgba(mCairo, c.r, c.g, c.b, c.a);
- }
---- mozilla/gfx/thebes/src/gfxPattern.cpp.orig	2008-09-11 15:55:16.000000000 +0300
-+++ mozilla/gfx/thebes/src/gfxPattern.cpp	2008-09-11 16:31:10.000000000 +0300
-@@ -84,26 +84,28 @@ cairo_pattern_t *
- gfxPattern::CairoPattern()
- {
-     return mPattern;
- }
- 
- void
- gfxPattern::AddColorStop(gfxFloat offset, const gfxRGBA& c)
- {
-+#ifndef MOZ_NO_LCMS
-     if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
-         gfxRGBA cms;
-         gfxPlatform::TransformPixel(c, cms, gfxPlatform::GetCMSRGBTransform());
- 
-         // Use the original alpha to avoid unnecessary float->byte->float
-         // conversion errors
-         cairo_pattern_add_color_stop_rgba(mPattern, offset,
-                                           cms.r, cms.g, cms.b, c.a);
-     }
-     else
-+#endif
-         cairo_pattern_add_color_stop_rgba(mPattern, offset, c.r, c.g, c.b, c.a);
- }
- 
- void
- gfxPattern::SetMatrix(const gfxMatrix& matrix)
- {
-     cairo_matrix_t mat = *reinterpret_cast<const cairo_matrix_t*>(&matrix);
-     cairo_pattern_set_matrix(mPattern, &mat);

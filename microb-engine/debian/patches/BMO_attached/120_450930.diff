@@ -2,19 +2,50 @@ Index: mozilla/content/base/src/nsContentUtils.cpp
 ===================================================================
 --- mozilla.orig/content/base/src/nsContentUtils.cpp
 +++ mozilla/content/base/src/nsContentUtils.cpp
-@@ -469,18 +469,19 @@
-     { &nsGkAtoms::ontimeupdate,                  { NS_TIMEUPDATE, EventNameType_HTML }},
-     { &nsGkAtoms::onended,                       { NS_ENDED, EventNameType_HTML }},
+@@ -438,29 +438,29 @@
+     { &nsGkAtoms::ondragdrop,                    { NS_DRAGDROP_DRAGDROP, EventNameType_XUL }},
+     { &nsGkAtoms::ondraggesture,                 { NS_DRAGDROP_GESTURE, EventNameType_XUL }},
+     { &nsGkAtoms::ondrag,                        { NS_DRAGDROP_DRAG, EventNameType_HTMLXUL }},
+     { &nsGkAtoms::ondragend,                     { NS_DRAGDROP_END, EventNameType_HTMLXUL }},
+     { &nsGkAtoms::ondragstart,                   { NS_DRAGDROP_START, EventNameType_HTMLXUL }},
+     { &nsGkAtoms::ondragleave,                   { NS_DRAGDROP_LEAVE_SYNTH, EventNameType_HTMLXUL }},
+     { &nsGkAtoms::ondrop,                        { NS_DRAGDROP_DROP, EventNameType_HTMLXUL }},
+     { &nsGkAtoms::onoverflow,                    { NS_SCROLLPORT_OVERFLOW, EventNameType_XUL }},
+-    { &nsGkAtoms::onunderflow,                   { NS_SCROLLPORT_UNDERFLOW, EventNameType_XUL }}
++    { &nsGkAtoms::onunderflow,                   { NS_SCROLLPORT_UNDERFLOW, EventNameType_XUL }},
+ #ifdef MOZ_SVG
+-   ,{ &nsGkAtoms::onSVGLoad,                     { NS_SVG_LOAD, EventNameType_None }},
++    { &nsGkAtoms::onSVGLoad,                     { NS_SVG_LOAD, EventNameType_None }},
+     { &nsGkAtoms::onSVGUnload,                   { NS_SVG_UNLOAD, EventNameType_None }},
+     { &nsGkAtoms::onSVGAbort,                    { NS_SVG_ABORT, EventNameType_None }},
+     { &nsGkAtoms::onSVGError,                    { NS_SVG_ERROR, EventNameType_None }},
+     { &nsGkAtoms::onSVGResize,                   { NS_SVG_RESIZE, EventNameType_None }},
+     { &nsGkAtoms::onSVGScroll,                   { NS_SVG_SCROLL, EventNameType_None }},
+     { &nsGkAtoms::onSVGZoom,                     { NS_SVG_ZOOM, EventNameType_None }},
+-    { &nsGkAtoms::onzoom,                        { NS_SVG_ZOOM, EventNameType_SVGSVG }}
++    { &nsGkAtoms::onzoom,                        { NS_SVG_ZOOM, EventNameType_SVGSVG }},
+ #endif // MOZ_SVG
+ #ifdef MOZ_MEDIA 
+-   ,{ &nsGkAtoms::onloadstart,                   { NS_LOADSTART, EventNameType_HTML }},
++    { &nsGkAtoms::onloadstart,                   { NS_LOADSTART, EventNameType_HTML }},
+     { &nsGkAtoms::onprogress,                    { NS_PROGRESS, EventNameType_HTML }},
+     { &nsGkAtoms::onloadedmetadata,              { NS_LOADEDMETADATA, EventNameType_HTML }},
+     { &nsGkAtoms::onloadedfirstframe,            { NS_LOADEDFIRSTFRAME, EventNameType_HTML }},
+     { &nsGkAtoms::onemptied,                     { NS_EMPTIED, EventNameType_HTML }},
+     { &nsGkAtoms::onstalled,                     { NS_STALLED, EventNameType_HTML }},
+     { &nsGkAtoms::onplay,                        { NS_PLAY, EventNameType_HTML }},
+     { &nsGkAtoms::onpause,                       { NS_PAUSE, EventNameType_HTML }},
+     { &nsGkAtoms::onwaiting,                     { NS_WAITING, EventNameType_HTML }},
+@@ -471,16 +471,17 @@
      { &nsGkAtoms::ondataunavailable,             { NS_DATAUNAVAILABLE, EventNameType_HTML }},
      { &nsGkAtoms::oncanshowcurrentframe,         { NS_CANSHOWCURRENTFRAME, EventNameType_HTML }},
      { &nsGkAtoms::oncanplay,                     { NS_CANPLAY, EventNameType_HTML }},
      { &nsGkAtoms::oncanplaythrough,              { NS_CANPLAYTHROUGH, EventNameType_HTML }},
      { &nsGkAtoms::onratechange,                  { NS_RATECHANGE, EventNameType_HTML }},
      { &nsGkAtoms::ondurationchange,              { NS_DURATIONCHANGE, EventNameType_HTML }},
--    { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }},
-+    { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }}
+     { &nsGkAtoms::onvolumechange,                { NS_VOLUMECHANGE, EventNameType_HTML }},
  #endif //MOZ_MEDIA
-+    ,{ &nsGkAtoms::onMozDOMAfterPaint,            { NS_AFTERPAINT, EventNameType_HTML }}
++    { &nsGkAtoms::onMozAfterPaint,               { NS_AFTERPAINT, EventNameType_None }}
    };
  
    sEventTable = new nsDataHashtable<nsISupportsHashKey, EventNameMapping>;
@@ -117,7 +148,7 @@ Index: mozilla/content/base/src/nsGkAtomList.h
  GK_ATOM(onmouseout, "onmouseout")
  GK_ATOM(onmouseover, "onmouseover")
  GK_ATOM(onmouseup, "onmouseup")
-+GK_ATOM(onMozDOMAfterPaint, "onMozDOMAfterPaint")
++GK_ATOM(onMozAfterPaint, "onMozAfterPaint")
  GK_ATOM(ononline, "ononline")
  GK_ATOM(onoffline, "onoffline")
  GK_ATOM(onoverflow, "onoverflow")
@@ -168,16 +199,33 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
 ===================================================================
 --- mozilla.orig/content/events/src/nsDOMEvent.cpp
 +++ mozilla/content/events/src/nsDOMEvent.cpp
-@@ -80,16 +80,17 @@
+@@ -66,30 +66,29 @@
+   "dragenter", "dragover", "dragexit", "dragdrop", "draggesture",
+   "drag", "dragend", "dragstart", "dragleave", "drop", "resize",
+   "scroll", "overflow", "underflow", "overflowchanged",
+   "DOMSubtreeModified", "DOMNodeInserted", "DOMNodeRemoved", 
+   "DOMNodeRemovedFromDocument", "DOMNodeInsertedIntoDocument",
+   "DOMAttrModified", "DOMCharacterDataModified",
+   "DOMActivate", "DOMFocusIn", "DOMFocusOut",
+   "pageshow", "pagehide", "DOMMouseScroll", "offline", "online",
+-  "copy", "cut", "paste"
++  "copy", "cut", "paste",
+ #ifdef MOZ_SVG
+- ,
+   "SVGLoad", "SVGUnload", "SVGAbort", "SVGError", "SVGResize", "SVGScroll",
+-  "SVGZoom"
++  "SVGZoom",
+ #endif // MOZ_SVG
  #ifdef MOZ_MEDIA
-   ,
+-  ,
    "loadstart", "progress", "loadedmetadata", "loadedfirstframe",
    "emptied", "stalled", "play", "pause",
    "waiting", "seeking", "seeked", "timeupdate", "ended", "dataunavailable",
    "canshowcurrentframe", "canplay", "canplaythrough", "ratechange",
-   "durationchange", "volumechange"
+-  "durationchange", "volumechange"
++  "durationchange", "volumechange",
  #endif // MOZ_MEDIA
-+  , "MozDOMAfterPaint"
++  "MozAfterPaint"
  };
  
  static char *sPopupAllowedEvents;
@@ -186,7 +234,7 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
  nsDOMEvent::nsDOMEvent(nsPresContext* aPresContext, nsEvent* aEvent)
  {
    mPresContext = aPresContext;
-@@ -648,16 +649,21 @@
+@@ -648,16 +647,21 @@
      else if (atom == nsGkAtoms::onload)
        mEvent->message = NS_LOAD;
      else if (atom == nsGkAtoms::onabort)
@@ -196,7 +244,7 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
    }
  #endif // MOZ_MEDIA
 +  else if (mEvent->eventStructType == NS_NOTIFYPAINT_EVENT) {
-+    if (atom == nsGkAtoms::onMozDOMAfterPaint)
++    if (atom == nsGkAtoms::onMozAfterPaint)
 +      mEvent->message = NS_AFTERPAINT;
 +  }
 +
@@ -208,7 +256,7 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
  
  NS_IMETHODIMP
  nsDOMEvent::InitEvent(const nsAString& aEventTypeArg, PRBool aCanBubbleArg, PRBool aCancelableArg)
-@@ -962,16 +968,24 @@
+@@ -962,16 +966,24 @@
        newEvent = new nsXULCommandEvent(PR_FALSE, msg, nsnull);
        NS_ENSURE_TRUE(newEvent, NS_ERROR_OUT_OF_MEMORY);
        isInputEvent = PR_TRUE;
@@ -219,10 +267,10 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
      }
 +    case NS_NOTIFYPAINT_EVENT:
 +    {
++      nsNotifyPaintEvent* event = static_cast<nsNotifyPaintEvent*>(mEvent);
 +      newEvent =
 +        new nsNotifyPaintEvent(PR_FALSE, msg,
-+                               ((nsNotifyPaintEvent*) mEvent)->sameDocRegion,
-+                               ((nsNotifyPaintEvent*) mEvent)->crossDocRegion);
++                               event->sameDocRegion, event->crossDocRegion);
 +      break;
 +    }
      default:
@@ -233,7 +281,7 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
    }
  
    NS_ENSURE_TRUE(newEvent, NS_ERROR_OUT_OF_MEMORY);
-@@ -1464,16 +1478,18 @@
+@@ -1464,16 +1476,18 @@
      return sEventNames[eDOMEvents_canplaythrough];
    case NS_RATECHANGE:
      return sEventNames[eDOMEvents_ratechange];
@@ -256,16 +304,50 @@ Index: mozilla/content/events/src/nsDOMEvent.h
 ===================================================================
 --- mozilla.orig/content/events/src/nsDOMEvent.h
 +++ mozilla/content/events/src/nsDOMEvent.h
-@@ -157,16 +157,18 @@
+@@ -123,29 +123,27 @@
+     eDOMEvents_DOMFocusOut,
+     eDOMEvents_pageshow,
+     eDOMEvents_pagehide,
+     eDOMEvents_DOMMouseScroll,
+     eDOMEvents_offline,
+     eDOMEvents_online,
+     eDOMEvents_copy,
+     eDOMEvents_cut,
+-    eDOMEvents_paste
++    eDOMEvents_paste,
+ #ifdef MOZ_SVG
+-   ,
+     eDOMEvents_SVGLoad,
+     eDOMEvents_SVGUnload,
+     eDOMEvents_SVGAbort,
+     eDOMEvents_SVGError,
+     eDOMEvents_SVGResize,
+     eDOMEvents_SVGScroll,
+-    eDOMEvents_SVGZoom
++    eDOMEvents_SVGZoom,
+ #endif // MOZ_SVG
+ #ifdef MOZ_MEDIA
+-    ,
+     eDOMEvents_loadstart,
+     eDOMEvents_progress,
+     eDOMEvents_loadedmetadata,
+     eDOMEvents_loadedfirstframe,
+     eDOMEvents_emptied,
+     eDOMEvents_stalled,
+     eDOMEvents_play,
+     eDOMEvents_pause,
+@@ -155,18 +153,19 @@
+     eDOMEvents_timeupdate,
+     eDOMEvents_ended,
      eDOMEvents_dataunavailable,
      eDOMEvents_canshowcurrentframe,
      eDOMEvents_canplay,
      eDOMEvents_canplaythrough,
      eDOMEvents_ratechange,
      eDOMEvents_durationchange,
-     eDOMEvents_volumechange
+-    eDOMEvents_volumechange
++    eDOMEvents_volumechange,
  #endif
-+    ,
 +    eDOMEvents_afterpaint
    };
  
@@ -279,7 +361,7 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.cpp
 ===================================================================
 --- /dev/null
 +++ mozilla/content/events/src/nsDOMNotifyPaintEvent.cpp
-@@ -0,0 +1,131 @@
+@@ -0,0 +1,139 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -327,13 +409,23 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.cpp
 +  : nsDOMEvent(aPresContext, aEvent ? aEvent :
 +               new nsNotifyPaintEvent(PR_FALSE, 0, nsRegion(), nsRegion()))
 +{
-+  if ( aEvent ) {
++  if (aEvent) {
 +    mEventIsInternal = PR_FALSE;
 +  }
 +  else
 +  {
 +    mEventIsInternal = PR_TRUE;
 +    mEvent->time = PR_Now();
++  }
++}
++
++nsDOMNotifyPaintEvent::~nsDOMNotifyPaintEvent()
++{
++  if (mEventIsInternal) {
++    if (mEvent->eventStructType == NS_NOTIFYPAINT_EVENT) {
++      delete static_cast<nsNotifyPaintEvent*>(mEvent);
++      mEvent = nsnull;
++    }
 +  }
 +}
 +
@@ -378,8 +470,6 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.cpp
 +NS_IMETHODIMP
 +nsDOMNotifyPaintEvent::GetClientRects(nsIDOMClientRectList** aResult)
 +{
-+  *aResult = nsnull;
-+
 +  nsRefPtr<nsClientRectList> rectList = new nsClientRectList();
 +  if (!rectList)
 +    return NS_ERROR_OUT_OF_MEMORY;
@@ -415,7 +505,7 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.h
 ===================================================================
 --- /dev/null
 +++ mozilla/content/events/src/nsDOMNotifyPaintEvent.h
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,64 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -454,8 +544,8 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.h
 + *
 + * ***** END LICENSE BLOCK ***** */
 +
-+#ifndef nsDOMNotifyPaintEvent_h__
-+#define nsDOMNotifyPaintEvent_h__
++#ifndef nsDOMNotifyPaintEvent_h_
++#define nsDOMNotifyPaintEvent_h_
 +
 +#include "nsIDOMNotifyPaintEvent.h"
 +#include "nsDOMEvent.h"
@@ -466,6 +556,7 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.h
 +public:
 +  nsDOMNotifyPaintEvent(nsPresContext* aPresContext,
 +                        nsNotifyPaintEvent* aEvent);
++  virtual ~nsDOMNotifyPaintEvent();
 +
 +  NS_DECL_ISUPPORTS_INHERITED
 +
@@ -478,7 +569,7 @@ Index: mozilla/content/events/src/nsDOMNotifyPaintEvent.h
 +  nsRegion GetRegion();
 +};
 +
-+#endif // nsDOMNotifyPaintEvent_h__
++#endif // nsDOMNotifyPaintEvent_h_
 Index: mozilla/content/events/src/nsEventDispatcher.cpp
 ===================================================================
 --- mozilla.orig/content/events/src/nsEventDispatcher.cpp
@@ -711,7 +802,7 @@ Index: mozilla/dom/public/idl/events/nsIDOMNotifyPaintEvent.idl
 ===================================================================
 --- /dev/null
 +++ mozilla/dom/public/idl/events/nsIDOMNotifyPaintEvent.idl
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,67 @@
 +/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -762,11 +853,19 @@ Index: mozilla/dom/public/idl/events/nsIDOMNotifyPaintEvent.idl
 +interface nsIDOMNotifyPaintEvent : nsIDOMEvent
 +{
 +  /**
-+   * Stores a list of rectangles which are affected.
++   * Get a list of rectangles which are affected. The rectangles are in CSS pixels
++   * relative to the viewport origin.
++   * If the caller is not trusted (e.g., regular Web content) then only painting
++   * caused by the current document is reported; in particular, painting in subdocuments
++   * is not reported.
 +   */
 +  readonly attribute nsIDOMClientRectList clientRects;
 +  /**
-+   * Stores the bounding box of the rectangles which are affected.
++   * Get the bounding box of the rectangles which are affected. The rectangle
++   * is in CSS pixels relative to the viewport origin.
++   * If the caller is not trusted (e.g., regular Web content) then only painting
++   * caused by the current document is reported; in particular, painting in subdocuments
++   * is not reported.
 +   */
 +  readonly attribute nsIDOMClientRect boundingClientRect;
 +};
@@ -835,13 +934,13 @@ Index: mozilla/dom/src/base/nsDOMClassInfo.cpp
    PRInt32 mDOMClassInfoID;
    const char *mContractID;
  };
-@@ -2137,16 +2140,21 @@
-     DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
+@@ -3532,16 +3535,21 @@
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMEventTarget)
    DOM_CLASSINFO_MAP_END
  
-   DOM_CLASSINFO_MAP_BEGIN(DragEvent, nsIDOMDragEvent)
-     DOM_CLASSINFO_MAP_ENTRY(nsIDOMDragEvent)
-     DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
+   DOM_CLASSINFO_MAP_BEGIN(DataTransfer, nsIDOMDataTransfer)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMDataTransfer)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMNSDataTransfer)
    DOM_CLASSINFO_MAP_END
  
 +  DOM_CLASSINFO_MAP_BEGIN(NotifyPaintEvent, nsIDOMNotifyPaintEvent)
@@ -849,14 +948,14 @@ Index: mozilla/dom/src/base/nsDOMClassInfo.cpp
 +    DOM_CLASSINFO_EVENT_MAP_ENTRIES
 +  DOM_CLASSINFO_MAP_END
 +
-   DOM_CLASSINFO_MAP_BEGIN(HTMLDocument, nsIDOMHTMLDocument)
-     DOM_CLASSINFO_MAP_ENTRY(nsIDOMHTMLDocument)
-     DOM_CLASSINFO_MAP_ENTRY(nsIDOMNSHTMLDocument)
-     DOM_CLASSINFO_DOCUMENT_MAP_ENTRIES
-   DOM_CLASSINFO_MAP_END
+ #ifdef NS_DEBUG
+   {
+     PRUint32 i = NS_ARRAY_LENGTH(sClassInfoData);
  
-   DOM_CLASSINFO_MAP_BEGIN(HTMLOptionsCollection, nsIDOMHTMLOptionsCollection)
-     DOM_CLASSINFO_MAP_ENTRY(nsIDOMHTMLOptionsCollection)
+     if (i != eDOMClassInfoIDCount) {
+       NS_ERROR("The number of items in sClassInfoData doesn't match the "
+                "number of nsIDOMClassInfo ID's, this is bad! Fix it!");
+ 
 Index: mozilla/dom/src/base/nsDOMWindowUtils.cpp
 ===================================================================
 --- mozilla.orig/dom/src/base/nsDOMWindowUtils.cpp
@@ -941,7 +1040,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
  #include "nsContentUtils.h"
  
  // Needed for Start/Stop of Image Animation
-@@ -1564,8 +1565,52 @@
+@@ -1564,8 +1565,59 @@
  }
  
  /* virtual */ PRBool
@@ -961,9 +1060,13 @@ Index: mozilla/layout/base/nsPresContext.cpp
 +  nsISupports* eventTarget = ourWindow;
 +  if (mSameDocDirtyRegion.IsEmpty() && !IsChrome()) {
 +    // Don't tell the window about this event, it should not know that
-+    // something happened in a subdocument
++    // something happened in a subdocument. Tell only the chrome event handler.
++    // (Events sent to the window get propagated to the chrome event handler
++    // automatically.)
 +    eventTarget = ourWindow->GetChromeEventHandler();
 +  }
++  // Events sent to the window get propagated to the chrome event handler
++  // automatically.
 +
 +  nsNotifyPaintEvent event(PR_TRUE, NS_AFTERPAINT, mSameDocDirtyRegion,
 +                           mCrossDocDirtyRegion);
@@ -972,8 +1075,11 @@ Index: mozilla/layout/base/nsPresContext.cpp
 +  // it won't be blocking app execution though).
 +  mSameDocDirtyRegion.SetEmpty();
 +  mCrossDocDirtyRegion.SetEmpty();
++  // Even if we're not telling the window about the event (so eventTarget is
++  // the chrome event handler, not the window), the window is still
++  // logically the event target.
 +  event.target = do_QueryInterface(ourWindow);
-+  nsEventDispatcher::Dispatch(ourWindow, this, &event);
++  nsEventDispatcher::Dispatch(eventTarget, this, &event);
 +}
 +
 +void
@@ -1092,7 +1198,7 @@ Index: mozilla/layout/base/tests/Makefile.in
  		test_bug423523.html \
  		test_bug445810.html \
  		test_bug449781.html \
-+		test_bug450930.html \
++		test_bug450930.xhtml \
  		$(NULL)
  # test_bug396024.html is currently disabled because it interacts badly with
  # the "You can't print-preview while the page is loading" dialog.
@@ -1100,154 +1206,57 @@ Index: mozilla/layout/base/tests/Makefile.in
  
  libs:: $(_TEST_FILES)
  	$(INSTALL) $(foreach f,$^,"$f") $(DEPTH)/_tests/testing/mochitest/tests/$(relativesrcdir)
-Index: mozilla/layout/base/tests/Makefile.in.orig
+Index: mozilla/layout/base/tests/test_bug450930.xhtml
 ===================================================================
 --- /dev/null
-+++ mozilla/layout/base/tests/Makefile.in.orig
-@@ -0,0 +1,101 @@
-+#
-+# ***** BEGIN LICENSE BLOCK *****
-+# Version: MPL 1.1/GPL 2.0/LGPL 2.1
-+#
-+# The contents of this file are subject to the Mozilla Public License Version
-+# 1.1 (the "License"); you may not use this file except in compliance with
-+# the License. You may obtain a copy of the License at
-+# http://www.mozilla.org/MPL/
-+#
-+# Software distributed under the License is distributed on an "AS IS" basis,
-+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-+# for the specific language governing rights and limitations under the
-+# License.
-+#
-+# The Original Code is mozilla.org code.
-+#
-+# The Initial Developer of the Original Code is
-+# Netscape Communications Corporation.
-+# Portions created by the Initial Developer are Copyright (C) 1998
-+# the Initial Developer. All Rights Reserved.
-+#
-+# Contributor(s):
-+#
-+# Alternatively, the contents of this file may be used under the terms of
-+# either of the GNU General Public License Version 2 or later (the "GPL"),
-+# or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
-+# in which case the provisions of the GPL or the LGPL are applicable instead
-+# of those above. If you wish to allow use of your version of this file only
-+# under the terms of either the GPL or the LGPL, and not to allow others to
-+# use your version of this file under the terms of the MPL, indicate your
-+# decision by deleting the provisions above and replace them with the notice
-+# and other provisions required by the GPL or the LGPL. If you do not delete
-+# the provisions above, a recipient may use your version of this file under
-+# the terms of any one of the MPL, the GPL or the LGPL.
-+#
-+# ***** END LICENSE BLOCK *****
-+
-+DEPTH		= ../../..
-+topsrcdir	= @top_srcdir@
-+srcdir		= @srcdir@
-+VPATH		= @srcdir@
-+relativesrcdir	= layout/base/tests
-+
-+include $(DEPTH)/config/autoconf.mk
-+
-+ifeq (0,1) # false, since TestSpaceManager is broken
-+
-+MOZILLA_INTERNAL_API = 1
-+
-+REQUIRES	= xpcom \
-+		  gfx \
-+		  $(NULL)
-+
-+CPPSRCS		= \
-+		TestSpaceManager.cpp \
-+		$(NULL)
-+
-+SIMPLE_PROGRAMS	= $(CPPSRCS:.cpp=$(BIN_SUFFIX))
-+
-+LOCAL_INCLUDES	= \
-+		-I$(srcdir)/../src \
-+		$(NULL)
-+
-+EXTRA_DSO_LIBS	= gkbase_s gkgfx
-+
-+LIBS		+= \
-+		$(LIBS_DIR) \
-+		$(EXTRA_DSO_LIBS) \
-+		$(MOZ_UNICHARUTIL_LIBS) \
-+		$(MOZ_COMPONENT_LIBS) \
-+		$(MOZ_JS_LIBS) \
-+		$(TK_LIBS) \
-+		$(NULL)
-+
-+endif # false
-+
-+include $(topsrcdir)/config/rules.mk
-+
-+DEFINES += -D_IMPL_NS_LAYOUT
-+
-+_TEST_FILES =	\
-+		test_bug66619.html \
-+		test_bug386575.xhtml \
-+		test_bug388019.html \
-+		test_bug394057.html \
-+		test_bug396024.html \
-+		test_bug399284.html \
-+		test_bug399951.html \
-+		test_bug404209.xhtml \
-+		test_bug416896.html \
-+		test_bug420499.xul \
-+		test_bug423523.html \
-+		test_bug445810.html \
-+		test_bug449781.html \
-+		$(NULL)
-+# test_bug396024.html is currently disabled because it interacts badly with
-+# the "You can't print-preview while the page is loading" dialog.
-+# (See bug 407080)
-+
-+libs:: $(_TEST_FILES)
-+	$(INSTALL) $(foreach f,$^,"$f") $(DEPTH)/_tests/testing/mochitest/tests/$(relativesrcdir)
-Index: mozilla/layout/base/tests/test_bug450930.html
-===================================================================
---- /dev/null
-+++ mozilla/layout/base/tests/test_bug450930.html
-@@ -0,0 +1,132 @@
-+<!DOCTYPE HTML>
-+<html>
++++ mozilla/layout/base/tests/test_bug450930.xhtml
+@@ -0,0 +1,211 @@
++<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg">
 +<!--
 +https://bugzilla.mozilla.org/show_bug.cgi?id=450930
 +-->
 +<head>
 +  <title>Test for Bug 450930</title>
-+  <script type="text/javascript" src="/MochiKit/MochiKit.js"></script>
++  <script type="text/javascript" src="/MochiKit/packed.js"></script>
 +  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
 +  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 +</head>
 +<body>
 +<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=450930">Mozilla Bug 450930</a>
-+<p id="display">
++<div id="display">
 +  <div id="d" style="width:400px; height:200px;"></div>
-+  <iframe id="iframe" style="width:400px; height:200px;" src="data:text/html,<div id='d'>Hello</div>"></iframe>
-+</p>
++  <iframe id="iframe" style="width:400px; height:200px;"
++   src="data:text/html,&lt;div id='d'&gt;Hello&lt;/div&gt;&lt;div style='margin-top:500px' id='d2'&gt;Hello&lt;/div>"></iframe>
++  <svg:svg style="width:410px; height:210px;" id="svg">
++    <svg:foreignObject width="100%" height="100%">
++      <iframe id="iframe2" style="width:400px; height:200px;"
++       src="data:text/html,&lt;div id='d'&gt;Hello&lt;/div&gt;&lt;div style='margin-top:500px' id='d2'&gt;Hello&lt;/div>"></iframe>
++    </svg:foreignObject>
++  </svg:svg>
++</div>
 +<div id="content" style="display: none">
 +
 +</div>
 +<pre id="test">
-+<script class="testbody" type="text/javascript">
++<script class="testbody" type="text/javascript"><![CDATA[
 +
 +/** Test for Bug 450930 **/
 +SimpleTest.waitForExplicitFinish();
 +
-+var i = 0;
-+function flash(doc) {
-+  doc.getElementById('d').style.backgroundColor = i ? "blue" : "yellow";
-+  i = 1 - i;
++function flash(doc, name) {
++  var d = doc.getElementById(name);
++  d.style.backgroundColor = d.style.backgroundColor == "blue" ? "yellow" : "blue";
++}
++
++function le(v1, v2, s) {
++  ok(v1 <= v2, s + " (" + v1 + "," + v2 + ")");
 +}
 +
 +function checkContains(r1, r2, s) {
-+  ok(r1.left <= r2.left, "Left edges out" + s);
-+  ok(r1.right >= r2.right, "Right edges out" + s);
-+  ok(r1.top <= r2.top, "Top edges out" + s);
-+  ok(r1.bottom >= r2.bottom, "Bottom edges out" + s);
++  le(r1.left, r2.left, "Left edges out" + s);
++  le(r2.right, r1.right, "Right edges out" + s);
++  le(r1.top, r2.top, "Top edges out" + s);
++  le(r2.bottom, r1.bottom, "Bottom edges out" + s);
 +}
 +
 +function isRect(r1, r2) {
@@ -1263,53 +1272,36 @@ Index: mozilla/layout/base/tests/test_bug450930.html
 +  return false;
 +}
 +
-+function doesRectContainListElement(r, list, s) {
++function doesRectContain(r1, r2) {
++  return r1.left <= r2.left && r2.right <= r1.right &&
++         r1.top <= r2.top && r2.bottom <= r1.bottom;
++}
++
++function rectToString(r) {
++  return "(" + r.left + "," + r.top + "," + r.right + "," + r.bottom + ")";
++}
++
++function doesRectContainListElement(r, list) {
++  dump("Incoming rect: " + rectToString(r) + "\n");
 +  for (var i = 0; i < list.length; ++i) {
-+    if (checkContains(r, list[i], s))
++    dump("List rect " + i + ": " + rectToString(list[i]));
++    if (doesRectContain(r, list[i])) {
++      dump(" FOUND\n");
 +      return true;
++    }
++    dump("\n");
 +  }
++  dump("NOT FOUND\n");
 +  return false;
 +}
 +
-+function checkGotSubdoc(list, s) {
-+  var r = document.getElementById("iframe").getBoundingClientRect();
-+  return doesRectContainListElement(r, list, s);
-+}
-+
-+function runTest2() {
-+  var fired = false;
-+  var gotSubdocPrivileged = false;
-+  var gotSubdocNonprivileged = false;
-+  var iframe = document.getElementById("iframe");
-+
-+  function listener(event) {
-+    fired = true;
-+    if (checkGotSubdoc(event.clientRects, " (iframe, non-privileged)"))
-+      gotSubdocNonprivileged = true;
-+
-+    netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-+    if (checkGotSubdoc(event.clientRects, " (iframe, privileged)"))
-+      gotSubdocPrivileged = true;
-+  }
-+
-+  function check() {
-+    ok(fired, "Event fired (iframe again)");
-+    ok(gotSubdocPrivileged, "Didn't get subdoc invalidation while we were privileged");
-+    ok(!gotSubdocNonprivileged, "Got subdoc invalidation while we were not privileged");
-+    window.removeEventListener("MozDOMAfterPaint", listener, false);
-+    SimpleTest.finish();
-+  }
-+
-+  function triggerPaint() {
-+    window.addEventListener("MozDOMAfterPaint", listener, false);
-+    setTimeout(check, 100);
-+    flash(iframe.contentDocument);
-+    flash(document);
-+  }
-+  triggerPaint();
++function checkGotSubdoc(list, container) {
++  var r = container.getBoundingClientRect();
++  return doesRectContainListElement(r, list);
 +}
 +
 +function runTest1() {
++  // test basic functionality
 +  var iterations = 0;
 +  var foundExactRect = false;
 +
@@ -1320,25 +1312,112 @@ Index: mozilla/layout/base/tests/test_bug450930.html
 +    if (isRectInList(bounds, event.clientRects)) {
 +      foundExactRect = true;
 +    }
-+    window.removeEventListener("MozDOMAfterPaint", listener, false);
++    window.removeEventListener("MozAfterPaint", listener, false);
 +    ++iterations;
 +    if (iterations < 4) {
 +      setTimeout(triggerPaint, 100);
 +    } else {
 +      ok(foundExactRect, "Found exact rect");
-+      runTest2();
++      runNext();
 +    }
 +  }
 +
 +  function triggerPaint() {
-+    window.addEventListener("MozDOMAfterPaint", listener, false);
-+    flash(document);
++    window.addEventListener("MozAfterPaint", listener, false);
++    flash(document, 'd');
 +  }
 +  triggerPaint();
 +}
 +
-+window.onload = runTest1;
-+</script>
++function runTest2(frameID, containerID) {
++  // test reporting of painting in subdocuments
++  var fired = false;
++  var gotSubdocPrivileged = false;
++  var gotSubdocNonprivileged = false;
++  var iframe = document.getElementById(frameID);
++  var container = document.getElementById(containerID);
++
++  function listener(event) {
++    fired = true;
++    if (checkGotSubdoc(event.clientRects, container))
++      gotSubdocNonprivileged = true;
++
++    netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
++    if (checkGotSubdoc(event.clientRects, container))
++      gotSubdocPrivileged = true;
++  }
++
++  function check() {
++    ok(fired, "Event fired (" + frameID + ")");
++    ok(gotSubdocPrivileged, "Didn't get subdoc invalidation while we were privileged (" + frameID + ")");
++    ok(!gotSubdocNonprivileged, "Got subdoc invalidation while we were not privileged (" + frameID + ")");
++    window.removeEventListener("MozAfterPaint", listener, false);
++    runNext();
++  }
++
++  function triggerPaint() {
++    window.addEventListener("MozAfterPaint", listener, false);
++    setTimeout(check, 100);
++    document.body.offsetTop;
++    flash(iframe.contentDocument, 'd');
++    // make sure an event fires; since we're not using a chrome event handler, even though we
++    // can get privileges we wouldn't get the event
++    flash(document, 'd');
++  }
++  triggerPaint();
++}
++
++function runTest3() {
++  // test reporting of painting of scrolled-out-of-view areas
++  var gotScrolledOutInMainDoc = false;
++  var gotScrolledOutInSubdoc = false;
++  var iframe = document.getElementById("iframe");
++
++  function listener(event) {
++    netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
++    if (checkGotSubdoc(event.clientRects, iframe))
++      gotScrolledOutInMainDoc = true;
++  }
++
++  function IFRAMEListener(event) {
++    if (doesRectContainListElement(
++          iframe.contentDocument.getElementById("d2").getBoundingClientRect(), event.clientRects))
++      gotScrolledOutInSubdoc = true;
++  }
++
++  function check() {
++    ok(!gotScrolledOutInMainDoc, "scrolled-out invalidation should not propagate to main doc");
++    ok(gotScrolledOutInSubdoc, "scrolled-out invalidation should notify in subdoc");
++    window.removeEventListener("MozAfterPaint", listener, false);
++    iframe.contentWindow.removeEventListener("MozAfterPaint", IFRAMEListener, false);
++    runNext();
++  }
++
++  function triggerPaint() {
++    window.addEventListener("MozAfterPaint", listener, false);
++    iframe.contentWindow.addEventListener("MozAfterPaint", IFRAMEListener, false);
++    setTimeout(check, 100);
++    flash(iframe.contentDocument, 'd2');
++  }
++  triggerPaint();
++}
++
++var test = 0;
++var tests = [runTest1,
++             function() { runTest2("iframe", "iframe") },
++             function() { runTest2("iframe2", "svg") },
++             runTest3];
++function runNext() {
++  if (test < tests.length) {
++    ++test;
++    tests[test - 1]();
++  } else {
++    SimpleTest.finish();
++  }
++}
++
++window.onload = runNext();
++]]></script>
 +</pre>
 +</body>
 +</html>
@@ -1704,7 +1783,7 @@ Index: mozilla/layout/generic/nsFrame.cpp
                  void*    aPropertyValue,
                  void*    aDtorData)
  {
-@@ -4422,17 +4424,17 @@
+@@ -4438,17 +4440,17 @@
  */
    if ( aSelected ){
      AddStateBits(NS_FRAME_SELECTED_CONTENT);
@@ -1947,7 +2026,7 @@ Index: mozilla/layout/generic/nsIFrame.h
 ===================================================================
 --- mozilla.orig/layout/generic/nsIFrame.h
 +++ mozilla/layout/generic/nsIFrame.h
-@@ -100,20 +100,21 @@
+@@ -100,20 +100,20 @@
  struct nsPoint;
  struct nsRect;
  struct nsSize;
@@ -1956,11 +2035,11 @@ Index: mozilla/layout/generic/nsIFrame.h
  typedef class nsIFrame nsIBox;
  
  // IID for the nsIFrame interface
+-// bc99463c-5ff7-4ff3-b2c8-b4172646f793
 +// 626a1563-1bae-4a6e-8d2c-2dc2c13048dd
- // 98a0c040-09cf-408b-b55f-321b4f8d9d67
  #define NS_IFRAME_IID \
--    { 0x98a0c040, 0x09cf, 0x408b, \
--      { 0xb5, 0x5f, 0x32, 0x1b, 0x4f, 0x8d, 0x9d, 0x67 } }
+-{ 0xbc99463c, 0x5ff7, 0x4ff3, \
+-  { 0xb2, 0xc8, 0xb4, 0x17, 0x26, 0x46, 0xf7, 0x93 } }
 +  { 0x626a1563, 0x1bae, 0x4a6e, \
 +    { 0x8d, 0x2c, 0x2d, 0xc2, 0xc1, 0x30, 0x48, 0xdd } }
  
@@ -1971,7 +2050,7 @@ Index: mozilla/layout/generic/nsIFrame.h
   * The choices are splittable, not splittable at all, and splittable in
   * a non-rectangular fashion. This last type only applies to block-level
   * elements, and indicates whether splitting can be used when doing runaround.
-@@ -1648,65 +1649,75 @@
+@@ -1648,65 +1648,75 @@
     * Does this frame want to capture the mouse when the user clicks in
     * it or its children? If so, return the view which should be
     * targeted for mouse capture. The view need not be this frame's view,
@@ -2020,7 +2099,7 @@ Index: mozilla/layout/generic/nsIFrame.h
     *   In case it's true, pending notifications will be flushed which
     *   could cause frames to be deleted (including |this|).
 -   */  
-+   * @param aFlags INVALIDATE_CROSS_FRAME: true if the invalidation
++   * @param aFlags INVALIDATE_CROSS_DOC: true if the invalidation
 +   *   originated in a subdocument
 +   */
 +  enum {
@@ -2055,7 +2134,7 @@ Index: mozilla/layout/generic/nsIFrame.h
     *
     * @param aR1 the first rectangle
     * @param aR2 the second rectangle
-@@ -2184,19 +2195,17 @@
+@@ -2216,19 +2226,17 @@
    nsIFrame*        mNextSibling;  // singly-linked list of frames
    nsFrameState     mState;
    
@@ -2363,7 +2442,7 @@ Index: mozilla/layout/svg/base/src/nsSVGForeignObjectFrame.cpp
  
 -  mDirtyRegion.Or(mDirtyRegion, aDamageRect + nsPoint(aX, aY));
 +  nsRegion* region = (aFlags & INVALIDATE_CROSS_DOC)
-+    ? &mSameDocDirtyRegion : &mCrossDocDirtyRegion;
++    ? &mCrossDocDirtyRegion : &mSameDocDirtyRegion;
 +  region->Or(*region, aDamageRect + nsPoint(aX, aY));
    FlushDirtyRegion();
  }
@@ -2530,6 +2609,44 @@ Index: mozilla/layout/svg/base/src/nsSVGForeignObjectFrame.h
  };
  
  #endif
+Index: mozilla/layout/svg/base/src/nsSVGOuterSVGFrame.cpp
+===================================================================
+--- mozilla.orig/layout/svg/base/src/nsSVGOuterSVGFrame.cpp
++++ mozilla/layout/svg/base/src/nsSVGOuterSVGFrame.cpp
+@@ -587,23 +587,32 @@
+     // It's not really clear what area to invalidate here. We might have
+     // stuffed up rendering for the entire window in this paint pass,
+     // so we can't just invalidate our own rect. Invalidate everything
+     // in sight.
+     // This won't work for printing, by the way, but failure to print the
+     // odd document is probably no worse than printing horribly for all
+     // documents. Better to fix things so we don't need fallback.
+     nsIFrame* frame = this;
++    nsPresContext* presContext = PresContext();
++    PRUint32 flags = 0;
+     while (PR_TRUE) {
+       nsIFrame* next = nsLayoutUtils::GetCrossDocParentFrame(frame);
+       if (!next)
+         break;
++      if (frame->GetParent() != next) {
++        // We're crossing a document boundary. Logically, the invalidation is
++        // being triggered by a subdocument of the root document. This will
++        // prevent an untrusted root document being told about invalidation
++        // that happened because a child was using SVG...
++        flags |= INVALIDATE_CROSS_DOC;
++      }
+       frame = next;
+     }
+-    frame->Invalidate(nsRect(nsPoint(0, 0), frame->GetSize()));
++    frame->InvalidateWithFlags(nsRect(nsPoint(0, 0), frame->GetSize()), flags);
+   }
+ #endif
+ 
+ #if defined(DEBUG) && defined(SVG_DEBUG_PAINT_TIMING)
+   PRTime end = PR_Now();
+   printf("SVG Paint Timing: %f ms\n", (end-start)/1000.0);
+ #endif
+   
 Index: mozilla/layout/tables/nsTableCellFrame.cpp
 ===================================================================
 --- mozilla.orig/layout/tables/nsTableCellFrame.cpp
@@ -2834,7 +2951,7 @@ Index: mozilla/widget/public/nsGUIEvent.h
  #define NS_MEDIA_ERROR         (NS_MEDIA_EVENT_START+21)
  #endif // MOZ_MEDIA
  
-+// pagetransition events
++// paint notification events
 +#define NS_NOTIFYPAINT_START    3400
 +#define NS_AFTERPAINT           (NS_NOTIFYPAINT_START)
 +
