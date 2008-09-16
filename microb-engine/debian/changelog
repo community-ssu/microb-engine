@@ -1,3 +1,9 @@
+microb-engine (20080902-31) unstable; urgency=low
+
+  * Fixes: NB#88273, added checks for null pointers
+
+ -- Ben <ben@koku.research.nokia.com>  Tue, 16 Sep 2008 11:58:27 +0300
+
 microb-engine (20080902-30) unstable; urgency=low
 
   * Updated to trunk 2008-09-16, 1aecd2a9914d

@@ -1,0 +1,14 @@
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp	2008-09-15 23:48:17.000000000 -0700
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2008-09-15 23:49:00.000000000 -0700
+@@ -1022,10 +1022,11 @@ nsWindow::SetCursor(nsCursor aCursor)
+     // if we're not the toplevel window pass up the cursor request to
+     // the toplevel window to handle it.
+     if (!mContainer && mDrawingarea) {
+         nsWindow *window;
+         GetContainerWindow(&window);
++        NS_ENSURE_TRUE(window, NS_OK);
+         return window->SetCursor(aCursor);
+     }
+ 
+     // Only change cursor if it's actually been changed
+     if (aCursor != mCursor) {
