@@ -1,0 +1,21 @@
+--- mozilla/layout/xul/base/src/nsSplitterFrame.cpp.orig	2008-09-02 18:16:18.000000000 +0300
++++ mozilla/layout/xul/base/src/nsSplitterFrame.cpp	2008-09-17 12:19:05.000000000 +0300
+@@ -521,16 +521,18 @@ nsSplitterFrameInner::MouseUp(nsPresCont
+ 
+     //printf("MouseUp\n");
+   }
+ 
+   delete[] mChildInfosBefore;
+   delete[] mChildInfosAfter;
+   mChildInfosBefore = nsnull;
+   mChildInfosAfter = nsnull;
++  mChildInfosBeforeCount = 0;
++  mChildInfosAfterCount = 0;
+ }
+ 
+ void
+ nsSplitterFrameInner::MouseDrag(nsPresContext* aPresContext, nsGUIEvent* aEvent)
+ {
+   if (mDragging && mOuter) {
+ 
+     //printf("Dragging\n");

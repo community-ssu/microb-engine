@@ -1,3 +1,9 @@
+microb-engine (20080902-32) unstable; urgency=low
+
+  * Fixed bugs 455665 and 455527 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Wed, 17 Sep 2008 12:43:25 +0300
+
 microb-engine (20080902-31) unstable; urgency=low
 
   * Fixes: NB#88273, added checks for null pointers
