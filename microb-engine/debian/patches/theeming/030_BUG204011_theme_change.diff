@@ -44,7 +44,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -272,16 +272,17 @@
+@@ -277,16 +277,17 @@
  static nsWindow         *gPluginFocusWindow    = NULL;
  
  static nsCOMPtr<nsIRollupListener> gRollupListener;
@@ -62,7 +62,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  static PRBool       gKeyEventCommitted = PR_FALSE;
  static PRBool       gKeyEventChanged = PR_FALSE;
  static PRBool       gIMESuppressCommit = PR_FALSE;
-@@ -346,16 +347,17 @@
+@@ -368,16 +369,17 @@
      mActivatePending     = PR_FALSE;
      mTransientParent     = nsnull;
      mWindowType          = eWindowType_child;
@@ -80,15 +80,15 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
          initialize_prefs();
      }
  
-@@ -466,16 +468,25 @@
+@@ -512,16 +514,26 @@
+         gBufferPixmapSize.width = 0;
+         gBufferPixmapSize.height = 0;
+     }
  
-     LOG(("nsWindow::Destroy [%p]\n", (void *)this));
-     mIsDestroyed = PR_TRUE;
-     mCreated = PR_FALSE;
-     
      g_signal_handlers_disconnect_by_func(gtk_settings_get_default(),
                                           (gpointer)G_CALLBACK(theme_changed_cb),
                                           this);
+ 
 +    if (mContainer)
 +        g_signal_handlers_disconnect_by_func(G_OBJECT(mContainer),
 +                                             (gpointer)G_CALLBACK(theme_changed_cb),
@@ -96,9 +96,9 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 +
 +    if (mThemeTimeoutSource) {
 +        g_source_remove(mThemeTimeoutSource);
-+         mThemeTimeoutSource = 0;
++        mThemeTimeoutSource = 0;
 +    }
- 
++
      // ungrab if required
      nsCOMPtr<nsIWidget> rollupWidget = do_QueryReferent(gRollupWindow);
      if (static_cast<nsIWidget *>(this) == rollupWidget.get()) {
@@ -106,7 +106,8 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
              gRollupListener->Rollup(nsnull);
          gRollupWindow = nsnull;
          gRollupListener = nsnull;
-@@ -3482,16 +3493,18 @@
+     }
+@@ -3567,16 +3579,18 @@
                                 "notify::gtk-theme-name",
                                 G_CALLBACK(theme_changed_cb), this);
          g_signal_connect_after(default_settings,
@@ -125,7 +126,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
                           G_CALLBACK(enter_notify_event_cb), NULL);
          g_signal_connect_after(G_OBJECT(mContainer), "leave_notify_event",
                           G_CALLBACK(leave_notify_event_cb), NULL);
-@@ -5137,22 +5150,35 @@
+@@ -5212,22 +5226,35 @@
      if (!window)
          return FALSE;
  

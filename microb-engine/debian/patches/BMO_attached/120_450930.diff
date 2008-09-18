@@ -2,7 +2,7 @@ Index: mozilla/content/base/src/nsContentUtils.cpp
 ===================================================================
 --- mozilla.orig/content/base/src/nsContentUtils.cpp
 +++ mozilla/content/base/src/nsContentUtils.cpp
-@@ -438,29 +438,29 @@
+@@ -439,29 +439,29 @@
      { &nsGkAtoms::ondragdrop,                    { NS_DRAGDROP_DRAGDROP, EventNameType_XUL }},
      { &nsGkAtoms::ondraggesture,                 { NS_DRAGDROP_GESTURE, EventNameType_XUL }},
      { &nsGkAtoms::ondrag,                        { NS_DRAGDROP_DRAG, EventNameType_HTMLXUL }},
@@ -36,7 +36,7 @@ Index: mozilla/content/base/src/nsContentUtils.cpp
      { &nsGkAtoms::onplay,                        { NS_PLAY, EventNameType_HTML }},
      { &nsGkAtoms::onpause,                       { NS_PAUSE, EventNameType_HTML }},
      { &nsGkAtoms::onwaiting,                     { NS_WAITING, EventNameType_HTML }},
-@@ -471,16 +471,17 @@
+@@ -472,16 +472,17 @@
      { &nsGkAtoms::ondataunavailable,             { NS_DATAUNAVAILABLE, EventNameType_HTML }},
      { &nsGkAtoms::oncanshowcurrentframe,         { NS_CANSHOWCURRENTFRAME, EventNameType_HTML }},
      { &nsGkAtoms::oncanplay,                     { NS_CANPLAY, EventNameType_HTML }},
@@ -139,8 +139,7 @@ Index: mozilla/content/base/src/nsGkAtomList.h
 ===================================================================
 --- mozilla.orig/content/base/src/nsGkAtomList.h
 +++ mozilla/content/base/src/nsGkAtomList.h
-@@ -636,16 +636,17 @@
- GK_ATOM(onLoad, "onLoad")
+@@ -637,16 +637,17 @@
  GK_ATOM(onload, "onload")
  GK_ATOM(only, "only")               // this one is not an event
  GK_ATOM(onmousedown, "onmousedown")
@@ -148,6 +147,7 @@ Index: mozilla/content/base/src/nsGkAtomList.h
  GK_ATOM(onmouseout, "onmouseout")
  GK_ATOM(onmouseover, "onmouseover")
  GK_ATOM(onmouseup, "onmouseup")
+ GK_ATOM(onMozMousePixelScroll, "onMozMousePixelScroll")
 +GK_ATOM(onMozAfterPaint, "onMozAfterPaint")
  GK_ATOM(ononline, "ononline")
  GK_ATOM(onoffline, "onoffline")
@@ -207,9 +207,9 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
    "DOMNodeRemovedFromDocument", "DOMNodeInsertedIntoDocument",
    "DOMAttrModified", "DOMCharacterDataModified",
    "DOMActivate", "DOMFocusIn", "DOMFocusOut",
-   "pageshow", "pagehide", "DOMMouseScroll", "offline", "online",
--  "copy", "cut", "paste"
-+  "copy", "cut", "paste",
+   "pageshow", "pagehide", "DOMMouseScroll", "MozMousePixelScroll",
+-  "offline", "online", "copy", "cut", "paste"
++  "offline", "online", "copy", "cut", "paste",
  #ifdef MOZ_SVG
 - ,
    "SVGLoad", "SVGUnload", "SVGAbort", "SVGError", "SVGResize", "SVGScroll",
@@ -234,7 +234,7 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
  nsDOMEvent::nsDOMEvent(nsPresContext* aPresContext, nsEvent* aEvent)
  {
    mPresContext = aPresContext;
-@@ -648,16 +647,21 @@
+@@ -650,16 +649,21 @@
      else if (atom == nsGkAtoms::onload)
        mEvent->message = NS_LOAD;
      else if (atom == nsGkAtoms::onabort)
@@ -256,7 +256,7 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
  
  NS_IMETHODIMP
  nsDOMEvent::InitEvent(const nsAString& aEventTypeArg, PRBool aCanBubbleArg, PRBool aCancelableArg)
-@@ -962,16 +966,24 @@
+@@ -964,16 +968,24 @@
        newEvent = new nsXULCommandEvent(PR_FALSE, msg, nsnull);
        NS_ENSURE_TRUE(newEvent, NS_ERROR_OUT_OF_MEMORY);
        isInputEvent = PR_TRUE;
@@ -281,7 +281,7 @@ Index: mozilla/content/events/src/nsDOMEvent.cpp
    }
  
    NS_ENSURE_TRUE(newEvent, NS_ERROR_OUT_OF_MEMORY);
-@@ -1464,16 +1476,18 @@
+@@ -1468,16 +1480,18 @@
      return sEventNames[eDOMEvents_canplaythrough];
    case NS_RATECHANGE:
      return sEventNames[eDOMEvents_ratechange];
@@ -304,11 +304,11 @@ Index: mozilla/content/events/src/nsDOMEvent.h
 ===================================================================
 --- mozilla.orig/content/events/src/nsDOMEvent.h
 +++ mozilla/content/events/src/nsDOMEvent.h
-@@ -123,29 +123,27 @@
-     eDOMEvents_DOMFocusOut,
+@@ -124,29 +124,27 @@
      eDOMEvents_pageshow,
      eDOMEvents_pagehide,
      eDOMEvents_DOMMouseScroll,
+     eDOMEvents_MozMousePixelScroll,
      eDOMEvents_offline,
      eDOMEvents_online,
      eDOMEvents_copy,
@@ -336,7 +336,7 @@ Index: mozilla/content/events/src/nsDOMEvent.h
      eDOMEvents_stalled,
      eDOMEvents_play,
      eDOMEvents_pause,
-@@ -155,18 +153,19 @@
+@@ -156,18 +154,19 @@
      eDOMEvents_timeupdate,
      eDOMEvents_ended,
      eDOMEvents_dataunavailable,
@@ -1166,7 +1166,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -4338,17 +4338,17 @@
+@@ -4311,17 +4311,17 @@
      return;
    }
    
@@ -2942,7 +2942,7 @@ Index: mozilla/widget/public/nsGUIEvent.h
  #define NS_EVENT_FLAG_TRUSTED             0x0001
  #define NS_EVENT_FLAG_BUBBLE              0x0002
  #define NS_EVENT_FLAG_CAPTURE             0x0004
-@@ -370,16 +372,20 @@
+@@ -371,16 +373,20 @@
  #define NS_CANPLAYTHROUGH      (NS_MEDIA_EVENT_START+16)
  #define NS_RATECHANGE          (NS_MEDIA_EVENT_START+17)
  #define NS_DURATIONCHANGE      (NS_MEDIA_EVENT_START+18)
@@ -2963,7 +2963,7 @@ Index: mozilla/widget/public/nsGUIEvent.h
  /**
   * sizemode is an adjunct to widget size
   */
-@@ -1021,16 +1027,33 @@
+@@ -1067,16 +1073,33 @@
        detail(d)
    {
    }

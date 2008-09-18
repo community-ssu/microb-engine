@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4794,16 +4794,21 @@
+@@ -4810,16 +4810,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4897,17 +4902,16 @@
+@@ -4913,17 +4918,16 @@
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
  
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6047,22 +6051,164 @@
+@@ -6063,22 +6067,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7518,35 +7664,54 @@
+@@ -7534,35 +7680,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7819,16 +7984,21 @@
+@@ -7835,16 +8000,21 @@
  [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
      MOZ_V1_STRING_ABI=,
      MOZ_V1_STRING_ABI=1)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8108,16 +8278,22 @@
+@@ -8124,16 +8294,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -660,14 +660,14 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsSound)
 +#endif
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsScreenManagerGtk)
- #ifdef NATIVE_THEME_SUPPORT
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsNativeThemeGTK)
- #endif
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsImageToPixbuf)
  
- #if defined(NS_OSSO)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsIdleServiceOSSO)
-@@ -116,16 +126,17 @@
+ 
+ #ifdef NATIVE_THEME_SUPPORT
+ // from nsWindow.cpp
+ extern PRBool gDisableNativeTheme;
+ 
+@@ -147,16 +157,17 @@
  #ifdef NS_PRINTING
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsDeviceContextSpecGTK)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintOptionsGTK, Init)
@@ -685,7 +685,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
    if (aOuter != nsnull) {
      return NS_ERROR_NO_AGGREGATION;
    }
-@@ -149,16 +160,17 @@
+@@ -180,16 +191,17 @@
    }
  
    if (!picker) {
@@ -703,7 +703,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  {
      nsresult rv;
  
-@@ -212,42 +224,48 @@
+@@ -243,42 +255,48 @@
      { "Gtk2 AppShell",
        NS_APPSHELL_CID,
        "@mozilla.org/widget/appshell/gtk;1",
@@ -752,7 +752,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
      NS_BIDIKEYBOARD_CID,
      "@mozilla.org/widget/bidikeyboard;1",
      nsBidiKeyboardConstructor },
-@@ -313,18 +331,22 @@
+@@ -344,18 +362,22 @@
      nsIdleServiceGTKConstructor },
  #endif
  
@@ -799,7 +799,7 @@ Index: mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp
  NS_IMPL_ISUPPORTS2(nsXPLookAndFeel, nsILookAndFeel, nsIObserver)
  
  nsLookAndFeelIntPref nsXPLookAndFeel::sIntPrefs[] =
-@@ -602,27 +604,29 @@
+@@ -608,27 +610,29 @@
    if (aID == eColor_TextHighlightForeground) {
      // The foreground color for the matched text in findbar highlighting
      // Used with nsISelectionController::SELECTION_FIND
@@ -3163,7 +3163,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2911,16 +2911,17 @@
+@@ -2977,16 +2977,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer

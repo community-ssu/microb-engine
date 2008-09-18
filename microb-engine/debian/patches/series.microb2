@@ -5,7 +5,6 @@ buildconfig/011_BuildWithGCC3.4.4.diff
 buildconfig/015_jemalloc_sb.diff
 buildconfig/020_cs2007_rpath_wr.diff
 buildconfig/023_PC_CONFIG_sqlite_neededby_libsoftokn.diff
-buildconfig/024_bug455204.diff
 
 branding/010_MICROB_paths_and_names.diff
 branding/020_BUG349921_toolkit_branding.diff
@@ -135,7 +134,6 @@ BMO_attached/120_450930.diff
 
 crashes/SetCursor_crash.diff
 crashes/attachment.cgi?id=338876.diff
-crashes/attachment.cgi?id=339030.diff
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail
