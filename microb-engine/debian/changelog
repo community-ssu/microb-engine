@@ -1,3 +1,9 @@
+microb-engine (20080902-35) unstable; urgency=low
+
+  *  Fixes: NB#88223 456015, Certificate Viewer malfunction
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 19 Sep 2008 15:20:10 -0500
+
 microb-engine (20080902-34) unstable; urgency=low
 
   * Updated to trunk b9e6d86b0b71
