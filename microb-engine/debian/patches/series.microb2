@@ -137,6 +137,8 @@ crashes/attachment.cgi?id=338876.diff
 
 BMO_attached/130_456015.certview.diff
 
+zooming/040_s60textframes.diff
+
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail
 #$ acid3/attachment.cgi?id=312294.diff

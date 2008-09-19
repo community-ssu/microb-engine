@@ -1,0 +1,155 @@
+--- mozilla/layout/generic/nsTextFrameThebes.cpp.orig	2008-09-19 21:06:55.000000000 -0500
++++ mozilla/layout/generic/nsTextFrameThebes.cpp	2008-09-19 23:52:48.000000000 -0500
+@@ -5813,10 +5813,12 @@ nsTextFrame::Reflow(nsPresContext*      
+   }
+   PRUint32 transformedLastBreak = 0;
+   PRBool usedHyphenation;
+   gfxFloat trimmedWidth = 0;
+   gfxFloat availWidth = aReflowState.availableWidth;
++  if (aPresContext->FitTextToWidth() && availWidth / aPresContext->AppUnitsPerDevPixel() > aPresContext->ScreenWidth())
++    availWidth = aPresContext->ScreenWidth() * aPresContext->AppUnitsPerDevPixel();
+   PRBool canTrimTrailingWhitespace = !textStyle->WhiteSpaceIsSignificant();
+   PRInt32 unusedOffset;  
+   gfxBreakPriority breakPriority;
+   lineLayout.GetLastOptionalBreakPosition(&unusedOffset, &breakPriority);
+   PRUint32 transformedCharsFit =
+@@ -6013,11 +6015,12 @@ nsTextFrame::Reflow(nsPresContext*      
+     aStatus |= NS_INLINE_BREAK_FIRST_LETTER_COMPLETE;
+   }
+ 
+   // Compute space and letter counts for justification, if required
+   if (!textStyle->WhiteSpaceIsSignificant() &&
+-      lineContainer->GetStyleText()->mTextAlign == NS_STYLE_TEXT_ALIGN_JUSTIFY) {
++      lineContainer->GetStyleText()->mTextAlign == NS_STYLE_TEXT_ALIGN_JUSTIFY &&
++      !aPresContext->FitTextToWidth()) {
+     AddStateBits(TEXT_JUSTIFICATION_ENABLED);    // This will include a space for trailing whitespace, if any is present.
+     // This is corrected for in nsLineLayout::TrimWhiteSpaceIn.
+     PRInt32 numJustifiableCharacters =
+       provider.ComputeJustifiableCharacters(offset, charsFit);
+ 
+--- mozilla/layout/base/nsPresContext.h.orig	2008-09-19 22:02:15.000000000 -0500
++++ mozilla/layout/base/nsPresContext.h	2008-09-19 23:42:42.000000000 -0500
+@@ -776,10 +776,12 @@ public:
+   PRBool UseDocumentColors() const {
+     return GetCachedBoolPref(kPresContext_UseDocumentColors) || IsChrome();
+   }
+ 
+   PRBool           SupressingResizeReflow() const { return mSupressResizeReflow; }
++  PRBool           FitTextToWidth() const { return mFitTextToWidth; }
++  PRInt32          ScreenWidth() const { return mScreenWidth; }
+ 
+   void NotifyInvalidation(const nsRect& aRect, PRBool aIsCrossDoc);
+   void FireDOMPaintEvent();
+ 
+ protected:
+@@ -828,10 +830,11 @@ protected:
+   float                 mTextZoom;      // Text zoom, defaults to 1.0
+   float                 mFullZoom;      // Page zoom, defaults to 1.0
+ 
+   PRInt32               mCurAppUnitsPerDevPixel;
+   PRInt32               mAutoQualityMinFontSizePixelsPref;
++  PRInt32               mScreenWidth;
+ 
+ #ifdef IBMBIDI
+   nsBidiPresUtils*      mBidiUtils;
+ #endif
+ 
+@@ -904,10 +907,11 @@ protected:
+   unsigned              mRenderedPositionVaryingContent : 1;
+ 
+   // resize reflow is supressed when the only change has been to zoom
+   // the document rather than to change the document's dimensions
+   unsigned              mSupressResizeReflow : 1;
++  unsigned              mFitTextToWidth : 1;
+ 
+ #ifdef IBMBIDI
+   unsigned              mIsVisual : 1;
+ 
+ #endif
+--- mozilla/layout/base/nsPresContext.cpp.orig	2008-09-19 21:06:55.000000000 -0500
++++ mozilla/layout/base/nsPresContext.cpp	2008-09-19 23:50:50.000000000 -0500
+@@ -180,11 +180,12 @@ nsPresContext::nsPresContext(nsIDocument
+     mDefaultCursiveFont("cursive", NS_FONT_STYLE_NORMAL,
+                         NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
+     mDefaultFantasyFont("fantasy", NS_FONT_STYLE_NORMAL,
+                         NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
+     mCanPaginatedScroll(PR_FALSE),
+-    mIsRootPaginatedDocument(PR_FALSE), mSupressResizeReflow(PR_FALSE)
++    mIsRootPaginatedDocument(PR_FALSE), mSupressResizeReflow(PR_FALSE),
++    mFitTextToWidth(PR_FALSE), mScreenWidth(650)
+ {
+   // NOTE! nsPresContext::operator new() zeroes out all members, so don't
+   // bother initializing members to 0.
+ 
+   mDoScaledTwips = PR_TRUE;
+@@ -277,10 +278,16 @@ nsPresContext::~nsPresContext()
+   delete mBidiUtils;
+ #endif // IBMBIDI
+   nsContentUtils::UnregisterPrefCallback("layout.css.dpi",
+                                          nsPresContext::PrefChangedCallback,
+                                          this);
++  nsContentUtils::UnregisterPrefCallback("fit.text.to.screen",
++                                         nsPresContext::PrefChangedCallback,
++                                         this);
++  nsContentUtils::UnregisterPrefCallback("fit.screen.width",
++                                         nsPresContext::PrefChangedCallback,
++                                         this);
+ 
+   NS_IF_RELEASE(mDeviceContext);
+   NS_IF_RELEASE(mLookAndFeel);
+   NS_IF_RELEASE(mLangGroup);
+ }
+@@ -585,10 +592,17 @@ nsPresContext::GetUserPreferences()
+     
+   mFontScaler =
+     nsContentUtils::GetIntPref("browser.display.base_font_scaler",
+                                mFontScaler);
+ 
++  mFitTextToWidth =
++    nsContentUtils::GetBoolPref("fit.text.to.screen",
++                                mFitTextToWidth);
++
++  mScreenWidth =
++    nsContentUtils::GetIntPref("fit.screen.width",
++                                mScreenWidth);
+ 
+   mAutoQualityMinFontSizePixelsPref =
+     nsContentUtils::GetIntPref("browser.display.auto_quality_min_font_size");
+ 
+   // * document colors
+@@ -734,10 +748,18 @@ nsPresContext::PreferenceChanged(const c
+       MediaFeatureValuesChanged(PR_TRUE);
+       RebuildAllStyleData(NS_STYLE_HINT_REFLOW);
+     }
+     return;
+   }
++  if (prefName.EqualsLiteral("fit.text.to.screen")) {
++    mFitTextToWidth = nsContentUtils::GetBoolPref("fit.text.to.screen", mFitTextToWidth);
++    return;
++  }
++  if (prefName.EqualsLiteral("fit.screen.width")) {
++    mScreenWidth = nsContentUtils::GetIntPref("fit.screen.width", mScreenWidth);
++    return;
++  }
+   if (StringBeginsWith(prefName, NS_LITERAL_CSTRING("font."))) {
+     // Changes to font family preferences don't change anything in the
+     // computed style data, so the style system won't generate a reflow
+     // hint for us.  We need to do that manually.
+ 
+@@ -851,10 +873,16 @@ nsPresContext::Init(nsIDeviceContext* aD
+                                        this);
+ #endif
+   nsContentUtils::RegisterPrefCallback("layout.css.dpi",
+                                        nsPresContext::PrefChangedCallback,
+                                        this);
++  nsContentUtils::RegisterPrefCallback("fit.text.to.screen",
++                                       nsPresContext::PrefChangedCallback,
++                                       this);
++  nsContentUtils::RegisterPrefCallback("fit.screen.width",
++                                       nsPresContext::PrefChangedCallback,
++                                       this);
+ 
+   rv = mEventManager->Init();
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   mEventManager->SetPresContext(this);
