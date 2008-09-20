@@ -38,3 +38,5 @@ pref("general.skins.selectedSkin", "classic/1.0");
 pref("snav.keyCode.modifier", 0);
 pref("javascript.options.jit.content",false);
 pref("javascript.options.jit.chrome",false);
+pref("fit.text.to.screen", false);
+pref("fit.screen.width", 660);

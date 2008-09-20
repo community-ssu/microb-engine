@@ -1,3 +1,9 @@
+microb-engine (20080902-38) unstable; urgency=low
+
+  * Added default configure options
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sat, 20 Sep 2008 21:45:06 -0400
+
 microb-engine (20080902-37) unstable; urgency=low
 
   * Improved  text frame force resize
