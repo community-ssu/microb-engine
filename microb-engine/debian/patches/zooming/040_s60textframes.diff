@@ -1,19 +1,38 @@
 --- mozilla/layout/generic/nsTextFrameThebes.cpp.orig	2008-09-19 21:06:55.000000000 -0500
-+++ mozilla/layout/generic/nsTextFrameThebes.cpp	2008-09-19 23:52:48.000000000 -0500
-@@ -5813,10 +5813,12 @@ nsTextFrame::Reflow(nsPresContext*      
++++ mozilla/layout/generic/nsTextFrameThebes.cpp	2008-09-20 11:10:20.000000000 -0500
+@@ -5813,23 +5813,30 @@ nsTextFrame::Reflow(nsPresContext*      
    }
    PRUint32 transformedLastBreak = 0;
    PRBool usedHyphenation;
    gfxFloat trimmedWidth = 0;
    gfxFloat availWidth = aReflowState.availableWidth;
-+  if (aPresContext->FitTextToWidth() && availWidth / aPresContext->AppUnitsPerDevPixel() > aPresContext->ScreenWidth())
++  PRBool wrapTextToWidth = aPresContext->FitTextToWidth() &&
++                           availWidth / aPresContext->AppUnitsPerDevPixel() > aPresContext->ScreenWidth();
++  if (wrapTextToWidth)
 +    availWidth = aPresContext->ScreenWidth() * aPresContext->AppUnitsPerDevPixel();
    PRBool canTrimTrailingWhitespace = !textStyle->WhiteSpaceIsSignificant();
    PRInt32 unusedOffset;  
    gfxBreakPriority breakPriority;
    lineLayout.GetLastOptionalBreakPosition(&unusedOffset, &breakPriority);
++  if (wrapTextToWidth)
++    breakPriority = eWordWrapBreak;
    PRUint32 transformedCharsFit =
-@@ -6013,11 +6015,12 @@ nsTextFrame::Reflow(nsPresContext*      
+     mTextRun->BreakAndMeasureText(transformedOffset, transformedLength,
+                                   (GetStateBits() & TEXT_START_OF_LINE) != 0,
+                                   availWidth,
+                                   &provider, !lineLayout.LineIsBreakable(),
+                                   canTrimTrailingWhitespace ? &trimmedWidth : nsnull,
+                                   &textMetrics, needTightBoundingBox, ctx,
+                                   &usedHyphenation, &transformedLastBreak,
+-                                  textStyle->WordCanWrap(), &breakPriority);
++                                  wrapTextToWidth?wrapTextToWidth:textStyle->WordCanWrap(),
++                                  &breakPriority);
+   // The "end" iterator points to the first character after the string mapped
+   // by this frame. Basically, its original-string offset is offset+charsFit
+   // after we've computed charsFit.
+   gfxSkipCharsIterator end(provider.GetEndHint());
+   end.SetSkippedOffset(transformedOffset + transformedCharsFit);
+@@ -6013,11 +6020,12 @@ nsTextFrame::Reflow(nsPresContext*      
      aStatus |= NS_INLINE_BREAK_FIRST_LETTER_COMPLETE;
    }
  
@@ -21,7 +40,7 @@
    if (!textStyle->WhiteSpaceIsSignificant() &&
 -      lineContainer->GetStyleText()->mTextAlign == NS_STYLE_TEXT_ALIGN_JUSTIFY) {
 +      lineContainer->GetStyleText()->mTextAlign == NS_STYLE_TEXT_ALIGN_JUSTIFY &&
-+      !aPresContext->FitTextToWidth()) {
++      !wrapTextToWidth) {
      AddStateBits(TEXT_JUSTIFICATION_ENABLED);    // This will include a space for trailing whitespace, if any is present.
      // This is corrected for in nsLineLayout::TrimWhiteSpaceIn.
      PRInt32 numJustifiableCharacters =
@@ -76,7 +95,7 @@
      mCanPaginatedScroll(PR_FALSE),
 -    mIsRootPaginatedDocument(PR_FALSE), mSupressResizeReflow(PR_FALSE)
 +    mIsRootPaginatedDocument(PR_FALSE), mSupressResizeReflow(PR_FALSE),
-+    mFitTextToWidth(PR_FALSE), mScreenWidth(650)
++    mFitTextToWidth(PR_FALSE), mScreenWidth(660)
  {
    // NOTE! nsPresContext::operator new() zeroes out all members, so don't
    // bother initializing members to 0.
