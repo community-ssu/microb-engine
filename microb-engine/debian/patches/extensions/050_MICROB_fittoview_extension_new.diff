@@ -301,10 +301,10 @@ diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensio
 +	rm -f $@
 +	$(PREPROCESS_FTV_CSS) > $@
 +
-+$(DIST)/bin/res/ftv.new.css $(DESTDIR)$(mozappdir)/res/ftv.new.css: $(FTV_CSS_SRC) Makefile
++$(DIST)/bin/res/ftv.new.css $(DESTDIR)$(mozappdir)/res/ftv.new.css: $(FTV_NEW_CSS_SRC) Makefile
 +	if test ! -d $(@D); then rm -rf $(@D); $(NSINSTALL) -D $(@D); else true; fi
 +	rm -f $@
-+	$(PREPROCESS_FTV_CSS) > $@
++	$(PREPROCESS_NEW_FTV_CSS) > $@
 +
 +libs:: $(DIST)/bin/res/ftv.css $(DIST)/bin/res/ftv.new.css
 +install:: $(DESTDIR)$(mozappdir)/res/ftv.css $(DESTDIR)$(mozappdir)/res/ftv.new.css
