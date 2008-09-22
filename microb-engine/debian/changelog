@@ -1,3 +1,9 @@
+microb-engine (20080902-40) unstable; urgency=low
+
+  * Updated to latest trunk. 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Mon, 22 Sep 2008 22:04:07 -0400
+
 microb-engine (20080902-39) unstable; urgency=low
 
   * Added new fit to width version with simple implementation

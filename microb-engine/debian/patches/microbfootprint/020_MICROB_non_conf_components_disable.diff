@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4810,16 +4810,21 @@
+@@ -4809,16 +4809,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4913,17 +4918,16 @@
+@@ -4912,17 +4917,16 @@
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
  
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6063,22 +6067,164 @@
+@@ -6062,22 +6066,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7534,35 +7680,54 @@
+@@ -7533,35 +7679,54 @@
     fi
  fi
  
@@ -273,14 +273,14 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7835,16 +8000,21 @@
- [  --disable-v1-string-abi   Disable binary compatibility layer for strings],
-     MOZ_V1_STRING_ABI=,
-     MOZ_V1_STRING_ABI=1)
- AC_SUBST(MOZ_V1_STRING_ABI)
- if test "$MOZ_V1_STRING_ABI"; then
-     AC_DEFINE(MOZ_V1_STRING_ABI)
+@@ -7822,16 +7987,21 @@
+ AC_SUBST(NECKO_COOKIES)
+ if test "$NECKO_COOKIES"; then
+     AC_DEFINE(NECKO_COOKIES)
  fi
+ 
+ dnl NECKO_ configuration options are not global
+ _NON_GLOBAL_ACDEFINES="$_NON_GLOBAL_ACDEFINES NECKO_"
  
 +MOZ_ARG_DISABLE_BOOL(moz-mork,
 +[  --disable-moz-mork   Disable moz mork db],
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8124,16 +8294,22 @@
+@@ -8111,16 +8281,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -322,7 +322,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -147,16 +147,27 @@
+@@ -149,16 +149,27 @@
  MOZ_PROFILESHARING = @MOZ_PROFILESHARING@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@

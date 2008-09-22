@@ -80,22 +80,3 @@ Index: mozilla/layout/base/nsPresShell.cpp
  
  void
  PresShell::sPaintSuppressionCallback(nsITimer *aTimer, void* aPresShell)
-@@ -4325,17 +4329,17 @@
-     return;
-   }
-   
-   mPaintingSuppressed = PR_FALSE;
-   nsIFrame* rootFrame = FrameManager()->GetRootFrame();
-   if (rootFrame) {
-     // let's assume that outline on a root frame is not supported
-     nsRect rect(nsPoint(0, 0), rootFrame->GetSize());
--    rootFrame->Invalidate(rect, PR_FALSE);
-+    rootFrame->Invalidate(rect, gPaintDelay < -1 ? PR_TRUE : PR_FALSE);
-   }
- 
-   // This makes sure to get the same thing that nsPresContext::EnsureVisible()
-   // got.
-   nsCOMPtr<nsISupports> container = mPresContext->GetContainer();
-   nsCOMPtr<nsPIDOMWindow> ourWindow = do_GetInterface(container);
-   nsCOMPtr<nsIFocusController> focusController =
-     ourWindow ? ourWindow->GetRootFocusController() : nsnull;
