@@ -1,3 +1,9 @@
+microb-engine (20080902-41) unstable; urgency=low
+
+  * Add patches for fonts perf improvments 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Mon, 22 Sep 2008 22:31:38 -0400
+
 microb-engine (20080902-40) unstable; urgency=low
 
   * Updated to latest trunk. 
