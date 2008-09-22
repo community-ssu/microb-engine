@@ -1,3 +1,9 @@
+microb-engine (20080902-39) unstable; urgency=low
+
+  * Added new fit to width version with simple implementation
+
+ -- Oleg Romashin <romaxa@gmail.com>  Mon, 22 Sep 2008 20:08:57 -0400
+
 microb-engine (20080902-38) unstable; urgency=low
 
   * Added default configure options
