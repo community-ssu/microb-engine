@@ -1,3 +1,9 @@
+microb-engine (20080902-45) unstable; urgency=low
+
+  * Fixed ENABLE_QT conditionn
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Fri, 26 Sep 2008 15:43:44 -0400
+
 microb-engine (20080902-44) unstable; urgency=low
 
   * Fixed small Xul buttons size
