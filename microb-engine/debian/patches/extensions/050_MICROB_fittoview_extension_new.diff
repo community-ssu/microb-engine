@@ -397,7 +397,7 @@ diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/ftv.new.css mozilla/extensio
 +img {
 +  vertical-align:bottom !important;
 +  width: auto !important;
-+  display:block !important;
++  /* display:block !important; */
 +}
 +
 +embed {

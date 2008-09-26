@@ -1,3 +1,11 @@
+microb-engine (20080902-42) unstable; urgency=low
+
+  * Updated to latest trunk c2e02e6250db
+  * Enabled new FTV component
+  * Fixed Qt Port (with trunk update)
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 26 Sep 2008 09:35:15 -0500
+
 microb-engine (20080902-41) unstable; urgency=low
 
   * Add patches for fonts perf improvments 

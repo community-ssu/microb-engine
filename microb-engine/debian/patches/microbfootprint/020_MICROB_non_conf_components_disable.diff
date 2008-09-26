@@ -833,7 +833,7 @@ Index: mozilla/toolkit/components/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/Makefile.in
 +++ mozilla/toolkit/components/Makefile.in
-@@ -41,37 +41,44 @@
+@@ -41,32 +41,39 @@
  srcdir    = @srcdir@
  VPATH   = @srcdir@
  
@@ -851,11 +851,6 @@ Index: mozilla/toolkit/components/Makefile.in
          contentprefs \
          microformats \
          places \
-         $(NULL)
- 
- # These component dirs are built only for XUL apps
- 
- DIRS += \
  	apppicker \
  	filepicker \
  	console \
@@ -879,7 +874,7 @@ Index: mozilla/toolkit/components/Makefile.in
  
  ifdef MOZ_FEEDS
  DIRS += feeds
-@@ -114,30 +121,37 @@
+@@ -110,30 +117,37 @@
  DIRS += passwordmgr/public
  else
  DIRS += passwordmgr
