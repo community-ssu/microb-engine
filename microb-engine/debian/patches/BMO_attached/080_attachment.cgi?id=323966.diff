@@ -4,15 +4,15 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
 ===================================================================
 --- mozilla.orig/content/canvas/src/nsCanvasRenderingContext2D.cpp
 +++ mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
-@@ -347,16 +347,17 @@
-         STYLE_MAX
-     };
- 
-     nsresult SetStyleFromVariant(nsIVariant* aStyle, Style aWhichStyle);
-     void StyleColorToString(const nscolor& aColor, nsAString& aStr);
+@@ -352,16 +352,17 @@
  
      void DirtyAllStyles();
-     void ApplyStyle(Style aWhichStyle);
+     /**
+      * applies the given style as the current source. If the given style is
+      * a solid color, aUseGlobalAlpha indicates whether to multiply the alpha
+      * by global alpha, and is ignored otherwise.
+      */
+     void ApplyStyle(Style aWhichStyle, PRBool aUseGlobalAlpha = PR_TRUE);
 +    void ApplyQualityHints();
      
      // If aPrincipal is not subsumed by this canvas element, then
@@ -22,7 +22,7 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
      // from a <canvas> that had write-only set.)
      void DoDrawImageSecurityCheck(nsIPrincipal* aPrincipal,
                                    PRBool forceWriteOnly);
-@@ -422,33 +423,41 @@
+@@ -516,36 +517,44 @@
       */
      nsresult DrawOrMeasureText(const nsAString& text,
                                 float x,
@@ -48,14 +48,18 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
      // state stack handling
      class ContextState {
      public:
-         ContextState() : globalAlpha(1.0),
+         ContextState() : shadowOffset(0.0, 0.0),
+                          globalAlpha(1.0),             
 +                         imageRenderingQuality(Auto),
+                          shadowBlur(0.0),
                           textAlign(TEXT_ALIGN_START),
                           textBaseline(TEXT_BASELINE_ALPHABETIC) { }
  
          ContextState(const ContextState& other)
-             : globalAlpha(other.globalAlpha),
+             : shadowOffset(other.shadowOffset),
+               globalAlpha(other.globalAlpha),
 +              imageRenderingQuality(other.imageRenderingQuality),
+               shadowBlur(other.shadowBlur),
                font(other.font),
                fontGroup(other.fontGroup),
                textAlign(other.textAlign),
@@ -63,8 +67,7 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
          {
              for (int i = 0; i < STYLE_MAX; i++) {
                  colorStyles[i] = other.colorStyles[i];
-                 gradientStyles[i] = other.gradientStyles[i];
-@@ -477,16 +486,17 @@
+@@ -586,16 +595,17 @@
          nsString font;
          nsRefPtr<gfxFontGroup> fontGroup;
          TextAlign textAlign;
@@ -82,7 +85,7 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
          return mStyleStack[mSaveCount];
      }
  
-@@ -726,21 +736,23 @@
+@@ -840,21 +850,23 @@
      nsCanvasPattern* pattern = CurrentState().patternStyles[aWhichStyle];
      if (pattern) {
          if (!mCanvasElement)
@@ -101,30 +104,42 @@ Index: mozilla/content/canvas/src/nsCanvasRenderingContext2D.cpp
          return;
      }
  
-     SetThebesColor(CurrentState().colorStyles[aWhichStyle]);
- }
+     gfxRGBA color(CurrentState().colorStyles[aWhichStyle]);
+     if (aUseGlobalAlpha)
+         color.a *= CurrentState().globalAlpha;
  
- nsresult
- nsCanvasRenderingContext2D::Redraw()
-@@ -2590,16 +2602,17 @@
-     pattern = new gfxPattern(imgsurf);
-     pattern->SetMatrix(matrix);
+     mThebes->SetColor(color);
+@@ -2958,25 +2970,28 @@
+         PRBool doUseIntermediateSurface = NeedToUseIntermediateSurface();
  
-     path = mThebes->CopyPath();
+         mThebes->SetPattern(pattern);
+         DirtyAllStyles();
  
-     mThebes->Save();
-     mThebes->Translate(gfxPoint(dx, dy));
-     mThebes->SetPattern(pattern);
-+    ApplyQualityHints();
-     mThebes->Clip(gfxRect(0, 0, dw, dh));
-     mThebes->Paint(CurrentState().globalAlpha);
-     mThebes->Restore();
+         if (doUseIntermediateSurface) {
+             // draw onto a pushed group
+             mThebes->PushGroup(gfxASurface::CONTENT_COLOR_ALPHA);
++            ApplyQualityHints();
+             mThebes->Clip(clip);
+ 
+             // don't want operators to be applied twice
+             mThebes->SetOperator(gfxContext::OPERATOR_SOURCE);
+ 
+             mThebes->Paint();
+             mThebes->PopGroupToSource();
+-        } else
++        } else {
++            ApplyQualityHints();
+             mThebes->Clip(clip);
++	}
+ 
+         mThebes->Paint(CurrentState().globalAlpha);
+     }
  
  #if 1
      // XXX cairo bug workaround; force a clip update on mThebes.
      // Otherwise, a pixman clip gets left around somewhere, and pixman
      // (Render) does source clipping as well -- so we end up
-@@ -3141,16 +3154,69 @@
+@@ -3537,16 +3552,69 @@
      jsval *retvalPtr;
      ncc->GetRetValPtr(&retvalPtr);
      *retvalPtr = OBJECT_TO_JSVAL(result);

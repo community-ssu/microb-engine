@@ -1,3 +1,9 @@
+microb-engine (20080902-43) unstable; urgency=low
+
+  * Fixed last trunk update (merge problems)
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 26 Sep 2008 11:05:21 -0500
+
 microb-engine (20080902-42) unstable; urgency=low
 
   * Updated to latest trunk c2e02e6250db
