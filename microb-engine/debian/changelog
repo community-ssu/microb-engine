@@ -1,3 +1,9 @@
+microb-engine (20080902-44) unstable; urgency=low
+
+  * Fixed small Xul buttons size
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 26 Sep 2008 13:20:31 -0500
+
 microb-engine (20080902-43) unstable; urgency=low
 
   * Fixed last trunk update (merge problems)

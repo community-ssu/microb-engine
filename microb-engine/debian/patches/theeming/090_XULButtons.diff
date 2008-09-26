@@ -1,0 +1,14 @@
+--- mozilla/toolkit/themes/gnomestripe/global/button.css.orig	2008-09-02 10:16:18.000000000 -0500
++++ mozilla/toolkit/themes/gnomestripe/global/button.css	2008-09-26 13:18:59.000000000 -0500
+@@ -45,10 +45,11 @@
+ /* :::::::::: button :::::::::: */
+ 
+ button {
+   -moz-appearance: button;
+   margin: 1px 5px 2px 5px;
++  padding: 5px 0px 5px 0px;
+   min-width: 6.3em;
+   border: 3px solid;
+   -moz-border-top-colors: transparent ThreeDHighlight ThreeDLightShadow;
+   -moz-border-right-colors: transparent ThreeDDarkShadow ThreeDShadow;
+   -moz-border-bottom-colors: transparent ThreeDDarkShadow ThreeDShadow;
