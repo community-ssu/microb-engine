@@ -1,3 +1,9 @@
+microb-engine (20080902-46) unstable; urgency=low
+
+  * Optimized engine responsivnes settings
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sat, 27 Sep 2008 10:44:55 -0400
+
 microb-engine (20080902-45) unstable; urgency=low
 
   * Fixed ENABLE_QT conditionn

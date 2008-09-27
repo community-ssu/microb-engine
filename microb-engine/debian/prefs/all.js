@@ -1388,13 +1388,13 @@ pref("zoom.maxPercent", 300);
 pref("toolkit.zoomManager.zoomValues", ".3,.5,.67,.8,.9,1,1.1,1.2,1.33,1.5,1.7,2,2.4,3");
 
 
-pref("content.max.tokenizing.time", 100000);
+pref("content.max.tokenizing.time", 80000);
 pref("content.notify.backoffcount", -1);
 pref("content.notify.ontimer", false);
 pref("content.switch.threshold", 500000);
-pref("nglayout.initialpaint.delay", -3);
+pref("nglayout.initialpaint.delay", 0);
 pref("nglayout.frame.constructor.signals", 5);
-pref("content.perf.interrupts.count", 3);
+pref("content.perf.interrupts.count", 5);
 
 pref("layout.xml.prettyprint", true);
 pref("browser.sessionhistory.max_entries", 31);
