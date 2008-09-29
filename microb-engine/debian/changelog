@@ -1,3 +1,9 @@
+microb-engine (20080902-47) unstable; urgency=low
+
+  * Updated to latest trunk (fixes for text rendering performance)
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 29 Sep 2008 14:14:13 -0500
+
 microb-engine (20080902-46) unstable; urgency=low
 
   * Optimized engine responsivnes settings
