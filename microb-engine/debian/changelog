@@ -1,3 +1,10 @@
+microb-engine (20080902-48) unstable; urgency=low
+
+  * Fixes: NB#87973 Firefox can't find the server at... information
+    appears
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 29 Sep 2008 17:05:23 -0500
+
 microb-engine (20080902-47) unstable; urgency=low
 
   * Updated to latest trunk (fixes for text rendering performance)

@@ -131,6 +131,7 @@ extensions/040_OldSpatialNavigationModule.diff
 BMO_attached/090_bug428988_pressure.diff
 
 localization/bug87973.browser.localization.diff
+localization/bug87973.firefox.hardcoded.diff
 
 
 crashes/SetCursor_crash.diff
