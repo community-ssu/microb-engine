@@ -40,3 +40,4 @@ pref("javascript.options.jit.content",false);
 pref("javascript.options.jit.chrome",false);
 pref("fit.text.to.screen", false);
 pref("fit.screen.width", 660);
+pref("ftv.new.enabled", false);

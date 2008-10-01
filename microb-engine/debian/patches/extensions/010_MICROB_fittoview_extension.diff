@@ -1,50 +1,6 @@
-# Fit to View Extension
-Index: mozilla/extensions/ftv/Makefile.in
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/Makefile.in
-@@ -0,0 +1,37 @@
-+
-+DEPTH=../..
-+topsrcdir=@top_srcdir@
-+srcdir=@srcdir@
-+VPATH=@srcdir@
-+
-+include $(DEPTH)/config/autoconf.mk
-+
-+MODULE	= ftv
-+#XPI_NAME = ftv
-+
-+ifdef MOZ_XUL_APP
-+#INSTALL_EXTENSION_ID = ftv@extensions.mozilla.org
-+#DIST_FILES = install.rdf
-+#NO_JAR_AUTO_REG        = 1
-+#USE_EXTENSION_MANIFEST = 1
-+#XPI_PKGNAME            = ftv-$(MOZ_APP_VERSION)
-+
-+# We should really pull FIREFOX_VERSION and THUNDERBIRD_VERSION from
-+# browser/config/version.txt mail/config/version.txt but we can't be assured
-+# that we've even pulled those files. So we hardcode them.
-+
-+XULAPP_DEFINES = \
-+	-DFIREFOX_VERSION=$(FIREFOX_VERSION) \
-+	-DTHUNDERBIRD_VERSION=$(THUNDERBIRD_VERSION) \
-+	-DEXTENSION_VERSION=$(MOZILLA_VERSION) \
-+	$(NULL)
-+
-+ifdef TARGET_XPCOM_ABI
-+XULAPP_DEFINES += -DEM_ABI=$(OS_TARGET)_$(TARGET_XPCOM_ABI)
-+endif
-+endif
-+
-+DIRS    = src
-+DIRS   += public
-+
-+include $(topsrcdir)/config/rules.mk
-Index: mozilla/extensions/ftv/install.rdf
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/install.rdf
+diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/install.rdf mozilla/extensions/ftv/install.rdf
+--- mozilla/extensions/ftv.orig/install.rdf	1969-12-31 18:00:00.000000000 -0600
++++ mozilla/extensions/ftv/install.rdf	2008-10-01 11:45:03.000000000 -0500
 @@ -0,0 +1,40 @@
 +<?xml version="1.0"?>
 +
@@ -86,10 +42,50 @@ Index: mozilla/extensions/ftv/install.rdf
 +    <em:homepageURL>http://www.mozilla.org/access/keyboard/snav/</em:homepageURL>
 +  </Description>
 +</RDF>
-Index: mozilla/extensions/ftv/public/Makefile.in
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/public/Makefile.in
+diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/Makefile.in mozilla/extensions/ftv/Makefile.in
+--- mozilla/extensions/ftv.orig/Makefile.in	1969-12-31 18:00:00.000000000 -0600
++++ mozilla/extensions/ftv/Makefile.in	2008-10-01 11:45:03.000000000 -0500
+@@ -0,0 +1,37 @@
++
++DEPTH=../..
++topsrcdir=@top_srcdir@
++srcdir=@srcdir@
++VPATH=@srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++MODULE	= ftv
++#XPI_NAME = ftv
++
++ifdef MOZ_XUL_APP
++#INSTALL_EXTENSION_ID = ftv@extensions.mozilla.org
++#DIST_FILES = install.rdf
++#NO_JAR_AUTO_REG        = 1
++#USE_EXTENSION_MANIFEST = 1
++#XPI_PKGNAME            = ftv-$(MOZ_APP_VERSION)
++
++# We should really pull FIREFOX_VERSION and THUNDERBIRD_VERSION from
++# browser/config/version.txt mail/config/version.txt but we can't be assured
++# that we've even pulled those files. So we hardcode them.
++
++XULAPP_DEFINES = \
++	-DFIREFOX_VERSION=$(FIREFOX_VERSION) \
++	-DTHUNDERBIRD_VERSION=$(THUNDERBIRD_VERSION) \
++	-DEXTENSION_VERSION=$(MOZILLA_VERSION) \
++	$(NULL)
++
++ifdef TARGET_XPCOM_ABI
++XULAPP_DEFINES += -DEM_ABI=$(OS_TARGET)_$(TARGET_XPCOM_ABI)
++endif
++endif
++
++DIRS    = src
++DIRS   += public
++
++include $(topsrcdir)/config/rules.mk
+diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/public/Makefile.in mozilla/extensions/ftv/public/Makefile.in
+--- mozilla/extensions/ftv.orig/public/Makefile.in	1969-12-31 18:00:00.000000000 -0600
++++ mozilla/extensions/ftv/public/Makefile.in	2008-10-01 11:45:03.000000000 -0500
 @@ -0,0 +1,50 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
@@ -141,10 +137,9 @@ Index: mozilla/extensions/ftv/public/Makefile.in
 +XPIDLSRCS	= nsIFitToView.idl
 +
 +include $(topsrcdir)/config/rules.mk
-Index: mozilla/extensions/ftv/public/nsIFitToView.idl
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/public/nsIFitToView.idl
+diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/public/nsIFitToView.idl mozilla/extensions/ftv/public/nsIFitToView.idl
+--- mozilla/extensions/ftv.orig/public/nsIFitToView.idl	1969-12-31 18:00:00.000000000 -0600
++++ mozilla/extensions/ftv/public/nsIFitToView.idl	2008-10-01 11:45:03.000000000 -0500
 @@ -0,0 +1,47 @@
 +/* vim:set ts=2 sw=2 sts=2 et cin: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -193,11 +188,112 @@ Index: mozilla/extensions/ftv/public/nsIFitToView.idl
 +   */
 +  long extra(in long a, in long b);
 +};
-Index: mozilla/extensions/ftv/src/Makefile.in
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/src/Makefile.in
-@@ -0,0 +1,110 @@
+diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/ftv.css mozilla/extensions/ftv/src/ftv.css
+--- mozilla/extensions/ftv.orig/src/ftv.css	1969-12-31 18:00:00.000000000 -0600
++++ mozilla/extensions/ftv/src/ftv.css	2008-10-01 11:45:03.000000000 -0500
+@@ -0,0 +1,47 @@
++* {
++  max-width: 100% !important;
++}
++
++*.ftvAll {
++  width: auto !important;
++  left:auto !important;
++  float:none !important;
++  padding:0px !important;
++  margin:0px !important;
++  white-space:normal !important;
++  clear:left !important;
++}
++
++td.ftvHalf {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++}
++
++td.ftvFull {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++}
++
++tr.ftv, tbody.ftv, table.ftv {
++  display:block !important;
++  height:auto !important;
++}
++
++img.ftv {
++  vertical-align:bottom !important;
++  width: 100% !important;
++}
++
++embed.ftv {
++  width: 100% !important;
++}
++
++
++div.ftv {
++  vertical-align:bottom !important;
++}
++
+diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/ftv.new.css mozilla/extensions/ftv/src/ftv.new.css
+--- mozilla/extensions/ftv.orig/src/ftv.new.css	1969-12-31 18:00:00.000000000 -0600
++++ mozilla/extensions/ftv/src/ftv.new.css	2008-09-30 11:30:15.000000000 -0500
+@@ -0,0 +1,47 @@
++* {
++  max-width: 100% !important;
++  width: auto !important;
++  left:auto !important;
++  float:none !important;
++  padding:0px !important;
++  margin:0px !important;
++  white-space:normal !important;
++  clear:left !important;
++  word-wrap: break-word!important;
++}
++
++body {
++  padding:8px !important;
++  margin:8px !important;
++}
++
++td {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++  word-wrap: break-word!important;
++}
++
++tr, tbody, table {
++  display:block !important;
++  height:auto !important;
++  word-wrap: break-word!important;
++}
++
++img {
++  vertical-align:bottom !important;
++  width: auto !important;
++  /* display:block !important; */
++}
++
++embed {
++  width: auto !important;
++  word-wrap: break-word!important;
++}
++
++div {
++  vertical-align:bottom !important;
++  word-wrap: break-word!important;
++}
++
+diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensions/ftv/src/Makefile.in
+--- mozilla/extensions/ftv.orig/src/Makefile.in	1969-12-31 18:00:00.000000000 -0600
++++ mozilla/extensions/ftv/src/Makefile.in	2008-09-30 11:30:15.000000000 -0500
+@@ -0,0 +1,116 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
 +# Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -299,72 +395,25 @@ Index: mozilla/extensions/ftv/src/Makefile.in
 +
 +FTV_CSS_SRC = $(srcdir)/ftv.css
 +PREPROCESS_FTV_CSS = $(PERL) $(MOZILLA_DIR)/config/preprocessor.pl --marker=% $(DEFINES) $(ACDEFINES) $(FTV_CSS_SRC)
++FTV_NEW_CSS_SRC = $(srcdir)/ftv.new.css
++PREPROCESS_NEW_FTV_CSS = $(PERL) $(MOZILLA_DIR)/config/preprocessor.pl --marker=% $(DEFINES) $(ACDEFINES) $(FTV_NEW_CSS_SRC)
 +
 +$(DIST)/bin/res/ftv.css $(DESTDIR)$(mozappdir)/res/ftv.css: $(FTV_CSS_SRC) Makefile
 +	if test ! -d $(@D); then rm -rf $(@D); $(NSINSTALL) -D $(@D); else true; fi
 +	rm -f $@
 +	$(PREPROCESS_FTV_CSS) > $@
 +
-+libs:: $(DIST)/bin/res/ftv.css
++$(DIST)/bin/res/ftv.new.css $(DESTDIR)$(mozappdir)/res/ftv.new.css: $(FTV_NEW_CSS_SRC) Makefile
++	if test ! -d $(@D); then rm -rf $(@D); $(NSINSTALL) -D $(@D); else true; fi
++	rm -f $@
++	$(PREPROCESS_NEW_FTV_CSS) > $@
 +
-+install:: $(DESTDIR)$(mozappdir)/res/ftv.css
-Index: mozilla/extensions/ftv/src/ftv.css
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/src/ftv.css
-@@ -0,0 +1,47 @@
-+* {
-+  max-width: 100% !important;
-+}
-+
-+*.ftvAll {
-+  width: auto !important;
-+  left:auto !important;
-+  float:none !important;
-+  padding:0px !important;
-+  margin:0px !important;
-+  white-space:normal !important;
-+  clear:left !important;
-+}
-+
-+td.ftvHalf {
-+  display:block !important;
-+  valign:top !important;
-+  align:left !important;
-+  height:auto !important;
-+}
-+
-+td.ftvFull {
-+  display:block !important;
-+  valign:top !important;
-+  align:left !important;
-+  height:auto !important;
-+}
-+
-+tr.ftv, tbody.ftv, table.ftv {
-+  display:block !important;
-+  height:auto !important;
-+}
-+
-+img.ftv {
-+  vertical-align:bottom !important;
-+  width: 100% !important;
-+}
-+
-+embed.ftv {
-+  width: 100% !important;
-+}
-+
-+
-+div.ftv {
-+  vertical-align:bottom !important;
-+}
-+
-Index: mozilla/extensions/ftv/src/nsFitToView.cpp
-===================================================================
---- /dev/null
-+++ mozilla/extensions/ftv/src/nsFitToView.cpp
-@@ -0,0 +1,518 @@
++libs:: $(DIST)/bin/res/ftv.css $(DIST)/bin/res/ftv.new.css
++install:: $(DESTDIR)$(mozappdir)/res/ftv.css $(DESTDIR)$(mozappdir)/res/ftv.new.css
+diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/nsFitToView.cpp mozilla/extensions/ftv/src/nsFitToView.cpp
+--- mozilla/extensions/ftv.orig/src/nsFitToView.cpp	1969-12-31 18:00:00.000000000 -0600
++++ mozilla/extensions/ftv/src/nsFitToView.cpp	2008-10-01 11:55:56.000000000 -0500
+@@ -0,0 +1,596 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim:set ts=2 sw=2 sts=2 tw=80 et cindent: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -433,6 +482,13 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +#include "nsStringGlue.h"
 +#include "nsWeakReference.h"
 +#include "nsIWebBrowser.h"
++#include "nsIMarkupDocumentViewer.h"
++#include "nsPIDOMWindow.h"
++#include "nsIContentViewer.h"
++#include "nsIDocShell.h"
++
++#define _OLD_CSS "resource://gre/res/ftv.css"
++#define _NEW_CSS "resource://gre/res/ftv.new.css"
 +
 +#define EM_MULT 16.
 +#define NS_FRAME_HAS_RELATIVE_SIZE 0x01000000
@@ -449,6 +505,7 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  nsresult Init(void);
 +  nsresult SetOptimize(nsISupports *aObject = nsnull, const void * data = nsnull);
 +  nsresult DoOptimize(nsISupports *aObject = nsnull, const void * data = nsnull);
++  nsresult SetOptimizeNew(nsISupports *aObject, PRBool aEnable);
 +
 +  NS_DECL_ISUPPORTS
 +  NS_DECL_NSIOBSERVER
@@ -459,6 +516,9 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  nsresult OptimizeDocument(float aCurrOptimizeVal, nsIDOMDocument *aDocument);
 +  nsresult OptimizeWindow(nsIDOMWindow *aWindow);
 +  nsresult OptimizeElementsByTag(float aCurrOptimizeVal, nsIDOMDocument *aDocument, nsString aTag);
++  nsresult GetDomWindow(nsIDOMWindow **aWindow, nsISupports *aObject = nsnull);
++  nsresult GetMarkupViewerByWindow(nsIDOMWindow *aDOMWindow, nsIMarkupDocumentViewer * *aMarkupDocViewver);
++
 +  PRBool mAttached;
 +  PRBool mOptimizeFull;
 +  PRUint32 mNewOptimize;
@@ -749,7 +809,7 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +  nsCOMPtr<nsIStyleSheetService> styleSheetService = do_GetService("@mozilla.org/content/style-sheet-service;1");
 +  NS_ENSURE_TRUE(styleSheetService, NS_OK);
 +  nsCOMPtr<nsIURI> uri;
-+  NS_NewURI(getter_AddRefs(uri), NS_LITERAL_CSTRING("resource://gre/res/ftv.css"));
++  NS_NewURI(getter_AddRefs(uri), NS_LITERAL_CSTRING(_OLD_CSS));
 +  NS_ENSURE_TRUE(uri, NS_OK);
 +  if (mSetOptimizing) {
 +    if (!mStyleSheetRegistered)
@@ -780,7 +840,39 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +    mAttached = PR_TRUE;
 +  }
 +
-+  nsCOMPtr<nsIDOMWindow> parent = nsnull;
++  nsCOMPtr<nsIDOMWindow> parent;
++  rv = GetDomWindow(getter_AddRefs(parent), aObject);
++  rv |= OptimizeWindow(parent);
++  return rv;
++}
++
++nsresult
++nsFitToView::GetMarkupViewerByWindow(nsIDOMWindow *aDOMWindow,
++                                     nsIMarkupDocumentViewer * *aMarkupDocViewver)
++{
++    nsresult rv;
++    NS_ENSURE_ARG_POINTER(aMarkupDocViewver);
++    nsCOMPtr<nsPIDOMWindow> window(do_QueryInterface(aDOMWindow, &rv));
++    NS_ENSURE_SUCCESS(rv, rv);
++    nsIDocShell *docShell = nsnull;
++    if (window)
++        docShell = window->GetDocShell();
++    NS_ENSURE_TRUE(docShell, NS_ERROR_FAILURE);
++    nsCOMPtr<nsIContentViewer> contentViewer;
++    rv = docShell->GetContentViewer(getter_AddRefs(contentViewer));
++    NS_ENSURE_SUCCESS(rv, rv);
++    nsCOMPtr<nsIMarkupDocumentViewer> markupViewer(do_QueryInterface(contentViewer, &rv));
++    NS_ENSURE_TRUE(markupViewer, NS_ERROR_FAILURE);
++    *aMarkupDocViewver = markupViewer;
++    NS_IF_ADDREF(*aMarkupDocViewver);
++    return rv;
++}
++
++nsresult
++nsFitToView::GetDomWindow(nsIDOMWindow **aWindow, nsISupports *aObject)
++{
++  nsresult rv;
++  nsCOMPtr<nsIDOMWindow> parent;
 +  if (aObject)
 +  {
 +    nsCOMPtr <nsIWebBrowser> browser = do_QueryInterface(aObject, &rv);
@@ -815,8 +907,35 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +    rv = wwatcher->GetActiveWindow(getter_AddRefs(parent));
 +    NS_ENSURE_SUCCESS(rv, rv);
 +  }
-+  OptimizeWindow(parent);
-+  return rv;
++  NS_ADDREF(*aWindow = parent);
++  return NS_OK;
++}
++
++nsresult
++nsFitToView::SetOptimizeNew(nsISupports *aObject, PRBool aEnable)
++{
++  nsCOMPtr<nsIDOMWindow> parent;
++  GetDomWindow(getter_AddRefs(parent), aObject);
++  nsCOMPtr<nsIMarkupDocumentViewer> view;
++  GetMarkupViewerByWindow(parent, getter_AddRefs(view));
++
++  nsCOMPtr<nsIStyleSheetService> styleSheetService = do_GetService("@mozilla.org/content/style-sheet-service;1");
++  NS_ENSURE_TRUE(styleSheetService, NS_OK);
++  nsCOMPtr<nsIURI> uri;
++  NS_NewURI(getter_AddRefs(uri), NS_LITERAL_CSTRING(_NEW_CSS));
++  NS_ENSURE_TRUE(uri, NS_OK);
++
++  if (aEnable) {
++    if (view)
++      view->SetAuthorStyleDisabled(aEnable);
++    styleSheetService->LoadAndRegisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
++  }
++  else {
++    styleSheetService->UnregisterSheet(uri, nsIStyleSheetService::AGENT_SHEET);
++    if (view)
++      view->SetAuthorStyleDisabled(aEnable);
++  }
++  return NS_OK;
 +}
 +
 +NS_IMPL_ISUPPORTS3(nsFitToView, nsIObserver, nsIWebProgressListener, nsISupportsWeakReference)
@@ -825,31 +944,39 @@ Index: mozilla/extensions/ftv/src/nsFitToView.cpp
 +nsFitToView::Observe(nsISupports *aSubject, const char *aTopic, const PRUnichar *aData)
 +{
 +  nsresult rv;
-+//  printf("nsFitToView::Observe: aSubject:%p, aTopic:%s, aData:%s\n", aSubject, aTopic, aData);
++  // printf("nsFitToView::Observe: aSubject:%p, aTopic:%s, aData:%s\n", aSubject, aTopic, aData);
 +  mDoOptimize = PR_FALSE;
 +  if (strcmp(aTopic, "set_optimized_view") == 0)
 +  {
 +    mDoOnloadOptimizing = PR_TRUE;
 +    mSetOptimizing = PR_TRUE;
-+    //nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
-+    //if(pref)
-+    //{
-+      //rv = pref->SetBoolPref("layout.full.true.zoom.mode", PR_FALSE);
-+    //}
++    PRBool newFtvMode = PR_FALSE;
++    nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
++    if(pref)
++      rv = pref->GetBoolPref("ftv.new.enabled", &newFtvMode);
++    if (newFtvMode)
++      return SetOptimizeNew(aSubject, PR_TRUE);
 +    return SetOptimize(aSubject);
 +  }
 +  if (strcmp(aTopic, "unset_optimized_view") == 0)
 +  {
 +    mSetOptimizing = PR_FALSE;
-+    //nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
-+    //if(pref)
-+    //{
-+      //rv = pref->SetBoolPref("layout.full.true.zoom.mode", PR_TRUE);
-+    //}
++    PRBool newFtvMode = PR_FALSE;
++    nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
++    if(pref)
++      rv = pref->GetBoolPref("ftv.new.enabled", &newFtvMode);
++    if (newFtvMode)
++      return SetOptimizeNew(aSubject, PR_FALSE);
 +    return SetOptimize(aSubject);
 +  }
 +  if (strcmp(aTopic, "optimized_view") == 0)
 +  {
++    PRBool newFtvMode = PR_FALSE;
++    nsCOMPtr<nsIPref> pref = do_GetService(NS_PREF_CONTRACTID);
++    if(pref)
++      rv = pref->GetBoolPref("ftv.new.enabled", &newFtvMode);
++    if (newFtvMode)
++      return NS_OK;
 +    mDoOptimize = PR_TRUE;
 +    return DoOptimize(aSubject);
 +  }

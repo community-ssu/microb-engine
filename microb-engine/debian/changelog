@@ -1,3 +1,9 @@
+microb-engine (20080902-50) unstable; urgency=low
+
+  * Merge new ftv into old ftv and set new ftv as optional by preference
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 01 Oct 2008 11:57:51 -0500
+
 microb-engine (20080902-49) unstable; urgency=low
 
   * Temporary disable new fit to view implementation. 
