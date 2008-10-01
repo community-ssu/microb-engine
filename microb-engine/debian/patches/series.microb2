@@ -35,8 +35,8 @@ testgtkembed/010_BUILDFIX_embedding_tests.diff
 #testgtkembed/040_ftv_testgtkembed.diff
 testgtkembed/050_MICROB_autoset_grehome_display.diff
 
-#extensions/010_MICROB_fittoview_extension.diff
-extensions/050_MICROB_fittoview_extension_new.diff
+extensions/010_MICROB_fittoview_extension.diff
+#extensions/050_MICROB_fittoview_extension_new.diff
 #extensions/020_BUG375179_spellcheck_libxul.diff
 extensions/030_spellchecker_select_enabling.diff
 
