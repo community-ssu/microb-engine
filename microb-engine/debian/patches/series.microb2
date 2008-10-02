@@ -140,6 +140,8 @@ BMO_attached/130_456015.certview.diff
 
 zooming/040_s60textframes.diff
 
+logindialog/xullogindialog.diff
+
 # Fonts perf  Bug 385263
 #perf_tweaks/fonts/attachment.cgi?id=336403.diff
 #perf_tweaks/fonts/attachment.cgi?id=338030.diff

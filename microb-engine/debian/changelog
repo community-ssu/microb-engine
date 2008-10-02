@@ -1,3 +1,10 @@
+microb-engine (20080902-51) unstable; urgency=low
+
+  * A XUL-dialog implementation of asynchronous non-modal "remember password"
+  dialog. 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu,  2 Oct 2008 11:40:47 +0300
+
 microb-engine (20080902-50) unstable; urgency=low
 
   * Merge new ftv into old ftv and set new ftv as optional by preference

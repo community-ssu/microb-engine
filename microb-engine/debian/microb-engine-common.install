@@ -136,6 +136,8 @@ usr/lib/microb-engine/chrome/toolkit/content/global/*fontpack*
 usr/lib/microb-engine/chrome/toolkit/content/global/globalOverlay.js
 usr/lib/microb-engine/chrome/toolkit/content/global/inlineSpellCheckUI.js
 usr/lib/microb-engine/chrome/toolkit/content/global/nsClipboard.js
+usr/lib/microb-engine/chrome/toolkit/content/global/savePasswordDialog.js
+usr/lib/microb-engine/chrome/toolkit/content/global/savePasswordDialog.xul
 usr/lib/microb-engine/chrome/toolkit/content/mozapps/extensions
 usr/lib/microb-engine/chrome/toolkit/content/mozapps/plugins
 usr/lib/microb-engine/chrome/toolkit/content/mozapps/update
