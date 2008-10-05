@@ -128,7 +128,7 @@ extensions/040_OldSpatialNavigationModule.diff
 # Latest tracemonkey update
 #arm/tt_latest.diff
 
-BMO_attached/090_bug428988_pressure.diff
+#BMO_attached/090_bug428988_pressure.diff
 
 localization/bug87973.browser.localization.diff
 localization/bug87973.firefox.hardcoded.diff

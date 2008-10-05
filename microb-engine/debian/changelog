@@ -1,3 +1,9 @@
+microb-engine (20080902-52) unstable; urgency=low
+
+  * Disable pressure patch until it not tested properly 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sun, 05 Oct 2008 21:37:49 -0400
+
 microb-engine (20080902-51) unstable; urgency=low
 
   * A XUL-dialog implementation of asynchronous non-modal "remember password"
