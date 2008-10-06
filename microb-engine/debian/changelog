@@ -1,3 +1,9 @@
+microb-engine (20080902-53) unstable; urgency=low
+
+  * Fixes: NB#89459 chrome://global/content/conigIntValue.xul resource missing
+
+ -- Oleg Romashin <romaxa@gmail.com>  Mon, 06 Oct 2008 18:37:27 -0400
+
 microb-engine (20080902-52) unstable; urgency=low
 
   * Disable pressure patch until it not tested properly 

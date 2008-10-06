@@ -87,6 +87,7 @@ usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLPrettyPrint.css
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLMonoPrint.css
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLPrettyPrint.xml
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLPrettyPrint.xsl
+usr/lib/microb-engine/chrome/toolkit/content/global/configIntValue.xul
 usr/lib/microb-engine/chrome/toolkit/content/global/netError.xhtml
 usr/lib/microb-engine/chrome/toolkit/content/global/nsHelperAppDlg.xul
 usr/lib/microb-engine/chrome/toolkit/content/global/nsProgressDialog.xul
