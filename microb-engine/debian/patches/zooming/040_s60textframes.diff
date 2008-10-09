@@ -1,6 +1,11 @@
---- mozilla/layout/generic/nsTextFrameThebes.cpp.orig	2008-09-19 21:06:55.000000000 -0500
-+++ mozilla/layout/generic/nsTextFrameThebes.cpp	2008-09-20 11:10:20.000000000 -0500
-@@ -5813,23 +5813,30 @@ nsTextFrame::Reflow(nsPresContext*      
+Index: mozilla/layout/generic/nsTextFrameThebes.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsTextFrameThebes.cpp
++++ mozilla/layout/generic/nsTextFrameThebes.cpp
+@@ -5816,29 +5816,36 @@
+     gfxSkipCharsIterator iter(provider.GetStart());
+     iter.SetOriginalOffset(offset + limitLength);
+     transformedLength = iter.GetSkippedOffset() - transformedOffset;
    }
    PRUint32 transformedLastBreak = 0;
    PRBool usedHyphenation;
@@ -32,7 +37,13 @@
    // after we've computed charsFit.
    gfxSkipCharsIterator end(provider.GetEndHint());
    end.SetSkippedOffset(transformedOffset + transformedCharsFit);
-@@ -6013,11 +6020,12 @@ nsTextFrame::Reflow(nsPresContext*      
+   PRInt32 charsFit = end.GetOriginalOffset() - offset;
+   if (offset + charsFit == newLineOffset) {
+     // We broke before a trailing preformatted '\n'. The newline should
+@@ -6016,17 +6023,18 @@
+   }
+   if (completedFirstLetter) {
+     lineLayout.SetFirstLetterStyleOK(PR_FALSE);
      aStatus |= NS_INLINE_BREAK_FIRST_LETTER_COMPLETE;
    }
  
@@ -46,9 +57,17 @@
      PRInt32 numJustifiableCharacters =
        provider.ComputeJustifiableCharacters(offset, charsFit);
  
---- mozilla/layout/base/nsPresContext.h.orig	2008-09-19 22:02:15.000000000 -0500
-+++ mozilla/layout/base/nsPresContext.h	2008-09-19 23:42:42.000000000 -0500
-@@ -776,10 +776,12 @@ public:
+     NS_ASSERTION(numJustifiableCharacters <= charsFit,
+                  "Bad justifiable character count");
+     lineLayout.SetTextJustificationWeights(numJustifiableCharacters,
+Index: mozilla/layout/base/nsPresContext.h
+===================================================================
+--- mozilla.orig/layout/base/nsPresContext.h
++++ mozilla/layout/base/nsPresContext.h
+@@ -776,16 +776,18 @@
+   virtual PRBool HasAuthorSpecifiedRules(nsIFrame *aFrame, PRUint32 ruleTypeMask) const;
+ 
+   // Is it OK to let the page specify colors and backgrounds?
    PRBool UseDocumentColors() const {
      return GetCachedBoolPref(kPresContext_UseDocumentColors) || IsChrome();
    }
@@ -56,12 +75,18 @@
    PRBool           SupressingResizeReflow() const { return mSupressResizeReflow; }
 +  PRBool           FitTextToWidth() const { return mFitTextToWidth; }
 +  PRInt32          ScreenWidth() const { return mScreenWidth; }
+   
+   gfxUserFontSet* GetUserFontSet();
+   void SetUserFontSet(gfxUserFontSet *aUserFontSet);
  
    void NotifyInvalidation(const nsRect& aRect, PRBool aIsCrossDoc);
    void FireDOMPaintEvent();
  
  protected:
-@@ -828,10 +830,11 @@ protected:
+@@ -831,16 +833,17 @@
+   ImageLoaderTable      mBorderImageLoaders;
+   nsWeakPtr             mContainer;
+ 
    float                 mTextZoom;      // Text zoom, defaults to 1.0
    float                 mFullZoom;      // Page zoom, defaults to 1.0
  
@@ -73,7 +98,13 @@
    nsBidiPresUtils*      mBidiUtils;
  #endif
  
-@@ -904,10 +907,11 @@ protected:
+   nsCOMPtr<nsITheme> mTheme;
+   nsCOMPtr<nsILanguageAtomService> mLangService;
+   nsCOMPtr<nsIPrintSettings> mPrintSettings;
+@@ -911,16 +914,17 @@
+   unsigned              mPendingThemeChanged : 1;
+   unsigned              mPendingMediaFeatureValuesChanged : 1;
+   unsigned              mPrefChangePendingNeedsReflow : 1;
    unsigned              mRenderedPositionVaryingContent : 1;
  
    // resize reflow is supressed when the only change has been to zoom
@@ -85,9 +116,17 @@
    unsigned              mIsVisual : 1;
  
  #endif
---- mozilla/layout/base/nsPresContext.cpp.orig	2008-09-19 21:06:55.000000000 -0500
-+++ mozilla/layout/base/nsPresContext.cpp	2008-09-19 23:50:50.000000000 -0500
-@@ -180,11 +180,12 @@ nsPresContext::nsPresContext(nsIDocument
+ #ifdef DEBUG
+   PRBool                mInitialized;
+ #endif
+Index: mozilla/layout/base/nsPresContext.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresContext.cpp
++++ mozilla/layout/base/nsPresContext.cpp
+@@ -178,17 +178,18 @@
+                           NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
+     mDefaultMonospaceFont("monospace", NS_FONT_STYLE_NORMAL,
+                           NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
      mDefaultCursiveFont("cursive", NS_FONT_STYLE_NORMAL,
                          NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
      mDefaultFantasyFont("fantasy", NS_FONT_STYLE_NORMAL,
@@ -101,7 +140,13 @@
    // bother initializing members to 0.
  
    mDoScaledTwips = PR_TRUE;
-@@ -277,10 +278,16 @@ nsPresContext::~nsPresContext()
+ 
+   SetBackgroundImageDraw(PR_TRUE);		// always draw the background
+   SetBackgroundColorDraw(PR_TRUE);
+@@ -276,16 +277,22 @@
+ #ifdef IBMBIDI
+   nsContentUtils::UnregisterPrefCallback("bidi.", PrefChangedCallback, this);
+ 
    delete mBidiUtils;
  #endif // IBMBIDI
    nsContentUtils::UnregisterPrefCallback("layout.css.dpi",
@@ -117,8 +162,14 @@
    NS_IF_RELEASE(mDeviceContext);
    NS_IF_RELEASE(mLookAndFeel);
    NS_IF_RELEASE(mLangGroup);
+   
+   SetUserFontSet(nsnull);
  }
-@@ -585,10 +592,17 @@ nsPresContext::GetUserPreferences()
+ 
+@@ -591,16 +598,23 @@
+     // get a presshell.
+     return;
+   }
      
    mFontScaler =
      nsContentUtils::GetIntPref("browser.display.base_font_scaler",
@@ -136,7 +187,13 @@
      nsContentUtils::GetIntPref("browser.display.auto_quality_min_font_size");
  
    // * document colors
-@@ -734,10 +748,18 @@ nsPresContext::PreferenceChanged(const c
+   GetDocumentColorPreferences();
+ 
+   // * link colors
+@@ -743,16 +757,24 @@
+       nscoord height = NSToCoordRound(oldHeightDevPixels*AppUnitsPerDevPixel());
+       vm->SetWindowDimensions(width, height);
+ 
        MediaFeatureValuesChanged(PR_TRUE);
        RebuildAllStyleData(NS_STYLE_HINT_REFLOW);
      }
@@ -155,7 +212,13 @@
      // computed style data, so the style system won't generate a reflow
      // hint for us.  We need to do that manually.
  
-@@ -851,10 +873,16 @@ nsPresContext::Init(nsIDeviceContext* aD
+     // FIXME We could probably also handle changes to
+     // browser.display.auto_quality_min_font_size here, but that
+     // probably also requires clearing the text run cache, so don't
+@@ -860,16 +882,22 @@
+                                        this);
+ #ifdef IBMBIDI
+   nsContentUtils::RegisterPrefCallback("bidi.", PrefChangedCallback,
                                         this);
  #endif
    nsContentUtils::RegisterPrefCallback("layout.css.dpi",
@@ -172,3 +235,6 @@
    NS_ENSURE_SUCCESS(rv, rv);
  
    mEventManager->SetPresContext(this);
+ 
+ #ifdef DEBUG
+   mInitialized = PR_TRUE;

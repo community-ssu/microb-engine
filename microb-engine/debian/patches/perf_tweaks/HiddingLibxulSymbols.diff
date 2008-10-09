@@ -38,13 +38,13 @@ Index: mozilla/toolkit/library/libxul-rules.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-rules.mk
 +++ mozilla/toolkit/library/libxul-rules.mk
-@@ -86,14 +86,17 @@
+@@ -83,14 +83,17 @@
+ ifneq ($(OS_ARCH),WINCE)
+ OS_LIBS += $(call EXPAND_LIBNAME,usp10 oleaut32)
+ endif
  endif
  ifneq (,$(filter $(MOZ_WIDGET_TOOLKIT),mac cocoa))
  EXTRA_DSO_LDOPTS += -lcups
- ifdef MOZ_ENABLE_GLITZ
- EXTRA_DSO_LDOPTS += -lmozglitzagl -framework OpenGL -framework AGL
- endif
  endif
  
 +# Hack for Maemo: exporting only limited set of symbols for Linux

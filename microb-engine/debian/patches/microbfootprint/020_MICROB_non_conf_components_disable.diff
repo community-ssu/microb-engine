@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4809,16 +4809,21 @@
+@@ -4794,16 +4794,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,14 +29,14 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4912,17 +4917,16 @@
+@@ -4896,17 +4901,16 @@
+ AC_SUBST(GTK_CONFIG)
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
  
  AC_SUBST(MOZ_ENABLE_GTK2)
  AC_SUBST(MOZ_ENABLE_PHOTON)
  AC_SUBST(MOZ_ENABLE_COCOA)
- AC_SUBST(MOZ_ENABLE_GLITZ)
  AC_SUBST(MOZ_ENABLE_QT)
 -AC_SUBST(MOZ_ENABLE_XREMOTE)
  AC_SUBST(MOZ_GTK2_CFLAGS)
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6062,22 +6066,164 @@
+@@ -6044,22 +6048,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7533,35 +7679,54 @@
+@@ -7498,35 +7644,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7822,16 +7987,21 @@
+@@ -7787,16 +7952,21 @@
  AC_SUBST(NECKO_COOKIES)
  if test "$NECKO_COOKIES"; then
      AC_DEFINE(NECKO_COOKIES)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8111,16 +8281,22 @@
+@@ -8076,16 +8246,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -538,7 +538,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/Makefile.in
 +++ mozilla/widget/src/gtk2/Makefile.in
-@@ -96,18 +96,16 @@
+@@ -92,18 +92,16 @@
  		nsWindow.cpp \
  		nsAppShell.cpp \
  		nsWidgetFactory.cpp \
@@ -557,7 +557,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  		$(NULL)
  
  ifdef NS_OSSO
-@@ -124,19 +122,35 @@
+@@ -120,19 +118,35 @@
  		nsPrintOptionsGTK.cpp \
  		nsPrintDialogGTK.cpp \
  		nsPrintSettingsGTK.cpp \
@@ -593,7 +593,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  
  SHARED_LIBRARY_LIBS = ../xpwidgets/libxpwidgets_s.a
  
-@@ -168,17 +182,17 @@
+@@ -164,17 +178,17 @@
  DEFINES		+= -DNATIVE_THEME_SUPPORT
  endif
  
@@ -1211,7 +1211,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  #include "nsIExtensionManager.h"
  #include "nsIFastLoadService.h" // for PLATFORM_FASL_SUFFIX
  #include "nsIGenericFactory.h"
-@@ -1136,25 +1138,27 @@
+@@ -1151,25 +1153,27 @@
    {
      nsXREDirProvider dirProvider;
      dirProvider.Initialize(nsnull, gAppData->xreDirectory);
@@ -1239,7 +1239,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  // here, or in a native resource file.
  static void
  DumpHelp()
-@@ -3081,35 +3085,39 @@
+@@ -3126,35 +3130,39 @@
            gDoMigration = PR_FALSE;
            nsCOMPtr<nsIProfileMigrator> pm
              (do_CreateInstance(NS_PROFILEMIGRATOR_CONTRACTID));
@@ -1279,7 +1279,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  
  #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
          nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
-@@ -3124,40 +3132,48 @@
+@@ -3169,40 +3177,48 @@
            NS_ENSURE_TRUE(em, 1);
  
            ar = CheckArg("install-global-extension", PR_TRUE);
@@ -1328,7 +1328,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
          if (noEMRestart && *noEMRestart && *noEMRestart == '1') {
            if (upgraded || needsRestart) {
              NS_WARNING("EM tried to force us to restart twice! Forcefully preventing that.");
-@@ -3195,18 +3211,20 @@
+@@ -3240,18 +3256,20 @@
            // Prepare Cocoa's form of Apple Event handling.
            SetupMacApplicationDelegate();
  #endif
@@ -1405,13 +1405,13 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatform.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatform.cpp
-@@ -62,17 +62,19 @@
+@@ -59,17 +59,19 @@
+ #include "gfxUserFontSet.h"
+ 
+ #include "nsIPref.h"
+ #include "nsServiceManagerUtils.h"
  
  #include "nsWeakReference.h"
- 
- #ifdef MOZ_ENABLE_GLITZ
- #include <stdlib.h>
- #endif
  
  #include "cairo.h"
 +#ifndef MOZ_NO_LCMS
@@ -1424,8 +1424,8 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  #include "nsIPrefBranch2.h"
  
  gfxPlatform *gPlatform = nsnull;
- int gGlitzState = -1;
-@@ -509,16 +511,17 @@
+ 
+@@ -504,16 +506,17 @@
  unacceptable performance overhead, so we go with perceptual. */
  #define INTENT_DEFAULT INTENT_PERCEPTUAL
  
@@ -1443,7 +1443,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
              if (NS_SUCCEEDED(rv)) {
                
                  /* If the pref is within range, use it as an override. */
-@@ -529,20 +532,22 @@
+@@ -524,20 +527,22 @@
                  else
                      gCMSIntent = -1;
              }
@@ -1466,7 +1466,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  #ifdef IS_LITTLE_ENDIAN
          PRUint32 packed = in.Packed(gfxRGBA::PACKED_ABGR);
          cmsDoTransform(transform,
-@@ -694,21 +699,23 @@
+@@ -689,21 +694,23 @@
  
          gCMSRGBATransform = cmsCreateTransform(inProfile, TYPE_RGBA_8,
                                                 outProfile, TYPE_RGBA_8,
@@ -1490,7 +1490,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
          cmsDeleteTransform(gCMSInverseRGBTransform);
          gCMSInverseRGBTransform = nsnull;
      }
-@@ -723,16 +730,17 @@
+@@ -718,16 +725,17 @@
          if (gCMSsRGBProfile == gCMSOutputProfile)
              gCMSsRGBProfile = nsnull;
          gCMSOutputProfile = nsnull;
@@ -1565,7 +1565,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -74,19 +74,21 @@
+@@ -69,19 +69,21 @@
  #endif
  
  #ifdef MOZ_DFB
@@ -1587,7 +1587,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  
  double gfxPlatformGtk::sDPI = -1.0;
  gfxFontconfigUtils *gfxPlatformGtk::sFontconfigUtils = nsnull;
-@@ -504,16 +506,17 @@
+@@ -466,16 +468,17 @@
      sDPI = gdk_screen_get_resolution(gdk_screen_get_default());
  
      if (sDPI <= 0.0) {
@@ -1605,7 +1605,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
      const char ICC_PROFILE_ATOM_NAME[] = "_ICC_PROFILE";
  
      Atom edidAtom, iccAtom;
-@@ -633,16 +636,17 @@
+@@ -595,16 +598,17 @@
  
              return profile;
          }
@@ -1627,7 +1627,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatform.h
 +++ mozilla/gfx/thebes/public/gfxPlatform.h
-@@ -233,16 +233,17 @@
+@@ -250,16 +250,17 @@
       * valid rendering intent as defined in modules/lcms/include/lcms.h, that
       * value is returned. Otherwise, -1 is returned and the embedded intent
       * should be used.
@@ -1645,7 +1645,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
      static void TransformPixel(const gfxRGBA& in, gfxRGBA& out, cmsHTRANSFORM transform);
  
      /**
-@@ -264,20 +265,23 @@
+@@ -281,20 +282,23 @@
       * Return output -> sRGB device transform.
       */
      static cmsHTRANSFORM GetCMSInverseRGBTransform();
@@ -1673,7 +1673,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatformGtk.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatformGtk.h
 +++ mozilla/gfx/thebes/public/gfxPlatformGtk.h
-@@ -103,13 +103,15 @@
+@@ -104,13 +104,15 @@
      GdkDrawable *GetGdkDrawable(gfxASurface *target);
  
  protected:
@@ -2261,7 +2261,7 @@ Index: mozilla/caps/src/nsScriptSecurityManager.cpp
  PRBool nsScriptSecurityManager::sStrictFileOriginPolicy = PR_TRUE;
  
  // Info we need about the JSClasses used by XPConnects wrapped
-@@ -2769,29 +2773,31 @@
+@@ -2820,29 +2824,31 @@
      {
          nsCOMPtr<nsIFile> systemCertFile;
          nsCOMPtr<nsIProperties> directoryService =
@@ -3158,7 +3158,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2977,16 +2977,17 @@
+@@ -2972,16 +2972,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer

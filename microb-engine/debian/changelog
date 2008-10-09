@@ -1,3 +1,9 @@
+microb-engine (20081009-1) unstable; urgency=low
+
+  * Updated tarball to latest trunk 20081009 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 09 Oct 2008 14:54:16 -0500
+
 microb-engine (20080902-53) unstable; urgency=low
 
   * Fixes: NB#89459 chrome://global/content/conigIntValue.xul resource missing

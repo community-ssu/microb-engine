@@ -5,7 +5,6 @@ buildconfig/011_BuildWithGCC3.4.4.diff
 buildconfig/015_jemalloc_sb.diff
 buildconfig/020_cs2007_rpath_wr.diff
 buildconfig/023_PC_CONFIG_sqlite_neededby_libsoftokn.diff
-buildconfig/025_test_enable_qt.diff
 
 branding/010_MICROB_paths_and_names.diff
 branding/020_BUG349921_toolkit_branding.diff
@@ -40,11 +39,9 @@ extensions/010_MICROB_fittoview_extension.diff
 #extensions/020_BUG375179_spellcheck_libxul.diff
 extensions/030_spellchecker_select_enabling.diff
 
-stylus_im_tweaks/020_js_handler_events_info.diff
 
 not_sorted/others/150_BUG347731_MOZILLA_INTERNAL_API.diff
 
-theeming/010_focus_style.diff
 theeming/020_BUG359812_neterror_noxul.diff
 theeming/030_BUG204011_theme_change.diff
 theeming/040_disable_F6_focus.diff
@@ -61,7 +58,6 @@ prettyrssfeed/030_BUG54742rss_add_support.diff
 prettyrssfeed/040_HelperRSS_DOMEvent.diff
 prettyrssfeed/050_RSS_preview_support.diff
 
-not_sorted/others/230_DONT_CHECKIN_adding_get_content_length_method.diff
 #Workaround for unknown protocol handling
 not_sorted/others/675_unknown_protocol_handling.diff
 not_sorted/others/680_MICROB_about_fixes_lp0.diff
@@ -146,6 +142,10 @@ logindialog/xullogindialog.diff
 #perf_tweaks/fonts/attachment.cgi?id=336403.diff
 #perf_tweaks/fonts/attachment.cgi?id=338030.diff
 #perf_tweaks/fonts/attachment.cgi?id=339161.diff
+
+BMO_attached/140_attachment.cgi?id=342340.diff
+BMO_attached/150_attachment.cgi?id=342275.diff
+
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail
