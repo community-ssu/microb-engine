@@ -49,7 +49,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.cpp
 +++ mozilla/layout/base/nsPresContext.cpp
-@@ -915,17 +915,17 @@
+@@ -927,17 +927,17 @@
          doc->AddCharSetObserver(this);
          UpdateCharSet(doc->GetDocumentCharacterSet());
        }
@@ -65,9 +65,9 @@ Index: mozilla/layout/base/nsPresContext.cpp
      NS_IF_RELEASE(mLangGroup);
      mLangGroup = mLangService->LookupCharSet(aCharSet.get()).get();  // addrefs
  
-     if (mLangGroup == nsGkAtoms::Japanese && mEnableJapaneseTransform) {
-       mLanguageSpecificTransformType =
-         eLanguageSpecificTransformType_Japanese;
+     // bug 39570: moved from nsLanguageAtomService::LookupCharSet()
+ #if !defined(XP_BEOS) 
+     if (mLangGroup == nsGkAtoms::Unicode) {
 Index: mozilla/layout/base/nsPresContext.h
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.h
@@ -91,7 +91,7 @@ Index: mozilla/layout/base/nsPresContext.h
  #include "nsIWeakReference.h"
  #include "nsITheme.h"
  #include "nsILanguageAtomService.h"
-@@ -790,17 +790,17 @@
+@@ -760,17 +760,17 @@
    static NS_HIDDEN_(int) PR_CALLBACK PrefChangedCallback(const char*, void*);
  
    NS_HIDDEN_(void) UpdateAfterPreferencesChanged();

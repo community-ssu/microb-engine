@@ -1,0 +1,4358 @@
+diff -r 9929cf926c62 browser/installer/windows/Makefile.in
+--- a/browser/installer/windows/Makefile.in	Thu Oct 09 11:49:17 2008 +0100
++++ b/browser/installer/windows/Makefile.in	Fri Oct 10 00:51:59 2008 -0500
+@@ -63,18 +63,18 @@ BRANDING_FILES = \
+ 	branding.nsi \
+ 	wizHeader.bmp \
+ 	wizHeaderRTL.bmp \
+ 	wizWatermark.bmp \
+ 	$(NULL)
+ 
+ DEFINES += \
+ 	-DAB_CD=$(AB_CD) \
+-	-DPKG_BASENAME=$(PKG_BASENAME) \
+-	-DPKG_INST_BASENAME=$(PKG_INST_BASENAME) \
++	-DPKG_BASENAME="$(PKG_BASENAME)" \
++	-DPKG_INST_BASENAME="$(PKG_INST_BASENAME)" \
+ 	-DMOZ_APP_VERSION=$(MOZ_APP_VERSION) \
+ 	-DMOZ_APP_NAME=$(MOZ_APP_NAME) \
+ 	-DMOZ_APP_DISPLAYNAME=${MOZ_APP_DISPLAYNAME} \
+ 	-DMOZILLA_VERSION=${MOZILLA_VERSION} \
+ 	$(NULL)
+ 
+ include $(topsrcdir)/config/config.mk
+ include $(call EXPAND_LOCALE_SRCDIR,toolkit/locales)/installer/windows/charset.mk
+diff -r 9929cf926c62 browser/locales/Makefile.in
+--- a/browser/locales/Makefile.in	Thu Oct 09 11:49:17 2008 +0100
++++ b/browser/locales/Makefile.in	Fri Oct 10 00:51:59 2008 -0500
+@@ -68,18 +68,18 @@ PWD := $(shell pwd)
+ PWD := $(shell pwd)
+ core_abspath = $(if $(findstring :,$(1)),$(1),$(if $(filter /%,$(1)),$(1),$(PWD)/$(1)))
+ 
+ DEFINES += \
+ 	-DAB_CD=$(AB_CD) \
+ 	-DMOZ_LANGPACK_EID=langpack-$(AB_CD)@firefox.mozilla.org \
+ 	-DMOZ_APP_VERSION=$(MOZ_APP_VERSION) \
+ 	-DLOCALE_SRCDIR=$(call core_abspath,$(LOCALE_SRCDIR)) \
+-	-DPKG_BASENAME=$(PKG_BASENAME) \
+-	-DPKG_INST_BASENAME=$(PKG_INST_BASENAME) \
++	-DPKG_BASENAME="$(PKG_BASENAME)" \
++	-DPKG_INST_BASENAME="$(PKG_INST_BASENAME)" \
+ 	$(NULL)
+ 
+ ifndef MOZ_BRANDING_DIRECTORY
+ DEFINES += -DMOZ_USE_GENERIC_BRANDING
+ endif
+ 
+ ifeq (,$(filter-out pref,$(MOZ_EXTENSIONS)))
+ DEFINES += -DEXTENSION_PREF
+@@ -188,17 +188,17 @@ MOZ_PKG_MAC_RSRC=$(_ABS_DIST)/branding/l
+ MOZ_PKG_MAC_RSRC=$(_ABS_DIST)/branding/license.r
+ MOZ_PKG_MAC_EXTRA=--symlink "/Applications:/ "
+ endif
+ 
+ PACKAGER_NO_LIBS = 1
+ include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
+ include $(call EXPAND_LOCALE_SRCDIR,toolkit/locales)/installer/windows/charset.mk
+ 
+-repackage-win32-installer: WIN32_INSTALLER_OUT=$(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe
++repackage-win32-installer: WIN32_INSTALLER_OUT="$(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe"
+ repackage-win32-installer: $(WIN32_INSTALLER_IN) $(SUBMAKEFILES)
+ ifneq (en-US,$(AB_CD))
+ 	@echo "Verifying $(AB_CD) installer variable usage"
+ 	@$(PERL) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/check-locales.pl $(LOCALE_SRCDIR)/installer
+ endif
+ 	@echo "Repackaging $(WIN32_INSTALLER_IN) into $(WIN32_INSTALLER_OUT)."
+ ifdef MOZ_BRANDING_DIRECTORY
+ 	$(MAKE) -C $(DEPTH)/$(MOZ_BRANDING_DIRECTORY) export
+@@ -223,17 +223,17 @@ endif
+ 	rm -f app.7z
+ 	cd l10n-stage && \
+ 	  $(CYGWIN_WRAPPER) 7z a -r -t7z ../app.7z -mx -m0=BCJ2 -m1=LZMA:d24 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
+ 	cat ../installer/windows/l10ngen/7zSD.sfx \
+ 	    $(topsrcdir)/browser/installer/windows/app.tag \
+ 	    app.7z > $(WIN32_INSTALLER_OUT)
+ 	chmod 0755 $(WIN32_INSTALLER_OUT)
+ 
+-repackage-win32-installer-%: WIN32_INSTALLER_IN=$(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe
++repackage-win32-installer-%: "WIN32_INSTALLER_IN=$(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe"
+ repackage-win32-installer-%: $(WIN32_INSTALLER_IN)
+ 	@$(MAKE) repackage-win32-installer AB_CD=$* WIN32_INSTALLER_IN=$(WIN32_INSTALLER_IN)
+ 
+ ifneq (,$(filter mac cocoa,$(MOZ_WIDGET_TOOLKIT)))
+ STAGEDIST = $(_ABS_DIST)/l10n-stage/$(MOZ_PKG_APPNAME)/$(_APPNAME)/Contents/MacOS
+ else
+ STAGEDIST = $(_ABS_DIST)/l10n-stage/$(MOZ_PKG_APPNAME)
+ endif
+@@ -334,17 +334,17 @@ wget-en-US:
+ wget-en-US:
+ ifndef WGET
+ 	$(error Wget not installed)
+ endif
+ 	@$(WGET) -nv --output-document $(_ABS_DIST)/$(PACKAGE) $(EN_US_BINARY_URL)/$(PACKAGE)
+ 	@echo "Downloaded $(EN_US_BINARY_URL)/$(PACKAGE) to $(_ABS_DIST)/$(PACKAGE)"
+ ifeq ($(OS_ARCH), WINNT)
+ 	$(NSINSTALL) -D $(_ABS_DIST)/$(PKG_INST_PATH)
+-	@$(WGET) -nv --output-document $(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe $(EN_US_BINARY_URL)/$(PKG_PATH)$(PKG_INST_BASENAME).exe
++	@$(WGET) -nv --output-document "$(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe $(EN_US_BINARY_URL)/$(PKG_PATH)$(PKG_INST_BASENAME).exe"
+ 	@echo "Downloaded $(EN_US_BINARY_URL)/$(PKG_PATH)$(PKG_INST_BASENAME).exe to $(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME)"
+ endif
+ 
+ #These make targets call prepare-repackages by setting different UPLOAD_DIR
+ prepare-upload-latest-%:
+ 	@$(MAKE) prepare-repackages-$* UPLOAD_DIR=$(DIST)/upload/latest
+ 
+ prepare-upload-dated-%:
+diff -r 9929cf926c62 configure.in
+--- a/configure.in	Thu Oct 09 11:49:17 2008 +0100
++++ b/configure.in	Fri Oct 10 00:51:59 2008 -0500
+@@ -6085,17 +6085,19 @@ PKG_CHECK_MODULES(LIBOSSO,libosso,
+ PKG_CHECK_MODULES(LIBOSSO,libosso,
+                   NS_OSSO=1,
+                   NS_OSSO=)
+ 
+ if test $NS_OSSO; then
+     if test -z "$MOZ_ENABLE_DBUS"; then
+         AC_MSG_ERROR([DBus is required when building for OSSO])
+     fi
+-    AC_DEFINE(NS_OSSO)     
++    AC_DEFINE(NS_OSSO)
++    dnl XXX this should go somewhere else; it's not just for OSSO
++    AC_DEFINE(MOZ_GFX_OPTIMIZE_MOBILE)
+ fi
+ AC_SUBST(LIBOSSO_CFLAGS)
+ AC_SUBST(LIBOSSO_LIBS)
+ 
+ PKG_CHECK_MODULES(MOZ_LOCATION, [liblocation gpsbt],
+                   NS_MAEMO_LOCATION=1,
+                   NS_MAEMO_LOCATION=)
+ 
+diff -r 9929cf926c62 content/canvas/src/nsCanvasRenderingContext2D.cpp
+--- a/content/canvas/src/nsCanvasRenderingContext2D.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/content/canvas/src/nsCanvasRenderingContext2D.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -172,18 +172,18 @@ public:
+ public:
+     NS_DECLARE_STATIC_IID_ACCESSOR(NS_CANVASGRADIENT_PRIVATE_IID)
+ 
+     nsCanvasGradient(gfxPattern* pat, nsICSSParser* cssparser)
+         : mPattern(pat), mCSSParser(cssparser)
+     {
+     }
+ 
+-    void Apply(gfxContext* ctx) {
+-        ctx->SetPattern(mPattern);
++    gfxPattern* GetPattern() {
++        return mPattern;
+     }
+ 
+     /* nsIDOMCanvasGradient */
+     NS_IMETHOD AddColorStop (float offset,
+                              const nsAString& colorstr)
+     {
+         nscolor color;
+ 
+@@ -235,18 +235,18 @@ public:
+                     nsIPrincipal* principalForSecurityCheck,
+                     PRBool forceWriteOnly)
+         : mPattern(pat),
+           mPrincipal(principalForSecurityCheck),
+           mForceWriteOnly(forceWriteOnly)
+     {
+     }
+ 
+-    void Apply(gfxContext* ctx) {
+-        ctx->SetPattern(mPattern);
++    gfxPattern* GetPattern() {
++        return mPattern;
+     }
+     
+     nsIPrincipal* Principal() { return mPrincipal; }
+     PRBool GetForceWriteOnly() { return mForceWriteOnly; }
+ 
+     NS_DECL_ISUPPORTS
+ 
+ protected:
+@@ -531,26 +531,29 @@ protected:
+ 
+     // state stack handling
+     class ContextState {
+     public:
+         ContextState() : shadowOffset(0.0, 0.0),
+                          globalAlpha(1.0),             
+                          shadowBlur(0.0),
+                          textAlign(TEXT_ALIGN_START),
+-                         textBaseline(TEXT_BASELINE_ALPHABETIC) { }
++                         textBaseline(TEXT_BASELINE_ALPHABETIC),
++                         imageSmoothingEnabled(PR_TRUE)
++        { }
+ 
+         ContextState(const ContextState& other)
+             : shadowOffset(other.shadowOffset),
+               globalAlpha(other.globalAlpha),
+               shadowBlur(other.shadowBlur),
+               font(other.font),
+               fontGroup(other.fontGroup),
+               textAlign(other.textAlign),
+-              textBaseline(other.textBaseline)
++              textBaseline(other.textBaseline),
++              imageSmoothingEnabled(other.imageSmoothingEnabled)
+         {
+             for (int i = 0; i < STYLE_MAX; i++) {
+                 colorStyles[i] = other.colorStyles[i];
+                 gradientStyles[i] = other.gradientStyles[i];
+                 patternStyles[i] = other.patternStyles[i];
+             }
+         }
+ 
+@@ -586,16 +589,18 @@ protected:
+         nsString font;
+         nsRefPtr<gfxFontGroup> fontGroup;
+         TextAlign textAlign;
+         TextBaseline textBaseline;
+ 
+         nscolor colorStyles[STYLE_MAX];
+         nsCOMPtr<nsCanvasGradient> gradientStyles[STYLE_MAX];
+         nsCOMPtr<nsCanvasPattern> patternStyles[STYLE_MAX];
++
++        PRPackedBool imageSmoothingEnabled;
+     };
+ 
+     nsTArray<ContextState> mStyleStack;
+ 
+     inline ContextState& CurrentState() {
+         return mStyleStack[mSaveCount];
+     }
+ 
+@@ -839,22 +844,31 @@ nsCanvasRenderingContext2D::ApplyStyle(S
+ 
+     nsCanvasPattern* pattern = CurrentState().patternStyles[aWhichStyle];
+     if (pattern) {
+         if (!mCanvasElement)
+             return;
+ 
+         DoDrawImageSecurityCheck(pattern->Principal(),
+                                  pattern->GetForceWriteOnly());
+-        pattern->Apply(mThebes);
++
++        gfxPattern* gpat = pattern->GetPattern();
++
++        if (CurrentState().imageSmoothingEnabled)
++            gpat->SetFilter(1 /*CAIRO_FILTER_GOOD*/);
++        else
++            gpat->SetFilter(0 /*CAIRO_FILTER_FAST*/);
++
++        mThebes->SetPattern(gpat);
+         return;
+     }
+ 
+     if (CurrentState().gradientStyles[aWhichStyle]) {
+-        CurrentState().gradientStyles[aWhichStyle]->Apply(mThebes);
++        gfxPattern* gpat = CurrentState().gradientStyles[aWhichStyle]->GetPattern();
++        mThebes->SetPattern(gpat);
+         return;
+     }
+ 
+     gfxRGBA color(CurrentState().colorStyles[aWhichStyle]);
+     if (aUseGlobalAlpha)
+         color.a *= CurrentState().globalAlpha;
+ 
+     mThebes->SetColor(color);
+@@ -2925,16 +2939,21 @@ nsCanvasRenderingContext2D::DrawImage()
+     }
+     
+     matrix.Translate(gfxPoint(sx, sy));
+     matrix.Scale(sw/dw, sh/dh);
+ 
+     pattern = new gfxPattern(imgsurf);
+     pattern->SetMatrix(matrix);
+ 
++    if (CurrentState().imageSmoothingEnabled)
++        pattern->SetFilter(1 /*CAIRO_FILTER_GOOD*/);
++    else
++        pattern->SetFilter(0 /*CAIRO_FILTER_FAST*/);
++
+     pathSR.Save();
+ 
+     {
+         gfxContextAutoSaveRestore autoSR(mThebes);
+         mThebes->Translate(gfxPoint(dx, dy));
+         mThebes->SetPattern(pattern);
+ 
+         gfxRect clip(0, 0, dw, dh);
+@@ -3796,11 +3815,27 @@ nsCanvasRenderingContext2D::CreateImageD
+         return NS_ERROR_FAILURE;
+ 
+     jsval *retvalPtr;
+     ncc->GetRetValPtr(&retvalPtr);
+     *retvalPtr = OBJECT_TO_JSVAL(result);
+     ncc->SetReturnValueWasSet(PR_TRUE);
+ 
+     return NS_OK;
+-
+ }
+ 
++NS_IMETHODIMP
++nsCanvasRenderingContext2D::GetMozImageSmoothingEnabled(PRBool *retVal)
++{
++    *retVal = CurrentState().imageSmoothingEnabled;
++    return NS_OK;
++}
++
++NS_IMETHODIMP
++nsCanvasRenderingContext2D::SetMozImageSmoothingEnabled(PRBool val)
++{
++    if (val != CurrentState().imageSmoothingEnabled) {
++        CurrentState().imageSmoothingEnabled = val;
++        DirtyAllStyles();
++    }
++
++    return NS_OK;
++}
+diff -r 9929cf926c62 content/canvas/test/Makefile.in
+--- a/content/canvas/test/Makefile.in	Thu Oct 09 11:49:17 2008 +0100
++++ b/content/canvas/test/Makefile.in	Fri Oct 10 00:51:59 2008 -0500
+@@ -694,16 +694,17 @@ _TEST_FILES_6 = \
+ 	test_2d.shadow.alpha.2.html \
+ 	test_2d.shadow.alpha.3.html \
+ 	test_2d.shadow.alpha.4.html \
+ 	test_2d.shadow.alpha.5.html \
+ 	test_2d.shadow.composite.1.html \
+ 	test_2d.shadow.composite.2.html \
+ 	test_2d.shadow.composite.3.html \
+ 	test_2d.shadow.composite.4.html \
++	test_2d.imageRenderingQuality.html \
+ 	test_bug397524.html \
+ 	test_bug405982.html \
+ 	test_text.font.html \
+ 	test_text.textAlign.html \
+ 	test_text.textBaseline.html \
+ 	test_text.measure.html \
+ 	test_text.space.replace.html \
+ 	image_transparent50.png \
+diff -r 9929cf926c62 content/canvas/test/test_2d.imageSmoothing.html
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/content/canvas/test/test_2d.imageSmoothing.html	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,65 @@
++<!DOCTYPE HTML>
++<html>
++<head>
++<title>Canvas test: 2d.imageRenderingQuality</title>
++<script src="/MochiKit/MochiKit.js"></script>
++<script src="/tests/SimpleTest/SimpleTest.js"></script>
++<script type="text/javascript">
++
++var _deferred = false;
++
++function setup() {
++  var c2 = document.getElementById("c2");
++  var cx2 = c2.getContext("2d");
++
++  cx2.fillStyle = "red";
++  cx2.fillRect(0, 0, 2, 2);
++
++  cx2.fillStyle = "rgb(0,255,0)";
++  cx2.fillRect(0, 0, 1, 1);
++}
++
++function f() {
++  setup();
++
++  var c = document.getElementById("c");
++  var c2 = document.getElementById("c2");
++
++  var cx = c.getContext("2d");
++
++  ok(cx.mozImageSmoothingEnabled == true, "initial mozImageSmoothingEnabled is true");
++
++  // check that mozImageSmoothingEnabled is part of the context
++  cx.save();
++  cx.mozImageSmoothingEnabled = false;
++  ok(cx.mozImageSmoothingEnabled == false, "mozImageSmoothingEnabled is false after setting");
++  cx.restore();
++  ok(cx.mozImageSmoothingEnabled == true, "mozImageSmoothingEnabled is true after restore");
++
++  // check that false works
++  cx.mozImageSmoothingEnabled = false;
++
++  cx.scale(10,10);
++  cx.drawImage(c2, 0, 0);
++
++  // this should be all red
++  var data = cx.getImageData(9, 9, 1, 1);
++  var pixels = data.data;
++  ok (pixels[0] == 0 &&
++      pixels[1] == 255 &&
++      pixels[2] == 0 &&
++      pixels[3] == 255,
++      "pixel is " + pixels.toSource() + " (expected [0,255,0,255])");
++
++  if (!_deferred) SimpleTest.finish();
++}
++
++SimpleTest.waitForExplicitFinish();
++MochiKit.DOM.addLoadEvent(f);
++</script>
++</head>
++<body>
++<canvas id="c" width="10" height="10"></canvas><br>
++<canvas style="visibility: hidden" id="c2" width="2" height="2"></canvas>
++</body>
++</html>
+diff -r 9929cf926c62 content/events/crashtests/457776-1.html
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/content/events/crashtests/457776-1.html	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,9 @@
++<html xmlns="http://www.w3.org/1999/xhtml">
++<head>
++<script>
++new XMLHttpRequest().upload.onabort = function(){};
++</script>
++</head>
++<body>
++</body>
++</html>
+diff -r 9929cf926c62 content/events/crashtests/crashtests.list
+--- a/content/events/crashtests/crashtests.list	Thu Oct 09 11:49:17 2008 +0100
++++ b/content/events/crashtests/crashtests.list	Fri Oct 10 00:51:59 2008 -0500
+@@ -1,1 +1,2 @@ load 422009-1.xhtml
+ load 422009-1.xhtml
++load 457776-1.html
+diff -r 9929cf926c62 content/xml/document/crashtests/crashtests.list
+--- a/content/xml/document/crashtests/crashtests.list	Thu Oct 09 11:49:17 2008 +0100
++++ b/content/xml/document/crashtests/crashtests.list	Fri Oct 10 00:51:59 2008 -0500
+@@ -1,4 +1,4 @@ load 382636-1.xml
+ load 382636-1.xml
+ load 382636-2.svg
+ load 382636-3.xhtml
+-load 382636-4.xul # Throws (bug 42976)
++load 382636-4.xul # Throws (bug 455856)
+diff -r 9929cf926c62 dom/public/idl/canvas/nsIDOMCanvasRenderingContext2D.idl
+--- a/dom/public/idl/canvas/nsIDOMCanvasRenderingContext2D.idl	Thu Oct 09 11:49:17 2008 +0100
++++ b/dom/public/idl/canvas/nsIDOMCanvasRenderingContext2D.idl	Fri Oct 10 00:51:59 2008 -0500
+@@ -156,16 +156,20 @@ interface nsIDOMCanvasRenderingContext2D
+   // ImageData = { width: #, height: #, data: [r, g, b, a, ...] }
+ 
+   void getImageData();
+   void putImageData();
+ 
+   // ImageData createImageData(in float w, in float h);
+   void createImageData();
+ 
++  // image smoothing mode -- if disabled, images won't be smoothed
++  // if scaled.
++  attribute boolean mozImageSmoothingEnabled;
++
+   /**
+    * Renders a region of a window into the canvas.  The contents of
+    * the window's viewport are rendered, ignoring viewport clipping
+    * and scrolling.
+    *
+    * @param x
+    * @param y
+    * @param w
+diff -r 9929cf926c62 dom/src/base/nsGlobalWindow.cpp
+--- a/dom/src/base/nsGlobalWindow.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/dom/src/base/nsGlobalWindow.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -82,17 +82,16 @@
+ #include "nsLayoutStatics.h"
+ #include "nsCycleCollector.h"
+ #include "nsCCUncollectableMarker.h"
+ #include "nsDOMThreadService.h"
+ 
+ // Interfaces Needed
+ #include "nsIWidget.h"
+ #include "nsIBaseWindow.h"
+-#include "nsICharsetConverterManager.h"
+ #include "nsIContent.h"
+ #include "nsIContentViewerEdit.h"
+ #include "nsIDocShell.h"
+ #include "nsIDocShellLoadInfo.h"
+ #include "nsIDocShellTreeItem.h"
+ #include "nsIDocShellTreeNode.h"
+ #include "nsIDocCharset.h"
+ #include "nsIDocument.h"
+@@ -342,18 +341,16 @@ PRInt32 gTimeoutCnt                     
+   }                                                                           \
+   PR_END_MACRO
+ 
+ // CIDs
+ #ifdef OJI
+ static NS_DEFINE_CID(kJVMServiceCID, NS_JVMMANAGER_CID);
+ #endif
+ static NS_DEFINE_CID(kXULControllersCID, NS_XULCONTROLLERS_CID);
+-static NS_DEFINE_CID(kCharsetConverterManagerCID,
+-                     NS_ICHARSETCONVERTERMANAGER_CID);
+ 
+ static const char sJSStackContractID[] = "@mozilla.org/js/xpc/ContextStack;1";
+ 
+ static const char kCryptoContractID[] = NS_CRYPTO_CONTRACTID;
+ static const char kPkcs11ContractID[] = NS_PKCS11_CONTRACTID;
+ 
+ static PRBool
+ IsAboutBlank(nsIURI* aURI)
+@@ -5986,75 +5983,16 @@ nsGlobalWindow::UpdateCommands(const nsA
+     nsCOMPtr<nsIDOMXULCommandDispatcher> xulCommandDispatcher;
+     xulDoc->GetCommandDispatcher(getter_AddRefs(xulCommandDispatcher));
+     xulCommandDispatcher->UpdateCommands(anAction);
+   }
+ 
+   return NS_OK;
+ }
+ 
+-nsresult
+-nsGlobalWindow::ConvertCharset(const nsAString& aStr, char** aDest)
+-{
+-  nsresult result = NS_OK;
+-  nsCOMPtr<nsIUnicodeEncoder> encoder;
+-
+-  nsCOMPtr<nsICharsetConverterManager>
+-    ccm(do_GetService(kCharsetConverterManagerCID));
+-  NS_ENSURE_TRUE(ccm, NS_ERROR_FAILURE);
+-
+-  // Get the document character set
+-  nsCAutoString charset(NS_LITERAL_CSTRING("UTF-8")); // default to utf-8
+-  if (mDoc) {
+-    charset = mDoc->GetDocumentCharacterSet();
+-  }
+-
+-  // Get an encoder for the character set
+-  result = ccm->GetUnicodeEncoderRaw(charset.get(),
+-                                     getter_AddRefs(encoder));
+-  if (NS_FAILED(result))
+-    return result;
+-
+-  result = encoder->Reset();
+-  if (NS_FAILED(result))
+-    return result;
+-
+-  PRInt32 maxByteLen, srcLen;
+-  srcLen = aStr.Length();
+-
+-  const nsPromiseFlatString& flatSrc = PromiseFlatString(aStr);
+-  const PRUnichar* src = flatSrc.get();
+-
+-  // Get the expected length of result string
+-  result = encoder->GetMaxLength(src, srcLen, &maxByteLen);
+-  if (NS_FAILED(result))
+-    return result;
+-
+-  // Allocate a buffer of the maximum length
+-  *aDest = (char *) nsMemory::Alloc(maxByteLen + 1);
+-  PRInt32 destLen2, destLen = maxByteLen;
+-  if (!*aDest)
+-    return NS_ERROR_OUT_OF_MEMORY;
+-
+-  // Convert from unicode to the character set
+-  result = encoder->Convert(src, &srcLen, *aDest, &destLen);
+-  if (NS_FAILED(result)) {    
+-    nsMemory::Free(*aDest);
+-    *aDest = nsnull;
+-    return result;
+-  }
+-
+-  // Allow the encoder to finish the conversion
+-  destLen2 = maxByteLen - destLen;
+-  encoder->Finish(*aDest + destLen, &destLen2);
+-  (*aDest)[destLen + destLen2] = '\0';
+-
+-  return result;
+-}
+-
+ PRBool
+ nsGlobalWindow::GetBlurSuppression()
+ {
+   nsCOMPtr<nsIBaseWindow> treeOwnerAsWin;
+   GetTreeOwner(getter_AddRefs(treeOwnerAsWin));
+   PRBool suppress = PR_FALSE;
+   if (treeOwnerAsWin)
+     treeOwnerAsWin->GetBlurSuppression(&suppress);
+diff -r 9929cf926c62 dom/src/base/nsGlobalWindow.h
+--- a/dom/src/base/nsGlobalWindow.h	Thu Oct 09 11:49:17 2008 +0100
++++ b/dom/src/base/nsGlobalWindow.h	Fri Oct 10 00:51:59 2008 -0500
+@@ -567,18 +567,16 @@ protected:
+   nsresult CheckSecurityWidthAndHeight(PRInt32* width, PRInt32* height);
+   nsresult CheckSecurityLeftAndTop(PRInt32* left, PRInt32* top);
+   static PRBool CanSetProperty(const char *aPrefName);
+ 
+   static void MakeScriptDialogTitle(nsAString &aOutTitle);
+ 
+   static PRBool CanMoveResizeWindows();
+ 
+-  nsresult ConvertCharset(const nsAString& aStr, char** aDest);
+-
+   PRBool   GetBlurSuppression();
+ 
+   // If aDoFlush is true, we'll flush our own layout; otherwise we'll try to
+   // just flush our parent and only flush ourselves if we think we need to.
+   nsresult GetScrollXY(PRInt32* aScrollX, PRInt32* aScrollY,
+                        PRBool aDoFlush);
+   nsresult GetScrollMaxXY(PRInt32* aScrollMaxX, PRInt32* aScrollMaxY);
+   
+diff -r 9929cf926c62 gfx/cairo/cairo/src/cairo-quartz-surface.c
+--- a/gfx/cairo/cairo/src/cairo-quartz-surface.c	Thu Oct 09 11:49:17 2008 +0100
++++ b/gfx/cairo/cairo/src/cairo-quartz-surface.c	Fri Oct 10 00:51:59 2008 -0500
+@@ -801,17 +801,16 @@ SurfacePatternDrawFunc (void *ainfo, CGC
+ 	 */
+ 	CGContextTranslateCTM (context, 2 * info->imageBounds.size.width, 0);
+ 	CGContextScaleCTM (context, -1, 1);
+ 	CGContextDrawImage (context, info->imageBounds, info->image);
+ 
+ 	/* Then unflip the Y-axis again, and draw the image above the point. */
+ 	CGContextScaleCTM (context, 1, -1);
+ 	CGContextDrawImage (context, info->imageBounds, info->image);
+-
+     }
+ }
+ 
+ static void
+ SurfacePatternReleaseInfoFunc (void *ainfo)
+ {
+     SurfacePatternDrawInfo *info = (SurfacePatternDrawInfo*) ainfo;
+ 
+@@ -867,18 +866,18 @@ _cairo_quartz_cairo_repeating_surface_pa
+      * Otherwise, the underlying data store may disappear from under us!
+      *
+      * _cairo_surface_to_cgimage will copy when it converts non-Quartz surfaces,
+      * since the Quartz surfaces have a higher chance of sticking around.  If the
+      * source is a quartz image surface, then it's set up to retain a ref to the
+      * image surface that it's backed by.
+      */
+     info->image = image;
+-
+     info->imageBounds = CGRectMake (0, 0, extents.width, extents.height);
++    info->do_reflect = FALSE;
+ 
+     pbounds.origin.x = 0;
+     pbounds.origin.y = 0;
+ 
+     if (spattern->base.extend == CAIRO_EXTEND_REFLECT) {
+ 	pbounds.size.width = 2.0 * extents.width;
+ 	pbounds.size.height = 2.0 * extents.height;
+ 	info->do_reflect = TRUE;
+diff -r 9929cf926c62 gfx/cairo/cairo/src/cairo-win32-surface.c
+--- a/gfx/cairo/cairo/src/cairo-win32-surface.c	Thu Oct 09 11:49:17 2008 +0100
++++ b/gfx/cairo/cairo/src/cairo-win32-surface.c	Fri Oct 10 00:51:59 2008 -0500
+@@ -382,54 +382,46 @@ _cairo_win32_surface_create_similar_inte
+ _cairo_win32_surface_create_similar_internal (void	    *abstract_src,
+ 					      cairo_content_t content,
+ 					      int	     width,
+ 					      int	     height,
+ 					      cairo_bool_t   force_dib)
+ {
+     cairo_win32_surface_t *src = abstract_src;
+     cairo_format_t format = _cairo_format_from_content (content);
+-    cairo_win32_surface_t *new_surf;
++    cairo_surface_t *new_surf = NULL;
+ 
+     /* We force a DIB always if:
+      * - we need alpha; or
+      * - the parent is a DIB; or
+      * - the parent is for printing (because we don't care about the bit depth at that point)
++     *
++     * We also might end up with a DIB even if a DDB is requested if DDB creation failed
++     * due to out of memory.
+      */
+     if (src->is_dib ||
+ 	(content & CAIRO_CONTENT_ALPHA) ||
+ 	src->base.backend->type == CAIRO_SURFACE_TYPE_WIN32_PRINTING)
+     {
+ 	force_dib = TRUE;
+     }
+ 
+-    if (force_dib) {
+-	new_surf = (cairo_win32_surface_t*)
+-	    _cairo_win32_surface_create_for_dc (src->dc, format, width, height);
+-    } else {
+-	/* otherwise, create a ddb */
+-	HBITMAP ddb = CreateCompatibleBitmap (src->dc, width, height);
+-	HDC ddb_dc = CreateCompatibleDC (src->dc);
+-	HBITMAP saved_dc_bitmap;
++    if (!force_dib) {
++	/* try to create a ddb */
++	new_surf = cairo_win32_surface_create_with_ddb (src->dc, CAIRO_FORMAT_RGB24, width, height);
+ 
+-	saved_dc_bitmap = SelectObject (ddb_dc, ddb);
+-
+-	new_surf = (cairo_win32_surface_t*) cairo_win32_surface_create (ddb_dc);
+-	if (new_surf->base.status == CAIRO_STATUS_SUCCESS) {
+-	    new_surf->bitmap = ddb;
+-	    new_surf->saved_dc_bitmap = saved_dc_bitmap;
+-	    new_surf->is_dib = FALSE;
+-	} else {
+-	    SelectObject (ddb_dc, saved_dc_bitmap);
+-	    DeleteDC (ddb_dc);
+-	    DeleteObject (ddb);
+-	}
++	if (new_surf->status != CAIRO_STATUS_SUCCESS)
++	    new_surf = NULL;
+     }
+ 
+-    return (cairo_surface_t*) new_surf;
++    if (new_surf == NULL) {
++	new_surf = _cairo_win32_surface_create_for_dc (src->dc, format, width, height);
++    }
++
++    return new_surf;
+ }
+ 
+ cairo_surface_t *
+ _cairo_win32_surface_create_similar (void	    *abstract_src,
+ 				     cairo_content_t content,
+ 				     int	     width,
+ 				     int	     height)
+ {
+@@ -1826,30 +1818,29 @@ cairo_win32_surface_create_with_ddb (HDC
+ 	screen_dc = GetDC (NULL);
+ 	hdc = screen_dc;
+     } else {
+ 	screen_dc = NULL;
+     }
+ 
+     ddb_dc = CreateCompatibleDC (hdc);
+     if (ddb_dc == NULL) {
+-	_cairo_win32_print_gdi_error("CreateCompatibleDC");
+ 	new_surf = (cairo_win32_surface_t*) _cairo_surface_create_in_error (_cairo_error (CAIRO_STATUS_NO_MEMORY));
+ 	goto FINISH;
+     }
+ 
+     ddb = CreateCompatibleBitmap (hdc, width, height);
+     if (ddb == NULL) {
+ 	DeleteDC (ddb_dc);
+ 
+ 	/* Note that if an app actually does hit this out of memory
+ 	 * condition, it's going to have lots of other issues, as
+-	 * video memory is probably exhausted.
++	 * video memory is probably exhausted.  However, it can often
++	 * continue using DIBs instead of DDBs.
+ 	 */
+-	_cairo_win32_print_gdi_error("CreateCompatibleBitmap");
+ 	new_surf = (cairo_win32_surface_t*) _cairo_surface_create_in_error (_cairo_error (CAIRO_STATUS_NO_MEMORY));
+ 	goto FINISH;
+     }
+ 
+     saved_dc_bitmap = SelectObject (ddb_dc, ddb);
+ 
+     new_surf = (cairo_win32_surface_t*) cairo_win32_surface_create (ddb_dc);
+     new_surf->bitmap = ddb;
+diff -r 9929cf926c62 gfx/src/thebes/nsThebesImage.cpp
+--- a/gfx/src/thebes/nsThebesImage.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/gfx/src/thebes/nsThebesImage.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -624,17 +624,21 @@ nsThebesImage::Draw(nsIRenderingContext 
+     }
+ 
+     gfxContext::GraphicsOperator op = ctx->CurrentOperator();
+     if (op == gfxContext::OPERATOR_OVER && mFormat == gfxASurface::ImageFormatRGB24)
+         ctx->SetOperator(gfxContext::OPERATOR_SOURCE);
+ 
+     ctx->NewPath();
+     ctx->SetPattern(pat);
++#ifdef MOZ_GFX_OPTIMIZE_MOBILE
++    ctx->Rectangle(destRect, PR_TRUE);
++#else
+     ctx->Rectangle(destRect);
++#endif
+     ctx->Fill();
+ 
+     ctx->SetOperator(op);
+     ctx->SetDeviceColor(gfxRGBA(0,0,0,0));
+ 
+     return NS_OK;
+ }
+ 
+@@ -651,17 +655,21 @@ nsThebesImage::ThebesDrawTile(gfxContext
+ 
+     if (targetRect.size.width <= 0.0 || targetRect.size.height <= 0.0)
+         return NS_OK;
+ 
+     // don't do anything if we have a transparent pixel source
+     if (mSinglePixel && mSinglePixelColor.a == 0.0)
+         return NS_OK;
+ 
++#ifdef MOZ_GFX_OPTIMIZE_MOBILE
++    PRBool doSnap = PR_TRUE;
++#else
+     PRBool doSnap = !(thebesContext->CurrentMatrix().HasNonTranslation());
++#endif
+     PRBool hasPadding = ((xPadding != 0) || (yPadding != 0));
+     gfxImageSurface::gfxImageFormat format = mFormat;
+     
+     gfxPoint tmpOffset = offset;
+ 
+     if (mSinglePixel && !hasPadding) {
+         thebesContext->SetDeviceColor(mSinglePixelColor);
+     } else {
+diff -r 9929cf926c62 gfx/thebes/src/gfxContext.cpp
+--- a/gfx/thebes/src/gfxContext.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/gfx/thebes/src/gfxContext.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -212,17 +212,22 @@ gfxContext::Line(const gfxPoint& start, 
+ // For odd-width stroked rectangles, we need to offset x/y by
+ // 0.5...
+ void
+ gfxContext::Rectangle(const gfxRect& rect, PRBool snapToPixels)
+ {
+     if (snapToPixels) {
+         gfxRect snappedRect(rect);
+ 
+-        if (UserToDevicePixelSnapped(snappedRect)) {
++#ifdef MOZ_GFX_OPTIMIZE_MOBILE
++        if (UserToDevicePixelSnapped(snappedRect, PR_TRUE))
++#else
++        if (UserToDevicePixelSnapped(snappedRect))
++#endif
++        {
+             cairo_matrix_t mat;
+             cairo_get_matrix(mCairo, &mat);
+             cairo_identity_matrix(mCairo);
+             Rectangle(snappedRect);
+             cairo_set_matrix(mCairo, &mat);
+ 
+             return;
+         }
+diff -r 9929cf926c62 js/src/config/Linux_All.mk
+--- a/js/src/config/Linux_All.mk	Thu Oct 09 11:49:17 2008 +0100
++++ b/js/src/config/Linux_All.mk	Fri Oct 10 00:51:59 2008 -0500
+@@ -55,27 +55,16 @@ MKSHLIB = $(LD) -shared $(XMKSHLIBOPTS)
+ 
+ CPU_ARCH = $(shell uname -m)
+ # don't filter in x86-64 architecture
+ ifneq (x86_64,$(CPU_ARCH))
+ ifeq (86,$(findstring 86,$(CPU_ARCH)))
+ CPU_ARCH = x86
+ OS_CFLAGS += -DX86_LINUX -DAVMPLUS_IA32 -DAVMPLUS_UNIX -DAVMPLUS_LINUX
+ NANOJIT_ARCH = i386
+-
+-ifeq (gcc, $(CC))
+-# if using gcc on x86, check version for opt bug 
+-# (http://bugzilla.mozilla.org/show_bug.cgi?id=24892)
+-GCC_VERSION := $(shell gcc -v 2>&1 | grep version | awk '{ print $$3 }')
+-GCC_LIST:=$(sort 2.91.66 $(GCC_VERSION) )
+-
+-ifeq (2.91.66, $(firstword $(GCC_LIST)))
+-CFLAGS+= -DGCC_OPT_BUG
+-endif # gcc 2.91.66
+-endif # gcc
+ endif # 86
+ endif # !x86_64
+ 
+ ifeq ($(CPU_ARCH),x86_64)
+ OS_CFLAGS += -DAVMPLUS_AMD64 -DAVMPLUS_64BIT -DAVMPLUS_UNIX -DAVMPLUS_LINUX
+ NANOJIT_ARCH = i386
+ endif
+ 
+diff -r 9929cf926c62 js/src/jsobj.cpp
+--- a/js/src/jsobj.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/js/src/jsobj.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -5414,17 +5414,17 @@ JS_FRIEND_API(void)
+ JS_FRIEND_API(void)
+ js_DumpId(jsid id)
+ {
+     fprintf(stderr, "id %d (%p) = ", (int) id, (void *) id);
+     dumpValue(ID_TO_VALUE(id));
+     fputc('\n', stderr);
+ }
+ 
+-void
++static void
+ dumpScopeProp(JSScopeProperty *sprop)
+ {
+     jsid id = sprop->id;
+     uint8 attrs = sprop->attrs;
+ 
+     fprintf(stderr, "    ");
+     if (attrs & JSPROP_ENUMERATE) fprintf(stderr, "enumerate ");
+     if (attrs & JSPROP_READONLY) fprintf(stderr, "readonly ");
+@@ -5444,16 +5444,17 @@ dumpScopeProp(JSScopeProperty *sprop)
+ }
+ 
+ JS_FRIEND_API(void)
+ js_DumpObject(JSObject *obj)
+ {
+     uint32 i, slots;
+     JSClass *clasp;
+     jsuint reservedEnd;
++    JSBool sharesScope = JS_FALSE;
+ 
+     fprintf(stderr, "object %p\n", (void *) obj);
+     clasp = STOBJ_GET_CLASS(obj);
+     fprintf(stderr, "class %p %s\n", (void *)clasp, clasp->name);
+ 
+     /* OBJ_IS_DENSE_ARRAY ignores the cx argument. */
+     if (OBJ_IS_DENSE_ARRAY(BOGUS_CX, obj)) {
+         slots = JS_MIN((jsuint) obj->fslots[JSSLOT_ARRAY_LENGTH],
+@@ -5470,44 +5471,45 @@ js_DumpObject(JSObject *obj)
+ 
+     if (OBJ_IS_NATIVE(obj)) {
+         JSScope *scope = OBJ_SCOPE(obj);
+         JSObject *proto = STOBJ_GET_PROTO(obj);
+ 
+         if (SCOPE_IS_SEALED(scope))
+             fprintf(stderr, "sealed\n");
+ 
+-        if (proto && scope == OBJ_SCOPE(proto)) {
+-            fprintf(stderr, "shares scope with proto (%s at %p)\n",
++        sharesScope = (scope->object != obj);
++        if (sharesScope) {
++            fprintf(stderr, "no own properties - see proto (%s at %p)\n",
+                     STOBJ_GET_CLASS(proto)->name, proto);
+-        }
+-
+-        fprintf(stderr, "properties:\n");
+-        for (JSScopeProperty *sprop = SCOPE_LAST_PROP(scope); sprop;
+-             sprop = sprop->parent) {
+-            if (!SCOPE_HAD_MIDDLE_DELETE(scope) ||
+-                SCOPE_HAS_PROPERTY(scope, sprop)) {
+-                dumpScopeProp(sprop);
++        } else {
++            fprintf(stderr, "properties:\n");
++            for (JSScopeProperty *sprop = SCOPE_LAST_PROP(scope); sprop;
++                 sprop = sprop->parent) {
++                if (!SCOPE_HAD_MIDDLE_DELETE(scope) ||
++                    SCOPE_HAS_PROPERTY(scope, sprop)) {
++                    dumpScopeProp(sprop);
++                }
+             }
+         }
+     } else {
+         if (!OBJ_IS_NATIVE(obj))
+             fprintf(stderr, "not native\n");
+     }
+ 
+     fprintf(stderr, "slots:\n");
+-    slots = obj->map->freeslot;
+     reservedEnd = JSSLOT_PRIVATE;
+     if (clasp->flags & JSCLASS_HAS_PRIVATE)
+         reservedEnd++;
+     reservedEnd += JSCLASS_RESERVED_SLOTS(clasp);
++    slots = sharesScope ? reservedEnd : obj->map->freeslot;
+     for (i = 0; i < slots; i++) {
+         fprintf(stderr, " %3d ", i);
+         if (i == JSSLOT_PRIVATE && (clasp->flags & JSCLASS_HAS_PRIVATE)) {
+-            fprintf(stderr, "(private) = %p",
++            fprintf(stderr, "(private) = %p\n",
+                     JSVAL_TO_PRIVATE(STOBJ_GET_SLOT(obj, i)));
+             continue;
+         }
+         if (i == JSSLOT_PROTO)
+             fprintf(stderr, "(proto) ");
+         else if (i == JSSLOT_PARENT)
+             fprintf(stderr, "(parent) ");
+         else if (i < reservedEnd)
+diff -r 9929cf926c62 js/src/xpconnect/src/dom_quickstubs.qsconf
+--- a/js/src/xpconnect/src/dom_quickstubs.qsconf	Thu Oct 09 11:49:17 2008 +0100
++++ b/js/src/xpconnect/src/dom_quickstubs.qsconf	Fri Oct 10 00:51:59 2008 -0500
+@@ -61,17 +61,20 @@ members = [
+     #   - nsIDOMJSWindow.{prompt,setTimeout,setInterval,open,openDialog}
+     #
+     # (And nsIDOMModalContentWindow.returnValue is an attribute of type
+     # nsIVariant, which qsgen.py can't handle.)
+     #
+     'nsIDOMWindow.name',
+     'nsIDOMWindow.parent',
+     'nsIDOMWindow.top',
+-    'nsIDOMWindow.document',
++    # Several window properties are magically resolved, including
++    # location, _content, navigator, document, and window itself.
++    # These do not need quick stubs.
++    #'nsIDOMWindow.document',
+     'nsIDOMWindow.getSelection',
+     'nsIDOMWindowCollection.item',
+     'nsIDOMWindowCollection.length',
+     'nsIDOMScreen.top',
+     'nsIDOMScreen.height',
+     'nsIDOMScreen.width',
+     'nsIDOMScreen.left',
+     'nsIDOMClientRect.top',
+diff -r 9929cf926c62 layout/base/nsCSSRenderingBorders.cpp
+--- a/layout/base/nsCSSRenderingBorders.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/layout/base/nsCSSRenderingBorders.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -1183,18 +1183,25 @@ nsCSSBorderRenderer::DrawBorders()
+       mContext->Restore();
+ 
+       SN();
+     }
+ 
+     // in the case of a single-unit border, we already munged the
+     // corners up above; so we can just draw the top left and bottom
+     // right sides separately, if they're the same.
++    //
++    // We need to check for mNoBorderRadius, because when there is
++    // one, FillSolidBorder always draws the full rounded rectangle
++    // and expects there to be a clip in place.
+     PRIntn alreadyDrawnSides = 0;
+-    if (mOneUnitBorder && (dashedSides & (SIDE_BIT_TOP | SIDE_BIT_LEFT)) == 0) {
++    if (mOneUnitBorder &&
++        mNoBorderRadius &&
++        (dashedSides & (SIDE_BIT_TOP | SIDE_BIT_LEFT)) == 0)
++    {
+       if (tlBordersSame) {
+         DrawBorderSides(SIDE_BIT_TOP | SIDE_BIT_LEFT);
+         alreadyDrawnSides |= (SIDE_BIT_TOP | SIDE_BIT_LEFT);
+       }
+ 
+       if (brBordersSame && (dashedSides & (SIDE_BIT_BOTTOM | SIDE_BIT_RIGHT)) == 0) {
+         DrawBorderSides(SIDE_BIT_BOTTOM | SIDE_BIT_RIGHT);
+         alreadyDrawnSides |= (SIDE_BIT_BOTTOM | SIDE_BIT_RIGHT);
+diff -r 9929cf926c62 layout/base/nsPresContext.cpp
+--- a/layout/base/nsPresContext.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/layout/base/nsPresContext.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -204,17 +204,16 @@ nsPresContext::nsPresContext(nsIDocument
+   mActiveLinkColor = NS_RGB(0xEE, 0x00, 0x00);
+   mVisitedLinkColor = NS_RGB(0x55, 0x1A, 0x8B);
+   mUnderlineLinks = PR_TRUE;
+ 
+   mFocusTextColor = mDefaultColor;
+   mFocusBackgroundColor = mBackgroundColor;
+   mFocusRingWidth = 1;
+ 
+-  mLanguageSpecificTransformType = eLanguageSpecificTransformType_Unknown;
+   if (aType == eContext_Galley) {
+     mMedium = nsGkAtoms::screen;
+   } else {
+     SetBackgroundImageDraw(PR_FALSE);
+     SetBackgroundColorDraw(PR_FALSE);
+     mMedium = nsGkAtoms::print;
+     mPaginated = PR_TRUE;
+   }
+@@ -934,24 +933,16 @@ nsPresContext::SetShell(nsIPresShell* aS
+ 
+ void
+ nsPresContext::UpdateCharSet(const nsAFlatCString& aCharSet)
+ {
+   if (mLangService) {
+     NS_IF_RELEASE(mLangGroup);
+     mLangGroup = mLangService->LookupCharSet(aCharSet.get()).get();  // addrefs
+ 
+-    if (mLangGroup == nsGkAtoms::Japanese && mEnableJapaneseTransform) {
+-      mLanguageSpecificTransformType =
+-        eLanguageSpecificTransformType_Japanese;
+-    }
+-    else {
+-      mLanguageSpecificTransformType =
+-        eLanguageSpecificTransformType_None;
+-    }
+     // bug 39570: moved from nsLanguageAtomService::LookupCharSet()
+ #if !defined(XP_BEOS) 
+     if (mLangGroup == nsGkAtoms::Unicode) {
+       NS_RELEASE(mLangGroup);
+       NS_IF_ADDREF(mLangGroup = mLangService->GetLocaleLanguageGroup()); 
+     }
+ #endif
+     GetFontPreferences();
+@@ -1097,31 +1088,25 @@ nsPresContext::SetImageAnimationModeInte
+ 
+ void
+ nsPresContext::SetImageAnimationModeExternal(PRUint16 aMode)
+ {
+   SetImageAnimationModeInternal(aMode);
+ }
+ 
+ already_AddRefed<nsIFontMetrics>
+-nsPresContext::GetMetricsForInternal(const nsFont& aFont)
++nsPresContext::GetMetricsFor(const nsFont& aFont)
+ {
+   nsIFontMetrics* metrics = nsnull;
+   mDeviceContext->GetMetricsFor(aFont, mLangGroup, metrics);
+   return metrics;
+ }
+ 
+-already_AddRefed<nsIFontMetrics>
+-nsPresContext::GetMetricsForExternal(const nsFont& aFont)
+-{
+-  return GetMetricsForInternal(aFont);
+-}
+-
+ const nsFont*
+-nsPresContext::GetDefaultFontInternal(PRUint8 aFontID) const
++nsPresContext::GetDefaultFont(PRUint8 aFontID) const
+ {
+   const nsFont *font;
+   switch (aFontID) {
+     // Special (our default variable width font and fixed width font)
+     case kPresContext_DefaultVariableFont_ID:
+       font = &mDefaultVariableFont;
+       break;
+     case kPresContext_DefaultFixedFont_ID:
+@@ -1144,22 +1129,16 @@ nsPresContext::GetDefaultFontInternal(PR
+       font = &mDefaultFantasyFont;
+       break;
+     default:
+       font = nsnull;
+       NS_ERROR("invalid arg");
+       break;
+   }
+   return font;
+-}
+-
+-const nsFont*
+-nsPresContext::GetDefaultFontExternal(PRUint8 aFontID) const
+-{
+-  return GetDefaultFontInternal(aFontID);
+ }
+ 
+ void
+ nsPresContext::SetFullZoom(float aZoom)
+ {
+   if (!mShell || mFullZoom == aZoom) {
+     return;
+   }
+diff -r 9929cf926c62 layout/base/nsPresContext.h
+--- a/layout/base/nsPresContext.h	Thu Oct 09 11:49:17 2008 +0100
++++ b/layout/base/nsPresContext.h	Fri Oct 10 00:51:59 2008 -0500
+@@ -270,27 +270,18 @@ public:
+   {
+     if (mShell)
+       mShell->FreeFrame(aSize, aFreeChunk);
+   }
+ 
+   /**
+    * Get the font metrics for a given font.
+    */
+-  virtual NS_HIDDEN_(already_AddRefed<nsIFontMetrics>)
+-   GetMetricsForExternal(const nsFont& aFont);
+   NS_HIDDEN_(already_AddRefed<nsIFontMetrics>)
+-    GetMetricsForInternal(const nsFont& aFont);
+-#ifdef _IMPL_NS_LAYOUT
+-  already_AddRefed<nsIFontMetrics> GetMetricsFor(const nsFont& aFont)
+-  { return GetMetricsForInternal(aFont); }
+-#else
+-  already_AddRefed<nsIFontMetrics> GetMetricsFor(const nsFont& aFont)
+-  { return GetMetricsForExternal(aFont); }
+-#endif
++  GetMetricsFor(const nsFont& aFont);
+ 
+   /**
+    * Get the default font corresponding to the given ID.  This object is
+    * read-only, you must copy the font to modify it.
+    * 
+    * When aFontID is kPresContext_DefaultVariableFontID or
+    * kPresContext_DefaultFixedFontID (which equals
+    * kGenericFont_moz_fixed, which is used for the -moz-fixed generic),
+@@ -299,25 +290,17 @@ public:
+    * as the default font size for variable or fixed fonts for the pres
+    * context's language group.
+    *
+    * For aFontID corresponds to a CSS Generic, the nsFont returned has
+    * its name as the name or names of the fonts in the user's
+    * preferences for the given generic and the pres context's language
+    * group, and its size set to the default variable font size.
+    */
+-  virtual NS_HIDDEN_(const nsFont*) GetDefaultFontExternal(PRUint8 aFontID) const;
+-  NS_HIDDEN_(const nsFont*) GetDefaultFontInternal(PRUint8 aFontID) const;
+-#ifdef _IMPL_NS_LAYOUT
+-  const nsFont* GetDefaultFont(PRUint8 aFontID) const
+-  { return GetDefaultFontInternal(aFontID); }
+-#else
+-  const nsFont* GetDefaultFont(PRUint8 aFontID) const
+-  { return GetDefaultFontExternal(aFontID); }
+-#endif
++  NS_HIDDEN_(const nsFont*) GetDefaultFont(PRUint8 aFontID) const;
+ 
+   /** Get a cached boolean pref, by its type */
+   // *  - initially created for bugs 31816, 20760, 22963
+   PRBool GetCachedBoolPref(nsPresContext_CachedBoolPrefType aPrefType) const
+   {
+     // If called with a constant parameter, the compiler should optimize
+     // this switch statement away.
+     switch (aPrefType) {
+@@ -534,19 +517,16 @@ public:
+   static PRInt32 AppUnitsToIntCSSPixels(nscoord aAppUnits)
+   { return NSAppUnitsToIntPixels(aAppUnits,
+                                  nsIDeviceContext::AppUnitsPerCSSPixel()); }
+ 
+   static float AppUnitsToFloatCSSPixels(nscoord aAppUnits)
+   { return NSAppUnitsToFloatPixels(aAppUnits,
+                                    nsIDeviceContext::AppUnitsPerCSSPixel()); }
+ 
+-  static gfxFloat AppUnitsToGfxCSSPixels(nscoord aAppUnits)
+-  { return nsIDeviceContext::AppUnitsToGfxCSSPixels(aAppUnits); }
+-
+   nscoord DevPixelsToAppUnits(PRInt32 aPixels) const
+   { return NSIntPixelsToAppUnits(aPixels,
+                                  mDeviceContext->AppUnitsPerDevPixel()); }
+ 
+   PRInt32 AppUnitsToDevPixels(nscoord aAppUnits) const
+   { return NSAppUnitsToIntPixels(aAppUnits,
+                                  mDeviceContext->AppUnitsPerDevPixel()); }
+ 
+@@ -569,42 +549,22 @@ public:
+ 
+   // Margin-specific version, since they often need TwipsToAppUnits
+   nsMargin TwipsToAppUnits(const nsMargin &marginInTwips) const
+   { return nsMargin(TwipsToAppUnits(marginInTwips.left), 
+                     TwipsToAppUnits(marginInTwips.top),
+                     TwipsToAppUnits(marginInTwips.right),
+                     TwipsToAppUnits(marginInTwips.bottom)); }
+ 
+-  PRInt32 AppUnitsToTwips(nscoord aTwips) const
+-  { return NS_INCHES_TO_TWIPS((float)aTwips /
+-                              mDeviceContext->AppUnitsPerInch()); }
+-
+   nscoord PointsToAppUnits(float aPoints) const
+   { return NSToCoordRound(aPoints * mDeviceContext->AppUnitsPerInch() /
+                           POINTS_PER_INCH_FLOAT); }
+-  float AppUnitsToPoints(nscoord aAppUnits) const
+-  { return (float)aAppUnits / mDeviceContext->AppUnitsPerInch() *
+-      POINTS_PER_INCH_FLOAT; }
+ 
+   nscoord RoundAppUnitsToNearestDevPixels(nscoord aAppUnits) const
+   { return DevPixelsToAppUnits(AppUnitsToDevPixels(aAppUnits)); }
+-
+-  /**
+-   * Get the language-specific transform type for the current document.
+-   * This tells us whether we need to perform special language-dependent
+-   * transformations such as Unicode U+005C (backslash) to Japanese
+-   * Yen Sign (Unicode U+00A5, JIS 0x5C).
+-   *
+-   * @param aType returns type, must be non-NULL
+-   */
+-  nsLanguageSpecificTransformType LanguageSpecificTransformType() const
+-  {
+-    return mLanguageSpecificTransformType;
+-  }
+ 
+   struct ScrollbarStyles {
+     // Always one of NS_STYLE_OVERFLOW_SCROLL, NS_STYLE_OVERFLOW_HIDDEN,
+     // or NS_STYLE_OVERFLOW_AUTO.
+     PRUint8 mHorizontal, mVertical;
+     ScrollbarStyles(PRUint8 h, PRUint8 v) : mHorizontal(h), mVertical(v) {}
+     ScrollbarStyles() {}
+   };
+@@ -849,17 +809,16 @@ protected:
+   nsPropertyTable       mPropertyTable;
+ 
+   nsRegion              mSameDocDirtyRegion;
+   nsRegion              mCrossDocDirtyRegion;
+ 
+   // container for per-context fonts (downloadable, SVG, etc.)
+   gfxUserFontSet* mUserFontSet;
+   
+-  nsLanguageSpecificTransformType mLanguageSpecificTransformType;
+   PRInt32               mFontScaler;
+   nscoord               mMinimumFontSize;
+ 
+   nsRect                mVisibleArea;
+   nsSize                mPageSize;
+   float                 mPageScale;
+   float                 mPPScale;
+ 
+diff -r 9929cf926c62 layout/base/nsPresShell.cpp
+--- a/layout/base/nsPresShell.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/layout/base/nsPresShell.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -4910,34 +4910,52 @@ PresShell::RenderDocument(const nsRect& 
+                           gfxContext* aThebesContext)
+ {
+   NS_ENSURE_TRUE(!aUntrusted, NS_ERROR_NOT_IMPLEMENTED);
+ 
+   gfxRect r(0, 0,
+             nsPresContext::AppUnitsToFloatCSSPixels(aRect.width),
+             nsPresContext::AppUnitsToFloatCSSPixels(aRect.height));
+   aThebesContext->Save();
+-  aThebesContext->Clip(r);
+-
+-  aThebesContext->PushGroup(NS_GET_A(aBackgroundColor) == 0xff ?
+-                            gfxASurface::CONTENT_COLOR :
+-                            gfxASurface::CONTENT_COLOR_ALPHA);
+-
+-  aThebesContext->Save();
++
++  aThebesContext->NewPath();
++#ifdef MOZ_GFX_MOBILE_OPTIMIZE
++  aThebesContext->Rectangle(r, PR_TRUE);
++#else
++  aThebesContext->Rectangle(r);
++#endif
++  aThebesContext->Clip();
++
++  // we can avoid using a temporary surface if we're using OPERATOR_OVER
++  // and our background color has no alpha (so we'll be compositing on top
++  // of a fully opaque solid color region)
++  PRBool needsGroup = PR_TRUE;
++  if (aThebesContext->CurrentOperator() == gfxContext::OPERATOR_OVER &&
++      NS_GET_A(aBackgroundColor) == 0xff)
++    needsGroup = PR_FALSE;
++
++  if (needsGroup) {
++    aThebesContext->PushGroup(NS_GET_A(aBackgroundColor) == 0xff ?
++                              gfxASurface::CONTENT_COLOR :
++                              gfxASurface::CONTENT_COLOR_ALPHA);
++
++    aThebesContext->Save();
++  }
+ 
+   // draw background color
+   if (NS_GET_A(aBackgroundColor) > 0) {
+     aThebesContext->SetColor(gfxRGBA(aBackgroundColor));
+     aThebesContext->SetOperator(gfxContext::OPERATOR_SOURCE);
+     aThebesContext->Paint();
+   }
+ 
+   // we want the window to be composited as a single image using
+-  // whatever operator was set, so set this to the default OVER;
+-  // the original operator will be present when we PopGroup
++  // whatever operator was set; set OPERATOR_OVER here, which is
++  // either already the case, or overrides the operator in a group.
++  // the original operator will be present when we PopGroup.
+   aThebesContext->SetOperator(gfxContext::OPERATOR_OVER);
+ 
+   nsIFrame* rootFrame = FrameManager()->GetRootFrame();
+   if (rootFrame) {
+     nsDisplayListBuilder builder(rootFrame, PR_FALSE, PR_FALSE);
+     nsDisplayList list;
+ 
+     nsRect rect(aRect);
+@@ -4974,19 +4992,22 @@ PresShell::RenderDocument(const nsRect& 
+       list.Paint(&builder, rc, rect);
+       // Flush the list so we don't trigger the IsEmpty-on-destruction assertion
+       list.DeleteAll();
+ 
+       aThebesContext->Restore();
+     }
+   }
+ 
+-  aThebesContext->Restore();
+-  aThebesContext->PopGroupToSource();
+-  aThebesContext->Paint();
++  // if we had to use a group, paint it to the destination now
++  if (needsGroup) {
++    aThebesContext->Restore();
++    aThebesContext->PopGroupToSource();
++    aThebesContext->Paint();
++  }
+ 
+   aThebesContext->Restore();
+ 
+   return NS_OK;
+ }
+ 
+ /*
+  * Clip the display list aList to a range. Returns the clipped
+diff -r 9929cf926c62 layout/generic/crashtests/411213-1.html
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/layout/generic/crashtests/411213-1.html	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,9 @@
++<html xmlns="http://www.w3.org/1999/xhtml" style="direction: rtl;">
++<body onload="document.getElementById('i').style.fontSize = '10em';">
++
++<div style="-moz-column-width: 60px;"><div id="i" style="overflow: -moz-hidden-unscrollable; white-space: pre;">
++ b
++</div></div>
++
++</body>
++</html>
+diff -r 9929cf926c62 layout/generic/crashtests/411213-2.xml
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/layout/generic/crashtests/411213-2.xml	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,8 @@
++<html xmlns="http://www.w3.org/1999/xhtml" style="direction: rtl;">
++<body onload="document.getElementById('i').style.fontSize = '10em';">
++
++<div style="-moz-column-width: 60px;"><div id="i" style="overflow: -moz-hidden-unscrollable; white-space: pre;">
++ b</div></div>
++
++</body>
++</html>
+diff -r 9929cf926c62 layout/generic/crashtests/413582-1.xhtml
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/layout/generic/crashtests/413582-1.xhtml	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,9 @@
++<html xmlns="http://www.w3.org/1999/xhtml">
++<head>
++</head>
++<body>
++
++<div style="-moz-column-count: 2; text-indent: 11px;"> <div style="float: right;"></div><select style="float: right;"></select></div>
++    
++</body>
++</html>
+diff -r 9929cf926c62 layout/generic/crashtests/413582-2.html
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/layout/generic/crashtests/413582-2.html	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,9 @@
++<html>
++<head></head>
++<body>
++<div style="-moz-column-count: 2;">r
++<span style="float: right;"></span>
++<textarea style="float: left;"></textarea>
++</div>
++</body>
++</html>
+diff -r 9929cf926c62 layout/generic/crashtests/437156-1.html
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/layout/generic/crashtests/437156-1.html	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,10 @@
++<!DOCTYPE html>
++<html>
++<head>
++</head>
++<body onload="document.getElementById('c').style.counterIncrement = 'c';">
++
++<div style="-moz-column-width: 1px;"><div id="c"><div style="float: right;">T<iframe></iframe></div></div></div>
++
++</body>
++</html>
+\ No newline at end of file
+diff -r 9929cf926c62 layout/generic/crashtests/438259-1.html
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/layout/generic/crashtests/438259-1.html	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,13 @@
++<!DOCTYPE html>
++<html>
++<head>
++<style type="text/css">
++
++div:first-letter { font-size: 7em; }
++
++</style>
++</head>
++
++<body style="width: 3px; float: left;" onload="document.body.style.direction = 'rtl';"><div><br> A B</div></body>
++
++</html>
+diff -r 9929cf926c62 layout/generic/crashtests/crashtests.list
+--- a/layout/generic/crashtests/crashtests.list	Thu Oct 09 11:49:17 2008 +0100
++++ b/layout/generic/crashtests/crashtests.list	Fri Oct 10 00:51:59 2008 -0500
+@@ -124,27 +124,33 @@ load 407009-1.xhtml
+ load 407009-1.xhtml
+ load 408304-1.xhtml
+ load 408602-1.html
+ load 408737-1.html
+ load 408737-2.html
+ load 408749-1.xhtml
+ load 408883-1.html
+ load 410228-1.html
++load 411213-1.html
++load 411213-2.xml
+ load 411851-1.html
+ load 412201-1.xhtml
+ load 412543-1.html
+ load 413048-1.html
++load 413582-1.xhtml
++load 413582-2.html
+ load 414061-1.html
+ load 414719-1.html
+ load 415685-1.html
+ load 416264-1.html
+ load 416476-1.html
+ load 418532-1.html
+ load 421404-1.html
+ load 422283-1.html
+ load 422301-1.html
+ load 423055-1.html
+ load 425253-1.html
+ load 426272-1.html
+ load 429981-1.html
+ load 430352-1.html
++load 437156-1.html
++load 438259-1.html
+ load 448903-1.html
+diff -r 9929cf926c62 layout/reftests/bugs/reftest.list
+--- a/layout/reftests/bugs/reftest.list	Thu Oct 09 11:49:17 2008 +0100
++++ b/layout/reftests/bugs/reftest.list	Fri Oct 10 00:51:59 2008 -0500
+@@ -906,16 +906,17 @@ random == 429849-1.html 429849-1-ref.htm
+ == 439639-1.html 439639-1-ref.html
+ == 439910.html 439910-ref.html
+ == 441259-1.html 441259-1-ref.html
+ fails == 441259-2.html 441259-2-ref.html # bug 441400
+ == 444015-1.html 444015-1-ref.html
+ == 444928-1.html 444928-1-ref.html
+ == 444928-2.html 444928-2-ref.html
+ != 444928-3.html 444928-3-notref.html
++# == 448193.html 448193-ref.html  # Fails due to 2 small single-pixel differences
+ # == 448987.html 448987-ref.html  # Disabled for now - it needs privileges
+ == 449171-1.html 449171-ref.html
+ == 449519-1.html 449519-1-ref.html
+ # == 449653-1.html 449653-1-ref.html # Disabled for now - it needs privileges
+ == 450670-1.html 450670-1-ref.html
+ == 451168-1.html 451168-1-ref.html
+ == 452964-1.html 452964-1-ref.html
+ == 454361.html about:blank
+diff -r 9929cf926c62 modules/plugin/base/src/nsPluginHostImpl.cpp
+--- a/modules/plugin/base/src/nsPluginHostImpl.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/modules/plugin/base/src/nsPluginHostImpl.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -87,17 +87,16 @@
+ #include "nsHashtable.h"
+ #include "nsIProxyInfo.h"
+ #include "nsObsoleteModuleLoading.h"
+ #include "nsIComponentRegistrar.h"
+ #include "nsPluginLogging.h"
+ #include "nsIPrefBranch2.h"
+ #include "nsIScriptChannel.h"
+ #include "nsPrintfCString.h"
+-#include "nsVersionComparator.h"
+ 
+ // Friggin' X11 has to "#define None". Lame!
+ #ifdef None
+ #undef None
+ #endif
+ 
+ #ifdef CursorShape
+ #undef CursorShape /*X.h defines it as 0,
+@@ -199,20 +198,17 @@
+ // 0.03 changed name, description and mime desc from string to bytes, bug 108246
+ // 0.04 added new mime entry point on Mac, bug 113464
+ // 0.05 added new entry point check for the default plugin, bug 132430
+ // 0.06 strip off suffixes in mime description strings, bug 53895
+ // 0.07 changed nsIRegistry to flat file support for caching plugins info
+ // 0.08 mime entry point on MachO, bug 137535
+ // 0.09 the file encoding is changed to UTF-8, bug 420285
+ // 0.10 added plugin versions on appropriate platforms, bug 427743
+-// The current plugin registry version (and the maximum version we know how to read)
+ static const char *kPluginRegistryVersion = "0.10";
+-// The minimum registry version we know how to read
+-static const char *kMinimumRegistryVersion = "0.9";
+ ////////////////////////////////////////////////////////////////////////
+ // CID's && IID's
+ static NS_DEFINE_IID(kIPluginInstanceIID, NS_IPLUGININSTANCE_IID);
+ static NS_DEFINE_CID(kPluginCID, NS_PLUGIN_CID);
+ static NS_DEFINE_IID(kIPluginTagInfo2IID, NS_IPLUGINTAGINFO2_IID);
+ static const char kDirectoryServiceContractID[] = "@mozilla.org/file/directory_service;1";
+ // for the dialog
+ static NS_DEFINE_CID(kCPluginManagerCID, NS_PLUGINMANAGER_CID); // needed for NS_TRY_SAFE_CALL
+@@ -5773,55 +5769,42 @@ nsPluginHostImpl::ReadPluginInfo()
+   }
+ 
+   // VersionLiteral
+   if (PL_strcmp(values[0], "Version")) {
+     return rv;
+   }
+ 
+   // kPluginRegistryVersion
+-  PRInt32 vdiff = NS_CompareVersions(values[1], kPluginRegistryVersion);
+-  // If this is a registry from some future version then don't attempt to read it
+-  if (vdiff > 0) {
+-    return rv;
+-  }
+-  // If this is a registry from before the minimum then don't attempt to read it
+-  if (NS_CompareVersions(values[1], kMinimumRegistryVersion) < 0) {
++  if (PL_strcmp(values[1], kPluginRegistryVersion)) {
+     return rv;
+   }
+ 
+   if (!ReadSectionHeader(reader, "PLUGINS")) {
+     return rv;
+   }
+ 
+   while (reader.NextLine()) {
+     char *filename = reader.LinePtr();
+     if (!reader.NextLine())
+       return rv;
+ 
+     char *fullpath = reader.LinePtr();
+     if (!reader.NextLine())
+       return rv;
+ 
+-    char *version;
+-    if (NS_CompareVersions(values[1], "0.10") >= 0) {
+-      version = reader.LinePtr();
+-      if (!reader.NextLine())
+-        return rv;
+-    }
+-    else {
+-      version = "0";
+-    }
++    char *version = reader.LinePtr();
++    if (!reader.NextLine())
++      return rv;
+ 
+     // lastModifiedTimeStamp|canUnload|tag.mFlag
+     if (3 != reader.ParseLine(values, 3))
+       return rv;
+ 
+-    // If this is an old plugin registry mark this plugin tag to be refreshed
+-    PRInt64 lastmod = vdiff == 0 ? nsCRT::atoll(values[0]) : -1;
++    PRInt64 lastmod = nsCRT::atoll(values[0]);
+     PRBool canunload = atoi(values[1]);
+     PRUint32 tagflag = atoi(values[2]);
+     if (!reader.NextLine())
+       return rv;
+ 
+     char *description = reader.LinePtr();
+     if (!reader.NextLine())
+       return rv;
+diff -r 9929cf926c62 modules/plugin/test/Makefile.in
+--- a/modules/plugin/test/Makefile.in	Thu Oct 09 11:49:17 2008 +0100
++++ b/modules/plugin/test/Makefile.in	Fri Oct 10 00:51:59 2008 -0500
+@@ -37,17 +37,13 @@
+ 
+ DEPTH		= ../../..
+ topsrcdir	= @top_srcdir@
+ srcdir		= @srcdir@
+ VPATH		= @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
+-MODULE = test_plugin
++MODULE = plugin
+ 
+ DIRS = testplugin
+ 
+-XPCSHELL_TESTS = \
+-  unit \
+-  $(NULL)
+-
+ include $(topsrcdir)/config/rules.mk
+diff -r 9929cf926c62 modules/plugin/test/unit/test_bug455213.js
+--- a/modules/plugin/test/unit/test_bug455213.js	Thu Oct 09 11:49:17 2008 +0100
++++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+@@ -1,160 +0,0 @@
+-/* ***** BEGIN LICENSE BLOCK *****
+- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+- *
+- * The contents of this file are subject to the Mozilla Public License Version
+- * 1.1 (the "License"); you may not use this file except in compliance with
+- * the License. You may obtain a copy of the License at
+- * http://www.mozilla.org/MPL/
+- *
+- * Software distributed under the License is distributed on an "AS IS" basis,
+- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+- * for the specific language governing rights and limitations under the
+- * License.
+- *
+- * The Original Code is mozilla.org code.
+- *
+- * The Initial Developer of the Original Code is
+- *      Dave Townsend <dtownsend@oxymoronical.com>.
+- *
+- * Portions created by the Initial Developer are Copyright (C) 2007
+- * the Initial Developer. All Rights Reserved.
+- *
+- * Contributor(s):
+- *
+- * Alternatively, the contents of this file may be used under the terms of
+- * either the GNU General Public License Version 2 or later (the "GPL"), or
+- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+- * in which case the provisions of the GPL or the LGPL are applicable instead
+- * of those above. If you wish to allow use of your version of this file only
+- * under the terms of either the GPL or the LGPL, and not to allow others to
+- * use your version of this file under the terms of the MPL, indicate your
+- * decision by deleting the provisions above and replace them with the notice
+- * and other provisions required by the GPL or the LGPL. If you do not delete
+- * the provisions above, a recipient may use your version of this file under
+- * the terms of any one of the MPL, the GPL or the LGPL.
+- *
+- * ***** END LICENSE BLOCK *****
+- */
+-
+-const Cc = Components.classes;
+-const Ci = Components.interfaces;
+-
+-const NS_APP_USER_PROFILE_50_DIR      = "ProfD";
+-const NS_APP_PROFILE_DIR_STARTUP      = "ProfDS";
+-
+-var gProfD;
+-var gDirSvc = Cc["@mozilla.org/file/directory_service;1"].
+-             getService(Ci.nsIProperties);
+-
+-// Creates a fake profile folder that the pluginhost will read our crafted
+-// pluginreg.dat from
+-function createProfileFolder() {
+-  gProfD = gDirSvc.get("CurProcD", Ci.nsILocalFile);
+-  gProfD = gProfD.parent.parent;
+-  gProfD.append("_tests");
+-  gProfD.append("xpcshell-simple");
+-  gProfD.append("test_plugin");
+-  gProfD.append("profile");
+-  
+-  if (gProfD.exists())
+-    gProfD.remove(true);
+-  gProfD.create(Components.interfaces.nsIFile.DIRECTORY_TYPE, 0755);
+-  
+-  var dirProvider = {
+-    getFile: function(prop, persistent) {
+-      persistent.value = true;
+-      if (prop == NS_APP_USER_PROFILE_50_DIR ||
+-          prop == NS_APP_PROFILE_DIR_STARTUP)
+-        return gProfD.clone();
+-      return null;
+-    },
+-    QueryInterface: function(iid) {
+-      if (iid.equals(Ci.nsIDirectoryServiceProvider) ||
+-          iid.equals(Ci.nsISupports)) {
+-        return this;
+-      }
+-      throw Components.results.NS_ERROR_NO_INTERFACE;
+-    }
+-  };
+-  gDirSvc.QueryInterface(Ci.nsIDirectoryService)
+-         .registerProvider(dirProvider);
+-}
+-
+-// Writes out some plugin registry to the profile
+-function write_registry(version, info) {
+-  var header = "Generated File. Do not edit.\n\n";
+-  header += "[HEADER]\n";
+-  header += "Version:" + version + ":$\n\n";
+-  header += "[PLUGINS]\n";
+-
+-  var registry = gProfD.clone();
+-  registry.append("pluginreg.dat");
+-  var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"]
+-                           .createInstance(Components.interfaces.nsIFileOutputStream);
+-  // write, create, truncate
+-  foStream.init(registry, 0x02 | 0x08 | 0x20, 0666, 0); 
+-
+-  var charset = "UTF-8"; // Can be any character encoding name that Mozilla supports
+-  var os = Cc["@mozilla.org/intl/converter-output-stream;1"].
+-           createInstance(Ci.nsIConverterOutputStream);
+-  os.init(foStream, charset, 0, 0x0000);
+-  
+-  os.writeString(header);
+-  os.writeString(info);
+-  os.close();
+-}
+-
+-// Finds the test plugin library
+-function get_test_plugin() {
+-  var plugins = gDirSvc.get("CurProcD", Ci.nsILocalFile);
+-  plugins.append("plugins");
+-  do_check_true(plugins.exists());
+-  var plugin = plugins.clone();
+-  plugin.append("Test.plugin");
+-  if (plugin.exists()) {
+-    plugin.normalize();
+-    return plugin;
+-  }
+-  return null;
+-}
+-
+-// Finds the test nsIPluginTag
+-function get_test_plugintag() {
+-  var host = Cc["@mozilla.org/plugin/host;1"].
+-             getService(Ci.nsIPluginHost);
+-  var tags = host.getPluginTags({});
+-  for (var i = 0; i < tags.length; i++) {
+-    if (tags[i].name == "Test Plug-in")
+-      return tags[i];
+-  }
+-  return null;
+-}
+-
+-function run_test() {
+-  createProfileFolder();
+-  var file = get_test_plugin();
+-  if (!file)
+-    do_throw("Plugin library not found");
+-
+-  // Write out a 0.9 version registry that marks the test plugin as disabled
+-  var registry = "";
+-  registry += file.leafName + ":$\n";
+-  registry += file.path + ":$\n";
+-  registry += file.lastModifiedTime + ":0:0" + ":$\n";
+-  registry += "Plug-in for testing purposes." + ":$\n";
+-  registry += "Test Plug-in" + ":$\n";
+-  registry += "1\n";
+-  registry += "0:application/x-test:Test mimetype:tst" + ":$\n";
+-  write_registry("0.9", registry);
+-
+-  var plugin = get_test_plugintag();
+-  if (!plugin)
+-    do_throw("Plugin tag not found");
+-
+-  // If the plugin was not rescanned then this version will not be correct
+-  do_check_eq(plugin.version, "1.0.0.0");
+-  do_check_eq(plugin.description, "Plug-in for testing purposes.");
+-  // If the plugin registry was not read then the plugin will not be disabled
+-  do_check_true(plugin.disabled);
+-  do_check_false(plugin.blocklisted);
+-}
+diff -r 9929cf926c62 parser/htmlparser/src/nsElementTable.cpp
+--- a/parser/htmlparser/src/nsElementTable.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/parser/htmlparser/src/nsElementTable.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -191,1230 +191,1111 @@ const nsHTMLElement gHTMLElements[] = {
+ const nsHTMLElement gHTMLElements[] = {
+   {
+     /*tag*/                             eHTMLTag_unknown,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,  
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer, 10,
+-    /*special parents,kids,skip*/       0,&gUnknownKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gUnknownKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_a,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, kInlineEntity, kNone,  
+     /*special props, prop-range*/       kVerifyHierarchy, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_abbr,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_acronym,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_address,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock, kInlineEntity, kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gAddressKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gAddressKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_applet,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kSelf|kInlineEntity|kFlowEntity), kNone,
+     /*special props, prop-range*/       kRequiresBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gContainsParam,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gContainsParam,
+   },
+   {
+     /*tag*/                             eHTMLTag_area,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gAreaParent,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kInlineEntity, kSelf,
+     /*special props, prop-range*/       kNonContainer,kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gAreaParent,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gAreaParent,0,
+   },
+ #if defined(MOZ_MEDIA)
+   {
+     /*tag*/                             eHTMLTag_audio,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0, 0, 0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kFlowEntity|kSelf), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gAudioKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gAudioKids,
+   },
+ #endif
+   {
+     /*tag*/                             eHTMLTag_b,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kInlineEntity|kSelf), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_base,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInHead,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kHeadContent, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer, kNoPropRange,
+-    /*special parents,kids,skip*/       &gInHead,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInHead,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_basefont,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, kInlineEntity, kNone,
+     /*special props, prop-range*/       kNonContainer, kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_bdo,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_bgsound,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          (kFlowEntity|kHeadMisc), kNone, kNone,
+     /*special props, prop-range*/       kNonContainer,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_big,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kInlineEntity|kSelf), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_blink,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kFlowEntity|kSelf), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_blockquote,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,  //remove excludeable parents to fix bug 53473
+     /*parent,incl,exclgroups*/          kBlock, (kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_body,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_frameset,
+     /*rootnodes,endrootnodes*/          &gInHTML,&gInHTML,
+     /*autoclose starttags and endtags*/ &gBodyAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kHTMLContent,(kFlowEntity|kSelf), kNone,
+     /*special props, prop-range*/       kOmitEndTag, kBodyPropRange,
+-    /*special parents,kids,skip*/       0,&gBodyKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gBodyKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_br,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, kNone, kNone,
+     /*special props, prop-range*/       kRequiresBody|kNonContainer, kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_button,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFormControl, kFlowEntity, kFormControl,
+     /*special props, prop-range*/       kRequiresBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gButtonKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gButtonKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_canvas,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kFlowEntity|kSelf), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_caption,
+     /*req-parent excl-parent*/          eHTMLTag_table,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInTable,&gInTable,
+     /*autoclose starttags and endtags*/ &gCaptionAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kFlowEntity, kSelf,
+     /*special props, prop-range*/       (kNoPropagate|kNoStyleLeaksOut),kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInTable,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInTable,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_center,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock, (kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_cite,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_code,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_col,
+     /*req-parent excl-parent*/          eHTMLTag_table,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gColParents,&gColParents,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kNone,
+     /*special props, prop-range*/       kNoPropagate|kNonContainer,kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gColParents,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gColParents,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_colgroup,
+     /*req-parent excl-parent*/          eHTMLTag_table,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInTable,&gInTable,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kNone,
+     /*special props, prop-range*/       kNoPropagate,kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInTable,&gColgroupKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInTable,&gColgroupKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_dd,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gDTCloseTags,0,&gDLKids,0,
+     /*parent,incl,exclgroups*/          kInlineEntity, kFlowEntity, kNone,
+     /*special props, prop-range*/       kNoPropagate|kMustCloseSelf|kVerifyHierarchy|kRequiresBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInDL,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInDL,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_del,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, (kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInBody,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInBody,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_dfn,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_dir,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gOLRootTags,&gOLRootTags,
+     /*autoclose starttags and endtags*/ &gOLAutoClose, &gULCloseTags, 0,0,
+     /*parent,incl,exclgroups*/          kList, (kFlowEntity|kSelf), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gULKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gULKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_div,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gDivAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock, (kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_dl,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gDLRootTags,&gRootTags,  //fix bug 57634
+     /*autoclose starttags and endtags*/ 0,0,0,&gDTKids,           // DT should not contain DL - bug 100466
+     /*parent,incl,exclgroups*/          kBlock, kSelf|kFlowEntity, kNone,
+     /*special props, prop-range*/       0, kNoPropRange,
+-    /*special parents,kids,skip*/       0,&gDLKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gDLKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_dt,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gDTCloseTags,0,&gDLKids,0,
+     /*parent,incl,exclgroups*/          kInlineEntity, (kFlowEntity-kHeading), kNone,  // dt's parent group is inline - bug 65467
+     /*special props, prop-range*/       (kNoPropagate|kMustCloseSelf|kVerifyHierarchy|kRequiresBody),kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInDL,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInDL,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_em,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_embed,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer|kRequiresBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gContainsParam,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gContainsParam,
+   },
+   {
+     /*tag*/                             eHTMLTag_fieldset,
+     /*requiredAncestor*/                eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock, (kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       kNoPropagate,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gFieldsetKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gFieldsetKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_font,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gFontKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gFontKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_form,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock, kFlowEntity, kNone,
+     /*special props, prop-range*/       kNoStyleLeaksIn, kNoPropRange,
+-    /*special parents,kids,skip*/       0,&gFormKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gFormKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_frame, 
+     /*req-parent excl-parent*/          eHTMLTag_frameset,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInFrameset,&gInFrameset,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kNone,
+     /*special props, prop-range*/       kNoPropagate|kNoStyleLeaksIn|kNonContainer, kNoPropRange,
+-    /*special parents,kids,skip*/       &gInFrameset,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInFrameset,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_frameset,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_body,
+     /*rootnodes,endrootnodes*/          &gFramesetParents,&gInHTML,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kHTMLContent, kSelf, kAllTags,
+     /*special props, prop-range*/       kNoPropagate|kNoStyleLeaksIn, kNoPropRange,
+-    /*special parents,kids,skip*/       &gInHTML,&gFramesetKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInHTML,&gFramesetKids,
+   },
+ 
+   {
+     /*tag*/                             eHTMLTag_h1,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gHeadingTags,  &gHeadingTags, &gHeadingTags,0,
+     /*parent,incl,exclgroups*/          kHeading, kFlowEntity, kNone,
+     /*special props, prop-range*/       kVerifyHierarchy,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_h2,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gHeadingTags,  &gHeadingTags, &gHeadingTags,0,
+     /*parent,incl,exclgroups*/          kHeading, kFlowEntity, kNone,
+     /*special props, prop-range*/       kVerifyHierarchy,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_h3,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gHeadingTags,  &gHeadingTags, &gHeadingTags,0,
+     /*parent,incl,exclgroups*/          kHeading, kFlowEntity, kNone,
+     /*special props, prop-range*/       kVerifyHierarchy,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_h4,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gHeadingTags,  &gHeadingTags, &gHeadingTags,0,
+     /*parent,incl,exclgroups*/          kHeading, kFlowEntity, kNone,
+     /*special props, prop-range*/       kVerifyHierarchy,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_h5,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gHeadingTags,  &gHeadingTags, &gHeadingTags,0,
+     /*parent,incl,exclgroups*/          kHeading, kFlowEntity, kNone,
+     /*special props, prop-range*/       kVerifyHierarchy,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_h6,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gHeadingTags,  &gHeadingTags, &gHeadingTags,0,
+     /*parent,incl,exclgroups*/          kHeading, kFlowEntity, kNone,
+     /*special props, prop-range*/       kVerifyHierarchy,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_head,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInHTML,&gInHTML,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kHTMLContent, (kHeadContent|kHeadMisc), kNone,
+     /*special props, prop-range*/       kNoStyleLeaksIn, kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInHTML,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInHTML,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_hr,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gHRAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer|kRequiresBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_html,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_html,
+     /*rootnodes,endrootnodes*/          &gHTMLRootTags,&gHTMLRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kHTMLContent, kNone,
+     /*special props, prop-range*/       kSaveMisplaced|kOmitEndTag|kNoStyleLeaksIn, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gHtmlKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gHtmlKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_i,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_iframe,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       kNoStyleLeaksIn, kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_image,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_img,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer|kRequiresBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_input,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gInputAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kFormControl, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer|kRequiresBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_ins,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, (kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_isindex,
+     /*requiredAncestor*/                eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock, kFlowEntity, kNone,
+     /*special props, prop-range*/       kNonContainer|kRequiresBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInBody,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInBody,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_kbd,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_keygen,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_label,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFormControl, kInlineEntity, kSelf,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gLabelKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gLabelKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_legend,
+     /*requiredAncestor*/                eHTMLTag_fieldset,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInFieldset,&gInFieldset,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kInlineEntity, kNone,
+     /*special props, prop-range*/       kRequiresBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInFieldset,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInFieldset,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_li,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gLIRootTags,&gLIRootTags,
+     /*autoclose starttags and endtags*/ &gLIAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kBlockEntity, kFlowEntity, kSelf, // changed this back to kBlockEntity so we enable RS handling for phrasals. ref bug 181697
+     /*special props, prop-range*/       kNoPropagate|kVerifyHierarchy|kRequiresBody, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gLIKids,eHTMLTag_unknown,
+-    /*contain-func*/                    &CanBeContainedLI
++    /*special parents,kids*/            0,&gLIKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_link,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInHead,&gInHead,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kAllTags - kHeadContent, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer|kPreferHead|kLegalOpen,kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInHead,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInHead,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_listing,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPreformatted, (kSelf|kFlowEntity), kNone,  //add flowentity to fix 54993
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_map,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, kInlineEntity|kBlockEntity, kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gMapKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gMapKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_marquee,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       kRequiresBody, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_menu,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kList, (kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gULKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gULKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_meta,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInHead,&gInHead,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kHeadContent, kNone, kNone,
+     /*special props, prop-range*/       kNoStyleLeaksIn|kNonContainer, kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInHead,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInHead,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_multicol,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock, kFlowEntity, kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_nobr,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kExtensions, kFlowEntity, kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_noembed, 
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, kFlowEntity, kNone,
+     /*special props, prop-range*/       0, kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_noframes,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gNoframeRoot,&gNoframeRoot,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, kFlowEntity, kNone,
+     /*special props, prop-range*/       0, kNoPropRange,
+-    /*special parents,kids,skip*/       &gNoframeRoot,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gNoframeRoot,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_noscript,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity|kHeadMisc, kFlowEntity|kSelf, kNone,
+     /*special props, prop-range*/       0, kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_object,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kFlowEntity|kSelf), kNone,
+     /*special props, prop-range*/       kNoStyleLeaksOut|kPreferBody,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gContainsParam,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gContainsParam,
+   },
+   {
+     /*tag*/                             eHTMLTag_ol,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gOLRootTags,&gOLRootTags,
+     /*autoclose starttags and endtags*/ &gOLAutoClose, &gULCloseTags, 0,0,
+     /*parent,incl,exclgroups*/          kList, (kFlowEntity|kSelf), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,   
+-    /*special parents,kids,skip*/       0,&gULKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gULKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_optgroup,
+     /*requiredAncestor*/                eHTMLTag_select,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gOptgroupParents,&gOptgroupParents,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gOptgroupParents,&gContainsOpts,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gOptgroupParents,&gContainsOpts,
+   },
+   {
+     /*tag*/                             eHTMLTag_option,
+     /*requiredAncestor*/                eHTMLTag_select,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gOptgroupParents,&gOptgroupParents, 
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kPCDATA, kFlowEntity|kHeadMisc,
+     /*special props, prop-range*/       kNoStyleLeaksIn|kNoPropagate, kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gOptgroupParents,&gContainedInOpt,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gOptgroupParents,&gContainedInOpt,
+   },
+   {
+     /*tag*/                             eHTMLTag_p,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock, kInlineEntity, kNone,      //this used to contain FLOW. But it's really an inline container.
+     /*special props, prop-range*/       kHandleStrayTag,kDefaultPropRange, //otherwise it tries to contain things like H1..H6
+-    /*special parents,kids,skip*/       0,&gInP,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gInP,
+   },
+   {
+     /*tag*/                             eHTMLTag_param,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gParamParents,&gParamParents,
+     /*autoclose starttags and endtags*/ &gPAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer, kNoPropRange,
+-    /*special parents,kids,skip*/       &gParamParents,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gParamParents,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_plaintext,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kExtensions, kCDATA, kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_pre,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kBlock|kPreformatted, (kSelf|kFlowEntity), kNone,  // Note: PRE is a block level element - bug 80009
+     /*special props, prop-range*/       kRequiresBody, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gPreKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gPreKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_q,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_s,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_samp,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_script,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          (kSpecial|kHeadContent), kCDATA, kNone,   // note: this is kHeadContent since shipping this breaks things.
+     /*special props, prop-range*/       kNoStyleLeaksIn|kLegalOpen, kNoPropRange,
+-    /*special parents,kids,skip*/       0,&gContainsText,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gContainsText,
+   },
+   {
+     /*tag*/                             eHTMLTag_select,
+     /*requiredAncestor*/                eHTMLTag_unknown, eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInForm,&gInForm,
+     /*autoclose starttags and endtags*/ &gInputAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kFormControl, kNone, kFlowEntity|kDLChild|kHeadMisc, // Added kHeadMisc to fix bug 287349
+     /*special props, prop-range*/       kNoPropagate|kNoStyleLeaksIn|kRequiresBody, kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInForm,&gContainsOpts,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInForm,&gContainsOpts,
+   },
+   {
+     /*tag*/                             eHTMLTag_small,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+ #if defined(MOZ_MEDIA)
+   {
+     /*tag*/                             eHTMLTag_source,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gSourceParents,&gSourceParents,
+     /*autoclose starttags and endtags*/ &gPAutoClose, 0, 0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer,kNoPropRange,
+-    /*special parents,kids,skip*/       &gSourceParents,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gSourceParents,0,
+   },
+ #endif
+   {
+     
+     /*tag*/                             eHTMLTag_spacer,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kExtensions, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     
+           // I made span a special% tag again, (instead of inline).
+           // This fixes the case:  <font color="blue"><p><span>text</span>
+ 
+     /*tag*/                             eHTMLTag_span,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kInlineEntity|kSelf|kFlowEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     
+     /*tag*/                             eHTMLTag_strike,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     
+     /*tag*/                             eHTMLTag_strong,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,  //changed this to inline per spec; fix bug 44584.
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gContainsText,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gContainsText,
+   },
+   {
+     
+     /*tag*/                             eHTMLTag_style,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kAllTags - kHeadContent, kCDATA, kNone,
+     /*special props, prop-range*/       kNoStyleLeaksIn|kPreferHead|kLegalOpen, kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_sub,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     
+     /*tag*/                             eHTMLTag_sup,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_table,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gTableRootTags,&gTableRootTags,
+     /*autoclose starttags and endtags*/ 0,&gTableCloseTags,0,0,
+     /*parent,incl,exclgroups*/          kBlock, kNone, (kSelf|kInlineEntity),
+     /*special props, prop-range*/       (kBadContentWatch|kNoStyleLeaksIn|kRequiresBody), 2,
+-    /*special parents,kids,skip*/       0,&gTableKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gTableKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_tbody,
+     /*requiredAncestor*/                eHTMLTag_table, eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInTable,&gInTable,
+     /*autoclose starttags and endtags*/ &gTBodyAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, (kSelf|kInlineEntity),
+     /*special props, prop-range*/       (kNoPropagate|kBadContentWatch|kNoStyleLeaksIn|kNoStyleLeaksOut), kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInTable,&gTBodyKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInTable,&gTBodyKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_td,
+     /*requiredAncestor*/                eHTMLTag_table, eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gTDRootTags,&gTDRootTags,
+     /*autoclose starttags and endtags*/ &gTDCloseTags,&gTDCloseTags,0,&gExcludableParents,
+     /*parent,incl,exclgroups*/          kNone, kFlowEntity, kSelf,
+     /*special props, prop-range*/       kNoStyleLeaksIn|kNoStyleLeaksOut, kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gTDRootTags,&gBodyKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gTDRootTags,&gBodyKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_textarea,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInForm,&gInForm,
+     /*autoclose starttags and endtags*/ &gInputAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kFormControl, kPCDATA, kNone,
+     /*special props, prop-range*/       kRequiresBody|kNoStyleLeaksIn,kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gInForm,&gContainsText,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInForm,&gContainsText,
+   },
+   {
+     /*tag*/                             eHTMLTag_tfoot,
+     /*requiredAncestor*/                eHTMLTag_table, eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInTable,&gInTable,
+     /*autoclose starttags and endtags*/ &gTBodyAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kSelf,
+     /*special props, prop-range*/       (kNoPropagate|kBadContentWatch|kNoStyleLeaksIn|kNoStyleLeaksOut), kNoPropRange,
+-    /*special parents,kids,skip*/       &gInTable,&gTableElemKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInTable,&gTableElemKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_th, 
+     /*requiredAncestor*/                eHTMLTag_table, eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gTDRootTags,&gTDRootTags,
+     /*autoclose starttags and endtags*/ &gTDCloseTags,&gTDCloseTags,0,0,
+     /*parent,incl,exclgroups*/          kNone, kFlowEntity, kSelf,
+     /*special props, prop-range*/       (kNoStyleLeaksIn|kNoStyleLeaksOut), kDefaultPropRange,
+-    /*special parents,kids,skip*/       &gTDRootTags,&gBodyKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gTDRootTags,&gBodyKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_thead,
+     /*req-parent excl-parent*/          eHTMLTag_table,eHTMLTag_unknown,  //fix bug 54840...
+     /*rootnodes,endrootnodes*/          &gInTable,&gInTable,  
+     /*autoclose starttags and endtags*/ &gTBodyAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kSelf,
+     /*special props, prop-range*/       (kNoPropagate|kBadContentWatch|kNoStyleLeaksIn|kNoStyleLeaksOut), kNoPropRange,
+-    /*special parents,kids,skip*/       &gInTable,&gTableElemKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInTable,&gTableElemKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_title,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInHead,&gInHead,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kHeadContent,kPCDATA, kNone,
+     /*special props, prop-range*/       kNoStyleLeaksIn, kNoPropRange,
+-    /*special parents,kids,skip*/       &gInHead,&gContainsText,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInHead,&gContainsText,
+   },
+   {
+     /*tag*/                             eHTMLTag_tr,
+     /*requiredAncestor*/                eHTMLTag_table, eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gTRParents,&gTREndParents,
+     /*autoclose starttags and endtags*/ &gTRCloseTags,0,0,0,
+     /*parent,incl,exclgroups*/          kNone, kNone, kInlineEntity,
+     /*special props, prop-range*/       (kBadContentWatch|kNoStyleLeaksIn|kNoStyleLeaksOut), kNoPropRange,
+-    /*special parents,kids,skip*/       &gTRParents,&gTRKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gTRParents,&gTRKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_tt,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_u,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFontStyle, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0, kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_ul,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gOLRootTags,&gOLRootTags,
+     /*autoclose starttags and endtags*/ &gULAutoClose,&gULCloseTags,0,0,
+     /*parent,incl,exclgroups*/          kList, (kFlowEntity|kSelf), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gULKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gULKids,
+   },
+   {
+     /*tag*/                             eHTMLTag_var,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kPhrase, (kSelf|kInlineEntity), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+ #if defined(MOZ_MEDIA)
+   {
+     /*tag*/                             eHTMLTag_video,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0, 0, 0,0,
+     /*parent,incl,exclgroups*/          kSpecial, (kFlowEntity|kSelf), kNone,
+     /*special props, prop-range*/       0,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,&gVideoKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,&gVideoKids,
+   },
+ #endif
+   {
+     /*tag*/                             eHTMLTag_wbr,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kExtensions, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer|kRequiresBody,kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_xmp,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kInlineEntity|kPreformatted, kCDATA, kNone,
+     /*special props, prop-range*/       kNone,kDefaultPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_text,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInBody,&gInBody,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer|kRequiresBody,kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+           // Whitespace must have a parent model of kHeadMisc to ensure that we
+           // do the right thing for whitespace in the head section of a document.
+           // (i.e., it must be non-exclusively a child of the head).
+ 
+     /*tag*/                             eHTMLTag_whitespace, 
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInBody,&gInBody,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity|kHeadMisc, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer|kLegalOpen,kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+           // Newlines must have a parent model of kHeadMisc to ensure that we
+           // do the right thing for whitespace in the head section of a document.
+           // (i.e., it must be non-exclusively a child of the head).
+ 
+     /*tag*/                             eHTMLTag_newline,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInBody,&gInBody,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity|kHeadMisc, kNone, kNone,
+     /*special props, prop-range*/       kNonContainer|kLegalOpen, kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+           // Comments must have a parent model of kHeadMisc to ensure that we
+           // do the right thing for whitespace in the head section of a document
+           // (i.e., it must be non-exclusively a child of the head).
+ 
+     /*tag*/                             eHTMLTag_comment,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity|kHeadMisc, kNone, kNone,
+     /*special props, prop-range*/       kOmitEndTag|kLegalOpen,kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_entity,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gInBody,&gInBody,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, kNone, kNone,
+     /*special props, prop-range*/       0, kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_doctypeDecl,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, kNone, kNone,
+     /*special props, prop-range*/       kOmitEndTag,kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_markupDecl,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, kNone, kNone,
+     /*special props, prop-range*/       kOmitEndTag,kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+     /*tag*/                             eHTMLTag_instruction,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_unknown,
+     /*rootnodes,endrootnodes*/          0,0,
+     /*autoclose starttags and endtags*/ 0,0,0,0,
+     /*parent,incl,exclgroups*/          kFlowEntity, kNone, kNone,
+     /*special props, prop-range*/       kOmitEndTag,kNoPropRange,
+-    /*special parents,kids,skip*/       0,0,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            0,0,
+   },
+   {
+           // Userdefined tags must have a parent model of kHeadMisc to ensure that
+           // we do the right thing for whitespace in the head section of a document.
+           // (i.e., it must be non-exclusively a child of the head).
+ 
+     /*tag*/                             eHTMLTag_userdefined,
+     /*req-parent excl-parent*/          eHTMLTag_unknown,eHTMLTag_frameset,
+     /*rootnodes,endrootnodes*/          &gRootTags,&gRootTags,
+     /*autoclose starttags and endtags*/ &gBodyAutoClose,0,0,0,
+     /*parent,incl,exclgroups*/          (kFlowEntity|kHeadMisc), (kInlineEntity|kSelf), kNone,  // Treat userdefined as inline element - Ref bug 56245,66772
+     /*special props, prop-range*/       kPreferBody, kBodyPropRange,
+-    /*special parents,kids,skip*/       &gInNoframes,&gBodyKids,eHTMLTag_unknown,
+-    /*contain-func*/                    0
++    /*special parents,kids*/            &gInNoframes,&gBodyKids,
+   }
+ };
+ 
+ #ifdef NS_DEBUG  
+ void CheckElementTable() {
+   for (eHTMLTags t = eHTMLTag_unknown; t <= eHTMLTag_userdefined; t = eHTMLTags(t + 1)) {
+     NS_ASSERTION(gHTMLElements[t].mTagID == t, "gHTMLElements entries does match tag list.");
+   }
+@@ -1458,90 +1339,16 @@ PRBool CanBeContainedLI(eHTMLTags aChild
+         break;
+       }
+     }
+     result=theLIHasABlockParent;
+   }    
+   else {
+     result=PR_TRUE;
+   }
+-  return result;
+-}
+-
+-/**
+- * This is the default implementation, that was moved out of CNavDTD, so that it can be made
+- * to behave in a more flexible manner. At this point, the code itself has not changed.
+- * NOTE: This is not called YET. It's just a placeholder for future changes.
+- *
+- * @update	gess 10/13/00
+- * @param 
+- * @return
+- */ 
+-PRBool nsHTMLElement::CanBeContained(eHTMLTags aChildTag,nsDTDContext &aContext) const {
+-  PRBool result=PR_TRUE;
+-  if(!mCanBeContained) {
+-
+-    /* #    Interesting test cases:       Result:
+-     * 1.   <UL><LI>..<B>..<LI>           inner <LI> closes outer <LI>
+-     * 2.   <CENTER><DL><DT><A><CENTER>   allow nested <CENTER>
+-     * 3.   <TABLE><TR><TD><TABLE>...     allow nested <TABLE>
+-     * 4.   <FRAMESET> ... <FRAMESET>
+-     */
+-
+-    //Note: This method is going away. First we need to get the elementtable to do closures right, and
+-    //      therefore we must get residual style handling to work.
+-
+-    //the changes to this method were added to fix bug 54651...
+-
+-    PRInt32 theCount=aContext.GetCount();
+-    result=PR_TRUE;
+-
+-    if(0<theCount){
+-      const TagList* theRootTags=gHTMLElements[aChildTag].GetRootTags();
+-      const TagList* theSpecialParents=gHTMLElements[aChildTag].GetSpecialParents();
+-      if(theRootTags) {
+-        PRInt32 theRootIndex=LastOf(aContext,*theRootTags);
+-        PRInt32 theSPIndex=(theSpecialParents) ? LastOf(aContext,*theSpecialParents) : kNotFound;  
+-        PRInt32 theChildIndex=GetIndexOfChildOrSynonym(aContext,aChildTag);
+-        PRInt32 theTargetIndex=(theRootIndex>theSPIndex) ? theRootIndex : theSPIndex;
+-
+-        if((theTargetIndex==theCount-1) ||
+-          ((theTargetIndex==theChildIndex) && gHTMLElements[aChildTag].CanContainSelf())) {
+-          result=PR_TRUE;
+-        }
+-        else {
+-        
+-          result=PR_FALSE;
+-
+-          static eHTMLTags gTableElements[]={eHTMLTag_td,eHTMLTag_th};
+-
+-          PRInt32 theIndex=theCount-1;
+-          while(theChildIndex<theIndex) {
+-            eHTMLTags theParentTag=aContext.TagAt(theIndex--);
+-            if (gHTMLElements[theParentTag].IsMemberOf(kBlockEntity)  || 
+-                gHTMLElements[theParentTag].IsMemberOf(kHeading)      || 
+-                gHTMLElements[theParentTag].IsMemberOf(kPreformatted) || 
+-                gHTMLElements[theParentTag].IsMemberOf(kFormControl) || //added this to fix bug 44479
+-                gHTMLElements[theParentTag].IsMemberOf(kList)) {
+-              if(!HasOptionalEndTag(theParentTag)) {
+-                result=PR_TRUE;
+-                break;
+-              }
+-            }
+-            else if(FindTagInSet(theParentTag,gTableElements,sizeof(gTableElements)/sizeof(eHTMLTag_unknown))){
+-              result=PR_TRUE;  //added this to catch a case we missed; bug 57173.
+-              break;
+-            }
+-          }
+-        }
+-      }
+-    }
+-
+-  }
+-  else result=(*mCanBeContained)(aChildTag,aContext);
+   return result;
+ }
+ 
+ /**
+  *  Call this to find the index of a given child, or (if not found)
+  *  the index of its nearest synonym.
+  *   
+  *  @update  gess 3/25/98
+@@ -1845,27 +1652,16 @@ PRBool nsHTMLElement::IsExcludableParent
+  * @update	gess 01/04/99
+  * @param 
+  * @return
+  */
+ PRBool nsHTMLElement::CanOmitEndTag(void) const{
+   PRBool result=!IsContainer(mTagID);
+   if(!result)
+     result=TestBits(mSpecialProperties,kOmitEndTag);
+-  return result;
+-}
+-
+-/**
+- * 
+- * @update	gess 01/04/99
+- * @param 
+- * @return
+- */
+-PRBool nsHTMLElement::CanOmitStartTag(eHTMLTags aChild) const{
+-  PRBool result=PR_FALSE;
+   return result;
+ }
+ 
+ /**
+  * Returns whether a given tag can be a direct child of the <head> node of
+  * an HTML document.
+  *
+  * @param aChild The tag in question.
+diff -r 9929cf926c62 parser/htmlparser/src/nsElementTable.h
+--- a/parser/htmlparser/src/nsElementTable.h	Thu Oct 09 11:49:17 2008 +0100
++++ b/parser/htmlparser/src/nsElementTable.h	Fri Oct 10 00:51:59 2008 -0500
+@@ -201,31 +201,27 @@ struct nsHTMLElement {
+   eHTMLTags       GetCloseTargetForEndTag(nsDTDContext& aContext,PRInt32 anIndex,nsDTDMode aMode) const;
+ 
+   const TagList*        GetSpecialChildren(void) const {return mSpecialKids;}
+   const TagList*        GetSpecialParents(void) const {return mSpecialParents;}
+ 
+   PRBool          IsMemberOf(PRInt32 aType) const;
+   PRBool          ContainsSet(PRInt32 aType) const;
+   PRBool          CanContainType(PRInt32 aType) const;
+-  
+-  eHTMLTags       GetTag(void) const {return mTagID;}
++
+   PRBool          CanContain(eHTMLTags aChild,nsDTDMode aMode) const;
+   PRBool          CanExclude(eHTMLTags aChild) const;
+-  PRBool          CanOmitStartTag(eHTMLTags aChild) const;
+   PRBool          CanOmitEndTag(void) const;
+   PRBool          CanContainSelf(void) const;
+   PRBool          CanAutoCloseTag(nsDTDContext& aContext,PRInt32 aIndex,eHTMLTags aTag) const;
+   PRBool          HasSpecialProperty(PRInt32 aProperty) const;
+   PRBool          IsSpecialParent(eHTMLTags aTag) const;
+   PRBool          IsExcludableParent(eHTMLTags aParent) const;
+   PRBool          SectionContains(eHTMLTags aTag,PRBool allowDepthSearch) const;
+   PRBool          ShouldVerifyHierarchy() const;
+-
+-  PRBool          CanBeContained(eHTMLTags aParentTag,nsDTDContext &aContext) const; //default version
+ 
+   static  PRBool  CanContain(eHTMLTags aParent,eHTMLTags aChild,nsDTDMode aMode);
+   static  PRBool  IsContainer(eHTMLTags aTag) ;
+   static  PRBool  IsResidualStyleTag(eHTMLTags aTag) ;
+   static  PRBool  IsTextTag(eHTMLTags aTag);
+   static  PRBool  IsWhitespaceTag(eHTMLTags aTag);
+ 
+   static  PRBool  IsBlockParent(eHTMLTags aTag);
+@@ -245,18 +241,16 @@ struct nsHTMLElement {
+   const TagList*        mExcludableParents; //These are the TAGS that cannot contain you
+   int             mParentBits;        //defines groups that can contain this element
+   int             mInclusionBits;     //defines parental and containment rules
+   int             mExclusionBits;     //defines things you CANNOT contain
+   int             mSpecialProperties; //used for various special purposes...
+   PRUint32        mPropagateRange;    //tells us how far a parent is willing to prop. badly formed children
+   const TagList*  mSpecialParents;    //These are the special tags that contain this tag (directly)
+   const TagList*  mSpecialKids;       //These are the extra things you can contain
+-  eHTMLTags       mSkipTarget;        //If set, then we skip all content until this tag is seen
+-  ContainFunc     mCanBeContained;
+ }; 
+ 
+ extern const nsHTMLElement gHTMLElements[];
+ 
+ //special property bits...
+ static const int kPreferBody       = 0x0001; //this kHeadMisc tag prefers to be in the body if there isn't an explicit <head>
+ static const int kOmitEndTag       = 0x0002; //safely ignore end tag
+ static const int kLegalOpen        = 0x0004; //Lets BODY, TITLE, SCRIPT to reopen
+diff -r 9929cf926c62 toolkit/components/help/content/help.xul
+--- a/toolkit/components/help/content/help.xul	Thu Oct 09 11:49:17 2008 +0100
++++ b/toolkit/components/help/content/help.xul	Fri Oct 10 00:51:59 2008 -0500
+@@ -179,18 +179,17 @@
+                        label="&printButton.label;"
+                        oncommand="print();"
+                        tooltiptext="&printButton.tooltip;"/>
+         <toolbarspring flex="1"/>
+         <toolbaritem id="search-box"
+                      align="center" pack="center">
+           <label value="&searchtab.label;" accesskey="&searchtab.accesskey;" 
+                  control="findText"/>
+-          <textbox id="findText" type="timed" timeout="500"
+-                   oncommand="doFind();"/>
++          <textbox id="findText" type="search" oncommand="doFind();"/>
+         </toolbaritem>
+       </toolbar>
+     </toolbox>
+ 
+     <hbox flex="1">
+       <vbox id="help-sidebar" persist="width">
+         <vbox flex="1" id="help-toc-sidebar">
+           <sidebarheader align="center">
+diff -r 9929cf926c62 toolkit/mozapps/installer/packager.mk
+--- a/toolkit/mozapps/installer/packager.mk	Thu Oct 09 11:49:17 2008 +0100
++++ b/toolkit/mozapps/installer/packager.mk	Fri Oct 10 00:51:59 2008 -0500
+@@ -332,17 +332,17 @@ ifdef MOZ_OPTIONAL_PKG_LIST
+ 	$(call PACKAGER_COPY, "$(DIST)",\
+ 		"$(DEPTH)/installer-stage/optional", \
+ 		"$(MOZ_PKG_MANIFEST)", "$(PKGCP_OS)", 1, 0, 1 \
+ 		$(foreach pkg,$(MOZ_OPTIONAL_PKG_LIST),$(PKG_ARG)) )
+ endif
+ 	$(PERL) $(MOZILLA_DIR)/xpinstall/packager/xptlink.pl -s $(DIST) -d $(DIST)/xpt -f $(DEPTH)/installer-stage/nonlocalized/components -v -x "$(XPIDL_LINK)"
+ 
+ stage-package: $(MOZ_PKG_MANIFEST) $(MOZ_PKG_REMOVALS_GEN)
+-	@rm -rf $(DIST)/$(MOZ_PKG_APPNAME) $(DIST)/$(PKG_PATH)$(PKG_BASENAME).tar $(DIST)/$(PKG_PATH)$(PKG_BASENAME).dmg $@ $(EXCLUDE_LIST)
++	@rm -rf $(DIST)/$(MOZ_PKG_APPNAME) "$(DIST)/$(PKG_PATH)$(PKG_BASENAME).tar" "$(DIST)/$(PKG_PATH)$(PKG_BASENAME).dmg" $@ $(EXCLUDE_LIST)
+ # NOTE: this must be a tar now that dist links into the tree so that we
+ # do not strip the binaries actually in the tree.
+ 	@echo "Creating package directory..."
+ 	@mkdir $(DIST)/$(MOZ_PKG_APPNAME)
+ ifdef MOZ_PKG_MANIFEST
+ 	$(RM) -rf $(DIST)/xpt
+ 	$(call PACKAGER_COPY, "$(DIST)",\
+ 		 "$(DIST)/$(MOZ_PKG_APPNAME)", \
+diff -r 9929cf926c62 toolkit/mozapps/installer/windows/nsis/makensis.mk
+--- a/toolkit/mozapps/installer/windows/nsis/makensis.mk	Thu Oct 09 11:49:17 2008 +0100
++++ b/toolkit/mozapps/installer/windows/nsis/makensis.mk	Fri Oct 10 00:51:59 2008 -0500
+@@ -67,18 +67,18 @@ endif
+ $(CONFIG_DIR)/7zSD.sfx:
+ 	$(CYGWIN_WRAPPER) upx --best -o $(CONFIG_DIR)/7zSD.sfx $(SFX_MODULE)
+ 
+ installer::
+ 	$(INSTALL) $(CONFIG_DIR)/removed-files.log $(CONFIG_DIR)/setup.exe $(DEPTH)/installer-stage
+ 	cd $(DEPTH)/installer-stage && $(CYGWIN_WRAPPER) 7z a -r -t7z $(ABS_CONFIG_DIR)/app.7z -mx -m0=BCJ2 -m1=LZMA:d24 -m2=LZMA:d19 -m3=LZMA:d19  -mb0:1 -mb0s1:2 -mb0s2:3
+ 	$(MAKE) $(CONFIG_DIR)/7zSD.sfx
+ 	$(NSINSTALL) -D $(DIST)/$(PKG_INST_PATH)
+-	cat $(CONFIG_DIR)/7zSD.sfx $(CONFIG_DIR)/app.tag $(CONFIG_DIR)/app.7z > $(DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe
+-	chmod 0755 $(DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe
++	cat $(CONFIG_DIR)/7zSD.sfx $(CONFIG_DIR)/app.tag $(CONFIG_DIR)/app.7z > "$(DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe"
++	chmod 0755 "$(DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe"
+ 
+ # For building the uninstaller during the application build so it can be
+ # included for mar file generation.
+ uninstaller::
+ 	$(INSTALL) $(addprefix $(MOZILLA_DIR)/toolkit/mozapps/installer/windows/nsis/,$(TOOLKIT_NSIS_FILES)) $(CONFIG_DIR)
+ 	$(INSTALL) $(MOZILLA_DIR)/toolkit/mozapps/installer/windows/nsis/setup.ico $(CONFIG_DIR)
+ 	cd $(CONFIG_DIR) && makensis.exe uninstaller.nsi
+ 	$(NSINSTALL) -D $(DIST)/bin/uninstall
+diff -r 9929cf926c62 toolkit/xre/Makefile.in
+--- a/toolkit/xre/Makefile.in	Thu Oct 09 11:49:17 2008 +0100
++++ b/toolkit/xre/Makefile.in	Fri Oct 10 00:51:59 2008 -0500
+@@ -102,17 +102,16 @@ EXPORTS = \
+ 	$(NULL)
+ 
+ CPPSRCS = \
+ 	nsAppRunner.cpp \
+ 	nsConsoleWriter.cpp \
+ 	nsXREDirProvider.cpp \
+ 	nsNativeAppSupportBase.cpp \
+ 	nsAppData.cpp \
+-	showOSAlert.cpp \
+ 	$(NULL)
+ 
+ DEFINES += -DIMPL_XREAPI
+ 
+ ifndef BUILD_STATIC_LIBS
+ CPPSRCS += nsEmbedFunctions.cpp
+ endif
+ 
+diff -r 9929cf926c62 toolkit/xre/nsAppRunner.cpp
+--- a/toolkit/xre/nsAppRunner.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ b/toolkit/xre/nsAppRunner.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -176,18 +176,16 @@
+ #if defined(DEBUG) && defined(XP_WIN32)
+ #include <malloc.h>
+ #endif
+ 
+ #if defined (XP_MACOSX)
+ #include <Processes.h>
+ #include <Events.h>
+ #endif
+-
+-extern "C" void ShowOSAlert(const char* aMessage);
+ 
+ #ifdef DEBUG
+ #include "prlog.h"
+ #endif
+ 
+ #ifdef MOZ_JPROF
+ #include "jprof.h"
+ #endif
+diff -r 9929cf926c62 toolkit/xre/showOSAlert.cpp
+--- a/toolkit/xre/showOSAlert.cpp	Thu Oct 09 11:49:17 2008 +0100
++++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+@@ -1,92 +0,0 @@
+-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+-/* ***** BEGIN LICENSE BLOCK *****
+- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+- *
+- * The contents of this file are subject to the Mozilla Public License Version
+- * 1.1 (the "License"); you may not use this file except in compliance with
+- * the License. You may obtain a copy of the License at
+- * http://www.mozilla.org/MPL/
+- *
+- * Software distributed under the License is distributed on an "AS IS" basis,
+- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+- * for the specific language governing rights and limitations under the
+- * License.
+- *
+- * The Original Code is Mozilla Communicator client code.
+- *
+- * The Initial Developer of the Original Code is
+- * Netscape Communications Corporation.
+- * Portions created by the Initial Developer are Copyright (C) 1998
+- * the Initial Developer. All Rights Reserved.
+- *
+- * Contributor(s):
+- *   Don Bragg <dbragg@netscape.com>
+- *
+- * Alternatively, the contents of this file may be used under the terms of
+- * either of the GNU General Public License Version 2 or later (the "GPL"),
+- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+- * in which case the provisions of the GPL or the LGPL are applicable instead
+- * of those above. If you wish to allow use of your version of this file only
+- * under the terms of either the GPL or the LGPL, and not to allow others to
+- * use your version of this file under the terms of the MPL, indicate your
+- * decision by deleting the provisions above and replace them with the notice
+- * and other provisions required by the GPL or the LGPL. If you do not delete
+- * the provisions above, a recipient may use your version of this file under
+- * the terms of any one of the MPL, the GPL or the LGPL.
+- *
+- * ***** END LICENSE BLOCK ***** */
+-
+-#include  <stdio.h>
+-#include  <string.h>
+-#include "nscore.h"
+-
+-//defines and includes for previous installation cleanup process
+-#if defined (XP_WIN)
+-#include <windows.h>
+-#elif defined (XP_MAC)
+-#include <Dialogs.h>
+-#include <TextUtils.h>
+-#elif defined (XP_OS2)
+-#define INCL_DOS
+-#define INCL_WIN
+-#include <os2.h>
+-#endif
+-
+-extern "C" void ShowOSAlert(const char* aMessage);
+-
+-
+-// The maximum allowed length of aMessage is 255 characters!
+-void ShowOSAlert(const char* aMessage)
+-{
+-#ifdef DEBUG_dbragg
+-printf("\n****Inside ShowOSAlert ***\n");	
+-#endif 
+-
+-    const PRInt32 max_len = 255;
+-    char message_copy[max_len+1] = { 0 };
+-    PRInt32 input_len = strlen(aMessage);
+-    PRInt32 copy_len = (input_len > max_len) ? max_len : input_len;
+-    strncpy(message_copy, aMessage, copy_len);
+-    message_copy[copy_len] = 0;
+-
+-#if defined (XP_WIN)
+-    MessageBoxA(NULL, message_copy, NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND );
+-#elif (XP_MAC)
+-    short buttonClicked;
+-    StandardAlert(kAlertStopAlert, c2pstr(message_copy), nil, nil, &buttonClicked);
+-#elif defined (XP_OS2)
+-    /* Set our app to be a PM app before attempting Win calls */
+-    PPIB ppib;
+-    PTIB ptib;
+-    DosGetInfoBlocks(&ptib, &ppib);
+-    ppib->pib_ultype = 3;
+-    HAB hab = WinInitialize(0);
+-    HMQ hmq = WinCreateMsgQueue(hmq,0);
+-    WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, message_copy, "", 0, MB_OK);
+-    WinDestroyMsgQueue(hmq);
+-    WinTerminate(hab);
+-#endif
+-    // It can't hurt to display the message on the console in any case,
+-    // even if we have already tried to display it in a GUI window.
+-    fprintf(stdout, "%s\n", aMessage);
+-}
+diff -r 9929cf926c62 tools/update-packaging/make_incremental_updates.py
+--- a/tools/update-packaging/make_incremental_updates.py	Thu Oct 09 11:49:17 2008 +0100
++++ b/tools/update-packaging/make_incremental_updates.py	Fri Oct 10 00:51:59 2008 -0500
+@@ -320,28 +320,35 @@ def get_buildid(work_dir, platform):
+         return ''
+     file = bz2.BZ2File(ini)
+     for line in file:
+       if line.find('BuildID') == 0:
+         return line.strip().split('=')[1]
+     print 'WARNING: cannot find build ID in application.ini'
+     return ''
+ 
+-def decode_filename(filename):
+-    """ Breaks filename into component parts based on regex
++def decode_filename(filepath):
++    """ Breaks filename/dir structure into component parts based on regex
+         for example: firefox-3.0b3pre.en-US.linux-i686.complete.mar
++        Or linux-i686/en-US/firefox-3.0b3.complete.mar
+         Returns dict with keys product, version, locale, platform, type
+     """
+     try:
+       m = re.search(
+         '(?P<product>\w+)(-)(?P<version>\w+\.\w+)(\.)(?P<locale>.+?)(\.)(?P<platform>.+?)(\.)(?P<type>\w+)(.mar)',
+-      filename)
++      os.path.basename(filepath))
+       return m.groupdict()
+     except Exception, exc:
+-      raise Exception("could not parse filename %s: %s" % (filename, exc))
++      try:
++        m = re.search(
++          '(?P<platform>.+?)\/(?P<locale>.+?)\/(?P<product>\w+)-(?P<version>\w+\.\w+)\.(?P<type>\w+).mar',
++        filepath)
++        return m.groupdict()
++      except:
++        raise Exception("could not parse filepath %s: %s" % (filepath, exc))
+ 
+ def create_partial_patches(patches):
+     """ Given the patches generates a set of partial patches"""
+     shas = {}
+ 
+     work_dir_root = None
+     metadata = []
+     try:
+@@ -359,34 +366,34 @@ def create_partial_patches(patches):
+             # Each patch iteration uses its own work dir
+             work_dir = os.path.join(work_dir_root,str(patch_num))
+             os.mkdir(work_dir)
+ 
+             # Extract from mar into from dir
+             work_dir_from =  os.path.join(work_dir,"from");
+             os.mkdir(work_dir_from)
+             extract_mar(from_filename,work_dir_from)
+-            from_decoded = decode_filename(os.path.basename(from_filename))
++            from_decoded = decode_filename(from_filename)
+             from_buildid = get_buildid(work_dir_from, from_decoded['platform'])
+             from_shasum = sha.sha(open(from_filename).read()).hexdigest()
+             from_size = str(os.path.getsize(to_filename))
+             
+             # Extract to mar into to dir
+             work_dir_to =  os.path.join(work_dir,"to")
+             os.mkdir(work_dir_to)
+             extract_mar(to_filename, work_dir_to)
+-            to_decoded = decode_filename(os.path.basename(from_filename))
++            to_decoded = decode_filename(from_filename)
+             to_buildid = get_buildid(work_dir_to, to_decoded['platform'])
+             to_shasum = sha.sha(open(to_filename).read()).hexdigest()
+             to_size = str(os.path.getsize(to_filename))
+ 
+             mar_extract_time = time.time()
+ 
+             partial_filename = create_partial_patch(work_dir_from, work_dir_to, patch_filename, shas, PatchInfo(work_dir, ['channel-prefs.js','update.manifest','removed-files'],['/readme.txt']))
+-            partial_decoded = decode_filename(os.path.basename(partial_filename))
++            partial_decoded = decode_filename(partial_filename)
+             partial_buildid = to_buildid
+             partial_shasum = sha.sha(open(partial_filename).read()).hexdigest()
+             partial_size = str(os.path.getsize(partial_filename))
+ 
+             metadata.append({
+              'to_filename': os.path.basename(to_filename),
+              'from_filename': os.path.basename(from_filename),
+              'partial_filename': os.path.basename(partial_filename),
+diff -r 9929cf926c62 xpcom/analysis/MDC-upload.py
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/xpcom/analysis/MDC-upload.py	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,18 @@
++#!/usr/bin/env python
++
++"""
++Upload a file to MDC
++
++Usage: python MDC-upload.py <file> <MDC-path>
++Please set MDC_USER and MDC_PASSWORD in the environment
++"""
++
++import os, sys, urllib, urllib2, deki
++
++wikiuser = os.environ['MDC_USER']
++wikipw = os.environ['MDC_PASSWORD']
++
++(file, wikipath) = sys.argv[1:]
++
++wiki = deki.Deki("http://developer.mozilla.org/@api/deki/", wikiuser, wikipw)
++wiki.create_page(wikipath, open(file).read(), overwrite=True)
+diff -r 9929cf926c62 xpcom/analysis/Makefile.in
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/xpcom/analysis/Makefile.in	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,46 @@
++DEPTH = ../..
++topsrcdir = @top_srcdir@
++srcdir = @srcdir@
++VPATH = @srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++MOZILLA_INTERNAL_API = 1
++
++REQUIRES = \
++  string \
++  xpcom \
++  $(NULL)
++
++include $(topsrcdir)/config/rules.mk
++
++DUMP_CLASSES = \
++  nsAString_internal \
++  nsACString_internal \
++  nsString \
++  nsCString \
++  nsAutoString \
++  nsCAutoString \
++  nsXPIDLString \
++  nsXPIDLCString \
++  $(NULL)
++
++SPACE = $(NULL) $(NULL)
++COMMA = ,
++
++HGREV = $(shell hg -R $(topsrcdir) id -i)
++
++classapi: DEHYDRA_MODULES = $(srcdir)/type-printer.js
++classapi: TREEHYDRA_MODULES =
++classapi: DEHYDRA_ARGS += --dump-types=$(subst $(SPACE),$(COMMA),$(strip $(DUMP_CLASSES))) --rev=$(HGREV)
++classapi:
++	$(CCC) $(OUTOPTION)/dev/null -c $(COMPILE_CXXFLAGS) $(srcdir)/type-printer.cpp
++	$(EXIT_ON_ERROR) \
++	for class in $(DUMP_CLASSES); do \
++	  $(PYTHON) $(srcdir)/fix-srcrefs.py $(topsrcdir) < $${class}.html > $${class}-fixed.html; \
++	done
++
++upload_classapi:
++	for class in $(DUMP_CLASSES); do \
++	  $(PYTHON) $(srcdir)/MDC-upload.py $${class}-fixed.html en/$${class}; \
++	done
+diff -r 9929cf926c62 xpcom/analysis/deki.py
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/xpcom/analysis/deki.py	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,307 @@
++""" deki.py - Access the wiki pages on a MindTouch Deki server via the API.
++
++Here's what this code can do:
++
++  wiki = deki.Deki("http://developer.mozilla.org/@api/deki/", username, password)
++  page = wiki.get_page("Sheep")
++  print page.title
++  print page.doc.toxml()
++
++  page.title = "Bananas"
++  page.save()
++
++There are also some additional methods:
++  wiki.create_page(path, content, title=, override=)
++  wiki.move_page(old, new)
++  wiki.get_subpages(page)
++
++This module does not try to mimic the MindTouch "Plug" API.  It's meant to be
++higher-level than that.
++"""
++
++import sys
++import urllib2, cookielib
++import xml.dom.minidom as dom
++from urllib import quote as _urllib_quote
++from urllib import urlencode as _urlencode
++import urlparse
++from datetime import datetime
++import re
++
++__all__ = ['Deki']
++
++
++# === Utils
++
++def _check(fact):
++    if not fact:
++        raise AssertionError('check failed')
++
++def _urlquote(s, *args):
++    return _urllib_quote(s.encode('utf-8'), *args)
++
++def _make_url(*dirs, **params):
++    """ dirs must already be url-encoded, params must not """
++    url = '/'.join(dirs)
++    if params:
++        url += '?' + _urlencode(params)
++    return url
++
++# === Dream framework client code
++
++# This handler causes python to "always be logged in" when it's talking to the
++# server.  If you're just accessing public pages, it generates more requests
++# than are strictly needed, but this is the behavior you want for a bot.
++#
++# The users/authenticate request is sent twice: once without any basic auth and
++# once with.  Dumb.  Feel free to fix.
++#
++class _LoginHandler(urllib2.HTTPCookieProcessor):
++    def __init__(self, server):
++        policy = cookielib.DefaultCookiePolicy(rfc2965=True)
++        cookiejar = cookielib.CookieJar(policy)
++        urllib2.HTTPCookieProcessor.__init__(self, cookiejar)
++        self.server = server
++
++    def http_request(self, req):
++        #print "DEBUG- Requesting " + req.get_full_url()
++        s = self.server
++        req = urllib2.HTTPCookieProcessor.http_request(self, req)
++        if ('Cookie' not in req.unredirected_hdrs
++              and req.get_full_url() != s.base + 'users/authenticate'):
++            s.login()
++            # Retry - should have a new cookie.
++            req = urllib2.HTTPCookieProcessor.http_request(self, req)
++            _check('Cookie' in req.unredirected_hdrs)
++        return req
++
++class DreamClient:
++    def __init__(self, base, user, password):
++        """ 
++        base - The base URI of the Deki API, with trailing slash.
++               Typically, 'http://wiki.example.org/@api/deki/'.
++        user, password - Your Deki login information.
++        """
++        self.base = base
++        pm = urllib2.HTTPPasswordMgrWithDefaultRealm()
++        pm.add_password(None, self.base, user, password)
++        ah = urllib2.HTTPBasicAuthHandler(pm)
++        lh = _LoginHandler(self)
++        self._opener = urllib2.build_opener(ah, lh)
++
++    def login(self):
++        response = self._opener.open(self.base + 'users/authenticate')
++        response.close()
++
++    def open(self, url):
++        return self._opener.open(self.base + url)
++
++    def post(self, url, data, type):
++        #print "DEBUG- posting to:", self.base + url
++        req = urllib2.Request(self.base + url, data, {'Content-Type': type})
++        resp = self._opener.open(req)
++        try:
++            ct = resp.headers.get('Content-Type', '(none)')
++            if '/xml' in ct or '+xml' in ct:
++                return dom.parse(resp)
++            else:
++                #print "DEBUG- Content-Type:", ct
++                crud = resp.read()
++                #print 'DEBUG- crud:\n---\n%s\n---' % re.sub(r'(?m)^', '    ', crud)
++                return None
++        finally:
++            resp.close()
++
++    def get_xml(self, url):
++        resp = self.open(url)
++        try:
++            return dom.parse(resp)
++        finally:
++            resp.close()
++
++
++# === DOM
++
++def _text_of(node):
++    if node.nodeType == node.ELEMENT_NODE:
++        return u''.join(_text_of(n) for n in node.childNodes)
++    elif node.nodeType == node.TEXT_NODE:
++        return node.nodeValue
++    else:
++        return u''
++
++def _the_element_by_name(doc, tagName):
++    elts = doc.getElementsByTagName(tagName)
++    if len(elts) != 1:
++        raise ValueError("Expected exactly one <%s> tag, got %d." % (tagName, len(elts)))
++    return elts[0]
++
++def _first_element(node):
++    n = node.firstChild
++    while n is not None:
++        if n.nodeType == n.ELEMENT_NODE:
++            return n
++        n = node.nextSibling
++    return None
++
++def _find_elements(node, path):
++    if u'/' in path:
++        [first, rest] = path.split(u'/', 1)
++        for child in _find_elements(node, first):
++            for desc in _find_elements(child, rest):
++                yield desc
++    else:
++        for n in node.childNodes:
++            if n.nodeType == node.ELEMENT_NODE and n.nodeName == path:
++                yield n
++
++
++# === Deki
++
++def _format_page_id(id):
++    if isinstance(id, int):
++        return str(id)
++    elif id is Deki.HOME:
++        return 'home'
++    elif isinstance(id, basestring):
++        # Double-encoded, per the Deki API reference.
++        return '=' + _urlquote(_urlquote(id, ''))
++
++class Deki(DreamClient):
++    HOME = object()
++
++    def get_page(self, page_id):
++        """ Get the content of a page from the wiki.
++
++        The page_id argument must be one of:
++          an int - The page id (an arbitrary number assigned by Deki)
++          a str - The page name (not the title, the full path that shows up in the URL)
++          Deki.HOME - Refers to the main page of the wiki.
++
++        Returns a Page object.
++        """
++        p = Page(self)
++        p._load(page_id)
++        return p
++
++    def create_page(self, path, content, title=None, overwrite=False):
++        """ Create a new wiki page.
++
++        Parameters:
++          path - str - The page id.
++          content - str - The XML content to put in the new page.
++            The document element must be a <body>.
++          title - str - The page title.  Keyword argument only.
++            Defaults to the last path-segment of path.
++          overwrite - bool - Whether to overwrite an existing page. If false,
++            and the page already exists, the method will throw an error.
++        """
++        if title is None:
++            title = path.split('/')[-1]
++        doc = dom.parseString(content)
++        _check(doc.documentElement.tagName == 'body')
++        p = Page(self)
++        p._create(path, title, doc, overwrite)
++
++    def get_subpages(self, page_id):
++        """ Return the ids of all subpages of the given page. """
++        doc = self.get_xml(_make_url("pages", _format_page_id(page_id),
++                                     "files,subpages"))
++        for elt in _find_elements(doc, u'page/subpages/page.subpage/path'):
++            yield _text_of(elt)
++
++    def move_page(self, page_id, new_title, redirects=True):
++        """ Move an existing page to a new location.
++
++        A page cannot be moved to a destination that already exists, is a
++        descendant, or has a protected title (ex.  Special:xxx, User:,
++        Template:).
++
++        When a page is moved, subpages under the specified page are also moved.
++        For each moved page, the system automatically creates an alias page
++        that redirects from the old to the new destination.
++        """
++        self.post(_make_url("pages", _format_page_id(page_id), "move",
++                            to=new_title,
++                            redirects=redirects and "1" or "0"),
++                  "", "text/plain")
++
++class Page:
++    """ A Deki wiki page.
++
++    To obtain a page, call wiki.get_page(id).
++    Attributes:
++        title : unicode - The page title.
++        doc : Document - The content of the page as a DOM Document.
++          The root element of this document is a <body>.
++        path : unicode - The path.  Use this to detect redirects, as otherwise
++          page.save() will overwrite the redirect with a copy of the content!
++        deki : Deki - The Deki object from which the page was loaded.
++        page_id : str/id/Deki.HOME - The page id used to load the page.
++        load_time : datetime - The time the page was loaded,
++          according to the clock on the client machine.
++    Methods:
++        save() - Save the modified document back to the server.
++          Only the page.title and the contents of page.doc are saved.
++    """
++
++    def __init__(self, deki):
++        self.deki = deki
++
++    def _create(self, path, title, doc, overwrite):
++        self.title = title
++        self.doc = doc
++        self.page_id = path
++        if overwrite:
++            self.load_time = datetime(2500, 1, 1)
++        else:
++            self.load_time = datetime(1900, 1, 1)
++        self.path = path
++        self.save()
++
++    def _load(self, page_id):
++        """ page_id - See comment near the definition of `HOME`. """
++        load_time = datetime.utcnow()
++
++        # Getting the title is a whole separate query!
++        url = 'pages/%s/info' % _format_page_id(page_id)
++        doc = self.deki.get_xml(url)
++        title = _text_of(_the_element_by_name(doc, 'title'))
++        path = _text_of(_the_element_by_name(doc, 'path'))
++
++        # If you prefer to sling regexes, you can request format=raw instead.
++        # The result is an XML document with one big fat text node in the body.
++        url = _make_url('pages', _format_page_id(page_id), 'contents',
++                        format='xhtml', mode='edit')
++        doc = self.deki.get_xml(url)
++
++        content = doc.documentElement
++        _check(content.tagName == u'content')
++        body = _first_element(content)
++        _check(body is not None)
++        _check(body.tagName == u'body')
++
++        doc.removeChild(content)
++        doc.appendChild(body)
++
++        self.page_id = page_id
++        self.load_time = load_time
++        self.title = title
++        self.path = path
++        self.doc = doc
++
++    def save(self):
++        p = {'edittime': _urlquote(self.load_time.strftime('%Y%m%d%H%M%S')),
++             'abort': 'modified'}
++
++        if self.title is not None:
++            p['title'] = _urlquote(self.title)
++
++        url = _make_url('pages', _format_page_id(self.page_id), 'contents', **p)
++
++        body = self.doc.documentElement
++        bodyInnerXML = ''.join(n.toxml('utf-8') for n in body.childNodes)
++
++        reply = self.deki.post(url, bodyInnerXML, 'text/plain; charset=utf-8')
++        _check(reply.documentElement.nodeName == u'edit')
++        _check(reply.documentElement.getAttribute(u'status') == u'success')
+diff -r 9929cf926c62 xpcom/analysis/fix-srcrefs.py
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/xpcom/analysis/fix-srcrefs.py	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,27 @@
++#!/usr/bin/env python
++
++"""
++Fix references to source files of the form [LOCpath]
++so that they are relative to a given source directory.
++"""
++
++import os, sys, re
++
++(srcdir, ) = sys.argv[1:]
++srcdir = os.path.realpath(srcdir)
++
++f = re.compile(r'\[LOC(.*?)\]')
++
++def replacer(m):
++    file = m.group(1)
++    file = os.path.realpath(file)
++    if not file.startswith(srcdir):
++        raise Exception("File %s doesn't start with %s" % (file, srcdir))
++
++    file = file[len(srcdir) + 1:]
++    return file
++
++for line in sys.stdin:
++    line = f.sub(replacer, line)
++    sys.stdout.write(line)
++
+diff -r 9929cf926c62 xpcom/analysis/type-printer.cpp
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/xpcom/analysis/type-printer.cpp	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,3 @@
++#include "nsString.h"
++
++/* do nothing else */
+diff -r 9929cf926c62 xpcom/analysis/type-printer.js
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/xpcom/analysis/type-printer.js	Fri Oct 10 00:51:59 2008 -0500
+@@ -0,0 +1,359 @@
++let dumpTypes = options['dump-types'].split(',');
++function interestingType(name) dumpTypes.some(function(n) n == name);
++
++let typelist = {};
++
++function addSubtype(t, subt)
++{
++  if (subt.typedef === undefined &&
++      subt.kind === undefined)
++    throw Error("Unexpected subtype: not class or typedef: " + subt);
++
++  if (t.subtypes === undefined)
++    t.subtypes = [];
++  
++  t.subtypes.push(subt);
++}
++
++function process_type(t)
++{
++  let name = t.name;
++  
++  if (interestingType(t.name))
++    typelist[t.name] = t;
++  
++  if (t.memberOf)
++    addSubtype(t.memberOf, t);
++}
++
++function process_decl(d)
++{
++  if (d.typedef !== undefined && d.memberOf)
++    addSubtype(d.memberOf, d);
++}
++
++function publicBases(t)
++{
++  yield t;
++
++  for each (let base in t.bases)
++    if (base.access == "public")
++      for each (let gbase in publicBases(base.type))
++        yield gbase;
++}
++
++function publicMembers(t)
++{
++  for each (let base in publicBases(t)) {
++    for each (let member in base.members) {
++      if (member.access === undefined)
++        throw Error("Harumph: member without access? " + member);
++
++      if (member.access != "public")
++        continue;
++      
++      yield member;
++    }
++  }
++}
++
++function signaturesMatch(m1, m2)
++{
++  let p1 = m1.type.parameters;
++  let p2 = m2.type.parameters;
++  
++  if (p1.length != p2.length)
++    return false;
++  
++  for (let i = 0; i < p1.length; ++i)
++    if (p1[i] !== p2[i])
++      return false;
++  
++  return true;
++}
++
++/**
++ * Get the short name of a decl name. E.g. turn
++ * "MyNamespace::MyClass::Method(int j) const" into
++ * "Method"
++ */
++function getShortName(decl)
++{
++  let name = decl.name;
++  let lp = name.lastIndexOf('(');
++  if (lp != -1)
++    name = name.slice(0, lp);
++  
++  lp = name.lastIndexOf('::');
++  if (lp != -1)
++    name = name.slice(lp + 2);
++
++  return name;
++}
++
++/**
++ * Remove functions in a base class which were overridden in a derived
++ * class.
++ *
++ * Although really, we should perhaps do this the other way around, or even
++ * group the two together, but that can come later.
++ */ 
++function removeOverrides(members)
++{
++  let overrideMap = {};
++  for (let i = members.length - 1; i >= 0; --i) {
++    let m = members[i];
++    if (!m.isFunction)
++      continue;
++
++    let shortName = getShortName(m);
++
++    let overrides = overrideMap[shortName];
++    if (overrides === undefined) {
++      overrideMap[shortName] = [m];
++      continue;
++    }
++
++    let found = false;
++    for each (let override in overrides) {
++      if (signaturesMatch(override, m)) {
++        // remove members[i], it was overridden
++        members.splice(i, 1);
++        found = true;
++      }
++    }
++    if (found)
++      continue;
++         
++    overrides.push(m);
++  }
++}
++
++/**
++ * Generates the starting position of lines within a file.
++ */
++function getLineLocations(fdata)
++{
++  yield 0;
++  
++  let r = /\n/y;
++  let pos = 0;
++  let i = 1;
++  for (;;) {
++    pos = fdata.indexOf('\n', pos) + 1;
++    if (pos == 0)
++      break;
++
++    yield pos;
++    i++;
++  }
++}
++    
++/**
++ * Find and return the doxygen comment immediately prior to the location
++ * object that was passed in.
++ * 
++ * @todo: parse doccomment data such as @param, @returns
++ * @todo: parse comments for markup
++ */
++function getDocComment(loc)
++{
++  let fdata = read_file(loc.file);
++  let linemap = [l for (l in getLineLocations(fdata))];
++  
++  if (loc.line >= linemap.length) {
++    warning("Location larger than actual header: " + loc);
++    return <></>;
++  }
++  
++  let endpos = linemap[loc.line - 1] + loc.column - 1;
++  let semipos = fdata.lastIndexOf(';', endpos);
++  let bracepos = fdata.lastIndexOf('}', endpos);
++  let searchslice = fdata.slice(Math.max(semipos, bracepos) + 1, endpos);
++
++  let m = searchslice.match(/\/\*\*[\s\S]*?\*\//gm);
++  if (m === null)
++    return <></>;
++  
++  let dc = m[m.length - 1].slice(3, -2);
++  dc = dc.replace(/^\s*(\*+[ \t]*)?/gm, "");
++
++  return <pre class="doccomment">{dc}</pre>;
++}
++
++function typeName(t)
++{
++  if (t.name !== undefined)
++    return t.name;
++
++  if (t.isPointer)
++    return "%s%s*".format(t.isConst ? "const " : "", typeName(t.type));
++  
++  if (t.isReference)
++    return "%s%s&".format(t.isConst ? "const " : "", typeName(t.type));
++
++  return t.toString();
++}
++
++function publicBaseList(t)
++{
++  let l = <ul/>;
++  for each (let b in t.bases) {
++    if (b.access == 'public')
++      l.* += <li><a href={"/en/%s".format(b.type.name)}>{b.type.name}</a></li>;
++  }
++
++  if (l.*.length() == 0)
++    return <></>;
++  
++  return <>
++    <h2>Base Classes</h2>
++    {l}
++  </>;
++}
++
++/**
++ * Get a source-link for a given location.
++ */
++function getLocLink(loc, text)
++{
++  return <a class="loc"
++            href={"http://hg.mozilla.org/mozilla-central/file/%s/[LOC%s]#l%i".format(options.rev, loc.file, loc.line)}>{text}</a>;
++}
++
++function dumpType(t)
++{
++  let methodOverview = <tbody />;
++  let methodList = <div/>;
++  let memberList = <></>;
++
++  let shortNameMap = {};
++
++  let members = [m for (m in publicMembers(t))];
++  
++  removeOverrides(members);
++
++  for each (let m in members) {
++    let qname = m.memberOf.name + '::';
++
++    // we don't inherit constructors from base classes
++    if (m.isConstructor && m.memberOf !== t)
++      continue;
++    
++    if (m.name.indexOf(qname) != 0)
++      throw Error("Member name not qualified?");
++    
++    let name = m.name.slice(qname.length);
++    
++    if (name.indexOf('~') == 0)
++      continue;
++
++    if (m.isFunction) {
++      let innerList;
++
++      let shortName = getShortName(m);
++      if (m.isConstructor)
++        shortName = 'Constructors';
++
++      if (shortNameMap.hasOwnProperty(shortName)) {
++        innerList = shortNameMap[shortName];
++      }
++      else {
++        let overview = 
++          <tr><td>
++            <a href={'#%s'.format(escape(shortName))}>{shortName}</a>
++          </td></tr>;
++
++        if (m.isConstructor)
++          methodOverview.insertChildAfter(null, overview);
++        else
++          methodOverview.appendChild(overview);
++        
++        let shortMarkup =
++          <div>
++            <h3 id={shortName}>{shortName}</h3>
++            <dl/>
++          </div>;
++
++        
++        if (m.isConstructor)
++          methodList.insertChildAfter(null, shortMarkup);
++        else
++          methodList.appendChild(shortMarkup);
++
++        innerList = shortMarkup.dl;
++        shortNameMap[shortName] = innerList;
++      }
++      
++      let parameters = <ul/>;
++      for each (p in m.parameters) {
++        let name = p.name;
++        if (name == 'this')
++          continue;
++        
++        if (/^D_\d+$/.test(name))
++          name = '<anonymous>';
++        
++        parameters.* += <li>{typeName(p.type)} {name}</li>;
++      }
++
++      innerList.* +=
++        <>
++          <dt id={name} class="methodName">
++            <code>{typeName(m.type.type)} {name}</code> - {getLocLink(m.loc, "source")}
++          </dt>
++          <dd>
++            {getDocComment(m.loc)}
++            {parameters.*.length() > 0 ?
++             <>
++               <h4>Parameters</h4>
++               {parameters}
++             </> : <></>}
++          </dd>
++        </>;
++    }
++    else {
++      memberList += <li class="member">{name}</li>;
++    }
++  }
++
++  let r =
++    <body>
++      <p>{getLocLink(t.loc, "Class Declaration")}</p>
++  
++      {getDocComment(t.loc)}
++  
++      {methodOverview.*.length() > 0 ?
++         <>
++           <h2>Method Overview</h2>
++           <table class="standard-table">{methodOverview}</table>
++         </> :
++         ""
++      }
++
++      {publicBaseList(t)}
++  
++      <h2>Data Members</h2>
++
++      {memberList.*.length() > 0 ?
++         memberList :
++         <p><em>No public members.</em></p>
++      }
++
++      <h2>Methods</h2>
++  
++      {methodList.*.length() > 0 ?
++         methodList :
++         <p><em>No public methods.</em></p>
++      }
++  
++    </body>;
++
++  write_file(t.name + ".html", r.toXMLString());
++}
++
++function input_end()
++{
++  for (let p in typelist)
++    dumpType(typelist[p]);
++}

@@ -75,7 +75,6 @@ lowmem/LowMemoryManageImprovements.diff
 not_sorted/maemo_hacks/GConfProxySettings.diff
 
 #Canvas
-BMO_attached/080_attachment.cgi?id=323966.diff
 
 arm/random_to_urandom.diff
 #arm/Bug405992.atomic.nspr.diff
@@ -143,7 +142,6 @@ logindialog/xullogindialog.diff
 #perf_tweaks/fonts/attachment.cgi?id=338030.diff
 #perf_tweaks/fonts/attachment.cgi?id=339161.diff
 
-BMO_attached/140_attachment.cgi?id=342340.diff
 BMO_attached/150_attachment.cgi?id=342275.diff
 
 
