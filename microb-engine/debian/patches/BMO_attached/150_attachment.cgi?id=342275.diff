@@ -1,0 +1,131 @@
+commit 8ccf8b01bc7de3771b5d813870c7f5f2d5882ee3
+Author: Jeff Muizelaar <jmuizelaar@mozilla.com>
+Date:   Wed Oct 8 14:22:12 2008 -0400
+
+    Simple first cut at improving speed.
+
+diff --git mozilla.orig/gfx/cairo/libpixman/src/pixman-pict.c mozilla/gfx/cairo/libpixman/src/pixman-pict.c
+index 070b190..e5f9f2b 100644
+--- mozilla.orig/gfx/cairo/libpixman/src/pixman-pict.c
++++ mozilla/gfx/cairo/libpixman/src/pixman-pict.c
+@@ -1212,6 +1212,96 @@ fbCompositeSrc_8888xx888 (pixman_op_t op,
+ }
+ 
+ static void
++adjust (pixman_vector_t *v, pixman_vector_t *u, pixman_fixed_t adjustment)
++{
++    int delta_v = (adjustment * v->vector[2]) >> 16;
++    int delta_u = (adjustment * u->vector[2]) >> 16;
++
++    v->vector[0] += delta_v;
++    v->vector[1] += delta_v;
++
++    u->vector[0] += delta_u;
++    u->vector[1] += delta_u;
++}
++
++
++static void
++fbCompositeSrcScaleNearestPad (pixman_op_t op,
++		      pixman_image_t * pSrc,
++		      pixman_image_t * pMask,
++		      pixman_image_t * pDst,
++		      int16_t      xSrc,
++		      int16_t      ySrc,
++		      int16_t      xMask,
++		      int16_t      yMask,
++		      int16_t      xDst,
++		      int16_t      yDst,
++		      uint16_t     width,
++		      uint16_t     height)
++{
++    uint32_t	*dst;
++    uint32_t    *src;
++    int		 dstStride, srcStride;
++    uint32_t	 n_bytes = width * sizeof (uint32_t);
++
++    fbComposeGetStart (pDst, xDst, yDst, uint32_t, dstStride, dst, 1);
++    fbComposeGetStart (pSrc, 0, 0, uint32_t, srcStride, src, 1);
++
++    //printf("pad\n");
++    int i, j;
++    for (j = 0; j < height; j++) {
++        pixman_vector_t v;
++        pixman_vector_t unit;
++
++        /* reference point is the center of the pixel */
++        v.vector[0] = pixman_int_to_fixed(xSrc) + pixman_fixed_1 / 2;
++        v.vector[1] = pixman_int_to_fixed(ySrc + j) + pixman_fixed_1 / 2;
++        v.vector[2] = pixman_fixed_1;
++
++        if (!pixman_transform_point_3d (pSrc->common.transform, &v))
++            return;
++        unit.vector[0] = pSrc->common.transform->matrix[0][0];
++        unit.vector[1] = pSrc->common.transform->matrix[1][0];
++        unit.vector[2] = pSrc->common.transform->matrix[2][0];
++
++        /* This allows filtering code to pretend that pixels are located at integer coordinates */
++        adjust (&v, &unit, -(pixman_fixed_1 / 2));
++
++        /* Round down to closest integer, ensuring that 0.5 rounds to 0, not 1 */
++        adjust (&v, &unit, pixman_fixed_1 / 2 - pixman_fixed_e);
++
++        pixman_bool_t src_clip = pSrc->common.src_clip != &(pSrc->common.full_region);
++
++        for (i = 0; i < width; ++i)
++        {
++            int x, y;
++            uint32_t result;
++#define PAD
++#ifdef PAD
++            y = CLIP(v.vector[1]>>16, 0, pSrc->bits.height-1);
++            x = CLIP(v.vector[0]>>16, 0, pSrc->bits.width-1);
++	    result = READ(pSrc, src + y * srcStride + x);
++            WRITE(pDst, dst + i, result);
++#else //NONE
++            y = v.vector[1]>>16;
++            x = v.vector[0]>>16;
++            if (x >= 0 && x < pSrc->bits.width && y >= 0 && y < pSrc->bits.height) {
++                result = READ(pSrc, src + y * srcStride + x);
++            } else {
++                result = 0;
++            }
++            WRITE(pDst, dst + i, result);
++#endif
++
++            v.vector[0] += unit.vector[0];
++            v.vector[1] += unit.vector[1];
++            v.vector[2] += unit.vector[2];
++        }
++        dst += dstStride;
++    }
++}
++
++static void
+ pixman_walk_composite_region (pixman_op_t op,
+ 			      pixman_image_t * pSrc,
+ 			      pixman_image_t * pMask,
+@@ -1858,6 +1948,23 @@ pixman_image_composite (pixman_op_t      op,
+     if(op == PIXMAN_OP_DST)
+         return;
+ 
++    if (pSrc->type == BITS
++            && srcTransform
++            && !pMask
++            && op == PIXMAN_OP_SRC
++            && !maskAlphaMap && !srcAlphaMap && !dstAlphaMap
++            && (pSrc->common.filter == PIXMAN_FILTER_NEAREST)
++            && (pSrc->common.repeat == PIXMAN_REPEAT_PAD)
++            && PIXMAN_FORMAT_BPP(pDst->bits.format) == 32
++            && pSrc->bits.format == pDst->bits.format
++            && pSrc->common.src_clip == &(pSrc->common.full_region)
++            && !pSrc->common.read_func && !pSrc->common.write_func
++            && !pDst->common.read_func && !pDst->common.write_func)
++    {
++        func = fbCompositeSrcScaleNearestPad;
++    }
++
++
+     if ((pSrc->type == BITS || pixman_image_can_get_solid (pSrc)) && (!pMask || pMask->type == BITS)
+         && !srcTransform && !maskTransform
+         && !maskAlphaMap && !srcAlphaMap && !dstAlphaMap
