@@ -1,0 +1,5 @@
+ac_add_options --enable-default-toolkit=cairo-qt
+ac_add_options --enable-storage
+ac_add_options --enable-places
+ac_add_options --enable-printing
+

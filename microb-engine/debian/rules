@@ -6,7 +6,7 @@
 tarballname = mozilla
 
 configopts += $(ADD_OPTIONS)
-optimize_add = 
+optimize_add =
 envflags =
 
 static:=n
@@ -34,6 +34,9 @@ QUILT_PATCHES:=$(CURDIR)/debian/patches
 STAMP_DIR:=$(CURDIR)/stampdir
 STAMPDIR_LOG:=$(CURDIR)/stampdir/log
 STAMPDIR_PATCH:=$(CURDIR)/stampdir/log/patch
+
+CONFIG_DIR:=$(CURDIR)/debian/configs
+APPENDICES_DIR:=$(CONFIG_DIR)/appendices
 
 GCCVER=.gcc$(shell gcc --version | grep gcc | cut -d ' ' -f 3)
 
@@ -133,6 +136,10 @@ endif
 
 ifneq (,$(findstring config,$(DEB_BUILD_OPTIONS)))
 	MOZCONFIG_LEV:= $(shell echo $(DEB_BUILD_OPTIONS) | sed -e 's/.*config=\([0-9a-zA-Z]\+\).*/\1/')
+endif
+
+ifneq (,$(findstring cairoqt,$(DEB_BUILD_OPTIONS)))
+	APPENDICES+=cairoqt
 endif
 
 series_file:=series.$(MOZCONFIG_LEV)
@@ -320,7 +327,7 @@ ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
 XPT_LINK:=$(CURDIR)/debian/tmp/usr/lib/microb-engine/xpt_link
 else
 	HBT_OPT = --target=$(DEB_HOST_GNU_TYPE)
-	CROSS_FLAGS = 
+	CROSS_FLAGS =
 cross_compile:=y
 bldstr:=$(bldstr)cross-
 XPT_LINK:=$(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/host/bin/host_xpt_link
@@ -353,10 +360,25 @@ configure-stamp: patch-stamp
 	for f in `find debian/ -name "[^c]*.in"`; do \
 		sed -e "s/@PACKAGEVERSION@/${PKGVERSION}/g" -e "s/@PACKAGENAME@/${packagename}/g"  $$f > `echo $$f | sed -e "s/\.in//"`; \
  	done
-       
+
 	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(MOZCONFIG_LEV)
 	#if ! test -e /usr/include/X11; then cd /usr/include && ln -s ../X11R6/include/X11; fi
 	cd $(builddir) && $(PRE_CONF_SCRIPT) rm -f ./.mozconfig && cp $(CURDIR)/debian/$(MOZCONFIG_NAME)$(MOZCONFIG_LEV) ./mozconfig
+
+	# integrate appendices into mozconfig:
+	for i in $(APPENDICES) ; do \
+	    cat $(APPENDICES_DIR)/$$i.appendix | \
+	        sed -e "s!=.*!=!" | sed -e "s!--enable-!--disable-!" > $(builddir)/$$i.appendix.disable ; \
+	    grep -vf $(builddir)/$${i}.appendix.disable $(builddir)/mozconfig > \
+	        $(builddir)/mozconfig.$$i.disable_clean ; \
+	    cat $(APPENDICES_DIR)/$$i.appendix | \
+	        sed -e "s!=.*!=!" | sed -e "s!--disable-!--enable-!" > $(builddir)/$$i.appendix.enable ; \
+	    grep -vf $(builddir)/$$i.appendix.enable $(builddir)/mozconfig.$$i.disable_clean > \
+ 	        $(builddir)/mozconfig.$$i.clean ; \
+	    cat $(builddir)/mozconfig.$$i.clean $(APPENDICES_DIR)/$$i.appendix > \
+	        $(builddir)/mozconfig ; \
+	done
+
 	echo "ac_add_options $(configopts) --prefix=$(prefix) $(HBT_OPT)" >> $(builddir)/mozconfig
 	echo "mk_add_options MOZ_OBJDIR=$(buildobjdir)" >> $(builddir)/mozconfig
 	echo "mk_add_options MOZ_MAKE_FLAGS=$(NJOBS)" >> $(builddir)/mozconfig
@@ -384,7 +406,7 @@ build-stamp:
 	cd $(builddir) && $(envflags) $(MAKE) -f client.mk build
 	touch build-stamp
 
-clean: 
+clean:
 	dh_testdir
 	dh_testroot
 
@@ -466,7 +488,7 @@ install: build
 	# Add here commands to install the package into debian/tmp obj-$(bldstr)build$(MOZCONFIG_LEV)
 	dh_testdir
 	dh_testroot
-	dh_clean -k 
+	dh_clean -k
 	dh_installdirs
 	# Add here commands to install the package into debian/tmp
 	#Small hack touch $(builddir)/toolkit/empty-file
@@ -519,7 +541,7 @@ binary-arch: build install
 	dh_fixperms
 	dh_makeshlibs -V
 	dh_installdeb
-	dh_shlibdeps 
+	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
