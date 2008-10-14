@@ -1,3 +1,9 @@
+microb-engine (20081009-6) unstable; urgency=low
+
+  * Fixes: NB#89968 Random Crashes,while navigating the web pages using the HW keys 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 14 Oct 2008 22:57:30 -0400
+
 microb-engine (20081009-5) unstable; urgency=low
 
   * Added preference for changing DPI value for system fonts 

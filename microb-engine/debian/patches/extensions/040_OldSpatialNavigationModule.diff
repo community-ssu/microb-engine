@@ -3622,8 +3622,8 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +   nsIViewManager* viewManager = shell->GetViewManager();
 +   if (!viewManager)
 +     return PR_FALSE;
-+ 
-+ 
++   if (!frame)
++     return PR_FALSE;
 +   // If visibility:hidden or visibility:collapsed then mark with STATE_INVISIBLE
 +   if (!frame->GetStyleVisibility()->IsVisible())
 +   {
