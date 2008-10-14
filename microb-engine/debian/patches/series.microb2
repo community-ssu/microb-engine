@@ -144,6 +144,7 @@ logindialog/xullogindialog.diff
 
 BMO_attached/150_attachment.cgi?id=342275.diff
 
+zooming/050_DefaultFontDPIIncreasePref.diff
 
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail

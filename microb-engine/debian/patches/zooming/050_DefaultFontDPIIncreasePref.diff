@@ -1,0 +1,52 @@
+--- mozilla/gfx/src/thebes/nsSystemFontsGTK2.cpp.orig	2008-10-09 05:49:17.000000000 -0500
++++ mozilla/gfx/src/thebes/nsSystemFontsGTK2.cpp	2008-10-14 15:28:44.000000000 -0500
+@@ -53,16 +53,21 @@
+ 
+ #include <fontconfig/fontconfig.h>
+ #include "nsSystemFontsGTK2.h"
+ #include "gfxPlatformGtk.h"
+ 
++#include "nsIPref.h"
++#include "nsIServiceManager.h"
++
+ // Glue to avoid build/runtime dependencies on Pango > 1.6
+ #if defined(MOZ_PANGO) && !defined(THEBES_USE_PANGO_CAIRO)
+ static gboolean
+ (* PTR_pango_font_description_get_size_is_absolute)(PangoFontDescription*)
+     = nsnull;
+ 
++static PRInt32 sSysFontDpiAdd = 0;
++
+ static void InitPangoLib()
+ {
+     static PRBool initialized = PR_FALSE;
+     if (initialized)
+         return;
+@@ -73,10 +78,14 @@ static void InitPangoLib()
+         (gboolean (*)(PangoFontDescription*))
+         PR_FindFunctionSymbolAndLibrary("pango_font_description_get_size_is_absolute",
+                                         &pangoLib);
+     if (pangoLib)
+         PR_UnloadLibrary(pangoLib);
++
++    nsCOMPtr<nsIPref> prefs(do_GetService(NS_PREF_CONTRACTID));
++    if (prefs)
++        prefs->GetIntPref("system.font.dpi.add", &sSysFontDpiAdd);
+ }
+ 
+ static void
+ ShutdownPangoLib()
+ {
+@@ -217,11 +226,11 @@ nsSystemFontsGTK2::GetSystemFontInfo(Gtk
+ 
+     // |size| is now either pixels or pango-points (not Mozilla-points!)
+ 
+     if (!MOZ_pango_font_description_get_size_is_absolute(desc)) {
+         // |size| is in pango-points, so convert to pixels.
+-        size *= gfxPlatformGtk::DPI() / POINTS_PER_INCH_FLOAT;
++        size *= (gfxPlatformGtk::DPI() + sSysFontDpiAdd) / POINTS_PER_INCH_FLOAT;
+     }
+ 
+     // |size| is now pixels
+ 
+     aFontStyle->size = size;

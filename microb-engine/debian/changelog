@@ -1,3 +1,9 @@
+microb-engine (20081009-5) unstable; urgency=low
+
+  * Added preference for changing DPI value for system fonts 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 14 Oct 2008 15:38:28 -0500
+
 microb-engine (20081009-4) unstable; urgency=low
 
   * Add build dependency on libdbus-glib-1-dev.
