@@ -145,6 +145,8 @@ BMO_attached/150_attachment.cgi?id=342275.diff
 
 zooming/050_DefaultFontDPIIncreasePref.diff
 
+theeming/100_XUL_shortuctKeysDisable.diff
+
 #***************************NOT TESTED and probably buggy ACID3 patches***********************
 #$ # Seems does not work, test 98 still fail
 #$ acid3/attachment.cgi?id=312294.diff
