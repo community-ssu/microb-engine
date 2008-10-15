@@ -1,3 +1,9 @@
+microb-engine (20081009-8) unstable; urgency=low
+
+  * Fixed History preferences for endurance testing 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 15 Oct 2008 11:25:35 -0500
+
 microb-engine (20081009-7) unstable; urgency=low
 
   * Updated to trunk 4b060ed856e0. 

@@ -41,3 +41,6 @@ pref("javascript.options.jit.chrome",false);
 pref("fit.text.to.screen", false);
 pref("fit.screen.width", 660);
 pref("ftv.new.enabled", false);
+pref("browser.sessionhistory.max_total_viewers", 0);
+pref("browser.sessionhistory.max_viewers", 1);
+pref("browser.sessionhistory.max_entries", 11);

@@ -81,7 +81,8 @@ pref("offline-apps.quota.warn",        51200);
 
 // Fastback caching - if this pref is negative, then we calculate the number
 // of content viewers to cache based on the amount of available memory.
-pref("browser.sessionhistory.max_total_viewers", 2);
+pref("browser.sessionhistory.max_total_viewers", 0);
+pref("browser.sessionhistory.max_viewers", 1);
 
 pref("browser.display.use_document_fonts",  1);  // 0 = never, 1 = quick, 2 = always
 pref("browser.display.use_document_colors", true);
@@ -1397,7 +1398,7 @@ pref("nglayout.frame.constructor.signals", 5);
 pref("content.perf.interrupts.count", 5);
 
 pref("layout.xml.prettyprint", true);
-pref("browser.sessionhistory.max_entries", 31);
+pref("browser.sessionhistory.max_entries", 11);
 
 pref("dom.window.useragent.policy", true);
 pref("ua.policy.mail.google.com", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.4.0) Gecko/20070423 Firefox/0.8");
