@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4794,16 +4794,21 @@
+@@ -4737,16 +4737,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4896,17 +4901,16 @@
+@@ -4839,17 +4844,16 @@
  AC_SUBST(GTK_CONFIG)
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6044,22 +6048,164 @@
+@@ -5987,22 +5991,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7498,35 +7644,54 @@
+@@ -7435,35 +7581,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7787,16 +7952,21 @@
+@@ -7724,16 +7889,21 @@
  AC_SUBST(NECKO_COOKIES)
  if test "$NECKO_COOKIES"; then
      AC_DEFINE(NECKO_COOKIES)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8076,16 +8246,22 @@
+@@ -8012,16 +8182,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -322,7 +322,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -149,16 +149,27 @@
+@@ -148,16 +148,27 @@
  MOZ_PROFILESHARING = @MOZ_PROFILESHARING@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@
@@ -758,7 +758,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  
  };
  
- PR_STATIC_CALLBACK(void)
+ static void
  nsWidgetGtk2ModuleDtor(nsIModule *aSelf)
  {
 +#ifndef MOZ_NO_FILEPICKER
@@ -1211,7 +1211,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  #include "nsIExtensionManager.h"
  #include "nsIFastLoadService.h" // for PLATFORM_FASL_SUFFIX
  #include "nsIGenericFactory.h"
-@@ -1151,25 +1153,27 @@
+@@ -1149,25 +1151,27 @@
    {
      nsXREDirProvider dirProvider;
      dirProvider.Initialize(nsnull, gAppData->xreDirectory);
@@ -1239,7 +1239,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  // here, or in a native resource file.
  static void
  DumpHelp()
-@@ -3126,35 +3130,39 @@
+@@ -3124,35 +3128,39 @@
            gDoMigration = PR_FALSE;
            nsCOMPtr<nsIProfileMigrator> pm
              (do_CreateInstance(NS_PROFILEMIGRATOR_CONTRACTID));
@@ -1279,7 +1279,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  
  #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
          nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
-@@ -3169,40 +3177,48 @@
+@@ -3167,40 +3175,48 @@
            NS_ENSURE_TRUE(em, 1);
  
            ar = CheckArg("install-global-extension", PR_TRUE);
@@ -1328,7 +1328,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
          if (noEMRestart && *noEMRestart && *noEMRestart == '1') {
            if (upgraded || needsRestart) {
              NS_WARNING("EM tried to force us to restart twice! Forcefully preventing that.");
-@@ -3240,18 +3256,20 @@
+@@ -3238,18 +3254,20 @@
            // Prepare Cocoa's form of Apple Event handling.
            SetupMacApplicationDelegate();
  #endif
@@ -1532,7 +1532,7 @@ Index: mozilla/gfx/thebes/src/gfxContext.cpp
  #include "gfxASurface.h"
  #include "gfxPattern.h"
  #include "gfxPlatform.h"
-@@ -616,26 +618,28 @@
+@@ -621,26 +623,28 @@
      return gfxRect(xmin, ymin, xmax - xmin, ymax - ymin);
  }
  
@@ -2256,12 +2256,12 @@ Index: mozilla/caps/src/nsScriptSecurityManager.cpp
  
  nsIIOService    *nsScriptSecurityManager::sIOService = nsnull;
  nsIXPConnect    *nsScriptSecurityManager::sXPConnect = nsnull;
+ nsIThreadJSContextStack *nsScriptSecurityManager::sJSContextStack = nsnull;
  nsIStringBundle *nsScriptSecurityManager::sStrBundle = nsnull;
  JSRuntime       *nsScriptSecurityManager::sRuntime   = 0;
  PRBool nsScriptSecurityManager::sStrictFileOriginPolicy = PR_TRUE;
  
- // Info we need about the JSClasses used by XPConnects wrapped
-@@ -2820,29 +2824,31 @@
+@@ -2809,29 +2813,31 @@
      {
          nsCOMPtr<nsIFile> systemCertFile;
          nsCOMPtr<nsIProperties> directoryService =
@@ -3158,7 +3158,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2972,16 +2972,17 @@
+@@ -2977,16 +2977,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer

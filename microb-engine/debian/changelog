@@ -1,3 +1,9 @@
+microb-engine (20081009-7) unstable; urgency=low
+
+  * Updated to trunk 4b060ed856e0. 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 15 Oct 2008 08:12:02 -0500
+
 microb-engine (20081009-6) unstable; urgency=low
 
   * Fixes: NB#89968 Random Crashes,while navigating the web pages using the HW keys 

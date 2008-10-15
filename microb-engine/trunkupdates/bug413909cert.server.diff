@@ -1,0 +1,4 @@
+--- mozilla/build/pgo/certs/bug413909cert.server.orig	2008-10-15 07:56:10.000000000 -0500
++++ mozilla/build/pgo/certs/bug413909cert.server	2008-10-15 07:57:11.000000000 -0500
+@@ -0,0 +1 @@
++testfile

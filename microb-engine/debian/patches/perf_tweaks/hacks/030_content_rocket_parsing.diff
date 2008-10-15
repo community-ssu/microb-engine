@@ -61,7 +61,7 @@ Index: mozilla/content/base/src/nsContentSink.cpp
  
    if ((currentTime - mDelayTimerStart) >
        static_cast<PRUint32>(GetMaxTokenProcessingTime())) {
-+    if (mCountInterruptsBeforePerfMode > 0) {
++    if (mCountInterruptsBeforePerfMode >= 0) {
 +      if (mCountInterruptsBeforePerfMode == 0)
 +        mMaxTokenProcessingTime = mMaxTokenProcessingPerfTime;
 +      else

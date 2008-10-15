@@ -1,8 +1,8 @@
+Index: mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
+===================================================================
 --- mozilla.orig/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
 +++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
-@@ -423,20 +423,24 @@ LoginManagerPrompter.prototype = {
-         try {
- 
+@@ -425,16 +425,20 @@
              this.log("===== promptAuth called =====");
  
              // If the user submits a login but it fails, we need to remove the
@@ -10,7 +10,7 @@
              // be prompted for authentication again, which brings us here.
              var notifyBox = this._getNotifyBox();
              if (notifyBox)
-                 this._removeSaveLoginNotification(notifyBox);
+                 this._removeLoginNotifications(notifyBox);
 +            if (this._xulRememberDialog) {
 +                this._xulRememberDialog.close();
 +                this._xulRememberDialog = null;
@@ -23,11 +23,7 @@
              var foundLogins = this._pwmgr.findLogins({},
                                          hostname, null, httpRealm);
              this.log("found " + foundLogins.length + " matching logins.");
- 
-             // XXX Can't select from multiple accounts yet. (bug 227632)
-@@ -545,24 +549,63 @@ LoginManagerPrompter.prototype = {
- 
-     /*
+@@ -550,20 +554,59 @@
       * promptToSavePassword
       *
       */
@@ -63,7 +59,7 @@
 +
 +        return ret;
 +    },
-+ 
++
 +    _xulRememberCb : function (aLogin) {
 +        this.log("Saving login for " + aLogin.hostname);
 +        this._pwmgr.addLogin(aLogin);
@@ -89,8 +85,8 @@
       *
       */
      _showLoginNotification : function (aNotifyBox, aName, aText, aButtons) {
-         var oldBar = aNotifyBox.getNotificationWithValue(aName);
-         const priority = aNotifyBox.PRIORITY_INFO_MEDIUM;
+Index: mozilla/toolkit/content/savePasswordDialog.js
+===================================================================
 --- /dev/null
 +++ mozilla/toolkit/content/savePasswordDialog.js
 @@ -0,0 +1,74 @@
@@ -142,8 +138,8 @@
 +    var dialog = document.documentElement;
 +    var stringBundle = document.getElementById("strings");
 +
-+    // The following does not work, see Mozilla bug 316920, 
-+    // Dialog title not updated on-screen although dialog.title DOM attribute is changed  
++    // The following does not work, see Mozilla bug 316920,
++    // Dialog title not updated on-screen although dialog.title DOM attribute is changed
 +    dialog.title = stringBundle.getString("savePasswordTitle");
 +
 +    dialog.getButton("extra1").label = stringBundle.getString("notifyBarNeverForSiteButtonText");
@@ -168,10 +164,12 @@
 +        prompter._xulNeverCb(logindata);
 +}
 +
+Index: mozilla/toolkit/content/savePasswordDialog.xul
+===================================================================
 --- /dev/null
 +++ mozilla/toolkit/content/savePasswordDialog.xul
 @@ -0,0 +1,56 @@
-+<?xml version="1.0"?> 
++<?xml version="1.0"?>
 +
 +<!-- ***** BEGIN LICENSE BLOCK *****
 + Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -224,14 +222,14 @@
 +                src="chrome://passwordmgr/locale/passwordmgr.properties"/>
 +
 +   <script type="application/x-javascript" src="chrome://global/content/savePasswordDialog.js"/>
-+    
-+   <label id="info"/> 
++
++   <label id="info"/>
 +</dialog>
---- mozilla/toolkit/content/jar.mn.orig
+Index: mozilla/toolkit/content/jar.mn
+===================================================================
+--- mozilla.orig/toolkit/content/jar.mn
 +++ mozilla/toolkit/content/jar.mn
-@@ -28,20 +28,22 @@ toolkit.jar:
- *+ content/global/finddialog.js               (finddialog.js)
- *+ content/global/finddialog.xul              (finddialog.xul)
+@@ -30,16 +30,18 @@
  *+ content/global/findUtils.js                (findUtils.js)
  *+ content/global/globalOverlay.js            (globalOverlay.js)
  *+ content/global/inlineSpellCheckUI.js       (inlineSpellCheckUI.js)
@@ -250,5 +248,3 @@
  *+ content/global/bindings/datetimepicker.xml  (widgets/datetimepicker.xml)
  *+ content/global/bindings/dialog.xml          (widgets/dialog.xml)
  *+ content/global/bindings/editor.xml          (widgets/editor.xml)
- *  content/global/bindings/expander.xml        (widgets/expander.xml)
- *+ content/global/bindings/general.xml         (widgets/general.xml)

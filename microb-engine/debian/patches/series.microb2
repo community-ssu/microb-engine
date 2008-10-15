@@ -76,7 +76,6 @@ not_sorted/maemo_hacks/GConfProxySettings.diff
 
 #Canvas
 
-arm/random_to_urandom.diff
 #arm/Bug405992.atomic.nspr.diff
 #arm/Bug385583.nspr.jmp_buf.eabi.diff
 
