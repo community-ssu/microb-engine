@@ -1,3 +1,9 @@
+microb-engine (20081009-12) hardy; urgency=low
+
+  * Disable wrong title for passwords prompt xul window 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Thu, 16 Oct 2008 23:56:51 -0400
+
 microb-engine (20081009-11) hardy; urgency=low
 
   * Make APPENDICES work inside scratchbox.

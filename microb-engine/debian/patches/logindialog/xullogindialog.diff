@@ -210,7 +210,7 @@ Index: mozilla/toolkit/content/savePasswordDialog.xul
 +
 +<?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
 +
-+<dialog id="rememberpassword" title="Confirm?"
++<dialog id="rememberpassword" title=""
 +   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 +   buttons="extra1,extra2,cancel"
 +   onload="onLoad();"
