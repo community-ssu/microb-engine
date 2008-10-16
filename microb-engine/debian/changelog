@@ -1,3 +1,9 @@
+microb-engine (20081009-11) hardy; urgency=low
+
+  * Make APPENDICES work inside scratchbox.
+
+ -- Tobias Hunger <tobias.hunger@gmail.com>  Thu, 16 Oct 2008 11:32:43 +0200
+
 microb-engine (20081009-10) unstable; urgency=low
 
   * Updated changelog. 

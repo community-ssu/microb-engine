@@ -368,11 +368,13 @@ configure-stamp: patch-stamp
 	# integrate appendices into mozconfig:
 	for i in $(APPENDICES) ; do \
 	    cat $(APPENDICES_DIR)/$$i.appendix | \
-	        sed -e "s!=.*!=!" | sed -e "s!--enable-!--disable-!" > $(builddir)/$$i.appendix.disable ; \
+	        sed -e "s!=.*!=!" | sed -e "s!--enable-!--disable-!" | \
+                    grep -v "^$$" > $(builddir)/$$i.appendix.disable ; \
 	    grep -vf $(builddir)/$${i}.appendix.disable $(builddir)/mozconfig > \
 	        $(builddir)/mozconfig.$$i.disable_clean ; \
 	    cat $(APPENDICES_DIR)/$$i.appendix | \
-	        sed -e "s!=.*!=!" | sed -e "s!--disable-!--enable-!" > $(builddir)/$$i.appendix.enable ; \
+	        sed -e "s!=.*!=!" | sed -e "s!--disable-!--enable-!" | \
+                    grep -v "^$$" > $(builddir)/$$i.appendix.enable ; \
 	    grep -vf $(builddir)/$$i.appendix.enable $(builddir)/mozconfig.$$i.disable_clean > \
  	        $(builddir)/mozconfig.$$i.clean ; \
 	    cat $(builddir)/mozconfig.$$i.clean $(APPENDICES_DIR)/$$i.appendix > \
