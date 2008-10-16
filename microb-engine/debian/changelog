@@ -1,3 +1,9 @@
+microb-engine (20081009-10) unstable; urgency=low
+
+  * Updated changelog. 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 16 Oct 2008 11:39:23 +0300
+
 microb-engine (20081009-9) unstable; urgency=low
 
   * Fixes: NB#90097 Add Security Exception window has kb shortcuts not suported by slice kb 
@@ -86,7 +92,7 @@ microb-engine (20080902-49) unstable; urgency=low
 
 microb-engine (20080902-48) unstable; urgency=low
 
-  * Fixes: NB#87973 Firefox can't find the server at... information
+  * Fixed bug#87973 Firefox can't find the server at... information
     appears
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 29 Sep 2008 17:05:23 -0500
@@ -167,7 +173,7 @@ microb-engine (20080902-36) unstable; urgency=low
 
 microb-engine (20080902-35) unstable; urgency=low
 
-  *  Fixes: NB#88223 456015, Certificate Viewer malfunction
+  *  Fixed bug#88223 456015, Certificate Viewer malfunction
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 19 Sep 2008 15:20:10 -0500
 
@@ -191,7 +197,7 @@ microb-engine (20080902-32) unstable; urgency=low
 
 microb-engine (20080902-31) unstable; urgency=low
 
-  * Fixes: NB#88273, added checks for null pointers
+  * Fixed bug#88273, added checks for null pointers
 
  -- Ben <ben@koku.research.nokia.com>  Tue, 16 Sep 2008 11:58:27 +0300
 
@@ -260,7 +266,7 @@ microb-engine (20080902-21) unstable; urgency=low
 
 microb-engine (20080902-20) unstable; urgency=low
 
-  * Fixes: NB#88108 libsqlite3.so needed by libsoftokn3.so
+  * Fixed bug#88108 libsqlite3.so needed by libsoftokn3.so
 
  -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue,  9 Sep 2008 20:41:21 +0300
 
@@ -272,13 +278,13 @@ microb-engine (20080902-19) unstable; urgency=low
 
 microb-engine (20080902-18) unstable; urgency=low
 
-  * Fixes: bug#88108
+  * Fixed bug#88108
 
  -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue,  9 Sep 2008 17:13:06 +0300
 
 microb-engine (20080902-17) unstable; urgency=low
 
-  * Fixes: NB#88212	- Stylus interactions don't work
+  * Fixed bug#88212 - Stylus interactions don't work
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 09 Sep 2008 14:17:44 +0300
 
@@ -361,14 +367,14 @@ microb-engine (20080902-5) unstable; urgency=low
 microb-engine (20080902-4) unstable; urgency=low
 
   * Sqlite library moved to libnss3 package (libsoftokn.so depends on it)
-  * Fixes: NB#88108
+  * Fixed: bug#88108
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 05 Sep 2008 14:03:51 +0300
 
 microb-engine (20080902-3) unstable; urgency=low
 
   * Fixed Build bustage
-  * Fixes: NB#87980 Auhentication dialog does not remember user and password typed
+  * Fixed bug#87980 Auhentication dialog does not remember user and password typed
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 04 Sep 2008 21:46:49 +0300
 
