@@ -129,6 +129,7 @@ localization/bug87973.firefox.hardcoded.diff
 
 
 crashes/SetCursor_crash.diff
+crashes/bug90141.diff
 
 BMO_attached/130_456015.certview.diff
 

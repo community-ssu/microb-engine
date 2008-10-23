@@ -1,3 +1,9 @@
+microb-engine (20081009-16) hardy; urgency=low
+
+  * Fixes: NB#90141 Browser crash when some JavaScript function is called
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 23 Oct 2008 17:33:22 -0500
+
 microb-engine (20081009-15) hardy; urgency=low
 
   * Fixes: NB#90380 Browser, Untranslated string, File not found, Error title

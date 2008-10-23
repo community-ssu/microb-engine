@@ -1,0 +1,15 @@
+--- mozilla/content/xslt/src/xslt/txStylesheet.cpp.orig	2008-10-09 05:49:17.000000000 -0500
++++ mozilla/content/xslt/src/xslt/txStylesheet.cpp	2008-10-23 17:30:29.000000000 -0500
+@@ -540,11 +540,11 @@ txStylesheet::addAttributeSet(txAttribut
+     }
+     
+     // We need to prepend the new instructions before the existing ones.
+     txInstruction* instr = aAttributeSetItem->mFirstInstruction;
+     txInstruction* lastNonReturn = nsnull;
+-    while (instr->mNext) {
++    while (instr && instr->mNext) {
+         lastNonReturn = instr;
+         instr = instr->mNext;
+     }
+     
+     if (!lastNonReturn) {
