@@ -1,3 +1,9 @@
+microb-engine (20081009-15) hardy; urgency=low
+
+  * Fixes: NB#90380 Browser, Untranslated string, File not found, Error title
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 23 Oct 2008 16:20:58 -0500
+
 microb-engine (20081009-14) hardy; urgency=low
 
   * Removed wrong commit 

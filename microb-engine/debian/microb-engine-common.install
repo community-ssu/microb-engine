@@ -81,7 +81,6 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/places
 usr/lib/microb-engine/chrome/en-US/locale/branding/brand.dtd
 usr/lib/microb-engine/chrome/en-US/locale/branding/brand.properties
 usr/lib/microb-engine/chrome/en-US/locale/branding/poweredby.png
-usr/lib/microb-engine/chrome/en-US/locale/browser/appstrings.properties
 usr/lib/microb-engine/chrome/en-US.manifest
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLPrettyPrint.css
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLMonoPrint.css
