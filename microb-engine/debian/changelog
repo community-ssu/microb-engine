@@ -1,3 +1,9 @@
+microb-engine (20081009-13) hardy; urgency=low
+
+  * Fixes: NB#90718 Localization fix 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 23 Oct 2008 14:38:28 -0500
+
 microb-engine (20081009-12) hardy; urgency=low
 
   * Disable wrong title for passwords prompt xul window 

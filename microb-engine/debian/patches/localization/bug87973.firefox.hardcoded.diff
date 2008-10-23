@@ -30,7 +30,7 @@
 -deniedPortAccess=This address uses a network port which is normally used for purposes other than Web browsing. Firefox has canceled the request for your protection.
 -proxyResolveFailure=Firefox is configured to use a proxy server that can't be found.
 -proxyConnectFailure=Firefox is configured to use a proxy server that is refusing connections.
-+deniedPortAccess=This address uses a network port which is normally used for purposes other than Web browsing. MicroB has canceled the request for your protection.
++deniedPortAccess=This address uses a network port which is normally used for purposes other than Web browsing. MicroB has cancelled the request for your protection.
 +proxyResolveFailure=MicroB is configured to use a proxy server that can't be found.
 +proxyConnectFailure=MicroB is configured to use a proxy server that is refusing connections.
  contentEncodingError=The page you are trying to view cannot be shown because it uses an invalid or unsupported form of compression.
