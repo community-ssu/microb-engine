@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4737,16 +4737,21 @@
+@@ -4738,16 +4738,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4839,17 +4844,16 @@
+@@ -4840,17 +4845,16 @@
  AC_SUBST(GTK_CONFIG)
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -5987,22 +5991,164 @@
+@@ -5988,22 +5992,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7435,35 +7581,54 @@
+@@ -7436,35 +7582,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7724,16 +7889,21 @@
+@@ -7725,16 +7890,21 @@
  AC_SUBST(NECKO_COOKIES)
  if test "$NECKO_COOKIES"; then
      AC_DEFINE(NECKO_COOKIES)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8012,16 +8182,22 @@
+@@ -8014,16 +8184,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -375,7 +375,7 @@ Index: mozilla/chrome/src/nsChromeProtocolHandler.cpp
  #include "nsIStreamListener.h"
  #include "nsNetUtil.h"
  #include "nsXPIDLString.h"
-@@ -565,19 +567,22 @@
+@@ -567,19 +569,22 @@
              if (!exists) {
                  nsCAutoString path;
                  file->GetNativePath(path);
@@ -399,7 +399,7 @@ Index: mozilla/chrome/src/nsChromeProtocolHandler.cpp
                      result = nsnull;
                      return NS_ERROR_FAILURE;
                  }
-@@ -628,19 +633,21 @@
+@@ -630,19 +635,21 @@
                  if (fileChan) {
                      fileChan->GetFile(getter_AddRefs(file));
                  } else {
@@ -538,13 +538,13 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/Makefile.in
 +++ mozilla/widget/src/gtk2/Makefile.in
-@@ -92,18 +92,16 @@
+@@ -91,18 +91,16 @@
+ CPPSRCS		= \
  		nsWindow.cpp \
  		nsAppShell.cpp \
  		nsWidgetFactory.cpp \
  		nsToolkit.cpp \
  		nsBidiKeyboard.cpp \
- 		nsCommonWidget.cpp \
  		nsLookAndFeel.cpp \
  		nsGtkKeyUtils.cpp \
 -		nsFilePicker.cpp \
@@ -557,7 +557,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  		$(NULL)
  
  ifdef NS_OSSO
-@@ -120,19 +118,35 @@
+@@ -119,19 +117,35 @@
  		nsPrintOptionsGTK.cpp \
  		nsPrintDialogGTK.cpp \
  		nsPrintSettingsGTK.cpp \
@@ -593,7 +593,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  
  SHARED_LIBRARY_LIBS = ../xpwidgets/libxpwidgets_s.a
  
-@@ -164,17 +178,17 @@
+@@ -163,17 +177,17 @@
  DEFINES		+= -DNATIVE_THEME_SUPPORT
  endif
  
@@ -2261,7 +2261,7 @@ Index: mozilla/caps/src/nsScriptSecurityManager.cpp
  JSRuntime       *nsScriptSecurityManager::sRuntime   = 0;
  PRBool nsScriptSecurityManager::sStrictFileOriginPolicy = PR_TRUE;
  
-@@ -2809,29 +2813,31 @@
+@@ -2802,29 +2806,31 @@
      {
          nsCOMPtr<nsIFile> systemCertFile;
          nsCOMPtr<nsIProperties> directoryService =
@@ -2956,7 +2956,7 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 ===================================================================
 --- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 +++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
-@@ -6021,19 +6021,20 @@
+@@ -6023,19 +6023,20 @@
                                  state, value);
    },
  
@@ -3158,7 +3158,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2977,16 +2977,17 @@
+@@ -3337,16 +3337,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer

@@ -2,3 +2,15 @@
 +++ mozilla/build/pgo/certs/bug413909cert.server	2008-10-15 07:57:11.000000000 -0500
 @@ -0,0 +1 @@
 +testfile
+--- mozilla/build/pgo/certs/cert8.db.orig	2008-10-23 19:55:02.000000000 -0500
++++ mozilla/build/pgo/certs/cert8.db	2008-10-23 19:55:10.000000000 -0500
+@@ -0,0 +1 @@
++testfile
+--- mozilla/build/pgo/certs/key3.db.orig	2008-10-23 19:55:02.000000000 -0500
++++ mozilla/build/pgo/certs/key3.db	2008-10-23 19:55:10.000000000 -0500
+@@ -0,0 +1 @@
++testfile
+--- mozilla/build/pgo/certs/secmod.db.orig	2008-10-23 19:55:02.000000000 -0500
++++ mozilla/build/pgo/certs/secmod.db	2008-10-23 19:55:10.000000000 -0500
+@@ -0,0 +1 @@
++testfile

@@ -1,8 +1,14 @@
-diff -ruN mozilla.orig/configure.in mozilla/configure.in
---- mozilla.orig/configure.in   2008-08-13 14:49:40.000000000 +0300
-+++ mozilla/configure.in        2008-08-13 14:50:56.000000000 +0300
-@@ -965,7 +965,7 @@
-
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -959,17 +959,17 @@
+ MOZ_ZLIB_LIBS='$(call EXPAND_LIBNAME_PATH,mozz,$(DEPTH)/modules/zlib/src)'
+ MOZ_BZ2_CFLAGS=
+ MOZ_BZ2_LIBS='$(call EXPAND_LIBNAME_PATH,bz2,$(DEPTH)/modules/libbz2/src)'
+ MOZ_PNG_CFLAGS=
+ MOZ_PNG_LIBS='$(call EXPAND_LIBNAME_PATH,mozpng,$(DEPTH)/modules/libimg/png)'
+ 
  MOZ_JS_LIBS='-L$(LIBXUL_DIST)/bin -lmozjs'
  DYNAMIC_XPCOM_LIBS='-L$(LIBXUL_DIST)/bin -lxpcom -lxpcom_core'
 -MOZ_FIX_LINK_PATHS='-Wl,-rpath-link,$(LIBXUL_DIST)/bin -Wl,-rpath-link,$(PREFIX)/lib'
@@ -10,26 +16,8 @@ diff -ruN mozilla.orig/configure.in mozilla/configure.in
  XPCOM_FROZEN_LDOPTS='-L$(LIBXUL_DIST)/bin -lxpcom'
  LIBXUL_LIBS='$(XPCOM_FROZEN_LDOPTS) -lxul'
  XPCOM_GLUE_LDOPTS='$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue_s.$(LIB_SUFFIX) $(XPCOM_FROZEN_LDOPTS)'
-Index: mozilla/security/nss/cmd/platlibs.mk
-===================================================================
---- mozilla.orig/security/nss/cmd/platlibs.mk
-+++ mozilla/security/nss/cmd/platlibs.mk
-@@ -239,17 +239,17 @@
- ifeq ($(OS_ARCH), AIX) 
- EXTRA_SHARED_LIBS += -brtl 
- endif
+ XPCOM_STANDALONE_GLUE_LDOPTS='$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue.$(LIB_SUFFIX)'
  
- # If GNU ld is used, we must use the -rpath-link option to tell
- # the linker where to find libsoftokn3.so, an implicit dependency
- # of libnss3.so.
- ifeq (,$(filter-out BSD_OS FreeBSD Linux NetBSD, $(OS_ARCH)))
--EXTRA_SHARED_LIBS += -Wl,-rpath-link,$(DIST)/lib
-+EXTRA_SHARED_LIBS += -Wl,-rpath-link,$(DIST)/lib:/lib:/usr/lib:/usr/local/lib:/usr/X11R6/lib
- endif
+ MOZ_COMPONENT_NSPR_LIBS='-L$(LIBXUL_DIST)/bin $(NSPR_LIBS)'
+ MOZ_XPCOM_OBSOLETE_LIBS='-L$(LIBXUL_DIST)/lib -lxpcom_compat'
  
- ifeq ($(OS_ARCH), SunOS)
- ifdef NS_USE_GCC
- ifdef GCC_USE_GNU_LD
- EXTRA_SHARED_LIBS += -Wl,-rpath-link,$(DIST)/lib
- endif
- endif
