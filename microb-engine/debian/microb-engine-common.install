@@ -114,6 +114,7 @@ usr/lib/microb-engine/chrome/toolkit/content/global/console.js
 usr/lib/microb-engine/chrome/toolkit/content/global/console.xul
 usr/lib/microb-engine/chrome/toolkit/content/global/console.css
 usr/lib/microb-engine/chrome/toolkit/content/global/config.xul
+usr/lib/microb-engine/chrome/toolkit/content/global/config.dtd
 usr/lib/microb-engine/chrome/toolkit/content/global/config.js
 usr/lib/microb-engine/chrome/toolkit/content/global/license.html
 usr/lib/microb-engine/chrome/toolkit/content/global/xul.css
