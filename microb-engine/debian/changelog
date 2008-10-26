@@ -1,6 +1,13 @@
+microb-engine (20081009-19) hardy; urgency=low
+
+  * Fixes: NB#90882 The 'about:config' page does not work, proper path
+    Added patch for bluetooth fix
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 26 Oct 2008 23:53:36 -0500
+
 microb-engine (20081009-18) hardy; urgency=low
 
-  * Fixes: NB#90882 The 'about:config' page does not work 
+  * Fixes The 'about:config' page does not work 
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 24 Oct 2008 17:29:37 -0500
 
