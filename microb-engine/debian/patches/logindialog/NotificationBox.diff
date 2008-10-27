@@ -1,0 +1,129 @@
+--- mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js.orig	2008-10-27 08:56:31.000000000 +0200
++++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js	2008-10-27 08:57:43.000000000 +0200
+@@ -596,21 +596,21 @@ LoginManagerPrompter.prototype = {
+                                 priority, aButtons);
+ 
+         // The page we're going to hasn't loaded yet, so we want to persist
+         // across the first location change.
+         newBar.persistence++;
+ 
+         // Sites like Gmail perform a funky redirect dance before you end up
+         // at the post-authentication page. I don't see a good way to
+         // heuristically determine when to ignore such location changes, so
+         // we'll try ignoring location changes based on a time interval.
+-        newBar.timeout = Date.now() + 20000; // 20 seconds
++        //newBar.timeout = Date.now() + 20000; // 20 seconds
+ 
+         if (oldBar) {
+             this.log("(...and removing old " + aName + " notification bar)");
+             aNotifyBox.removeNotification(oldBar);
+         }
+     },
+ 
+ 
+     /*
+      * _showSaveLoginNotification
+@@ -642,50 +642,47 @@ LoginManagerPrompter.prototype = {
+         var brandShortName =
+               this._brandBundle.GetStringFromName("brandShortName");
+         var notificationText  = this._getLocalizedString(
+                                         "savePasswordText", [brandShortName]);
+ 
+         // The callbacks in |buttons| have a closure to access the variables
+         // in scope here; set one to |this._pwmgr| so we can get back to pwmgr
+         // without a getService() call.
+         var pwmgr = this._pwmgr;
+ 
++        var buttons = Cc["@mozilla.org/array;1"]
++                        .createInstance(Ci.nsIMutableArray);
+ 
+-        var buttons = [
+-            // "Remember" button
+-            {
+-                label:     rememberButtonText,
+-                accessKey: rememberButtonAccessKey,
+-                popup:     null,
+-                callback: function(aNotificationBar, aButton) {
+-                    pwmgr.addLogin(aLogin);
+-                }
+-            },
+-
+-            // "Never for this site" button
+-            {
+-                label:     neverButtonText,
+-                accessKey: neverButtonAccessKey,
+-                popup:     null,
+-                callback: function(aNotificationBar, aButton) {
+-                    pwmgr.setLoginSavingEnabled(aLogin.hostname, false);
+-                }
+-            },
+-
+-            // "Not now" button
+-            {
+-                label:     notNowButtonText,
+-                accessKey: notNowButtonAccessKey,
+-                popup:     null,
+-                callback:  function() { /* NOP */ } 
+-            }
+-        ];
++        var button1 = Cc["@browser.garage.maemo.org/microb/notificationbutton;1"]
++                        .createInstance(Ci.nsINotificationButton);
++        var button2 = Cc["@browser.garage.maemo.org/microb/notificationbutton;1"]
++                        .createInstance(Ci.nsINotificationButton);
++        var button3 = Cc["@browser.garage.maemo.org/microb/notificationbutton;1"]
++                        .createInstance(Ci.nsINotificationButton);
++        button1.label = rememberButtonText;
++        button1.accessKey = rememberButtonAccessKey;
++        button1.popup = null;
++        button1.callback = function(aNotificationBar, aButton) { pwmgr.addLogin(aLogin); };
++
++        button2.label = neverButtonText;
++        button2.accessKey = neverButtonAccessKey;
++        button2.popup = null;
++        button2.callback = function(aNotificationBar, aButton) { pwmgr.setLoginSavingEnabled(aLogin.hostname, false); };
++
++        button3.label = notNowButtonText;
++        button3.accessKey = notNowButtonAccessKey;
++        button3.popup = null;
++        button3.callback = function() { /* NO-OP */ };
++
++        buttons.appendElement(button1, false);
++        buttons.appendElement(button2, false);
++        buttons.appendElement(button3, false);
+ 
+         this._showLoginNotification(aNotifyBox, "password-save",
+              notificationText, buttons);
+     },
+ 
+ 
+     /*
+      * _removeLoginNotifications
+      *
+      */
+@@ -914,20 +911,26 @@ LoginManagerPrompter.prototype = {
+ 
+     /*
+      * _getNotifyBox
+      *
+      * Returns the notification box to this prompter, or null if there isn't
+      * a notification box available.
+      */
+     _getNotifyBox : function () {
+         var notifyBox = null;
+ 
++        notifyBox = Cc["@browser.garage.maemo.org/microb/notificationbox;1"]
++                           .getService(Ci.nsINotificationBox);
++
++        return notifyBox;
++        // Forget the rest
++
+         // Given a content DOM window, returns the chrome window it's in.
+         function getChromeWindow(aWindow) {
+             var chromeWin = aWindow 
+                                 .QueryInterface(Ci.nsIInterfaceRequestor)
+                                 .getInterface(Ci.nsIWebNavigation)
+                                 .QueryInterface(Ci.nsIDocShellTreeItem)
+                                 .rootTreeItem
+                                 .QueryInterface(Ci.nsIInterfaceRequestor)
+                                 .getInterface(Ci.nsIDOMWindow)
+                                 .QueryInterface(Ci.nsIDOMChromeWindow);

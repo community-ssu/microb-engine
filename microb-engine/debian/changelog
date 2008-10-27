@@ -1,3 +1,9 @@
+microb-engine (20081009-21) hardy; urgency=low
+
+  * Changed 'remember password' dialog to use the notification box. 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 27 Oct 2008 13:48:19 +0200
+
 microb-engine (20081009-20) hardy; urgency=low
 
   * Fixes: NB#90130 Saving web page via bluetooth is not working. 
