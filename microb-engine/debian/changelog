@@ -1,3 +1,9 @@
+microb-engine (20081009-23) hardy; urgency=low
+
+  * Login manager prompter supports now both notification box implementations.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 28 Oct 2008 10:15:10 +0200
+
 microb-engine (20081009-22) hardy; urgency=low
 
   * A small fix to the way login manager prompter looks for notification box. 
