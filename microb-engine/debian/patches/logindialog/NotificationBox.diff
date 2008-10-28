@@ -1,5 +1,5 @@
---- mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js.orig	2008-10-27 08:56:31.000000000 +0200
-+++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js	2008-10-27 08:57:43.000000000 +0200
+--- mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js.orig	2008-10-28 08:44:58.000000000 +0200
++++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js	2008-10-28 08:45:58.000000000 +0200
 @@ -596,21 +596,21 @@ LoginManagerPrompter.prototype = {
                                  priority, aButtons);
  
@@ -100,30 +100,36 @@
       * _removeLoginNotifications
       *
       */
-@@ -914,20 +911,26 @@ LoginManagerPrompter.prototype = {
+@@ -963,22 +960,30 @@ LoginManagerPrompter.prototype = {
+             // Get the chrome window for the content window we're using.
+             // .wrappedJSObject needed here -- see bug 422974 comment 5.
+             var chromeWin = getChromeWindow(notifyWindow).wrappedJSObject;
+ 
+             if (chromeWin.getNotificationBox)
+                 notifyBox = chromeWin.getNotificationBox(notifyWindow);
+             else
+                 this.log("getNotificationBox() not available on window");
+ 
+         } catch (e) {
+-            // If any errors happen, just assume no notification box.
+-            this.log("No notification box available: " + e)
++            // No Mozilla notification box available
++            this.log("No notification box available: " + e);
++            // Use our own implementation if possible
++            notifyBox = Cc["@browser.garage.maemo.org/microb/notificationbox;1"]
++                               .getService(Ci.nsINotificationBox);
++
++            if (notifyBox) {
++                this.log("Using Maemo implementation of notifybox");
++            }
++            return notifyBox;
+         }
+ 
+         return notifyBox;
+     },
+ 
  
      /*
-      * _getNotifyBox
+      * _repickSelectedLogin
       *
-      * Returns the notification box to this prompter, or null if there isn't
-      * a notification box available.
-      */
-     _getNotifyBox : function () {
-         var notifyBox = null;
- 
-+        notifyBox = Cc["@browser.garage.maemo.org/microb/notificationbox;1"]
-+                           .getService(Ci.nsINotificationBox);
-+
-+        return notifyBox;
-+        // Forget the rest
-+
-         // Given a content DOM window, returns the chrome window it's in.
-         function getChromeWindow(aWindow) {
-             var chromeWin = aWindow 
-                                 .QueryInterface(Ci.nsIInterfaceRequestor)
-                                 .getInterface(Ci.nsIWebNavigation)
-                                 .QueryInterface(Ci.nsIDocShellTreeItem)
-                                 .rootTreeItem
-                                 .QueryInterface(Ci.nsIInterfaceRequestor)
-                                 .getInterface(Ci.nsIDOMWindow)
-                                 .QueryInterface(Ci.nsIDOMChromeWindow);
+      * The user might enter a login that isn't the one we prefilled, but
