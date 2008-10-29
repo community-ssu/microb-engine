@@ -69,7 +69,7 @@ cross/050_uclibc_strings_index.diff
 cross/070_Cross_freetype_config.diff
 
 lowmem/LowMemoryManageImprovements.diff
-#lowmem/PNGLowMemDetection.diff
+lowmem/PNGLowMemDetection.diff
 
 # Workarround for hildon gconf proxy settings
 not_sorted/maemo_hacks/GConfProxySettings.diff
