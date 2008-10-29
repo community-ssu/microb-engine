@@ -171,7 +171,7 @@ pref("accessibility.typeaheadfind.prefillwithselection", true);
 // use Mac OS X Appearance panel text smoothing setting when rendering text, disabled by default
 pref("gfx.use_text_smoothing_setting", false);
 
-pref("browser.history_expire_days", 9);
+pref("browser.history_expire_days", 7);
 
 // loading and rendering of framesets and iframes
 pref("browser.frames.enabled", true);
@@ -1398,7 +1398,7 @@ pref("nglayout.frame.constructor.signals", 5);
 pref("content.perf.interrupts.count", 5);
 
 pref("layout.xml.prettyprint", true);
-pref("browser.sessionhistory.max_entries", 11);
+pref("browser.sessionhistory.max_entries", 20);
 
 pref("dom.window.useragent.policy", true);
 pref("ua.policy.mail.google.com", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.4.0) Gecko/20070423 Firefox/0.8");

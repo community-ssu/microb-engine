@@ -1,3 +1,10 @@
+microb-engine (20081009-24) hardy; urgency=low
+
+  * Fixes: Recent history max entries count and compelete history expire days
+  * (Fremantle recent history max entries is 20 and complete history expire days is 7)
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Wed, 29 Oct 2008 13:39:21 +0200
+
 microb-engine (20081009-23) hardy; urgency=low
 
   * Login manager prompter supports now both notification box implementations.
