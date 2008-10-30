@@ -1,0 +1,173 @@
+buildconfig/007_BUILD_CONFIG_xul_manual_enable.diff
+buildconfig/008_BrowserNotUsedHeaders.diff
+buildconfig/009_BrowserLibregTiers.diff
+buildconfig/011_BuildWithGCC3.4.4.diff
+buildconfig/015_jemalloc_sb.diff
+buildconfig/020_cs2007_rpath_wr.diff
+buildconfig/023_PC_CONFIG_sqlite_neededby_libsoftokn.diff
+buildconfig/025_test_enable_qt.diff
+
+branding/010_MICROB_paths_and_names.diff
+branding/020_BUG349921_toolkit_branding.diff
+branding/030_MICROB_about_fixes_lp0.diff
+
+linking/010_XULRunner_minimal_linking_jpeg.diff
+linking/020_jprof_linking_fix.diff
+
+stylus_im_tweaks/010_connect_move_signal_after_default.diff
+
+#gtkmozembed/010_GtkMozEmbed_Shared.diff
+gtkmozembed/BugXXXExtensionsComponentsRegistering.diff
+#gtkmozembed/bug227986.diff
+#gtkmozembed/Bug349382.TestEmbedPrompter.diff
+#gtkmozembed/Bug349382.TestEmbedPrompter.moz.diff
+gtkmozembed/020_nsWindowCreator2_iface.diff
+#gtkmozembed/drop_conflicting_gtkmozembed_header_exporting.diff
+
+microbfootprint/010_MICROB_xslt_xpath_disable_lp0.diff
+microbfootprint/020_MICROB_non_conf_components_disable.diff
+microbfootprint/040_NO_XPFE_BROWSER.diff
+
+
+
+testgtkembed/010_BUILDFIX_embedding_tests.diff
+#testgtkembed/030_ZoomControlsTestGtkEmbed.diff
+#testgtkembed/040_ftv_testgtkembed.diff
+testgtkembed/050_MICROB_autoset_grehome_display.diff
+
+extensions/010_MICROB_fittoview_extension.diff
+#extensions/050_MICROB_fittoview_extension_new.diff
+#extensions/020_BUG375179_spellcheck_libxul.diff
+extensions/030_spellchecker_select_enabling.diff
+
+stylus_im_tweaks/020_js_handler_events_info.diff
+
+not_sorted/others/150_BUG347731_MOZILLA_INTERNAL_API.diff
+
+theeming/010_focus_style.diff
+theeming/020_BUG359812_neterror_noxul.diff
+theeming/030_BUG204011_theme_change.diff
+theeming/040_disable_F6_focus.diff
+theeming/060_Theeming_NO_XUL.diff
+theeming/070_RadioCheckButtonsHildons.diff
+theeming/080_CertificateExceptionDialog.diff
+theeming/090_XULButtons.diff
+
+xpinstaller/01_ConfirmNoXul.diff
+xpinstaller/04_ChromeRegistrationWithRDFwithoutXUL.diff
+xpinstaller/05_BUG437018_AllowFullWidgetReparent.diff
+
+prettyrssfeed/030_BUG54742rss_add_support.diff
+prettyrssfeed/040_HelperRSS_DOMEvent.diff
+prettyrssfeed/050_RSS_preview_support.diff
+
+not_sorted/others/230_DONT_CHECKIN_adding_get_content_length_method.diff
+#Workaround for unknown protocol handling
+not_sorted/others/675_unknown_protocol_handling.diff
+not_sorted/others/680_MICROB_about_fixes_lp0.diff
+
+cross/010_BUG376279_security_cross_compile.diff
+cross/020_nspr_dpkg_cross.diff
+cross/030_host_libidl_dpkg_cross.diff
+cross/050_uclibc_strings_index.diff
+cross/070_Cross_freetype_config.diff
+
+lowmem/LowMemoryManageImprovements.diff
+#lowmem/PNGLowMemDetection.diff
+
+# Workarround for hildon gconf proxy settings
+not_sorted/maemo_hacks/GConfProxySettings.diff
+
+#Canvas
+BMO_attached/080_attachment.cgi?id=323966.diff
+
+arm/random_to_urandom.diff
+#arm/Bug405992.atomic.nspr.diff
+#arm/Bug385583.nspr.jmp_buf.eabi.diff
+
+perf_tweaks/suspend/010_NativeSuspendImplementation.diff
+#perf_tweaks/hacks/010_layout_state_listener.diff
+perf_tweaks/hacks/020_minimize_paint_delay_hack.diff
+perf_tweaks/hacks/030_content_rocket_parsing.diff
+perf_tweaks/hacks/040_netwerk_buffer_count.diff
+perf_tweaks/HiddingLibxulSymbols.diff
+
+#perf_tweaks/gmail_performance.diff
+perf_tweaks/css_erros_parsing_disable.diff
+
+#Startup perf
+BMO_attached/030_attachment.cgi?id=297001.diff
+BMO_attached/040_attachment.cgi?id=303172.diff
+
+#JS Perf
+
+perf_tweaks/JSBreakExperimental.diff
+
+#perf_tweaks/FontsRenderingHacks.diff
+
+#zooming/010_MBUG_42865_zoom_navigation_fix.diff
+#zooming/020_Bug70843.RestoreZoomState.diff
+#zooming/030_TrueZoomMode.diff
+
+perf_tweaks/enable_16bpp_format.diff
+
+perf_tweaks/bug446376_easy.diff
+
+not_sorted/others/330_MBUG_42865_zoom_navigation_fix.diff
+
+not_sorted/others/400_bigger_ua_string_length_61630.diff
+not_sorted/002_drawingMissingGlyphs.diff
+
+#qt/010_attachment.cgi?id=333090.diff
+#qt/020_attachment.cgi?id=333029.diff
+qt/030_nonconf.diff
+
+# Old spatial navigation module (until trunk version http://hg.mozilla.org/mozilla-central/file/ec658a5f3699/toolkit/spatial-navigation/SpatialNavigation.js not fixed)
+extensions/040_OldSpatialNavigationModule.diff
+
+# Latest tracemonkey update
+#arm/tt_latest.diff
+
+#BMO_attached/090_bug428988_pressure.diff
+
+localization/bug87973.browser.localization.diff
+localization/bug87973.firefox.hardcoded.diff
+
+
+crashes/SetCursor_crash.diff
+
+BMO_attached/130_456015.certview.diff
+
+zooming/040_s60textframes.diff
+
+logindialog/xullogindialog.diff
+
+# Fonts perf  Bug 385263
+#perf_tweaks/fonts/attachment.cgi?id=336403.diff
+#perf_tweaks/fonts/attachment.cgi?id=338030.diff
+#perf_tweaks/fonts/attachment.cgi?id=339161.diff
+
+#***************************NOT TESTED and probably buggy ACID3 patches***********************
+#$ # Seems does not work, test 98 still fail
+#$ acid3/attachment.cgi?id=312294.diff
+#$ # Seems applied: acid3/attachment.cgi?id=323763.diff
+#$ # Problems test 77: acid3/attachment.cgi?id=275753.diff
+#$ acid3/attachment.cgi?id=320264.diff
+#$ acid3/attachment.cgi?id=324804.diff
+#$ #test 11 (seem patch does not help)
+#$ acid3/attachment.cgi?id=251426.diff
+#$ # Problems nsINodeIterator.h missing, test 10: acid3/attachment.cgi?id=320745.diff
+#$ acid3/132824/attachment.cgi?id=316943.diff
+#$ acid3/132824/attachment.cgi?id=319078.diff
+#$ #test 70
+#$ acid3/attachment.cgi?id=327210.diff
+#$ acid3/156716/1.attachment.cgi?id=325868.diff
+#$ acid3/156716/2.attachment.cgi?id=325869.diff
+#$ acid3/156716/3.attachment.cgi?id=325870.diff
+#$ acid3/156716/4.attachment.cgi?id=325871.diff
+#$ acid3/156716/5.attachment.cgi?id=325872.diff
+#$ acid3/156716/6.attachment.cgi?id=325873.diff
+#$ acid3/156716/7.attachment.cgi?id=325875.diff
+#$ acid3/156716/8.attachment.cgi?id=325876.diff
+#$ acid3/156716/9.attachment.cgi?id=325877.diff
+#***************************END OF NOT TESTED and probably buggy ACID3 patches***********************

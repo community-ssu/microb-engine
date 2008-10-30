@@ -1,0 +1,36 @@
+mk_add_options MOZ_CO_PROJECT=suite,browser,xulrunner
+ac_add_options --enable-application=xulrunner #browser
+
+#* Simple Build
+ac_add_options --disable-javaxpcom
+ac_add_options --disable-js-static-build
+ac_add_options --disable-tests
+
+#* Missing environment
+ac_add_options --disable-crashreporter --disable-mochitest --disable-dbus
+ac_add_options --enable-dbus # Is it usefull?
+
+#* Micro Base
+#ac_add_options --with-embedding-profile=minimal
+
+#* Branding
+ac_add_options --with-branding=branding/microb
+
+#* Toolkit Options for Linux/Qt
+ac_add_options --enable-default-toolkit=cairo-qt
+ac_add_options --disable-freetype2
+
+#ac_add_options --enable-extensions="widgetutils"
+ac_add_options --disable-pango --disable-postscript --disable-xprint --disable-printing --disable-mathml
+# --disable-canvas --disable-svg
+
+#* Compiler options
+ac_add_options --disable-pedantic
+ac_add_options --disable-old-abi-compat-wrappers
+ac_add_options --enable-chrome-format=flat
+ac_add_options --disable-elf-dynstr-gc
+
+#*
+ac_add_options --disable-embedding-tests
+ac_add_options --disable-ogg
+

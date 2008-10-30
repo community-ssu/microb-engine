@@ -1,3 +1,9 @@
+microb-engine (20081009-26) hardy; urgency=low
+
+  * Added Qt config and series files
+
+ -- Anton Rogaynis <anton.rogaynis@nokia.com>  Thu, 30 Oct 2008 12:09:22 -0400
+
 microb-engine (20081009-25) hardy; urgency=low
 
   * Fixes: NB#90109 Browser freeze on big png image 
