@@ -1,3 +1,9 @@
+microb-engine (20081009-28) hardy; urgency=low
+
+  * Fixed patch apply error
+
+ -- Oleg Romashin <romaxaxz@romaxaHP.research.nokia.com>  Fri, 31 Oct 2008 11:21:41 +0200
+
 microb-engine (20081009-27) hardy; urgency=low
 
   * Updated to trunk a131999fa900

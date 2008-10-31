@@ -1,8 +1,8 @@
---- mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js.orig	2008-10-28 09:28:23.000000000 +0200
-+++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js	2008-10-28 09:55:24.000000000 +0200
-@@ -596,21 +596,21 @@ LoginManagerPrompter.prototype = {
-                                 priority, aButtons);
- 
+Index: mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
+===================================================================
+--- mozilla.orig/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
++++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
+@@ -613,17 +613,17 @@
          // The page we're going to hasn't loaded yet, so we want to persist
          // across the first location change.
          newBar.persistence++;
@@ -21,13 +21,9 @@
      },
  
  
-     /*
-      * _showSaveLoginNotification
-@@ -642,53 +642,84 @@ LoginManagerPrompter.prototype = {
-         var brandShortName =
-               this._brandBundle.GetStringFromName("brandShortName");
-         var notificationText  = this._getLocalizedString(
-                                         "savePasswordText", [brandShortName]);
+@@ -678,49 +678,81 @@
+                                         [brandShortName, displayHost]);
+         }
  
          // The callbacks in |buttons| have a closure to access the variables
          // in scope here; set one to |this._pwmgr| so we can get back to pwmgr
@@ -65,7 +61,7 @@
 +                        pwmgr.addLogin(aLogin);
 +                    }
 +                },
-+    
++
 +                // "Never for this site" button
 +                {
 +                    label:     neverButtonText,
@@ -75,13 +71,13 @@
 +                        pwmgr.setLoginSavingEnabled(aLogin.hostname, false);
 +                    }
 +                },
-+    
++
 +                // "Not now" button
 +                {
 +                    label:     notNowButtonText,
 +                    accessKey: notNowButtonAccessKey,
 +                    popup:     null,
-+                    callback:  function() { /* NOP */ } 
++                    callback:  function() { /* NOP */ }
                  }
 -            },
 -
@@ -93,13 +89,12 @@
 -                callback:  function() { /* NOP */ } 
 -            }
 -        ];
--
 +            ];
 +        }
 +        else {
 +            var buttons = Cc["@mozilla.org/array;1"]
 +                            .createInstance(Ci.nsIMutableArray);
-+    
++
 +            var button1 = Cc["@browser.garage.maemo.org/microb/notificationbutton;1"]
 +                            .createInstance(Ci.nsINotificationButton);
 +            var button2 = Cc["@browser.garage.maemo.org/microb/notificationbutton;1"]
@@ -110,22 +105,23 @@
 +            button1.accessKey = rememberButtonAccessKey;
 +            button1.popup = null;
 +            button1.callback = function(aNotificationBar, aButton) { pwmgr.addLogin(aLogin); };
-+    
++
 +            button2.label = neverButtonText;
 +            button2.accessKey = neverButtonAccessKey;
 +            button2.popup = null;
 +            button2.callback = function(aNotificationBar, aButton) { pwmgr.setLoginSavingEnabled(aLogin.hostname, false); };
-+    
++
 +            button3.label = notNowButtonText;
 +            button3.accessKey = notNowButtonAccessKey;
 +            button3.popup = null;
 +            button3.callback = function() { /* NO-OP */ };
-+    
++
 +            buttons.appendElement(button1, false);
 +            buttons.appendElement(button2, false);
 +            buttons.appendElement(button3, false);
 +        }
-+    
++
+ 
          this._showLoginNotification(aNotifyBox, "password-save",
 -             notificationText, buttons);
 +                notificationText, buttons);
@@ -137,11 +133,7 @@
       *
       */
      _removeLoginNotifications : function (aNotifyBox) {
-         var oldBar = aNotifyBox.getNotificationWithValue("password-save");
-         if (oldBar) {
-@@ -963,22 +994,30 @@ LoginManagerPrompter.prototype = {
-             // Get the chrome window for the content window we're using.
-             // .wrappedJSObject needed here -- see bug 422974 comment 5.
+@@ -1018,18 +1050,26 @@
              var chromeWin = getChromeWindow(notifyWindow).wrappedJSObject;
  
              if (chromeWin.getNotificationBox)
@@ -170,5 +162,3 @@
  
      /*
       * _repickSelectedLogin
-      *
-      * The user might enter a login that isn't the one we prefilled, but
