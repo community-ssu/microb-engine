@@ -33,8 +33,10 @@ esac
 if [ "$1" = "configure" ]; then
     origdir=/usr/lib/microb-engine/dictionaries/
     destdir=/home/$USER/.mozilla/dictionaries
-    if [ ! -d $destdir ]; then
-        ln -s $origdir $destdir
+    if [ ! -d $destdir &&  ]; then
+        if [ -d $origdir ]; then
+            ln -s $origdir $destdir
+        fi
     fi
 fi
 

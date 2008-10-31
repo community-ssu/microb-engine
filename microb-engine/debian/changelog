@@ -1,3 +1,10 @@
+microb-engine (20081009-29) hardy; urgency=low
+
+  * Removed obsolete gtkmozembed package
+  * Fixed spellcheck installation error
+
+ -- Oleg Romashin <romaxaxz@romaxaHP.research.nokia.com>  Fri, 31 Oct 2008 13:23:18 +0200
+
 microb-engine (20081009-28) hardy; urgency=low
 
   * Fixed patch apply error
