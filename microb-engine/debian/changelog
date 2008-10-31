@@ -1,3 +1,9 @@
+microb-engine (20081009-27) hardy; urgency=low
+
+  * Updated to trunk a131999fa900
+
+ -- Oleg Romashin <romaxa@romaxa-sr>  Thu, 30 Oct 2008 06:44:44 -0400
+
 microb-engine (20081009-26) hardy; urgency=low
 
   * Added Qt config and series files

@@ -9,7 +9,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4352,16 +4352,18 @@
+@@ -4295,16 +4295,18 @@
  MOZ_IMG_ENCODERS_DEFAULT="png jpeg"
  MOZ_IPCD=
  MOZ_JAVAXPCOM=
@@ -28,7 +28,7 @@ Index: mozilla/configure.in
  MOZ_NO_XPCOM_OBSOLETE=
  MOZ_NO_FAST_LOAD=
  MOZ_OGG=1
-@@ -7534,16 +7536,42 @@
+@@ -7462,16 +7464,42 @@
      PKG_CHECK_MODULES(LCMS, lcms >= $LCMS_VERSION)
  fi
  
@@ -75,7 +75,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -190,16 +190,18 @@
+@@ -191,16 +191,18 @@
  PKG_SKIP_STRIP	= @PKG_SKIP_STRIP@
  
  ClientWallet=1
@@ -108,7 +108,7 @@ Index: mozilla/content/xslt/src/Makefile.in
  include $(DEPTH)/config/autoconf.mk
  
 +ifdef MOZ_XSLT
- DIRS            = base xml xpath xslt 
+ PARALLEL_DIRS   = base xml xpath xslt 
 +else
 +ifdef MOZ_XPATH
 +DIRS            = base xpath
@@ -116,7 +116,7 @@ Index: mozilla/content/xslt/src/Makefile.in
 +endif
  
  ifdef MOZ_XSLT_STANDALONE
- DIRS += main
+ PARALLEL_DIRS += main
  endif
  
  include $(topsrcdir)/config/rules.mk
@@ -175,7 +175,7 @@ Index: mozilla/layout/build/Makefile.in
  
  ifdef MOZ_OGG
  SHARED_LIBRARY_LIBS 	+= \
-@@ -276,20 +287,16 @@
+@@ -275,20 +286,16 @@
  		   -I$(srcdir)/../tables \
  		   -I$(srcdir)/../style \
  		   -I$(srcdir)/../xul/content/src \
@@ -196,7 +196,7 @@ Index: mozilla/layout/build/Makefile.in
  		   -I$(topsrcdir)/view/src \
  		   -I$(topsrcdir)/dom/src/base \
  		   -I$(topsrcdir)/dom/src/json \
-@@ -301,16 +308,30 @@
+@@ -300,16 +307,30 @@
  		   -I. \
  		   -I$(topsrcdir)/editor/libeditor/base \
  		   -I$(topsrcdir)/editor/libeditor/text \
@@ -231,7 +231,7 @@ Index: mozilla/layout/build/nsLayoutStatics.cpp
 ===================================================================
 --- mozilla.orig/layout/build/nsLayoutStatics.cpp
 +++ mozilla/layout/build/nsLayoutStatics.cpp
-@@ -69,17 +69,19 @@
+@@ -68,17 +68,19 @@
  #include "nsRange.h"
  #include "nsRepeatService.h"
  #include "nsSpaceManager.h"
@@ -275,7 +275,7 @@ Index: mozilla/layout/build/nsLayoutStatics.cpp
    }
  
  #ifndef DEBUG_CC
-@@ -267,17 +271,19 @@
+@@ -266,17 +270,19 @@
  
  void
  nsLayoutStatics::Shutdown()
@@ -372,9 +372,9 @@ Index: mozilla/layout/build/nsLayoutModule.cpp
  
  //-----------------------------------------------------------------------------
  
-@@ -1282,37 +1293,40 @@
-     nsnull,
-     CreatePluginDocument },
+@@ -1292,37 +1303,40 @@
+     CreateVideoDocument },
+ #endif
  
    { "Style sheet service",
      NS_STYLESHEETSERVICE_CID,

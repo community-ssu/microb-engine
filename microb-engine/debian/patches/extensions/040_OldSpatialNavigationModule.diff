@@ -1,6 +1,7 @@
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/Makefile.in mozilla/extensions/spatialnavigation/Makefile.in
---- mozilla/extensions/spatialnavigation.orig/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/Makefile.in	2008-09-05 23:48:17.000000000 +0300
+Index: mozilla/extensions/spatialnavigation/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/Makefile.in
 @@ -0,0 +1,37 @@
 +
 +DEPTH=../..
@@ -39,9 +40,10 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/Makefile.in mozill
 +DIRS   += public
 +
 +include $(topsrcdir)/config/rules.mk
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/install.rdf mozilla/extensions/spatialnavigation/install.rdf
---- mozilla/extensions/spatialnavigation.orig/install.rdf	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/install.rdf	2008-09-05 23:10:59.000000000 +0300
+Index: mozilla/extensions/spatialnavigation/install.rdf
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/install.rdf
 @@ -0,0 +1,40 @@
 +<?xml version="1.0"?>
 +
@@ -83,9 +85,10 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/install.rdf mozill
 +    <em:homepageURL>http://www.mozilla.org/access/keyboard/snav/</em:homepageURL>
 +  </Description>
 +</RDF>
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/public/Makefile.in mozilla/extensions/spatialnavigation/public/Makefile.in
---- mozilla/extensions/spatialnavigation.orig/public/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/public/Makefile.in	2008-09-05 23:45:19.000000000 +0300
+Index: mozilla/extensions/spatialnavigation/public/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/public/Makefile.in
 @@ -0,0 +1,49 @@
 +# ***** BEGIN LICENSE BLOCK *****
 +# Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -136,9 +139,10 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/public/Makefile.in
 +
 +include $(topsrcdir)/config/rules.mk
 +
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/public/nsISpatialNavigation.idl mozilla/extensions/spatialnavigation/public/nsISpatialNavigation.idl
---- mozilla/extensions/spatialnavigation.orig/public/nsISpatialNavigation.idl	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/public/nsISpatialNavigation.idl	2008-09-05 23:11:00.000000000 +0300
+Index: mozilla/extensions/spatialnavigation/public/nsISpatialNavigation.idl
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/public/nsISpatialNavigation.idl
 @@ -0,0 +1,54 @@
 +/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -156,7 +160,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/public/nsISpatialN
 + *
 + * The Original Code is Spatial Navigation
 + *
-+ * The Initial Developer of the Original Code is 
++ * The Initial Developer of the Original Code is
 + * Douglas F. Turner II
 + * Portions created by the Initial Developer are Copyright (C) 2004
 + * the Initial Developer. All Rights Reserved.
@@ -182,21 +186,22 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/public/nsISpatialN
 +interface nsIDOMWindow;
 +
 +[scriptable, uuid(ef7cb437-9eb3-47c7-9d89-71679bfefcc1)]
-+interface nsISpatialNavigation: nsISupports 
++interface nsISpatialNavigation: nsISupports
 +{
 +  void init(in nsIDOMWindow aWindow);
 +  void shutdown();
-+  
++
 +  void up();
 +  void down();
 +  void left();
 +  void right();
-+  
++
 +  readonly attribute nsIDOMWindow attachedWindow;
 +};
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/Makefile.in mozilla/extensions/spatialnavigation/src/Makefile.in
---- mozilla/extensions/spatialnavigation.orig/src/Makefile.in	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/Makefile.in	2008-09-05 23:48:19.000000000 +0300
+Index: mozilla/extensions/spatialnavigation/src/Makefile.in
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/src/Makefile.in
 @@ -0,0 +1,109 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
@@ -307,9 +312,10 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/Makefile.in mo
 +CFLAGS   += -fno-unit-at-a-time
 +CXXFLAGS += -fno-unit-at-a-time
 +endif
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp mozilla/extensions/spatialnavigation/src/nsRect.cpp
---- mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsRect.cpp	2008-09-05 23:11:00.000000000 +0300
+Index: mozilla/extensions/spatialnavigation/src/nsRect.cpp
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/src/nsRect.cpp
 @@ -0,0 +1,220 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -362,7 +368,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp moz
 +//Also Returns true if aRect is Empty
 +PRBool nsRect::Contains(const nsRect &aRect) const
 +{
-+  return aRect.IsEmpty() || 
++  return aRect.IsEmpty() ||
 +          ((PRBool) ((aRect.x >= x) && (aRect.y >= y) &&
 +                    (aRect.XMost() <= XMost()) && (aRect.YMost() <= YMost())));
 +}
@@ -487,7 +493,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp moz
 +}
 +
 +// scale the rect but round to smallest containing rect
-+nsRect& nsRect::ScaleRoundOut(float aScale) 
++nsRect& nsRect::ScaleRoundOut(float aScale)
 +{
 +  nscoord right = NSToCoordCeil(float(XMost()) * aScale);
 +  nscoord bottom = NSToCoordCeil(float(YMost()) * aScale);
@@ -498,7 +504,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp moz
 +  return *this;
 +}
 +
-+nsRect& nsRect::ScaleRoundOutInverse(float aScale) 
++nsRect& nsRect::ScaleRoundOutInverse(float aScale)
 +{
 +  nscoord right = NSToCoordCeil(float(XMost()) / aScale);
 +  nscoord bottom = NSToCoordCeil(float(YMost()) / aScale);
@@ -510,7 +516,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp moz
 +}
 +
 +// scale the rect but round to largest contained rect
-+nsRect& nsRect::ScaleRoundIn(float aScale) 
++nsRect& nsRect::ScaleRoundIn(float aScale)
 +{
 +  nscoord right = NSToCoordFloor(float(XMost()) * aScale);
 +  nscoord bottom = NSToCoordFloor(float(YMost()) * aScale);
@@ -531,10 +537,11 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsRect.cpp moz
 +  height = (bottom - y);
 +  return *this;
 +}
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigation.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
---- mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigation.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp	2008-09-05 23:48:34.000000000 +0300
-@@ -0,0 +1,1376 @@
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigation.cpp
+@@ -0,0 +1,1373 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 + *
@@ -550,7 +557,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 + *
 + * The Original Code is Spatial Navigation
 + *
-+ * The Initial Developer of the Original Code is 
++ * The Initial Developer of the Original Code is
 + * Douglas F. Turner II  <dougt@meer.net>
 + * Portions created by the Initial Developer are Copyright (C) 2004-2005
 + * the Initial Developer. All Rights Reserved.
@@ -638,7 +645,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    nsAutoString href;
 +    link->GetHref(href);
 +    printf("<%s href=\"%s\">%s</a>\n", NS_ConvertUTF16toUTF8(str).get(), NS_ConvertUTF16toUTF8(href).get(), NS_ConvertUTF16toUTF8(text).get());
-+  } 
++  }
 +    else
 +  {
 +    nsCOMPtr<nsIDOMHTMLInputElement> inputEl(do_QueryInterface(content));
@@ -653,8 +660,8 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      inputEl->GetType(type);
 +      inputEl->GetValue(value);
 +
-+      printf("<%s name=\"%s\" type=\"%s\" value=\"%s\">\n", NS_ConvertUTF16toUTF8(str).get(), 
-+                                               NS_ConvertUTF16toUTF8(name).get(), 
++      printf("<%s name=\"%s\" type=\"%s\" value=\"%s\">\n", NS_ConvertUTF16toUTF8(str).get(),
++                                               NS_ConvertUTF16toUTF8(name).get(),
 +                                               NS_ConvertUTF16toUTF8(type).get(),
 +                                               NS_ConvertUTF16toUTF8(value).get());
 +    }
@@ -686,25 +693,25 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +{
 +}
 +
-+NS_IMETHODIMP 
++NS_IMETHODIMP
 +nsSpatialNavigation::Up()
 +{
 +  return handleMove(eNavUp);
 +}
 +
-+NS_IMETHODIMP 
++NS_IMETHODIMP
 +nsSpatialNavigation::Down()
 +{
 +  return handleMove(eNavDown);
 +}
 +
-+NS_IMETHODIMP 
++NS_IMETHODIMP
 +nsSpatialNavigation::Left()
 +{
 +  return handleMove(eNavLeft);
 +}
 +
-+NS_IMETHODIMP 
++NS_IMETHODIMP
 +nsSpatialNavigation::Right()
 +{
 +  return handleMove(eNavRight);
@@ -719,7 +726,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  if (!mService->mEnabled) return NS_OK;
 +
 +/****************
-+  // if (!mKeyPressedState) 
++  // if (!mKeyPressedState)
 +  {
 +    aEvent->StopPropagation();
 +    aEvent->PreventDefault();
@@ -750,16 +757,16 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    return NS_OK;
 +  }
 +
-+  if (!mService->mEnabled) 
++  if (!mService->mEnabled)
 +  {
 +    mKeyWasDown = PR_FALSE;
 +    return NS_OK;
 +  }
 +
-+  if (mKeyPressedCount > 1) 
++  if (mKeyPressedCount > 1)
 +  {
 +    if (mKeyPressedState == 0) mKeyPressedState = 1;
-+    
++
 +    mKeyPressedCount = 0;
 +    mKeyWasDown = PR_FALSE;
 +
@@ -779,7 +786,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  return NS_OK;
 +}
 +
-+nsresult 
++nsresult
 +nsSpatialNavigation::HandleKey(nsIDOMEvent* aEvent, PRBool aReal)
 +{
 +  nsCOMPtr<nsIDOMNSUIEvent> uiEvent(do_QueryInterface(aEvent));
@@ -798,18 +805,18 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  PRInt32 formControlType = -1;
 +  // check to see if we are in a text field.
 +  // based on nsTypeAheadFind.
-+    
++
 +  //nsEvent should be renamed.
 +  nsCOMPtr<nsIDOMNSEvent> nsEvent = do_QueryInterface(aEvent);
 +  if (!nsEvent)
 +    return NS_ERROR_FAILURE;
-+  
++
 +  nsCOMPtr<nsIDOMEventTarget> domEventTarget;
 +  nsEvent->GetOriginalTarget(getter_AddRefs(domEventTarget));
-+  
++
 +  nsCOMPtr<nsIContent> targetContent = do_QueryInterface(domEventTarget);
 +
-+  if (targetContent->IsNodeOfType(nsINode::eXUL)) 
++  if (targetContent->IsNodeOfType(nsINode::eXUL))
 +    return NS_OK;
 +
 +  PRBool designMode = PR_FALSE;
@@ -825,17 +832,17 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    if (designMode) return NS_OK;
 +  }
 +
-+  if (targetContent->IsNodeOfType(nsINode::eHTML_FORM_CONTROL)) 
++  if (targetContent->IsNodeOfType(nsINode::eHTML_FORM_CONTROL))
 +  {
 +      nsCOMPtr<nsIFormControl> formControl(do_QueryInterface(targetContent));
 +      formControlType = formControl->GetType();
-+      
++
 +      if (mService->mIgnoreTextFields)
 +      {
 +        if (formControlType == NS_FORM_TEXTAREA ||
 +            formControlType == NS_FORM_INPUT_TEXT ||
 +            formControlType == NS_FORM_INPUT_PASSWORD ||
-+            formControlType == NS_FORM_INPUT_FILE) 
++            formControlType == NS_FORM_INPUT_FILE)
 +        {
 +          return NS_OK;
 +        }
@@ -851,7 +858,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +        PRUint32 keyCode;
 +        nsCOMPtr<nsIDOMKeyEvent> keyEvent(do_QueryInterface(aEvent));
-+  
++
 +        if (!keyEvent) return NS_ERROR_FAILURE;
 +
 +        if (NS_FAILED(keyEvent->GetKeyCode(&keyCode)))
@@ -874,7 +881,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +          if (keyCode == nsIDOMKeyEvent::DOM_VK_RETURN)
 +          {
-+            if (isMultiple && !mSelectControlSelected) 
++            if (isMultiple && !mSelectControlSelected)
 +            {
 +              element->SetSelectedIndex(0);
 +              mSelectMultiCount = 0;
@@ -882,14 +889,14 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +            mSelectControlSelected = isMultiple ? PR_TRUE : !mSelectControlSelected;
 +
-+            if (size < 2) 
++            if (size < 2)
 +            {
 +              mSelectPopup = !mSelectPopup;
 +              ++mSelectPopupCount;
 +            }
 +          }
 +
-+          if (mSelectControlSelected && isMultiple) 
++          if (mSelectControlSelected && isMultiple)
 +          {
 +            if (keyCode == nsIDOMKeyEvent::DOM_VK_DOWN) ++mSelectMultiCount;
 +            if (keyCode == nsIDOMKeyEvent::DOM_VK_UP) --mSelectMultiCount;
@@ -897,7 +904,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +            if (mSelectMultiCount >= 0 && mSelectMultiCount <= len)
 +            {
 +              return NS_OK;
-+            } 
++            }
 +              else
 +            {
 +              if (mSelectMultiCount < 0) mSelectMultiCount = 0;
@@ -908,7 +915,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +          }
 +            else
 +          {
-+            if (mSelectPopup) 
++            if (mSelectPopup)
 +            {
 +              aEvent->StopPropagation();
 +              aEvent->PreventDefault();
@@ -922,33 +929,33 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +              {
 +                mSelectControlSelected = PR_FALSE;
 +                mSelectNavCount = 0;
-+              } 
++              }
 +                else if (!mSelectPopup)
 +              {
 +                if (keyCode == nsIDOMKeyEvent::DOM_VK_DOWN) ++mSelectNavCount;
-+          
++
 +                if (keyCode == nsIDOMKeyEvent::DOM_VK_UP) --mSelectNavCount;
 +
 +                element->SetSelectedIndex(mSelectNavCount);
 +
 +                return NS_OK;
 +              }
-+            } 
++            }
 +              else if (size > 1 && index < 0 && !mSelectControlSelected)
 +            {
 +              element->SetSelectedIndex(-1);
 +            }
-+          } 
++          }
 +        }
 +      }
 +  }
-+  else if (mService->mIgnoreTextFields && targetContent->IsNodeOfType(nsINode::eHTML)) 
++  else if (mService->mIgnoreTextFields && targetContent->IsNodeOfType(nsINode::eHTML))
 +  {
-+    // Test for isindex, a deprecated kind of text field. We're using a string 
-+    // compare because <isindex> is not considered a form control, so it does 
-+    // not support nsIFormControl or eHTML_FORM_CONTROL, and it's not worth 
-+    // having a table of atoms just for it. 
-+    
++    // Test for isindex, a deprecated kind of text field. We're using a string
++    // compare because <isindex> is not considered a form control, so it does
++    // not support nsIFormControl or eHTML_FORM_CONTROL, and it's not worth
++    // having a table of atoms just for it.
++
 +      if (isContentOfType(targetContent, "isindex"))
 +        return NS_OK;
 +  }
@@ -956,7 +963,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  PRUint32 keyCode;
 +  PRBool isModifier;
 +  nsCOMPtr<nsIDOMKeyEvent> keyEvent(do_QueryInterface(aEvent));
-+  
++
 +  if (!keyEvent)
 +    return NS_ERROR_FAILURE;
 +
@@ -974,40 +981,40 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      }
 +    }
 +  }
-+  
-+  // figure out what modifier to use  
-+  
++
++  // figure out what modifier to use
++
 +  /************************************************
 +    Value of the keyCodeModifier is
-+  
++
 +    SHIFT          = 0x00100000
 +    CONTROL        = 0x00001100
 +    ALT            = 0x00000012
 +  *************************************************/
-+  
-+  
++
++
 +  if (mService->mKeyCodeModifier & 0x00100000)
 +  {
 +    if (NS_FAILED(keyEvent->GetShiftKey(&isModifier)))
 +      return NS_ERROR_FAILURE;
 +    if (!isModifier)
-+      return NS_OK;  
++      return NS_OK;
 +  }
-+  
++
 +  if (mService->mKeyCodeModifier & 0x00001100)
 +  {
 +    if (NS_FAILED(keyEvent->GetCtrlKey(&isModifier)))
 +      return NS_ERROR_FAILURE;
 +    if (!isModifier)
-+      return NS_OK;  
++      return NS_OK;
 +  }
-+  
++
 +  if (mService->mKeyCodeModifier & 0x00000012)
 +  {
 +    if (NS_FAILED(keyEvent->GetAltKey(&isModifier)))
 +      return NS_ERROR_FAILURE;
 +    if (!isModifier)
-+      return NS_OK;  
++      return NS_OK;
 +  }
 +
 +  if (keyCode == mService->mKeyCodeLeft)
@@ -1016,7 +1023,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    // NS_FORM_TEXTAREA & (NS_FORM_INPUT_TEXT | NS_FORM_INPUT_PASSWORD | NS_FORM_INPUT_FILE) cases
 +
 +    PRInt32 selectionStart = 0, textLength = 0;
-+    if (formControlType == NS_FORM_INPUT_TEXT || 
++    if (formControlType == NS_FORM_INPUT_TEXT ||
 +        formControlType == NS_FORM_INPUT_PASSWORD ||
 +        formControlType == NS_FORM_INPUT_FILE)
 +    {
@@ -1050,7 +1057,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +    PRInt32 selectionEnd = 0, textLength = 0;
 +
-+    if (formControlType == NS_FORM_INPUT_TEXT || 
++    if (formControlType == NS_FORM_INPUT_TEXT ||
 +        formControlType == NS_FORM_INPUT_PASSWORD ||
 +        formControlType == NS_FORM_INPUT_FILE)
 +    {
@@ -1162,7 +1169,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  return NS_OK;
 +}
 +
-+NS_IMETHODIMP 
++NS_IMETHODIMP
 +nsSpatialNavigation::Init(nsIDOMWindow *aWindow)
 +{
 +  mTopWindow = aWindow;
@@ -1171,17 +1178,17 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  nsCOMPtr<nsIDOMEventGroup> systemGroup;
 +  nsresult rv = getEventTargetFromWindow(aWindow, getter_AddRefs(target), getter_AddRefs(systemGroup));
 +  if (NS_FAILED(rv))
-+    return rv;  
-+  
++    return rv;
++
 +  target->AddGroupedEventListener(NS_LITERAL_STRING("keypress"),
 +                                  static_cast<nsIDOMKeyListener*>(this),
-+                                  PR_FALSE, 
++                                  PR_FALSE,
 +                                  systemGroup);
-+  
++
 +  return NS_OK;
 +}
 +
-+NS_IMETHODIMP 
++NS_IMETHODIMP
 +nsSpatialNavigation::Shutdown()
 +{
 +  nsCOMPtr<nsIDOM3EventTarget> target;
@@ -1189,17 +1196,17 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  nsresult rv = getEventTargetFromWindow(mTopWindow, getter_AddRefs(target), getter_AddRefs(systemGroup));
 +  if (NS_FAILED(rv))
 +    return rv;
-+  
++
 +  target->RemoveGroupedEventListener(NS_LITERAL_STRING("keypress"),
 +                                     static_cast<nsIDOMKeyListener*>(this),
-+                                     PR_FALSE, 
++                                     PR_FALSE,
 +                                     systemGroup);
 +  mTopWindow = nsnull;
 +
 +  return NS_OK;
 +}
 +
-+NS_IMETHODIMP 
++NS_IMETHODIMP
 +nsSpatialNavigation::GetAttachedWindow(nsIDOMWindow * *aAttachedWindow)
 +{
 +  NS_IF_ADDREF(*aAttachedWindow = mTopWindow);
@@ -1207,13 +1214,13 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +}
 +
 +void DoTraversal(int aDirection,
-+                 nsIBidirectionalEnumerator* aFrameTraversal, 
++                 nsIFrameEnumerator* aFrameTraversal,
 +                 nsIFrame* aFocusedFrame,
 +                 nsRect& aFocusedRect,
 +                 PRBool isAREA,
 +                 PRBool focusDocuments,
-+                 nsPresContext* aPresContext, 
-+                 PRInt64* aDSoFar,                 
++                 nsPresContext* aPresContext,
++                 PRInt64* aDSoFar,
 +                 nsIContent** aCurrentContent)
 +{
 +
@@ -1239,7 +1246,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +  nsIFrame* frame;
 +  nsRect frameRect;
-+  
++
 +  PRInt64 d;
 +  PRBool superPrecedent = PR_FALSE;
 +  PRBool precedent = PR_FALSE;
@@ -1247,11 +1254,8 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  do
 +  {
 +    aFrameTraversal->Next();
-+    
-+    nsISupports* currentItem;
-+    aFrameTraversal->CurrentItem(&currentItem);
-+    frame = static_cast<nsIFrame*>(currentItem);
 +
++    frame = aFrameTraversal->CurrentItem();
 +    if (!frame)
 +      break;
 +#ifdef DEBUG_outputframes
@@ -1261,13 +1265,13 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    // nav to isn't part of the flow of the currently
 +    // focused frame
 +
-+  if (!isAREA) 
++  if (!isAREA)
 +    {
 +      nsIFrame* flowFrame = aFocusedFrame;
 +      PRBool currentFrameIsFocusedFrame = PR_FALSE;
-+      while (flowFrame) 
++      while (flowFrame)
 +      {
-+        if (flowFrame == frame) 
++        if (flowFrame == frame)
 +        {
 +          currentFrameIsFocusedFrame = PR_TRUE;
 +          break;
@@ -1280,8 +1284,8 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +    ////////////////////////////////////////////////////////////////////////////////////
 +    // a special case for area's which are not enumerated by the nsIFrameTraversal
-+    ////////////////////////////////////////////////////////////////////////////////////    
-+    if (isMap(frame)) 
++    ////////////////////////////////////////////////////////////////////////////////////
++    if (isMap(frame))
 +    {
 +      nsIContent* c = frame->GetContent();
 +      nsCOMPtr<nsIDOMHTMLMapElement> element = do_QueryInterface(c);
@@ -1292,37 +1296,37 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      element->GetAreas(getter_AddRefs(mapAreas));
 +      if (!mapAreas)
 +        continue;
-+      
++
 +      PRUint32 length;
 +      mapAreas->GetLength(&length);
-+      
-+      for (PRUint32 i = 0; i < length; i++) 
++
++      for (PRUint32 i = 0; i < length; i++)
 +      {
 +        nsCOMPtr<nsIDOMNode> domNode;
 +        mapAreas->Item(i,getter_AddRefs(domNode));
-+        
-+        nsCOMPtr<nsIDOMHTMLAreaElement> e = do_QueryInterface(domNode);        
++
++        nsCOMPtr<nsIDOMHTMLAreaElement> e = do_QueryInterface(domNode);
 +        nsCOMPtr<nsIContent> content= do_QueryInterface(domNode);
 +        getFrameForContent(content, &frame);
-+        
++
 +        getRectOfAreaElement(frame, e, &frameRect);
-+        
++
 +        if (!isRectInDirection(aDirection, aFocusedRect, frameRect))
 +          continue;
-+        
++
 +        d = spatialDistance(aDirection, aFocusedRect, frameRect);
-+        
-+        if ((*aDSoFar) > d) 
++
++        if ((*aDSoFar) > d)
 +        {
 +          (*aDSoFar) = d;
 +          NS_IF_RELEASE(*aCurrentContent);
 +          NS_ADDREF(*aCurrentContent = content);
-+        }      
++        }
 +      }
 +      continue;
 +    }
 +    ////////////////////////////////////////////////////////////////////////////////////
-+    
++
 +    // we don't want to worry about the same frame if we
 +    // aren't an area
 +    if (frame == aFocusedFrame ||
@@ -1349,7 +1353,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      const nsSize ns(frameRect.width, frameRect.height);
 +      frame->SetSize(ns);
 +    }
-+    
++
 +    // deflate the rect to avoid overlapping with other
 +    // rects.
 +    frameRect.Deflate(gRectFudge, gRectFudgeY);
@@ -1360,7 +1364,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +    if (!isRectInDirection(aDirection, aFocusedRect, frameRect))
 +      continue;
-+    
++
 +    nsCOMPtr<nsIDOMNode> n = do_QueryInterface(content);
 +    nsString str;
 +    if (n) n->GetNodeName(str);
@@ -1384,7 +1388,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +        NS_IF_RELEASE(*aCurrentContent);
 +        NS_ADDREF(*aCurrentContent = content);
-+      } 
++      }
 +    }
 +
 +    if (superPrecedent) continue;
@@ -1408,8 +1412,8 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    if (precedent) continue;
 +
 +    d = spatialDistance(aDirection, aFocusedRect, frameRect);
-+    
-+    if ((*aDSoFar) >= d) 
++
++    if ((*aDSoFar) >= d)
 +    {
 +#ifdef DEBUG_dougt
 +      if (d == 0)
@@ -1452,14 +1456,14 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +}
 +
 +nsresult
-+nsSpatialNavigation::getContentInDirection(int aDirection, 
-+                                           nsPresContext* aPresContext, 
-+                                           nsRect& aFocusedRect, 
-+                                           nsIFrame* aFocusedFrame, 
++nsSpatialNavigation::getContentInDirection(int aDirection,
++                                           nsPresContext* aPresContext,
++                                           nsRect& aFocusedRect,
++                                           nsIFrame* aFocusedFrame,
 +                                           PRBool aIsAREA,
 +                                           PRBool aFocusDocuments,
 +                                           nsIContent** aContent)
-+{  
++{
 +  NS_ENSURE_ARG_POINTER(aFocusedFrame);
 +  // Check to see if we should decend into subdoc
 +  nsIContent* subFrameContent = aFocusedFrame->GetContent();
@@ -1472,27 +1476,27 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    centerRect(aDirection, aFocusedRect);
 +  }
 +
-+  
-+  nsCOMPtr<nsIBidirectionalEnumerator> frameTraversal;
++
++  nsCOMPtr<nsIFrameEnumerator> frameTraversal;
 +  nsresult result = createFrameTraversal(aPresContext,
 +                                         ePreOrder,
 +                                         PR_FALSE, // aVisual
 +                                         PR_FALSE, // aLockInScrollView
 +                                         PR_TRUE,  // aFollowOOFs
-+                                         getter_AddRefs(frameTraversal));  
++                                         getter_AddRefs(frameTraversal));
 +  if (NS_FAILED(result))
 +    return result;
-+  
++
 +  nsCOMPtr<nsIContent> currentContent;
 +  PRInt64 currentDistance = LL_MaxInt();
 +
 +  DoTraversal(aDirection,
-+              frameTraversal, 
++              frameTraversal,
 +              aFocusedFrame,
 +              aFocusedRect,
 +              aIsAREA,
 +              aFocusDocuments,
-+              aPresContext, 
++              aPresContext,
 +              &currentDistance,
 +              aContent);
 +
@@ -1616,7 +1620,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    ScrollWindow(direction, getContentWindow());
 +    return NS_OK;
 +  }
-+  
++
 +  nsPresContext* presContext = getPresContext(focusedContent);
 +  if(!presContext)
 +    return NS_ERROR_NULL_POINTER;
@@ -1637,7 +1641,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +  nsRect focusedRect;
 +  PRBool isAREA = isArea(focusedContent);
-+  if (!isAREA) 
++  if (!isAREA)
 +  {
 +    // RECT !!
 +    if (focusedFrame)
@@ -1667,19 +1671,19 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  {
 +    getContentInDirection(direction, presContext, focusedRect, focusedFrame, PR_FALSE, isAREA, getter_AddRefs(c));
 +  }
-+  
-+  if (c) 
++
++  if (c)
 +  {
 +    nsIDocument* doc = c->GetDocument();
 +    if (!doc)
 +      return NS_ERROR_FAILURE;
-+    
++
 +    nsIPresShell *presShell = doc->GetPrimaryShell();
 +
 +    nsIFrame* cframe = presShell->GetPrimaryFrameFor(c);
-+    
-+    PRBool b = IsPartiallyVisible(presShell, cframe); 
-+    
++
++    PRBool b = IsPartiallyVisible(presShell, cframe);
++
 +    if (b)
 +      setFocusedContent(c);
 +    else
@@ -1703,14 +1707,14 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +    nsIPresShell *shell = doc->GetPrimaryShell();
 +    if (!shell) return NS_OK;
-+  
++
 +    presContext = shell->GetPresContext();
 +
 +    nsIFrame* parentFrame = shell->GetRootFrame();
 +
 +    nsCOMPtr<nsIDocument> subdoc = focusedContent->GetDocument();
 +    if (!subdoc) return NS_OK;
-+    
++
 +    nsCOMPtr<nsIDOMDocument> subdomdoc = do_QueryInterface(subdoc);
 +
 +    nsCOMPtr<nsIDOMWindowInternal> domWindowInternal;
@@ -1719,7 +1723,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +    nsCOMPtr<nsIDOMWindowInternal> domWindowInternal2 = domWindowInternal;
 +    domWindowInternal2->GetOpener(getter_AddRefs(domWindowInternal));
-+    if (!domWindowInternal) 
++    if (!domWindowInternal)
 +      domWindowInternal = domWindowInternal2;
 +
 +    nsCOMPtr<nsIDOMWindow> subdocWindow = do_QueryInterface(domWindowInternal);
@@ -1730,7 +1734,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +    nsIPresShell *subdocShell = subdoc->GetPrimaryShell();
 +    if (!subdocShell) return NS_OK;
-+  
++
 +    nsPresContext *subdocPresContext = subdocShell->GetPresContext();
 +
 +    nsIFrame* subdocFrame = subdocShell->GetRootFrame();
@@ -1739,7 +1743,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    nsRect subdocRect = subdocFrame->GetRect();
 +
 +    nsPoint frame_offset = subdocFrame->GetOffsetToExternal(parentFrame);
-+  
++
 +    subdocRect.x = frame_offset.x;
 +    subdocRect.y = frame_offset.y;
 +
@@ -1758,7 +1762,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    setFocusedContent(c);
 +    return NS_OK;
 +  }
-+  
++
 +  // if everything fails, default is to move the focus just as if the user hit tab.
 +  //  presContext->EventStateManager()->ShiftFocus(PR_TRUE, focusedContent);
 +
@@ -1776,20 +1780,20 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +nsSpatialNavigation::getFocusedContent(int direction, nsIContent** aContent)
 +{
 +  *aContent = nsnull;
-+  
++
 +  nsCOMPtr<nsIDOMWindow> contentWindow = getContentWindow();
 +  if (!contentWindow)
 +    return;
-+  
++
 +  nsCOMPtr<nsPIDOMWindow> privateWindow = do_QueryInterface(contentWindow);
 +  nsIFocusController *focusController = privateWindow->GetRootFocusController();
-+  
++
 +  if (!focusController)
 +    return;
-+  
++
 +  nsCOMPtr<nsIDOMElement> element;
 +  focusController->GetFocusedElement(getter_AddRefs(element));
-+  
++
 +  if (element)
 +  {
 +    nsCOMPtr<nsIContent> content = do_QueryInterface(element);
@@ -1798,7 +1802,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  }
 +}
 +
-+void 
++void
 +nsSpatialNavigation::setFocusedContent(nsIContent* c)
 +{
 +  if (!c) return;
@@ -1827,13 +1831,13 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +  nsPresContext* presContext = getPresContext(c);
 +  nsCOMPtr<nsIPresShell> presShell = presContext->PresShell();
-+  
-+  if (mService->mOrderLayout) 
++
++  if (mService->mOrderLayout)
 +  {
 +    // Google Spreadsheets works ugly with this call
-+    // presContext->EventStateManager()->SetContentState(c, NS_EVENT_STATE_FOCUS);  
++    // presContext->EventStateManager()->SetContentState(c, NS_EVENT_STATE_FOCUS);
 +
-+    presShell->ScrollContentIntoView(c, 
++    presShell->ScrollContentIntoView(c,
 +                                     NS_PRESSHELL_SCROLL_IF_NOT_VISIBLE,
 +                                     NS_PRESSHELL_SCROLL_IF_NOT_VISIBLE);
 +
@@ -1844,11 +1848,11 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +  mLastContent = do_QueryInterface(nsElement);
 +
-+  if (nsElement) 
++  if (nsElement)
 +    nsElement->Focus();
 +
 +  return;
-+  
++
 +  nsIFrame* focusedFrame;
 +  getFrameForContent(c, &focusedFrame);
 +  nsRect rect = makeRectRelativeToGlobalView(focusedFrame);
@@ -1877,10 +1881,10 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(mTopWindow);
 +  nsIDOMWindowInternal *rootWindow = window->GetPrivateRoot();
-+  
++
 +  nsCOMPtr<nsIDOMWindow> windowContent;
 +  rootWindow->GetContent(getter_AddRefs(windowContent));
-+  
++
 +  if (!windowContent)
 +  return nsnull;
 +
@@ -1889,7 +1893,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +}
 +
 +
-+nsPresContext* 
++nsPresContext*
 +nsSpatialNavigation::getPresContext(nsIContent* content)
 +{
 +  nsCOMPtr<nsIDocument> doc;
@@ -1901,20 +1905,21 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  } else
 +    doc = content->GetDocument();
 +
-+  if (!doc) return nsnull;  
++  if (!doc) return nsnull;
 +  // the only case where there could be more shells in printpreview
 +  nsIPresShell *shell = doc->GetPrimaryShell();
 +  if (!shell) return nsnull;
-+  
++
 +  nsPresContext *presContext = shell->GetPresContext();
 +  return presContext;
 +}
 +
 +
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationPrivate.h mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
---- mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationPrivate.h	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h	2008-09-05 23:11:00.000000000 +0300
-@@ -0,0 +1,298 @@
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationPrivate.h
+@@ -0,0 +1,299 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 + *
@@ -1930,7 +1935,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 + *
 + * The Original Code is Spatial Navigation
 + *
-+ * The Initial Developer of the Original Code is 
++ * The Initial Developer of the Original Code is
 + * Douglas F. Turner II  <dougt@meer.net>
 + * Portions created by the Initial Developer are Copyright (C) 2004-2005
 + * the Initial Developer. All Rights Reserved.
@@ -2041,6 +2046,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +#include "nsLayoutCID.h"
 +#include "nsPIDOMWindow.h"
 +#include "nsStyleContext.h"
++#include "nsIEnumerator.h"
 +
 +class nsSpatialNavigationService;
 +class nsSpatialNavigation;
@@ -2048,33 +2054,33 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +class nsSpatialNavigation : public nsISpatialNavigation, public nsIDOMKeyListener
 +{
 +public:
-+  
++
 +  NS_DECL_ISUPPORTS
 +  NS_DECL_NSISPATIALNAVIGATION
-+  
++
 +  NS_DECL_NSIDOMEVENTLISTENER
-+  
++
 +  // ----- nsIDOMKeyListener ----------------------------
 +  NS_IMETHOD KeyDown(nsIDOMEvent* aKeyEvent);
 +  NS_IMETHOD KeyUp(nsIDOMEvent* aKeyEvent);
 +  NS_IMETHOD KeyPress(nsIDOMEvent* aKeyEvent);
-+  
++
 +  nsSpatialNavigation(nsSpatialNavigationService* aService);
-+  
++
 +private:
 +  ~nsSpatialNavigation();
-+  
++
 +  nsresult HandleKey(nsIDOMEvent* aKeyEvent, PRBool aReal);
 +  nsPresContext* getPresContext(nsIContent* aContent);
-+  
++
 +  PRInt64 spatialDistance(int direction, nsRect& a, nsRect& b);
-+  
++
 +  nsIDOMWindow* getContentWindow();
-+  
++
 +  void setFocusedContent(nsIContent* aContent);
 +  void getFocusedContent(int direction, nsIContent** aContent);
 +  PRBool isContentInsideWindow(nsIContent* aContent, nsIDOMWindow* aWin, PRInt32 *xpos = nsnull, PRInt32 *ypos = nsnull);
-+  
++
 +  nsresult handleMove(int direction);
 +  nsresult getContentInDirection(int direction, nsPresContext* presContext, nsRect& focusedRect, nsIFrame* focusedFrame, PRBool aFocusDocuments, PRBool isAREA, nsIContent** aContent);
 +
@@ -2097,12 +2103,12 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +
 +
-+class nsSpatialNavigationService: public nsIObserver 
++class nsSpatialNavigationService: public nsIObserver
 +{
-+public:  
-+  nsSpatialNavigationService();  
-+  virtual ~nsSpatialNavigationService();  
-+  
++public:
++  nsSpatialNavigationService();
++  virtual ~nsSpatialNavigationService();
++
 +  NS_DECL_ISUPPORTS
 +  NS_DECL_NSIOBSERVER
 +
@@ -2140,7 +2146,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +                                       PRBool aVisual,
 +                                       PRBool aLockInScrollView,
 +                                       PRBool aFollowOOFs,
-+                                       nsIBidirectionalEnumerator** outTraversal);
++                                       nsIFrameEnumerator** outTraversal);
 +nsresult getEventTargetFromWindow     (nsIDOMWindow* aWindow, nsIDOM3EventTarget** aEventTarget, nsIDOMEventGroup** aSystemGroup);
 +void     getContentFromFrame          (nsIContent* c, nsIContent** outContent);
 +nsresult getFrameForContent           (nsIContent* aContent, nsIFrame** aFrame);
@@ -2189,13 +2195,13 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    nsCOMPtr<nsIScriptGlobalObject> sgo (do_QueryInterface(window));
 +    if (!sgo)
 +      return;
-+    
++
 +    scriptContext = sgo->GetContext();
 +    if (!scriptContext)
 +      return;
 +
 +    isEnabled = scriptContext->GetScriptsEnabled();
-+    
++
 +    if (isEnabled)
 +      scriptContext->SetScriptsEnabled(PR_FALSE, PR_TRUE);
 +  }
@@ -2207,15 +2213,16 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      // enable javascript again..
 +      scriptContext->SetScriptsEnabled(PR_TRUE, PR_TRUE);
 +    }
-+      
++
 +  }
 +  PRBool isEnabled;
 +  nsIScriptContext *scriptContext;
 +};
 +
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationService.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp
---- mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationService.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp	2008-09-05 23:11:00.000000000 +0300
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationService.cpp
 @@ -0,0 +1,332 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -2232,7 +2239,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 + *
 + * The Original Code is Spatial Navigation
 + *
-+ * The Initial Developer of the Original Code is 
++ * The Initial Developer of the Original Code is
 + * Douglas F. Turner II  <dougt@meer.net>
 + * Portions created by the Initial Developer are Copyright (C) 2004-2005
 + * the Initial Developer. All Rights Reserved.
@@ -2256,7 +2263,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +#include "nsSpatialNavigationPrivate.h"
 +#include "nsIObserverService.h"
 +
-+nsSpatialNavigationService::nsSpatialNavigationService()  
++nsSpatialNavigationService::nsSpatialNavigationService()
 +{
 +  mEnabled             = PR_TRUE;
 +  mIgnoreTextFields    = PR_FALSE;
@@ -2269,11 +2276,11 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  mKeyCodeDown         = nsIDOMKeyEvent::DOM_VK_DOWN;
 +
 +  mKeyCodeModifier     = 0x00000012 | 0x00100000; // By default ALT and SHIFT
-+}  
++}
 +
-+nsSpatialNavigationService::~nsSpatialNavigationService()  
++nsSpatialNavigationService::~nsSpatialNavigationService()
 +{
-+}  
++}
 +
 +NS_IMPL_ISUPPORTS1(nsSpatialNavigationService, nsIObserver)
 +
@@ -2282,27 +2289,27 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +{
 +  nsresult rv;
 +
-+  if (!strcmp(aTopic,"domwindowopened")) 
++  if (!strcmp(aTopic,"domwindowopened"))
 +  {
 +    nsCOMPtr<nsIDOMWindow> chromeWindow = do_QueryInterface(aSubject);
-+    
++
 +    nsSpatialNavigation* sn = new nsSpatialNavigation(this);
 +
 +    if (!sn)
 +      return NS_ERROR_OUT_OF_MEMORY;
 +
 +    sn->Init(chromeWindow);
-+    
++
 +    mObjects.AppendObject(sn);  // the array owns the only reference to sn.
 +
 +    return NS_OK;
 +  }
-+  
-+  if (!strcmp(aTopic,"domwindowclosed")) 
++
++  if (!strcmp(aTopic,"domwindowclosed"))
 +  {
 +    nsCOMPtr<nsIDOMWindow> chromeWindow = do_QueryInterface(aSubject);
 +    // need to find it in our array
-+  
++
 +    PRInt32 count = mObjects.Count();
 +    for (PRInt32 i = 0; i < count; i++)
 +    {
@@ -2310,7 +2317,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      nsCOMPtr<nsIDOMWindow> attachedWindow;
 +      sn->GetAttachedWindow(getter_AddRefs(attachedWindow));
 +
-+      if (attachedWindow == chromeWindow) 
++      if (attachedWindow == chromeWindow)
 +      {
 +        sn->Shutdown();
 +        mObjects.RemoveObjectAt(i);
@@ -2320,39 +2327,39 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    return NS_OK;
 +  }
 +
-+  
-+  if (!strcmp(aTopic,"app-startup")) 
++
++  if (!strcmp(aTopic,"app-startup"))
 +  {
 +    nsCOMPtr<nsIWindowWatcher> windowWatcher = do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
 +    NS_ENSURE_SUCCESS(rv, rv);
 +    windowWatcher->RegisterNotification(this);
-+    
++
 +    nsCOMPtr<nsIPrefBranch2> prefBranch = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
 +    NS_ENSURE_SUCCESS(rv, rv);
 +
 +    prefBranch->AddObserver("snav.", this, PR_FALSE);
-+    
-+    nsCOMPtr<nsIObserverService> observerService = 
++
++    nsCOMPtr<nsIObserverService> observerService =
 +             do_GetService(NS_OBSERVERSERVICE_CONTRACTID, &rv);
 +    NS_ENSURE_SUCCESS(rv, rv);
 +    rv = observerService->AddObserver(this, "profile-after-change", PR_FALSE);
 +    NS_ENSURE_SUCCESS(rv, rv);
-+    
++
 +    return NS_OK;
 +  }
-+  
++
 +  if (!strcmp(aTopic,"profile-after-change"))
 +  {
 +    // the profile has loaded, read in the preferences
 +    nsCOMPtr<nsIPrefBranch> prefBranch = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
 +    NS_ENSURE_SUCCESS(rv, rv);
-+    
++
 +    PRBool tempBool;
 +    PRInt32 tempInt32;
-+    
++
 +    // note that if Get*Pref fails, the pref may not exist, so we fallback to
 +    // the defaults as defined in the constructor
-+    
++
 +    rv = prefBranch->GetBoolPref("snav.enabled", &tempBool);
 +    if (NS_SUCCEEDED(rv))
 +      mEnabled = tempBool;
@@ -2390,14 +2397,14 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    rv = prefBranch->GetIntPref("snav.keyCode.modifier", &tempInt32);
 +    if (NS_SUCCEEDED(rv))
 +      mKeyCodeModifier = tempInt32;
-+    
++
 +    return NS_OK;
 +  }
-+  
-+  if (!strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID)) 
++
++  if (!strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID))
 +  {
 +    nsCOMPtr<nsIPrefBranch> prefBranch = do_QueryInterface(aSubject);
-+    
++
 +    nsCString prefc(NS_ConvertUTF16toUTF8(aData).get());
 +    nsString prefs(aData);
 +
@@ -2438,19 +2445,19 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    else if (prefs.EqualsLiteral("snav.keyCode.up"))
 +    {
 +      prefBranch->GetIntPref(prefc.get(), &mKeyCodeUp);
-+    }    
++    }
 +    else if (prefs.EqualsLiteral("snav.keyCode.down"))
 +    {
 +      prefBranch->GetIntPref(prefc.get(), &mKeyCodeDown);
-+    }    
++    }
 +    else if (prefs.EqualsLiteral("snav.keyCode.modifier"))
 +    {
 +      prefBranch->GetIntPref(prefc.get(), &mKeyCodeModifier);
 +    }
-+    
++
 +    return NS_OK;
 +  }
-+  
++
 +  return NS_OK;
 +}
 +
@@ -2478,30 +2485,30 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +                                                      const nsModuleComponentInfo *info)
 +{
 +  nsresult rv;
-+  
++
 +  nsCOMPtr<nsIServiceManager> servman = do_QueryInterface((nsISupports*)aCompMgr, &rv);
 +  if (NS_FAILED(rv))
 +    return rv;
-+  
-+  
++
++
 +  nsCOMPtr<nsICategoryManager> catman;
-+  servman->GetServiceByContractID(NS_CATEGORYMANAGER_CONTRACTID, 
-+                                  NS_GET_IID(nsICategoryManager), 
++  servman->GetServiceByContractID(NS_CATEGORYMANAGER_CONTRACTID,
++                                  NS_GET_IID(nsICategoryManager),
 +                                  getter_AddRefs(catman));
-+  
++
 +  if (NS_FAILED(rv))
 +    return rv;
-+  
++
 +  char* previous = nsnull;
 +  rv = catman->AddCategoryEntry("app-startup",
-+                                "SpatialNavigationService", 
++                                "SpatialNavigationService",
 +                                SpatialNavigationService_ContractID,
-+                                PR_TRUE, 
-+                                PR_TRUE, 
++                                PR_TRUE,
++                                PR_TRUE,
 +                                &previous);
 +  if (previous)
 +    nsMemory::Free(previous);
-+  
++
 +  return rv;
 +}
 +
@@ -2511,47 +2518,48 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +                                                        const nsModuleComponentInfo *info)
 +{
 +  nsresult rv;
-+  
++
 +  nsCOMPtr<nsIServiceManager> servman = do_QueryInterface((nsISupports*)aCompMgr, &rv);
 +  if (NS_FAILED(rv))
 +    return rv;
-+  
++
 +  nsCOMPtr<nsICategoryManager> catman;
-+  servman->GetServiceByContractID(NS_CATEGORYMANAGER_CONTRACTID, 
-+                                  NS_GET_IID(nsICategoryManager), 
++  servman->GetServiceByContractID(NS_CATEGORYMANAGER_CONTRACTID,
++                                  NS_GET_IID(nsICategoryManager),
 +                                  getter_AddRefs(catman));
-+  
++
 +  if (NS_FAILED(rv))
 +    return rv;
-+  
++
 +  rv = catman->DeleteCategoryEntry("app-startup",
-+                                   "SpatialNavigationService", 
++                                   "SpatialNavigationService",
 +                                   PR_TRUE);
-+  
++
 +  return rv;
 +}
 +
 +
 +
 +NS_GENERIC_FACTORY_CONSTRUCTOR(nsSpatialNavigationService)
-+  
-+  
++
++
 +static const nsModuleComponentInfo components[] =
 +{
-+  { "SpatialNavigationService", 
-+    SpatialNavigationService_CID, 
++  { "SpatialNavigationService",
++    SpatialNavigationService_CID,
 +    SpatialNavigationService_ContractID,
 +    nsSpatialNavigationServiceConstructor,
 +    SpatialNavigationServiceRegistration,
 +    SpatialNavigationServiceUnregistration
 +  }
-+  
++
 +};
 +
 +NS_IMPL_NSGETMODULE(SpatialNavigationModule, components)
-diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationUtils.cpp mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
---- mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavigationUtils.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp	2008-09-05 23:11:00.000000000 +0300
+Index: mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
+===================================================================
+--- /dev/null
++++ mozilla/extensions/spatialnavigation/src/nsSpatialNavigationUtils.cpp
 @@ -0,0 +1,1146 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -2568,7 +2576,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 + *
 + * The Original Code is Spatial Navigation
 + *
-+ * The Initial Developer of the Original Code is 
++ * The Initial Developer of the Original Code is
 + * Douglas F. Turner II  <dougt@meer.net>
 + * Portions created by the Initial Developer are Copyright (C) 2004-2005
 + * the Initial Developer. All Rights Reserved.
@@ -2626,7 +2634,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  char *n_str;
 +  PRInt32 i, cnt;
 +  PRInt32 *value_list;
-+  
++
 +  /*
 +   * Nothing in an empty list
 +   */
@@ -2635,7 +2643,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  {
 +    return nsnull;
 +  }
-+  
++
 +  /*
 +   * Skip beginning whitespace, all whitespace is empty list.
 +   */
@@ -2648,7 +2656,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  {
 +    return nsnull;
 +  }
-+  
++
 +  /*
 +   * Make a pass where any two numbers separated by just whitespace
 +   * are given a comma separator.  Count entries while passing.
@@ -2657,7 +2665,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  while (*n_str != '\0')
 +  {
 +    PRBool has_comma;
-+    
++
 +    /*
 +     * Skip to a separator
 +     */
@@ -2667,7 +2675,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      tptr++;
 +    }
 +    n_str = tptr;
-+    
++
 +    /*
 +     * If no more entries, break out here
 +     */
@@ -2675,7 +2683,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    {
 +      break;
 +    }
-+    
++
 +    /*
 +     * Skip to the end of the separator, noting if we have a
 +     * comma.
@@ -2711,19 +2719,19 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    {
 +      *n_str = ',';
 +    }
-+    
++
 +    /*
 +     * count the entry skipped.
 +     */
 +    cnt++;
-+    
++
 +    n_str = tptr;
 +  }
 +  /*
 +   * count the last entry in the list.
 +   */
 +  cnt++;
-+  
++
 +  /*
 +   * Allocate space for the coordinate array.
 +   */
@@ -2732,7 +2740,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  {
 +    return nsnull;
 +  }
-+  
++
 +  /*
 +   * Second pass to copy integer values into list.
 +   */
@@ -2740,7 +2748,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  for (i=0; i<cnt; i++)
 +  {
 +    char *ptr;
-+    
++
 +    ptr = strchr(tptr, ',');
 +    if (ptr)
 +    {
@@ -2768,7 +2776,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      tptr = ptr + 1;
 +    }
 +  }
-+  
++
 +  *value_cnt = cnt;
 +  return value_list;
 +}
@@ -2778,18 +2786,18 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +                              PRBool aVisual,
 +                              PRBool aLockInScrollView,
 +                              PRBool aFollowOOFs,
-+                              nsIBidirectionalEnumerator** outTraversal)
++                              nsIFrameEnumerator** outTraversal)
 +{
 +  nsresult result;
 +  if (!aPresContext)
-+    return NS_ERROR_FAILURE;    
-+  
++    return NS_ERROR_FAILURE;
++
 +  nsIPresShell* presShell = aPresContext->PresShell();
 +  if (!presShell)
 +    return NS_ERROR_FAILURE;
-+  
++
 +  nsIFrame* frame = presShell->GetRootFrame();
-+  
++
 +  if (!frame)
 +    return NS_ERROR_FAILURE;
 +
@@ -2800,19 +2808,19 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    fd->List(frame->GetPresContext(), stdout, 0);
 +#endif
 +
-+  nsCOMPtr<nsIBidirectionalEnumerator> frameTraversal;
-+  
++  nsCOMPtr<nsIFrameEnumerator> frameTraversal;
++
 +  static NS_DEFINE_CID(kFrameTraversalCID, NS_FRAMETRAVERSAL_CID);
 +  nsCOMPtr<nsIFrameTraversal> trav(do_CreateInstance(kFrameTraversalCID,&result));
 +  if (NS_FAILED(result))
 +    return result;
-+  
++
 +  result = trav->NewFrameTraversal(getter_AddRefs(frameTraversal),
 +                                   aPresContext, frame,
 +                                   aType, aVisual, aLockInScrollView, aFollowOOFs);
 +  if (NS_FAILED(result))
 +    return result;
-+  
++
 +  NS_IF_ADDREF(*outTraversal = frameTraversal);
 +  return NS_OK;
 +}
@@ -2821,22 +2829,22 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +{
 +  *aEventTarget = nsnull;
 +  nsCOMPtr<nsPIDOMWindow> privateWindow = do_QueryInterface(aWindow);
-+  
++
 +  if (!privateWindow)
 +    return NS_ERROR_UNEXPECTED; // assert
-+  
++
 +  nsPIDOMEventTarget *chromeEventHandler = privateWindow->GetChromeEventHandler();
 +
 +  if (!chromeEventHandler)
 +    return NS_ERROR_UNEXPECTED; // assert
-+  
++
 +  nsCOMPtr<nsIDOMEventGroup> systemGroup;
 +  chromeEventHandler->GetSystemEventGroup(getter_AddRefs(systemGroup));
 +  nsCOMPtr<nsIDOM3EventTarget> target(do_QueryInterface(chromeEventHandler));
-+  
++
 +  if (!target || !systemGroup)
 +    return NS_ERROR_FAILURE;
-+  
++
 +  NS_ADDREF(*aEventTarget = target);
 +  NS_ADDREF(*aSystemGroup = systemGroup);
 +  return NS_OK;
@@ -2853,7 +2861,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +  if (domFrameElement) {
 +    domFrameElement->GetContentDocument(getter_AddRefs(contentDocument));
-+  }  
++  }
 +  else {
 +    nsCOMPtr<nsIDOMHTMLIFrameElement> domIFrameElement = do_QueryInterface(c);
 +	if (domIFrameElement)
@@ -2874,16 +2882,16 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +  if (!aContent)
 +    return NS_ERROR_FAILURE;
-+  
++
 +  nsIDocument* doc = aContent->GetDocument();
 +  if (!doc)
 +    return NS_ERROR_FAILURE;
-+  
++
 +  nsIPresShell *presShell = doc->GetPrimaryShell();
 +  nsIFrame* frame = presShell->GetPrimaryFrameFor(aContent);
 +
 +  if (!frame) return NS_ERROR_FAILURE;
-+  
++
 +  *aFrame = frame;
 +  return NS_OK;
 +}
@@ -2923,7 +2931,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  return isContentOfType(content, "map");
 +}
 +
-+PRBool 
++PRBool
 +isTargetable(PRBool focusDocuments, nsIFrame* frame)
 +{
 +  nsIContent* currentContent = frame->GetContent();
@@ -2947,22 +2955,22 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    nsAutoString uri;
 +    anchorElement->GetHref(uri);
 +    if (uri.IsEmpty()) {
-+      return PR_FALSE; 
++      return PR_FALSE;
 +    }
 +    return PR_TRUE;
 +  }
 +
 +  nsCOMPtr<nsIFrameFrame> frameFrame(do_QueryInterface(frame));
-+  if (frameFrame) 
++  if (frameFrame)
 +    return PR_TRUE;
 +
 +  nsCOMPtr<nsIDOMHTMLIFrameElement> iFrameElement = do_QueryInterface(currentContent);
-+  if (iFrameElement) 
++  if (iFrameElement)
 +    return PR_TRUE;
 +
 +  if (focusDocuments) {
 +    nsCOMPtr<nsIDOMHTMLHtmlElement> hhElement(do_QueryInterface(currentContent));
-+    if (hhElement) 
++    if (hhElement)
 +      return PR_TRUE;
 +  }
 +
@@ -2971,7 +2979,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  // its parent being one of these.
 +
 +  PRBool disabled = PR_FALSE;
-+  
++
 +  nsCOMPtr<nsIDOMNode> node;
 +  node = do_QueryInterface(currentContent);
 +  if (node)
@@ -3055,7 +3063,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  nscoord x1, x2, y1, y2, xtmp, ytmp;
 +  x1 = x2 = coord[0];
 +  y1 = y2 = coord[1];
-+  for (PRInt32 i = 2; i < sides; i += 2) 
++  for (PRInt32 i = 2; i < sides; i += 2)
 +  {
 +    xtmp = coord[i];
 +    ytmp = coord[i+1];
@@ -3074,32 +3082,32 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +  // RECT !!
 +  nsRect frameRect = makeRectRelativeToGlobalView(f);
-+  
++
 +  if (frameRect.width == 0)
 +    frameRect.width = 1;
 +  if (frameRect.height == 0)
 +    frameRect.height = 1;
-+  
++
 +  nsPoint offset;
 +  offset.x = frameRect.x;
 +  offset.y = frameRect.y;
-+  
++
 +
 +  nsAutoString coordstr;
 +  e->GetCoords(coordstr);
 +
 +  NS_ConvertUTF16toUTF8 cp (coordstr);
-+  
++
 +  PRInt32 count;
 +  nscoord* coords = lo_parse_coord_list((char*) cp.get(), &count);
-+  
++
 +  // FIX what about other shapes?
-+  
-+  if (count == 4) 
++
++  if (count == 4)
 +  {
 +    //                x          y          width                  height
 +    frameRect.SetRect(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1]);
-+    
++
 +    frameRect.x += offset.x;
 +    frameRect.y += offset.y;
 +  }
@@ -3130,20 +3138,20 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    int middle = frameRect.x + abs(frameRect.width)/2;
 +    return (middle < focusedRect.x);
 +  }
-+  
++
 +  if (direction == eNavRight)
 +  {
 +    int middle = frameRect.x + abs(frameRect.width)/2;
 +    return (middle  > focusedRect.x + abs(focusedRect.width));
 +  }
-+  
++
 +  if (direction == eNavUp)
 +  {
 +    int middle = frameRect.y + abs(frameRect.height)/2;
 +    // return (middle < focusedRect.y);
 +    return (frameRect.y < focusedRect.y);
 +  }
-+  
++
 +  if (direction == eNavDown)
 +  {
 +    int middle = frameRect.y + abs(frameRect.height)/2;
@@ -3159,7 +3167,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +PRBool takesSuperPrecedence(int direction, nsRect& c, nsRect& t)
 +{
 +  PRBool rv = PR_FALSE;
-+  
++
 +  if (direction == eNavLeft || direction == eNavRight)
 +  {
 +    int tMiddle = t.y + abs(t.height)/2;
@@ -3174,9 +3182,9 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    if (direction == eNavRight && t.x < cEnd) return PR_FALSE;
 +
 +    if (t.y >= c.y && t.y <= cBottom             ||
-+        tMiddle >= c.y && tMiddle <= cBottom     || 
-+        tBottom >= c.y && tBottom <= cBottom     || 
-+        t.y == c.y                               || 
++        tMiddle >= c.y && tMiddle <= cBottom     ||
++        tBottom >= c.y && tBottom <= cBottom     ||
++        t.y == c.y                               ||
 +        tBottom == cBottom                       ||
 +        t.y <= c.y && tBottom >= cBottom)
 +      rv = PR_TRUE;
@@ -3195,9 +3203,9 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +    if (direction == eNavDown && t.y < c.y) return PR_FALSE;
 +
-+    if (tMiddle >= c.x && tMiddle <= cEnd || 
-+        t.x >= c.x && t.x <= cEnd         || 
-+        c.x == t.x                        || 
++    if (tMiddle >= c.x && tMiddle <= cEnd ||
++        t.x >= c.x && t.x <= cEnd         ||
++        c.x == t.x                        ||
 +        cEnd == tEnd                      ||
 +        tEnd >= c.x && tEnd <= cEnd       ||
 +        t.x <= c.x && tEnd >= cEnd)
@@ -3206,11 +3214,11 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +  return rv;
 +}
-+  
++
 +PRBool takesPrecedence(int direction, nsRect& c, nsRect& t)
 +{
 +  PRBool rv = PR_FALSE;
-+  
++
 +  if (direction == eNavLeft || direction == eNavRight)
 +  {
 +    int half = abs(c.height)/2;
@@ -3222,9 +3230,9 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +    int cBottom = c.y + abs(c.height);
 +
-+    if (t.y >= minY && t.y <=  maxY              || 
-+        tBottom >= minY && tBottom <= maxY       || 
-+        tMiddle >= c.y && tMiddle <= cBottom     || 
++    if (t.y >= minY && t.y <=  maxY              ||
++        tBottom >= minY && tBottom <= maxY       ||
++        tMiddle >= c.y && tMiddle <= cBottom     ||
 +        t.y >= c.y && t.y <= cBottom             ||
 +        tBottom >= c.y && tBottom <= cBottom     ||
 +        t.y <= c.y && tBottom >= cBottom)
@@ -3251,7 +3259,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +{
 +  PRBool inlineNavigation = PR_FALSE;
 +  nsPoint m, n;
-+  
++
 +  if (direction == eNavLeft)
 +  {
 +    //  |---|
@@ -3263,8 +3271,8 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    //  |---|
 +    //  |---|
 +    //
-+    
-+    if (a.y > b.y + b.height) 
++
++    if (a.y > b.y + b.height)
 +    {
 +      // the b rect is above a.
 +      m.x = a.x;
@@ -3278,13 +3286,13 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      m.x = a.x;
 +      m.y = a.y + a.height;
 +      n.x = b.x + b.width;
-+      n.y = b.y;       
++      n.y = b.y;
 +    }
 +    else
 +    {
 +      m.x = a.x;
 +      m.y = 0;
-+      n.x = b.x + b.width; 
++      n.x = b.x + b.width;
 +      n.y = 0;
 +
 +      //      m.x = (a.x + (a.width / 2));
@@ -3296,7 +3304,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  }
 +  else if (direction == eNavRight)
 +  {
-+    
++
 +    //         |---|
 +    //         |---|
 +    //
@@ -3309,8 +3317,8 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +
 +    // printf("   CUR: a.y (%d), a.x (%d), a.width (%d), a.height (%d)\n", a.y, a.x, a.width, a.height);
 +    // printf("TARGET: b.y (%d), b.x (%d), b.width (%d), b.height (%d)\n", b.y, b.x, b.width, b.height);
-+    
-+    if (a.y > b.y + b.height) 
++
++    if (a.y > b.y + b.height)
 +    {
 +      // the b rect is above a.
 +      m.x = a.x + a.width;
@@ -3324,15 +3332,15 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      m.x = a.x + a.width;
 +      m.y = a.y + a.height;
 +      n.x = b.x;
-+      n.y = b.y;       
++      n.y = b.y;
 +    }
 +    else
 +    {
 +      m.x = a.x + a.width;
 +      m.y = 0;
-+      n.x = b.x; 
++      n.x = b.x;
 +      n.y = 0;
-+      
++
 +      //      m.x = (a.x + (a.width / 2));
 +      //      m.y = (a.y + (a.height / 2));
 +      //      n.x = (b.x + (b.width / 2));
@@ -3341,15 +3349,15 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  }
 +  else if (direction == eNavUp)
 +  {
-+    
++
 +    //  |---|  |---|  |---|
 +    //  |---|  |---|  |---|
 +    //
 +    //         |---|
 +    //         |---|
 +    //
-+    
-+    if (a.x > b.x + b.width) 
++
++    if (a.x > b.x + b.width)
 +    {
 +      // the b rect is to the left of a.
 +      m.x = a.x;
@@ -3363,7 +3371,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      m.x = a.x + a.width;
 +      m.y = a.y;
 +      n.x = b.x;
-+      n.y = b.y + b.height;       
++      n.y = b.y + b.height;
 +    }
 +    else
 +    {
@@ -3374,7 +3382,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      n.y = b.y + b.height;
 +
 +      //      m.x = (a.x + (a.width / 2));
-+      //      m.y = (a.y + (a.height / 2));     
++      //      m.y = (a.y + (a.height / 2));
 +      //      n.x = (b.x + (b.width / 2));
 +      //      n.y = (b.y + (b.height / 2));
 +    }
@@ -3387,8 +3395,8 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    //  |---|  |---|  |---|
 +    //  |---|  |---|  |---|
 +    //
-+    
-+    if (a.x > b.x + b.width) 
++
++    if (a.x > b.x + b.width)
 +    {
 +      // the b rect is to the left of a.
 +      m.x = a.x;
@@ -3402,7 +3410,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      m.x = a.x + a.width;
 +      m.y = a.y + a.height;
 +      n.x = b.x;
-+      n.y = b.y;       
++      n.y = b.y;
 +    }
 +    else
 +    {
@@ -3413,17 +3421,17 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +      n.y = b.y;
 +
 +      //      m.x = (a.x + (a.width / 2));
-+      //      m.y = (a.y + (a.height / 2));     
++      //      m.y = (a.y + (a.height / 2));
 +      //      n.x = (b.x + (b.width / 2));
 +      //      n.y = (b.y + (b.height / 2));
 +    }
 +  }
-+  
++
 +  // a is always the currently focused rect.
-+  
++
 +  nsRect scopedRect = a;
 +  scopedRect.Inflate(gRectFudge, gRectFudge);
-+  
++
 +  if (direction == eNavLeft)
 +  {
 +    scopedRect.x = 0;
@@ -3450,15 +3458,15 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +    if (scopedRect.Intersects(b))
 +      inlineNavigation = PR_TRUE;
 +  }
-+  
++
 +  PRInt64 d = ((m.x-n.x)*(m.x-n.x)) + ((m.y-n.y)*(m.y-n.y));
-+  
++
 +  if(d<0)
 +    d=d*(-1);
-+  
++
 +  if (inlineNavigation)
 +	d /= gDirectionalBias;
-+  
++
 +  return d;
 +}
 +
@@ -3568,7 +3576,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +        child->GetNodeName(str);
 +
 +        nsCOMPtr<nsIDOMHTMLImageElement> img(do_QueryInterface(child));
-+ 
++
 +        if (img)
 +        {
 +          PRInt32 width, height;
@@ -3581,8 +3589,8 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +          img->GetAlt(alt);
 +
 +          /********************************************
-+          printf("<img src=\"%s\" alt=\"%s\" width=\"%d\" height=\"%d\">\n", 
-+                     NS_ConvertUTF16toUTF8(src).get(), NS_ConvertUTF16toUTF8(alt).get(), 
++          printf("<img src=\"%s\" alt=\"%s\" width=\"%d\" height=\"%d\">\n",
++                     NS_ConvertUTF16toUTF8(src).get(), NS_ConvertUTF16toUTF8(alt).get(),
 +                     width, height);
 +          ********************************************/
 +
@@ -3590,7 +3598,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +          r.height = height;
 +
 +          nsRect nr = makeRectRelativeToGlobalView(img);
-+ 
++
 +          r.x = nr.x;
 +          r.y = nr.y;
 +        }
@@ -3606,7 +3614,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  nsCOMPtr<nsIDOMAbstractView> view;
 +  docview->GetDefaultView(getter_AddRefs(view));
 +  if (!view) return;
-+  
++
 +  nsCOMPtr<nsIDOMWindowInternal> window = do_QueryInterface(view);
 +  NS_IF_ADDREF(*aWindow = window);
 +}
@@ -3615,10 +3623,10 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +{
 +   // We need to know if at least a kMinPixels around the object is visible
 +   // Otherwise it will be marked STATE_OFFSCREEN and STATE_INVISIBLE
-+   
++
 +   const PRUint16 kMinPixels  = 12;
 +    // Set up the variables we need, return false if we can't get at them all
-+ 
++
 +   nsIViewManager* viewManager = shell->GetViewManager();
 +   if (!viewManager)
 +     return PR_FALSE;
@@ -3629,15 +3637,15 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +   {
 +       return PR_FALSE;
 +   }
-+ 
++
 +   nsPresContext *presContext = shell->GetPresContext();
 +   if (!presContext)
 +     return PR_FALSE;
-+ 
++
 +   // Get the bounds of the current frame, relative to the current view.
-+   // We don't use the more accurate GetBoundsRect, because that is more expensive 
++   // We don't use the more accurate GetBoundsRect, because that is more expensive
 +   // and the STATE_OFFSCREEN flag that this is used for only needs to be a rough indicator
-+ 
++
 +   nsRect relFrameRect = frame->GetRect();
 +   nsPoint frameOffset;
 +   nsIView *containingView = frame->GetViewExternal();
@@ -3650,13 +3658,13 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +   }
 +   relFrameRect.width +=1;
 +   relFrameRect.height +=1;
-+ 
++
 +   PRUint16 minPixels = PRUint16(nsPresContext::CSSPixelsToAppUnits(kMinPixels));
 +   nsRectVisibility rectVisibility;
-+   viewManager->GetRectVisibility(containingView, relFrameRect, 
-+                                  minPixels, 
++   viewManager->GetRectVisibility(containingView, relFrameRect,
++                                  minPixels,
 +                                  &rectVisibility);
-+ 
++
 +   if (rectVisibility == nsRectVisibility_kVisible
 +      ||(aForce &&
 +      (
@@ -3676,7 +3684,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +     }
 +     return PR_TRUE;
 +   }
-+ 
++
 +   return PR_FALSE;
 + }
 +
@@ -3689,7 +3697,7 @@ diff -ruN -p -B -U5 mozilla/extensions/spatialnavigation.orig/src/nsSpatialNavig
 +  printf("ScrollWindow ...\n");
 +
 +  if (!contentWindow) return;
-+  
++
 +  if (direction == eNavLeft)
 +    contentWindow->ScrollBy(-1* gScrollOffset, 0);
 +  else if (direction == eNavRight)
