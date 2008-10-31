@@ -18188,18 +18188,6 @@ diff -r 17e9560465b0 content/Makefile.in
  
  ifdef ENABLE_TESTS
  TOOL_DIRS += test
-diff -r 17e9560465b0 content/base/Makefile.in
---- a/content/base/Makefile.in	Thu Oct 23 09:51:35 2008 -0700
-+++ b/content/base/Makefile.in	Thu Oct 30 05:41:44 2008 -0400
-@@ -42,7 +42,7 @@
- 
- include $(DEPTH)/config/autoconf.mk
- 
--DIRS		= public src
-+PARALLEL_DIRS	= public src
- 
- ifdef ENABLE_TESTS
- TOOL_DIRS		+= test
 diff -r 17e9560465b0 content/base/public/nsContentCID.h
 --- a/content/base/public/nsContentCID.h	Thu Oct 23 09:51:35 2008 -0700
 +++ b/content/base/public/nsContentCID.h	Thu Oct 30 05:41:44 2008 -0400

@@ -1,3 +1,9 @@
+microb-engine (20081009-30) hardy; urgency=low
+
+  * Fixed parrallel dirs problem 
+
+ -- Oleg Romashin <romaxaxz@romaxaHP.research.nokia.com>  Fri, 31 Oct 2008 13:47:08 +0200
+
 microb-engine (20081009-29) hardy; urgency=low
 
   * Removed obsolete gtkmozembed package
