@@ -14,7 +14,7 @@ Index: mozilla/content/base/src/nsContentList.h
  #include "nsCOMArray.h"
 -#include "nsString.h"
 +#include "nsStringGlue.h"
- #include "nsIDOMHTMLCollection.h"
+ #include "nsIHTMLCollection.h"
  #include "nsIDOMNodeList.h"
  #include "nsINodeList.h"
  #include "nsStubMutationObserver.h"
@@ -49,7 +49,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.cpp
 +++ mozilla/layout/base/nsPresContext.cpp
-@@ -924,17 +924,17 @@
+@@ -932,17 +932,17 @@
          doc->AddCharSetObserver(this);
          UpdateCharSet(doc->GetDocumentCharacterSet());
        }
@@ -91,7 +91,7 @@ Index: mozilla/layout/base/nsPresContext.h
  #include "nsIWeakReference.h"
  #include "nsITheme.h"
  #include "nsILanguageAtomService.h"
-@@ -737,17 +737,17 @@
+@@ -760,17 +760,17 @@
    static NS_HIDDEN_(int) PrefChangedCallback(const char*, void*);
  
    NS_HIDDEN_(void) UpdateAfterPreferencesChanged();

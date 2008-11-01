@@ -1,3 +1,9 @@
+microb-engine (20081009-31) hardy; urgency=low
+
+  * Disable parallel building until problem with parallel dirs not fixed properly 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 01 Nov 2008 13:54:42 +0200
+
 microb-engine (20081009-30) hardy; urgency=low
 
   * Fixed parrallel dirs problem 
