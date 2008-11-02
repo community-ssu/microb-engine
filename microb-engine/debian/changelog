@@ -1,3 +1,9 @@
+microb-engine (20081009-31.1) hardy; urgency=low
+
+  * Disabled broken patch (gnomevfs bluetooth)... because it breaks normal input stream
+
+ -- Oleg Romashin <romaxa@romaxa-sr>  Sun, 02 Nov 2008 01:38:21 -0400
+
 microb-engine (20081009-31) hardy; urgency=low
 
   * Disable parallel building until problem with parallel dirs not fixed properly 
