@@ -1,3 +1,9 @@
+microb-engine (20081009-31.2) hardy; urgency=low
+
+  * Fixed updating dat files after microb engine update
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 03 Nov 2008 10:17:30 +0200
+
 microb-engine (20081009-31.1) hardy; urgency=low
 
   * Disabled broken patch (gnomevfs bluetooth)... because it breaks normal input stream
