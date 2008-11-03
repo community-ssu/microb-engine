@@ -1,9 +1,8 @@
-diff -ruN -p -u10 mozilla/widget/src/gtk2.orig/gtk2drawing.c mozilla/widget/src/gtk2/gtk2drawing.c
---- mozilla/widget/src/gtk2.orig/gtk2drawing.c	2008-05-16 22:15:53.000000000 +0300
-+++ mozilla/widget/src/gtk2/gtk2drawing.c	2008-05-26 16:07:03.000000000 +0300
-@@ -944,21 +944,25 @@ moz_gtk_toggle_paint(GdkDrawable* drawab
-         w = gCheckboxWidget;
-     }
+Index: mozilla/widget/src/gtk2/gtk2drawing.c
+===================================================================
+--- mozilla.orig/widget/src/gtk2/gtk2drawing.c
++++ mozilla/widget/src/gtk2/gtk2drawing.c
+@@ -985,17 +985,21 @@
  
      NS_ASSERTION(rect->width == indicator_size,
                   "GetMinimumWidgetSize was ignored");
@@ -26,34 +25,3 @@ diff -ruN -p -u10 mozilla/widget/src/gtk2.orig/gtk2drawing.c mozilla/widget/src/
      focus_width = width + 2 * indicator_spacing;
      focus_height = height + 2 * indicator_spacing;
    
-     style = w->style;
-     TSOffsetStyleGCs(style, x, y);
-diff -ruN -p -u10 mozilla/widget/src/gtk2.orig/nsNativeThemeGTK.cpp mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
---- mozilla/widget/src/gtk2.orig/nsNativeThemeGTK.cpp	2008-05-26 11:40:22.000000000 +0300
-+++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp	2008-05-26 16:06:29.000000000 +0300
-@@ -1103,23 +1103,23 @@ nsNativeThemeGTK::GetMinimumWidgetSize(n
-     {
-       gint separator_height;
- 
-       moz_gtk_get_menu_separator_height(&separator_height);
-       aResult->height = separator_height;
-     
-       *aIsOverridable = PR_FALSE;
-     }
-     break;
-   case NS_THEME_CHECKBOX:
--  case NS_THEME_CHECKBOX_SMALL:
-+  //case NS_THEME_CHECKBOX_SMALL:
-   case NS_THEME_RADIO:
--  case NS_THEME_RADIO_SMALL:
-+  //case NS_THEME_RADIO_SMALL:
-     {
-       gint indicator_size, indicator_spacing;
- 
-       if (IsCheckboxWidgetType(aWidgetType)) {
-         moz_gtk_checkbox_get_metrics(&indicator_size, &indicator_spacing);
-       } else {
-         moz_gtk_radio_get_metrics(&indicator_size, &indicator_spacing);
-       }
- 
-       // Include space for the indicator and the padding around it.

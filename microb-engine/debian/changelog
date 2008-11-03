@@ -1,3 +1,10 @@
+microb-engine (20081009-32) hardy; urgency=low
+
+  * Updated to trunk c56b266cdb75
+  * Added interuptable reflow patch
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 03 Nov 2008 05:42:49 -0500
+
 microb-engine (20081009-31.2) hardy; urgency=low
 
   * Fixed updating dat files after microb engine update

@@ -174,3 +174,6 @@ theeming/100_XUL_shortuctKeysDisable.diff
 #***************************END OF NOT TESTED and probably buggy ACID3 patches***********************
 
 #BMO_attached/attachment.cgi?id=318998.diff -p0
+
+BMO_attached/attachment.cgi?id=346007.diff
+BMO_attached/attachment.cgi?id=345387.diff
