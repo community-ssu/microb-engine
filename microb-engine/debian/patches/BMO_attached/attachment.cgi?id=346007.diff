@@ -214,7 +214,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
 +
 +  mHasPendingInterrupt = HavePendingInputEvent();
 +  if (mHasPendingInterrupt) {
-+    printf("*** DETECTED pending interrupt (time=%ld)\n", PR_Now());
++    //printf("*** DETECTED pending interrupt (time=%ld)\n", PR_Now());
 +  }
 +  return mHasPendingInterrupt;
 +}
@@ -528,10 +528,10 @@ Index: mozilla/layout/base/nsPresShell.cpp
  
 -    ps->DoFlushPendingNotifications(Flush_Layout, PR_TRUE);
 +    ps->mSuppressInterruptibleReflows = PR_FALSE;
-+    printf("*** Entering reflow event (time=%ld)\n", PR_Now());
++    //printf("*** Entering reflow event (time=%ld)\n", PR_Now());
 +    ps->FlushPendingNotifications(Flush_InterruptibleLayout);
  
-+    printf("*** Returning from reflow event (time=%ld)\n", PR_Now());
++    //printf("*** Returning from reflow event (time=%ld)\n", PR_Now());
      // Now, explicitly release the pres shell before the view manager
      ps = nsnull;
      viewManager = nsnull;
