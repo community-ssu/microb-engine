@@ -1,3 +1,9 @@
+microb-engine (20081009-40) hardy; urgency=low
+
+  * Added xul downloads implementation required for fennec browser 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Wed, 05 Nov 2008 00:09:05 -0500
+
 microb-engine (20081009-39) hardy; urgency=low
 
   * Fixed proper structure of common microb-full package 

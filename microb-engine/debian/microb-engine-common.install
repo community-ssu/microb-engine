@@ -141,6 +141,7 @@ usr/lib/microb-engine/chrome/toolkit/content/mozapps/extensions
 usr/lib/microb-engine/chrome/toolkit/content/mozapps/plugins
 usr/lib/microb-engine/chrome/toolkit/content/mozapps/update
 usr/lib/microb-engine/chrome/toolkit/content/mozapps/xpinstall
+usr/lib/microb-engine/chrome/toolkit/content/mozapps/downloads
 usr/lib/microb-engine/chrome/toolkit.manifest
 usr/lib/microb-engine/chrome/classic/skin/classic/global/arrow.css
 usr/lib/microb-engine/chrome/classic/skin/classic/global/globalBindings.xml
@@ -184,6 +185,7 @@ usr/lib/microb-engine/chrome/classic/skin/classic/mozapps/plugins
 usr/lib/microb-engine/chrome/classic/skin/classic/mozapps/update
 usr/lib/microb-engine/chrome/classic/skin/classic/mozapps/xpinstall
 usr/lib/microb-engine/chrome/classic/skin/classic/mozapps/places
+usr/lib/microb-engine/chrome/classic/skin/classic/mozapps/downloads
 usr/lib/microb-engine/chrome/classic.manifest
 usr/lib/microb-engine/chrome/comm/content/xbl-marquee/xbl-marquee.xml
 usr/lib/microb-engine/chrome/comm/content/xbl-marquee/xbl-marquee.css
