@@ -1,1 +1,3 @@
 usr/include/microb-engine/unstable/mozilla-config.h usr/include/mozilla-config.h
+usr/lib/microb-engine-devel usr/lib/microb-engine-devel/linux/gecko_sdk
+usr/lib/microb-engine-devel/include usr/lib/microb-engine-devel/gecko_internal

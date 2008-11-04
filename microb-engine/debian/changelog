@@ -1,3 +1,9 @@
+microb-engine (20081009-34) hardy; urgency=low
+
+  * Added symlinks for building gears.
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 08:43:11 -0500
+
 microb-engine (20081009-33) hardy; urgency=low
 
   * Updated interuptable reflow patch proto-patch v2  
