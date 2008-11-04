@@ -1,3 +1,9 @@
+microb-engine (20081009-37) hardy; urgency=low
+
+  * Added missing browser.xul and navigator.xul
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 21:52:50 -0500
+
 microb-engine (20081009-36) hardy; urgency=low
 
   * Disabled debug printing from interruptable reflow patch

@@ -191,6 +191,8 @@ usr/lib/microb-engine/chrome/comm.manifest
 usr/lib/microb-engine/chrome/browser/content/branding/about.png
 usr/lib/microb-engine/chrome/browser/content/branding/config.html
 usr/lib/microb-engine/chrome/browser/content/branding/feed.gif
+usr/lib/microb-engine/chrome/browser/content/browser/*
+usr/lib/microb-engine/chrome/browser/content/navigator/*
 usr/lib/microb-engine/chrome/browser.manifest
 usr/lib/microb-engine/res/fon*
 usr/lib/microb-engine/res/forms.css
