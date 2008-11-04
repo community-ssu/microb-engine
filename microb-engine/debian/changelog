@@ -1,3 +1,9 @@
+microb-engine (20081009-35) hardy; urgency=low
+
+  * Added missing symlinks for building gears 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 04 Nov 2008 09:55:20 +0200
+
 microb-engine (20081009-34) hardy; urgency=low
 
   * Added symlinks for building gears.
