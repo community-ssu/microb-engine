@@ -1,3 +1,10 @@
+microb-engine (20081009-39) hardy; urgency=low
+
+  * Fixed proper structure of common microb-full package 
+  * Disabled interruptable reflow patch because it breaks fennec
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 23:51:44 -0500
+
 microb-engine (20081009-38) hardy; urgency=low
 
   * Fixed path for symlynks required for google gears 

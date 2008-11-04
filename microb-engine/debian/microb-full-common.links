@@ -3,3 +3,5 @@ usr/share/microb-xulrunner/res usr/lib/microb-xulrunner/res
 usr/share/microb-xulrunner/defaults usr/lib/microb-xulrunner/defaults
 usr/share/microb-xulrunner/chrome usr/lib/microb-xulrunner/chrome
 usr/share/microb-xulrunner/icons usr/lib/microb-xulrunner/icons
+usr/share/microb-xulrunner/modules usr/lib/microb-xulrunner/modules
+usr/share/microb-xulrunner/platform.ini usr/lib/microb-xulrunner/platform.ini
