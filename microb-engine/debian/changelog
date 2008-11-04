@@ -1,3 +1,9 @@
+microb-engine (20081009-38) hardy; urgency=low
+
+  * Fixed path for symlynks required for google gears 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 22:45:00 -0500
+
 microb-engine (20081009-37) hardy; urgency=low
 
   * Added missing browser.xul and navigator.xul
