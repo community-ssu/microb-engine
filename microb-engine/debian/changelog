@@ -1,3 +1,9 @@
+microb-engine (20081009-33) hardy; urgency=low
+
+  * Updated interuptable reflow patch proto-patch v2  
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 08:34:56 -0500
+
 microb-engine (20081009-32) hardy; urgency=low
 
   * Updated to trunk c56b266cdb75

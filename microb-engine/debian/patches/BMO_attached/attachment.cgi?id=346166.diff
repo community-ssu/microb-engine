@@ -1,4 +1,4 @@
-# Interruptable reflow 
+# Int reflow bug 67752
 Index: mozilla/content/base/public/mozFlushType.h
 ===================================================================
 --- mozilla.orig/content/base/public/mozFlushType.h
@@ -49,6 +49,29 @@ Index: mozilla/content/base/src/nsDocument.cpp
      shell->FlushPendingNotifications(aType);
    }
  }
+Index: mozilla/content/events/src/nsEventStateManager.cpp
+===================================================================
+--- mozilla.orig/content/events/src/nsEventStateManager.cpp
++++ mozilla/content/events/src/nsEventStateManager.cpp
+@@ -5471,17 +5471,17 @@
+ }
+ 
+ void
+ nsEventStateManager::FlushPendingEvents(nsPresContext* aPresContext)
+ {
+   NS_PRECONDITION(nsnull != aPresContext, "nsnull ptr");
+   nsIPresShell *shell = aPresContext->GetPresShell();
+   if (shell) {
+-    shell->FlushPendingNotifications(Flush_Display);
++    shell->FlushPendingNotifications(Flush_InterruptibleLayout);
+   }
+ }
+ 
+ nsresult
+ nsEventStateManager::GetDocSelectionLocation(nsIContent **aStartContent,
+                                              nsIContent **aEndContent,
+                                              nsIFrame **aStartFrame,
+                                              PRUint32* aStartOffset)
 Index: mozilla/content/html/content/src/nsGenericHTMLElement.cpp
 ===================================================================
 --- mozilla.orig/content/html/content/src/nsGenericHTMLElement.cpp
@@ -214,7 +237,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
 +
 +  mHasPendingInterrupt = HavePendingInputEvent();
 +  if (mHasPendingInterrupt) {
-+    //printf("*** DETECTED pending interrupt (time=%ld)\n", PR_Now());
++    printf("*** DETECTED pending interrupt (time=%ld)\n", PR_Now());
 +  }
 +  return mHasPendingInterrupt;
 +}
@@ -528,10 +551,10 @@ Index: mozilla/layout/base/nsPresShell.cpp
  
 -    ps->DoFlushPendingNotifications(Flush_Layout, PR_TRUE);
 +    ps->mSuppressInterruptibleReflows = PR_FALSE;
-+    //printf("*** Entering reflow event (time=%ld)\n", PR_Now());
++    printf("*** Entering reflow event (time=%ld)\n", PR_Now());
 +    ps->FlushPendingNotifications(Flush_InterruptibleLayout);
  
-+    //printf("*** Returning from reflow event (time=%ld)\n", PR_Now());
++    printf("*** Returning from reflow event (time=%ld)\n", PR_Now());
      // Now, explicitly release the pres shell before the view manager
      ps = nsnull;
      viewManager = nsnull;
@@ -1189,43 +1212,27 @@ Index: mozilla/widget/src/gtk2/nsAppShell.cpp
  #define NOTIFY_TOKEN 0xFA
  
  #ifdef PR_LOGGING
-@@ -153,10 +156,31 @@
- {
-     unsigned char buf[] = { NOTIFY_TOKEN };
+@@ -155,8 +158,15 @@
      write(mPipeFDs[1], buf, 1);
  }
  
  PRBool
  nsAppShell::ProcessNextNativeEvent(PRBool mayWait)
  {
-+    mHasPendingInputEvent = PR_FALSE;
-+    mLastEventCheckTime = 0;
      return g_main_context_iteration(NULL, mayWait);
  }
 +
 +NS_IMETHODIMP
 +nsAppShell::GetHasPendingInputEvent(PRBool *aResult)
 +{
-+#ifdef MOZ_X11
-+    PRIntervalTime now = PR_Now();
-+    if (PR_IntervalToMilliseconds(now - mLastEventCheckTime) > 200) {
-+        XEvent event;
-+        Display* display = gdk_x11_display_get_xdisplay(
-+            gdk_display_get_default());
-+        PRInt32 mask = KeyPressMask || KeyReleaseMask ||
-+            ButtonPressMask || ButtonReleaseMask || ButtonMotionMask;
-+        mHasPendingInputEvent = XCheckMaskEvent(display, mask, &event);
-+        mLastEventCheckTime = now;
-+    }
-+#endif
-+    *aResult = mHasPendingInputEvent;
++    *aResult = gdk_events_pending();
 +    return NS_OK;
 +}
 Index: mozilla/widget/src/gtk2/nsAppShell.h
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsAppShell.h
 +++ mozilla/widget/src/gtk2/nsAppShell.h
-@@ -37,35 +37,41 @@
+@@ -37,30 +37,33 @@
   * ***** END LICENSE BLOCK ***** */
  
  #ifndef nsAppShell_h__
@@ -1240,9 +1247,7 @@ Index: mozilla/widget/src/gtk2/nsAppShell.h
  public:
      NS_IMETHODIMP ResumeNative(void);
  
--    nsAppShell() : mTag(0), mSkippedNativeCallback(PR_FALSE) {
-+    nsAppShell() : mTag(0), mSkippedNativeCallback(PR_FALSE),
-+                   mLastEventCheckTime(0), mHasPendingInputEvent(PR_FALSE) {
+     nsAppShell() : mTag(0), mSkippedNativeCallback(PR_FALSE) {
          mPipeFDs[0] = mPipeFDs[1] = 0;
      }
  
@@ -1261,13 +1266,6 @@ Index: mozilla/widget/src/gtk2/nsAppShell.h
                                             gpointer data);
  
      int mPipeFDs[2];
-     PRUintn mTag;
-     PRPackedBool       mSkippedNativeCallback;
-+    PRIntervalTime     mLastEventCheckTime;
-+    PRPackedBool       mHasPendingInputEvent;
- };
- 
- #endif /* nsAppShell_h__ */
 Index: mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
 ===================================================================
 --- mozilla.orig/widget/src/xpwidgets/nsBaseAppShell.cpp
