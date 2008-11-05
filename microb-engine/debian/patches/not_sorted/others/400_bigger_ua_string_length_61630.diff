@@ -3,7 +3,7 @@ Index: mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp
 ===================================================================
 --- mozilla.orig/modules/plugin/base/src/nsPluginHostImpl.cpp
 +++ mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp
-@@ -2724,17 +2724,17 @@
+@@ -2898,17 +2898,17 @@
  
    PLUGIN_LOG(PLUGIN_LOG_NORMAL,
    ("nsPluginHostImpl::ReloadPlugins End active_instance_count=%d\n",
@@ -15,10 +15,10 @@ Index: mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp
 -#define NS_RETURN_UASTRING_SIZE 128
 +#define NS_RETURN_UASTRING_SIZE 256
  
+ 
+ ////////////////////////////////////////////////////////////////////////
  nsresult nsPluginHostImpl::UserAgent(const char **retstring)
  {
    static char resultString[NS_RETURN_UASTRING_SIZE];
    nsresult res;
  
-   nsCOMPtr<nsIHttpProtocolHandler> http = do_GetService(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX "http", &res);
-   if (NS_FAILED(res))

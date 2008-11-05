@@ -1,3 +1,9 @@
+microb-engine (20081009-41) hardy; urgency=low
+
+  * Revert back last trunk update because it breaks extension manager	functionality 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Nov 2008 10:54:15 +0200
+
 microb-engine (20081009-40) hardy; urgency=low
 
   * Added xul downloads implementation required for fennec browser 
