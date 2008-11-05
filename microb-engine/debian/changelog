@@ -1,3 +1,9 @@
+microb-engine (20081009-43.2) hardy; urgency=low
+
+  * Added memleaks deb build option 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Wed, 05 Nov 2008 22:43:48 -0500
+
 microb-engine (20081009-43.1) hardy; urgency=low
 
   * Added missing modules for microb-full package 

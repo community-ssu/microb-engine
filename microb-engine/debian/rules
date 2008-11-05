@@ -22,6 +22,7 @@ MOZCONFIG_LEV:=microb2
 syscairo:=n
 svgport:=n
 canvas:=n
+memleaks:=n
 jemalloc:=y
 
 DH_ALWAYS_EXCLUDE=CVS:.svn
@@ -184,6 +185,14 @@ else
 logging:=$(logging)
 endif
 
+ifneq (,$(findstring memleaks,$(DEB_BUILD_OPTIONS)))
+memleaks:=y
+bldstr:=$(bldstr)lk-
+else
+memleaks:=$(memleaks)
+endif
+
+
 ifeq ($(perfmetr),y)
 	configopts += --enable-reflow-perf --enable-perf-metrics
 endif
@@ -254,6 +263,10 @@ ifeq ($(logging),y)
 	configopts += --enable-logging  --enable-logrefcnt
 else
 	configopts += --disable-logging --disable-logrefcnt
+endif
+
+ifeq ($(memleaks),y)
+	configopts += --enable-debug --enable-trace-malloc
 endif
 
 ifeq ($(GCCENV),.cs)
