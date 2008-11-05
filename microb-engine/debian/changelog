@@ -1,3 +1,9 @@
+microb-engine (20081009-42) hardy; urgency=low
+
+  * Disabled parrallel build after reverting trunk update 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Nov 2008 14:20:38 +0200
+
 microb-engine (20081009-41) hardy; urgency=low
 
   * Revert back last trunk update because it breaks extension manager	functionality 
