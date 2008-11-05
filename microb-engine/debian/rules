@@ -383,7 +383,7 @@ configure-stamp: patch-stamp
 
 	echo "ac_add_options $(configopts) --prefix=$(prefix) $(HBT_OPT)" >> $(builddir)/mozconfig
 	echo "mk_add_options MOZ_OBJDIR=$(buildobjdir)" >> $(builddir)/mozconfig
-#	echo "mk_add_options MOZ_MAKE_FLAGS=$(NJOBS)" >> $(builddir)/mozconfig
+	echo "mk_add_options MOZ_MAKE_FLAGS=$(NJOBS)" >> $(builddir)/mozconfig
 ifeq ($(cross_compile),y)
 	echo "CROSS_COMPILE=1" >> $(builddir)/mozconfig
 	echo "LIBIDL_CONFIG=$(prefix)/$(DEB_HOST_GNU_TYPE)/include/cross-scripts/libIDL-config-2" >> $(builddir)/mozconfig

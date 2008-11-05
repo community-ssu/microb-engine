@@ -1,3 +1,9 @@
+microb-engine (20081009-43) hardy; urgency=low
+
+  * Added parallel build patches 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Nov 2008 17:21:50 +0200
+
 microb-engine (20081009-42) hardy; urgency=low
 
   * Disabled parrallel build after reverting trunk update 

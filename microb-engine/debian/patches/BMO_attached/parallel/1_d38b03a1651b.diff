@@ -1,0 +1,73 @@
+
+# HG changeset patch
+# User Benjamin Smedberg <benjamin@smedbergs.us>
+# Date 1225736117 18000
+# Node ID d38b03a1651bc04f1b2f70d3dbf745f344c0b507
+# Parent 93813ce86c71dc41ffea8f069cd59857ab6c0a08
+Bug 462730 - Parallel builds with -j20 don't build the submakefiles before recursing into them. Switch back to using $* in the rule because we found out the make 3.80 bug: it doesn't set $* in double-colon rules, but it does in single-colon rules. r=ted
+
+--- a/config/rules.mk	Mon Nov 03 11:02:25 2008 -0500
++++ b/config/rules.mk	Mon Nov 03 13:15:17 2008 -0500
+@@ -383,6 +383,8 @@
+ PARALLEL_DIRS_export = $(addsuffix _export,$(PARALLEL_DIRS))
+ PARALLEL_DIRS_libs = $(addsuffix _libs,$(PARALLEL_DIRS))
+ PARALLEL_DIRS_tools = $(addsuffix _tools,$(PARALLEL_DIRS))
++
++.PHONY: $(PARALLEL_DIRS_export) $(PARALLEL_DIRS_libs) $(PARALLEL_DIRS_tools)
+ endif
+ 
+ #
+@@ -593,9 +595,7 @@
+ 
+ # SUBMAKEFILES: List of Makefiles for next level down.
+ #   This is used to update or create the Makefiles before invoking them.
+-SUBMAKEFILES += $(addsuffix /Makefile, $(DIRS) $(TOOL_DIRS))
+-PARALLEL_SUBMAKEFILES += $(addsuffix /Makefile, $(PARALLEL_DIRS))
+-SUBMAKEFILES += $(PARALLEL_SUBMAKEFILES)
++SUBMAKEFILES += $(addsuffix /Makefile, $(DIRS) $(TOOL_DIRS) $(PARALLEL_DIRS))
+ 
+ # The root makefile doesn't want to do a plain export/libs, because
+ # of the tiers and because of libxul. Suppress the default rules in favor
+@@ -698,10 +698,10 @@
+ endif
+ 
+ ifdef PARALLEL_DIRS
+-export:: $(PARALLEL_SUBMAKEFILES) | $(PARALLEL_DIRS_export)
++export:: $(PARALLEL_DIRS_export)
+ 
+-$(PARALLEL_DIRS_export):: %_export: %
+-	+$(MAKE) -C $< export
++$(PARALLEL_DIRS_export): %_export: %/Makefile
++	+$(MAKE) -C $* export
+ endif
+ 
+ export:: $(SUBMAKEFILES) $(MAKE_DIRS) $(if $(EXPORTS)$(XPIDLSRCS)$(SDK_HEADERS)$(SDK_XPIDLSRCS),$(PUBLIC)) $(if $(SDK_HEADERS)$(SDK_XPIDLSRCS),$(SDK_PUBLIC)) $(if $(XPIDLSRCS),$(IDL_DIR)) $(if $(SDK_XPIDLSRCS),$(SDK_IDL_DIR))
+@@ -709,10 +709,10 @@
+ 	+$(LOOP_OVER_TOOL_DIRS)
+ 
+ ifdef PARALLEL_DIRS
+-tools:: $(PARALLEL_SUBMAKEFILES) | $(PARALLEL_DIRS_tools)
++tools:: $(PARALLEL_DIRS_tools)
+ 
+-$(PARALLEL_DIRS_tools):: %_tools: %
+-	+$(MAKE) -C $< tools
++$(PARALLEL_DIRS_tools): %_tools: %/Makefile
++	+$(MAKE) -C $* tools
+ endif
+ 
+ tools:: $(SUBMAKEFILES) $(MAKE_DIRS)
+@@ -748,10 +748,10 @@
+ 
+ ##############################################
+ ifdef PARALLEL_DIRS
+-libs:: $(PARALLEL_SUBMAKEFILES) | $(PARALLEL_DIRS_libs)
++libs:: $(PARALLEL_DIRS_libs)
+ 
+-$(PARALLEL_DIRS_libs):: %_libs: %
+-	+$(MAKE) -C $< libs
++$(PARALLEL_DIRS_libs): %_libs: %/Makefile
++	+$(MAKE) -C $* libs
+ endif
+ 
+ libs:: $(SUBMAKEFILES) $(MAKE_DIRS) $(HOST_LIBRARY) $(LIBRARY) $(SHARED_LIBRARY) $(IMPORT_LIBRARY) $(HOST_PROGRAM) $(PROGRAM) $(HOST_SIMPLE_PROGRAMS) $(SIMPLE_PROGRAMS) $(JAVA_LIBRARY)
+
