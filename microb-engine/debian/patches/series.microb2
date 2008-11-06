@@ -175,11 +175,6 @@ theeming/100_XUL_shortuctKeysDisable.diff
 
 #BMO_attached/attachment.cgi?id=318998.diff -p0
 
-#Parallel dirs
-BMO_attached/parallel/1_d38b03a1651b.diff
-BMO_attached/parallel/2_c56b266cdb75.diff
-
-
 BMO_attached/attachment.cgi?id=345387.diff
 
 # Interruptable reflow

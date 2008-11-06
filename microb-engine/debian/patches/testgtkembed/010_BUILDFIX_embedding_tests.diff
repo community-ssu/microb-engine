@@ -6,7 +6,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -5883,16 +5883,28 @@
+@@ -5823,16 +5823,28 @@
  dnl build the tests by default
  dnl ========================================================
  MOZ_ARG_DISABLE_BOOL(tests,
@@ -35,7 +35,7 @@ Index: mozilla/configure.in
     MOZ_DISABLE_PARENTAL_CONTROLS=1,
     MOZ_DISABLE_PARENTAL_CONTROLS=)
  if test -n "$MOZ_DISABLE_PARENTAL_CONTROLS"; then
-@@ -8263,16 +8275,17 @@
+@@ -8189,16 +8201,17 @@
  AC_SUBST(CXX_VERSION)
  AC_SUBST(MSMANIFEST_TOOL)
  AC_SUBST(MOZ_NO_FILEPICKER)
@@ -57,7 +57,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -120,16 +120,17 @@
+@@ -117,16 +117,17 @@
  INCREMENTAL_LINKER = @INCREMENTAL_LINKER@
  MACOSX_DEPLOYMENT_TARGET = @MACOSX_DEPLOYMENT_TARGET@
  MOZ_MAIL_NEWS	= @MOZ_MAIL_NEWS@
@@ -75,28 +75,11 @@ Index: mozilla/config/autoconf.mk.in
  MOZ_JSLOADER  = @MOZ_JSLOADER@
  MOZ_USE_NATIVE_UCONV = @MOZ_USE_NATIVE_UCONV@
  MOZ_BRANDING_DIRECTORY = @MOZ_BRANDING_DIRECTORY@
-Index: mozilla/embedding/browser/gtk/gtkembed.pkg
-===================================================================
---- mozilla.orig/embedding/browser/gtk/gtkembed.pkg
-+++ mozilla/embedding/browser/gtk/gtkembed.pkg
-@@ -1,9 +1,11 @@
- [gtkembed]
- dist/bin/@DLLP@gtkembedmoz@DLLS@
--dist/bin/TestGtkEmbed
-+#if ENABLE_EMBEDDING_TESTS
-+dist/bin/TestGtkEmbed@BINS@
-+#endif
- 
- #if ENABLE_TESTS
- dist/bin/TestGtkEmbedNotebook@BINS@
- dist/bin/TestGtkEmbedSocket@BINS@
- dist/bin/TestGtkEmbedChild@BINS@
- #endif
 Index: mozilla/embedding/browser/gtk/Makefile.in
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/Makefile.in
 +++ mozilla/embedding/browser/gtk/Makefile.in
-@@ -42,15 +42,13 @@
+@@ -42,13 +42,11 @@
  VPATH		= @srcdir@
  
  include $(DEPTH)/config/autoconf.mk
@@ -108,7 +91,5 @@ Index: mozilla/embedding/browser/gtk/Makefile.in
 -ifdef ENABLE_TESTS
  TOOL_DIRS  += tests
 -endif
- 
- PACKAGE_FILE = gtkembed.pkg
  
  include $(topsrcdir)/config/rules.mk

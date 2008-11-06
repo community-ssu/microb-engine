@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4738,16 +4738,21 @@
+@@ -4737,16 +4737,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4840,17 +4845,16 @@
+@@ -4839,17 +4844,16 @@
  AC_SUBST(GTK_CONFIG)
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -5988,22 +5992,164 @@
+@@ -5987,22 +5991,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7436,35 +7582,54 @@
+@@ -7435,35 +7581,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7725,16 +7890,21 @@
+@@ -7724,16 +7889,21 @@
  AC_SUBST(NECKO_COOKIES)
  if test "$NECKO_COOKIES"; then
      AC_DEFINE(NECKO_COOKIES)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8014,16 +8184,22 @@
+@@ -8013,16 +8183,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -538,7 +538,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/Makefile.in
 +++ mozilla/widget/src/gtk2/Makefile.in
-@@ -91,18 +91,16 @@
+@@ -89,18 +89,16 @@
  CPPSRCS		= \
  		nsWindow.cpp \
  		nsAppShell.cpp \
@@ -557,7 +557,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  		$(NULL)
  
  ifdef NS_OSSO
-@@ -119,19 +117,35 @@
+@@ -117,19 +115,35 @@
  		nsPrintOptionsGTK.cpp \
  		nsPrintDialogGTK.cpp \
  		nsPrintSettingsGTK.cpp \
@@ -593,7 +593,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  
  SHARED_LIBRARY_LIBS = ../xpwidgets/libxpwidgets_s.a
  
-@@ -163,17 +177,17 @@
+@@ -161,17 +175,17 @@
  DEFINES		+= -DNATIVE_THEME_SUPPORT
  endif
  
@@ -1532,7 +1532,7 @@ Index: mozilla/gfx/thebes/src/gfxContext.cpp
  #include "gfxASurface.h"
  #include "gfxPattern.h"
  #include "gfxPlatform.h"
-@@ -621,26 +623,28 @@
+@@ -641,26 +643,28 @@
      return gfxRect(xmin, ymin, xmax - xmin, ymax - ymin);
  }
  
@@ -1627,7 +1627,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatform.h
 +++ mozilla/gfx/thebes/public/gfxPlatform.h
-@@ -250,16 +250,17 @@
+@@ -247,16 +247,17 @@
       * valid rendering intent as defined in modules/lcms/include/lcms.h, that
       * value is returned. Otherwise, -1 is returned and the embedded intent
       * should be used.
@@ -1645,7 +1645,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
      static void TransformPixel(const gfxRGBA& in, gfxRGBA& out, cmsHTRANSFORM transform);
  
      /**
-@@ -281,20 +282,23 @@
+@@ -278,20 +279,23 @@
       * Return output -> sRGB device transform.
       */
      static cmsHTRANSFORM GetCMSInverseRGBTransform();
@@ -2881,7 +2881,7 @@ Index: mozilla/xpfe/components/build/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/components/build/Makefile.in
 +++ mozilla/xpfe/components/build/Makefile.in
-@@ -69,21 +69,23 @@
+@@ -66,21 +66,23 @@
  ifdef MOZ_PERF_METRICS
  SHARED_LIBRARY_LIBS += $(DEPTH)/modules/libutil/src/$(LIB_PREFIX)mozutil_s.$(LIB_SUFFIX)
  endif
@@ -2909,13 +2909,13 @@ Index: mozilla/xpfe/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/Makefile.in
 +++ mozilla/xpfe/Makefile.in
-@@ -42,18 +42,20 @@
+@@ -40,18 +40,20 @@
+ srcdir		= @srcdir@
+ VPATH		= @srcdir@
  
  include $(DEPTH)/config/autoconf.mk
  
  MODULE       = browser
- PACKAGE_FILE = xpfe.pkg
- PACKAGE_VARS = USE_SHORT_LIBNAME
  
  ifndef MOZ_SUNBIRD
 +ifndef MOZ_NO_XPFE_BROWSER
@@ -2934,7 +2934,7 @@ Index: mozilla/embedding/browser/build/Makefile.in
 ===================================================================
 --- mozilla.orig/embedding/browser/build/Makefile.in
 +++ mozilla/embedding/browser/build/Makefile.in
-@@ -60,16 +60,17 @@
+@@ -58,16 +58,17 @@
  		  widget \
  		  gfx \
  		  content \
@@ -2956,7 +2956,7 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 ===================================================================
 --- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 +++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
-@@ -6023,19 +6023,20 @@
+@@ -6046,19 +6046,20 @@
                                  state, value);
    },
  
@@ -3158,7 +3158,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -3337,16 +3337,17 @@
+@@ -3336,16 +3336,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer
