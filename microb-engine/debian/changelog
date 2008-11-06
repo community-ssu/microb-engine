@@ -1,3 +1,9 @@
+microb-engine (20081009-43.3) unstable; urgency=low
+
+  * Updated changelog 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu,  6 Nov 2008 13:34:50 +0200
+
 microb-engine (20081009-43.2) hardy; urgency=low
 
   * Added memleaks deb build option 
@@ -135,7 +141,7 @@ microb-engine (20081009-26) hardy; urgency=low
 
 microb-engine (20081009-25) hardy; urgency=low
 
-  * Fixes: NB#90109 Browser freeze on big png image 
+  * Fixed bug#90109 Browser freeze on big png image 
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 29 Oct 2008 22:46:09 +0200
 
@@ -166,7 +172,7 @@ microb-engine (20081009-21) hardy; urgency=low
 
 microb-engine (20081009-20) hardy; urgency=low
 
-  * Fixes: NB#90130 Saving web page via bluetooth is not working. 
+  * Fixed bug#90130 Saving web page via bluetooth is not working. 
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 26 Oct 2008 23:57:22 -0500
 
@@ -191,7 +197,7 @@ microb-engine (20081009-17) hardy; urgency=low
 
 microb-engine (20081009-16) hardy; urgency=low
 
-  * Fixes: NB#90141 Browser crash when some JavaScript function is called
+  * Fixed bug#90141 Browser crash when some JavaScript function is called
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 23 Oct 2008 17:33:22 -0500
 
