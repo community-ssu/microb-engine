@@ -1,6 +1,11 @@
---- mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp.orig	2008-11-07 09:21:23.000000000 +0200
-+++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp	2008-11-07 10:25:56.000000000 +0200
-@@ -1044,10 +1044,13 @@ nsNativeThemeGTK::GetMinimumWidgetSize(n
+Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
+@@ -1041,16 +1041,19 @@
+     {
+       gint indicator_size, indicator_spacing;
+ 
        if (aWidgetType == NS_THEME_CHECKBOX) {
          moz_gtk_checkbox_get_metrics(&indicator_size, &indicator_spacing);
        } else {
@@ -14,9 +19,17 @@
        aResult->width = indicator_size;
        aResult->height = indicator_size;
        *aIsOverridable = PR_FALSE;
---- mozilla/widget/src/gtk2/gtk2drawing.c.orig	2008-11-07 10:16:38.000000000 +0200
-+++ mozilla/widget/src/gtk2/gtk2drawing.c	2008-11-07 10:26:49.000000000 +0200
-@@ -988,11 +988,14 @@ moz_gtk_toggle_paint(GdkDrawable* drawab
+     }
+     break;
+   case NS_THEME_TOOLBAR_BUTTON_DROPDOWN:
+Index: mozilla/widget/src/gtk2/gtk2drawing.c
+===================================================================
+--- mozilla.orig/widget/src/gtk2/gtk2drawing.c
++++ mozilla/widget/src/gtk2/gtk2drawing.c
+@@ -985,17 +985,20 @@
+ 
+     NS_ASSERTION(rect->width == indicator_size,
+                  "GetMinimumWidgetSize was ignored");
      /*
       * vertically center in the box, since XUL sometimes ignores our
       * GetMinimumWidgetSize in the vertical dimension
@@ -25,10 +38,13 @@
 -    y = rect->y + (rect->height - indicator_size) / 2;
 +    y = rect->y;// + (rect->height - indicator_size) / 2;
 +
-+    if (MIN(rect->width, rect->height) < indicator_size) 
++    if (MIN(rect->width, rect->height) < indicator_size)
 +        indicator_size = MIN(rect->width, rect->height);
- 
      width = indicator_size;
      height = indicator_size;
  
      focus_x = x - indicator_spacing;
+     focus_y = y - indicator_spacing;
+     focus_width = width + 2 * indicator_spacing;
+     focus_height = height + 2 * indicator_spacing;
+   
