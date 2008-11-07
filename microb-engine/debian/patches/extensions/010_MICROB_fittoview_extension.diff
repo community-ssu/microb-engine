@@ -1,6 +1,47 @@
-diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/install.rdf mozilla/extensions/ftv/install.rdf
---- mozilla/extensions/ftv.orig/install.rdf	1969-12-31 18:00:00.000000000 -0600
-+++ mozilla/extensions/ftv/install.rdf	2008-10-01 11:45:03.000000000 -0500
+diff -r b33cdf36d0ee extensions/ftv/Makefile.in
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/extensions/ftv/Makefile.in	Fri Oct 17 11:21:25 2008 -0500
+@@ -0,0 +1,37 @@
++
++DEPTH=../..
++topsrcdir=@top_srcdir@
++srcdir=@srcdir@
++VPATH=@srcdir@
++
++include $(DEPTH)/config/autoconf.mk
++
++MODULE	= ftv
++#XPI_NAME = ftv
++
++ifdef MOZ_XUL_APP
++#INSTALL_EXTENSION_ID = ftv@extensions.mozilla.org
++#DIST_FILES = install.rdf
++#NO_JAR_AUTO_REG        = 1
++#USE_EXTENSION_MANIFEST = 1
++#XPI_PKGNAME            = ftv-$(MOZ_APP_VERSION)
++
++# We should really pull FIREFOX_VERSION and THUNDERBIRD_VERSION from
++# browser/config/version.txt mail/config/version.txt but we can't be assured
++# that we've even pulled those files. So we hardcode them.
++
++XULAPP_DEFINES = \
++	-DFIREFOX_VERSION=$(FIREFOX_VERSION) \
++	-DTHUNDERBIRD_VERSION=$(THUNDERBIRD_VERSION) \
++	-DEXTENSION_VERSION=$(MOZILLA_VERSION) \
++	$(NULL)
++
++ifdef TARGET_XPCOM_ABI
++XULAPP_DEFINES += -DEM_ABI=$(OS_TARGET)_$(TARGET_XPCOM_ABI)
++endif
++endif
++
++DIRS    = src
++DIRS   += public
++
++include $(topsrcdir)/config/rules.mk
+diff -r b33cdf36d0ee extensions/ftv/install.rdf
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/extensions/ftv/install.rdf	Fri Oct 17 11:21:25 2008 -0500
 @@ -0,0 +1,40 @@
 +<?xml version="1.0"?>
 +
@@ -42,50 +83,9 @@ diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/install.rdf mozilla/extensions/f
 +    <em:homepageURL>http://www.mozilla.org/access/keyboard/snav/</em:homepageURL>
 +  </Description>
 +</RDF>
-diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/Makefile.in mozilla/extensions/ftv/Makefile.in
---- mozilla/extensions/ftv.orig/Makefile.in	1969-12-31 18:00:00.000000000 -0600
-+++ mozilla/extensions/ftv/Makefile.in	2008-10-01 11:45:03.000000000 -0500
-@@ -0,0 +1,37 @@
-+
-+DEPTH=../..
-+topsrcdir=@top_srcdir@
-+srcdir=@srcdir@
-+VPATH=@srcdir@
-+
-+include $(DEPTH)/config/autoconf.mk
-+
-+MODULE	= ftv
-+#XPI_NAME = ftv
-+
-+ifdef MOZ_XUL_APP
-+#INSTALL_EXTENSION_ID = ftv@extensions.mozilla.org
-+#DIST_FILES = install.rdf
-+#NO_JAR_AUTO_REG        = 1
-+#USE_EXTENSION_MANIFEST = 1
-+#XPI_PKGNAME            = ftv-$(MOZ_APP_VERSION)
-+
-+# We should really pull FIREFOX_VERSION and THUNDERBIRD_VERSION from
-+# browser/config/version.txt mail/config/version.txt but we can't be assured
-+# that we've even pulled those files. So we hardcode them.
-+
-+XULAPP_DEFINES = \
-+	-DFIREFOX_VERSION=$(FIREFOX_VERSION) \
-+	-DTHUNDERBIRD_VERSION=$(THUNDERBIRD_VERSION) \
-+	-DEXTENSION_VERSION=$(MOZILLA_VERSION) \
-+	$(NULL)
-+
-+ifdef TARGET_XPCOM_ABI
-+XULAPP_DEFINES += -DEM_ABI=$(OS_TARGET)_$(TARGET_XPCOM_ABI)
-+endif
-+endif
-+
-+DIRS    = src
-+DIRS   += public
-+
-+include $(topsrcdir)/config/rules.mk
-diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/public/Makefile.in mozilla/extensions/ftv/public/Makefile.in
---- mozilla/extensions/ftv.orig/public/Makefile.in	1969-12-31 18:00:00.000000000 -0600
-+++ mozilla/extensions/ftv/public/Makefile.in	2008-10-01 11:45:03.000000000 -0500
+diff -r b33cdf36d0ee extensions/ftv/public/Makefile.in
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/extensions/ftv/public/Makefile.in	Fri Oct 17 11:21:25 2008 -0500
 @@ -0,0 +1,50 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
@@ -137,9 +137,9 @@ diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/public/Makefile.in mozilla/exten
 +XPIDLSRCS	= nsIFitToView.idl
 +
 +include $(topsrcdir)/config/rules.mk
-diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/public/nsIFitToView.idl mozilla/extensions/ftv/public/nsIFitToView.idl
---- mozilla/extensions/ftv.orig/public/nsIFitToView.idl	1969-12-31 18:00:00.000000000 -0600
-+++ mozilla/extensions/ftv/public/nsIFitToView.idl	2008-10-01 11:45:03.000000000 -0500
+diff -r b33cdf36d0ee extensions/ftv/public/nsIFitToView.idl
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/extensions/ftv/public/nsIFitToView.idl	Fri Oct 17 11:21:25 2008 -0500
 @@ -0,0 +1,47 @@
 +/* vim:set ts=2 sw=2 sts=2 et cin: */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -188,111 +188,9 @@ diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/public/nsIFitToView.idl mozilla/
 +   */
 +  long extra(in long a, in long b);
 +};
-diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/ftv.css mozilla/extensions/ftv/src/ftv.css
---- mozilla/extensions/ftv.orig/src/ftv.css	1969-12-31 18:00:00.000000000 -0600
-+++ mozilla/extensions/ftv/src/ftv.css	2008-10-01 11:45:03.000000000 -0500
-@@ -0,0 +1,47 @@
-+* {
-+  max-width: 100% !important;
-+}
-+
-+*.ftvAll {
-+  width: auto !important;
-+  left:auto !important;
-+  float:none !important;
-+  padding:0px !important;
-+  margin:0px !important;
-+  white-space:normal !important;
-+  clear:left !important;
-+}
-+
-+td.ftvHalf {
-+  display:block !important;
-+  valign:top !important;
-+  align:left !important;
-+  height:auto !important;
-+}
-+
-+td.ftvFull {
-+  display:block !important;
-+  valign:top !important;
-+  align:left !important;
-+  height:auto !important;
-+}
-+
-+tr.ftv, tbody.ftv, table.ftv {
-+  display:block !important;
-+  height:auto !important;
-+}
-+
-+img.ftv {
-+  vertical-align:bottom !important;
-+  width: 100% !important;
-+}
-+
-+embed.ftv {
-+  width: 100% !important;
-+}
-+
-+
-+div.ftv {
-+  vertical-align:bottom !important;
-+}
-+
-diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/ftv.new.css mozilla/extensions/ftv/src/ftv.new.css
---- mozilla/extensions/ftv.orig/src/ftv.new.css	1969-12-31 18:00:00.000000000 -0600
-+++ mozilla/extensions/ftv/src/ftv.new.css	2008-09-30 11:30:15.000000000 -0500
-@@ -0,0 +1,47 @@
-+* {
-+  max-width: 100% !important;
-+  width: auto !important;
-+  left:auto !important;
-+  float:none !important;
-+  padding:0px !important;
-+  margin:0px !important;
-+  white-space:normal !important;
-+  clear:left !important;
-+  word-wrap: break-word!important;
-+}
-+
-+body {
-+  padding:8px !important;
-+  margin:8px !important;
-+}
-+
-+td {
-+  display:block !important;
-+  valign:top !important;
-+  align:left !important;
-+  height:auto !important;
-+  word-wrap: break-word!important;
-+}
-+
-+tr, tbody, table {
-+  display:block !important;
-+  height:auto !important;
-+  word-wrap: break-word!important;
-+}
-+
-+img {
-+  vertical-align:bottom !important;
-+  width: auto !important;
-+  /* display:block !important; */
-+}
-+
-+embed {
-+  width: auto !important;
-+  word-wrap: break-word!important;
-+}
-+
-+div {
-+  vertical-align:bottom !important;
-+  word-wrap: break-word!important;
-+}
-+
-diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensions/ftv/src/Makefile.in
---- mozilla/extensions/ftv.orig/src/Makefile.in	1969-12-31 18:00:00.000000000 -0600
-+++ mozilla/extensions/ftv/src/Makefile.in	2008-09-30 11:30:15.000000000 -0500
+diff -r b33cdf36d0ee extensions/ftv/src/Makefile.in
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/extensions/ftv/src/Makefile.in	Fri Oct 17 11:21:25 2008 -0500
 @@ -0,0 +1,116 @@
 +# vim:set ts=8 sw=8 sts=8 noet:
 +# ***** BEGIN LICENSE BLOCK *****
@@ -410,9 +308,111 @@ diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/Makefile.in mozilla/extensio
 +
 +libs:: $(DIST)/bin/res/ftv.css $(DIST)/bin/res/ftv.new.css
 +install:: $(DESTDIR)$(mozappdir)/res/ftv.css $(DESTDIR)$(mozappdir)/res/ftv.new.css
-diff -ruN -p -B -U5 mozilla/extensions/ftv.orig/src/nsFitToView.cpp mozilla/extensions/ftv/src/nsFitToView.cpp
---- mozilla/extensions/ftv.orig/src/nsFitToView.cpp	1969-12-31 18:00:00.000000000 -0600
-+++ mozilla/extensions/ftv/src/nsFitToView.cpp	2008-10-01 11:55:56.000000000 -0500
+diff -r b33cdf36d0ee extensions/ftv/src/ftv.css
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/extensions/ftv/src/ftv.css	Fri Oct 17 11:21:25 2008 -0500
+@@ -0,0 +1,47 @@
++* {
++  max-width: 100% !important;
++}
++
++*.ftvAll {
++  width: auto !important;
++  left:auto !important;
++  float:none !important;
++  padding:0px !important;
++  margin:0px !important;
++  white-space:normal !important;
++  clear:left !important;
++}
++
++td.ftvHalf {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++}
++
++td.ftvFull {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++}
++
++tr.ftv, tbody.ftv, table.ftv {
++  display:block !important;
++  height:auto !important;
++}
++
++img.ftv {
++  vertical-align:bottom !important;
++  width: 100% !important;
++}
++
++embed.ftv {
++  width: 100% !important;
++}
++
++
++div.ftv {
++  vertical-align:bottom !important;
++}
++
+diff -r b33cdf36d0ee extensions/ftv/src/ftv.new.css
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/extensions/ftv/src/ftv.new.css	Fri Oct 17 11:21:25 2008 -0500
+@@ -0,0 +1,47 @@
++* {
++  max-width: 100% !important;
++  width: auto !important;
++  left:auto !important;
++  float:none !important;
++  padding:0px !important;
++  margin:0px !important;
++  white-space:normal !important;
++  clear:left !important;
++  word-wrap: break-word!important;
++}
++
++body {
++  padding:8px !important;
++  margin:8px !important;
++}
++
++td {
++  display:block !important;
++  valign:top !important;
++  align:left !important;
++  height:auto !important;
++  word-wrap: break-word!important;
++}
++
++tr, tbody, table {
++  display:block !important;
++  height:auto !important;
++  word-wrap: break-word!important;
++}
++
++img {
++  vertical-align:bottom !important;
++  width: auto !important;
++  /* display:block !important; */
++}
++
++embed {
++  width: auto !important;
++  word-wrap: break-word!important;
++}
++
++div {
++  vertical-align:bottom !important;
++  word-wrap: break-word!important;
++}
++
+diff -r b33cdf36d0ee extensions/ftv/src/nsFitToView.cpp
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/extensions/ftv/src/nsFitToView.cpp	Fri Oct 17 11:21:25 2008 -0500
 @@ -0,0 +1,596 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim:set ts=2 sw=2 sts=2 tw=80 et cindent: */
