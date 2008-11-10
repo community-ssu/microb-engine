@@ -1,0 +1,20 @@
+diff --git a/app/mobile.js b/app/mobile.js
+--- a/app/mobile.js
++++ b/app/mobile.js
+@@ -62,7 +62,7 @@
+ pref("network.http.max-persistent-connections-per-proxy", 4);
+ 
+ /* session history */
+-pref("browser.sessionhistory.max_total_viewers", 0);
++pref("browser.sessionhistory.max_total_viewers", 1);
+ pref("browser.sessionhistory.max_entries", 50);
+ 
+ /* these should help performance */
+@@ -258,3 +258,7 @@
+ pref("privacy.item.sessions", true);
+ 
+ pref("plugins.enabled", false);
++
++// content sink control -- controls responsiveness during page load
++pref("content.max.deflected.tokens", 10);
++pref("content.max.tokenizing.time", 50000);

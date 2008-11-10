@@ -25,8 +25,6 @@ gtkmozembed/020_nsWindowCreator2_iface.diff
 
 microbfootprint/010_MICROB_xslt_xpath_disable_lp0.diff
 microbfootprint/020_MICROB_non_conf_components_disable.diff
-microbfootprint/040_NO_XPFE_BROWSER.diff
-
 
 
 testgtkembed/010_BUILDFIX_embedding_tests.diff
@@ -112,10 +110,6 @@ not_sorted/others/330_MBUG_42865_zoom_navigation_fix.diff
 not_sorted/others/400_bigger_ua_string_length_61630.diff
 not_sorted/002_drawingMissingGlyphs.diff
 
-#qt/010_attachment.cgi?id=333090.diff
-#qt/020_attachment.cgi?id=333029.diff
-qt/030_nonconf.diff
-
 # Old spatial navigation module (until trunk version http://hg.mozilla.org/mozilla-central/file/ec658a5f3699/toolkit/spatial-navigation/SpatialNavigation.js not fixed)
 extensions/040_OldSpatialNavigationModule.diff
 
@@ -129,7 +123,6 @@ localization/bug87973.firefox.hardcoded.diff
 
 
 crashes/SetCursor_crash.diff
-crashes/bug90141.diff
 
 BMO_attached/130_456015.certview.diff
 
@@ -175,7 +168,10 @@ theeming/100_XUL_shortuctKeysDisable.diff
 
 #BMO_attached/attachment.cgi?id=318998.diff -p0
 
-BMO_attached/attachment.cgi?id=345387.diff
+#BMO_attached/attachment.cgi?id=345387.diff
 
 # Interruptable reflow
 #BMO_attached/attachment.cgi?id=346166.diff
+
+BMO_attached/vlad-parser.diff
+BMO_attached/690_bug459780.broken.events.diff

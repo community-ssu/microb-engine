@@ -1,0 +1,65 @@
+# Bug 459780 -  X11 event compression isn't handling extension events on maemo
+diff -r a872a415cfdd widget/src/gtk2/mozdrawingarea.c
+--- a/widget/src/gtk2/mozdrawingarea.c	Sat Nov 08 20:18:44 2008 -0500
++++ b/widget/src/gtk2/mozdrawingarea.c	Sat Nov 08 20:25:52 2008 -0500
+@@ -159,17 +159,18 @@ moz_drawingarea_create_windows (MozDrawi
+     /* set the default pixmap to None so that you don't end up with the
+        gtk default which is BlackPixel. */
+     gdk_window_set_back_pixmap(drawingarea->clip_window, NULL, FALSE);
+ 
+     attributes.event_mask = (GDK_EXPOSURE_MASK | GDK_STRUCTURE_MASK |
+                              GDK_VISIBILITY_NOTIFY_MASK |
+                              GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK |
+                              GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
+-                             GDK_POINTER_MOTION_MASK);
++                             GDK_POINTER_MOTION_MASK |
++                             GDK_POINTER_MOTION_HINT_MASK);
+     /* create the inner window */
+     drawingarea->inner_window = gdk_window_new (drawingarea->clip_window,
+                                                 &attributes, attributes_mask);
+     gdk_window_set_user_data(drawingarea->inner_window, widget);
+ 
+     /* set the default pixmap to None so that you don't end up with the
+        gtk default which is BlackPixel. */
+     gdk_window_set_back_pixmap(drawingarea->inner_window, NULL, FALSE);
+diff -r a872a415cfdd widget/src/gtk2/nsWindow.cpp
+--- a/widget/src/gtk2/nsWindow.cpp	Sat Nov 08 20:18:44 2008 -0500
++++ b/widget/src/gtk2/nsWindow.cpp	Sat Nov 08 20:25:52 2008 -0500
+@@ -4493,17 +4493,18 @@ nsWindow::GrabPointer(void)
+         return;
+ 
+     gint retval;
+     retval = gdk_pointer_grab(mDrawingarea->inner_window, TRUE,
+                               (GdkEventMask)(GDK_BUTTON_PRESS_MASK |
+                                              GDK_BUTTON_RELEASE_MASK |
+                                              GDK_ENTER_NOTIFY_MASK |
+                                              GDK_LEAVE_NOTIFY_MASK |
+-                                             GDK_POINTER_MOTION_MASK),
++                                             GDK_POINTER_MOTION_MASK |
++                                             GDK_POINTER_MOTION_HINT_MASK),
+                               (GdkWindow *)NULL, NULL, GDK_CURRENT_TIME);
+ 
+     if (retval != GDK_GRAB_SUCCESS) {
+         LOG(("GrabPointer: pointer grab failed\n"));
+         mRetryPointerGrab = PR_TRUE;
+     }
+ }
+ 
+@@ -5323,16 +5324,17 @@ motion_notify_event_cb(GtkWidget *widget
+ motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event)
+ {
+     nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);
+     if (!window)
+         return FALSE;
+ 
+     window->OnMotionNotifyEvent(widget, event);
+ 
++    gdk_event_request_motions(event);
+     return TRUE;
+ }
+ 
+ /* static */
+ gboolean
+ button_press_event_cb(GtkWidget *widget, GdkEventButton *event)
+ {
+     nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);

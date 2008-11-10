@@ -3176,3 +3176,31 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  
      GdkWindow *innerWindow = get_inner_gdk_window(aWidget->window, aX, aY,
                                                    &retx, &rety);
+--- mozilla/gfx/thebes/src/gfxQtPlatform.cpp.orig	2008-08-10 18:06:50.000000000 +0300
++++ mozilla/gfx/thebes/src/gfxQtPlatform.cpp	2008-08-10 18:26:14.000000000 +0300
+@@ -54,13 +54,15 @@
+ 
+ #include "nsUnicharUtils.h"
+ 
+ #include <fontconfig/fontconfig.h>
+ 
++#ifndef MOZ_NO_LCMS
+ #include "nsMathUtils.h"
+ 
+ #include "lcms.h"
++#endif
+ 
+ #include <ft2build.h>
+ #include FT_FREETYPE_H
+ 
+ PRInt32 gfxQtPlatform::sDPI = -1;
+--- mozilla/config/autoconf.mk.in.orig	2007-11-09 16:09:07.000000000 -0500
++++ mozilla/config/autoconf.mk.in	2007-11-09 17:15:43.000000000 -0500
+@@ -163,6 +163,7 @@
+ MOZ_NO_FASTFIND = @MOZ_NO_FASTFIND@
+ MOZ_NO_LCMS = @MOZ_NO_LCMS@
+ MOZ_NO_JARMODULE = @MOZ_NO_JARMODULE@
++MOZ_NO_XPFE_BROWSER = @MOZ_NO_XPFE_BROWSER@
+ MOZ_NO_DOWNLOADMGR = @MOZ_NO_DOWNLOADMGR@
+ MOZ_ZIPWRITER = @MOZ_ZIPWRITER@
+ MOZ_MORK = @MOZ_MORK@

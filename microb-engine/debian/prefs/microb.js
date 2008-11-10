@@ -44,3 +44,6 @@ pref("ftv.new.enabled", false);
 pref("browser.sessionhistory.max_total_viewers", 0);
 pref("browser.sessionhistory.max_viewers", 1);
 pref("browser.sessionhistory.max_entries", 20);
+// content sink control -- controls responsiveness during page load
+pref("content.max.deflected.tokens", 10);
+pref("content.max.tokenizing.time", 50000);

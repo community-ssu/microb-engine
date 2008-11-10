@@ -1,0 +1,134 @@
+diff --git a/content/base/src/nsContentSink.cpp b/content/base/src/nsContentSink.cpp
+--- a/content/base/src/nsContentSink.cpp
++++ b/content/base/src/nsContentSink.cpp
+@@ -294,6 +294,11 @@
+ 
+   mCanInterruptParser =
+     nsContentUtils::GetBoolPref("content.interrupt.parsing", PR_TRUE);
++
++  // 200 determined empirically to provide good user response without
++  // sampling the clock too often.
++  mMaxTokensDeflectedInLowFreqMode =
++    nsContentUtils::GetIntPref("content.max.deflected.tokens", 200);
+ 
+   return NS_OK;
+ 
+@@ -1519,6 +1524,7 @@
+     return NS_OK;
+   }
+ 
++#if 0
+   nsIViewManager* vm = shell->GetViewManager();
+   NS_ENSURE_TRUE(vm, NS_ERROR_FAILURE);
+   PRUint32 eventTime;
+@@ -1528,23 +1534,22 @@
+       // If we can't get the last input time from the widget
+       // then we will get it from the viewmanager.
+       rv = vm->GetLastUserEventTime(eventTime);
+-      NS_ENSURE_SUCCESS(rv , NS_ERROR_FAILURE);
+   }
+-
+ 
+   NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
+ 
+   if (!mDynamicLowerValue && mLastSampledUserEventTime == eventTime) {
+-    // The magic value of NS_MAX_TOKENS_DEFLECTED_IN_LOW_FREQ_MODE
++    // The default value of mMaxTokensDeflectedInLowFreqMode (200)
+     // was selected by empirical testing. It provides reasonable
+     // user response and prevents us from sampling the clock too
+-    // frequently.
+-    if (mDeflectedCount < NS_MAX_TOKENS_DEFLECTED_IN_LOW_FREQ_MODE) {
++    // frequently.  This value may be decreased if responsiveness is
++    // valued more than end-to-end pageload time (e.g., for mobile).
++    if (mDeflectedCount < mMaxTokensDeflectedInLowFreqMode) {
+       mDeflectedCount++;
+       // return early to prevent sampling the clock. Note: This
+       // prevents us from switching to higher frequency (better UI
+       // responsive) mode, so limit ourselves to doing for no more
+-      // than NS_MAX_TOKENS_DEFLECTED_IN_LOW_FREQ_MODE tokens.
++      // than mMaxTokensDeflectedInLowFreqMode tokens.
+ 
+       return NS_OK;
+     }
+@@ -1598,7 +1603,16 @@
+       FavorPerformanceHint(PR_TRUE, 0);
+     }
+   }
++#endif
+ 
++  if (mDeflectedCount < mMaxTokensDeflectedInLowFreqMode) {
++    mDeflectedCount++;
++    return NS_OK;
++  }
++
++  mDeflectedCount = 0;
++
++  PRUint32 currentTime = PR_IntervalToMicroseconds(PR_IntervalNow());
+   if ((currentTime - mDelayTimerStart) >
+       static_cast<PRUint32>(GetMaxTokenProcessingTime())) {
+     return NS_ERROR_HTMLPARSER_INTERRUPTED;
+diff --git a/content/base/src/nsContentSink.h b/content/base/src/nsContentSink.h
+--- a/content/base/src/nsContentSink.h
++++ b/content/base/src/nsContentSink.h
+@@ -105,10 +105,6 @@
+ 
+ // 1/2 second fudge factor for window creation
+ #define NS_DELAY_FOR_WINDOW_CREATION  500000
+-
+-// 200 determined empirically to provide good user response without
+-// sampling the clock too often.
+-#define NS_MAX_TOKENS_DEFLECTED_IN_LOW_FREQ_MODE 200
+ 
+ class nsContentSink : public nsICSSLoaderObserver,
+                       public nsIScriptLoaderObserver,
+@@ -264,19 +260,21 @@
+ 
+   inline PRInt32 GetNotificationInterval()
+   {
++#if 0
+     if (mDynamicLowerValue) {
+       return 1000;
+     }
+-
++#endif
+     return mNotificationInterval;
+   }
+ 
+   inline PRInt32 GetMaxTokenProcessingTime()
+   {
++#if 0
+     if (mDynamicLowerValue) {
+       return 3000;
+     }
+-
++#endif
+     return mMaxTokenProcessingTime;
+   }
+ 
+@@ -359,6 +357,8 @@
+   // Switch between intervals when time is exceeded
+   PRInt32 mDynamicIntervalSwitchThreshold;
+ 
++  PRInt32 mMaxTokensDeflectedInLowFreqMode;
++
+   PRInt32 mBeginLoadTime;
+ 
+   // Last mouse event or keyboard event time sampled by the content
+diff --git a/widget/src/xpwidgets/nsBaseAppShell.cpp b/widget/src/xpwidgets/nsBaseAppShell.cpp
+--- a/widget/src/xpwidgets/nsBaseAppShell.cpp
++++ b/widget/src/xpwidgets/nsBaseAppShell.cpp
+@@ -185,12 +185,14 @@
+                                      PRUint32 starvationDelay)
+ {
+   mStarvationDelay = PR_MillisecondsToInterval(starvationDelay);
++#if 0
+   if (favorPerfOverStarvation) {
+     ++mFavorPerf;
+   } else {
+     --mFavorPerf;
+     mSwitchTime = PR_IntervalNow();
+   }
++#endif
+   return NS_OK;
+ }
+ 
