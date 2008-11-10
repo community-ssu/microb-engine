@@ -175,3 +175,6 @@ theeming/100_XUL_shortuctKeysDisable.diff
 
 BMO_attached/vlad-parser.diff
 BMO_attached/690_bug459780.broken.events.diff
+
+# until bug 463872 not fixed
+qt/attachment.cgi?id=347124.diff
