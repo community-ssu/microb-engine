@@ -1,0 +1,16 @@
+#https://bugzilla.mozilla.org/show_bug.cgi?id=465170
+# workarround
+--- LIR.cpp.orig	2008-11-16 16:38:41.000000000 -0500
++++ LIR.cpp	2008-11-16 17:12:06.000000000 -0500
+@@ -836,11 +836,6 @@
+ 				oprnd1 = t;
+ 			}
+ 			else if (v >= LIR_lt && v <= LIR_uge) {
+-				NanoStaticAssert((LIR_lt ^ 1) == LIR_gt);
+-				NanoStaticAssert((LIR_le ^ 1) == LIR_ge);
+-				NanoStaticAssert((LIR_ult ^ 1) == LIR_ugt);
+-				NanoStaticAssert((LIR_ule ^ 1) == LIR_uge);
+-
+ 				// move const to rhs, swap the operator
+ 				LIns *t = oprnd2;
+ 				oprnd2 = oprnd1;

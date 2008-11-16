@@ -1,3 +1,9 @@
+microb-engine (20081106-1.5) unstable; urgency=low
+
+  * Fixed bug 465170 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sun, 16 Nov 2008 17:15:21 -0500
+
 microb-engine (20081106-1.4) unstable; urgency=low
 
   * Disable wave support
