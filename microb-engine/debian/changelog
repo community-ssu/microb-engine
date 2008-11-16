@@ -1,3 +1,9 @@
+microb-engine (20081106-1.6) unstable; urgency=low
+
+  * Fixed search service for fennec browser
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sun, 16 Nov 2008 06:09:07 -0500
+
 microb-engine (20081106-1.5) unstable; urgency=low
 
   * Fixed bug 465170 

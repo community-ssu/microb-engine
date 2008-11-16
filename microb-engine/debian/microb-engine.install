@@ -11,6 +11,7 @@ usr/lib/microb-engine/components/*gnomevfs*.so
 usr/lib/microb-engine/components/nsProxyAutoConfig*.js
 usr/lib/microb-engine/components/nsLivemarkService*.js
 usr/lib/microb-engine/components/nsTaggingService*.js
+usr/lib/microb-engine/components/nsSearch*.js
 usr/lib/microb-engine/*jprof*
 ../patches/*.js usr/lib/microb-engine/components
 usr/lib/microb-engine/regxp*
