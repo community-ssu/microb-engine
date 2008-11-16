@@ -2,8 +2,7 @@ Index: mozilla/content/base/src/nsGenericElement.cpp
 ===================================================================
 --- mozilla.orig/content/base/src/nsGenericElement.cpp
 +++ mozilla/content/base/src/nsGenericElement.cpp
-@@ -4122,37 +4122,39 @@
-         cb.NoteXPCOMChild(slots->mControllers);
+@@ -4067,38 +4067,40 @@
        cb.NoteXPCOMChild(
          static_cast<nsIDOMNodeList*>(slots->mChildrenList.get()));
      }
@@ -11,9 +10,10 @@ Index: mozilla/content/base/src/nsGenericElement.cpp
  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
  
  
--NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsGenericElement)
-+NS_INTERFACE_MAP_BEGIN(nsGenericElement)
+ NS_INTERFACE_MAP_BEGIN(nsGenericElement)
 +  NS_INTERFACE_MAP_ENTRY_CYCLE_COLLECTION(nsGenericElement)
+   NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
+   NS_INTERFACE_MAP_ENTRIES_CYCLE_COLLECTION(nsGenericElement)
    NS_INTERFACE_MAP_ENTRY(nsIContent)
    NS_INTERFACE_MAP_ENTRY(nsINode)
    NS_INTERFACE_MAP_ENTRY(nsPIDOMEventTarget)

@@ -1,0 +1,1461 @@
+diff -r 7c1c494c76ee browser/base/content/browser-context.inc
+--- a/browser/base/content/browser-context.inc	Sat Nov 15 18:32:08 2008 +0100
++++ b/browser/base/content/browser-context.inc	Sun Nov 16 14:45:26 2008 -0500
+@@ -260,17 +260,17 @@
+           <menuseparator/>
+           <menuitem id="context-bookmarkframe"
+                     label="&bookmarkThisFrameCmd.label;"
+                     accesskey="&bookmarkThisFrameCmd.accesskey;"
+                     oncommand="gContextMenu.addBookmarkForFrame();"/>
+           <menuitem id="context-saveframe"
+                     label="&saveFrameCmd.label;"
+                     accesskey="&saveFrameCmd.accesskey;"
+-                    oncommand="saveDocument(gContextMenu.target.ownerDocument);"/>
++                    oncommand="gContextMenu.saveFrame();"/>
+           <menuseparator/>
+           <menuitem id="context-printframe"
+                     label="&printFrameCmd.label;"
+                     accesskey="&printFrameCmd.accesskey;"
+                     oncommand="gContextMenu.printFrame();"/>
+           <menuseparator/>
+           <menuitem id="context-viewframesource"
+                     label="&viewFrameSourceCmd.label;"
+diff -r 7c1c494c76ee browser/base/content/browser.js
+--- a/browser/base/content/browser.js	Sat Nov 15 18:32:08 2008 +0100
++++ b/browser/base/content/browser.js	Sun Nov 16 14:45:26 2008 -0500
+@@ -858,47 +858,61 @@ let gGestureSupport = {
+     }
+   },
+ };
+ 
+ function BrowserStartup() {
+   var uriToLoad = null;
+ 
+   // window.arguments[0]: URI to load (string), or an nsISupportsArray of
+-  //                      nsISupportsStrings to load
++  //                      nsISupportsStrings to load, or a xul:tab of
++  //                      a tabbrowser, which will be replaced by this
++  //                      window (for this case, all other arguments are
++  //                      ignored).
+   //                 [1]: character set (string)
+   //                 [2]: referrer (nsIURI)
+   //                 [3]: postData (nsIInputStream)
+   //                 [4]: allowThirdPartyFixup (bool)
+   if ("arguments" in window && window.arguments[0])
+     uriToLoad = window.arguments[0];
+ 
+   var isLoadingBlank = uriToLoad == "about:blank";
+   var mustLoadSidebar = false;
+ 
+   prepareForStartup();
+ 
+ #ifdef ENABLE_PAGE_CYCLER
+   appCore.startPageCycler();
+ #else
+ # only load url passed in when we're not page cycling
+-  if (uriToLoad && !isLoadingBlank) {
++  if (uriToLoad && !isLoadingBlank) { 
+     if (uriToLoad instanceof Ci.nsISupportsArray) {
+       let count = uriToLoad.Count();
+       let specs = [];
+       for (let i = 0; i < count; i++) {
+         let urisstring = uriToLoad.GetElementAt(i).QueryInterface(Ci.nsISupportsString);
+         specs.push(urisstring.data);
+       }
+ 
+       // This function throws for certain malformed URIs, so use exception handling
+       // so that we don't disrupt startup
+       try {
+         gBrowser.loadTabs(specs, false, true);
+       } catch (e) {}
++    }
++    else if (uriToLoad instanceof XULElement) {
++      // swap the given tab with the default about:blank tab and then close
++      // the original tab in the other window.
++
++      // Stop the about:blank load
++      gBrowser.selectedBrowser.stop();
++      // make sure it has a docshell
++      gBrowser.selectedBrowser.docShell;
++
++      gBrowser.swapBrowsersAndCloseOther(gBrowser.selectedTab, uriToLoad);
+     }
+     else if (window.arguments.length >= 3) {
+       loadURI(uriToLoad, window.arguments[2], window.arguments[3] || null,
+               window.arguments[4] || false);
+     }
+     // Note: loadOneOrMoreURIs *must not* be called if window.arguments.length >= 3.
+     // Such callers expect that window.arguments[0] is handled as a single URI.
+     else
+diff -r 7c1c494c76ee browser/base/content/browser.xul
+--- a/browser/base/content/browser.xul	Sat Nov 15 18:32:08 2008 +0100
++++ b/browser/base/content/browser.xul	Sun Nov 16 14:45:26 2008 -0500
+@@ -266,16 +266,19 @@
+            onpopupshowing="return BookmarksEventHandler.fillInBTTooltip(document.tooltipNode)">
+     <vbox id="btTooltipTextBox" flex="1">
+       <label id="btTitleText" class="tooltip-label" />
+       <label id="btUrlText" crop="center" class="tooltip-label" />
+     </vbox>
+   </tooltip>
+ 
+   <toolbox id="navigator-toolbox" class="toolbox-top" mode="icons"
++           ondragover="gBrowser._onDragOver(event); event.stopPropagation();"
++           ondrop="gBrowser._onDrop(event); event.stopPropagation();"
++           ondragleave="gBrowser._onDragLeave(event); event.stopPropagation();"
+            defaultmode="icons">
+     <!-- Menu -->
+     <toolbar type="menubar" id="toolbar-menubar" class="chromeclass-menubar" customizable="true"
+              defaultset="menubar-items"
+              mode="icons" iconsize="small" defaulticonsize="small"
+              context="toolbar-context-menu">
+       <toolbaritem id="menubar-items" align="center">
+ # The entire main menubar is placed into browser-menubar.inc, so that it can be shared by 
+diff -r 7c1c494c76ee browser/base/content/tabbrowser.xml
+--- a/browser/base/content/tabbrowser.xml	Sat Nov 15 18:32:08 2008 +0100
++++ b/browser/base/content/tabbrowser.xml	Sun Nov 16 14:45:26 2008 -0500
+@@ -45,40 +45,46 @@
+    -
+    - ***** END LICENSE BLOCK ***** -->
+ 
+ <!DOCTYPE bindings [
+ <!ENTITY % tabBrowserDTD SYSTEM "chrome://browser/locale/tabbrowser.dtd" >
+ %tabBrowserDTD;
+ <!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+ %globalDTD;
++<!ENTITY % placesDTD SYSTEM "chrome://browser/locale/places/places.dtd">
++%placesDTD;
+ ]>
+ 
+ <bindings id="tabBrowserBindings"
+           xmlns="http://www.mozilla.org/xbl"
+           xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+           xmlns:xbl="http://www.mozilla.org/xbl">
+ 
+   <binding id="tabbrowser">
+     <resources>
+       <stylesheet src="chrome://browser/content/tabbrowser.css"/>
+     </resources>
+ 
+     <content>
+       <xul:stringbundle anonid="tbstringbundle" src="chrome://browser/locale/tabbrowser.properties"/>
+       <xul:tabbox anonid="tabbox" flex="1" eventnode="document" xbl:inherits="handleCtrlPageUpDown"
+                   onselect="if (!('updateCurrentBrowser' in this.parentNode) || event.target.localName != 'tabpanels') return; this.parentNode.updateCurrentBrowser();">
+-        <xul:hbox class="tab-drop-indicator-bar" collapsed="true" chromedir="&locale.dir;">
++        <xul:hbox class="tab-drop-indicator-bar" collapsed="true" chromedir="&locale.dir;"
++                  ondragover="this.parentNode.parentNode._onDragOver(event); event.stopPropagation();"
++                  ondragleave="this.parentNode.parentNode._onDragLeave(event); event.stopPropagation();"
++                  ondrop="this.parentNode.parentNode._onDrop(event); event.stopPropagation();">
+           <xul:hbox class="tab-drop-indicator" mousethrough="always"/>
+         </xul:hbox>
+         <xul:hbox class="tabbrowser-strip" collapsed="true" tooltip="_child" context="_child"
+                   anonid="strip"
+                   ondragstart="this.parentNode.parentNode._onDragStart(event); event.stopPropagation();"
+                   ondragover="this.parentNode.parentNode._onDragOver(event); event.stopPropagation();"
+                   ondrop="this.parentNode.parentNode._onDrop(event); event.stopPropagation();"
++                  ondragend="this.parentNode.parentNode._onDragEnd(event); event.stopPropagation();"
+                   ondragleave="this.parentNode.parentNode._onDragLeave(event); event.stopPropagation();">
+           <xul:tooltip onpopupshowing="return this.parentNode.parentNode.parentNode.createTooltip(event);"/>
+           <xul:menupopup anonid="tabContextMenu" onpopupshowing="this.parentNode.parentNode.parentNode.updatePopupMenu(this);">
+             <xul:menuitem id="context_newTab" label="&newTab.label;" accesskey="&newTab.accesskey;"
+                           xbl:inherits="oncommand=onnewtab"/>
+             <xul:menuseparator/>
+             <xul:menuitem id="context_reloadTab" label="&reloadTab.label;" accesskey="&reloadTab.accesskey;"
+                           oncommand="var tabbrowser = this.parentNode.parentNode.parentNode.parentNode;
+@@ -86,16 +92,21 @@
+             <xul:menuitem id="context_reloadAllTabs" label="&reloadAllTabs.label;" accesskey="&reloadAllTabs.accesskey;"
+                           tbattr="tabbrowser-multiple"
+                           oncommand="var tabbrowser = this.parentNode.parentNode.parentNode.parentNode;
+                                      tabbrowser.reloadAllTabs(tabbrowser.mContextTab);"/>
+             <xul:menuitem id="context_closeOtherTabs" label="&closeOtherTabs.label;" accesskey="&closeOtherTabs.accesskey;"
+                           tbattr="tabbrowser-multiple"
+                           oncommand="var tabbrowser = this.parentNode.parentNode.parentNode.parentNode;
+                                      tabbrowser.removeAllTabsBut(tabbrowser.mContextTab);"/>
++            <xul:menuseparator/>
++            <xul:menuitem id="context_openTabInWindow" label="&cmd.open_window.label;"
++                          tbattr="tabbrowser-multiple"
++                          oncommand="var tabbrowser = this.parentNode.parentNode.parentNode.parentNode;
++                                     tabbrowser._replaceTabWithWindow(tabbrowser.mContextTab);"/>
+             <xul:menuseparator/>
+             <xul:menuitem id="context_bookmarkTab"
+                           label="&bookmarkThisTab.label;"
+                           accesskey="&bookmarkThisTab.accesskey;"
+                           oncommand="BookmarkThisTab();"/>
+             <xul:menuitem id="context_bookmarkAllTabs"
+                           label="&bookmarkAllTabs.label;"
+                           accesskey="&bookmarkAllTabs.accesskey;"
+@@ -688,20 +699,21 @@
+               Cc["@mozilla.org/browser/sessionstore;1"].
+               getService(Ci.nsISessionStore).
+               getClosedTabCount(window) == 0;
+           ]]>
+         </body>
+       </method>
+ 
+       <method name="updateCurrentBrowser">
++        <parameter name="aForceUpdate"/>
+         <body>
+           <![CDATA[
+             var newBrowser = this.getBrowserAtIndex(this.mTabContainer.selectedIndex);
+-            if (this.mCurrentBrowser == newBrowser)
++            if (this.mCurrentBrowser == newBrowser && !aForceUpdate)
+               return;
+ 
+             if (this.mCurrentBrowser) {
+               // Only save the focused element if it is in our content window
+               // or in an ancestor window.
+               var focusedWindow = document.commandDispatcher.focusedWindow;
+               var saveFocus = false;
+ 
+@@ -1604,16 +1616,23 @@
+             tabListener = this.mTabProgressListener(aOurTab, ourBrowser,
+                                                     tabListenerBlank);
+             this.mTabListeners[ourIndex] = tabListener;
+             filter.addProgressListener(tabListener,
+               Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+ 
+             ourBrowser.webProgress.addProgressListener(filter,
+               Components.interfaces.nsIWebProgress.NOTIFY_ALL);
++
++            this.setTabTitle(aOurTab);
++
++            // If the tab was already selected (this happpens in the scenraio of
++            // _replaceTabWithWindow), notify onLoactionChange, etc.
++            if (aOurTab == this.selectedTab)
++              this.updateCurrentBrowser(true);
+           ]]>
+         </body>
+       </method>
+ 
+       <method name="reloadAllTabs">
+         <body>
+           <![CDATA[
+             var l = this.mPanelContainer.childNodes.length;
+@@ -1778,68 +1797,86 @@
+       <method name="_onDragStart">
+         <parameter name="aEvent"/>
+         <body>
+         <![CDATA[
+           var target = aEvent.target;
+           if (target.localName == "tab" &&
+               aEvent.originalTarget.localName != "toolbarbutton") {
+             var dt = aEvent.dataTransfer;
+-            dt.mozSetDataAt("application/x-moz-node", target, 0);
+-            var URI = this.getBrowserForTab(aEvent.target).currentURI;
+-            if (URI) {
+-              var spec = URI.spec;
+-              dt.mozSetDataAt("text/x-moz-url", spec + "\n" + aEvent.target.label, 0);
+-              dt.mozSetDataAt("text/uri-list", spec + "\n" + aEvent.target.label, 0);
+-              dt.mozSetDataAt("text/plain", spec, 0);
+-              dt.mozSetDataAt("text/html", '<a href="' + spec + '">' + aEvent.target.label + '</a>', 0);
+-            } else {
+-              dt.mozSetDataAt("text/plain", "about:blank", 0);
+-            }
++            // We're internetionally not setting any other data-type, otherwise
++            // applications may override our drop-as-window behavior
++            dt.mozSetDataAt("application/x-moz-tabbrowser-tab", target, 0);
++
++            var canvas = tabPreviews.capture(target, false);
++            dt.setDragImage(canvas, 0, 0);
+           }
+         ]]>
+         </body>
+       </method>
+ 
+       <field name="mDragTime">0</field>
+       <field name="mDragOverDelay">350</field>
+ 
+       <field name="_supportedLinkDropTypes"><![CDATA[
+         ["text/x-moz-url", "text/uri-list", "text/plain", "application/x-moz-file"]
+       ]]></field>
+ 
++      <field name="_cachedTargetInToolbox">null</field>
+       <method name="_setEffectAllowedForDataTransfer">
+         <parameter name="aEvent"/>
+         <body>
+           <![CDATA[
++            // Find out if the we're dragged over the toolbox
++            var target = aEvent.target;
++            var isInToolbox = target == this._cachedTargetInToolbox;
++            while (target && !isInToolbox) {
++              if (target == gNavToolbox) {
++                isInToolbox = true;
++                this._cachedTargetInToolbox = target;
++              }
++              else
++                target = target.parentNode;
++            }
++
+             var dt = aEvent.dataTransfer;
+             // Disallow dropping multiple items
+             if (dt.mozItemCount > 1)
+               return dt.effectAllowed = "none";
+ 
+             var types = dt.mozTypesAt(0);
+             var sourceNode = null;
+             // tabs are always added as the first type
+-            if (types[0] == "application/x-moz-node") {
+-              var sourceNode = dt.mozGetDataAt("application/x-moz-node", 0);
++            if (types[0] == "application/x-moz-tabbrowser-tab") {
++              var sourceNode = dt.mozGetDataAt("application/x-moz-tabbrowser-tab", 0);
+               if (sourceNode instanceof XULElement &&
+                   sourceNode.localName == "tab" &&
+                   (sourceNode.parentNode == this.mTabContainer ||
+                    (sourceNode.ownerDocument.defaultView instanceof ChromeWindow &&
+                     sourceNode.ownerDocument.documentElement.getAttribute("windowtype") == "navigator:browser"))) {
+                 if (sourceNode.parentNode == this.mTabContainer &&
+                     (aEvent.screenX >= sourceNode.boxObject.screenX &&
+                       aEvent.screenX <= (sourceNode.boxObject.screenX +
+                                          sourceNode.boxObject.width))) {
+-                  return dt.effectAllowed = "none";                                         
++                  return dt.effectAllowed = "none";
+                 }
+ 
++                // Within the toolbox, allow dropping by the height of a tab off
++                // the tabbar
++                if (isInToolbox &&
++                    aEvent.screenY < sourceNode.boxObject.screenY -
++                                     sourceNode.boxObject.height)
++                  return dt.effectAllowed = "none";
+                 return dt.effectAllowed = "copyMove";
+               }
+             }
++
++            // only tab-drags are taken care off within the toolbox
++            if (!isInToolbox)
++              return dt.effectAllowed = "none";
+ 
+             for (var i=0; i < this._supportedLinkDropTypes.length; i++) {
+               if (types.contains(this._supportedLinkDropTypes[i])) {
+                 // Here we need to to do this manually
+                 return dt.effectAllowed = dt.dropEffect = "link";
+               }
+             }
+             return dt.effectAllowed = "none";
+@@ -1951,22 +1988,25 @@
+       <method name="_onDrop">
+         <parameter name="aEvent"/>
+         <body>
+           <![CDATA[
+             var dt = aEvent.dataTransfer;
+             var dropEffect = dt.dropEffect;
+             var draggedTab;
+             if (dropEffect != "link") { // copy or move
+-              draggedTab = dt.mozGetDataAt("application/x-moz-node", 0);
++              draggedTab = dt.mozGetDataAt("application/x-moz-tabbrowser-tab", 0);
+               NS_ASSERT(draggedTab && draggedTab.localName == "tab",
+                         "copy or move action without a tab");
+             }
+ 
+-            if (draggedTab && (dropEffect == "copy" || draggedTab.parentNode == this.mTabContainer)) {
++            this.mTabDropIndicatorBar.collapsed = true;
++
++            if (draggedTab && (dropEffect == "copy" ||
++                draggedTab.parentNode == this.mTabContainer)) {
+               var newIndex = this.getNewIndex(aEvent);
+               if (dropEffect == "copy") {
+                 // copy the dropped tab (wherever it's from)
+                 var newTab = this.duplicateTab(draggedTab);
+                 this.moveTabTo(newTab, newIndex);
+                 if (draggedTab.parentNode != this.mTabContainer || aEvent.shiftKey)
+                   this.selectedTab = newTab;
+               }
+@@ -1993,17 +2033,16 @@
+               this.moveTabTo(newTab, newIndex);
+               
+               this.swapBrowsersAndCloseOther(newTab, draggedTab);
+ 
+               // We need to set selectedTab after we've done
+               // swapBrowsersAndCloseOther, so that the updateCurrentBrowser
+               // it triggers will correctly update our URL bar.
+               this.selectedTab = newTab;
+-              this.setTabTitle(newTab);
+             }
+             else {
+               var url;
+               for (var i=0; i < this._supportedLinkDropTypes.length; i++) {
+                 let dataType = this._supportedLinkDropTypes[i];
+                 // uri-list: for now, support dropping of the first URL
+                 // only
+                 var isURLList = dataType == "text/uri-list";
+@@ -2055,30 +2094,61 @@
+                   // Just ignore invalid urls
+                 }
+               }
+             }
+           ]]>
+         </body>
+       </method>
+ 
++      <method name="_onDragEnd">
++        <parameter name="aEvent"/>
++        <body>
++          <![CDATA[
++            if (this.mTabs.length == 1)
++              return;
++
++            var dt = aEvent.dataTransfer;
++            if (dt.dropEffect == "none") {
++              var draggedTab = dt.mozGetDataAt("application/x-moz-tabbrowser-tab", 0);
++              this._replaceTabWithWindow(draggedTab);
++            }
++          ]]>
++        </body>
++      </method>
++
++      <method name="_replaceTabWithWindow">
++        <parameter name="aTab"/>
++        <body>
++          <![CDATA[
++            // tell a new window to take the "dropped" tab
++            var ww = Cc["@mozilla.org/embedcomp/window-watcher;1"].
++                      getService(Ci.nsIWindowWatcher);
++            ww.openWindow(window,
++                          getBrowserURL(),
++                          null,
++                          "chrome,dialog=no,all",
++                          aTab);
++          ]]>
++        </body>
++      </method>
++
+       <method name="_onDragLeave">
+         <parameter name="aEvent"/>
+         <body>
+           <![CDATA[
+             this.mDragTime = 0;
+ 
+-            var dropEffect = aEvent.dataTransfer.dropEffect;
+-            if (dropEffect == "move" || dropEffect == "copy") {
+-              var target = aEvent.relatedTarget;
+-              while (target && target != this.mStrip)
+-                target = target.parentNode;
+-              if (target)
+-                return;
+-            }
++            // This does not work at all (see bug 458613)
++            var target = aEvent.relatedTarget;
++            while (target && (target != this && target != gNavToolbox))
++              target = target.parentNode;
++            if (target)
++              return;
++
+             this.mTabDropIndicatorBar.collapsed = true;
+           ]]>
+         </body>
+       </method>
+ 
+       <method name="moveTabTo">
+         <parameter name="aTab"/>
+         <parameter name="aIndex"/>
+diff -r 7c1c494c76ee browser/components/places/content/toolbar.xml
+--- a/browser/components/places/content/toolbar.xml	Sat Nov 15 18:32:08 2008 +0100
++++ b/browser/components/places/content/toolbar.xml	Sun Nov 16 14:45:26 2008 -0500
+@@ -1027,16 +1027,17 @@
+       <handler event="dragover"><![CDATA[
+         // Cache the dataTransfer
+         var dt = PlacesControllerDragHelper.currentDataTransfer =
+                  event.dataTransfer;
+ 
+         var ip = this.insertionPoint;
+         if (!ip || !PlacesControllerDragHelper.canDrop(ip)) {
+           ib.removeAttribute("dragging");
++          PlacesControllerDragHelper.currentDataTransfer = null;
+           return;
+         }
+ 
+         PlacesControllerDragHelper.currentDropTarget = event.target;
+         var dropPoint = this._getDropPoint(event);
+ 
+         if (this._ibTimer) {
+           this._ibTimer.cancel();
+@@ -1098,18 +1099,20 @@
+           this._clearOverFolder();
+         }
+ 
+         dt.effectAllowed = "all";
+         event.preventDefault();
+       ]]></handler>
+ 
+       <handler event="drop"><![CDATA[
+-        // Cache the dataTransfer
+-        PlacesControllerDragHelper.currentDataTransfer = event.dataTransfer;
++        // If the data-transfer isn't cached, it's not ours
++        // This happens when dropping tabs
++        if (event.dataTransfer != PlacesControllerDragHelper.currentDataTransfer)
++          return;
+ 
+         var dropPoint = this._getDropPoint(event);
+         if (!dropPoint)
+           return;
+         PlacesControllerDragHelper.onDrop(dropPoint.ip);
+       ]]></handler>
+ 
+       <handler event="dragleave"><![CDATA[
+diff -r 7c1c494c76ee configure.in
+--- a/configure.in	Sat Nov 15 18:32:08 2008 +0100
++++ b/configure.in	Sun Nov 16 14:45:26 2008 -0500
+@@ -676,17 +676,16 @@ else
+ else
+     AC_MSG_RESULT([yes])    
+ fi
+ 
+ AC_PATH_PROGS(PYTHON, $PYTHON python)
+ if test -z "$PYTHON"; then
+     AC_MSG_ERROR([python was not found in \$PATH])
+ fi
+-echo PYTHON="$PYTHON"
+ 
+ AC_PATH_PROGS(NSINSTALL_BIN, nsinstall )
+ if test -z "$COMPILE_ENVIRONMENT"; then
+ if test -z "$NSINSTALL_BIN" || test "$NSINSTALL_BIN" = ":"; then
+     NSINSTALL_BIN='$(PYTHON) $(topsrcdir)/config/nsinstall.py'
+ fi
+ fi
+ AC_SUBST(NSINSTALL_BIN)
+@@ -1820,32 +1819,39 @@ case "$target" in
+        MOZ_FIX_LINK_PATHS=
+     fi
+     if test -z "$GNU_CXX"; then
+       MIPSPRO_CXX=1
+     fi
+     ;;
+ 
+ *-*linux*)
+-    if test "$GNU_CC"; then
++    # Note: both GNU_CC and INTEL_CC are set when using Intel's C compiler.
++    # Similarly for GNU_CXX and INTEL_CXX.
++    if test "$INTEL_CC" || test "$INTEL_CXX"; then
++        # -Os has been broken on Intel's C/C++ compilers for quite a
++        # while; Intel recommends against using it.
++        MOZ_OPTIMIZE_FLAGS="-O2"
++        MOZ_DEBUG_FLAGS="-g -fno-inline"
++    elif test "$GNU_CC" || test "$GNU_CXX"; then
+         GCC_VERSION=`$CC -v 2>&1 | awk '/^gcc version/ { print $3 }'`
+         case $GCC_VERSION in
+         4.1.*|4.2.*)
+             # -Os is broken on gcc 4.1.x and 4.2.x, we need to tweak it to get good results.
+             MOZ_OPTIMIZE_SIZE_TWEAK="-finline-limit=50"
+         esac
++        MOZ_OPTIMIZE_FLAGS="-Os -freorder-blocks -fno-reorder-functions $MOZ_OPTIMIZE_SIZE_TWEAK"
++        MOZ_DEBUG_FLAGS="-g -fno-inline"  # most people on linux use gcc/gdb,
++                                          # and that combo is not yet good at
++                                          # debugging inlined functions (even
++                                          # when using DWARF2 as the debugging
++                                          # format)
+     fi
+ 
+     TARGET_NSPR_MDCPUCFG='\"md/_linux.cfg\"'
+-    MOZ_OPTIMIZE_FLAGS="-Os -freorder-blocks -fno-reorder-functions $MOZ_OPTIMIZE_SIZE_TWEAK"
+-    MOZ_DEBUG_FLAGS="-g -fno-inline"  # most people on linux use gcc/gdb,
+-                                      # and that combo is not yet good at
+-                                      # debugging inlined functions (even
+-                                      # when using DWARF2 as the debugging
+-                                      # format)    
+ 
+     MOZ_MEMORY=1
+ 
+     case "${target_cpu}" in
+     alpha*)
+     	CFLAGS="$CFLAGS -mieee"
+     	CXXFLAGS="$CXXFLAGS -mieee"
+     ;;
+diff -r 7c1c494c76ee js/src/Makefile.in
+--- a/js/src/Makefile.in	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/Makefile.in	Sun Nov 16 14:45:26 2008 -0500
+@@ -51,31 +51,31 @@ GRE_MODULE	= 1
+ 
+ PROGRAM         = js$(BIN_SUFFIX)
+ # The shell uses some 'HIDDEN' symbols to produce statistics, so we
+ # link directly against the .o files, not against the JS shared
+ # library.
+ PROGOBJS	= js.$(OBJ_SUFFIX) $(OBJS)
+ LIBS		= $(NSPR_LIBS)
+ 
+-ifdef GNU_CC
+-ifdef INTEL_CC
++ifdef GNU_CXX
++ifdef INTEL_CXX
+ # icc gets special optimize flags
+ ifdef MOZ_PROFILE_GENERATE
+ MODULE_OPTIMIZE_FLAGS = -O0
+ else
+ MODULE_OPTIMIZE_FLAGS = -O2 -ip
+ #XXX: do we want different INTERP_OPTIMIZER flags here?
+ endif
+-else
++else # not INTEL_CXX
+ MODULE_OPTIMIZE_FLAGS = -Os -fstrict-aliasing $(MOZ_OPTIMIZE_SIZE_TWEAK)
+ # Special optimization flags for jsinterp.c
+ INTERP_OPTIMIZER = -O3 -fstrict-aliasing
+ endif
+-else
++else # not GNU_CXX
+ ifeq ($(OS_ARCH),SunOS)
+ MODULE_OPTIMIZE_FLAGS = -xO4
+ endif
+ ifeq ($(OS_ARCH),WINNT)
+ ifdef WINCE
+ # -GL is not supported on windows mobile while we are using the arm-wince-link command
+ MODULE_OPTIMIZE_FLAGS = -O2
+ else
+diff -r 7c1c494c76ee js/src/configure.in
+--- a/js/src/configure.in	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/configure.in	Sun Nov 16 14:45:26 2008 -0500
+@@ -649,17 +649,16 @@ else
+ else
+     AC_MSG_RESULT([yes])    
+ fi
+ 
+ AC_PATH_PROGS(PYTHON, $PYTHON python)
+ if test -z "$PYTHON"; then
+     AC_MSG_ERROR([python was not found in \$PATH])
+ fi
+-echo PYTHON="$PYTHON"
+ 
+ AC_PATH_PROGS(NSINSTALL_BIN, nsinstall )
+ if test -z "$COMPILE_ENVIRONMENT"; then
+ if test -z "$NSINSTALL_BIN" || test "$NSINSTALL_BIN" = ":"; then
+     NSINSTALL_BIN='$(PYTHON) $(topsrcdir)/config/nsinstall.py'
+ fi
+ fi
+ AC_SUBST(NSINSTALL_BIN)
+@@ -1771,33 +1770,38 @@ case "$target" in
+        MOZ_FIX_LINK_PATHS=
+     fi
+     if test -z "$GNU_CXX"; then
+       MIPSPRO_CXX=1
+     fi
+     ;;
+ 
+ *-*linux*)
+-    if test "$GNU_CC"; then
+-        GCC_VERSION=`$CC -v 2>&1 | awk '/^gcc version/ { print $3 }'`
++    # Note: both GNU_CXX and INTEL_CXX are set when using Intel's C compiler.
++    if test "$INTEL_CXX"; then
++        # -Os has been broken on Intel's C/C++ compilers for quite a
++        # while; Intel recommends against using it.
++        MOZ_OPTIMIZE_FLAGS="-O2"
++        MOZ_DEBUG_FLAGS="-g -fno-inline"
++    elif test "$GNU_CXX"; then
++        GCC_VERSION=`$CXX -v 2>&1 | awk '/^gcc version/ { print $3 }'`
+         case $GCC_VERSION in
+         4.1.*|4.2.*)
+             # -Os is broken on gcc 4.1.x and 4.2.x, we need to tweak it to get good results.
+             MOZ_OPTIMIZE_SIZE_TWEAK="-finline-limit=50"
+         esac
++        MOZ_OPTIMIZE_FLAGS="-Os -freorder-blocks -fno-reorder-functions $MOZ_OPTIMIZE_SIZE_TWEAK"
++        MOZ_DEBUG_FLAGS="-g -fno-inline"  # most people on linux use gcc/gdb,
++                                          # and that combo is not yet good at
++                                          # debugging inlined functions (even
++                                          # when using DWARF2 as the debugging
++                                          # format)
+     fi
+ 
+     TARGET_NSPR_MDCPUCFG='\"md/_linux.cfg\"'
+-    MOZ_OPTIMIZE_FLAGS="-Os -freorder-blocks -fno-reorder-functions $MOZ_OPTIMIZE_SIZE_TWEAK"
+-    MOZ_DEBUG_FLAGS="-g -fno-inline"  # most people on linux use gcc/gdb,
+-                                      # and that combo is not yet good at
+-                                      # debugging inlined functions (even
+-                                      # when using DWARF2 as the debugging
+-                                      # format)    
+-
+ 
+     case "${target_cpu}" in
+     alpha*)
+     	CFLAGS="$CFLAGS -mieee"
+     	CXXFLAGS="$CXXFLAGS -mieee"
+     ;;
+     i*86)
+         MOZ_ENABLE_OLD_ABI_COMPAT_WRAPPERS=1
+diff -r 7c1c494c76ee js/src/jsbuiltins.cpp
+--- a/js/src/jsbuiltins.cpp	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/jsbuiltins.cpp	Sun Nov 16 14:45:26 2008 -0500
+@@ -100,17 +100,17 @@ js_imod(int32 a, int32 b)
+ /* The following boxing/unboxing primitives we can't emit inline because
+    they either interact with the GC and depend on Spidermonkey's 32-bit
+    integer representation. */
+ 
+ jsval FASTCALL
+ js_BoxDouble(JSContext* cx, jsdouble d)
+ {
+     int32 i;
+-    if (JSDOUBLE_IS_INT(d, i))
++    if (JSDOUBLE_IS_INT(d, i) && INT_FITS_IN_JSVAL(i))
+         return INT_TO_JSVAL(i);
+     JS_ASSERT(JS_ON_TRACE(cx));
+     jsval v; /* not rooted but ok here because we know GC won't run */
+     if (!js_NewDoubleInRootedValue(cx, d, &v))
+         return JSVAL_ERROR_COOKIE;
+     return v;
+ }
+ 
+diff -r 7c1c494c76ee js/src/jscntxt.h
+--- a/js/src/jscntxt.h	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/jscntxt.h	Sun Nov 16 14:45:26 2008 -0500
+@@ -128,16 +128,19 @@ typedef struct JSTraceMonitor {
+     CLS(TypeMap)            globalTypeMap;
+     jsval                   *recoveryDoublePool;
+     jsval                   *recoveryDoublePoolPtr;
+ 
+     /* Fragmento for the regular expression compiler. This is logically
+      * a distinct compiler but needs to be managed in exactly the same
+      * way as the real tracing Fragmento. */
+     CLS(nanojit::Fragmento) reFragmento;
++
++    /* Keep a list of recorders we need to abort on cache flush. */
++    CLS(TraceRecorder)      abortStack;
+ } JSTraceMonitor;
+ 
+ #ifdef JS_TRACER
+ # define JS_ON_TRACE(cx)   (JS_TRACE_MONITOR(cx).onTrace)
+ #else
+ # define JS_ON_TRACE(cx)   JS_FALSE
+ #endif
+ 
+diff -r 7c1c494c76ee js/src/jsinterp.cpp
+--- a/js/src/jsinterp.cpp	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/jsinterp.cpp	Sun Nov 16 14:45:26 2008 -0500
+@@ -2574,16 +2574,17 @@ js_Interpret(JSContext *cx)
+ 
+ #ifdef JS_TRACER
+     /* We had better not be entering the interpreter from JIT-compiled code. */
+     TraceRecorder *tr = NULL;
+     if (JS_ON_TRACE(cx)) {
+         tr = TRACE_RECORDER(cx);
+         SET_TRACE_RECORDER(cx, NULL);
+         JS_TRACE_MONITOR(cx).onTrace = JS_FALSE;
++        tr->pushAbortStack();
+     }
+ #endif
+ 
+     /* Check for too deep of a native thread stack. */
+     JS_CHECK_RECURSION(cx, return JS_FALSE);
+ 
+     rt = cx->runtime;
+ 
+@@ -7183,17 +7184,20 @@ js_Interpret(JSContext *cx)
+     if (cx->version == currentVersion && currentVersion != originalVersion)
+         js_SetVersion(cx, originalVersion);
+     --cx->interpLevel;
+ 
+ #ifdef JS_TRACER
+     if (tr) {
+         JS_TRACE_MONITOR(cx).onTrace = JS_TRUE;
+         SET_TRACE_RECORDER(cx, tr);
+-        tr->deepAbort();
++        if (!tr->wasDeepAborted()) {
++            tr->popAbortStack();
++            tr->deepAbort();
++        }
+     }
+ #endif
+     return ok;
+ 
+   atom_not_defined:
+     {
+         const char *printable;
+ 
+diff -r 7c1c494c76ee js/src/jsinterp.h
+--- a/js/src/jsinterp.h	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/jsinterp.h	Sun Nov 16 14:45:26 2008 -0500
+@@ -139,16 +139,17 @@ typedef struct JSInlineFrame {
+                                        is currently assigning to a property */
+ #define JSFRAME_DEBUGGER       0x08 /* frame for JS_EvaluateInStackFrame */
+ #define JSFRAME_EVAL           0x10 /* frame for obj_eval */
+ #define JSFRAME_ROOTED_ARGV    0x20 /* frame.argv is rooted by the caller */
+ #define JSFRAME_YIELDING       0x40 /* js_Interpret dispatched JSOP_YIELD */
+ #define JSFRAME_ITERATOR       0x80 /* trying to get an iterator for for-in */
+ #define JSFRAME_POP_BLOCKS    0x100 /* scope chain contains blocks to pop */
+ #define JSFRAME_GENERATOR     0x200 /* frame belongs to generator-iterator */
++#define JSFRAME_IMACRO_START  0x400 /* imacro starting -- see jstracer.h */
+ 
+ #define JSFRAME_OVERRIDE_SHIFT 24   /* override bit-set params; see jsfun.c */
+ #define JSFRAME_OVERRIDE_BITS  8
+ 
+ #define JSFRAME_SPECIAL       (JSFRAME_DEBUGGER | JSFRAME_EVAL)
+ 
+ /*
+  * Property cache with structurally typed capabilities for invalidation, for
+diff -r 7c1c494c76ee js/src/jsopcode.tbl
+--- a/js/src/jsopcode.tbl	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/jsopcode.tbl	Sun Nov 16 14:45:26 2008 -0500
+@@ -127,20 +127,20 @@ OPDEF(JSOP_DUP,       12, "dup",        
+ OPDEF(JSOP_DUP,       12, "dup",        NULL,         1,  1,  2,  0,  JOF_BYTE)
+ OPDEF(JSOP_DUP2,      13, "dup2",       NULL,         1,  2,  4,  0,  JOF_BYTE)
+ OPDEF(JSOP_SETCONST,  14, "setconst",   NULL,         3,  1,  1,  3,  JOF_ATOM|JOF_NAME|JOF_SET)
+ OPDEF(JSOP_BITOR,     15, "bitor",      "|",          1,  2,  1,  7,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_BITXOR,    16, "bitxor",     "^",          1,  2,  1,  8,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_BITAND,    17, "bitand",     "&",          1,  2,  1,  9,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_EQ,        18, "eq",         "==",         1,  2,  1,  10,  JOF_BYTE|JOF_LEFTASSOC|JOF_DETECTING)
+ OPDEF(JSOP_NE,        19, "ne",         "!=",         1,  2,  1,  10,  JOF_BYTE|JOF_LEFTASSOC|JOF_DETECTING)
+-OPDEF(JSOP_LT,        20, "lt",         "<",          1,  2,  1, 11,  JOF_BYTE|JOF_LEFTASSOC)
+-OPDEF(JSOP_LE,        21, "le",         "<=",         1,  2,  1, 11,  JOF_BYTE|JOF_LEFTASSOC)
+-OPDEF(JSOP_GT,        22, "gt",         ">",          1,  2,  1, 11,  JOF_BYTE|JOF_LEFTASSOC)
+-OPDEF(JSOP_GE,        23, "ge",         ">=",         1,  2,  1, 11,  JOF_BYTE|JOF_LEFTASSOC)
++OPDEF(JSOP_LT,        20, "lt",         "<",          1,  2,  1, 11,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
++OPDEF(JSOP_LE,        21, "le",         "<=",         1,  2,  1, 11,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
++OPDEF(JSOP_GT,        22, "gt",         ">",          1,  2,  1, 11,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
++OPDEF(JSOP_GE,        23, "ge",         ">=",         1,  2,  1, 11,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_LSH,       24, "lsh",        "<<",         1,  2,  1, 12,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_RSH,       25, "rsh",        ">>",         1,  2,  1, 12,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_URSH,      26, "ursh",       ">>>",        1,  2,  1, 12,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_ADD,       27, "add",        "+",          1,  2,  1, 13,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_SUB,       28, "sub",        "-",          1,  2,  1, 13,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_MUL,       29, "mul",        "*",          1,  2,  1, 14,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_DIV,       30, "div",        "/",          1,  2,  1, 14,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+ OPDEF(JSOP_MOD,       31, "mod",        "%",          1,  2,  1, 14,  JOF_BYTE|JOF_LEFTASSOC|JOF_TMPSLOT2)
+diff -r 7c1c494c76ee js/src/jstracer.cpp
+--- a/js/src/jstracer.cpp	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/jstracer.cpp	Sun Nov 16 14:45:26 2008 -0500
+@@ -996,16 +996,17 @@ TraceRecorder::TraceRecorder(JSContext* 
+     this->atoms = cx->fp->script->atomMap.vector;
+     this->deepAborted = false;
+     this->applyingArguments = false;
+     this->trashTree = false;
+     this->whichTreeToTrash = _fragment->root;
+     this->global_dslots = this->globalObj->dslots;
+     this->terminate = false;
+     this->outerToBlacklist = outerToBlacklist;
++    this->wasRootFragment = _fragment == _fragment->root;
+ 
+     debug_only_v(printf("recording starting from %s:%u@%u\n",
+                         cx->fp->script->filename,
+                         js_FramePCToLineNumber(cx, cx->fp),
+                         FramePCOffset(cx->fp));)
+     debug_only_v(printf("globalObj=%p, shape=%d\n", this->globalObj, OBJ_SHAPE(this->globalObj));)
+ 
+     lir = lir_buf_writer = new (&gc) LirBufWriter(lirbuf);
+@@ -1052,33 +1053,43 @@ TreeInfo::~TreeInfo()
+         temp = unstableExits->next;
+         delete unstableExits;
+         unstableExits = temp;
+     }
+ }
+ 
+ TraceRecorder::~TraceRecorder()
+ {
+-    JS_ASSERT(treeInfo && fragment);
+-    if (fragment == fragment->root && !fragment->root->code()) {
+-        JS_ASSERT(!fragment->root->vmprivate);
++    JS_ASSERT(nextRecorderToAbort == NULL);
++    JS_ASSERT(treeInfo && (fragment || wasDeepAborted()));
++    if (fragment) {
++        if (wasRootFragment && !fragment->root->code()) {
++            JS_ASSERT(!fragment->root->vmprivate);
++            delete treeInfo;
++        }
++        if (trashTree)
++            js_TrashTree(cx, whichTreeToTrash);
++    } else if (wasRootFragment) {
+         delete treeInfo;
+     }
+-    if (trashTree)
+-        js_TrashTree(cx, whichTreeToTrash);
+ #ifdef DEBUG
+     delete verbose_filter;
+ #endif
+     delete cse_filter;
+     delete expr_filter;
+     delete func_filter;
+ #ifdef NJ_SOFTFLOAT
+     delete float_filter;
+ #endif
+     delete lir_buf_writer;
++}
++
++void TraceRecorder::removeFragmentoReferences()
++{
++    fragment = NULL;
+ }
+ 
+ /* Add debug information to a LIR instruction as we emit it. */
+ inline LIns*
+ TraceRecorder::addName(LIns* ins, const char* name)
+ {
+ #ifdef DEBUG
+     lirbuf->names->addName(ins, name);
+@@ -2180,18 +2191,19 @@ TraceRecorder::compile(Fragmento* fragme
+     if (fragmento->assm()->error() != nanojit::None)
+         return;
+     JS_ASSERT(fragment->code());
+     JS_ASSERT(!fragment->vmprivate);
+     if (fragment == fragment->root)
+         fragment->vmprivate = treeInfo;
+     /* :TODO: windows support */
+ #if defined DEBUG && !defined WIN32
+-    char* label = (char*)malloc(strlen(cx->fp->script->filename) + 16);
+-    sprintf(label, "%s:%u", cx->fp->script->filename,
++    const char* filename = cx->fp->script->filename;
++    char* label = (char*)malloc((filename ? strlen(filename) : 7) + 16);
++    sprintf(label, "%s:%u", filename ? filename : "<stdin>",
+             js_FramePCToLineNumber(cx, cx->fp));
+     fragmento->labels->add(fragment, sizeof(Fragment), 0, label);
+     free(label);
+ #endif
+     AUDIT(traceCompleted);
+ }
+ 
+ static bool
+@@ -2295,16 +2307,23 @@ TraceRecorder::closeLoop(Fragmento* frag
+             debug_only_v(printf("Joining type-unstable trace to target fragment %p.\n", peer);)
+             stable = true;
+             ((TreeInfo*)peer->vmprivate)->dependentTrees.addUnique(fragment);
+         }
+ 
+         compile(fragmento);
+     } else {
+         exit->target = fragment->root;
++#if defined(JS_HAS_OPERATION_COUNT) && !JS_HAS_OPERATION_COUNT
++        exit->exitType = TIMEOUT_EXIT;
++        guard(false, 
++              lir->ins_eq0(lir->insLoadi(cx_ins, 
++                                         offsetof(JSContext, operationCount))), 
++              exitIns);
++#endif
+         fragment->lastIns = lir->insGuard(LIR_loop, lir->insImm(1), exitIns);
+         compile(fragmento);
+     }
+ 
+     if (fragmento->assm()->error() != nanojit::None)
+         return false;
+ 
+     joinEdgesToEntry(fragmento, peer_root);
+@@ -2717,22 +2736,19 @@ js_SynthesizeFrame(JSContext* cx, const 
+ js_SynthesizeFrame(JSContext* cx, const FrameInfo& fi)
+ {
+     JS_ASSERT(HAS_FUNCTION_CLASS(fi.callee));
+ 
+     JSFunction* fun = GET_FUNCTION_PRIVATE(cx, fi.callee);
+     JS_ASSERT(FUN_INTERPRETED(fun));
+ 
+     /* Assert that we have a correct sp distance from cx->fp->slots in fi. */
+-    JS_ASSERT(js_ReconstructStackDepth(cx, cx->fp->script,
+-                                       FI_IMACRO_PC(fi, cx->fp)
+-                                       ? FI_SCRIPT_PC(fi, cx->fp) +
+-                                         js_CodeSpec[*FI_SCRIPT_PC(fi, cx->fp)].length
+-                                       : FI_SCRIPT_PC(fi, cx->fp))
+-              == uintN(fi.s.spdist - cx->fp->script->nfixed));
++    JS_ASSERT_IF(!FI_IMACRO_PC(fi, cx->fp),
++                 js_ReconstructStackDepth(cx, cx->fp->script, FI_SCRIPT_PC(fi, cx->fp))
++                 == uintN(fi.s.spdist - cx->fp->script->nfixed));
+ 
+     uintN nframeslots = JS_HOWMANY(sizeof(JSInlineFrame), sizeof(jsval));
+     JSScript* script = fun->u.i.script;
+     size_t nbytes = (nframeslots + script->nslots) * sizeof(jsval);
+ 
+     /* Code duplicated from inline_call: case in js_Interpret (FIXME). */
+     JSArena* a = cx->stackPool.current;
+     void* newmark = (void*) a->avail;
+@@ -3918,16 +3934,38 @@ js_FinishJIT(JSTraceMonitor *tm)
+         tm->recoveryDoublePool = tm->recoveryDoublePoolPtr = NULL;
+     }
+     if (tm->reFragmento != NULL) {
+         verbose_only(delete tm->reFragmento->labels;)
+         delete tm->reFragmento;
+     }
+ }
+ 
++void
++TraceRecorder::pushAbortStack()
++{
++    JSTraceMonitor* tm = &JS_TRACE_MONITOR(cx);
++
++    JS_ASSERT(tm->abortStack != this);
++
++    nextRecorderToAbort = tm->abortStack;
++    tm->abortStack = this;
++}
++
++void
++TraceRecorder::popAbortStack()
++{
++    JSTraceMonitor* tm = &JS_TRACE_MONITOR(cx);
++
++    JS_ASSERT(tm->abortStack == this);
++
++    tm->abortStack = nextRecorderToAbort;
++    nextRecorderToAbort = NULL;
++}
++
+ extern void
+ js_FlushJITOracle(JSContext* cx)
+ {
+     if (!TRACING_ENABLED(cx))
+         return;
+     oracle.clear();
+ }
+ 
+@@ -3935,16 +3973,22 @@ js_FlushJITCache(JSContext* cx)
+ js_FlushJITCache(JSContext* cx)
+ {
+     if (!TRACING_ENABLED(cx))
+         return;
+     debug_only_v(printf("Flushing cache.\n");)
+     JSTraceMonitor* tm = &JS_TRACE_MONITOR(cx);
+     if (tm->recorder)
+         js_AbortRecording(cx, "flush cache");
++    TraceRecorder* tr;
++    while ((tr = tm->abortStack) != NULL) {
++        tr->removeFragmentoReferences();
++        tr->deepAbort();
++        tr->popAbortStack();
++    }
+     Fragmento* fragmento = tm->fragmento;
+     if (fragmento) {
+         fragmento->clearFrags();
+ #ifdef DEBUG
+         JS_ASSERT(fragmento->labels);
+         delete fragmento->labels;
+         fragmento->labels = new (&gc) LabelMap(core, NULL);
+ #endif
+@@ -4111,35 +4155,33 @@ TraceRecorder::stringify(jsval& v)
+ 
+     LIns* args[] = { v_ins, cx_ins };
+     const CallInfo* ci;
+     if (JSVAL_IS_NUMBER(v)) {
+         ci = &js_NumberToString_ci;
+     } else if (JSVAL_TAG(v) == JSVAL_BOOLEAN) {
+         ci = &js_BooleanOrUndefinedToString_ci;
+     } else {
+-        JS_ASSERT(JSVAL_IS_OBJECT(v));
+-        // This is unsafe until we are able to abort if we re-enter the interpreter.
+-        // FIXME: 456511
+-        // ci = &js_ObjectToString_ci;
++        JS_NOT_REACHED("caller of stringify should have used an imacro here");
+         return NULL;
+     }
+     v_ins = lir->insCall(ci, args);
+     guard(false, lir->ins_eq0(v_ins), OOM_EXIT);
+     return v_ins;
+ }
+ 
+ bool
+ TraceRecorder::call_imacro(jsbytecode* imacro)
+ {
+     JSStackFrame* fp = cx->fp;
+     JSFrameRegs* regs = fp->regs;
+ 
+     JS_ASSERT(!fp->imacpc);
+     fp->imacpc = regs->pc;
++    fp->flags |= JSFRAME_IMACRO_START;
+     regs->pc = imacro;
+     atoms = COMMON_ATOMS_START(&cx->runtime->atomState);
+     return false;
+ }
+ 
+ bool
+ TraceRecorder::ifop()
+ {
+@@ -4337,47 +4379,97 @@ static bool
+ static bool
+ evalCmp(LOpcode op, JSString* l, JSString* r)
+ {
+     if (op == LIR_feq)
+         return js_EqualStrings(l, r);
+     return evalCmp(op, js_CompareStrings(l, r));
+ }
+ 
++static struct {
++    jsbytecode obj_any[13];
++    jsbytecode any_obj[11];
++    jsbytecode obj_obj[22];
++} binary_imacros = {
++    {
++        JSOP_SWAP,
++        JSOP_CALLPROP, 0, COMMON_ATOM_INDEX(valueOf),
++        JSOP_STRING, 0, COMMON_TYPE_ATOM_INDEX(JSTYPE_NUMBER),
++        JSOP_CALL, 0, 1,
++        JSOP_SWAP,
++        JSOP_IMACOP,
++        JSOP_STOP
++    },
++
++    {
++        JSOP_CALLPROP, 0, COMMON_ATOM_INDEX(valueOf),
++        JSOP_STRING, 0, COMMON_TYPE_ATOM_INDEX(JSTYPE_NUMBER),
++        JSOP_CALL, 0, 1,
++        JSOP_IMACOP,
++        JSOP_STOP
++    },
++
++    {
++        JSOP_SWAP,
++        JSOP_CALLPROP, 0, COMMON_ATOM_INDEX(valueOf),
++        JSOP_STRING, 0, COMMON_TYPE_ATOM_INDEX(JSTYPE_NUMBER),
++        JSOP_CALL, 0, 1,
++        JSOP_SWAP,
++        JSOP_CALLPROP, 0, COMMON_ATOM_INDEX(valueOf),
++        JSOP_STRING, 0, COMMON_TYPE_ATOM_INDEX(JSTYPE_NUMBER),
++        JSOP_CALL, 0, 1,
++        JSOP_IMACOP,
++        JSOP_STOP
++    }
++};
++
++JS_STATIC_ASSERT(sizeof(binary_imacros) < IMACRO_PC_ADJ_LIMIT);
++
+ bool
+ TraceRecorder::cmp(LOpcode op, int flags)
+ {
+     jsval& r = stackval(-1);
+     jsval& l = stackval(-2);
+     LIns* x = NULL;
+     bool negate = !!(flags & CMP_NEGATE);
+     bool cond;
+     LIns* l_ins = get(&l);
+     LIns* r_ins = get(&r);
+     bool fp = false;
+ 
+-    // CMP_STRICT is only set for JSOP_STRICTEQ and JSOP_STRICTNE, which correspond to the
++    if (op != LIR_feq) {
++        if (JSVAL_IS_OBJECT(l) && hasValueOfMethod(l)) {
++            if (JSVAL_IS_OBJECT(r) && hasValueOfMethod(r))
++                return call_imacro(binary_imacros.obj_obj);
++            return call_imacro(binary_imacros.obj_any);
++        }
++        if (JSVAL_IS_OBJECT(r) && hasValueOfMethod(r))
++            return call_imacro(binary_imacros.any_obj);
++    }
++
++    // CMP_STRICT is set only for JSOP_STRICTEQ and JSOP_STRICTNE, which correspond to the
+     // === and !== operators. negate is true for !== and false for ===. The strict equality
+     // operators produce false if the types of the operands differ, i.e. if only one of 
+     // them is a number. 
+     if ((flags & CMP_STRICT) && getPromotedType(l) != getPromotedType(r)) {
+         x = INS_CONST(negate);
+         cond = negate;
+     } else if (JSVAL_IS_STRING(l) || JSVAL_IS_STRING(r)) {
+         // The following cases always produce a constant false (or true if negated):
+         // - comparing a string against null
+         // - comparing a string against any boolean (including undefined)
+         if ((JSVAL_IS_NULL(l) && l_ins->isconst()) ||
+             (JSVAL_IS_NULL(r) && r_ins->isconst()) ||
+             (JSVAL_TAG(l) == JSVAL_BOOLEAN || JSVAL_TAG(r) == JSVAL_BOOLEAN)) {
+             x = INS_CONST(negate);
+             cond = negate;
+-        } else if (!JSVAL_IS_STRING(l) || !JSVAL_IS_STRING(r)) {
+-            ABORT_TRACE("unsupported type for cmp vs string");
+-        } else {
++        } else {
++            if (!JSVAL_IS_STRING(l) || !JSVAL_IS_STRING(r))
++                ABORT_TRACE("unsupported type for cmp vs string");
++
+             LIns* args[] = { r_ins, l_ins };
+             if (op == LIR_feq)
+                 l_ins = lir->ins_eq0(lir->insCall(&js_EqualStrings_ci, args));
+             else
+                 l_ins = lir->insCall(&js_CompareStrings_ci, args);
+             r_ins = lir->insImm(0);
+             cond = evalCmp(op, JSVAL_TO_STRING(l), JSVAL_TO_STRING(r));
+         }
+@@ -4397,17 +4489,17 @@ TraceRecorder::cmp(LOpcode op, int flags
+             l_ins = lir->insImmq(u.u64);
+         } else if (JSVAL_IS_STRING(l)) {
+             l_ins = lir->insCall(&js_StringToNumber_ci, args);
+         } else if (JSVAL_TAG(l) == JSVAL_BOOLEAN) {
+             /*
+              * What I really want here is for undefined to be type-specialized
+              * differently from real booleans.  Failing that, I want to be able
+              * to cmov on quads.  Failing that, I want to have small forward
+-             * branched.  Failing that, I want to be able to ins_choose on quads
++             * branches.  Failing that, I want to be able to ins_choose on quads
+              * without cmov.  Failing that, eat flaming builtin!
+              */
+             l_ins = lir->insCall(&js_BooleanOrUndefinedToNumber_ci, args);
+         } else if (!isNumber(l)) {
+             ABORT_TRACE("unsupported LHS type for cmp vs number");
+         }
+         lnum = js_ValueToNumber(cx, &tmp[0]);
+ 
+@@ -4433,18 +4525,18 @@ TraceRecorder::cmp(LOpcode op, int flags
+         // the right thing.
+         cond = evalCmp(op, l, r);
+         // For ==, !=, ===, and !=== the result is magically correct even if undefined (2) is
+         // involved. For the relational operations we need some additional cmov magic to make
+         // the result always false (since undefined becomes NaN per ECMA and that doesn't
+         // compare to anything, even itself). The code for this is emitted a few lines down.
+     } else if (JSVAL_IS_OBJECT(l) && JSVAL_IS_OBJECT(r)) {
+         if (op != LIR_feq) {
+-            negate = !(op == LIR_fle || op == LIR_fge);
+-            op = LIR_feq;
++            JS_NOT_REACHED("we should have converted to numbers already");
++            return false;
+         }
+         cond = (l == r); 
+     } else {
+         ABORT_TRACE("unsupported operand types for cmp");
+     }
+ 
+     /* If we didn't generate a constant result yet, then emit the comparison now. */
+     if (!x) {
+@@ -4511,55 +4603,16 @@ TraceRecorder::unary(LOpcode op)
+         a = lir->ins1(op, a);
+         if (intop)
+             a = lir->ins1(LIR_i2f, a);
+         set(&v, a);
+         return true;
+     }
+     return false;
+ }
+-
+-static struct {
+-    jsbytecode obj_any[13];
+-    jsbytecode any_obj[11];
+-    jsbytecode obj_obj[22];
+-} binary_imacros = {
+-    {
+-        JSOP_SWAP,
+-        JSOP_CALLPROP, 0, COMMON_ATOM_INDEX(valueOf),
+-        JSOP_STRING, 0, COMMON_TYPE_ATOM_INDEX(JSTYPE_NUMBER),
+-        JSOP_CALL, 0, 1,
+-        JSOP_SWAP,
+-        JSOP_IMACOP,
+-        JSOP_STOP
+-    },
+-
+-    {
+-        JSOP_CALLPROP, 0, COMMON_ATOM_INDEX(valueOf),
+-        JSOP_STRING, 0, COMMON_TYPE_ATOM_INDEX(JSTYPE_NUMBER),
+-        JSOP_CALL, 0, 1,
+-        JSOP_IMACOP,
+-        JSOP_STOP
+-    },
+-
+-    {
+-        JSOP_SWAP,
+-        JSOP_CALLPROP, 0, COMMON_ATOM_INDEX(valueOf),
+-        JSOP_STRING, 0, COMMON_TYPE_ATOM_INDEX(JSTYPE_NUMBER),
+-        JSOP_CALL, 0, 1,
+-        JSOP_SWAP,
+-        JSOP_CALLPROP, 0, COMMON_ATOM_INDEX(valueOf),
+-        JSOP_STRING, 0, COMMON_TYPE_ATOM_INDEX(JSTYPE_NUMBER),
+-        JSOP_CALL, 0, 1,
+-        JSOP_IMACOP,
+-        JSOP_STOP
+-    }
+-};
+-
+-JS_STATIC_ASSERT(sizeof(binary_imacros) < IMACRO_PC_ADJ_LIMIT);
+ 
+ bool
+ TraceRecorder::binary(LOpcode op)
+ {
+     jsval& r = stackval(-1);
+     jsval& l = stackval(-2);
+ 
+     if (JSVAL_IS_OBJECT(l) && hasValueOfMethod(l)) {
+@@ -7845,16 +7898,17 @@ TraceRecorder::record_JSOP_STOP()
+ TraceRecorder::record_JSOP_STOP()
+ {
+     JSStackFrame *fp = cx->fp;
+ 
+     if (fp->imacpc) {
+         // End of imacro, so return true to the interpreter immediately. The
+         // interpreter's JSOP_STOP case will return from the imacro, back to
+         // the pc after the calling op, still in the same JSStackFrame.
++        atoms = fp->script->atomMap.vector;
+         return true;
+     }
+ 
+     /*
+      * We know falling off the end of a constructor returns the new object that
+      * was passed in via fp->argv[-1], while falling off the end of a function
+      * returns undefined.
+      *
+diff -r 7c1c494c76ee js/src/jstracer.h
+--- a/js/src/jstracer.h	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/jstracer.h	Sun Nov 16 14:45:26 2008 -0500
+@@ -288,16 +288,18 @@ class TraceRecorder : public avmplus::GC
+     nanojit::Fragment*      whichTreeToTrash;
+     Queue<jsbytecode*>      cfgMerges;
+     jsval*                  global_dslots;
+     JSTraceableNative*      pendingTraceableNative;
+     bool                    terminate;
+     intptr_t                terminate_ip_adj;
+     nanojit::Fragment*      outerToBlacklist;
+     nanojit::Fragment*      promotedPeer;
++    TraceRecorder*          nextRecorderToAbort;
++    bool                    wasRootFragment;
+ 
+     bool isGlobal(jsval* p) const;
+     ptrdiff_t nativeGlobalOffset(jsval* p) const;
+     ptrdiff_t nativeStackOffset(jsval* p) const;
+     void import(nanojit::LIns* base, ptrdiff_t offset, jsval* p, uint8& t,
+                 const char *prefix, uintN index, JSStackFrame *fp);
+     void import(TreeInfo* treeInfo, nanojit::LIns* sp, unsigned ngslots, unsigned callDepth,
+                 uint8* globalTypeMap, uint8* stackTypeMap);
+@@ -433,16 +435,19 @@ public:
+     void endLoop(nanojit::Fragmento* fragmento);
+     void joinEdgesToEntry(nanojit::Fragmento* fragmento, nanojit::Fragment* peer_root);
+     void blacklist() { fragment->blacklist(); }
+     bool adjustCallerTypes(nanojit::Fragment* f, unsigned* demote_slots, bool& trash);
+     nanojit::Fragment* findNestedCompatiblePeer(nanojit::Fragment* f, nanojit::Fragment** empty);
+     void prepareTreeCall(nanojit::Fragment* inner);
+     void emitTreeCall(nanojit::Fragment* inner, VMSideExit* exit);
+     unsigned getCallDepth() const;
++    void pushAbortStack();
++    void popAbortStack();
++    void removeFragmentoReferences();
+ 
+     bool record_EnterFrame();
+     bool record_LeaveFrame();
+     bool record_SetPropHit(JSPropCacheEntry* entry, JSScopeProperty* sprop);
+     bool record_SetPropMiss(JSPropCacheEntry* entry);
+     bool record_DefLocalFunSetSlot(uint32 slot, JSObject* obj);
+     bool record_FastNativeCallComplete();
+     bool record_IteratorNextComplete();
+@@ -465,26 +470,33 @@ public:
+ #define SET_TRACE_RECORDER(cx,tr) (JS_TRACE_MONITOR(cx).recorder = (tr))
+ 
+ #define JSOP_IS_BINARY(op) ((uintN)((op) - JSOP_BITOR) <= (uintN)(JSOP_MOD - JSOP_BITOR))
+ 
+ /*
+  * See jsinterp.cpp for the ENABLE_TRACER definition. Also note how comparing x
+  * to JSOP_* constants specializes trace-recording code at compile time either
+  * to include imacro support, or exclude it altogether for this particular x.
++ *
++ * We save macro-generated code size also via bool TraceRecorder::record_JSOP_*
++ * return type, instead of a three-state: OK, ABORTED, IMACRO_STARTED. But the
++ * price of this is the JSFRAME_IMACRO_START frame flag. We need one more bit
++ * to detect that TraceRecorder::call_imacro was invoked by the record_JSOP_*
++ * method invoked by TRACE_ARGS_.
+  */
+ #define RECORD_ARGS(x,args)                                                   \
+     JS_BEGIN_MACRO                                                            \
+         if (!js_MonitorRecording(TRACE_RECORDER(cx))) {                       \
+             ENABLE_TRACER(0);                                                 \
+         } else {                                                              \
+             TRACE_ARGS_(x, args,                                              \
+-                if (fp->imacpc &&                                             \
++                if ((fp->flags & JSFRAME_IMACRO_START) &&                     \
+                     (x == JSOP_ITER || x == JSOP_NEXTITER ||                  \
+                     JSOP_IS_BINARY(x))) {                                     \
++                    fp->flags &= ~JSFRAME_IMACRO_START;                       \
+                     atoms = COMMON_ATOMS_START(&rt->atomState);               \
+                     op = JSOp(*regs.pc);                                      \
+                     DO_OP();                                                  \
+                 }                                                             \
+             );                                                                \
+          }                                                                    \
+     JS_END_MACRO
+ 
+diff -r 7c1c494c76ee js/src/trace-test.js
+--- a/js/src/trace-test.js	Sat Nov 15 18:32:08 2008 +0100
++++ b/js/src/trace-test.js	Sun Nov 16 14:45:26 2008 -0500
+@@ -2375,16 +2375,37 @@ function bug464403() {
+     print(8);
+     var u = [print, print, function(){}]
+     for each (x in u) for (u.e in [1,1,1,1]);
+     return "ok";
+ }
+ bug464403.expected = "ok";
+ test(bug464403);
+ 
++function testBoxDoubleWithDoubleSizedInt()
++{
++  var i = 0;
++  var a = new Array(3);
++
++  while (i < a.length)
++    a[i++] = 0x5a827999;
++  return a.join(",");
++}
++testBoxDoubleWithDoubleSizedInt.expected = "1518500249,1518500249,1518500249";
++test(testBoxDoubleWithDoubleSizedInt);
++
++function testObjectOrderedCmp()
++{
++  var a = new Array(5);
++  for(i=0;i<5;++i) a[i] = ({} < {});
++  return a.join(",");
++}
++testObjectOrderedCmp.expected = "false,false,false,false,false";
++test(testObjectOrderedCmp);
++
+ /* NOTE: Keep this test last, since it screws up all for...in loops after it. */
+ function testGlobalProtoAccess() {
+     return "ok";
+ }
+ this.__proto__.a = 3; for (var j = 0; j < 4; ++j) { [a]; }
+ testGlobalProtoAccess.expected = "ok";
+ test(testGlobalProtoAccess);
+ 
+diff -r 7c1c494c76ee toolkit/content/contentAreaUtils.js
+--- a/toolkit/content/contentAreaUtils.js	Sat Nov 15 18:32:08 2008 +0100
++++ b/toolkit/content/contentAreaUtils.js	Sun Nov 16 14:45:26 2008 -0500
+@@ -222,32 +222,41 @@ const kSaveAsType_Text     = 2; // Save 
+  *  - Determines a local target filename to use (unless parameter
+  *    aChosenData is non-null)
+  *  - Determines content-type if possible
+  *  - Prompts the user to confirm the destination filename and save mode
+  *    (content-type affects this)
+  *  - Creates a 'Persist' object (which will perform the saving in the
+  *    background) and then starts it.
+  *
+- * @param aURL The String representation of the URL of the document being saved
+- * @param aDocument The document to be saved
+- * @param aDefaultFileName The caller-provided suggested filename if we don't
++ * @param aURL
++ *        The String representation of the URL of the document being saved
++ * @param aDocument
++ *        The document to be saved
++ * @param aDefaultFileName
++ *        The caller-provided suggested filename if we don't 
+  *        find a better one
+- * @param aContentDisposition The caller-provided content-disposition header
+- *         to use.
+- * @param aContentType The caller-provided content-type to use
+- * @param aShouldBypassCache If true, the document will always be refetched
+- *        from the server
+- * @param aFilePickerTitleKey Alternate title for the file picker
+- * @param aChosenData If non-null this contains an instance of object AutoChosen
+- *        (see below) which holds pre-determined data so that the user does not
+- *        need to be prompted for a target filename.
+- * @param aReferrer the referrer URI object (not URL string) to use, or null
+-          if no referrer should be sent.
+- * @param aSkipPrompt If true, the file will be saved to the default download folder.
++ * @param aContentDisposition
++ *        The caller-provided content-disposition header to use.
++ * @param aContentType
++ *        The caller-provided content-type to use
++ * @param aShouldBypassCache
++ *        If true, the document will always be refetched from the server
++ * @param aFilePickerTitleKey
++ *        Alternate title for the file picker
++ * @param aChosenData
++ *        If non-null this contains an instance of object AutoChosen (see below)
++ *        which holds pre-determined data so that the user does not need to be
++ *        prompted for a target filename.
++ * @param aReferrer
++ *        the referrer URI object (not URL string) to use, or null
++ *        if no referrer should be sent.
++ * @param aSkipPrompt [optional]
++ *        If set to true, we will attempt to save the file to the
++ *        default downloads folder without prompting.
+  */
+ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
+                       aContentType, aShouldBypassCache, aFilePickerTitleKey,
+                       aChosenData, aReferrer, aSkipPrompt)
+ {
+   if (aSkipPrompt == undefined)
+     aSkipPrompt = false;
+ 
+@@ -443,17 +452,17 @@ function initFileInfo(aFI, aURL, aURLCha
+     } else {
+       aFI.fileExt = getDefaultExtension(aFI.fileName, aFI.uri, aContentType);
+       aFI.fileBaseName = getFileBaseName(aFI.fileName);
+     }
+   } catch (e) {
+   }
+ }
+ 
+-function getTargetFile(aFpP, aSkipPrompt)
++function getTargetFile(aFpP, /* optional */ aSkipPrompt)
+ {
+   const prefSvcContractID = "@mozilla.org/preferences-service;1";
+   const prefSvcIID = Components.interfaces.nsIPrefService;                              
+   var prefs = Components.classes[prefSvcContractID]
+                         .getService(prefSvcIID).getBranch("browser.download.");
+ 
+   const nsILocalFile = Components.interfaces.nsILocalFile;
+ 

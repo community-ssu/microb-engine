@@ -1,5 +1,6 @@
 # Added timeout for changing theme
 # Listener for style_set signal from GTK widgets, allow to change theme when GTK theme changed
+# Bug 393976 -  GTK2 Gecko should support theme change on fly
 Index: mozilla/widget/src/gtk2/nsWindow.h
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.h

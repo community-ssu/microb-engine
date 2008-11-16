@@ -1,8 +1,7 @@
---- mozilla/toolkit/content/widgets/text.xml.orig	2008-10-09 05:49:17.000000000 -0500
-+++ mozilla/toolkit/content/widgets/text.xml	2008-10-15 14:46:36.000000000 -0500
-@@ -25,10 +25,11 @@
-   <binding id="text-label" extends="chrome://global/content/bindings/text.xml#text-base">
-     <implementation implements="nsIDOMXULLabelElement">
+diff --git a/toolkit/content/widgets/text.xml b/toolkit/content/widgets/text.xml
+--- a/toolkit/content/widgets/text.xml
++++ b/toolkit/content/widgets/text.xml
+@@ -27,6 +27,7 @@
        <property name="accessKey">
          <getter>
            <![CDATA[
@@ -10,11 +9,7 @@
              var accessKey = this.getAttribute('accesskey');
              return accessKey ? accessKey[0] : null;
            ]]>
-         </getter>
-         <setter>
-@@ -223,10 +224,11 @@
- 
-       <property name="accessKey">
+@@ -225,6 +226,7 @@
          <getter>
            <![CDATA[
              var accessKey = null;
@@ -22,5 +17,3 @@
              var labeledEl = this.labeledControlElement;
              if (labeledEl) {
                accessKey = labeledEl.getAttribute('accesskey');
-             }
-             if (!accessKey) {

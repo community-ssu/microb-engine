@@ -1,8 +1,62 @@
+# https://bugzilla.mozilla.org/show_bug.cgi?id=386440
+# Enable 16 bit offscreen surface for images
+
 Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -179,18 +179,26 @@
+@@ -82,18 +82,23 @@
+ 
+ #define GDK_PIXMAP_SIZE_MAX 32767
+ 
+ #ifndef MOZ_PANGO
+ #include <ft2build.h>
+ #include FT_FREETYPE_H
+ #endif
+ 
++#include "nsIPrefService.h"
++#include "nsIPrefBranch.h"
++#include "nsServiceManagerUtils.h"
++
+ double gfxPlatformGtk::sDPI = -1.0;
+ gfxFontconfigUtils *gfxPlatformGtk::sFontconfigUtils = nsnull;
++static PRBool gForce24bpp = PR_FALSE;
+ 
+ #ifndef MOZ_PANGO
+ typedef nsDataHashtable<nsStringHashKey, nsRefPtr<FontFamily> > FontTable;
+ static FontTable *gPlatformFonts = NULL;
+ static FontTable *gPlatformFontAliases = NULL;
+ static FT_Library gPlatformFTLibrary = NULL;
+ #endif
+ 
+@@ -115,16 +120,26 @@
+     gPlatformFonts = new FontTable();
+     gPlatformFonts->Init(100);
+     gPlatformFontAliases = new FontTable();
+     gPlatformFontAliases->Init(100);
+     UpdateFontList();
+ #endif
+ 
+     InitDPI();
++
++    nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
++    if (!prefs)
++        return;
++
++    PRBool val = PR_TRUE;
++    nsresult rv;
++    rv = prefs->GetBoolPref("mozilla.widget.force-24bpp", &val);
++    if (NS_SUCCEEDED(rv))
++        gForce24bpp = val;
+ }
+ 
+ gfxPlatformGtk::~gfxPlatformGtk()
+ {
+     gfxFontconfigUtils::Shutdown();
+     sFontconfigUtils = nsnull;
+ 
+ #ifdef MOZ_PANGO
+@@ -186,18 +201,24 @@
      // XXX we really need a different interface here, something that passes
      // in more context, including the display and/or target surface type that
      // we should try to match
@@ -13,18 +67,16 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
      GdkPixmap* pixmap = nsnull;
 -    XRenderPictFormat* xrenderFormat =
 -        XRenderFindStandardFormat(display, xrenderFormatID);
-+
 +    XRenderPictFormat* xrenderFormat = nsnull;
 +
-+    if (xrenderFormatID == PictStandardRGB24) {
++    if (xrenderFormatID == PictStandardRGB24 && !gForce24bpp) {
 +        // Actually we want not strictly RGB24, but the fastest non-alpha
 +        // format (XXX to be verified if it is actually safe)
 +        xrenderFormat = XRenderFindVisualFormat(display, GDK_VISUAL_XVISUAL(gdk_visual_get_system()));
 +    }
-+
 +    if (!xrenderFormat) xrenderFormat = XRenderFindStandardFormat(display, xrenderFormatID);
  
-     if (xrenderFormat) {
+     if (xrenderFormat && sizeOk) {
          pixmap = gdk_pixmap_new(nsnull, size.width, size.height,
                                  xrenderFormat->depth);
  

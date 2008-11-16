@@ -63,7 +63,6 @@ not_sorted/others/680_MICROB_about_fixes_lp0.diff
 cross/010_BUG376279_security_cross_compile.diff
 cross/020_nspr_dpkg_cross.diff
 cross/030_host_libidl_dpkg_cross.diff
-cross/050_uclibc_strings_index.diff
 cross/070_Cross_freetype_config.diff
 
 lowmem/LowMemoryManageImprovements.diff
@@ -175,6 +174,7 @@ theeming/100_XUL_shortuctKeysDisable.diff
 
 BMO_attached/vlad-parser.diff
 BMO_attached/690_bug459780.broken.events.diff
+buildconfig/Bug465066_attachment.cgi?id=348321.diff
 
 # until bug 463872 not fixed
 qt/attachment.cgi?id=347124.diff

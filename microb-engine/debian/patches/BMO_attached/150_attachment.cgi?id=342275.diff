@@ -4,14 +4,17 @@ Date:   Wed Oct 8 14:22:12 2008 -0400
 
     Simple first cut at improving speed.
 
-diff --git mozilla.orig/gfx/cairo/libpixman/src/pixman-pict.c mozilla/gfx/cairo/libpixman/src/pixman-pict.c
-index 070b190..e5f9f2b 100644
---- mozilla.orig/gfx/cairo/libpixman/src/pixman-pict.c
-+++ mozilla/gfx/cairo/libpixman/src/pixman-pict.c
-@@ -1212,6 +1212,96 @@ fbCompositeSrc_8888xx888 (pixman_op_t op,
- }
+diff --git a/gfx/cairo/libpixman/src/pixman-pict.c b/gfx/cairo/libpixman/src/pixman-pict.c
+--- a/gfx/cairo/libpixman/src/pixman-pict.c
++++ b/gfx/cairo/libpixman/src/pixman-pict.c
+@@ -1204,6 +1204,96 @@
  
- static void
+ 	dst += dstStride;
+ 	src += srcStride;
++    }
++}
++
++static void
 +adjust (pixman_vector_t *v, pixman_vector_t *u, pixman_fixed_t adjustment)
 +{
 +    int delta_v = (adjustment * v->vector[2]) >> 16;
@@ -98,14 +101,10 @@ index 070b190..e5f9f2b 100644
 +            v.vector[2] += unit.vector[2];
 +        }
 +        dst += dstStride;
-+    }
-+}
-+
-+static void
- pixman_walk_composite_region (pixman_op_t op,
- 			      pixman_image_t * pSrc,
- 			      pixman_image_t * pMask,
-@@ -1858,6 +1948,23 @@ pixman_image_composite (pixman_op_t      op,
+     }
+ }
+ 
+@@ -1854,6 +1944,23 @@
      if(op == PIXMAN_OP_DST)
          return;
  

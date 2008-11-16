@@ -1,31 +1,5 @@
 --- mozilla/gfx/cairo/cairo/src/cairo-qpainter-surface.cpp.orig	2008-11-06 19:33:22.000000000 +0200
 +++ mozilla/gfx/cairo/cairo/src/cairo-qpainter-surface.cpp	2008-11-09 05:39:47.000000000 +0200
-@@ -599,10 +599,12 @@ _cairo_qpainter_surface_clone_similar (v
-                                        cairo_surface_t *src,
-                                        int              src_x,
-                                        int              src_y,
-                                        int              width,
-                                        int              height,
-+                                       int             *clone_offset_x,
-+                                       int             *clone_offset_y,
-                                        cairo_surface_t **clone_out)
- {
-     cairo_qpainter_surface_t *qs = (cairo_qpainter_surface_t *) abstract_surface;
-     cairo_surface_t *new_surf = NULL;
- 
-@@ -641,10 +643,12 @@ _cairo_qpainter_surface_clone_similar (v
-     if (status) {
-         cairo_surface_destroy (new_surf);
-         new_surf = NULL;
-     }
- 
-+    *clone_offset_x = src_x;
-+    *clone_offset_y = src_y;
-     *clone_out = new_surf;
-     return (cairo_status_t) status;
- }
- 
- static cairo_int_status_t
 @@ -1382,11 +1386,11 @@ _cairo_qpainter_surface_show_glyphs (voi
  	    qs->xlib_has_clipping = qs->has_clipping;
  	    qs->xlib_clip_bounds = qs->clip_bounds;
@@ -39,19 +13,3 @@
  
      return CAIRO_INT_STATUS_UNSUPPORTED;
  }
---- mozilla/gfx/cairo/cairo/src/cairo.h.orig	2008-11-06 19:33:22.000000000 +0200
-+++ mozilla/gfx/cairo/cairo/src/cairo.h	2008-11-09 05:25:26.000000000 +0200
-@@ -1911,11 +1911,12 @@ typedef enum _cairo_surface_type {
-     CAIRO_SURFACE_TYPE_BEOS,
-     CAIRO_SURFACE_TYPE_DIRECTFB,
-     CAIRO_SURFACE_TYPE_SVG,
-     CAIRO_SURFACE_TYPE_OS2,
-     CAIRO_SURFACE_TYPE_WIN32_PRINTING,
--    CAIRO_SURFACE_TYPE_QUARTZ_IMAGE
-+    CAIRO_SURFACE_TYPE_QUARTZ_IMAGE,
-+    CAIRO_SURFACE_TYPE_QPAINTER
- } cairo_surface_type_t;
- 
- cairo_public cairo_surface_type_t
- cairo_surface_get_type (cairo_surface_t *surface);
- 

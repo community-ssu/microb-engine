@@ -1,4 +1,5 @@
 #Fixed bug#88108:libsqlite3.so needed by libsoftokn3.so
+#bug 463928 libsqlite3.so required for libsoftokn3.so, but it is missing from mozilla-nss.pc.in 
 diff -ruN mozilla.orig/xulrunner/installer/mozilla-nss.pc.in mozilla/xulrunner/installer/mozilla-nss.pc.in
 --- mozilla.orig/xulrunner/installer/mozilla-nss.pc.in	2008-09-09 18:39:37.000000000 +0300
 +++ mozilla/xulrunner/installer/mozilla-nss.pc.in	2008-09-09 18:40:21.000000000 +0300

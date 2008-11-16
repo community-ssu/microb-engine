@@ -1,3 +1,10 @@
+microb-engine (20081106-1.3) unstable; urgency=low
+
+  * Updated to latest trunk 8b3caddca8f5
+  * Updated patchset to latest trunk 1acb1c8f878a
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sun, 16 Nov 2008 14:51:07 -0500
+
 microb-engine (20081106-1.2) unstable; urgency=low
 
   * Updated patchset

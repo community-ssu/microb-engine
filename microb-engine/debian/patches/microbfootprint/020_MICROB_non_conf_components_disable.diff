@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4737,16 +4737,21 @@
+@@ -4749,16 +4749,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4839,17 +4844,16 @@
+@@ -4851,17 +4856,16 @@
  AC_SUBST(GTK_CONFIG)
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -5987,22 +5991,164 @@
+@@ -6032,22 +6036,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7435,35 +7581,54 @@
+@@ -7480,35 +7626,54 @@
     fi
  fi
  
@@ -273,7 +273,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7724,16 +7889,21 @@
+@@ -7769,16 +7934,21 @@
  AC_SUBST(NECKO_COOKIES)
  if test "$NECKO_COOKIES"; then
      AC_DEFINE(NECKO_COOKIES)
@@ -295,7 +295,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8013,16 +8183,22 @@
+@@ -8058,16 +8228,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -322,7 +322,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -148,16 +148,27 @@
+@@ -148,16 +148,28 @@
  MOZ_PROFILESHARING = @MOZ_PROFILESHARING@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@
@@ -341,6 +341,7 @@ Index: mozilla/config/autoconf.mk.in
 +MOZ_NO_FASTFIND = @MOZ_NO_FASTFIND@
 +MOZ_NO_LCMS = @MOZ_NO_LCMS@
 +MOZ_NO_JARMODULE = @MOZ_NO_JARMODULE@
++MOZ_NO_XPFE_BROWSER = @MOZ_NO_XPFE_BROWSER@
 +MOZ_NO_DOWNLOADMGR = @MOZ_NO_DOWNLOADMGR@
  MOZ_ZIPWRITER = @MOZ_ZIPWRITER@
  MOZ_MORK = @MOZ_MORK@
@@ -348,8 +349,8 @@ Index: mozilla/config/autoconf.mk.in
  MOZ_NO_XPCOM_OBSOLETE = @MOZ_NO_XPCOM_OBSOLETE@
  MOZ_NO_FAST_LOAD = @MOZ_NO_FAST_LOAD@
  MOZ_OGG = @MOZ_OGG@
- MOZ_MEDIA = @MOZ_MEDIA@
- NS_PRINTING = @NS_PRINTING@
+ MOZ_SYDNEYAUDIO = @MOZ_SYDNEYAUDIO@
+ MOZ_WAVE = @MOZ_WAVE@
 Index: mozilla/chrome/src/nsChromeProtocolHandler.cpp
 ===================================================================
 --- mozilla.orig/chrome/src/nsChromeProtocolHandler.cpp
@@ -464,7 +465,7 @@ Index: mozilla/chrome/src/nsChromeRegistry.cpp
  #include "nsIPrefBranch.h"
  #include "nsIPrefBranch2.h"
  #include "nsIPresShell.h"
-@@ -1468,31 +1472,33 @@
+@@ -1494,31 +1498,33 @@
      }
      else if (pref.EqualsLiteral(SELECTED_LOCALE_PREF)) {
        mSelectedLocale = provider;
@@ -498,7 +499,7 @@ Index: mozilla/chrome/src/nsChromeRegistry.cpp
  }
  
  #ifdef MOZ_XUL
-@@ -1556,16 +1562,17 @@
+@@ -1582,16 +1588,17 @@
    CallQueryInterface(node, result);
  }
  
@@ -516,7 +517,7 @@ Index: mozilla/chrome/src/nsChromeRegistry.cpp
      nsCAutoString relativeBase;
      GetRelativePath(base, jarbase, relativeBase);
  
-@@ -1573,16 +1580,17 @@
+@@ -1599,16 +1606,17 @@
      jarrelative->GetJAREntry(jarEntry);
  
      result.Assign(NS_LITERAL_CSTRING("jar:"));
@@ -803,7 +804,7 @@ Index: mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp
    if (aID == eColor_TextHighlightForeground) {
      // The foreground color for the matched text in findbar highlighting
      // Used with nsISelectionController::SELECTION_FIND
-     aColor = NS_RGB(0x00, 0x00, 0x00);
+     aColor = NS_RGB(0xff, 0xff, 0xff);
      return NS_OK;
    }
  
@@ -1239,7 +1240,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  // here, or in a native resource file.
  static void
  DumpHelp()
-@@ -3124,35 +3128,39 @@
+@@ -3125,35 +3129,39 @@
            gDoMigration = PR_FALSE;
            nsCOMPtr<nsIProfileMigrator> pm
              (do_CreateInstance(NS_PROFILEMIGRATOR_CONTRACTID));
@@ -1279,7 +1280,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  
  #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
          nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
-@@ -3167,40 +3175,48 @@
+@@ -3168,40 +3176,48 @@
            NS_ENSURE_TRUE(em, 1);
  
            ar = CheckArg("install-global-extension", PR_TRUE);
@@ -1328,7 +1329,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
          if (noEMRestart && *noEMRestart && *noEMRestart == '1') {
            if (upgraded || needsRestart) {
              NS_WARNING("EM tried to force us to restart twice! Forcefully preventing that.");
-@@ -3238,18 +3254,20 @@
+@@ -3239,18 +3255,20 @@
            // Prepare Cocoa's form of Apple Event handling.
            SetupMacApplicationDelegate();
  #endif
@@ -1580,14 +1581,14 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  #include "lcms.h"
 +#endif
  
+ #define GDK_PIXMAP_SIZE_MAX 32767
+ 
  #ifndef MOZ_PANGO
  #include <ft2build.h>
  #include FT_FREETYPE_H
  #endif
  
- double gfxPlatformGtk::sDPI = -1.0;
- gfxFontconfigUtils *gfxPlatformGtk::sFontconfigUtils = nsnull;
-@@ -466,16 +468,17 @@
+@@ -476,16 +478,17 @@
      sDPI = gdk_screen_get_resolution(gdk_screen_get_default());
  
      if (sDPI <= 0.0) {
@@ -1605,7 +1606,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
      const char ICC_PROFILE_ATOM_NAME[] = "_ICC_PROFILE";
  
      Atom edidAtom, iccAtom;
-@@ -595,16 +598,17 @@
+@@ -605,16 +608,17 @@
  
              return profile;
          }
@@ -1673,7 +1674,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatformGtk.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatformGtk.h
 +++ mozilla/gfx/thebes/public/gfxPlatformGtk.h
-@@ -104,13 +104,15 @@
+@@ -110,13 +110,15 @@
      GdkDrawable *GetGdkDrawable(gfxASurface *target);
  
  protected:
@@ -1780,7 +1781,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
  {
    mFrame = do_CreateInstance("@mozilla.org/gfx/image/frame;2");
    if (!mFrame)
-@@ -389,16 +393,17 @@
+@@ -391,16 +395,17 @@
      }
      png_set_gamma(png_ptr, 2.2, aGamma);
    }
@@ -1798,7 +1799,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
    cmsHPROFILE profile = nsnull;
    *intent = INTENT_PERCEPTUAL; // Our default
  
-@@ -494,16 +499,17 @@
+@@ -496,16 +501,17 @@
          *inType = TYPE_RGBA_8;
        else
          *inType = TYPE_RGB_8;
@@ -1816,7 +1817,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
    png_uint_32 width, height;
    int bit_depth, color_type, interlace_type, compression_type, filter_type;
    unsigned int channels;
-@@ -550,16 +556,17 @@
+@@ -552,16 +558,17 @@
      else
         png_set_expand(png_ptr);
    }
@@ -1834,7 +1835,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
      if (intent == -1)
        intent = pIntent;
    }
-@@ -578,26 +585,29 @@
+@@ -580,26 +587,29 @@
        dwFlags |= cmsFLAGS_FLOATSHAPER;
  
      decoder->mTransform = cmsCreateTransform(decoder->mInProfile,
@@ -1866,7 +1867,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
      png_set_interlace_handling(png_ptr);
    }
  
-@@ -662,24 +672,26 @@
+@@ -664,24 +674,26 @@
      png_set_progressive_frame_fn(png_ptr, frame_info_callback, NULL);
    
    if (png_get_first_frame_is_hidden(png_ptr, info_ptr)) {
@@ -1893,7 +1894,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
        longjmp(decoder->mPNG->jmpbuf, 5); // NS_ERROR_OUT_OF_MEMORY
      }
    }
-@@ -740,30 +752,32 @@
+@@ -742,30 +754,32 @@
  
      // we're thebes. we can write stuff directly to the data
      PRUint8 *imageData;
@@ -2900,11 +2901,11 @@ Index: mozilla/xpfe/components/build/Makefile.in
  
  # Suite specific includes
  ifdef MOZ_SUITE
+ ifdef SUITE_USING_XPFE_DM
+ REQUIRES += downloadmanager
+ endif
+ 
  REQUIRES	+= \
- 		downloadmanager \
- 		intl \
- 		mork \
- 		widget \
 Index: mozilla/xpfe/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/Makefile.in
@@ -3176,9 +3177,14 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  
      GdkWindow *innerWindow = get_inner_gdk_window(aWidget->window, aX, aY,
                                                    &retx, &rety);
---- mozilla/gfx/thebes/src/gfxQtPlatform.cpp.orig	2008-08-10 18:06:50.000000000 +0300
-+++ mozilla/gfx/thebes/src/gfxQtPlatform.cpp	2008-08-10 18:26:14.000000000 +0300
-@@ -54,13 +54,15 @@
+Index: mozilla/gfx/thebes/src/gfxQtPlatform.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxQtPlatform.cpp
++++ mozilla/gfx/thebes/src/gfxQtPlatform.cpp
+@@ -51,19 +51,21 @@
+ #include "gfxQPainterSurface.h"
+ 
+ #include "gfxFT2Fonts.h"
  
  #include "nsUnicharUtils.h"
  
@@ -3194,13 +3200,6 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  #include FT_FREETYPE_H
  
  PRInt32 gfxQtPlatform::sDPI = -1;
---- mozilla/config/autoconf.mk.in.orig	2007-11-09 16:09:07.000000000 -0500
-+++ mozilla/config/autoconf.mk.in	2007-11-09 17:15:43.000000000 -0500
-@@ -163,6 +163,7 @@
- MOZ_NO_FASTFIND = @MOZ_NO_FASTFIND@
- MOZ_NO_LCMS = @MOZ_NO_LCMS@
- MOZ_NO_JARMODULE = @MOZ_NO_JARMODULE@
-+MOZ_NO_XPFE_BROWSER = @MOZ_NO_XPFE_BROWSER@
- MOZ_NO_DOWNLOADMGR = @MOZ_NO_DOWNLOADMGR@
- MOZ_ZIPWRITER = @MOZ_ZIPWRITER@
- MOZ_MORK = @MOZ_MORK@
+ gfxFontconfigUtils *gfxQtPlatform::sFontconfigUtils = nsnull;
+ static cairo_user_data_key_t cairo_qt_pixmap_key;
+ static void do_qt_pixmap_unref (void *data)
