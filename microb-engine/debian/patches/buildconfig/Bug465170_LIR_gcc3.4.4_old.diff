@@ -1,7 +1,7 @@
 #https://bugzilla.mozilla.org/show_bug.cgi?id=465170
 # workarround
---- LIR.cpp.orig	2008-11-16 16:38:41.000000000 -0500
-+++ LIR.cpp	2008-11-16 17:12:06.000000000 -0500
+--- mozilla-central/js/src/nanojit/LIR.cpp.orig	2008-11-16 16:38:41.000000000 -0500
++++ mozilla-central/js/src/nanojit/LIR.cpp	2008-11-16 17:12:06.000000000 -0500
 @@ -836,11 +836,6 @@
  				oprnd1 = t;
  			}
