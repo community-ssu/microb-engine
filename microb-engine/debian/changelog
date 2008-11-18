@@ -1,3 +1,9 @@
+microb-engine (20081106-1.7) unstable; urgency=low
+
+  * Added support for "change password" notification. 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 18 Nov 2008 08:28:19 +0200
+
 microb-engine (20081106-1.6) unstable; urgency=low
 
   * Fixed search service for fennec browser

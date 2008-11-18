@@ -1,8 +1,55 @@
-Index: mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
-===================================================================
---- mozilla.orig/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
-+++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
-@@ -613,17 +613,17 @@
+--- mozilla/toolkit/locales/en-US/chrome/passwordmgr/passwordmgr.properties.orig	2008-11-12 11:24:07.000000000 +0200
++++ mozilla/toolkit/locales/en-US/chrome/passwordmgr/passwordmgr.properties	2008-11-12 11:24:21.000000000 +0200
+@@ -34,38 +34,38 @@
+ # the provisions above, a recipient may use your version of this file under
+ # the terms of any one of the MPL, the GPL or the LGPL.
+ #
+ # ***** END LICENSE BLOCK *****
+ 
+ rememberValue = Use Password Manager to remember this value.
+ rememberPassword = Use Password Manager to remember this password.
+ savePasswordTitle = Confirm
+ # 1st string is product name, 2nd is the username for the login, 3rd is the
+ #   login's hostname. Note that long usernames may be truncated.
+-saveLoginText = Do you want %1$S to remember the password for "%2$S" on %3$S?
++saveLoginText = Remember credentials for this site?
+ # 1st string is product name, 2nd is the login's hostname
+-saveLoginTextNoUsername = Do you want %1$S to remember this password on %2$S?
++saveLoginTextNoUsername = Remember credentials for this site?
+ notNowButtonText = &Not Now
+ notifyBarNotNowButtonText = Not Now
+ notifyBarNotNowButtonAccessKey = N
+ neverForSiteButtonText = Ne&ver for This Site
+-notifyBarNeverForSiteButtonText = Never for This Site
++notifyBarNeverForSiteButtonText = Never
+ notifyBarNeverForSiteButtonAccessKey = e
+ rememberButtonText = &Remember
+-notifyBarRememberButtonText = Remember
++notifyBarRememberButtonText = Yes
+ notifyBarRememberButtonAccessKey = R
+ passwordChangeTitle = Confirm Password Change
+ passwordChangeText = Would you like to change the stored password for %S?
+ passwordChangeTextNoUser = Would you like to change the stored password for this login?
+-notifyBarChangeButtonText = Change
++notifyBarChangeButtonText = Yes
+ notifyBarChangeButtonAccessKey = C
+-notifyBarDontChangeButtonText = Don't Change
++notifyBarDontChangeButtonText = No
+ notifyBarDontChangeButtonAccessKey = D
+ userSelectText = Please confirm which user you are changing the password for
+ hidePasswords=Hide Passwords
+ hidePasswordsAccessKey=P
+ showPasswords=Show Passwords
+ showPasswordsAccessKey=P
+ noMasterPasswordPrompt=Are you sure you wish to show your passwords?
+ removeAllPasswordsPrompt=Are you sure you wish to remove all passwords?
+ removeAllPasswordsTitle=Remove all passwords
+ loginsSpielAll=Passwords for the following sites are stored on your computer:
+--- mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js.orig	2008-11-12 11:30:42.000000000 +0200
++++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js	2008-11-12 11:29:17.000000000 +0200
+@@ -611,21 +611,21 @@ LoginManagerPrompter.prototype = {
+                                 priority, aButtons);
+ 
          // The page we're going to hasn't loaded yet, so we want to persist
          // across the first location change.
          newBar.persistence++;
@@ -21,7 +68,11 @@ Index: mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
      },
  
  
-@@ -678,49 +678,81 @@
+     /*
+      * _showSaveLoginNotification
+@@ -667,53 +667,85 @@ LoginManagerPrompter.prototype = {
+             notificationText  = this._getLocalizedString(
+                                         "saveLoginTextNoUsername",
                                          [brandShortName, displayHost]);
          }
  
@@ -80,15 +131,6 @@ Index: mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
 +                    callback:  function() { /* NOP */ }
                  }
 -            },
--
--            // "Not now" button
--            {
--                label:     notNowButtonText,
--                accessKey: notNowButtonAccessKey,
--                popup:     null,
--                callback:  function() { /* NOP */ } 
--            }
--        ];
 +            ];
 +        }
 +        else {
@@ -120,7 +162,15 @@ Index: mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
 +            buttons.appendElement(button2, false);
 +            buttons.appendElement(button3, false);
 +        }
-+
+ 
+-            // "Not now" button
+-            {
+-                label:     notNowButtonText,
+-                accessKey: notNowButtonAccessKey,
+-                popup:     null,
+-                callback:  function() { /* NOP */ } 
+-            }
+-        ];
  
          this._showLoginNotification(aNotifyBox, "password-save",
 -             notificationText, buttons);
@@ -133,7 +183,98 @@ Index: mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
       *
       */
      _removeLoginNotifications : function (aNotifyBox) {
-@@ -1018,18 +1050,26 @@
+         var oldBar = aNotifyBox.getNotificationWithValue("password-save");
+         if (oldBar) {
+@@ -830,41 +862,68 @@ LoginManagerPrompter.prototype = {
+         var dontChangeButtonText =
+               this._getLocalizedString("notifyBarDontChangeButtonText");
+         var dontChangeButtonAccessKey =
+               this._getLocalizedString("notifyBarDontChangeButtonAccessKey");
+ 
+         // The callbacks in |buttons| have a closure to access the variables
+         // in scope here; set one to |this._pwmgr| so we can get back to pwmgr
+         // without a getService() call.
+         var pwmgr = this._pwmgr;
+ 
++        // Is the notification box a XUL box or Maemo box?
++        if (!aNotifyBox.QueryInterface(Ci.nsINotificationBox)) {
+         var buttons = [
+-            // "Yes" button
+-            {
+-                label:     changeButtonText,
+-                accessKey: changeButtonAccessKey,
+-                popup:     null,
+-                callback:  function(aNotificationBar, aButton) {
+-                    pwmgr.modifyLogin(aOldLogin, aNewLogin);
++                // "Yes" button
++                {
++                    label:     changeButtonText,
++                    accessKey: changeButtonAccessKey,
++                    popup:     null,
++                    callback:  function(aNotificationBar, aButton) {
++                        pwmgr.modifyLogin(aOldLogin, aNewLogin);
++                    }
++                },
++
++                // "No" button
++                {
++                    label:     dontChangeButtonText,
++                    accessKey: dontChangeButtonAccessKey,
++                    popup:     null,
++                    callback:  function(aNotificationBar, aButton) {
++                        // do nothing
++                    }
+                 }
+-            },
++            ];
++        }
++        else {
++            var buttons = Cc["@mozilla.org/array;1"]
++                            .createInstance(Ci.nsIMutableArray);
++
++            var button1 = Cc["@browser.garage.maemo.org/microb/notificationbutton;1"]
++                            .createInstance(Ci.nsINotificationButton);
++            var button2 = Cc["@browser.garage.maemo.org/microb/notificationbutton;1"]
++                            .createInstance(Ci.nsINotificationButton);
++            button1.label = changeButtonText;
++            button1.accessKey = changeButtonAccessKey;
++            button1.popup = null;
++            button1.callback = function(aNotificationBar, aButton) {
++                    pwmgr.modifyLogin(aOldLogin, aNewLogin);
++            };
+ 
+-            // "No" button
+-            {
+-                label:     dontChangeButtonText,
+-                accessKey: dontChangeButtonAccessKey,
+-                popup:     null,
+-                callback:  function(aNotificationBar, aButton) {
+-                    // do nothing
+-                }
+-            }
+-        ];
++            button2.label = dontChangeButtonText;
++            button2.accessKey = dontChangeButtonAccessKey;
++            button2.popup = null;
++            button2.callback =  function(aNotificationBar, aButton) {
++                        // do nothing
++            };
++            buttons.appendElement(button1, false);
++            buttons.appendElement(button2, false);
++        }
+ 
+         this._showLoginNotification(aNotifyBox, "password-change",
+              notificationText, buttons);
+     },
+ 
+ 
+     /*
+      * _showChangeLoginDialog
+      *
+      * Shows the Change Password dialog.
+@@ -998,22 +1057,30 @@ LoginManagerPrompter.prototype = {
+             // Get the chrome window for the content window we're using.
+             // .wrappedJSObject needed here -- see bug 422974 comment 5.
              var chromeWin = getChromeWindow(notifyWindow).wrappedJSObject;
  
              if (chromeWin.getNotificationBox)
@@ -162,3 +303,5 @@ Index: mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
  
      /*
       * _repickSelectedLogin
+      *
+      * The user might enter a login that isn't the one we prefilled, but
