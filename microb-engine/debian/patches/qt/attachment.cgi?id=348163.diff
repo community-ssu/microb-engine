@@ -1,0 +1,10 @@
+--- mozilla/widget/src/qt/nsQtKeyUtils.cpp	2008-11-06 18:33:22.000000000 +0100
++++ mozilla/widget/src/qt/nsQtKeyUtils.cpp.patched	2008-11-12 10:35:09.000000000 +0100
+@@ -54,6 +54,7 @@
+ //  { NS_VK_CANCEL,        Qt::Key_Cancel },
+     { NS_VK_BACK,          Qt::Key_Backspace },
+     { NS_VK_TAB,           Qt::Key_Tab },
++    { NS_VK_TAB,           Qt::Key_Backtab },
+ //  { NS_VK_CLEAR,         Qt::Key_Clear },
+     { NS_VK_RETURN,        Qt::Key_Return },
+     { NS_VK_RETURN,        Qt::Key_Enter },

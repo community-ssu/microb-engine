@@ -1,3 +1,9 @@
+microb-engine (20081106-2) unstable; urgency=low
+
+  * Add patches for cairoqt: Fixes MB#464050, MB#464880, MB#464890
+
+ -- Tobias Hunger <tobias.hunger@gmail.com>  Wed, 19 Nov 2008 09:29:22 +0100
+
 microb-engine (20081106-1.7) unstable; urgency=low
 
   * Added support for "change password" notification. 

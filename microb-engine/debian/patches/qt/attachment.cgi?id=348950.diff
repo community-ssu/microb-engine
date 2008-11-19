@@ -1,0 +1,16 @@
+--- mozilla/widget/src/qt/nsClipboard.cpp	2008-11-06 18:33:22.000000000 +0100
++++ mozilla/widget/src/qt/nsClipboard_unicode.cpp	2008-11-17 16:46:44.000000000 +0100
+@@ -135,7 +135,12 @@
+                 QString str = QString::fromUtf16(utf16string.get());
+ 
+                 // Set the date to the clipboard
+-                cb->setText(str, clipboardMode);
++                // (as text and as UTF-8 explicitly because Qt declares the text only as text/plain)
++                QMimeData* newData = new QMimeData();
++                newData->setText(str);
++                newData->setData("text/plain;charset=utf-8", str.toUtf8() );
++
++                cb->setMimeData(newData, clipboardMode);
+                 break;
+             }
+ 

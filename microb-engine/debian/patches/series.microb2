@@ -181,3 +181,10 @@ BMO_attached/690_bug459780.broken.events.diff
 
 # until bug 463872 not fixed
 qt/attachment.cgi?id=347124.diff
+# until bug 464050 not fixed
+qt/attachment.cgi?id=347303.diff
+# until bug 464880 not fixed
+qt/attachment.cgi?id=348163.diff
+# until bug 464890 not fixed
+qt/attachment.cgi?id=348950.diff
+
