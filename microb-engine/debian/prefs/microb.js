@@ -47,3 +47,4 @@ pref("browser.sessionhistory.max_entries", 20);
 // content sink control -- controls responsiveness during page load
 pref("content.max.deflected.tokens", 10);
 pref("content.max.tokenizing.time", 50000);
+pref("mozilla.widget.disable-native-theme", true);
