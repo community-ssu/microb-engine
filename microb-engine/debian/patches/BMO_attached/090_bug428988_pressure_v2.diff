@@ -488,6 +488,61 @@ diff -r 2ab8ad95e549 widget/src/gtk2/nsWindow.cpp
  button_release_event_cb(GtkWidget *widget, GdkEventButton *event)
  {
      nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);
+diff -r 2ab8ad95e549 dom/public/idl/events/nsIDOMMouseWithPressureEvent.idl
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/dom/public/idl/events/nsIDOMMouseWithPressureEvent.idl	Sun Nov 23 14:40:19 2008 -0500
+@@ -0,0 +1,51 @@
++/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* ***** BEGIN LICENSE BLOCK *****
++ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
++ *
++ * The contents of this file are subject to the Mozilla Public License Version
++ * 1.1 (the "License"); you may not use this file except in compliance with
++ * the License. You may obtain a copy of the License at
++ * http://www.mozilla.org/MPL/
++ *
++ * Software distributed under the License is distributed on an "AS IS" basis,
++ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++ * for the specific language governing rights and limitations under the
++ * License.
++ *
++ * The Original Code is mozilla.org code.
++ *
++ * The Initial Developer of the Original Code is
++ * Netscape Communications Corporation.
++ * Portions created by the Initial Developer are Copyright (C) 2000
++ * the Initial Developer. All Rights Reserved.
++ *
++ * Contributor(s):
++ *   Doug Turner <dougt@mozilla.com> (original author)
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * either of the GNU General Public License Version 2 or later (the "GPL"),
++ * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
++ * in which case the provisions of the GPL or the LGPL are applicable instead
++ * of those above. If you wish to allow use of your version of this file only
++ * under the terms of either the GPL or the LGPL, and not to allow others to
++ * use your version of this file under the terms of the MPL, indicate your
++ * decision by deleting the provisions above and replace them with the notice
++ * and other provisions required by the GPL or the LGPL. If you do not delete
++ * the provisions above, a recipient may use your version of this file under
++ * the terms of any one of the MPL, the GPL or the LGPL.
++ *
++ * ***** END LICENSE BLOCK ***** */
++
++#include "nsIDOMMouseEvent.idl"
++
++/**
++ * The nsIDOMMouseEventPressure interface extends nsIDOMMouseEvent
++ * by providing pressure information related to the mouse event.
++ */
++
++[scriptable, uuid(25e47b17-a0df-4ac1-aa1b-fda7d5701447)]
++interface nsIDOMMouseWithPressureEvent : nsIDOMMouseEvent
++{
++  readonly attribute float pressure;
++};
++
 diff -r 2ab8ad95e549 widget/src/gtk2/nsWindow.h
 --- a/widget/src/gtk2/nsWindow.h	Sun Nov 23 14:12:23 2008 -0500
 +++ b/widget/src/gtk2/nsWindow.h	Sun Nov 23 14:22:06 2008 -0500
