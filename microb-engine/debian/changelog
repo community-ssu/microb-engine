@@ -1,3 +1,9 @@
+microb-engine (20081106-5) unstable; urgency=low
+
+  * Enabled mouse pressure patch to better detection of finger motions
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sun, 23 Nov 2008 14:35:23 -0500
+
 microb-engine (20081106-4) unstable; urgency=low
 
   * Updated to trunk 04cecb0ec24c

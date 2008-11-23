@@ -189,3 +189,6 @@ qt/attachment.cgi?id=348163.diff
 # until bug 464890 not fixed
 qt/attachment.cgi?id=348950.diff
 
+#tested mouse pressure
+BMO_attached/090_bug428988_pressure_v2.diff
+
