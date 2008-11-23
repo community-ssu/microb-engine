@@ -1,3 +1,9 @@
+microb-engine (20081106-4) unstable; urgency=low
+
+  * Updated to trunk 04cecb0ec24c
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sun, 23 Nov 2008 11:21:34 -0500
+
 microb-engine (20081106-3) unstable; urgency=low
 
   * Fixes: NB#92005 Native theming from GTK causes problems with widgets in browser 

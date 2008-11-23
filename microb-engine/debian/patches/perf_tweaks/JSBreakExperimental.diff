@@ -49,12 +49,15 @@ Index: mozilla/widget/public/nsIAppShell.idl
     */
    readonly attribute unsigned long eventloopNestingLevel;
  };
-Index: mozilla/dom/src/base/nsJSEnvironment.cpp
-===================================================================
---- mozilla.orig/dom/src/base/nsJSEnvironment.cpp
-+++ mozilla/dom/src/base/nsJSEnvironment.cpp
-@@ -219,16 +219,20 @@
+--- mozilla/dom/src/base/nsJSEnvironment.cpp.orig	2008-11-22 15:47:04.000000000 -0500
++++ mozilla/dom/src/base/nsJSEnvironment.cpp	2008-11-22 15:51:55.000000000 -0500
+@@ -209,17 +209,22 @@ static PRBool sDidShutdown;
+ 
+ static PRInt32 sContextCount;
+ 
+ static PRTime sMaxScriptRunTime;
  static PRTime sMaxChromeScriptRunTime;
++static PRBool sWakeUpNativeLoopOnJS;
  
  static nsIScriptSecurityManager *sSecurityManager;
  
@@ -71,39 +74,14 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
  // notifications and if the number is bigger than NS_CC_SOFT_LIMIT_ACTIVE
  // (in case the current notification is user-interaction-active) or
  // NS_CC_SOFT_LIMIT_INACTIVE (current notification is user-interaction-inactive)
- // MaybeCC is called with aHigherParameter set to PR_TRUE, otherwise PR_FALSE.
- //
- // When moving from active state to inactive, nsJSContext::CC() is called
-@@ -835,17 +839,17 @@
- 
-   nsCAutoString spec;
-   uri->GetSpec(spec);
-   printf("%s\n", spec.get());
- }
- #endif
- 
- // The accumulated operation weight before we call MaybeGC
--const PRUint32 MAYBE_GC_OPERATION_WEIGHT = 5000 * JS_OPERATION_WEIGHT_BASE;
-+const PRUint32 MAYBE_GC_OPERATION_WEIGHT = 1000 * JS_OPERATION_WEIGHT_BASE;
- 
- static void
- MaybeGC(JSContext *cx)
- {
-   size_t bytes = cx->runtime->gcBytes;
-   size_t lastBytes = cx->runtime->gcLastBytes;
- 
-   if ((bytes > 8192 && bytes / 16 > lastBytes)
-@@ -864,16 +868,30 @@
-   // Get the native context
-   nsJSContext *ctx = static_cast<nsJSContext *>(::JS_GetContextPrivate(cx));
- 
+@@ -895,10 +900,24 @@ nsJSContext::DOMOperationCallback(JSCont
    if (!ctx) {
      // Can happen; see bug 355811
      return JS_TRUE;
    }
  
 +  nsCOMPtr<nsIAppShell> appShell = do_GetService(kAppShellCID);
-+  if (appShell) {
++  if (appShell && sWakeUpNativeLoopOnJS) {
 +    nsCOMPtr<nsPIDOMWindow> win(do_QueryInterface(ctx->GetGlobalObject()));
 +    // Check for existing docshell before possible window close event
 +    PRBool docshell = (win && win->GetDocShell());
@@ -121,6 +99,37 @@ Index: mozilla/dom/src/base/nsJSEnvironment.cpp
    // ScriptEvaluated to be called, and clearing our operation callback time.
    // See bug 302333.
    PRTime callbackTime = ctx->mOperationCallbackTime;
+@@ -3715,10 +3734,17 @@ ReportAllJSExceptionsPrefChangedCallback
+   PRBool reportAll = nsContentUtils::GetBoolPref(aPrefName, PR_FALSE);
+   nsContentUtils::XPConnect()->SetReportAllJSExceptions(reportAll);
+   return 0;
+ }
  
-   MaybeGC(cx);
++static int
++WakeUpNativeLoopOnJSPrefChangedCallback(const char* aPrefName, void* aClosure)
++{
++  sWakeUpNativeLoopOnJS = nsContentUtils::GetBoolPref(aPrefName, PR_TRUE);
++  return 0;
++}
++
+ static JSPrincipals *
+ ObjectPrincipalFinder(JSContext *cx, JSObject *obj)
+ {
+   if (!sSecurityManager)
+     return nsnull;
+@@ -3796,10 +3822,15 @@ nsJSRuntime::Init()
+                                        ReportAllJSExceptionsPrefChangedCallback,
+                                        nsnull);
+   ReportAllJSExceptionsPrefChangedCallback("dom.report_all_js_exceptions",
+                                            nsnull);
  
++  nsContentUtils::RegisterPrefCallback("dom.wakeup_native_on_js",
++                                       WakeUpNativeLoopOnJSPrefChangedCallback,
++                                       nsnull);
++  WakeUpNativeLoopOnJSPrefChangedCallback("dom.wakeup_native_on_js", nsnull);
++
+   nsCOMPtr<nsIObserverService> obs =
+     do_GetService("@mozilla.org/observer-service;1", &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+   nsIObserver* activityObserver = new nsUserActivityObserver();
+   NS_ENSURE_TRUE(activityObserver, NS_ERROR_OUT_OF_MEMORY);

@@ -5,7 +5,6 @@ buildconfig/011_BuildWithGCC3.4.4.diff
 buildconfig/015_jemalloc_sb.diff
 buildconfig/020_cs2007_rpath_wr.diff
 buildconfig/023_PC_CONFIG_sqlite_neededby_libsoftokn.diff
-buildconfig/BrokenDisableWaveOption.diff
 buildconfig/Bug465066_attachment.cgi?id=348321.diff
 buildconfig/Bug465170_LIR_gcc3.4.4_old.diff
 
@@ -178,6 +177,8 @@ theeming/100_XUL_shortuctKeysDisable.diff
 BMO_attached/vlad-parser.diff
 BMO_attached/690_bug459780.broken.events.diff
 
+# bug 466265
+BMO_attached/attachment.cgi?id=349551.diff
 
 # until bug 463872 not fixed
 qt/attachment.cgi?id=347124.diff
