@@ -1,3 +1,9 @@
+microb-engine (20081106-7) unstable; urgency=low
+
+  * Fixes: NB#91126 "only loaded" option does not work correctly
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 27 Nov 2008 10:34:33 +0200
+
 microb-engine (20081106-6) unstable; urgency=low
 
   * Removing scrollbars from browser view 
