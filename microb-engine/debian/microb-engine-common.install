@@ -39,6 +39,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/global/viewSource.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/wizard.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/charsetOverlay.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/xslt*
+usr/lib/microb-engine/chrome/en-US/locale/en-US/global/xpinstall*
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/xml*
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/commonDialog*
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/config.dtd
