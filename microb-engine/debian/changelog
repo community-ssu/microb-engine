@@ -2,7 +2,7 @@ microb-engine (20081106-8) unstable; urgency=low
 
   *NB#89851 There is no information during installing invalid add-on. Missing file with information added. 
 
- -- Egor Starkov <egor@estarkov.research.nokia.com>  Mon,  1 Dec 2008 22:18:05 +0200
+ -- Egor Starkov <starkov.egor@gmail.com>  Mon,  1 Dec 2008 22:18:05 +0200
 
 microb-engine (20081106-7) unstable; urgency=low
 
