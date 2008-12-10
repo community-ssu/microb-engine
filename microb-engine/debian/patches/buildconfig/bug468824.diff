@@ -1,0 +1,18 @@
+diff -r 85d98d440856 config/system-headers
+--- a/config/system-headers	Tue Dec 02 21:59:04 2008 +0200
++++ b/config/system-headers	Wed Dec 10 15:52:31 2008 +0200
+@@ -1031,8 +1031,14 @@ libsn/sn-util.h
+ libsn/sn-util.h
+ #endif
+ #if MOZ_NATIVE_HUNSPELL==1
+ hunspell.hxx
+ #endif
+ #if MOZ_NATIVE_BZ2==1
+ bzlib.h
+ #endif
++#ifdef MOZ_PLATFORM_HILDON
++hildon-uri.h
++#endif
++#ifdef NS_OSSO
++libosso.h
++#endif
