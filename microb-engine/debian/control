@@ -1,7 +1,7 @@
 Source: microb-engine
 Priority: optional
 Maintainer: Oleg Romashin <oleg.romashin@nokia.com>
-Build-Depends: debhelper (>= 4.0.0), libidl-dev, libxt-dev, autoconf2.13, libgtk2.0-dev, automake1.7, libjpeg62-dev, libpng12-dev | libpng-dev, libosso-gnomevfs2-dev | libgnomevfs2-dev, quilt, bc, sharutils, libcairo2-dev, libsqlite3-dev, libdbus-glib-1-dev, liblocation-dev | ubuntu-minimal
+Build-Depends: debhelper (>= 4.0.0), libidl-dev, libxt-dev, autoconf2.13, libgtk2.0-dev, automake1.7, libjpeg62-dev, libpng12-dev | libpng-dev, libosso-gnomevfs2-dev | libgnomevfs2-dev, quilt, bc, sharutils, libcairo2-dev, libsqlite3-dev, libdbus-glib-1-dev, liblocation-dev | ubuntu-minimal, libhildonmime-dev | ubuntu-minimal, libosso-dev | ubuntu-minimal
 XS-Cross-Build-Depends: libidl-dev, libxt-dev, libgtk2.0-dev, libjpeg62-dev, libpng12-dev
 XS-Cross-Host-Build-Depends: debhelper, quilt, bc, sharutils, zip, libidl-dev
 Standards-Version: 3.6.2

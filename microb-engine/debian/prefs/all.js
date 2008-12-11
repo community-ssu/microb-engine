@@ -512,7 +512,9 @@ pref("security.fileuri.strict_origin_policy", true);
 
 // Default action for unlisted external protocol handlers
 pref("network.protocol-handler.external-default", true);      // OK to load
-pref("network.protocol-handler.warn-external-default", true); // warn before load
+
+// Maemo, by default no warn on mime handling
+pref("network.protocol-handler.warn-external-default", false); // warn before load
 
 // Prevent using external protocol handlers for these schemes
 pref("network.protocol-handler.external.hcp", false);
