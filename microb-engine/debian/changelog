@@ -1,3 +1,9 @@
+microb-engine (20081106-11) unstable; urgency=low
+
+  * Fixes: NB#94428 [NEWIMPL] Enable mouse cursors in hover and manipulation modes
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 11 Dec 2008 10:54:01 +0200
+
 microb-engine (20081106-10) unstable; urgency=low
 
   * Fixes: NB#94919 microb-engine linking of libxul.so fails when libhildonmime is installed 

@@ -193,3 +193,5 @@ qt/attachment.cgi?id=348950.diff
 BMO_attached/090_bug428988_pressure_v2.diff
 
 buildconfig/bug468824.diff
+
+theeming/110_hildon_cursors.diff

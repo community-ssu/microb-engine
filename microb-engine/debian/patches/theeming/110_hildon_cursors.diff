@@ -1,0 +1,162 @@
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp	2008-12-10 19:34:33.000000000 +0200
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2008-12-10 19:35:44.000000000 +0200
+@@ -144,17 +144,24 @@ static PRBool     check_for_rollup(GdkWi
+                                    gdouble aMouseX, gdouble aMouseY,
+                                    PRBool aIsWheel);
+ static PRBool     is_mouse_in_window(GdkWindow* aWindow,
+                                      gdouble aMouseX, gdouble aMouseY);
+ static nsWindow  *get_window_for_gtk_widget(GtkWidget *widget);
+ static nsWindow  *get_window_for_gdk_window(GdkWindow *window);
+ static nsWindow  *get_owning_window_for_gdk_window(GdkWindow *window);
+ static GtkWidget *get_gtk_widget_for_gdk_window(GdkWindow *window);
++#ifdef MOZ_PLATFORM_HILDON
++static GdkCursor *get_hildon_cursor(nsCursor aCursor);
++static PRBool    get_cursor_visibility(GdkWindow* aWindow);
++static GdkCursor *create_hildon_cursor(const char* aIconName,
++                                       gint aXOffset, gint aYOffset);
++#else
+ static GdkCursor *get_gtk_cursor(nsCursor aCursor);
++#endif
+ 
+ static GdkWindow *get_inner_gdk_window (GdkWindow *aWindow,
+                                         gint x, gint y,
+                                         gint *retx, gint *rety);
+ 
+ static inline PRBool is_context_menu_key(const nsKeyEvent& inKeyEvent);
+ static void   key_event_to_context_menu_event(nsMouseEvent &aEvent,
+                                               GdkEventKey *aGdkEvent);
+@@ -1420,17 +1427,22 @@ nsWindow::SetCursor(nsCursor aCursor)
+         NS_ENSURE_TRUE(window, NS_OK);
+         return window->SetCursor(aCursor);
+     }
+ 
+     // Only change cursor if it's actually been changed
+     if (aCursor != mCursor) {
+         GdkCursor *newCursor = NULL;
+ 
++#ifdef MOZ_PLATFORM_HILDON
++        gboolean visible = get_cursor_visibility(mDrawingarea->inner_window);
++        newCursor = get_hildon_cursor(visible ? aCursor : eCursor_none);
++#else
+         newCursor = get_gtk_cursor(aCursor);
++#endif
+ 
+         if (nsnull != newCursor) {
+             mCursor = aCursor;
+ 
+             if (!mContainer)
+                 return NS_OK;
+ 
+             gdk_window_set_cursor(GTK_WIDGET(mContainer)->window, newCursor);
+@@ -5105,16 +5117,92 @@ get_gtk_widget_for_gdk_window(GdkWindow 
+     gpointer user_data = NULL;
+     gdk_window_get_user_data(window, &user_data);
+     if (!user_data)
+         return NULL;
+ 
+     return GTK_WIDGET(user_data);
+ }
+ 
++#ifdef MOZ_PLATFORM_HILDON
++
++/* static */
++GdkCursor *
++get_hildon_cursor(nsCursor aCursor)
++{
++    GdkCursor *gdkcursor = nsnull;
++
++    if ((gdkcursor = gCursorCache[aCursor])) {
++        return gdkcursor;
++    }
++
++    // Load specific cursors and define the focus point offset for each. The
++    // cursor icon files do not carry the focus point information in themselves.
++    switch (aCursor) {
++    case eCursor_standard:
++        gdkcursor = create_hildon_cursor("browser_cursor", 9, 12);
++        break;
++    case eCursor_select:
++        gdkcursor = create_hildon_cursor("browser_text_cursor", 16, 16);
++        break;
++    case eCursor_hyperlink:
++        gdkcursor = create_hildon_cursor("browser_pointer", 15, 10);
++        break;
++    case eCursor_move:
++    case eCursor_grab:
++        gdkcursor = create_hildon_cursor("browser_mover", 17, 17);
++        break;
++    case eCursor_grabbing:
++        gdkcursor = create_hildon_cursor("browser_grab", 17, 17);
++        break;
++    default:
++        gdkcursor = gdk_cursor_new(GDK_LEFT_PTR);
++        break;
++    }
++
++    gCursorCache[aCursor] = gdkcursor;
++
++    return gdkcursor;
++}
++
++/* static */
++PRBool
++get_cursor_visibility(GdkWindow* aWindow)
++{
++    // retrieve the named data "cursor-visibile" that will set
++    // to each GdkWindow that has "nsWindow" data set
++    PRBool* visiblePtr =
++        (PRBool*) g_object_get_data(G_OBJECT(aWindow), "cursor-visibile");
++    return visiblePtr && *visiblePtr;
++}
++
++/* static */
++GdkCursor *
++create_hildon_cursor(const char* aIconName, gint aXOffset, gint aYOffset)
++{
++    GError* error = NULL;
++    GdkPixbuf* pixbuf = NULL;
++    GtkIconTheme* theme = NULL;
++
++    // request the cursor pixbuf by size (cursors are 32x32)
++    theme = gtk_icon_theme_get_default();
++    pixbuf = gtk_icon_theme_load_icon(theme, aIconName, 32,
++                                      GTK_ICON_LOOKUP_USE_BUILTIN, &error);
++    if (error) {
++        g_error_free(error);
++    }
++    else if (pixbuf) {
++        GdkDisplay* disp = gdk_display_get_default();
++        return gdk_cursor_new_from_pixbuf(disp, pixbuf, aXOffset, aYOffset);
++    }
++    return NULL;
++}
++
++#else // !MOZ_PLATFORM_HILDON
++
+ /* static */
+ GdkCursor *
+ get_gtk_cursor(nsCursor aCursor)
+ {
+     GdkPixmap *cursor;
+     GdkPixmap *mask;
+     GdkColor fg, bg;
+     GdkCursor *gdkcursor = nsnull;
+@@ -5263,16 +5351,18 @@ get_gtk_cursor(nsCursor aCursor)
+         gdk_bitmap_unref(cursor);
+     }
+ 
+     gCursorCache[aCursor] = gdkcursor;
+ 
+     return gdkcursor;
+ }
+ 
++#endif // MOZ_PLATFORM_HILDON
++
+ // gtk callbacks
+ 
+ /* static */
+ gboolean
+ expose_event_cb(GtkWidget *widget, GdkEventExpose *event)
+ {
+     nsRefPtr<nsWindow> window = get_window_for_gdk_window(event->window);
+     if (!window)
