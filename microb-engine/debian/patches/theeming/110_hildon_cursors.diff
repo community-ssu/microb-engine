@@ -1,5 +1,5 @@
---- mozilla.orig/widget/src/gtk2/nsWindow.cpp	2008-12-10 19:34:33.000000000 +0200
-+++ mozilla/widget/src/gtk2/nsWindow.cpp	2008-12-10 19:35:44.000000000 +0200
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp	2008-12-12 11:08:58.000000000 +0200
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2008-12-12 10:28:45.000000000 +0200
 @@ -144,17 +144,24 @@ static PRBool     check_for_rollup(GdkWi
                                     gdouble aMouseX, gdouble aMouseY,
                                     PRBool aIsWheel);
@@ -25,7 +25,7 @@
  static inline PRBool is_context_menu_key(const nsKeyEvent& inKeyEvent);
  static void   key_event_to_context_menu_event(nsMouseEvent &aEvent,
                                                GdkEventKey *aGdkEvent);
-@@ -1420,17 +1427,22 @@ nsWindow::SetCursor(nsCursor aCursor)
+@@ -1420,17 +1427,23 @@ nsWindow::SetCursor(nsCursor aCursor)
          NS_ENSURE_TRUE(window, NS_OK);
          return window->SetCursor(aCursor);
      }
@@ -35,7 +35,8 @@
          GdkCursor *newCursor = NULL;
  
 +#ifdef MOZ_PLATFORM_HILDON
-+        gboolean visible = get_cursor_visibility(mDrawingarea->inner_window);
++        gboolean visible = mDrawingarea ?
++            get_cursor_visibility(mDrawingarea->inner_window) : FALSE;
 +        newCursor = get_hildon_cursor(visible ? aCursor : eCursor_none);
 +#else
          newCursor = get_gtk_cursor(aCursor);
@@ -48,7 +49,7 @@
                  return NS_OK;
  
              gdk_window_set_cursor(GTK_WIDGET(mContainer)->window, newCursor);
-@@ -5105,16 +5117,92 @@ get_gtk_widget_for_gdk_window(GdkWindow 
+@@ -5105,16 +5118,92 @@ get_gtk_widget_for_gdk_window(GdkWindow 
      gpointer user_data = NULL;
      gdk_window_get_user_data(window, &user_data);
      if (!user_data)
@@ -141,7 +142,7 @@
      GdkPixmap *mask;
      GdkColor fg, bg;
      GdkCursor *gdkcursor = nsnull;
-@@ -5263,16 +5351,18 @@ get_gtk_cursor(nsCursor aCursor)
+@@ -5263,16 +5352,18 @@ get_gtk_cursor(nsCursor aCursor)
          gdk_bitmap_unref(cursor);
      }
  

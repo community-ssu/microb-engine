@@ -1,3 +1,9 @@
+microb-engine (20081106-13) unstable; urgency=low
+
+  * Fixes: NB#94428 additional crash fix 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 12 Dec 2008 11:49:46 +0200
+
 microb-engine (20081106-12) unstable; urgency=low
 
   * Fixes: NB#95323 network.protocol-handler.warn-external-default does not	work with hildon platform
