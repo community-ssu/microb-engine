@@ -1,0 +1,24 @@
+--- mozilla/widget/src/gtk2/nsAppShell.cpp.orig	2008-12-12 16:46:07.000000000 +0200
++++ mozilla/widget/src/gtk2/nsAppShell.cpp	2008-12-12 16:47:20.000000000 +0200
+@@ -155,8 +155,21 @@ nsAppShell::ScheduleNativeEventCallback(
+     write(mPipeFDs[1], buf, 1);
+ }
+ 
++#ifdef NS_OSSO
++static guint timerID;
++static gboolean watchdog_timeout(gpointer data)
++{
++    timerID = 0;
++    return FALSE;
++}
++#endif
++
+ PRBool
+ nsAppShell::ProcessNextNativeEvent(PRBool mayWait)
+ {
++#ifdef NS_OSSO
++    if (mayWait && !timerID && !g_main_context_pending(NULL))
++        timerID = g_timeout_add(1000, watchdog_timeout, 0);
++#endif
+     return g_main_context_iteration(NULL, mayWait);
+ }

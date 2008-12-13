@@ -1,3 +1,9 @@
+microb-engine (20081106-14) unstable; urgency=low
+
+  * Fixes: NB#92422 Internet keyword doesn't load page immediately. workaround r=romaxa.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 13 Dec 2008 10:38:32 +0200
+
 microb-engine (20081106-13) unstable; urgency=low
 
   * Fixes: NB#94428 additional crash fix 
