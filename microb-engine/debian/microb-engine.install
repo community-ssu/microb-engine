@@ -46,3 +46,5 @@ usr/lib/microb-engine/libmozz*so
 usr/lib/microb-engine/libthebes*so
 usr/lib/microb-engine/libxpcom_core*so
 usr/lib/microb-engine/components/lib*.so
+
+usr/lib/microb-engine/components/nsPlacesDBFlush.js

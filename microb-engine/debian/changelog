@@ -1,3 +1,9 @@
+microb-engine (20081106-15) unstable; urgency=low
+
+  * Fixes: NB#92099 Browser close resets Complete browsing history
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 14 Dec 2008 10:44:16 +0200
+
 microb-engine (20081106-14) unstable; urgency=low
 
   * Fixes: NB#92422 Internet keyword doesn't load page immediately. workaround r=romaxa.
