@@ -1,3 +1,9 @@
+microb-engine (20081106-16) unstable; urgency=low
+
+  * NB#95508 Web page does not have focus immediately after page loading
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Mon, 15 Dec 2008 17:04:59 +0200
+
 microb-engine (20081106-15) unstable; urgency=low
 
   * Fixes: NB#92099 Browser close resets Complete browsing history

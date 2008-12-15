@@ -469,25 +469,6 @@ diff -r 2ab8ad95e549 widget/src/gtk2/nsWindow.cpp
                           G_CALLBACK(expose_event_cb), NULL);
          g_signal_connect_after(G_OBJECT(mContainer), "enter_notify_event",
                           G_CALLBACK(enter_notify_event_cb), NULL);
-@@ -5342,16 +5369,18 @@ button_press_event_cb(GtkWidget *widget,
- button_press_event_cb(GtkWidget *widget, GdkEventButton *event)
- {
-     nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);
-     if (!window)
-         return FALSE;
- 
-     window->OnButtonPressEvent(widget, event);
- 
-+    gtk_widget_set_extension_events (GTK_WIDGET(widget),
-+                                     GDK_EXTENSION_EVENTS_ALL);
-     return TRUE;
- }
- 
- /* static */
- gboolean
- button_release_event_cb(GtkWidget *widget, GdkEventButton *event)
- {
-     nsWindow *window = GetFirstNSWindowForGDKWindow(event->window);
 diff -r 2ab8ad95e549 dom/public/idl/events/nsIDOMMouseWithPressureEvent.idl
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
 +++ b/dom/public/idl/events/nsIDOMMouseWithPressureEvent.idl	Sun Nov 23 14:40:19 2008 -0500
