@@ -188,6 +188,7 @@ qt/attachment.cgi?id=347303.diff
 qt/attachment.cgi?id=348163.diff
 # until bug 464890 not fixed
 qt/attachment.cgi?id=348950.diff
+qt/mozqwidget_leak.diff
 
 #tested mouse pressure
 BMO_attached/090_bug428988_pressure_v3.diff
