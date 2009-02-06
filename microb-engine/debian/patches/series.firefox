@@ -1,1 +1,3 @@
 buildconfig/015_jemalloc_sb.diff
+buildconfig/scratchbox.hg.workaround.diff
+

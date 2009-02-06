@@ -32,7 +32,7 @@ ac_add_options --with-system-bz2
 ac_add_options --disable-js-binary
 
    #* Missing environment
-ac_add_options --disable-crashreporter --disable-mochitest --disable-dbus
+ac_add_options --disable-crashreporter --disable-mochitest
 
 
    #* Micro Base

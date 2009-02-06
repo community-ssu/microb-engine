@@ -2,11 +2,11 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
 ===================================================================
 --- mozilla.orig/xpcom/base/nsMemoryImpl.cpp
 +++ mozilla/xpcom/base/nsMemoryImpl.cpp
-@@ -181,16 +190,20 @@
- nsMemoryImpl::HeapMinimize(PRBool aImmediate)
- {
-     return FlushMemory(NS_LITERAL_STRING("heap-minimize").get(), aImmediate);
- }
+@@ -187,16 +187,20 @@
+  * and after all, 40mb should be good enough for any web app
+  * unless it's part of an office suite.
+  */
+ static const int kRequiredMemory = 0x3000000;
  
  NS_IMETHODIMP
  nsMemoryImpl::IsLowMemory(PRBool *result)
@@ -20,10 +20,10 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
      GlobalMemoryStatus(&stat);
      *result = ((float)stat.dwAvailPhys / stat.dwTotalPhys) < 0.1;
  #elif defined(XP_WIN)
-     MEMORYSTATUS stat;
-     GlobalMemoryStatus(&stat);
-     *result = ((float)stat.dwAvailPageFile / stat.dwTotalPageFile) < 0.1;
-@@ -205,16 +218,22 @@
+     MEMORYSTATUSEX stat;
+     stat.dwLength = sizeof stat;
+     GlobalMemoryStatusEx(&stat);
+@@ -213,16 +217,22 @@
      close(fd);
      *result = (c == '1');
  #else
@@ -46,7 +46,7 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
      return sGlobalMemoryFlusher.Init();
  #else
      return NS_OK;
-@@ -281,16 +300,19 @@
+@@ -289,16 +299,19 @@
  nsMemoryImpl::FlushEvent::Run()
  {
      sGlobalMemory.RunFlushers(mReason);
@@ -65,7 +65,7 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
  XPCOM_API(void*)
  NS_Alloc(PRSize size)
  {
-     void* result = MALLOC1(size);
+     if (size > PR_INT32_MAX)
 Index: mozilla/xpcom/base/nsIMemory.idl
 ===================================================================
 --- mozilla.orig/xpcom/base/nsIMemory.idl

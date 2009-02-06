@@ -3,10 +3,9 @@ buildconfig/008_BrowserNotUsedHeaders.diff
 buildconfig/009_BrowserLibregTiers.diff
 buildconfig/011_BuildWithGCC3.4.4.diff
 buildconfig/015_jemalloc_sb.diff
-buildconfig/020_cs2007_rpath_wr.diff
 buildconfig/023_PC_CONFIG_sqlite_neededby_libsoftokn.diff
-buildconfig/Bug465066_attachment.cgi?id=348321.diff
 buildconfig/Bug465170_LIR_gcc3.4.4_old.diff
+buildconfig/b13132800742_fda500192569.diff
 
 branding/010_MICROB_paths_and_names.diff
 branding/020_BUG349921_toolkit_branding.diff
@@ -117,8 +116,6 @@ extensions/040_OldSpatialNavigationModule.diff
 # Latest tracemonkey update
 #arm/tt_latest.diff
 
-#BMO_attached/090_bug428988_pressure.diff
-
 #localization/bug87973.browser.localization.diff
 localization/bug87973.firefox.hardcoded.diff
 
@@ -175,29 +172,31 @@ theeming/100_XUL_shortuctKeysDisable.diff
 #BMO_attached/attachment.cgi?id=346166.diff
 
 BMO_attached/vlad-parser.diff
-BMO_attached/690_bug459780.broken.events.diff
 
 # bug 466265
-BMO_attached/attachment.cgi?id=349551.diff
 
 # until bug 463872 not fixed
-qt/attachment.cgi?id=347124.diff
 # until bug 464050 not fixed
 qt/attachment.cgi?id=347303.diff
 # until bug 464880 not fixed
 qt/attachment.cgi?id=348163.diff
 # until bug 464890 not fixed
 qt/attachment.cgi?id=348950.diff
-qt/mozqwidget_leak.diff
 
 #tested mouse pressure
 BMO_attached/090_bug428988_pressure_v3.diff
-
-buildconfig/bug468824.diff
 
 theeming/110_hildon_cursors.diff
 
 BMO_attached/protocol_handling_hildon.diff
 
 not_sorted/92422.workaround.diff
+
+BMO_attached/bug472821.diff
+
+not_sorted/disable_native_offscreen.diff
+
+crashes/mDrawingarea_crash.diff
+
+perf_tweaks/attachment.cgi?id=40603.diff
 

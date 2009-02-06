@@ -11,7 +11,7 @@ ac_add_options --disable-tests
 ac_add_options --with-branding=branding/microb
 
    #* Missing environment
-ac_add_options --disable-crashreporter --disable-mochitest --disable-dbus
+ac_add_options --disable-crashreporter --disable-mochitest
 
 
 ac_add_options --disable-pedantic

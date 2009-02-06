@@ -1,4 +1,4 @@
-etc
+etc/*
 ../prefs/*.js usr/lib/microb-engine/greprefs
 usr/lib/microb-engine/modules
 usr/lib/microb-engine/defaults

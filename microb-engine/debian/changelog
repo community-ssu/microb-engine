@@ -1,38 +1,220 @@
-microb-engine (20081106-18) unstable; urgency=low
+microb-engine (20090203-8) unstable; urgency=low
 
-  * Fix leak of qmozwidget. 
+  * Fixes: NB#99847 webmessenger.yahoo.com is not rendered, there is only	visible blank page
+           Also opening .swf files 
 
- -- Tobias Hunger <tobias.hunger@gmail.com>  Fri, 16 Jan 2009 14:13:26 +0100
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 06 Feb 2009 13:05:37 +0200
 
-microb-engine (20081106-17) unstable; urgency=low
+microb-engine (20090203-7) unstable; urgency=low
 
-  * Fixes: NB#95508 Web page does not have focus immediately after page	loading 
+  * Updated upstream tag, fixed plugins opening in full document mode
 
- -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 17 Dec 2008 11:15:04 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 05 Feb 2009 21:04:45 +0200
 
-microb-engine (20081106-16) unstable; urgency=low
+microb-engine (20090203-6) unstable; urgency=low
 
-  * Fixes: NB#95508 Web page does not have focus immediately after page loading
+  * Fixes: NB#99858 URL field and Internet keywords feature change (form Google's "I'm Feeling Lucky" service to Google's Search Results Page)
 
- -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Mon, 15 Dec 2008 17:04:59 +0200
+ -- Oleg Romashin <romaxa@gmail.com>  Wed,  4 Feb 2009 11:41:59 +0200
 
-microb-engine (20081106-15) unstable; urgency=low
+microb-engine (20090203-5) unstable; urgency=low
 
-  * Fixes: NB#92099 Browser close resets Complete browsing history
+  * Fixed wrong preference type, should be int 
 
- -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 14 Dec 2008 10:44:16 +0200
+ -- Oleg Romashin <romaxa@gmail.com>  Wed, 04 Feb 2009 10:30:12 -0500
 
-microb-engine (20081106-14) unstable; urgency=low
+microb-engine (20090203-4) unstable; urgency=low
 
-  * Fixes: NB#92422 Internet keyword doesn't load page immediately. workaround r=romaxa.
+  * Fixed bug 100084 on engine side.
 
- -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 13 Dec 2008 10:38:32 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 04 Feb 2009 08:43:05 +0200
 
-microb-engine (20081106-13) unstable; urgency=low
+microb-engine (20090203-3) unstable; urgency=low
 
-  * Fixes: NB#94428 additional crash fix 
+  * Fixed spatialnavigation building with new nsIFrame definition 
 
- -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 12 Dec 2008 11:49:46 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 04 Feb 2009 04:57:00 +0200
+
+microb-engine (20090203-2) unstable; urgency=low
+
+  * Updated patch to latest trunk sources
+
+ -- Oleg Romashin <romaxa@gmail.com>  Wed, 04 Feb 2009 04:34:08 -0500
+
+microb-engine (20090203-1) unstable; urgency=low
+
+  * Updated to trunk 59f04c021bb8, 2009-02-03 10:40
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 03 Feb 2009 20:55:09 +0200
+
+microb-engine (20090109-9) unstable; urgency=low
+
+  * Fix branch name and tag for build.
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Mon, 19 Jan 2009 19:15:33 +0200
+
+microb-engine (20090109-8) unstable; urgency=low
+
+  * Fixes: NB#98094 Nonreproducible crash while using flash test cases
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 19 Jan 2009 14:56:50 +0200
+
+microb-engine (20090109-7) unstable; urgency=low
+
+  * Fixes: NB#98037 We need to have option to work without any offscreen XPixmaps by preference 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 14 Jan 2009 14:38:06 -0500
+
+microb-engine (20090109-6) unstable; urgency=low
+
+  * Fixes: NB#97454 Mouse hover interaction over Flash - property to enforce windowless mode
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 12 Jan 2009 11:28:41 +0200
+
+microb-engine (20090109-5) unstable; urgency=low
+
+  * Fixed bug 471359 trunk build broken with "libxul.so: hidden symbol `deflate' isn't defined"
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 10 Jan 2009 10:24:07 +0200
+
+microb-engine (20090109-4) unstable; urgency=low
+
+  * Fixed build bustage caused by bug BMO 467583
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 09 Jan 2009 22:48:53 +0200
+
+microb-engine (20090109-3) unstable; urgency=low
+
+  * Fixed right path to patch
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 09 Jan 2009 11:47:26 +0200
+
+microb-engine (20090109-2) unstable; urgency=low
+
+  * Fixed patchset, and building problem with new engine 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 09 Jan 2009 11:26:31 +0200
+
+microb-engine (20090109-1) unstable; urgency=low
+
+  * Updated to mozilla-central trunk e62d412d6251
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 09 Jan 2009 02:19:44 +0200
+
+microb-engine (20081221.c-9) unstable; urgency=low
+
+  * Retag upstream to restore version order
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Mon, 29 Dec 2008 18:58:44 +0200
+
+microb-engine (20081221-8) unstable; urgency=low
+
+  * Updated changelog
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Mon, 29 Dec 2008 18:41:11 +0200
+
+microb-engine (20081221-7) unstable; urgency=low
+
+  * Fixes: NB#96705 DEB_BUILD_OPTIONS=parallel=n is more parallel than n
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Mon, 29 Dec 2008 15:13:59 +0200
+
+microb-engine (20081221-6) unstable; urgency=low
+
+  * Retag to upstream with more shorter version
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 29 Dec 2008 11:39:03 +0200
+
+microb-engine (20081221.b1251b9b986e-5) unstable; urgency=low
+
+  * Fixed missing -R flag. no bug 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 24 Dec 2008 18:11:22 +0200
+
+microb-engine (20081221.b1251b9b986e-4) unstable; urgency=low
+
+  * Fixed in 20081106-17: NB#95508 Web page does not have focus
+    immediately after page loading
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 23 Dec 2008 11:11:02 +0200
+
+microb-engine (20081221.b1251b9b986e-3) unstable; urgency=low
+
+  * Fixed in 20081106-15: NB#92099 Browser close resets Complete browsing
+    history
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 23 Dec 2008 11:05:29 +0200
+
+microb-engine (20081221.b1251b9b986e-2) unstable; urgency=low
+
+  * Fixed in 20081106-14: NB#92422 Internet keyword doesn't load page
+    immediately. workaround. r=romaxa.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 23 Dec 2008 11:00:08 +0200
+
+microb-engine (20081221.b1251b9b986e-1) unstable; urgency=low
+
+  * Updated to trunk 20081221.b1251b9b986e 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 21 Dec 2008 13:21:10 +0200
+
+microb-engine (20081217.57469d8d6668-3) unstable; urgency=low
+
+  * Added patch for building browser with old mercurial
+  * Fixed packaging of firefox package
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 18 Dec 2008 01:22:03 +0200
+
+microb-engine (20081217.57469d8d6668-2) unstable; urgency=low
+
+  * Fixed building with firefox config
+  * Enable unpacking with mercurial repository
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 18 Dec 2008 00:57:32 +0200
+
+microb-engine (20081217.57469d8d6668-1) unstable; urgency=low
+
+  * Updated to trunk 57469d8d6668
+
+ -- Oleg Romashin <romaxa@gmail.com>  Wed, 17 Dec 2008 21:50:55 -0500
+
+microb-engine (20081211.b0ddbbdd62e0-2) unstable; urgency=low
+
+  * Fixed in 20081106-13: NB#94428 additional crash fix 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 12 Dec 2008 11:53:57 +0200
+
+microb-engine (20081211.b0ddbbdd62e0-1) unstable; urgency=low
+
+  * Updated to trunk upstream/20081211.b0ddbbdd62e0
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 12 Dec 2008 02:20:54 +0200
+
+microb-engine (20081211.76ca5cd4892f-1) unstable; urgency=low
+
+  * Updated to trunk upstream/20081211.76ca5cd4892f
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 11 Dec 2008 23:42:32 +0200
+
+microb-engine (20081203-2.1) unstable; urgency=low
+
+  * Fixed integration building
+
+ -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Dec 2008 21:53:00 -0500
+
+microb-engine (20081203-2) unstable; urgency=low
+
+  * Added printing of current directories until bug with tarball packing not fixed 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 03 Dec 2008 21:52:01 +0200
+
+microb-engine (20081203-1) unstable; urgency=low
+
+  * Updated to trunk e4cc992e5dd4
+  * Fixed rules script for missing trunkupdates
+  * First tag with hg branch
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 03 Dec 2008 09:24:47 +0200
 
 microb-engine (20081106-12) unstable; urgency=low
 
@@ -43,7 +225,8 @@ microb-engine (20081106-12) unstable; urgency=low
 
 microb-engine (20081106-11) unstable; urgency=low
 
-  * Fixes: NB#94428 [NEWIMPL] Enable mouse cursors in hover and manipulation modes
+  * Fixed in 20081106-11: NB#94428 [NEWIMPL] Enable mouse cursors in hover
+    and manipulation modes
 
  -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 11 Dec 2008 10:54:01 +0200
 
@@ -63,7 +246,7 @@ microb-engine (20081106-8) unstable; urgency=low
 
   *NB#89851 There is no information during installing invalid add-on. Missing file with information added. 
 
- -- Egor Starkov <starkov.egor@gmail.com>  Mon,  1 Dec 2008 22:18:05 +0200
+ -- Egor Starkov <egor.starkov@nokia.com>  Mon,  1 Dec 2008 22:18:05 +0200
 
 microb-engine (20081106-7) unstable; urgency=low
 

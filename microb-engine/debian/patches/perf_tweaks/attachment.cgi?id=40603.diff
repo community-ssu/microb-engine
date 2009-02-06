@@ -1,0 +1,318 @@
+#Proposed way to render plugins content directly to gfx surface
+diff -r 3f1335e93839 layout/generic/nsObjectFrame.cpp
+--- a/layout/generic/nsObjectFrame.cpp	Wed Feb 04 08:39:56 2009 +0200
++++ b/layout/generic/nsObjectFrame.cpp	Wed Feb 04 08:42:02 2009 +0200
+@@ -140,6 +140,8 @@
+ #include "gfxWindowsSurface.h"
+ #endif
+ 
++#include "gfxImageSurface.h"
++
+ // accessibility support
+ #ifdef ACCESSIBILITY
+ #include "nsIAccessibilityService.h"
+@@ -493,6 +495,7 @@ private:
+   PRUint16          mNumCachedParams;
+   char              **mCachedAttrParamNames;
+   char              **mCachedAttrParamValues;
++  PRPackedBool                mDrawToOriginalSurface;
+ 
+   // pointer to wrapper for nsIDOMContextMenuListener
+   nsRefPtr<nsPluginDOMContextMenuListener> mCXMenuListener;
+@@ -536,6 +539,10 @@ private:
+     const nsIntRect& mDirtyRect;
+   };
+ #endif
++  nsresult NativeImageDraw(gfxContext *aContext,
++                           nsPluginWindow* mWindow,
++                           const nsIntSize& mPluginSize,
++                           const nsIntRect& mDirtyRect);
+ 
+ };
+ 
+@@ -2212,6 +2219,7 @@ nsPluginInstanceOwner::nsPluginInstanceO
+   mCachedAttrParamValues = nsnull;
+   mDestroyWidget = PR_FALSE;
+   mTimerCanceled = PR_TRUE;
++  mDrawToOriginalSurface = PR_FALSE;
+ 
+   PR_LOG(nsObjectFrameLM, PR_LOG_DEBUG,
+          ("nsPluginInstanceOwner %p created\n", this));
+@@ -4228,7 +4236,6 @@ void nsPluginInstanceOwner::Paint(gfxCon
+   nsPluginWindow* window;
+   GetWindow(window);
+ 
+-  Renderer renderer(window, mInstance, pluginSize, pluginDirtyRect);
+   PRUint32 rendererFlags =
+     Renderer::DRAW_SUPPORTS_OFFSET |
+     Renderer::DRAW_SUPPORTS_CLIP_RECT |
+@@ -4245,6 +4252,15 @@ void nsPluginInstanceOwner::Paint(gfxCon
+   gfxContextAutoSaveRestore autoSR(aContext);
+   aContext->Translate(pluginRect.pos);
+ 
++  PRBool simpleImageRender = PR_FALSE;
++  mInstance->GetValue(nsPluginInstanceVariable_WindowlessLocalBool,
++                      (void *)&simpleImageRender);
++  if (simpleImageRender) {
++    NativeImageDraw(aContext, window, pluginSize, pluginDirtyRect);
++    return;
++  }
++
++  Renderer renderer(window, mInstance, pluginSize, pluginDirtyRect);
+   renderer.Draw(aContext, window->width, window->height,
+                 rendererFlags, nsnull);
+ }
+@@ -4266,6 +4282,120 @@ DepthOfVisual(const Screen* screen, cons
+ }
+ #endif
+ 
++nsresult
++nsPluginInstanceOwner::NativeImageDraw(gfxContext *aContext,
++                                       nsPluginWindow* mWindow,
++                                       const nsIntSize& mPluginSize,
++                                       const nsIntRect& mDirtyRect)
++
++{
++  PRBool doupdatewindow = PR_FALSE;
++
++  int offsetX = 0, offsetY = 0;
++  if (mWindow->x != offsetX || mWindow->y != offsetY) {
++    mWindow->x = offsetX;
++    mWindow->y = offsetY;
++    doupdatewindow = PR_TRUE;
++  }
++
++  if (nsIntSize(mWindow->width, mWindow->height) != mPluginSize) {
++    mWindow->width = mPluginSize.width;
++    mWindow->height = mPluginSize.height;
++    doupdatewindow = PR_TRUE;
++  }
++
++  // The clip rect is relative to drawable top-left.
++  nsIntRect clipRect;
++  // nsPluginRect members are unsigned, but
++  // we should have been given a clip if an offset is -ve.
++  NS_ASSERTION(offsetX >= 0 && offsetY >= 0,
++               "Clip rectangle offsets are negative!");
++  clipRect.x = offsetX;
++  clipRect.y = offsetY;
++  clipRect.width  = mWindow->width;
++  clipRect.height = mWindow->height;
++
++  nsPluginRect newClipRect;
++  newClipRect.left = clipRect.x;
++  newClipRect.top = clipRect.y;
++  newClipRect.right = clipRect.XMost();
++  newClipRect.bottom = clipRect.YMost();
++  if (mWindow->clipRect.left    != newClipRect.left   ||
++      mWindow->clipRect.top     != newClipRect.top    ||
++      mWindow->clipRect.right   != newClipRect.right  ||
++      mWindow->clipRect.bottom  != newClipRect.bottom) {
++    mWindow->clipRect = newClipRect;
++    doupdatewindow = PR_TRUE;
++  }
++
++  NPSetWindowCallbackStruct* ws_info =
++    static_cast<NPSetWindowCallbackStruct*>(mWindow->ws_info);
++  ws_info->visual = 0;
++  ws_info->colormap = 0;
++  ws_info->depth = 24;
++
++  doupdatewindow = PR_TRUE;
++
++  if (doupdatewindow)
++      mInstance->SetWindow(mWindow);
++
++#ifdef MOZ_X11
++  // Translate the dirty rect to drawable coordinates.
++  nsIntRect dirtyRect = mDirtyRect + nsIntPoint(offsetX, offsetY);
++  // Intersect the dirty rect with the clip rect to ensure that it lies within
++  // the drawable.
++  if (!dirtyRect.IntersectRect(dirtyRect, clipRect))
++    return NS_OK;
++
++  nsPluginEvent pluginEvent;
++  XGraphicsExposeEvent& exposeEvent = pluginEvent.event.xgraphicsexpose;
++  // set the drawing info
++  exposeEvent.type = GraphicsExpose;
++  exposeEvent.display = 0;
++  exposeEvent.x = mDirtyRect.x + offsetX;
++  exposeEvent.y = mDirtyRect.y + offsetY;
++  exposeEvent.width  = mDirtyRect.width;
++  exposeEvent.height = mDirtyRect.height;
++  exposeEvent.count = 0;
++  // information not set:
++  exposeEvent.serial = 0;
++  exposeEvent.send_event = False;
++  exposeEvent.major_code = 0;
++  exposeEvent.minor_code = 0;
++
++  PRBool eventHandled = PR_FALSE;
++
++  if (!mDrawToOriginalSurface) {
++    // Create temporary image surface
++    nsRefPtr<gfxImageSurface> surface =
++        new gfxImageSurface(gfxIntSize(mWindow->width, mWindow->height),
++                            gfxASurface::ImageFormatRGB24);
++    // Set surface data pointer as drawable member
++    exposeEvent.drawable = (Drawable)surface->Data();
++    // Draw plugin content to temp surface
++    mInstance->HandleEvent(&pluginEvent, &eventHandled);
++    // Copy temp surface to original surface
++    aContext->SetSource(surface);
++    aContext->Paint();
++  } else {
++    // Get Image surface from original context
++    nsRefPtr<gfxImageSurface> surface = static_cast<gfxImageSurface*>(aContext->OriginalSurface());
++    NS_ENSURE_TRUE(surface, NS_ERROR_OUT_OF_MEMORY);
++    // Calculate src buffer pointer according to translation
++    // and set it as drawable member
++    gfxMatrix matr = aContext->CurrentMatrix();
++    gfxPoint pt = matr.GetTranslation();
++    exposeEvent.drawable = (Drawable)((char *)surface->Data() + 4*(int)pt.y*(int)surface->Width() + 4*(int)pt.x);
++    // Hack: store Bpl of original surface into serial member
++    exposeEvent.serial = 4*(int)surface->Width();
++    // Draw plugin content to temp surface
++    mInstance->HandleEvent(&pluginEvent, &eventHandled);
++  }
++#endif
++
++  return NS_OK;
++}
++
+ #if defined(MOZ_WIDGET_GTK2)
+ nsresult
+ nsPluginInstanceOwner::Renderer::NativeDraw(GdkDrawable * drawable, 
+@@ -4540,6 +4670,8 @@ nsresult nsPluginInstanceOwner::Init(nsP
+     
+     curView = curView->GetParent();
+   }
++  mDrawToOriginalSurface =
++    nsContentUtils::GetBoolPref("layout.draw.plugins.directly", mDrawToOriginalSurface);
+ 
+   return NS_OK; 
+ }
+diff -r 3f1335e93839 modules/plugin/base/public/npapi.h
+--- a/modules/plugin/base/public/npapi.h	Wed Feb 04 08:39:56 2009 +0200
++++ b/modules/plugin/base/public/npapi.h	Wed Feb 04 08:42:02 2009 +0200
+@@ -333,6 +333,7 @@ typedef enum {
+   /* Used for negotiating drawing models */
+   , NPPVpluginDrawingModel = 1000
+ #endif
++  , NPPVpluginWindowlessLocalBool = 2002
+ } NPPVariable;
+ 
+ /*
+@@ -371,6 +372,7 @@ typedef enum {
+ #endif
+   , NPNVsupportsCoreGraphicsBool = 2001
+ #endif
++  , NPNVSupportsWindowlessLocal = 2002
+ } NPNVariable;
+ 
+ typedef enum {
+@@ -580,6 +582,7 @@ enum NPEventType {
+ #define NPVERS_HAS_PLUGIN_THREAD_ASYNC_CALL 19
+ #define NPVERS_HAS_ALL_NETWORK_STREAMS      20
+ #define NPVERS_HAS_URL_AND_AUTH_INFO        21
++#define NPVERS_HAS_WINDOWLESS_LOCAL         22
+ 
+ /*----------------------------------------------------------------------*/
+ /*                        Function Prototypes                           */
+diff -r 3f1335e93839 modules/plugin/base/public/nsplugindefs.h
+--- a/modules/plugin/base/public/nsplugindefs.h	Wed Feb 04 08:39:56 2009 +0200
++++ b/modules/plugin/base/public/nsplugindefs.h	Wed Feb 04 08:42:02 2009 +0200
+@@ -204,6 +204,7 @@ enum nsPluginInstanceVariable {
+ #ifdef XP_MACOSX
+     , nsPluginInstanceVariable_DrawingModel          = 20
+ #endif
++    , nsPluginInstanceVariable_WindowlessLocalBool   = 21
+ };
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+diff -r 3f1335e93839 modules/plugin/base/src/nsNPAPIPlugin.cpp
+--- a/modules/plugin/base/src/nsNPAPIPlugin.cpp	Wed Feb 04 08:39:56 2009 +0200
++++ b/modules/plugin/base/src/nsNPAPIPlugin.cpp	Wed Feb 04 08:42:02 2009 +0200
+@@ -2052,6 +2052,15 @@ _getvalue(NPP npp, NPNVariable variable,
+     return NPERR_GENERIC_ERROR;
+   }
+ 
++  case NPNVSupportsWindowlessLocal: {
++#if defined(XP_WIN) || defined(XP_MACOSX) || (defined(MOZ_X11) && defined(MOZ_WIDGET_GTK2))
++    *(NPBool*)result = PR_TRUE;
++#else
++    *(NPBool*)result = PR_FALSE;
++#endif
++    return NPERR_NO_ERROR;
++  }
++
+ #ifdef XP_MACOSX
+   case NPNVpluginDrawingModel: {
+     if (npp) {
+@@ -2126,6 +2135,11 @@ _setvalue(NPP npp, NPPVariable variable,
+ #endif
+     }
+ 
++    case NPPVpluginWindowlessLocalBool: {
++      NPBool bWindowlessLocal = (result != nsnull);
++      return inst->SetWindowlessLocal(bWindowlessLocal);
++    }
++
+     case NPPVpluginTransparentBool: {
+       NPBool bTransparent = (result != nsnull);
+       return inst->SetTransparent(bTransparent);
+diff -r 3f1335e93839 modules/plugin/base/src/nsNPAPIPluginInstance.cpp
+--- a/modules/plugin/base/src/nsNPAPIPluginInstance.cpp	Wed Feb 04 08:39:56 2009 +0200
++++ b/modules/plugin/base/src/nsNPAPIPluginInstance.cpp	Wed Feb 04 08:42:02 2009 +0200
+@@ -764,6 +764,7 @@ nsNPAPIPluginInstance::nsNPAPIPluginInst
+ #endif
+ #endif
+     mWindowless(PR_FALSE),
++    mWindowlessLocal(PR_FALSE),
+     mTransparent(PR_FALSE),
+     mStarted(PR_FALSE),
+     mCached(PR_FALSE),
+@@ -1256,6 +1257,10 @@ NS_IMETHODIMP nsNPAPIPluginInstance::Get
+       *(PRBool *)value = mWindowless;
+       break;
+ 
++    case nsPluginInstanceVariable_WindowlessLocalBool:
++      *(PRBool *)value = mWindowlessLocal;
++      break;
++
+     case nsPluginInstanceVariable_TransparentBool:
+       *(PRBool *)value = mTransparent;
+       break;
+@@ -1307,6 +1312,12 @@ NPError nsNPAPIPluginInstance::SetWindow
+   return NPERR_NO_ERROR;
+ }
+ 
++NPError nsNPAPIPluginInstance::SetWindowlessLocal(PRBool aWindowlessLocal)
++{
++  mWindowlessLocal = aWindowlessLocal;
++  return NPERR_NO_ERROR;
++}
++
+ NPError nsNPAPIPluginInstance::SetTransparent(PRBool aTransparent)
+ {
+   mTransparent = aTransparent;
+diff -r 3f1335e93839 modules/plugin/base/src/nsNPAPIPluginInstance.h
+--- a/modules/plugin/base/src/nsNPAPIPluginInstance.h	Wed Feb 04 08:39:56 2009 +0200
++++ b/modules/plugin/base/src/nsNPAPIPluginInstance.h	Wed Feb 04 08:42:02 2009 +0200
+@@ -96,6 +96,8 @@ public:
+ 
+     NPError SetWindowless(PRBool aWindowless);
+ 
++    NPError SetWindowlessLocal(PRBool aWindowlessLocal);
++
+     NPError SetTransparent(PRBool aTransparent);
+ 
+     NPError SetWantsAllNetworkStreams(PRBool aWantsAllNetworkStreams);
+@@ -158,6 +160,7 @@ protected:
+     // these are used to store the windowless properties
+     // which the browser will later query
+     PRPackedBool  mWindowless;
++    PRPackedBool  mWindowlessLocal;
+     PRPackedBool  mTransparent;
+     PRPackedBool  mStarted;
+     PRPackedBool  mCached;

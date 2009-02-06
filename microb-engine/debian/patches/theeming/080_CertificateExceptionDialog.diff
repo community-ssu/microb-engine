@@ -2,14 +2,14 @@ Index: mozilla/security/manager/pki/resources/content/exceptionDialog.js
 ===================================================================
 --- mozilla.orig/security/manager/pki/resources/content/exceptionDialog.js
 +++ mozilla/security/manager/pki/resources/content/exceptionDialog.js
-@@ -91,45 +91,48 @@
-              getService(Components.interfaces.nsIPrivateBrowsingService);
-     if (pb.privateBrowsingEnabled) {
-       var permanentCheckbox = document.getElementById("permanent");
-       permanentCheckbox.setAttribute("disabled", "true");
-       permanentCheckbox.removeAttribute("checked");
-     }
-   } catch (ex) {}
+@@ -78,45 +78,48 @@
+   gPKIBundle = srGetStrBundle("chrome://pippki/locale/pippki.properties");
+ 
+   var brandName = gBundleBrand.GetStringFromName("brandShortName");
+   
+   setText("warningText", gPKIBundle.formatStringFromName("addExceptionBrandedWarning2",
+                                                          [brandName], 1));
+   gDialog.getButton("extra1").disabled = true;
    
 -  var args = window.arguments;
 -  if (args && args[0]) {
@@ -59,14 +59,14 @@ Index: mozilla/security/manager/pki/resources/content/exceptionDialog.js
    try {
      var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
                           .getService(Components.interfaces.nsIRecentBadCertsService);
-@@ -373,14 +376,18 @@
+@@ -369,19 +372,23 @@
  
    var uri = getURI();
    overrideService.rememberValidityOverride(
      uri.asciiHost, uri.port,
      gCert,
      flags,
-     !permanentCheckbox.checked);
+     !shouldStorePermanently);
    
 -  var args = window.arguments;
 -  if (args && args[0])
@@ -81,3 +81,8 @@ Index: mozilla/security/manager/pki/resources/content/exceptionDialog.js
    
    gDialog.acceptDialog();
  }
+ 
+ /**
+  * Returns true if the private browsing mode is currently active and
+  * we have been instructed to handle it.
+  */

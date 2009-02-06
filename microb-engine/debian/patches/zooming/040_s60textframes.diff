@@ -2,7 +2,7 @@ Index: mozilla/layout/generic/nsTextFrameThebes.cpp
 ===================================================================
 --- mozilla.orig/layout/generic/nsTextFrameThebes.cpp
 +++ mozilla/layout/generic/nsTextFrameThebes.cpp
-@@ -5816,29 +5816,36 @@
+@@ -5929,29 +5929,36 @@
      gfxSkipCharsIterator iter(provider.GetStart());
      iter.SetOriginalOffset(offset + limitLength);
      transformedLength = iter.GetSkippedOffset() - transformedOffset;
@@ -40,7 +40,7 @@ Index: mozilla/layout/generic/nsTextFrameThebes.cpp
    PRInt32 charsFit = end.GetOriginalOffset() - offset;
    if (offset + charsFit == newLineOffset) {
      // We broke before a trailing preformatted '\n'. The newline should
-@@ -6016,17 +6023,18 @@
+@@ -6128,17 +6135,18 @@
    }
    if (completedFirstLetter) {
      lineLayout.SetFirstLetterStyleOK(PR_FALSE);
@@ -64,7 +64,7 @@ Index: mozilla/layout/base/nsPresContext.h
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.h
 +++ mozilla/layout/base/nsPresContext.h
-@@ -776,16 +776,18 @@
+@@ -768,16 +768,18 @@
    virtual PRBool HasAuthorSpecifiedRules(nsIFrame *aFrame, PRUint32 ruleTypeMask) const;
  
    // Is it OK to let the page specify colors and backgrounds?
@@ -76,14 +76,14 @@ Index: mozilla/layout/base/nsPresContext.h
 +  PRBool           FitTextToWidth() const { return mFitTextToWidth; }
 +  PRInt32          ScreenWidth() const { return mScreenWidth; }
    
-   gfxUserFontSet* GetUserFontSet();
-   void SetUserFontSet(gfxUserFontSet *aUserFontSet);
- 
-   void NotifyInvalidation(const nsRect& aRect, PRBool aIsCrossDoc);
-   void FireDOMPaintEvent();
- 
- protected:
-@@ -831,16 +833,17 @@
+   virtual NS_HIDDEN_(gfxUserFontSet*) GetUserFontSetExternal();
+   NS_HIDDEN_(gfxUserFontSet*) GetUserFontSetInternal();
+ #ifdef _IMPL_NS_LAYOUT
+   gfxUserFontSet* GetUserFontSet() { return GetUserFontSetInternal(); }
+ #else
+   gfxUserFontSet* GetUserFontSet() { return GetUserFontSetExternal(); }
+ #endif
+@@ -851,16 +853,17 @@
    ImageLoaderTable      mBorderImageLoaders;
    nsWeakPtr             mContainer;
  
@@ -101,11 +101,11 @@ Index: mozilla/layout/base/nsPresContext.h
    nsCOMPtr<nsITheme> mTheme;
    nsCOMPtr<nsILanguageAtomService> mLangService;
    nsCOMPtr<nsIPrintSettings> mPrintSettings;
-@@ -911,16 +914,17 @@
-   unsigned              mPendingThemeChanged : 1;
-   unsigned              mPendingMediaFeatureValuesChanged : 1;
-   unsigned              mPrefChangePendingNeedsReflow : 1;
-   unsigned              mRenderedPositionVaryingContent : 1;
+@@ -939,16 +942,17 @@
+   // Has GetUserFontSet() been called?
+   unsigned              mGetUserFontSetCalled : 1;
+   // Do we currently have an event posted to call FlushUserFontSet?
+   unsigned              mPostedFlushUserFontSet : 1;
  
    // resize reflow is supressed when the only change has been to zoom
    // the document rather than to change the document's dimensions
@@ -123,14 +123,14 @@ Index: mozilla/layout/base/nsPresContext.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.cpp
 +++ mozilla/layout/base/nsPresContext.cpp
-@@ -178,17 +178,18 @@
-                           NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
-     mDefaultMonospaceFont("monospace", NS_FONT_STYLE_NORMAL,
-                           NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
+@@ -192,17 +192,18 @@
+                           NS_FONT_STRETCH_NORMAL, 0, 0),
      mDefaultCursiveFont("cursive", NS_FONT_STYLE_NORMAL,
-                         NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
+                         NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL,
+                         NS_FONT_STRETCH_NORMAL, 0, 0),
      mDefaultFantasyFont("fantasy", NS_FONT_STYLE_NORMAL,
-                         NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL, 0, 0),
+                         NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL,
+                         NS_FONT_STRETCH_NORMAL, 0, 0),
      mCanPaginatedScroll(PR_FALSE),
 -    mIsRootPaginatedDocument(PR_FALSE), mSupressResizeReflow(PR_FALSE)
 +    mIsRootPaginatedDocument(PR_FALSE), mSupressResizeReflow(PR_FALSE),
@@ -143,7 +143,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
  
    SetBackgroundImageDraw(PR_TRUE);		// always draw the background
    SetBackgroundColorDraw(PR_TRUE);
-@@ -276,16 +277,22 @@
+@@ -291,16 +292,22 @@
  #ifdef IBMBIDI
    nsContentUtils::UnregisterPrefCallback("bidi.", PrefChangedCallback, this);
  
@@ -162,11 +162,11 @@ Index: mozilla/layout/base/nsPresContext.cpp
    NS_IF_RELEASE(mDeviceContext);
    NS_IF_RELEASE(mLookAndFeel);
    NS_IF_RELEASE(mLangGroup);
-   
-   SetUserFontSet(nsnull);
  }
  
-@@ -591,16 +598,23 @@
+ NS_IMPL_CYCLE_COLLECTION_CLASS(nsPresContext)
+ 
+@@ -607,16 +614,23 @@
      // get a presshell.
      return;
    }
@@ -190,7 +190,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
    GetDocumentColorPreferences();
  
    // * link colors
-@@ -743,16 +757,24 @@
+@@ -759,16 +773,24 @@
        nscoord height = NSToCoordRound(oldHeightDevPixels*AppUnitsPerDevPixel());
        vm->SetWindowDimensions(width, height);
  
@@ -215,7 +215,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
      // FIXME We could probably also handle changes to
      // browser.display.auto_quality_min_font_size here, but that
      // probably also requires clearing the text run cache, so don't
-@@ -860,16 +882,22 @@
+@@ -883,16 +905,22 @@
                                         this);
  #ifdef IBMBIDI
    nsContentUtils::RegisterPrefCallback("bidi.", PrefChangedCallback,

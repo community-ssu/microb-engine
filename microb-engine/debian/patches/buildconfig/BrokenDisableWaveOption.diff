@@ -1,0 +1,15 @@
+--- mozilla/configure.in.orig	2008-11-16 15:25:01.000000000 -0500
++++ mozilla/configure.in	2008-11-16 15:31:09.000000000 -0500
+@@ -5320,11 +5320,11 @@ if test -n "$MOZ_OGG"; then
+ fi
+ 
+ dnl ========================================================
+ dnl = Disable Wave decoder support
+ dnl ========================================================
+-MOZ_ARG_ENABLE_BOOL(wave,
++MOZ_ARG_DISABLE_BOOL(wave,
+ [  --disable-wave          Disable Wave decoder support],
+     MOZ_WAVE=,
+     MOZ_WAVE=1)
+ 
+ AC_SUBST(MOZ_WAVE)

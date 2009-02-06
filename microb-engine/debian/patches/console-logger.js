@@ -111,13 +111,13 @@ CLoggerService.prototype = {
     {
       if (!aObject.message) return;
 
+      var row = {};
       if (aObject instanceof Components.interfaces.nsIScriptError) {
         // filter chrome urls
         var nsIScriptError = Components.interfaces.nsIScriptError;
           
         // Is this error actually just a non-fatal warning?
         var warning = aObject.flags & nsIScriptError.warningFlag != 0;
-        row = {};
         var typetext = warning ? "typeWarning" : "typeError";
         row["typetext"] = this.mStrBundle ? this.mStrBundle.getString(typetext) : typetext;
         row["type"] = warning ? "warning" : "error";

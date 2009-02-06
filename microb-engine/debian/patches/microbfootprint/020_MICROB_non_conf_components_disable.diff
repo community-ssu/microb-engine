@@ -7,7 +7,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4749,16 +4749,21 @@
+@@ -4771,16 +4771,21 @@
      AC_DEFINE(TARGET_API_MAC_CARBON)
      TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
      TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4851,17 +4856,16 @@
+@@ -4873,17 +4878,16 @@
  AC_SUBST(GTK_CONFIG)
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6032,22 +6036,164 @@
+@@ -6120,22 +6124,164 @@
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,7 +212,7 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7480,35 +7626,54 @@
+@@ -7543,27 +7689,46 @@
     fi
  fi
  
@@ -221,7 +221,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOZ_CAIRO_LIBS)
  
  dnl ========================================================
-+dnl disable xpath services
++dnl disable lcms compilation
 +dnl ========================================================
 +MOZ_NO_LCMS=
 +MOZ_ARG_DISABLE_BOOL(lcms,
@@ -238,42 +238,34 @@ Index: mozilla/configure.in
  dnl Check for lcms
  dnl ========================================================
  
- MOZ_NATIVE_LCMS=
- MOZ_ARG_ENABLE_BOOL(system-lcms,
- [ --enable-system-lcms Use system lcms (located with pkgconfig)],
- MOZ_NATIVE_LCMS=1,
- MOZ_NATIVE_LCMS= )
- 
- if test -z "$MOZ_NATIVE_LCMS"
- then
-     LCMS_CFLAGS=
--    if test "$_WIN32_MSVC"; then
--        if test -z "$BUILD_STATIC_LIBS" -a -z "$MOZ_ENABLE_LIBXUL"; then
--            LCMS_CFLAGS=-DLCMS_DLL
--        fi
--        LCMS_LIBS='$(LIBXUL_DIST)/lib/mozlcms.lib'
-+    if test "$MOZ_NO_LCMS"; then
-+        LCMS_CFLAGS=
-+        LCMS_LIBS=
-     else
--        LCMS_LIBS='-L$(LIBXUL_DIST)/bin -lmozlcms'
-+        if test "$_WIN32_MSVC"; then
-+            if test -z "$BUILD_STATIC_LIBS" -a -z "$MOZ_ENABLE_LIBXUL"; then
-+                LCMS_CFLAGS=-DLCMS_DLL
-+            fi
-+            LCMS_LIBS='$(LIBXUL_DIST)/lib/mozlcms.lib'
-+        else
-+            LCMS_LIBS='-L$(LIBXUL_DIST)/bin -lmozlcms'
-+        fi
-     fi
+ LCMS_CFLAGS=
+-if test "$_WIN32_MSVC"; then
+-    if test -z "$BUILD_STATIC_LIBS" -a -z "$MOZ_ENABLE_LIBXUL"; then
+-        LCMS_CFLAGS=-DLCMS_DLL
+-    fi
+-    LCMS_LIBS='$(LIBXUL_DIST)/lib/mozlcms.lib'
++if test "$MOZ_NO_LCMS"; then
++    LCMS_CFLAGS=
++    LCMS_LIBS=
  else
-     PKG_CHECK_MODULES(LCMS, lcms >= $LCMS_VERSION)
+-    LCMS_LIBS='-L$(LIBXUL_DIST)/bin -lmozlcms'
++    if test "$_WIN32_MSVC"; then
++        if test -z "$BUILD_STATIC_LIBS" -a -z "$MOZ_ENABLE_LIBXUL"; then
++            LCMS_CFLAGS=-DLCMS_DLL
++        fi
++        LCMS_LIBS='$(LIBXUL_DIST)/lib/mozlcms.lib'
++    else
++        LCMS_LIBS='-L$(LIBXUL_DIST)/bin -lmozlcms'
++    fi
  fi
  
- AC_SUBST(MOZ_NATIVE_LCMS)
  AC_SUBST(LCMS_CFLAGS)
  AC_SUBST(LCMS_LIBS)
-@@ -7769,16 +7934,21 @@
+ 
+ dnl ========================================================
+ dnl disable xpath services
+ dnl ========================================================
+@@ -7800,16 +7965,21 @@
  AC_SUBST(NECKO_COOKIES)
  if test "$NECKO_COOKIES"; then
      AC_DEFINE(NECKO_COOKIES)
@@ -295,7 +287,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8058,16 +8228,22 @@
+@@ -8090,16 +8260,22 @@
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -322,8 +314,8 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -148,16 +148,28 @@
- MOZ_PROFILESHARING = @MOZ_PROFILESHARING@
+@@ -147,16 +147,28 @@
+ MOZ_XPFE_COMPONENTS = @MOZ_XPFE_COMPONENTS@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@
  MOZ_PLACES = @MOZ_PLACES@
@@ -376,60 +368,14 @@ Index: mozilla/chrome/src/nsChromeProtocolHandler.cpp
  #include "nsIStreamListener.h"
  #include "nsNetUtil.h"
  #include "nsXPIDLString.h"
-@@ -567,19 +569,22 @@
-             if (!exists) {
-                 nsCAutoString path;
-                 file->GetNativePath(path);
-                 printf("Chrome file doesn't exist: %s\n", path.get());
-             }
- #endif
-         }
-         else {
-+#ifndef MOZ_NO_JARMODULE
-             nsCOMPtr<nsIJARChannel> jarChan
-                 (do_QueryInterface(result));
--            if (!jarChan) {
-+            if (!jarChan)
-+#endif
-+            {
-                 nsRefPtr<nsCachedChromeChannel> cachedChannel;
-                 if (NS_FAILED(CallQueryInterface(result.get(),
-                         static_cast<nsCachedChromeChannel**>(
-                             getter_AddRefs(cachedChannel))))) {
-                     NS_WARNING("Remote chrome not allowed! Only file:, resource:, jar:, and cached chrome channels are valid.\n");
-                     result = nsnull;
-                     return NS_ERROR_FAILURE;
-                 }
-@@ -630,19 +635,21 @@
-                 if (fileChan) {
-                     fileChan->GetFile(getter_AddRefs(file));
-                 } else {
-                     nsCOMPtr<nsIURI> uri;
-                     result->GetURI(getter_AddRefs(uri));
- 
-                     // Loop, jar URIs can nest (e.g. jar:jar:A.jar!B.jar!C.xml).
-                     // Often, however, we have jar:resource:/chrome/A.jar!C.xml.
-+#ifndef MOZ_NO_JARMODULE
-                     nsCOMPtr<nsIJARURI> jarURI;
-                     while ((jarURI = do_QueryInterface(uri)) != nsnull)
-                         jarURI->GetJARFile(getter_AddRefs(uri));
-+#endif
- 
-                     // Here we have a URL of the form resource:/chrome/A.jar
-                     // or file:/some/path/to/A.jar.
-                     nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(uri));
-                     if (fileURL)
-                         fileURL->GetFile(getter_AddRefs(file));
-                 }
- 
 Index: mozilla/chrome/src/nsChromeRegistry.cpp
 ===================================================================
 --- mozilla.orig/chrome/src/nsChromeRegistry.cpp
 +++ mozilla/chrome/src/nsChromeRegistry.cpp
-@@ -69,34 +69,38 @@
- #include "nsString.h"
+@@ -70,34 +70,38 @@
  #include "nsUnicharUtils.h"
  #include "nsWidgetsCID.h"
+ #include "nsXPCOMCIDInternal.h"
  #include "nsXPIDLString.h"
  #include "nsXULAppAPI.h"
  #include "nsTextFormatter.h"
@@ -465,7 +411,7 @@ Index: mozilla/chrome/src/nsChromeRegistry.cpp
  #include "nsIPrefBranch.h"
  #include "nsIPrefBranch2.h"
  #include "nsIPresShell.h"
-@@ -1494,31 +1498,33 @@
+@@ -1505,31 +1509,33 @@
      }
      else if (pref.EqualsLiteral(SELECTED_LOCALE_PREF)) {
        mSelectedLocale = provider;
@@ -499,7 +445,7 @@ Index: mozilla/chrome/src/nsChromeRegistry.cpp
  }
  
  #ifdef MOZ_XUL
-@@ -1582,16 +1588,17 @@
+@@ -1593,16 +1599,17 @@
    CallQueryInterface(node, result);
  }
  
@@ -517,7 +463,7 @@ Index: mozilla/chrome/src/nsChromeRegistry.cpp
      nsCAutoString relativeBase;
      GetRelativePath(base, jarbase, relativeBase);
  
-@@ -1599,16 +1606,17 @@
+@@ -1610,16 +1617,17 @@
      jarrelative->GetJAREntry(jarEntry);
  
      result.Assign(NS_LITERAL_CSTRING("jar:"));
@@ -539,7 +485,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/Makefile.in
 +++ mozilla/widget/src/gtk2/Makefile.in
-@@ -89,18 +89,16 @@
+@@ -88,18 +88,16 @@
  CPPSRCS		= \
  		nsWindow.cpp \
  		nsAppShell.cpp \
@@ -558,7 +504,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  		$(NULL)
  
  ifdef NS_OSSO
-@@ -117,19 +115,35 @@
+@@ -116,19 +114,35 @@
  		nsPrintOptionsGTK.cpp \
  		nsPrintDialogGTK.cpp \
  		nsPrintSettingsGTK.cpp \
@@ -594,7 +540,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  
  SHARED_LIBRARY_LIBS = ../xpwidgets/libxpwidgets_s.a
  
-@@ -161,17 +175,17 @@
+@@ -160,17 +174,17 @@
  DEFINES		+= -DNATIVE_THEME_SUPPORT
  endif
  
@@ -800,7 +746,7 @@ Index: mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp
  NS_IMPL_ISUPPORTS2(nsXPLookAndFeel, nsILookAndFeel, nsIObserver)
  
  nsLookAndFeelIntPref nsXPLookAndFeel::sIntPrefs[] =
-@@ -608,27 +610,29 @@
+@@ -610,27 +612,29 @@
    if (aID == eColor_TextHighlightForeground) {
      // The foreground color for the matched text in findbar highlighting
      // Used with nsISelectionController::SELECTION_FIND
@@ -834,7 +780,7 @@ Index: mozilla/toolkit/components/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/Makefile.in
 +++ mozilla/toolkit/components/Makefile.in
-@@ -41,32 +41,39 @@
+@@ -41,33 +41,40 @@
  srcdir    = @srcdir@
  VPATH   = @srcdir@
  
@@ -859,12 +805,13 @@ Index: mozilla/toolkit/components/Makefile.in
  	viewconfig \
 -	typeaheadfind \
  	parentalcontrols \
+ 	passwordmgr \
  	$(NULL)
  
 +ifndef MOZ_NO_FASTFIND
 +DIRS += \
-+	typeaheadfind \
-+	$(NULL)
++ 	typeaheadfind \
++ 	$(NULL)
 +endif
 +
  ifneq (,$(filter cocoa, $(MOZ_WIDGET_TOOLKIT)))
@@ -875,11 +822,11 @@ Index: mozilla/toolkit/components/Makefile.in
  
  ifdef MOZ_FEEDS
  DIRS += feeds
-@@ -110,30 +117,37 @@
- DIRS += passwordmgr/public
- else
- DIRS += passwordmgr
- endif # MOZ_SUITE
+@@ -105,30 +112,37 @@
+ ifdef MOZ_XUL
+ DIRS += satchel
+ endif # MOZ_XUL
+ 
  endif # MOZ_THUNDERBIRD
  
  ifndef SUITE_USING_XPFE_DM
@@ -902,8 +849,8 @@ Index: mozilla/toolkit/components/Makefile.in
  
 +ifndef MOZ_NO_COMMANDLINE
 +DIRS += \
-+	commandlines \
-+	$(NULL)
++ 	commandlines \
++ 	$(NULL)
 +endif
 +
  EXTRA_PP_COMPONENTS = nsDefaultCLH.js
@@ -1044,7 +991,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
  COMPONENT_LIBS += \
  	xmlextras \
  	$(NULL)
-@@ -359,8 +356,27 @@
+@@ -354,8 +351,27 @@
  
  ifneq (,$(filter layout-debug,$(MOZ_EXTENSIONS)))
  COMPONENT_LIBS += gkdebug
@@ -1076,7 +1023,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
 ===================================================================
 --- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
 +++ mozilla/toolkit/library/nsStaticXULComponents.cpp
-@@ -204,16 +204,34 @@
+@@ -198,16 +198,34 @@
  #endif
  
  #ifdef MOZ_STORAGE
@@ -1111,7 +1058,8 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  
  #ifdef MOZ_PLACES
  #define PLACES_MODULES \
-@@ -273,17 +291,17 @@
+@@ -266,17 +284,17 @@
+     MATHML_MODULES                           \
      MODULE(nsUConvModule)                    \
      MODULE(nsI18nModule)                     \
      MODULE(nsChardetModule)                  \
@@ -1119,7 +1067,6 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      MODULE(necko)                            \
      PERMISSIONS_MODULES                      \
      AUTH_MODULE                              \
-     IPC_MODULE                               \
 -    MODULE(nsJarModule)                      \
 +    JAR_MODULE                               \
      ZIPWRITER_MODULE                         \
@@ -1130,7 +1077,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      MODULE(nsParserModule)                   \
      GFX_MODULES                              \
      WIDGET_MODULES                           \
-@@ -298,22 +316,22 @@
+@@ -291,22 +309,22 @@
      OJI_MODULES                              \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \
@@ -1212,7 +1159,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  #include "nsIExtensionManager.h"
  #include "nsIFastLoadService.h" // for PLATFORM_FASL_SUFFIX
  #include "nsIGenericFactory.h"
-@@ -1149,25 +1151,27 @@
+@@ -1095,25 +1097,27 @@
    {
      nsXREDirProvider dirProvider;
      dirProvider.Initialize(nsnull, gAppData->xreDirectory);
@@ -1240,7 +1187,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  // here, or in a native resource file.
  static void
  DumpHelp()
-@@ -3125,35 +3129,39 @@
+@@ -3077,35 +3081,39 @@
            gDoMigration = PR_FALSE;
            nsCOMPtr<nsIProfileMigrator> pm
              (do_CreateInstance(NS_PROFILEMIGRATOR_CONTRACTID));
@@ -1280,7 +1227,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  
  #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
          nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
-@@ -3168,40 +3176,48 @@
+@@ -3120,40 +3128,48 @@
            NS_ENSURE_TRUE(em, 1);
  
            ar = CheckArg("install-global-extension", PR_TRUE);
@@ -1329,7 +1276,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
          if (noEMRestart && *noEMRestart && *noEMRestart == '1') {
            if (upgraded || needsRestart) {
              NS_WARNING("EM tried to force us to restart twice! Forcefully preventing that.");
-@@ -3239,18 +3255,20 @@
+@@ -3191,18 +3207,20 @@
            // Prepare Cocoa's form of Apple Event handling.
            SetupMacApplicationDelegate();
  #endif
@@ -1354,7 +1301,8 @@ Index: mozilla/toolkit/toolkit-tiers.mk
 ===================================================================
 --- mozilla.orig/toolkit/toolkit-tiers.mk
 +++ mozilla/toolkit/toolkit-tiers.mk
-@@ -66,18 +66,20 @@
+@@ -65,17 +65,19 @@
+ 
  ifdef MOZ_UPDATER
  ifndef MOZ_NATIVE_BZ2
  tier_external_dirs += modules/libbz2
@@ -1362,10 +1310,8 @@ Index: mozilla/toolkit/toolkit-tiers.mk
  tier_external_dirs += modules/libmar
  endif
  
- ifndef MOZ_NATIVE_LCMS
 +ifndef MOZ_NO_LCMS
  tier_external_dirs	+= modules/lcms
- endif
 +endif
  
  #
@@ -1375,11 +1321,11 @@ Index: mozilla/toolkit/toolkit-tiers.mk
  tier_gecko_dirs += \
  		js/src/xpconnect \
  		intl/chardet \
-@@ -90,20 +92,25 @@
+@@ -84,20 +86,25 @@
+ ifdef MOZ_ENABLE_GTK2
+ ifdef MOZ_X11
+ tier_gecko_dirs     += widget/src/gtkxtbin
  endif
- 
- ifdef MOZ_IPCD
- tier_gecko_dirs += ipc/ipcd
  endif
  
  tier_gecko_dirs	+= \
@@ -1406,11 +1352,11 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatform.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatform.cpp
-@@ -59,17 +59,19 @@
- #include "gfxUserFontSet.h"
+@@ -60,17 +60,19 @@
  
  #include "nsIPref.h"
  #include "nsServiceManagerUtils.h"
+ #include "nsTArray.h"
  
  #include "nsWeakReference.h"
  
@@ -1426,7 +1372,31 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  
  gfxPlatform *gPlatform = nsnull;
  
-@@ -504,16 +506,17 @@
+@@ -222,21 +224,23 @@
+     gPlatform->overrideObserver = new SRGBOverrideObserver();
+     nsCOMPtr<nsIPrefBranch2> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+     if (prefs)
+         prefs->AddObserver(CMForceSRGBPrefName, gPlatform->overrideObserver, PR_TRUE);
+ 
+     /* By default, LCMS calls exit() on error, which isn't what we want. If
+        cms is enabled, change the error functionality. */
+     if (GetCMSMode() != eCMSMode_Off) {
++#ifndef MOZ_NO_LCMS
+ #ifdef DEBUG
+         cmsErrorAction(LCMS_ERROR_SHOW);
+ #else
+         cmsErrorAction(LCMS_ERROR_IGNORE);
+ #endif
++#endif
+     }
+ 
+     return NS_OK;
+ }
+ 
+ void
+ gfxPlatform::Shutdown()
+ {
+@@ -515,16 +519,17 @@
  unacceptable performance overhead, so we go with perceptual. */
  #define INTENT_DEFAULT INTENT_PERCEPTUAL
  
@@ -1444,7 +1414,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
              if (NS_SUCCEEDED(rv)) {
                
                  /* If the pref is within range, use it as an override. */
-@@ -524,20 +527,22 @@
+@@ -535,20 +540,22 @@
                  else
                      gCMSIntent = -1;
              }
@@ -1467,7 +1437,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  #ifdef IS_LITTLE_ENDIAN
          PRUint32 packed = in.Packed(gfxRGBA::PACKED_ABGR);
          cmsDoTransform(transform,
-@@ -689,21 +694,23 @@
+@@ -699,21 +706,23 @@
  
          gCMSRGBATransform = cmsCreateTransform(inProfile, TYPE_RGBA_8,
                                                 outProfile, TYPE_RGBA_8,
@@ -1491,7 +1461,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
          cmsDeleteTransform(gCMSInverseRGBTransform);
          gCMSInverseRGBTransform = nsnull;
      }
-@@ -718,16 +725,17 @@
+@@ -728,16 +737,17 @@
          if (gCMSsRGBProfile == gCMSOutputProfile)
              gCMSsRGBProfile = nsnull;
          gCMSOutputProfile = nsnull;
@@ -1566,7 +1536,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -69,19 +69,21 @@
+@@ -70,19 +70,21 @@
  #endif
  
  #ifdef MOZ_DFB
@@ -1588,7 +1558,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  #include FT_FREETYPE_H
  #endif
  
-@@ -476,16 +478,17 @@
+@@ -524,16 +526,17 @@
      sDPI = gdk_screen_get_resolution(gdk_screen_get_default());
  
      if (sDPI <= 0.0) {
@@ -1606,7 +1576,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
      const char ICC_PROFILE_ATOM_NAME[] = "_ICC_PROFILE";
  
      Atom edidAtom, iccAtom;
-@@ -605,16 +608,17 @@
+@@ -655,16 +658,17 @@
  
              return profile;
          }
@@ -1628,7 +1598,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatform.h
 +++ mozilla/gfx/thebes/public/gfxPlatform.h
-@@ -247,16 +247,17 @@
+@@ -260,16 +260,17 @@
       * valid rendering intent as defined in modules/lcms/include/lcms.h, that
       * value is returned. Otherwise, -1 is returned and the embedded intent
       * should be used.
@@ -1646,7 +1616,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
      static void TransformPixel(const gfxRGBA& in, gfxRGBA& out, cmsHTRANSFORM transform);
  
      /**
-@@ -278,20 +279,23 @@
+@@ -291,20 +292,23 @@
       * Return output -> sRGB device transform.
       */
      static cmsHTRANSFORM GetCMSInverseRGBTransform();
@@ -1674,7 +1644,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatformGtk.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatformGtk.h
 +++ mozilla/gfx/thebes/public/gfxPlatformGtk.h
-@@ -110,13 +110,15 @@
+@@ -136,13 +136,15 @@
      GdkDrawable *GetGdkDrawable(gfxASurface *target);
  
  protected:
@@ -1714,7 +1684,7 @@ Index: mozilla/dom/src/base/nsLocation.cpp
  #include "prmem.h"
  #include "nsCOMPtr.h"
  #include "nsEscape.h"
-@@ -319,21 +321,23 @@
+@@ -321,21 +323,23 @@
  
    // It is valid for docshell to return a null URI. Don't try to fixup
    // if this happens.
@@ -2262,7 +2232,7 @@ Index: mozilla/caps/src/nsScriptSecurityManager.cpp
  JSRuntime       *nsScriptSecurityManager::sRuntime   = 0;
  PRBool nsScriptSecurityManager::sStrictFileOriginPolicy = PR_TRUE;
  
-@@ -2802,29 +2806,31 @@
+@@ -2807,29 +2811,31 @@
      {
          nsCOMPtr<nsIFile> systemCertFile;
          nsCOMPtr<nsIProperties> directoryService =
@@ -2821,14 +2791,14 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
 ===================================================================
 --- mozilla.orig/xpfe/components/build/nsModule.cpp
 +++ mozilla/xpfe/components/build/nsModule.cpp
-@@ -54,17 +54,17 @@
+@@ -45,30 +45,30 @@
+ #include "nsRDFCID.h"
  #endif
  
- #if !defined(MOZ_PLACES)
- #include "nsGlobalHistory.h"
+ #ifdef SUITE_USING_XPFE_DM
+ #include "nsDownloadManager.h"
+ #include "nsDownloadProxy.h"
  #endif
- 
- #endif // MOZ_SUITE
  
 -#if !defined(MOZ_MACBROWSER)
 +#if !defined(MOZ_MACBROWSER) && !defined(MOZ_NO_XPFE_BROWSER)
@@ -2837,11 +2807,6 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  #endif
  #include "nsCURILoader.h"
  #include "nsXPFEComponentsCID.h"
- 
- #if !defined(MOZ_PLACES)
- // {9491C382-E3C4-11D2-BDBE-0050040A9B44}
-@@ -76,17 +76,17 @@
- #endif
  
  #ifdef MOZ_RDF
  // Factory constructors
@@ -2855,18 +2820,18 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsBrowserInstance)
  #endif
  
- #ifdef MOZ_SUITE
- NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(RelatedLinksHandlerImpl, Init)
  #ifdef SUITE_USING_XPFE_DM
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsDownloadManager, Init)
-@@ -159,17 +159,17 @@
-     { "Global History", NS_GLOBALHISTORY_CID, NS_GLOBALHISTORY_DATASOURCE_CONTRACTID,
-       nsGlobalHistoryConstructor },
-     { "Global History", NS_GLOBALHISTORY_CID, NS_GLOBALHISTORY_AUTOCOMPLETE_CONTRACTID,
-       nsGlobalHistoryConstructor },
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsDownloadProxy)
  #endif
+@@ -119,17 +119,17 @@
  
- #endif // MOZ_SUITE
+ #ifdef SUITE_USING_XPFE_DM
+     { "Download Manager", NS_DOWNLOADMANAGER_CID, NS_DOWNLOADMANAGER_CONTRACTID,
+       nsDownloadManagerConstructor },
+     { "Download", NS_DOWNLOAD_CID, NS_TRANSFER_CONTRACTID,
+       nsDownloadProxyConstructor },
+ #endif
  
 -#if !defined(MOZ_MACBROWSER)
 +#if !defined(MOZ_MACBROWSER) && !defined(MOZ_NO_XPFE_BROWSER)
@@ -2899,13 +2864,13 @@ Index: mozilla/xpfe/components/build/Makefile.in
  endif
 +endif
  
- # Suite specific includes
- ifdef MOZ_SUITE
+ # Suite xpfe download manager includes
  ifdef SUITE_USING_XPFE_DM
- REQUIRES += downloadmanager
- endif
- 
  REQUIRES	+= \
+ 		downloadmanager \
+ 		intl \
+ 		widget \
+ 		mimetype \
 Index: mozilla/xpfe/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/Makefile.in
@@ -2957,7 +2922,7 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 ===================================================================
 --- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 +++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
-@@ -6046,19 +6046,20 @@
+@@ -5864,19 +5864,20 @@
                                  state, value);
    },
  
@@ -3159,7 +3124,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -3336,16 +3336,17 @@
+@@ -3369,16 +3369,17 @@
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer
@@ -3181,18 +3146,16 @@ Index: mozilla/gfx/thebes/src/gfxQtPlatform.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxQtPlatform.cpp
 +++ mozilla/gfx/thebes/src/gfxQtPlatform.cpp
-@@ -51,19 +51,21 @@
- #include "gfxQPainterSurface.h"
- 
- #include "gfxFT2Fonts.h"
+@@ -54,17 +54,19 @@
  
  #include "nsUnicharUtils.h"
  
  #include <fontconfig/fontconfig.h>
  
-+#ifndef MOZ_NO_LCMS
  #include "nsMathUtils.h"
+ #include "nsTArray.h"
  
++#ifndef MOZ_NO_LCMS
  #include "lcms.h"
 +#endif
  

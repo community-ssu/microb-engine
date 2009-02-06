@@ -1,0 +1,62 @@
+diff -r b5574246655a layout/generic/nsObjectFrame.cpp
+--- a/layout/generic/nsObjectFrame.cpp	Fri Feb 06 12:00:37 2009 +0200
++++ b/layout/generic/nsObjectFrame.cpp	Fri Feb 06 12:01:17 2009 +0200
+@@ -2344,7 +2344,8 @@ NS_IMETHODIMP nsPluginInstanceOwner::Get
+   nsresult rv = GetDocument(getter_AddRefs(doc));
+   nsCOMPtr<nsIPluginDocument> pDoc (do_QueryInterface(doc));
+ 
+-  if (pDoc) {
++  nsAdoptingCString wmodeType = nsContentUtils::GetCharPref("plugins.force.wmode");
++  if (pDoc && wmodeType.IsEmpty()) {
+     *aMode = nsPluginMode_Full;
+   } else {
+     *aMode = nsPluginMode_Embedded;
+@@ -3039,7 +3040,7 @@ nsresult nsPluginInstanceOwner::EnsureCa
+ 
+   mNumCachedParams = 0;
+   nsCOMArray<nsIDOMElement> ourParams;
+- 
++
+   // use the DOM to get us ALL our dependent PARAM tags, even if not
+   // ours
+   nsCOMPtr<nsIDOMElement> mydomElement = do_QueryInterface(mContent);
+@@ -3052,7 +3053,7 @@ nsresult nsPluginInstanceOwner::EnsureCa
+   // Making DOM method calls can cause our frame to go away, which
+   // might kill us...
+   nsCOMPtr<nsIPluginInstanceOwner> kungFuDeathGrip(this);
+-  
++
+   if (ni->NamespaceEquals(kNameSpaceID_XHTML)) {
+     // For XHTML elements we need to take the namespace URI into
+     // account when looking for param elements.
+@@ -3067,7 +3068,7 @@ nsresult nsPluginInstanceOwner::EnsureCa
+ 
+     mydomElement->GetElementsByTagName(NS_LITERAL_STRING("param"),
+                                        getter_AddRefs(allParams));
+-  }    
++  }
+ 
+   if (allParams) {
+     PRUint32 numAllParams; 
+@@ -3141,6 +3142,9 @@ nsresult nsPluginInstanceOwner::EnsureCa
+       mNumCachedAttrs++;
+   }
+ 
++  nsAdoptingCString wmodeType = nsContentUtils::GetCharPref("plugins.force.wmode");
++  if (!wmodeType.IsEmpty())
++    mNumCachedAttrs++;
+   // now lets make the arrays
+   mCachedAttrParamNames  = (char **)PR_Calloc(sizeof(char *) * (mNumCachedAttrs + 1 + mNumCachedParams), 1);
+   NS_ENSURE_TRUE(mCachedAttrParamNames,  NS_ERROR_OUT_OF_MEMORY);
+@@ -3169,6 +3173,11 @@ nsresult nsPluginInstanceOwner::EnsureCa
+     end = numRealAttrs;
+     increment = 1;
+   }
++  if (!wmodeType.IsEmpty()) {
++    mCachedAttrParamNames [c] = ToNewUTF8String(NS_LITERAL_STRING("wmode"));
++    mCachedAttrParamValues[c] = ToNewUTF8String(NS_ConvertUTF8toUTF16(wmodeType));
++    c++;
++  }
+   for (PRInt16 index = start; index != end; index += increment) {
+     const nsAttrName* attrName = mContent->GetAttrNameAt(index);
+     nsIAtom* atom = attrName->LocalName();

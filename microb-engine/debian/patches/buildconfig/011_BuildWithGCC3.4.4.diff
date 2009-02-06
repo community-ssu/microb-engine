@@ -1,8 +1,10 @@
 # Building --enable-debug  with buggy gcc CodeSourcery 3.4.4
 # workarround
---- mozilla/layout/style/nsROCSSPrimitiveValue.cpp.orig	2007-02-07 09:46:41.000000000 +0200
-+++ mozilla/layout/style/nsROCSSPrimitiveValue.cpp	2007-11-26 14:52:46.000000000 +0200
-@@ -107,16 +107,44 @@ NS_INTERFACE_MAP_BEGIN(nsROCSSPrimitiveV
+Index: mozilla/layout/style/nsROCSSPrimitiveValue.cpp
+===================================================================
+--- mozilla.orig/layout/style/nsROCSSPrimitiveValue.cpp
++++ mozilla/layout/style/nsROCSSPrimitiveValue.cpp
+@@ -107,16 +107,44 @@
    NS_INTERFACE_MAP_ENTRY(nsIDOMCSSValue)
    NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMCSSPrimitiveValue)
    NS_INTERFACE_MAP_ENTRY_CONTENT_CLASSINFO(ROCSSPrimitiveValue)
@@ -15,28 +17,28 @@
 +void
 +nsROCSSPrimitiveValue::Reset(void)
 +{
-+    switch (mType) {
++  switch (mType) {
 +    case CSS_IDENT:
-+        NS_ASSERTION(mValue.mAtom, "Null atom should never happen");
-+        NS_RELEASE(mValue.mAtom);
-+        break;
++      break;
 +    case CSS_STRING:
-+        NS_ASSERTION(mValue.mString, "Null string should never happen");
-+        nsMemory::Free(mValue.mString);
-+        mValue.mString = nsnull;
-+        break;
++    case CSS_ATTR:
++    case CSS_COUNTER: // FIXME: Counter should use an object
++      NS_ASSERTION(mValue.mString, "Null string should never happen");
++      nsMemory::Free(mValue.mString);
++      mValue.mString = nsnull;
++      break;
 +    case CSS_URI:
-+        NS_IF_RELEASE(mValue.mURI);
-+        break;
++      NS_IF_RELEASE(mValue.mURI);
++      break;
 +    case CSS_RECT:
-+        NS_ASSERTION(mValue.mRect, "Null Rect should never happen");
-+        NS_RELEASE(mValue.mRect);
-+        break;
++      NS_ASSERTION(mValue.mRect, "Null Rect should never happen");
++      NS_RELEASE(mValue.mRect);
++      break;
 +    case CSS_RGBCOLOR:
-+        NS_ASSERTION(mValue.mColor, "Null RGBColor should never happen");
-+        NS_RELEASE(mValue.mColor);
-+        break;
-+    }
++      NS_ASSERTION(mValue.mColor, "Null RGBColor should never happen");
++      NS_RELEASE(mValue.mColor);
++      break;
++  }
 +}
 +#endif
  
@@ -47,9 +49,11 @@
    aCssText.Truncate();
    nsresult result = NS_OK;
  
---- mozilla/layout/style/nsROCSSPrimitiveValue.h.orig	2007-02-07 09:46:41.000000000 +0200
-+++ mozilla/layout/style/nsROCSSPrimitiveValue.h	2007-11-26 14:52:42.000000000 +0200
-@@ -183,16 +183,19 @@ public:
+Index: mozilla/layout/style/nsROCSSPrimitiveValue.h
+===================================================================
+--- mozilla.orig/layout/style/nsROCSSPrimitiveValue.h
++++ mozilla/layout/style/nsROCSSPrimitiveValue.h
+@@ -177,16 +177,19 @@
        NS_ADDREF(mValue.mRect);
        mType = CSS_RECT;
      }
@@ -65,11 +69,11 @@
    {
      switch (mType) {
        case CSS_IDENT:
-         NS_ASSERTION(mValue.mAtom, "Null atom should never happen");
-         NS_RELEASE(mValue.mAtom);
          break;
        case CSS_STRING:
-@@ -208,16 +211,17 @@ public:
+       case CSS_ATTR:
+       case CSS_COUNTER: // FIXME: Counter should use an object
+@@ -202,16 +205,17 @@
          NS_RELEASE(mValue.mRect);
          break;
        case CSS_RGBCOLOR:

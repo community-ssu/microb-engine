@@ -5,11 +5,11 @@ Index: mozilla/widget/src/gtk2/nsWindow.h
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.h
 +++ mozilla/widget/src/gtk2/nsWindow.h
-@@ -438,16 +438,18 @@
+@@ -437,16 +437,18 @@
      gfxASurface       *GetThebesSurface();
  
      static already_AddRefed<gfxASurface> GetSurfaceForGdkDrawable(GdkDrawable* aDrawable,
-                                                                   const nsSize& aSize);
+                                                                   const nsIntSize& aSize);
  
  #ifdef ACCESSIBILITY
      static PRBool      sAccessibilityEnabled;
@@ -46,7 +46,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -272,16 +272,17 @@
+@@ -270,16 +270,17 @@
  static nsWindow         *gPluginFocusWindow    = NULL;
  
  static nsCOMPtr<nsIRollupListener> gRollupListener;
@@ -64,7 +64,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  static PRBool       gKeyEventCommitted = PR_FALSE;
  static PRBool       gKeyEventChanged = PR_FALSE;
  static PRBool       gIMESuppressCommit = PR_FALSE;
-@@ -376,16 +377,17 @@
+@@ -374,16 +375,17 @@
      mActivatePending     = PR_FALSE;
      mTransientParent     = nsnull;
      mWindowType          = eWindowType_child;
@@ -82,7 +82,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
          initialize_prefs();
      }
  
-@@ -658,16 +660,26 @@
+@@ -657,16 +659,26 @@
          gBufferPixmapSize.width = 0;
          gBufferPixmapSize.height = 0;
      }
@@ -109,7 +109,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
          gRollupWindow = nsnull;
          gRollupListener = nsnull;
      }
-@@ -3904,16 +3916,18 @@
+@@ -3936,16 +3948,18 @@
                                 "notify::gtk-theme-name",
                                 G_CALLBACK(theme_changed_cb), this);
          g_signal_connect_after(default_settings,
@@ -128,7 +128,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
                           G_CALLBACK(enter_notify_event_cb), NULL);
          g_signal_connect_after(G_OBJECT(mContainer), "leave_notify_event",
                           G_CALLBACK(leave_notify_event_cb), NULL);
-@@ -5549,22 +5563,35 @@
+@@ -5613,22 +5627,35 @@
      if (!window)
          return FALSE;
  
