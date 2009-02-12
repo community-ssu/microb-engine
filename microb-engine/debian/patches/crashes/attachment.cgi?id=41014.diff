@@ -1,0 +1,24 @@
+#bug https://projects.maemo.org/bugzilla/show_bug.cgi?id=100612
+diff -r 068b964b931b widget/src/gtk2/mozdrawingarea.c
+--- a/widget/src/gtk2/mozdrawingarea.c	Sun Feb 08 14:00:48 2009 +0200
++++ b/widget/src/gtk2/mozdrawingarea.c	Tue Feb 10 11:26:06 2009 +0200
+@@ -148,6 +148,8 @@ moz_drawingarea_create_windows (MozDrawi
+         attributes.visual = visual;
+         attributes.colormap = gdk_colormap_new(visual, 0);
+     }
++    if (widget && !GTK_WIDGET_REALIZED(widget))
++      return;
+ 
+     attributes_mask |= GDK_WA_VISUAL | GDK_WA_COLORMAP |
+         GDK_WA_X | GDK_WA_Y;
+diff -r 068b964b931b widget/src/gtk2/nsWindow.cpp
+--- a/widget/src/gtk2/nsWindow.cpp	Sun Feb 08 14:00:48 2009 +0200
++++ b/widget/src/gtk2/nsWindow.cpp	Tue Feb 10 11:26:06 2009 +0200
+@@ -7186,6 +7186,7 @@ gfxASurface*
+ gfxASurface*
+ nsWindow::GetThebesSurface()
+ {
++    if (!mDrawingarea) return NULL;
+     GdkDrawable* d;
+     gint x_offset, y_offset;
+     gdk_window_get_internal_paint_info(mDrawingarea->inner_window,

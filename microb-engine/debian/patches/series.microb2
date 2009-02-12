@@ -200,3 +200,7 @@ crashes/mDrawingarea_crash.diff
 
 perf_tweaks/attachment.cgi?id=40603.diff
 
+perf_tweaks/attachment.cgi?id=40880.diff
+
+theeming/120_disable_native_colors.diff
+crashes/attachment.cgi?id=41014.diff

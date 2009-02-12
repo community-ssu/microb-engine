@@ -217,6 +217,7 @@ usr/lib/microb-engine/res/entityTables/html40Special.properties
 usr/lib/microb-engine/res/entityTables/*math*.properties
 usr/lib/microb-engine/res/sites*
 usr/lib/microb-engine/res/smallScree*
+usr/lib/microb-engine/res/designmode.css
 
 usr/lib/microb-engine/chrome/toolkit/content/global/bindings/button*
 usr/lib/microb-engine/chrome/toolkit/content/global/bindings/checkbox*

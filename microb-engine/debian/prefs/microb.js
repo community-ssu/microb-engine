@@ -48,4 +48,5 @@ pref("browser.sessionhistory.max_entries", 20);
 pref("content.max.deflected.tokens", 10);
 pref("content.max.tokenizing.time", 50000);
 pref("mozilla.widget.disable-native-theme", true);
+pref("ui.use_native_colors", false);
 pref("places.syncDBTableIntervalInSecs", 60);

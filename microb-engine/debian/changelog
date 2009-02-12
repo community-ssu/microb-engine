@@ -1,3 +1,39 @@
+microb-engine (20090207-6) unstable; urgency=low
+
+  * Fixed bug 101550 Scaled SetWindow required for WindowLessLocal API
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 12 Feb 2009 09:56:33 +0200
+
+microb-engine (20090207-5) unstable; urgency=low
+
+  * Fixes: NB#100612 Browser crash while surfing the web
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 10 Feb 2009 15:18:16 +0200
+
+microb-engine (20090207-4) unstable; urgency=low
+
+  * Fixes: NB#99266 Problems with displaying items in combobox.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 10 Feb 2009 11:40:22 +0200
+
+microb-engine (20090207-3) unstable; urgency=low
+
+  * Fixes for bug 99283, use nearest filter.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 07 Feb 2009 22:04:02 +0200
+
+microb-engine (20090207-2) unstable; urgency=low
+
+  * Fixes: NB#100144 Cursor stays in one position while typing text
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Sat,  7 Feb 2009 11:17:13 +0200
+
+microb-engine (20090207-1) unstable; urgency=low
+
+  * Updated to trunk, 935a929826e4
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 07 Feb 2009 05:53:09 -0500
+
 microb-engine (20090203-8) unstable; urgency=low
 
   * Fixes: NB#99847 webmessenger.yahoo.com is not rendered, there is only	visible blank page
