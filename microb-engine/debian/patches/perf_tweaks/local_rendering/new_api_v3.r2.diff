@@ -1,0 +1,501 @@
+diff -r 233c2cc7b415 layout/generic/nsObjectFrame.cpp
+--- a/layout/generic/nsObjectFrame.cpp	Wed Mar 18 22:21:03 2009 +0200
++++ b/layout/generic/nsObjectFrame.cpp	Wed Mar 18 22:21:58 2009 +0200
+@@ -135,16 +135,18 @@
+ 
+ #include "gfxContext.h"
+ 
+ #ifdef XP_WIN
+ #include "gfxWindowsNativeDrawing.h"
+ #include "gfxWindowsSurface.h"
+ #endif
+ 
++#include "gfxImageSurface.h"
++
+ // accessibility support
+ #ifdef ACCESSIBILITY
+ #include "nsIAccessibilityService.h"
+ #endif
+ 
+ #ifdef MOZ_LOGGING
+ #define FORCE_PR_LOG 1 /* Allow logging in the release build */
+ #endif /* MOZ_LOGGING */
+@@ -545,16 +547,20 @@ private:
+             short offsetY, QRect * clipRects, PRUint32 numClipRects);
+   private:
+     nsPluginWindow* mWindow;
+     nsIPluginInstance* mInstance;
+     const nsIntSize& mPluginSize;
+     const nsIntRect& mDirtyRect;
+   };
+ #endif
++  nsresult NativeImageDraw(gfxContext *aContext,
++                           nsPluginWindow* mWindow,
++                           const nsIntSize& mPluginSize,
++                           const nsIntRect& mDirtyRect);
+ 
+ };
+ 
+   // Mac specific code to fix up port position and clip during paint
+ #ifdef XP_MACOSX
+ 
+ #ifdef DO_DIRTY_INTERSECT
+   // convert relative coordinates to absolute
+@@ -2523,16 +2529,17 @@ NS_IMETHODIMP nsPluginInstanceOwner::Inv
+   nsresult rv = NS_ERROR_FAILURE;
+ 
+   if (mOwner && invalidRect && mWidgetVisible) {
+     nsPresContext* presContext = mOwner->PresContext();
+     nsRect rect(presContext->DevPixelsToAppUnits(invalidRect->left),
+                 presContext->DevPixelsToAppUnits(invalidRect->top),
+                 presContext->DevPixelsToAppUnits(invalidRect->right - invalidRect->left),
+                 presContext->DevPixelsToAppUnits(invalidRect->bottom - invalidRect->top));
++
+     mOwner->Invalidate(rect);
+   }
+ 
+   return rv;
+ }
+ 
+ NS_IMETHODIMP nsPluginInstanceOwner::InvalidateRegion(nsPluginRegion invalidRegion)
+ {
+@@ -4525,33 +4532,43 @@ void nsPluginInstanceOwner::Paint(gfxCon
+   if (!pluginDirtyRect.
+       IntersectRect(nsIntRect(0, 0, pluginSize.width, pluginSize.height),
+                     pluginDirtyRect))
+     return;
+ 
+   nsPluginWindow* window;
+   GetWindow(window);
+ 
+-  Renderer renderer(window, mInstance, pluginSize, pluginDirtyRect);
+   PRUint32 rendererFlags =
+     Renderer::DRAW_SUPPORTS_OFFSET |
+     Renderer::DRAW_SUPPORTS_CLIP_RECT |
+     Renderer::DRAW_SUPPORTS_NONDEFAULT_VISUAL |
+     Renderer::DRAW_SUPPORTS_ALTERNATE_SCREEN;
+ 
+   PRBool transparent = PR_TRUE;
+   mInstance->GetValue(nsPluginInstanceVariable_TransparentBool,
+                       (void *)&transparent);
+   if (!transparent)
+     rendererFlags |= Renderer::DRAW_IS_OPAQUE;
+ 
+   // Renderer::Draw() draws a rectangle with top-left at the aContext origin.
+   gfxContextAutoSaveRestore autoSR(aContext);
+   aContext->Translate(pluginRect.pos);
+ 
++  PRBool simpleImageRender = PR_FALSE;
++  mInstance->GetValue(nsPluginInstanceVariable_WindowlessLocalBool,
++                      (void *)&simpleImageRender);
++
++  nsRefPtr<gfxASurface> target = aContext->CurrentSurface();
++  if (simpleImageRender && target->GetType() == gfxASurface::SurfaceTypeImage) {
++    NativeImageDraw(aContext, window, pluginSize, pluginDirtyRect);
++    return;
++  }
++
++  Renderer renderer(window, mInstance, pluginSize, pluginDirtyRect);
+   renderer.Draw(aContext, window->width, window->height,
+                 rendererFlags, nsnull);
+ }
+ 
+ #ifdef MOZ_X11
+ static int
+ DepthOfVisual(const Screen* screen, const Visual* visual)
+ {
+@@ -4563,16 +4580,128 @@ DepthOfVisual(const Screen* screen, cons
+     }
+   }
+ 
+   NS_ERROR("Visual not on Screen.");
+   return 0;
+ }
+ #endif
+ 
++nsresult
++nsPluginInstanceOwner::NativeImageDraw(gfxContext *aContext,
++                                       nsPluginWindow* mWindow,
++                                       const nsIntSize& mPluginSize,
++                                       const nsIntRect& mDirtyRect)
++
++{
++  PRBool doupdatewindow = PR_FALSE;
++
++  if (mWindow->x || mWindow->y) {
++    mWindow->x = 0;
++    mWindow->y = 0;
++    doupdatewindow = PR_TRUE;
++  }
++
++  if (nsIntSize(mWindow->width, mWindow->height) != mPluginSize) {
++    mWindow->width = mPluginSize.width;
++    mWindow->height = mPluginSize.height;
++    doupdatewindow = PR_TRUE;
++  }
++
++  // The clip rect is relative to drawable top-left.
++  nsIntRect clipRect;
++  clipRect.x = 0;
++  clipRect.y = 0;
++  clipRect.width  = mWindow->width;
++  clipRect.height = mWindow->height;
++
++  nsPluginRect newClipRect;
++  newClipRect.left = clipRect.x;
++  newClipRect.top = clipRect.y;
++  newClipRect.right = clipRect.XMost();
++  newClipRect.bottom = clipRect.YMost();
++  if (mWindow->clipRect.left    != newClipRect.left   ||
++      mWindow->clipRect.top     != newClipRect.top    ||
++      mWindow->clipRect.right   != newClipRect.right  ||
++      mWindow->clipRect.bottom  != newClipRect.bottom) {
++    mWindow->clipRect = newClipRect;
++    doupdatewindow = PR_TRUE;
++  }
++
++  NPSetWindowCallbackStruct* ws_info =
++    static_cast<NPSetWindowCallbackStruct*>(mWindow->ws_info);
++  ws_info->visual = 0;
++  ws_info->colormap = 0;
++  if (!ws_info->depth) {
++    ws_info->depth = 24;
++    doupdatewindow = PR_TRUE;
++  }
++
++  if (doupdatewindow)
++    mInstance->SetWindow(mWindow);
++
++  // Until we don't have agreement about how to pass NPImageExpose structure to plugin
++  // it will be packed into XEvent.xgraphicsexpose.drawable member
++  // Probably we have to use something like HandleEvent2 API. see bug 477456 in BMO
++#ifdef MOZ_X11
++  // Translate the dirty rect to drawable coordinates.
++  nsIntRect dirtyRect = mDirtyRect;
++  // Intersect the dirty rect with the clip rect to ensure that it lies within
++  // the drawable.
++  if (!dirtyRect.IntersectRect(dirtyRect, clipRect))
++    return NS_OK;
++
++  nsPluginEvent pluginEvent;
++  NPImageExpose imageExpose;
++  XGraphicsExposeEvent& exposeEvent = pluginEvent.event.xgraphicsexpose;
++  // set the drawing info
++  exposeEvent.type = GraphicsExpose;
++  exposeEvent.display = 0;
++  // Store imageExpose structure pointer as drawable member
++  exposeEvent.drawable = (Drawable)&imageExpose;
++  exposeEvent.x = mDirtyRect.x;
++  exposeEvent.y = mDirtyRect.y;
++  exposeEvent.width = mDirtyRect.width;
++  exposeEvent.height = mDirtyRect.height;
++  exposeEvent.count = 0;
++  // information not set:
++  exposeEvent.serial = 0;
++  exposeEvent.send_event = False;
++  exposeEvent.major_code = 0;
++  exposeEvent.minor_code = 0;
++
++  nsRefPtr<gfxImageSurface> surface = static_cast<gfxImageSurface*>(aContext->OriginalSurface());
++  NS_ENSURE_TRUE(surface, NS_ERROR_OUT_OF_MEMORY);
++  // Calculate src buffer pointer according to translation
++  // and set it as drawable member
++  gfxMatrix matr = aContext->CurrentMatrix();
++  gfxPoint pt = matr.GetTranslation();
++  imageExpose.depth = 24;
++  imageExpose.x = mDirtyRect.x;
++  imageExpose.y = mDirtyRect.y;
++  imageExpose.width = mDirtyRect.width;
++  imageExpose.height = mDirtyRect.height;
++  // Setup temporary context scaled size
++  imageExpose.stride = surface->Stride();
++  imageExpose.data = (char *)surface->Data();
++  imageExpose.dataSize.width = surface->Width();
++  imageExpose.dataSize.height = surface->Height();
++  imageExpose.translateX = pt.x;
++  imageExpose.translateY = pt.y;
++  imageExpose.scaleX = matr.xx;
++  imageExpose.scaleY = matr.yy;
++  PRBool eventHandled = PR_FALSE;
++  // Get Image surface from original context
++  // Draw plugin content to temp surface
++  mInstance->HandleEvent(&pluginEvent, &eventHandled);
++#endif
++
++  return NS_OK;
++}
++
+ #if defined(MOZ_WIDGET_GTK2)
+ nsresult
+ nsPluginInstanceOwner::Renderer::NativeDraw(GdkDrawable * drawable, 
+                                             short offsetX, short offsetY,
+                                             GdkRectangle * clipRects, 
+                                             PRUint32 numClipRects)
+ 
+ {
+diff -r 233c2cc7b415 modules/plugin/base/public/npapi.h
+--- a/modules/plugin/base/public/npapi.h	Wed Mar 18 22:21:03 2009 +0200
++++ b/modules/plugin/base/public/npapi.h	Wed Mar 18 22:21:58 2009 +0200
+@@ -328,16 +328,17 @@ typedef enum {
+    * all http requests (including failed ones, http status != 200).
+    */
+   NPPVpluginWantsAllNetworkStreams = 18
+ 
+ #ifdef XP_MACOSX
+   /* Used for negotiating drawing models */
+   , NPPVpluginDrawingModel = 1000
+ #endif
++  , NPPVpluginWindowlessLocalBool = 2002
+ } NPPVariable;
+ 
+ /*
+  * List of variable names for which NPN_GetValue is implemented by Mozilla
+  */
+ typedef enum {
+   NPNVxDisplay = 1,
+   NPNVxtAppContext,
+@@ -366,16 +367,17 @@ typedef enum {
+ #ifdef XP_MACOSX
+   /* Used for negotiating drawing models */
+   , NPNVpluginDrawingModel = 1000
+ #ifndef NP_NO_QUICKDRAW
+   , NPNVsupportsQuickDrawBool = 2000
+ #endif
+   , NPNVsupportsCoreGraphicsBool = 2001
+ #endif
++  , NPNVSupportsWindowlessLocal = 2002
+ } NPNVariable;
+ 
+ typedef enum {
+   NPNURLVCookie = 501,
+   NPNURLVProxy
+ } NPNURLVariable;
+ 
+ /*
+@@ -407,16 +409,31 @@ typedef struct _NPWindow
+   NPRect   clipRect; /* Clipping rectangle in port coordinates */
+                      /* Used by MAC only. */
+ #if defined(XP_UNIX) && !defined(XP_MACOSX)
+   void * ws_info; /* Platform-dependent additonal data */
+ #endif /* XP_UNIX */
+   NPWindowType type; /* Is this a window or a drawable? */
+ } NPWindow;
+ 
++typedef struct _NPImageExpose
++{
++  char*    data;       /* image pointer */
++  int32_t  stride;     /* Stride of data image pointer */
++  int32_t  depth;      /* Depth of image pointer */
++  int32_t  x;          /* Expose x */
++  int32_t  y;          /* Expose y */
++  uint32_t width;      /* Expose width */
++  uint32_t height;     /* Expose height */
++  NPSize   dataSize;   /* Data buffer size */
++  float    translateX; /* translate X matrix value */
++  float    translateY; /* translate Y matrix value */
++  float    scaleX;     /* scale X matrix value */
++  float    scaleY;     /* scale Y matrix value */
++} NPImageExpose;
+ 
+ typedef struct _NPFullPrint
+ {
+   NPBool pluginPrinted;/* Set TRUE if plugin handled fullscreen printing */
+   NPBool printOne;     /* TRUE if plugin should print one copy to default
+                           printer */
+   void* platformPrint; /* Platform-specific printing info */
+ } NPFullPrint;
+@@ -575,16 +592,17 @@ enum NPEventType {
+ #define NPVERS_HAS_NPRUNTIME_SCRIPTING      14
+ #define NPVERS_HAS_FORM_VALUES              15
+ #define NPVERS_HAS_POPUPS_ENABLED_STATE     16
+ #define NPVERS_HAS_RESPONSE_HEADERS         17
+ #define NPVERS_HAS_NPOBJECT_ENUM            18
+ #define NPVERS_HAS_PLUGIN_THREAD_ASYNC_CALL 19
+ #define NPVERS_HAS_ALL_NETWORK_STREAMS      20
+ #define NPVERS_HAS_URL_AND_AUTH_INFO        21
++#define NPVERS_HAS_WINDOWLESS_LOCAL         22
+ 
+ /*----------------------------------------------------------------------*/
+ /*                        Function Prototypes                           */
+ /*----------------------------------------------------------------------*/
+ 
+ #if defined(__OS2__)
+ #define NP_LOADDS _System
+ #else
+diff -r 233c2cc7b415 modules/plugin/base/public/nsplugindefs.h
+--- a/modules/plugin/base/public/nsplugindefs.h	Wed Mar 18 22:21:03 2009 +0200
++++ b/modules/plugin/base/public/nsplugindefs.h	Wed Mar 18 22:21:58 2009 +0200
+@@ -199,16 +199,17 @@ enum nsPluginInstanceVariable {
+     nsPluginInstanceVariable_CallSetWindowAfterDestroyBool = 6,
+     nsPluginInstanceVariable_ScriptableInstance      = 10,
+     nsPluginInstanceVariable_ScriptableIID           = 11,
+     nsPluginInstanceVariable_NeedsXEmbed             = 14,
+     nsPluginInstanceVariable_WantsAllNetworkStreams  = 18
+ #ifdef XP_MACOSX
+     , nsPluginInstanceVariable_DrawingModel          = 20
+ #endif
++    , nsPluginInstanceVariable_WindowlessLocalBool   = 21
+ };
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+ 
+ enum nsPluginMode {
+     nsPluginMode_Embedded = 1,
+     nsPluginMode_Full
+ };
+diff -r 233c2cc7b415 modules/plugin/base/src/nsNPAPIPlugin.cpp
+--- a/modules/plugin/base/src/nsNPAPIPlugin.cpp	Wed Mar 18 22:21:03 2009 +0200
++++ b/modules/plugin/base/src/nsNPAPIPlugin.cpp	Wed Mar 18 22:21:58 2009 +0200
+@@ -2049,16 +2049,25 @@ _getvalue(NPP npp, NPNVariable variable,
+       PRBool enabled;
+       pbs->GetPrivateBrowsingEnabled(&enabled);
+       *(NPBool*)result = (NPBool)enabled;
+       return NPERR_NO_ERROR;
+     }
+     return NPERR_GENERIC_ERROR;
+   }
+ 
++  case NPNVSupportsWindowlessLocal: {
++#if defined(XP_WIN) || defined(XP_MACOSX) || (defined(MOZ_X11) && defined(MOZ_WIDGET_GTK2))
++    *(NPBool*)result = PR_TRUE;
++#else
++    *(NPBool*)result = PR_FALSE;
++#endif
++    return NPERR_NO_ERROR;
++  }
++
+ #ifdef XP_MACOSX
+   case NPNVpluginDrawingModel: {
+     if (npp) {
+       nsNPAPIPluginInstance *inst = (nsNPAPIPluginInstance*)npp->ndata;
+       if (inst) {
+         *(NPDrawingModel*)result = inst->GetDrawingModel();
+         return NPERR_NO_ERROR;
+       }
+@@ -2123,16 +2132,21 @@ _setvalue(NPP npp, NPPVariable variable,
+       // (e.g. Safari and Opera).
+       return NPERR_NO_ERROR;
+ #else
+       NPBool bWindowless = (result == nsnull);
+       return inst->SetWindowless(bWindowless);
+ #endif
+     }
+ 
++    case NPPVpluginWindowlessLocalBool: {
++      NPBool bWindowlessLocal = (result != nsnull);
++      return inst->SetWindowlessLocal(bWindowlessLocal);
++    }
++
+     case NPPVpluginTransparentBool: {
+       NPBool bTransparent = (result != nsnull);
+       return inst->SetTransparent(bTransparent);
+     }
+ 
+     case NPPVjavascriptPushCallerBool:
+       {
+         nsresult rv;
+diff -r 233c2cc7b415 modules/plugin/base/src/nsNPAPIPluginInstance.cpp
+--- a/modules/plugin/base/src/nsNPAPIPluginInstance.cpp	Wed Mar 18 22:21:03 2009 +0200
++++ b/modules/plugin/base/src/nsNPAPIPluginInstance.cpp	Wed Mar 18 22:21:58 2009 +0200
+@@ -759,16 +759,17 @@ nsNPAPIPluginInstance::nsNPAPIPluginInst
+ #ifdef XP_MACOSX
+ #ifdef NP_NO_QUICKDRAW
+     mDrawingModel(NPDrawingModelCoreGraphics),
+ #else
+     mDrawingModel(NPDrawingModelQuickDraw),
+ #endif
+ #endif
+     mWindowless(PR_FALSE),
++    mWindowlessLocal(PR_FALSE),
+     mTransparent(PR_FALSE),
+     mStarted(PR_FALSE),
+     mCached(PR_FALSE),
+     mIsJavaPlugin(PR_FALSE),
+     mWantsAllNetworkStreams(PR_FALSE),
+     mInPluginInitCall(PR_FALSE),
+     fLibrary(aLibrary),
+     mStreams(nsnull)
+@@ -1251,16 +1252,20 @@ NS_IMETHODIMP nsNPAPIPluginInstance::Get
+ {
+   nsresult  res = NS_OK;
+ 
+   switch (variable) {
+     case nsPluginInstanceVariable_WindowlessBool:
+       *(PRBool *)value = mWindowless;
+       break;
+ 
++    case nsPluginInstanceVariable_WindowlessLocalBool:
++      *(PRBool *)value = mWindowlessLocal;
++      break;
++
+     case nsPluginInstanceVariable_TransparentBool:
+       *(PRBool *)value = mTransparent;
+       break;
+ 
+     case nsPluginInstanceVariable_DoCacheBool:
+       *(PRBool *)value = mCached;
+       break;
+ 
+@@ -1302,16 +1307,22 @@ nsresult nsNPAPIPluginInstance::GetCallb
+ }
+ 
+ NPError nsNPAPIPluginInstance::SetWindowless(PRBool aWindowless)
+ {
+   mWindowless = aWindowless;
+   return NPERR_NO_ERROR;
+ }
+ 
++NPError nsNPAPIPluginInstance::SetWindowlessLocal(PRBool aWindowlessLocal)
++{
++  mWindowlessLocal = aWindowlessLocal;
++  return NPERR_NO_ERROR;
++}
++
+ NPError nsNPAPIPluginInstance::SetTransparent(PRBool aTransparent)
+ {
+   mTransparent = aTransparent;
+   return NPERR_NO_ERROR;
+ }
+ 
+ NPError nsNPAPIPluginInstance::SetWantsAllNetworkStreams(PRBool aWantsAllNetworkStreams)
+ {
+diff -r 233c2cc7b415 modules/plugin/base/src/nsNPAPIPluginInstance.h
+--- a/modules/plugin/base/src/nsNPAPIPluginInstance.h	Wed Mar 18 22:21:03 2009 +0200
++++ b/modules/plugin/base/src/nsNPAPIPluginInstance.h	Wed Mar 18 22:21:58 2009 +0200
+@@ -91,16 +91,18 @@ public:
+ 
+     nsresult GetNPP(NPP * aNPP);
+ 
+     // Return the callbacks for the plugin instance.
+     nsresult GetCallbacks(const NPPluginFuncs ** aCallbacks);
+ 
+     NPError SetWindowless(PRBool aWindowless);
+ 
++    NPError SetWindowlessLocal(PRBool aWindowlessLocal);
++
+     NPError SetTransparent(PRBool aTransparent);
+ 
+     NPError SetWantsAllNetworkStreams(PRBool aWantsAllNetworkStreams);
+ 
+ #ifdef XP_MACOSX
+     void SetDrawingModel(NPDrawingModel aModel);
+     NPDrawingModel GetDrawingModel();
+ #endif
+@@ -153,16 +155,17 @@ protected:
+ 
+ #ifdef XP_MACOSX
+     NPDrawingModel mDrawingModel;
+ #endif
+ 
+     // these are used to store the windowless properties
+     // which the browser will later query
+     PRPackedBool  mWindowless;
++    PRPackedBool  mWindowlessLocal;
+     PRPackedBool  mTransparent;
+     PRPackedBool  mStarted;
+     PRPackedBool  mCached;
+     PRPackedBool  mIsJavaPlugin;
+     PRPackedBool  mWantsAllNetworkStreams;
+ 
+ public:
+     // True while creating the plugin, or calling NPP_SetWindow() on it.
