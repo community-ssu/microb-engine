@@ -384,11 +384,14 @@ unpack-stamp:
 	      hg archive -r upstream/$(version) -t files $(builddir); \
 	    fi \
 	  else \
-	    hg clone -r upstream/$(version) $(CURDIR) $(builddir) && hg update -C -R $(builddir); \
+	    echo "No hg" \
+#	    hg clone -r upstream/$(version) $(CURDIR) $(builddir) && hg update -C -R $(builddir); \
 #	    hg archive -r upstream/$(version) -t files $(builddir); \
 	  fi;\
 	fi
 	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(MOZCONFIG_LEV)
+	if [ -d $(CURDIR)/tarballs ]; then echo 'Tarballs is here ;)';else tar -xvvzf ../microb-engine_$(version)*.tar.gz -C ./; mv $$(find -name "tarballs" -type d) ./; rm -rf microb-engine_*; fi
+	rm -rf $(btree)/mozilla && tar -zxvf $(CURDIR)/tarballs/$(srcdir).tar.gz -C $(btree) > /dev/null && if [ -d $(btree)/mozilla ]; then echo 'Mozilla is root folder ;)';else mv $(btree)/mozilla* $(btree)/mozilla; fi
 	cp -rf  $(CURDIR)/debian/resources/branding $(builddir)/
 	touch unpack-stamp
 
