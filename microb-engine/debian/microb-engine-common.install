@@ -1,4 +1,3 @@
-etc/*
 ../prefs/*.js usr/lib/microb-engine/greprefs
 usr/lib/microb-engine/modules
 usr/lib/microb-engine/defaults
@@ -8,7 +7,6 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/global/css.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/xbl.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/xul.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout_errors.properties
-usr/lib/microb-engine/chrome/en-US/locale/en-US/global/settingsChange.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/netError.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/netErrorApp.dtd
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/global.dtd
@@ -19,6 +17,7 @@ usr/lib/microb-engine/chrome/en-US/locale/en-US/global/global-strres.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/plugins.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/nsWebBrowserPersist.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/dom/dom.properties
+usr/lib/microb-engine/chrome/en-US/locale/en-US/global/svg/*.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout/MediaDocument.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout/xmlparser.properties
 usr/lib/microb-engine/chrome/en-US/locale/en-US/global/layout/HtmlForm.properties
@@ -87,6 +86,7 @@ usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLPrettyPrint.css
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLMonoPrint.css
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLPrettyPrint.xml
 usr/lib/microb-engine/chrome/toolkit/content/global/xml/XMLPrettyPrint.xsl
+usr/lib/microb-engine/chrome/toolkit/content/global/svg/*
 usr/lib/microb-engine/chrome/toolkit/content/global/configIntValue.xul
 usr/lib/microb-engine/chrome/toolkit/content/global/netError.xhtml
 usr/lib/microb-engine/chrome/toolkit/content/global/nsHelperAppDlg.xul
@@ -218,6 +218,7 @@ usr/lib/microb-engine/res/entityTables/*math*.properties
 usr/lib/microb-engine/res/sites*
 usr/lib/microb-engine/res/smallScree*
 usr/lib/microb-engine/res/designmode.css
+usr/lib/microb-engine/res/*svg*.css
 
 usr/lib/microb-engine/chrome/toolkit/content/global/bindings/button*
 usr/lib/microb-engine/chrome/toolkit/content/global/bindings/checkbox*

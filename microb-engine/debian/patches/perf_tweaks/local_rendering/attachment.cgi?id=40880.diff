@@ -1,18 +1,29 @@
 #Disable bilinear scaling for images
 #bug 99283
-diff -r b5574246655a gfx/src/thebes/nsThebesImage.cpp
---- a/gfx/src/thebes/nsThebesImage.cpp	Fri Feb 06 12:00:37 2009 +0200
-+++ b/gfx/src/thebes/nsThebesImage.cpp	Sat Feb 07 16:36:19 2009 +0200
-@@ -676,6 +676,12 @@ nsThebesImage::Draw(gfxContext*        a
+Index: mozilla/gfx/src/thebes/nsThebesImage.cpp
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsThebesImage.cpp
++++ mozilla/gfx/src/thebes/nsThebesImage.cpp
+@@ -681,16 +681,22 @@ nsThebesImage::Draw(gfxContext*        a
+         }
+     }
+ 
+     if ((op == gfxContext::OPERATOR_OVER || pushedGroup) &&
+         format == gfxASurface::ImageFormatRGB24) {
          aContext->SetOperator(gfxContext::OPERATOR_SOURCE);
      }
  
 +#ifdef __arm__ // Disable bilinear scaling on arm, because pixman is slow
 +
 +    if (currentTarget->GetType() == gfxASurface::SurfaceTypeImage)
-+      pattern->SetFilter(3);
++      pattern->SetFilter(gfxPattern::FILTER_NEAREST);
 +#endif
 +
      // Phew! Now we can actually draw this image
      aContext->NewPath();
      aContext->SetPattern(pattern);
+     aContext->Rectangle(fill);
+     aContext->Fill();
+   
+     aContext->SetOperator(op);
+     if (pushedGroup) {

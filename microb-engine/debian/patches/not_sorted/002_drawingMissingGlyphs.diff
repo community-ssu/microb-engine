@@ -1,9 +1,16 @@
 # Drawing 2 parallel lines for missing glyph
 # Anton Rogaynis <rogainis(at)gmail(dot)com>
 # bug 463927
---- mozilla/gfx/thebes/src/gfxFontMissingGlyphs.cpp.orig	2008-06-16 02:16:18.000000000 -0400
-+++ mozilla/gfx/thebes/src/gfxFontMissingGlyphs.cpp	2008-07-21 15:16:13.000000000 -0400
-@@ -212,62 +212,20 @@
+Index: mozilla/gfx/thebes/src/gfxFontMissingGlyphs.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxFontMissingGlyphs.cpp
++++ mozilla/gfx/thebes/src/gfxFontMissingGlyphs.cpp
+@@ -207,72 +207,30 @@ gfxFontMissingGlyphs::DrawMissingGlyph(g
+     }
+ 
+     // Stroke a rectangle so that the stroke's left edge is inset one pixel
+     // from the left edge of the glyph box and the stroke's right edge
+     // is inset one pixel from the right edge of the glyph box.
      gfxFloat halfBorderWidth = BOX_BORDER_WIDTH/2.0;
      gfxFloat borderLeft = aRect.X() + BOX_HORIZONTAL_INSET + halfBorderWidth;
      gfxFloat borderRight = aRect.XMost() - BOX_HORIZONTAL_INSET - halfBorderWidth;
@@ -79,3 +86,8 @@
  
      aContext->Restore();
  }
+ 
+ gfxFloat
+ gfxFontMissingGlyphs::GetDesiredMinWidth(PRUint32 aChar)
+ {
+ /**

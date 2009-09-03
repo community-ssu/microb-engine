@@ -3,7 +3,7 @@ Index: mozilla/nsprpub/config/Makefile.in
 ===================================================================
 --- mozilla.orig/nsprpub/config/Makefile.in
 +++ mozilla/nsprpub/config/Makefile.in
-@@ -133,16 +133,25 @@
+@@ -137,16 +137,25 @@ export:: $(TARGETS)
  	rm -f $(dist_bindir)/nspr-config
  
  ifdef WRAP_SYSTEM_INCLUDES

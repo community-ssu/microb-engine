@@ -2,7 +2,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -2710,17 +2710,17 @@
+@@ -2696,17 +2696,17 @@ nsWindow::OnMotionNotifyEvent(GtkWidget 
  }
  #endif
  
@@ -16,12 +16,12 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
          aEvent.refPoint.x = nscoord(aGdkEvent->x);
          aEvent.refPoint.y = nscoord(aGdkEvent->y);
      } else {
-         nsIntRect windowRect;
-         ScreenToWidget(nsIntRect(NSToIntFloor(aGdkEvent->x_root), NSToIntFloor(aGdkEvent->y_root), 1, 1), windowRect);
+         nsIntPoint point(NSToIntFloor(aGdkEvent->x_root), NSToIntFloor(aGdkEvent->y_root));
+         aEvent.refPoint = point - WidgetToScreenOffset();
+     }
  
-         aEvent.refPoint.x = windowRect.x;
-         aEvent.refPoint.y = windowRect.y;
-@@ -3268,17 +3268,17 @@
+     aEvent.isShift   = (aGdkEvent->state & GDK_SHIFT_MASK) != 0;
+@@ -3283,17 +3283,17 @@ nsWindow::OnScrollEvent(GtkWidget *aWidg
          event.delta = -1;
          break;
      case GDK_SCROLL_RIGHT:
@@ -32,11 +32,11 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  
 -    if (aEvent->window == mDrawingarea->inner_window) {
 +    if (mDrawingarea && aEvent->window == mDrawingarea->inner_window) {
-         // we are the window that the event happened on so no need for expensive ScreenToWidget
+         // we are the window that the event happened on so no need for expensive WidgetToScreenOffset
          event.refPoint.x = nscoord(aEvent->x);
          event.refPoint.y = nscoord(aEvent->y);
      } else {
          // XXX we're never quite sure which GdkWindow the event came from due to our custom bubbling
          // in scroll_event_cb(), so use ScreenToWidget to translate the screen root coordinates into
          // coordinates relative to this widget.
-         nsIntRect windowRect;
+         nsIntPoint point(NSToIntFloor(aEvent->x_root), NSToIntFloor(aEvent->y_root));

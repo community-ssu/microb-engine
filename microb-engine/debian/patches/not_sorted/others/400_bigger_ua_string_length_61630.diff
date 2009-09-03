@@ -3,11 +3,11 @@ Index: mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp
 ===================================================================
 --- mozilla.orig/modules/plugin/base/src/nsPluginHostImpl.cpp
 +++ mozilla/modules/plugin/base/src/nsPluginHostImpl.cpp
-@@ -2724,17 +2724,17 @@
+@@ -2706,17 +2706,17 @@ nsresult nsPluginHostImpl::ReloadPlugins
  
    PLUGIN_LOG(PLUGIN_LOG_NORMAL,
    ("nsPluginHostImpl::ReloadPlugins End active_instance_count=%d\n",
-   mActivePluginList.mCount));
+   mPluginInstanceTagList.mCount));
  
    return rv;
  }

@@ -1,0 +1,22 @@
+diff --git a/layout/base/nsBidiPresUtils.cpp b/layout/base/nsBidiPresUtils.cpp
+--- a/layout/base/nsBidiPresUtils.cpp
++++ b/layout/base/nsBidiPresUtils.cpp
+@@ -485,17 +485,17 @@ nsBidiPresUtils::Resolve(nsBlockFrame*  
+         ++lineOffset;
+       }
+     } // not directionalFrame
+     temp = runLength;
+     runLength -= fragmentLength;
+     fragmentLength -= temp;
+ 
+     if (frame && fragmentLength <= 0) {
+-      if (runLength <= 0) {
++      if (runLength <= 0 && !frame->GetNextInFlow()) {
+         // If the frame is at the end of a run, split all ancestor inlines that need splitting.
+         nsIFrame* child = frame;
+         nsIFrame* parent = frame->GetParent();
+         // As long as we're on the last sibling, the parent doesn't have to be split.
+         while (parent &&
+                IsBidiSplittable(parent) &&
+                !child->GetNextSibling()) {
+           child = parent;

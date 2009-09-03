@@ -6,9 +6,9 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -7471,17 +7471,18 @@
- 
- AC_SUBST(MOZ_XSLT)
+@@ -7658,17 +7658,18 @@ fi
+ AC_SUBST(LCMS_CFLAGS)
+ AC_SUBST(LCMS_LIBS)
  
  dnl ========================================================
  dnl disable xul
@@ -26,7 +26,7 @@ Index: mozilla/configure.in
  fi
  
  AC_SUBST(MOZ_XUL)
-@@ -7627,17 +7628,18 @@
+@@ -7786,17 +7787,18 @@ if test "$MOZ_PROFILELOCKING"; then
    AC_DEFINE(MOZ_PROFILELOCKING)
  fi
  

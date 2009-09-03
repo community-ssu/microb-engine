@@ -1,0 +1,35 @@
+Index: mozilla/dom/locales/en-US/chrome/netError.dtd
+===================================================================
+--- mozilla.orig/dom/locales/en-US/chrome/netError.dtd.orig	2009-05-26 10:08:59.000000000 +0300
++++ mozilla/dom/locales/en-US/chrome/netError.dtd	2009-05-26 10:15:32.000000000 +0300
+@@ -73,15 +73,25 @@
+ <p>Attack sites try to install programs that steal private information, use your computer to attack others, or damage your system.</p>
+ <p>Web site owners who believe their site has been reported as an attack site in error may <a href='http://www.stopbadware.org/home/reviewinfo' >request a review</a>.</p>
+ ">
+ 
+ <!ENTITY phishingBlocked.title "Suspected Web Forgery!">
+ <!ENTITY phishingBlocked.longDesc "
+ <p>Entering any personal information on this page may result in identity theft or other fraud.</p>
+ <p>These types of web forgeries are used in scams known as phishing attacks, in which fraudulent web pages and emails are used to imitate sources you may trust.</p>
+ ">
+ 
+-<!-- Include app-specific error messages - do not change this in localization!
+-     Some applications might override netErrorApp.dtd with their specific version,
+-     this inclusion needs to be intact for that approach to work correctly. -->
+-<!ENTITY % netErrorAppDTD SYSTEM "chrome://global/locale/netErrorApp.dtd">
+-%netErrorAppDTD;
++<!ENTITY securityOverride.linkText "Or you can add an exception…">
++<!ENTITY securityOverride.getMeOutOfHereButton "Get me out of here!">
++<!ENTITY securityOverride.exceptionButtonLabel "Add Exception…">
++
++<!-- LOCALIZATION NOTE (securityOverride.warningText) - Do not translate the
++contents of the <xul:button> tags.  The only language content is the label= field,
++which uses strings already defined above. The button is included here (instead of
++netError.xhtml) because it exposes functionality specific to microb. -->
++
++<!ENTITY securityOverride.warningText "
++<p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p>
++
++<xul:button xmlns:xul='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul' id='getMeOutOfHereButton' label='&securityOverride.getMeOutOfHereButton;'/>
++<xul:button xmlns:xul='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul' id='exceptionDialogButton' label='&securityOverride.exceptionButtonLabel;'/>
++">

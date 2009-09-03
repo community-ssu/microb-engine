@@ -1,0 +1,52 @@
+diff -r ba43b4ba7807 toolkit/mozapps/extensions/src/nsExtensionManager.js.in
+--- a/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	Mon Mar 30 22:14:17 2009 +0300
++++ b/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	Mon Mar 30 22:19:25 2009 +0300
+@@ -72,6 +72,7 @@ const PREF_DSS_SWITCHPENDING          = 
+ const PREF_DSS_SKIN_TO_SELECT         = "extensions.lastSelectedSkin";
+ const PREF_GENERAL_SKINS_SELECTEDSKIN = "general.skins.selectedSkin";
+ const PREF_EM_LOGGING_ENABLED         = "extensions.logging.enabled";
++const PREF_EM_ERROR_LOGGING_ENABLED   = "extensions.error.logging.enabled";
+ const PREF_EM_UPDATE_INTERVAL         = "extensions.update.interval";
+ const PREF_UPDATE_NOTIFYUSER          = "extensions.update.notifyUser";
+ const PREF_MATCH_OS_LOCALE            = "intl.locale.matchOS";
+@@ -178,6 +179,7 @@ var gInstallManifestRoot  = null;
+ var gVersionChecker       = null;
+ var gDirService           = null;
+ var gLoggingEnabled       = null;
++var gErrorLoggingEnabled  = null;
+ var gCheckCompatibility   = true;
+ var gCheckUpdateSecurity  = true;
+ var gLocale               = "en-US";
+@@ -548,6 +550,7 @@ function LOG(string) {
+  */  
+ function ERROR(string) {
+   LOG(string);
++  if (!gErrorLoggingEnabled) return;
+   try {
+     var tstamp = new Date();
+     var logfile = getFile(KEY_PROFILEDIR, [FILE_EXTENSIONS_LOG]);
+@@ -2536,7 +2539,7 @@ ExtensionManager.prototype = {
+       this._shutdown();
+       break;
+     case "nsPref:changed":
+-      if (data == PREF_EM_LOGGING_ENABLED)
++      if (data == PREF_EM_LOGGING_ENABLED || data == PREF_EM_ERROR_LOGGING_ENABLED)
+         this._loggingToggled();
+       else if (data == PREF_EM_CHECK_COMPATIBILITY ||
+                data == PREF_EM_CHECK_UPDATE_SECURITY)
+@@ -2553,6 +2556,7 @@ ExtensionManager.prototype = {
+    */
+   _loggingToggled: function EM__loggingToggled() {
+     gLoggingEnabled = getPref("getBoolPref", PREF_EM_LOGGING_ENABLED, false);
++    gErrorLoggingEnabled = getPref("getBoolPref", PREF_EM_ERROR_LOGGING_ENABLED, false);
+   },
+ 
+   /**
+@@ -2628,6 +2632,7 @@ ExtensionManager.prototype = {
+     }
+ 
+     gLoggingEnabled = getPref("getBoolPref", PREF_EM_LOGGING_ENABLED, false);
++    gErrorLoggingEnabled = getPref("getBoolPref", PREF_EM_ERROR_LOGGING_ENABLED, false);
+     gCheckCompatibility = getPref("getBoolPref", PREF_EM_CHECK_COMPATIBILITY, true);
+     gCheckUpdateSecurity = getPref("getBoolPref", PREF_EM_CHECK_UPDATE_SECURITY, true);
+     gPref.addObserver("extensions.", this, false);

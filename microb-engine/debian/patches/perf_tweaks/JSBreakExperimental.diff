@@ -1,57 +1,11 @@
-# Make UI Responsive while JS Script is working 
-# https://bugzilla.mozilla.org/show_bug.cgi?id=449109
-Index: mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
+Index: mozilla/dom/base/nsJSEnvironment.cpp
 ===================================================================
---- mozilla.orig/widget/src/xpwidgets/nsBaseAppShell.cpp
-+++ mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
-@@ -205,16 +205,22 @@
- nsBaseAppShell::ResumeNative()
- {
-   --mSuspendNativeCount;
-   NS_ASSERTION(mSuspendNativeCount >= 0, "Unbalanced call to nsBaseAppShell::ResumeNative!");
-   return NS_OK;
- }
+--- mozilla.orig/dom/base/nsJSEnvironment.cpp
++++ mozilla/dom/base/nsJSEnvironment.cpp
+@@ -208,23 +208,28 @@ static JSGCCallback gOldJSGCCallback;
  
- NS_IMETHODIMP
-+nsBaseAppShell::WakeupNative(PRBool mayWait)
-+{
-+  return OnProcessNextEvent(nsnull, PR_FALSE, 0);
-+}
-+
-+NS_IMETHODIMP
- nsBaseAppShell::GetEventloopNestingLevel(PRUint32* aNestingLevelResult)
- {
-   NS_ENSURE_ARG_POINTER(aNestingLevelResult);
- 
-   *aNestingLevelResult = mEventloopNestingLevel;
- 
-   return NS_OK;
- }
-Index: mozilla/widget/public/nsIAppShell.idl
-===================================================================
---- mozilla.orig/widget/public/nsIAppShell.idl
-+++ mozilla/widget/public/nsIAppShell.idl
-@@ -93,12 +93,17 @@
-   /**
-    * Resumes the use of additional platform-specific methods to run Gecko
-    * events on the main application thread.  Calls to suspendNative() and
-    * resumeNative() may be nested.  On some platforms this will be a no-op.
-    */
-   void resumeNative();
- 
-   /**
-+   * Will call DoNextNativeEvent for proceeding native event loop
-+   */
-+  void wakeupNative(in boolean mayWait);
-+
-+  /**
-    * The current event loop nesting level.
-    */
-   readonly attribute unsigned long eventloopNestingLevel;
- };
---- mozilla/dom/src/base/nsJSEnvironment.cpp.orig	2008-11-22 15:47:04.000000000 -0500
-+++ mozilla/dom/src/base/nsJSEnvironment.cpp	2008-11-22 15:51:55.000000000 -0500
-@@ -209,17 +209,22 @@ static PRBool sDidShutdown;
+ static PRBool sIsInitialized;
+ static PRBool sDidShutdown;
  
  static PRInt32 sContextCount;
  
@@ -74,7 +28,13 @@ Index: mozilla/widget/public/nsIAppShell.idl
  // notifications and if the number is bigger than NS_CC_SOFT_LIMIT_ACTIVE
  // (in case the current notification is user-interaction-active) or
  // NS_CC_SOFT_LIMIT_INACTIVE (current notification is user-interaction-inactive)
-@@ -895,10 +900,24 @@ nsJSContext::DOMOperationCallback(JSCont
+ // MaybeCC is called with aHigherParameter set to PR_TRUE, otherwise PR_FALSE.
+ //
+ // When moving from active state to inactive, nsJSContext::CC() is called
+@@ -896,16 +901,30 @@ nsJSContext::DOMOperationCallback(JSCont
+   // Get the native context
+   nsJSContext *ctx = static_cast<nsJSContext *>(::JS_GetContextPrivate(cx));
+ 
    if (!ctx) {
      // Can happen; see bug 355811
      return JS_TRUE;
@@ -99,7 +59,13 @@ Index: mozilla/widget/public/nsIAppShell.idl
    // ScriptEvaluated to be called, and clearing our operation callback time.
    // See bug 302333.
    PRTime callbackTime = ctx->mOperationCallbackTime;
-@@ -3715,10 +3734,17 @@ ReportAllJSExceptionsPrefChangedCallback
+   PRTime modalStateTime = ctx->mModalStateTime;
+ 
+   MaybeGC(cx);
+@@ -3833,16 +3852,23 @@ MaxScriptRunTimePrefChangedCallback(cons
+ static int
+ ReportAllJSExceptionsPrefChangedCallback(const char* aPrefName, void* aClosure)
+ {
    PRBool reportAll = nsContentUtils::GetBoolPref(aPrefName, PR_FALSE);
    nsContentUtils::XPConnect()->SetReportAllJSExceptions(reportAll);
    return 0;
@@ -108,7 +74,7 @@ Index: mozilla/widget/public/nsIAppShell.idl
 +static int
 +WakeUpNativeLoopOnJSPrefChangedCallback(const char* aPrefName, void* aClosure)
 +{
-+  sWakeUpNativeLoopOnJS = nsContentUtils::GetBoolPref(aPrefName, PR_TRUE);
++  sWakeUpNativeLoopOnJS = nsContentUtils::GetBoolPref(aPrefName, PR_FALSE);
 +  return 0;
 +}
 +
@@ -117,7 +83,13 @@ Index: mozilla/widget/public/nsIAppShell.idl
  {
    if (!sSecurityManager)
      return nsnull;
-@@ -3796,10 +3822,15 @@ nsJSRuntime::Init()
+ 
+   nsCOMPtr<nsIPrincipal> principal;
+   nsresult rv =
+@@ -3916,16 +3942,21 @@ nsJSRuntime::Init()
+                                       nsnull);
+ 
+   nsContentUtils::RegisterPrefCallback("dom.report_all_js_exceptions",
                                         ReportAllJSExceptionsPrefChangedCallback,
                                         nsnull);
    ReportAllJSExceptionsPrefChangedCallback("dom.report_all_js_exceptions",
@@ -133,3 +105,55 @@ Index: mozilla/widget/public/nsIAppShell.idl
    NS_ENSURE_SUCCESS(rv, rv);
    nsIObserver* activityObserver = new nsUserActivityObserver();
    NS_ENSURE_TRUE(activityObserver, NS_ERROR_OUT_OF_MEMORY);
+   obs->AddObserver(activityObserver, "user-interaction-inactive", PR_FALSE);
+   obs->AddObserver(activityObserver, "user-interaction-active", PR_FALSE);
+   obs->AddObserver(activityObserver, "xpcom-shutdown", PR_FALSE);
+Index: mozilla/widget/public/nsIAppShell.idl
+===================================================================
+--- mozilla.orig/widget/public/nsIAppShell.idl
++++ mozilla/widget/public/nsIAppShell.idl
+@@ -93,12 +93,17 @@ interface nsIAppShell : nsISupports
+   /**
+    * Resumes the use of additional platform-specific methods to run Gecko
+    * events on the main application thread.  Calls to suspendNative() and
+    * resumeNative() may be nested.  On some platforms this will be a no-op.
+    */
+   void resumeNative();
+ 
+   /**
++   * Will call DoNextNativeEvent for proceeding native event loop
++   */
++  void wakeupNative(in boolean mayWait);
++
++  /**
+    * The current event loop nesting level.
+    */
+   readonly attribute unsigned long eventloopNestingLevel;
+ };
+Index: mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
+===================================================================
+--- mozilla.orig/widget/src/xpwidgets/nsBaseAppShell.cpp
++++ mozilla/widget/src/xpwidgets/nsBaseAppShell.cpp
+@@ -205,16 +205,22 @@ NS_IMETHODIMP
+ nsBaseAppShell::ResumeNative()
+ {
+   --mSuspendNativeCount;
+   NS_ASSERTION(mSuspendNativeCount >= 0, "Unbalanced call to nsBaseAppShell::ResumeNative!");
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
++nsBaseAppShell::WakeupNative(PRBool mayWait)
++{
++  return OnProcessNextEvent(nsnull, PR_FALSE, 0);
++}
++
++NS_IMETHODIMP
+ nsBaseAppShell::GetEventloopNestingLevel(PRUint32* aNestingLevelResult)
+ {
+   NS_ENSURE_ARG_POINTER(aNestingLevelResult);
+ 
+   *aNestingLevelResult = mEventloopNestingLevel;
+ 
+   return NS_OK;
+ }

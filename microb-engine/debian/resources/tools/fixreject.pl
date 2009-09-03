@@ -45,5 +45,5 @@ while($quilt_out=~/^(.*)/gm) {
     }    
 }
 
-`cd build-tree/mozilla && quilt refresh -u -U 8 --no-timestamps -f --backup --strip-trailing-whitespace "$patch"`;
+`cd build-tree/mozilla && QUILT_DIFF_OPTS=" --show-c-function " quilt refresh -u -U 8 --no-timestamps -f --backup --strip-trailing-whitespace "$patch"`;
 

@@ -1,6 +1,11 @@
---- mozilla/security/manager/pki/resources/content/certViewer.xul.orig	2008-09-02 10:16:18.000000000 -0500
-+++ mozilla/security/manager/pki/resources/content/certViewer.xul	2008-09-19 15:04:32.000000000 -0500
-@@ -56,11 +56,11 @@
+Index: mozilla/security/manager/pki/resources/content/certViewer.xul
+===================================================================
+--- mozilla.orig/security/manager/pki/resources/content/certViewer.xul
++++ mozilla/security/manager/pki/resources/content/certViewer.xul
+@@ -53,17 +53,17 @@
+   buttonlabelaccept="&certmgr.close.label;"
+   buttonaccesskeyaccept="&certmgr.close.accesskey;"
+   onload="setWindowName();">
  
  <script type="application/x-javascript" src="chrome://global/content/strres.js"/>
  <script type="application/x-javascript" src="chrome://pippki/content/viewCertDetails.js"/>
@@ -13,3 +18,6 @@
             accesskey="&certmgr.detail.general_tab.accesskey;"/>
        <tab id="prettyprint_tab" label="&certmgr.detail.prettyprint_tab.title;"
             accesskey="&certmgr.detail.prettyprint_tab.accesskey;"/>
+     </tabs>
+     <tabpanels>
+       <vbox id="general_info"/>

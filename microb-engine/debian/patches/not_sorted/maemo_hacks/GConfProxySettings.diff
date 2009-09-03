@@ -1,7 +1,11 @@
-diff -ruN -p -U5 mozilla/extensions/pref/system-pref/src.orig/nsSystemPref.cpp mozilla/extensions/pref/system-pref/src/nsSystemPref.cpp
---- mozilla/extensions/pref/system-pref/src.orig/nsSystemPref.cpp	2008-06-04 08:23:17.000000000 +0300
-+++ mozilla/extensions/pref/system-pref/src/nsSystemPref.cpp	2008-06-04 13:50:55.000000000 +0300
-@@ -285,11 +285,11 @@ nsSystemPref::ReadSystemPref(const char 
+Index: mozilla/extensions/pref/system-pref/src/nsSystemPref.cpp
+===================================================================
+--- mozilla.orig/extensions/pref/system-pref/src/nsSystemPref.cpp
++++ mozilla/extensions/pref/system-pref/src/nsSystemPref.cpp
+@@ -282,31 +282,40 @@ nsSystemPref::ReadSystemPref(const char 
+ 
+     nsCOMPtr<nsIPrefBranch> prefBranch
+         (do_GetService(NS_PREFSERVICE_CONTRACTID, &rv));
      if (NS_FAILED(rv))
          return rv;
  
@@ -14,7 +18,10 @@ diff -ruN -p -U5 mozilla/extensions/pref/system-pref/src.orig/nsSystemPref.cpp m
      nsXPIDLCString strValue;
      PRInt32 intValue = 0;
      PRBool boolValue = PR_FALSE;
-@@ -300,10 +300,19 @@ nsSystemPref::ReadSystemPref(const char 
+ 
+     rv = prefBranch->GetPrefType(aPrefName, &prefType);
+     if (NS_FAILED(rv))
+         return rv;
      switch (prefType) {
      case nsIPrefBranch::PREF_STRING:
          mSysPrefService->GetCharPref(aPrefName, getter_Copies(strValue));
@@ -34,7 +41,13 @@ diff -ruN -p -U5 mozilla/extensions/pref/system-pref/src.orig/nsSystemPref.cpp m
      case nsIPrefBranch::PREF_INT:
          mSysPrefService->GetIntPref(aPrefName, &intValue);
          SYSPREF_LOG(("system value is %d\n", intValue));
-@@ -318,11 +327,11 @@ nsSystemPref::ReadSystemPref(const char 
+ 
+         prefBranch->SetIntPref(aPrefName, intValue);
+         break;
+@@ -315,17 +324,17 @@ nsSystemPref::ReadSystemPref(const char 
+         SYSPREF_LOG(("system value is %s\n", boolValue ? "TRUE" : "FALSE"));
+ 
+         prefBranch->SetBoolPref(aPrefName, boolValue);
          break;
      default:
          SYSPREF_LOG(("Fail to system value for it\n"));
@@ -47,3 +60,6 @@ diff -ruN -p -U5 mozilla/extensions/pref/system-pref/src.orig/nsSystemPref.cpp m
  
  //////////////////////////////////////////////////////////////////////
  // nsSystemPref::UseMozillaPrefs
+ // Restore mozilla default prefs, remove system pref listeners
+ /////////////////////////////////////////////////////////////////////
+ nsresult

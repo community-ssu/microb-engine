@@ -1,0 +1,21 @@
+diff -r 9847dc678adc gfx/cairo/libpixman/src/Makefile.in
+--- a/gfx/cairo/libpixman/src/Makefile.in	Wed May 06 21:56:54 2009 +0300
++++ b/gfx/cairo/libpixman/src/Makefile.in	Wed May 06 21:58:17 2009 +0300
+@@ -94,7 +94,7 @@ USE_ARM_SIMD_GCC=1
+ endif
+ ifdef HAVE_ARM_NEON
+ # temporarily disabled to see if it fixes odd mobile build breakage
+-#USE_ARM_NEON_GCC=1
++USE_ARM_NEON_GCC=1
+ endif
+ endif
+ 
+@@ -146,7 +146,7 @@ endif
+ ifdef USE_ARM_NEON_GCC
+ CSRCS += pixman-arm-neon.c
+ DEFINES += -DUSE_ARM_NEON
+-ARM_NEON_CFLAGS = -mfloat-abi=softfp -mfpu=neon
++ARM_NEON_CFLAGS = -mfloat-abi=softfp -mcpu=cortex-a8 -mfpu=neon
+ endif
+ 
+ ifdef USE_ARM_SIMD_MSVC

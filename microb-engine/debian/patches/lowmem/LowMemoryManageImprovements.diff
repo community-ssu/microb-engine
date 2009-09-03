@@ -2,7 +2,25 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
 ===================================================================
 --- mozilla.orig/xpcom/base/nsMemoryImpl.cpp
 +++ mozilla/xpcom/base/nsMemoryImpl.cpp
-@@ -187,16 +187,20 @@
+@@ -54,16 +54,17 @@
+ 
+ #if defined(XP_WIN)
+ #include <windows.h>
+ #define NS_MEMORY_FLUSHER
+ #elif defined (NS_OSSO)
+ #include <osso-mem.h>
+ #include <fcntl.h>
+ #include <unistd.h>
++#include <time.h>
+ const char* kHighMark = "/sys/kernel/high_watermark";
+ #else
+ // Need to implement the nsIMemory::IsLowMemory() predicate
+ #undef NS_MEMORY_FLUSHER
+ #endif
+ 
+ #ifdef NS_MEMORY_FLUSHER
+ #include "nsITimer.h"
+@@ -187,16 +188,20 @@ nsMemoryImpl::HeapMinimize(PRBool aImmed
   * and after all, 40mb should be good enough for any web app
   * unless it's part of an office suite.
   */
@@ -16,16 +34,41 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
 +        return NS_OK;
 +    }
  #if defined(WINCE)
-     MEMORYSTATUS stat;
-     GlobalMemoryStatus(&stat);
-     *result = ((float)stat.dwAvailPhys / stat.dwTotalPhys) < 0.1;
+     *result = PR_FALSE;
+     // See bug 475595 -- this is incorrect right now, and causes a big
+     // perf hit since GlobalMemoryStatus has to grab a kernel VM lock
+     // and do a bunch of munging through VM pages to get the data
+     // that's requested.  We call IsLowMemory in some performance
+     // critical code (e.g. during painting), so that's bad.
+ #if 0
+@@ -206,31 +211,46 @@ nsMemoryImpl::IsLowMemory(PRBool *result
+ #endif
  #elif defined(XP_WIN)
      MEMORYSTATUSEX stat;
      stat.dwLength = sizeof stat;
      GlobalMemoryStatusEx(&stat);
-@@ -213,16 +217,22 @@
+     *result = (stat.ullAvailPageFile < kRequiredMemory) &&
+         ((float)stat.ullAvailPageFile / stat.ullTotalPageFile) < 0.1;
+ #elif defined(NS_OSSO)
++    static time_t sTimeLastCheck = 0;
++    static PRBool sLastLowMemValue = PR_FALSE;
++    time_t newTime = time(0);
++    if (newTime - sTimeLastCheck < 1) {
++      *result = sLastLowMemValue;
++      return NS_OK;
++    }
++    sTimeLastCheck = newTime;
+     int fd = open (kHighMark, O_RDONLY);
+     if (fd == -1) {
+         *result = PR_FALSE;
+         return NS_OK;
+     }
+     int c = 0;
+     read (fd, &c, 1);
      close(fd);
-     *result = (c == '1');
+-    *result = (c == '1');
++    sLastLowMemValue = (c == '1');
++    *result = sLastLowMemValue;
  #else
      *result = PR_FALSE;
  #endif
@@ -46,7 +89,7 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
      return sGlobalMemoryFlusher.Init();
  #else
      return NS_OK;
-@@ -289,16 +299,19 @@
+@@ -297,16 +317,19 @@ NS_IMETHODIMP
  nsMemoryImpl::FlushEvent::Run()
  {
      sGlobalMemory.RunFlushers(mReason);
@@ -70,7 +113,7 @@ Index: mozilla/xpcom/base/nsIMemory.idl
 ===================================================================
 --- mozilla.orig/xpcom/base/nsIMemory.idl
 +++ mozilla/xpcom/base/nsIMemory.idl
-@@ -121,10 +121,17 @@
+@@ -121,10 +121,17 @@ interface nsIMemory : nsISupports
      void heapMinimize(in boolean immediate);
  
      /**
@@ -92,7 +135,7 @@ Index: mozilla/xpcom/base/nsMemoryImpl.h
 ===================================================================
 --- mozilla.orig/xpcom/base/nsMemoryImpl.h
 +++ mozilla/xpcom/base/nsMemoryImpl.h
-@@ -66,11 +66,13 @@
+@@ -66,11 +66,13 @@ protected:
      struct FlushEvent : public nsIRunnable {
          NS_DECL_ISUPPORTS_INHERITED
          NS_DECL_NSIRUNNABLE
@@ -110,7 +153,7 @@ Index: mozilla/xpcom/ds/nsRecyclingAllocator.cpp
 ===================================================================
 --- mozilla.orig/xpcom/ds/nsRecyclingAllocator.cpp
 +++ mozilla/xpcom/ds/nsRecyclingAllocator.cpp
-@@ -323,14 +323,21 @@
+@@ -323,14 +323,21 @@ nsRecyclingAllocatorImpl::Init(size_t nb
  NS_IMETHODIMP
  nsRecyclingAllocatorImpl::HeapMinimize(PRBool immediate)
  {
@@ -132,3 +175,29 @@ Index: mozilla/xpcom/ds/nsRecyclingAllocator.cpp
      return NS_ERROR_NOT_IMPLEMENTED;
  }
  
+Index: mozilla/xpcom/tests/TestPipe.cpp
+===================================================================
+--- mozilla.orig/xpcom/tests/TestPipe.cpp
++++ mozilla/xpcom/tests/TestPipe.cpp
+@@ -174,16 +174,21 @@ NS_IMETHODIMP BackwardsAllocator::HeapMi
+ }
+ 
+ NS_IMETHODIMP BackwardsAllocator::IsLowMemory(PRBool* retval)
+ {
+   *retval = PR_FALSE;
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++BackwardsAllocator::SetLowMemory(PRInt32 aLowMemState)
++{
++    return NS_OK;
++}
+ 
+ nsresult TestBackwardsAllocator()
+ {
+   const PRUint32 SEGMENT_COUNT = 10;
+   const PRUint32 SEGMENT_SIZE = 10;
+ 
+   nsRefPtr<BackwardsAllocator> allocator = new BackwardsAllocator();
+   if (!allocator)

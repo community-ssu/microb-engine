@@ -1,0 +1,30 @@
+Index: mozilla/toolkit/components/places/src/nsNavHistory.cpp
+===================================================================
+--- mozilla.orig/toolkit/components/places/src/nsNavHistory.cpp
++++ mozilla/toolkit/components/places/src/nsNavHistory.cpp
+@@ -2967,16 +2967,25 @@ nsNavHistory::ExecuteQueries(nsINavHisto
+                              nsINavHistoryResult** _retval)
+ {
+   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
+   NS_ENSURE_ARG(aQueries);
+   NS_ENSURE_ARG(aOptions);
+   NS_ENSURE_ARG(aQueryCount);
+   NS_ENSURE_ARG_POINTER(_retval);
+ 
++#ifdef LAZY_ADD
++  if (mLazyTimer) {
++    mLazyTimer->Cancel();
++    mLazyTimerSet = PR_FALSE;
++    mLazyTimerDeferments = 0;
++    CommitLazyMessages();
++  }
++#endif
++
+   nsresult rv;
+   // concrete options
+   nsCOMPtr<nsNavHistoryQueryOptions> options = do_QueryInterface(aOptions);
+   NS_ENSURE_TRUE(options, NS_ERROR_INVALID_ARG);
+ 
+   // concrete queries array
+   nsCOMArray<nsNavHistoryQuery> queries;
+   for (PRUint32 i = 0; i < aQueryCount; i ++) {

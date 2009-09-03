@@ -4,8 +4,7 @@ Index: mozilla/toolkit/toolkit-tiers.mk
 ===================================================================
 --- mozilla.orig/toolkit/toolkit-tiers.mk
 +++ mozilla/toolkit/toolkit-tiers.mk
-@@ -270,9 +270,17 @@
- endif
+@@ -265,8 +265,16 @@ endif
  
  ifdef ENABLE_TESTS
  tier_toolkit_dirs	+= testing/mochitest
@@ -13,9 +12,7 @@ Index: mozilla/toolkit/toolkit-tiers.mk
  
  ifdef MOZ_TREE_FREETYPE
  tier_external_dirs	+= modules/freetype2
--endif
-\ No newline at end of file
-+endif
+ endif
 +
 +ifndef MOZ_PHOENIX
 +ifdef MOZ_XULRUNNER

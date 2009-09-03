@@ -38,7 +38,7 @@ Index: mozilla/toolkit/library/libxul-rules.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-rules.mk
 +++ mozilla/toolkit/library/libxul-rules.mk
-@@ -83,14 +83,17 @@
+@@ -83,14 +83,17 @@ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
  ifneq ($(OS_ARCH),WINCE)
  OS_LIBS += $(call EXPAND_LIBNAME,usp10 oleaut32)
  endif

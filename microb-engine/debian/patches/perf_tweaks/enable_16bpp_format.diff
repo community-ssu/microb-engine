@@ -5,7 +5,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -82,18 +82,23 @@
+@@ -83,18 +83,23 @@
  
  #define GDK_PIXMAP_SIZE_MAX 32767
  
@@ -29,7 +29,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  static FT_Library gPlatformFTLibrary = NULL;
  #endif
  
-@@ -115,16 +120,26 @@
+@@ -116,16 +121,26 @@ gfxPlatformGtk::gfxPlatformGtk()
      gPlatformFonts = new FontTable();
      gPlatformFonts->Init(100);
      gPlatformFontAliases = new FontTable();
@@ -56,7 +56,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
      sFontconfigUtils = nsnull;
  
  #ifdef MOZ_PANGO
-@@ -186,18 +201,24 @@
+@@ -187,18 +202,24 @@ gfxPlatformGtk::CreateOffscreenSurface(c
      // XXX we really need a different interface here, something that passes
      // in more context, including the display and/or target surface type that
      // we should try to match

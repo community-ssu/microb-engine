@@ -1,6 +1,7 @@
-diff -r 233c2cc7b415 layout/generic/nsObjectFrame.cpp
---- a/layout/generic/nsObjectFrame.cpp	Wed Mar 18 22:21:03 2009 +0200
-+++ b/layout/generic/nsObjectFrame.cpp	Wed Mar 18 22:21:58 2009 +0200
+Index: mozilla/layout/generic/nsObjectFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsObjectFrame.cpp
++++ mozilla/layout/generic/nsObjectFrame.cpp
 @@ -135,16 +135,18 @@
  
  #include "gfxContext.h"
@@ -158,7 +159,7 @@ diff -r 233c2cc7b415 layout/generic/nsObjectFrame.cpp
 +    static_cast<NPSetWindowCallbackStruct*>(mWindow->ws_info);
 +  ws_info->visual = 0;
 +  ws_info->colormap = 0;
-+  if (!ws_info->depth) {
++  if (ws_info->depth != 24) {
 +    ws_info->depth = 24;
 +    doupdatewindow = PR_TRUE;
 +  }
@@ -233,9 +234,10 @@ diff -r 233c2cc7b415 layout/generic/nsObjectFrame.cpp
                                              PRUint32 numClipRects)
  
  {
-diff -r 233c2cc7b415 modules/plugin/base/public/npapi.h
---- a/modules/plugin/base/public/npapi.h	Wed Mar 18 22:21:03 2009 +0200
-+++ b/modules/plugin/base/public/npapi.h	Wed Mar 18 22:21:58 2009 +0200
+Index: mozilla/modules/plugin/base/public/npapi.h
+===================================================================
+--- mozilla.orig/modules/plugin/base/public/npapi.h
++++ mozilla/modules/plugin/base/public/npapi.h
 @@ -328,16 +328,17 @@ typedef enum {
     * all http requests (including failed ones, http status != 200).
     */
@@ -322,9 +324,10 @@ diff -r 233c2cc7b415 modules/plugin/base/public/npapi.h
  #if defined(__OS2__)
  #define NP_LOADDS _System
  #else
-diff -r 233c2cc7b415 modules/plugin/base/public/nsplugindefs.h
---- a/modules/plugin/base/public/nsplugindefs.h	Wed Mar 18 22:21:03 2009 +0200
-+++ b/modules/plugin/base/public/nsplugindefs.h	Wed Mar 18 22:21:58 2009 +0200
+Index: mozilla/modules/plugin/base/public/nsplugindefs.h
+===================================================================
+--- mozilla.orig/modules/plugin/base/public/nsplugindefs.h
++++ mozilla/modules/plugin/base/public/nsplugindefs.h
 @@ -199,16 +199,17 @@ enum nsPluginInstanceVariable {
      nsPluginInstanceVariable_CallSetWindowAfterDestroyBool = 6,
      nsPluginInstanceVariable_ScriptableInstance      = 10,
@@ -343,9 +346,10 @@ diff -r 233c2cc7b415 modules/plugin/base/public/nsplugindefs.h
      nsPluginMode_Embedded = 1,
      nsPluginMode_Full
  };
-diff -r 233c2cc7b415 modules/plugin/base/src/nsNPAPIPlugin.cpp
---- a/modules/plugin/base/src/nsNPAPIPlugin.cpp	Wed Mar 18 22:21:03 2009 +0200
-+++ b/modules/plugin/base/src/nsNPAPIPlugin.cpp	Wed Mar 18 22:21:58 2009 +0200
+Index: mozilla/modules/plugin/base/src/nsNPAPIPlugin.cpp
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/nsNPAPIPlugin.cpp
++++ mozilla/modules/plugin/base/src/nsNPAPIPlugin.cpp
 @@ -2049,16 +2049,25 @@ _getvalue(NPP npp, NPNVariable variable,
        PRBool enabled;
        pbs->GetPrivateBrowsingEnabled(&enabled);
@@ -394,9 +398,10 @@ diff -r 233c2cc7b415 modules/plugin/base/src/nsNPAPIPlugin.cpp
      case NPPVjavascriptPushCallerBool:
        {
          nsresult rv;
-diff -r 233c2cc7b415 modules/plugin/base/src/nsNPAPIPluginInstance.cpp
---- a/modules/plugin/base/src/nsNPAPIPluginInstance.cpp	Wed Mar 18 22:21:03 2009 +0200
-+++ b/modules/plugin/base/src/nsNPAPIPluginInstance.cpp	Wed Mar 18 22:21:58 2009 +0200
+Index: mozilla/modules/plugin/base/src/nsNPAPIPluginInstance.cpp
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/nsNPAPIPluginInstance.cpp
++++ mozilla/modules/plugin/base/src/nsNPAPIPluginInstance.cpp
 @@ -759,16 +759,17 @@ nsNPAPIPluginInstance::nsNPAPIPluginInst
  #ifdef XP_MACOSX
  #ifdef NP_NO_QUICKDRAW
@@ -459,9 +464,10 @@ diff -r 233c2cc7b415 modules/plugin/base/src/nsNPAPIPluginInstance.cpp
  
  NPError nsNPAPIPluginInstance::SetWantsAllNetworkStreams(PRBool aWantsAllNetworkStreams)
  {
-diff -r 233c2cc7b415 modules/plugin/base/src/nsNPAPIPluginInstance.h
---- a/modules/plugin/base/src/nsNPAPIPluginInstance.h	Wed Mar 18 22:21:03 2009 +0200
-+++ b/modules/plugin/base/src/nsNPAPIPluginInstance.h	Wed Mar 18 22:21:58 2009 +0200
+Index: mozilla/modules/plugin/base/src/nsNPAPIPluginInstance.h
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/nsNPAPIPluginInstance.h
++++ mozilla/modules/plugin/base/src/nsNPAPIPluginInstance.h
 @@ -91,16 +91,18 @@ public:
  
      nsresult GetNPP(NPP * aNPP);
@@ -481,7 +487,7 @@ diff -r 233c2cc7b415 modules/plugin/base/src/nsNPAPIPluginInstance.h
      void SetDrawingModel(NPDrawingModel aModel);
      NPDrawingModel GetDrawingModel();
  #endif
-@@ -153,16 +155,17 @@ protected:
+@@ -151,16 +153,17 @@ protected:
  
  #ifdef XP_MACOSX
      NPDrawingModel mDrawingModel;

@@ -3,7 +3,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -7054,18 +7054,19 @@
+@@ -7651,18 +7651,19 @@ int main() {
      fi
  fi
  

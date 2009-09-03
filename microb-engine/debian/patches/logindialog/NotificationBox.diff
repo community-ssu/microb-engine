@@ -1,8 +1,8 @@
---- mozilla/toolkit/locales/en-US/chrome/passwordmgr/passwordmgr.properties.orig	2008-11-12 11:24:07.000000000 +0200
-+++ mozilla/toolkit/locales/en-US/chrome/passwordmgr/passwordmgr.properties	2008-11-12 11:24:21.000000000 +0200
-@@ -34,38 +34,38 @@
- # the provisions above, a recipient may use your version of this file under
- # the terms of any one of the MPL, the GPL or the LGPL.
+Index: mozilla/toolkit/locales/en-US/chrome/passwordmgr/passwordmgr.properties
+===================================================================
+--- mozilla.orig/toolkit/locales/en-US/chrome/passwordmgr/passwordmgr.properties
++++ mozilla/toolkit/locales/en-US/chrome/passwordmgr/passwordmgr.properties
+@@ -36,34 +36,34 @@
  #
  # ***** END LICENSE BLOCK *****
  
@@ -43,13 +43,11 @@
  showPasswordsAccessKey=P
  noMasterPasswordPrompt=Are you sure you wish to show your passwords?
  removeAllPasswordsPrompt=Are you sure you wish to remove all passwords?
- removeAllPasswordsTitle=Remove all passwords
- loginsSpielAll=Passwords for the following sites are stored on your computer:
---- mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js.orig	2008-11-12 11:30:42.000000000 +0200
-+++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js	2008-11-12 11:29:17.000000000 +0200
-@@ -611,21 +611,21 @@ LoginManagerPrompter.prototype = {
-                                 priority, aButtons);
- 
+Index: mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
+===================================================================
+--- mozilla.orig/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
++++ mozilla/toolkit/components/passwordmgr/src/nsLoginManagerPrompter.js
+@@ -615,17 +615,17 @@ LoginManagerPrompter.prototype = {
          // The page we're going to hasn't loaded yet, so we want to persist
          // across the first location change.
          newBar.persistence++;
@@ -68,11 +66,7 @@
      },
  
  
-     /*
-      * _showSaveLoginNotification
-@@ -667,53 +667,85 @@ LoginManagerPrompter.prototype = {
-             notificationText  = this._getLocalizedString(
-                                         "saveLoginTextNoUsername",
+@@ -671,49 +671,81 @@ LoginManagerPrompter.prototype = {
                                          [brandShortName, displayHost]);
          }
  
@@ -183,11 +177,7 @@
       *
       */
      _removeLoginNotifications : function (aNotifyBox) {
-         var oldBar = aNotifyBox.getNotificationWithValue("password-save");
-         if (oldBar) {
-@@ -830,41 +862,68 @@ LoginManagerPrompter.prototype = {
-         var dontChangeButtonText =
-               this._getLocalizedString("notifyBarDontChangeButtonText");
+@@ -834,37 +866,64 @@ LoginManagerPrompter.prototype = {
          var dontChangeButtonAccessKey =
                this._getLocalizedString("notifyBarDontChangeButtonAccessKey");
  
@@ -270,11 +260,7 @@
  
      /*
       * _showChangeLoginDialog
-      *
-      * Shows the Change Password dialog.
-@@ -998,22 +1057,30 @@ LoginManagerPrompter.prototype = {
-             // Get the chrome window for the content window we're using.
-             // .wrappedJSObject needed here -- see bug 422974 comment 5.
+@@ -1002,18 +1061,26 @@ LoginManagerPrompter.prototype = {
              var chromeWin = getChromeWindow(notifyWindow).wrappedJSObject;
  
              if (chromeWin.getNotificationBox)
@@ -303,5 +289,3 @@
  
      /*
       * _repickSelectedLogin
-      *
-      * The user might enter a login that isn't the one we prefilled, but

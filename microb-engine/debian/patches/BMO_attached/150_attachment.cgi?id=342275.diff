@@ -4,17 +4,19 @@ Date:   Wed Oct 8 14:22:12 2008 -0400
 
     Simple first cut at improving speed.
 
-diff --git a/gfx/cairo/libpixman/src/pixman-pict.c b/gfx/cairo/libpixman/src/pixman-pict.c
---- a/gfx/cairo/libpixman/src/pixman-pict.c
-+++ b/gfx/cairo/libpixman/src/pixman-pict.c
-@@ -1204,6 +1204,96 @@
+Index: mozilla/gfx/cairo/libpixman/src/pixman-pict.c
+===================================================================
+--- mozilla.orig/gfx/cairo/libpixman/src/pixman-pict.c
++++ mozilla/gfx/cairo/libpixman/src/pixman-pict.c
+@@ -1208,16 +1208,106 @@ fbCompositeSrc_8888xx888 (pixman_op_t op
+ 	memcpy (dst, src, n_bytes);
  
  	dst += dstStride;
  	src += srcStride;
-+    }
-+}
-+
-+static void
+     }
+ }
+ 
+ static void
 +adjust (pixman_vector_t *v, pixman_vector_t *u, pixman_fixed_t adjustment)
 +{
 +    int delta_v = (adjustment * v->vector[2]) >> 16;
@@ -101,14 +103,27 @@ diff --git a/gfx/cairo/libpixman/src/pixman-pict.c b/gfx/cairo/libpixman/src/pix
 +            v.vector[2] += unit.vector[2];
 +        }
 +        dst += dstStride;
-     }
- }
- 
-@@ -1854,6 +1944,23 @@
++    }
++}
++
++static void
+ fbCompositeSrcScaleNearest (pixman_op_t op,
+ 		      pixman_image_t * pSrc,
+ 		      pixman_image_t * pMask,
+ 		      pixman_image_t * pDst,
+ 		      int16_t      xSrc,
+ 		      int16_t      ySrc,
+ 		      int16_t      xMask,
+ 		      int16_t      yMask,
+@@ -1942,16 +2032,32 @@ pixman_image_composite (pixman_op_t     
+     * Check if we can replace our operator by a simpler one if the src or dest are opaque
+     * The output operator should be mathematically equivalent to the source.
+     */
+     op = pixman_optimize_operator(op, pSrc, pMask, pDst);
      if(op == PIXMAN_OP_DST)
          return;
  
-+    if (pSrc->type == BITS
+     if (pSrc->type == BITS
 +            && srcTransform
 +            && !pMask
 +            && op == PIXMAN_OP_SRC
@@ -124,7 +139,12 @@ diff --git a/gfx/cairo/libpixman/src/pixman-pict.c b/gfx/cairo/libpixman/src/pix
 +        func = fbCompositeSrcScaleNearestPad;
 +    }
 +
-+
-     if ((pSrc->type == BITS || pixman_image_can_get_solid (pSrc)) && (!pMask || pMask->type == BITS)
-         && !srcTransform && !maskTransform
++    if (pSrc->type == BITS
+         && srcTransform
+         && !pMask
+         && op == PIXMAN_OP_SRC
          && !maskAlphaMap && !srcAlphaMap && !dstAlphaMap
+         && (pSrc->common.filter == PIXMAN_FILTER_NEAREST)
+         && PIXMAN_FORMAT_BPP(pDst->bits.format) == 32
+         && pSrc->bits.format == pDst->bits.format
+         && pSrc->common.src_clip == &(pSrc->common.full_region)

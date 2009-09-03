@@ -5,7 +5,7 @@ Index: mozilla/content/xml/document/src/nsXMLContentSink.cpp
 ===================================================================
 --- mozilla.orig/content/xml/document/src/nsXMLContentSink.cpp
 +++ mozilla/content/xml/document/src/nsXMLContentSink.cpp
-@@ -772,16 +772,19 @@
+@@ -783,16 +783,19 @@ nsXMLContentSink::ProcessStyleLink(nsICo
                                     nsContentUtils::GetSecurityManager());
  
      NS_ENSURE_SUCCESS(rv, rv);

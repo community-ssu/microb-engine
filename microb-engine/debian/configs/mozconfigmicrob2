@@ -5,7 +5,6 @@ ac_add_options --enable-application=xulrunner
    #* Simple Build
 ac_add_options --disable-javaxpcom
 ac_add_options --disable-js-static-build
-ac_add_options --disable-tests
 
 
    #* Toolkit Options for Linux/GTK2
@@ -35,7 +34,7 @@ ac_add_options --with-system-bz2
 ac_add_options --disable-js-binary
 
    #* Missing environment
-ac_add_options --disable-crashreporter --disable-mochitest
+ac_add_options --disable-crashreporter
 #ac_add_options --disable-dbus
 ac_add_options --disable-ogg --disable-wave
 
@@ -72,7 +71,6 @@ ac_add_options --disable-xinerama # ???
 #ac_add_options --disable-xslt # RSS, xml/xsl converter..., required 010_MICROB_xslt_xpath_disable_lp0.diff
 #ac_add_options --disable-xpath # Yahoo mail and others..., required 010_MICROB_xslt_xpath_disable_lp0.diff
 ac_add_options --enable-embedding-tests
-ac_add_options --disable-xremote
 ac_add_options --disable-filepicker
 ac_add_options --disable-dragservice
 ac_add_options --disable-gtksound
@@ -94,9 +92,12 @@ ac_add_options --enable-jarmodule
    #* Should be enabled in Micro base
 ac_add_options --enable-necko-protocols="about data http file res ftp"
 ac_add_options --enable-chrome-format=flat
-ac_add_options --enable-extensions="gnomevfs ftv spatialnavigation"
-ac_add_options --enable-image-decoders="png gif jpeg bmp"
+ac_add_options --enable-extensions="gnomevfs"
+ac_add_options --enable-image-decoders="png gif jpeg bmp icon"
 ac_add_options --enable-image-encoders="png jpeg" #Disabling of this required 010_XULRunner_minimal_linking.diff patch
+
+#gnome component is broken bug 110909
+ac_add_options --disable-gnomevfs
 
 ac_add_options --enable-storage
 ac_add_options --enable-places

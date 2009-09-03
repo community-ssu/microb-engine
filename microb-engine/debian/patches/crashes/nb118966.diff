@@ -1,0 +1,26 @@
+--- mozilla/docshell/base/nsDocShell.cpp.orig	2009-05-28 09:56:15.000000000 +0300
++++ mozilla/docshell/base/nsDocShell.cpp	2009-05-28 09:59:08.000000000 +0300
+@@ -4162,20 +4162,23 @@ nsDocShell::GetTitle(PRUnichar ** aTitle
+ {
+     NS_ENSURE_ARG_POINTER(aTitle);
+ 
+     *aTitle = ToNewUnicode(mTitle);
+     return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ nsDocShell::SetTitle(const PRUnichar * aTitle)
+ {
++    if (mIsBeingDestroyed)
++        return NS_ERROR_FAILURE;
++
+     // Store local title
+     mTitle = aTitle;
+ 
+     nsCOMPtr<nsIDocShellTreeItem> parent;
+     GetSameTypeParent(getter_AddRefs(parent));
+ 
+     // When title is set on the top object it should then be passed to the 
+     // tree owner.
+     if (!parent) {
+         nsCOMPtr<nsIBaseWindow>

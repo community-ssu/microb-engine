@@ -2,7 +2,7 @@ Index: mozilla/security/manager/pki/resources/content/exceptionDialog.js
 ===================================================================
 --- mozilla.orig/security/manager/pki/resources/content/exceptionDialog.js
 +++ mozilla/security/manager/pki/resources/content/exceptionDialog.js
-@@ -78,45 +78,48 @@
+@@ -78,45 +78,48 @@ function initExceptionDialog() {
    gPKIBundle = srGetStrBundle("chrome://pippki/locale/pippki.properties");
  
    var brandName = gBundleBrand.GetStringFromName("brandShortName");
@@ -59,7 +59,7 @@ Index: mozilla/security/manager/pki/resources/content/exceptionDialog.js
    try {
      var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
                           .getService(Components.interfaces.nsIRecentBadCertsService);
-@@ -369,19 +372,23 @@
+@@ -369,19 +372,23 @@ function addException() {
  
    var uri = getURI();
    overrideService.rememberValidityOverride(

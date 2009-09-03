@@ -1,8 +1,14 @@
 #bug https://projects.maemo.org/bugzilla/show_bug.cgi?id=100612
-diff -r 068b964b931b widget/src/gtk2/mozdrawingarea.c
---- a/widget/src/gtk2/mozdrawingarea.c	Sun Feb 08 14:00:48 2009 +0200
-+++ b/widget/src/gtk2/mozdrawingarea.c	Tue Feb 10 11:26:06 2009 +0200
-@@ -148,6 +148,8 @@ moz_drawingarea_create_windows (MozDrawi
+Index: mozilla/widget/src/gtk2/mozdrawingarea.c
+===================================================================
+--- mozilla.orig/widget/src/gtk2/mozdrawingarea.c
++++ mozilla/widget/src/gtk2/mozdrawingarea.c
+@@ -159,16 +159,18 @@ moz_drawingarea_create_windows (MozDrawi
+     attributes.window_type = GDK_WINDOW_CHILD;
+     if (!visual) {
+         attributes.visual = gtk_widget_get_visual (widget);
+         attributes.colormap = gtk_widget_get_colormap (widget);
+     } else {
          attributes.visual = visual;
          attributes.colormap = gdk_colormap_new(visual, 0);
      }
@@ -11,10 +17,21 @@ diff -r 068b964b931b widget/src/gtk2/mozdrawingarea.c
  
      attributes_mask |= GDK_WA_VISUAL | GDK_WA_COLORMAP |
          GDK_WA_X | GDK_WA_Y;
-diff -r 068b964b931b widget/src/gtk2/nsWindow.cpp
---- a/widget/src/gtk2/nsWindow.cpp	Sun Feb 08 14:00:48 2009 +0200
-+++ b/widget/src/gtk2/nsWindow.cpp	Tue Feb 10 11:26:06 2009 +0200
-@@ -7186,6 +7186,7 @@ gfxASurface*
+ 
+     drawingarea->clip_window = gdk_window_new (parent, &attributes,
+                                                attributes_mask);
+     gdk_window_set_user_data(drawingarea->clip_window, widget);
+ 
+Index: mozilla/widget/src/gtk2/nsWindow.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp
++++ mozilla/widget/src/gtk2/nsWindow.cpp
+@@ -7171,16 +7171,17 @@ nsWindow::GetSurfaceForGdkDrawable(GdkDr
+     return result;
+ }
+ #endif
+ 
+ // return the gfxASurface for rendering to this widget
  gfxASurface*
  nsWindow::GetThebesSurface()
  {
@@ -22,3 +39,8 @@ diff -r 068b964b931b widget/src/gtk2/nsWindow.cpp
      GdkDrawable* d;
      gint x_offset, y_offset;
      gdk_window_get_internal_paint_info(mDrawingarea->inner_window,
+                                        &d, &x_offset, &y_offset);
+ 
+ #ifdef MOZ_X11
+     gint width, height;
+     gdk_drawable_get_size(d, &width, &height);

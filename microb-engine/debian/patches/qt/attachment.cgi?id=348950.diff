@@ -1,6 +1,13 @@
---- mozilla/widget/src/qt/nsClipboard.cpp	2008-11-06 18:33:22.000000000 +0100
-+++ mozilla/widget/src/qt/nsClipboard_unicode.cpp	2008-11-17 16:46:44.000000000 +0100
-@@ -135,7 +135,12 @@
+Index: mozilla/widget/src/qt/nsClipboard.cpp
+===================================================================
+--- mozilla.orig/widget/src/qt/nsClipboard.cpp
++++ mozilla/widget/src/qt/nsClipboard.cpp
+@@ -130,17 +130,22 @@ nsClipboard::SetNativeClipboardData( nsI
+                     return NS_ERROR_FAILURE;
+                 }
+ 
+                 nsAutoString utf16string;
+                 wideString->GetData(utf16string);
                  QString str = QString::fromUtf16(utf16string.get());
  
                  // Set the date to the clipboard
@@ -14,3 +21,8 @@
                  break;
              }
  
+             if ( !strcmp(flavorStr.get(), kNativeImageMime)
+               || !strcmp(flavorStr.get(), kPNGImageMime)
+               || !strcmp(flavorStr.get(), kJPEGImageMime)
+               || !strcmp(flavorStr.get(), kGIFImageMime))
+             {

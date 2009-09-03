@@ -1,0 +1,45 @@
+diff -r d55435723f49 netwerk/protocol/http/src/nsHttpHandler.cpp
+--- a/netwerk/protocol/http/src/nsHttpHandler.cpp	Wed Aug 05 19:20:39 2009 +0300
++++ b/netwerk/protocol/http/src/nsHttpHandler.cpp	Wed Aug 05 19:31:24 2009 +0300
+@@ -281,16 +281,18 @@ nsHttpHandler::Init()
+                                   NS_HTTP_STARTUP_TOPIC);    
+     
+     mObserverService = do_GetService("@mozilla.org/observer-service;1");
+     if (mObserverService) {
+         mObserverService->AddObserver(this, "profile-change-net-teardown", PR_TRUE);
+         mObserverService->AddObserver(this, "profile-change-net-restore", PR_TRUE);
+         mObserverService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, PR_TRUE);
+         mObserverService->AddObserver(this, "net:clear-active-logins", PR_TRUE);
++        mObserverService->AddObserver(this, "system-idle", PR_TRUE);
++        mObserverService->AddObserver(this, "system-active", PR_TRUE);
+     }
+  
+     StartPruneDeadConnectionsTimer();
+     return NS_OK;
+ }
+ 
+ nsresult
+ nsHttpHandler::InitConnectionMgr()
+@@ -1722,16 +1724,22 @@ nsHttpHandler::Observe(nsISupports *subj
+     }
+     else if (strcmp(topic, "profile-change-net-restore") == 0) {
+         // initialize connection manager
+         InitConnectionMgr();
+ 
+         // restart the "prune dead connections" timer
+         StartPruneDeadConnectionsTimer();
+     }
++    else if (strcmp(topic, "system-idle") == 0) {
++        StopPruneDeadConnectionsTimer();
++    }
++    else if (strcmp(topic, "system-active") == 0) {
++        StartPruneDeadConnectionsTimer();
++    }
+     else if (strcmp(topic, "timer-callback") == 0) {
+         // prune dead connections
+ #ifdef DEBUG
+         nsCOMPtr<nsITimer> timer = do_QueryInterface(subject);
+         NS_ASSERTION(timer == mTimer, "unexpected timer-callback");
+ #endif
+         if (mConnMgr)
+             mConnMgr->PruneDeadConnections();

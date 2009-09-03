@@ -1,18 +1,18 @@
 # Patches for microb-engine
 # Oleg Romashin <oleg.romashin@nokia.com>
 # DP: This patch supposed to disable some not components wich probably useless in our configuration
-# For each disabled component we have separate configura option
+# For each disabled component we have separate configure option
 #     
 Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4771,16 +4771,21 @@
-     AC_DEFINE(TARGET_API_MAC_CARBON)
-     TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
-     TK_CFLAGS="-I${MACOS_SDK_DIR}/Developer/Headers/FlatCarbon"
+@@ -4957,16 +4957,21 @@ cairo-cocoa)
+     LDFLAGS="$LDFLAGS -framework Cocoa"
      CFLAGS="$CFLAGS $TK_CFLAGS"
      CXXFLAGS="$CXXFLAGS $TK_CFLAGS"
+     LIBXUL_LIBS='$(XPCOM_FROZEN_LDOPTS) $(LIBXUL_DIST)/bin/XUL -lobjc'
+     MOZ_FS_LAYOUT=bundle
      ;;
  esac
  
@@ -29,7 +29,7 @@ Index: mozilla/configure.in
    if test "$MOZ_ENABLE_GTK2"; then
      if test "$MOZ_X11"; then
        GDK_PACKAGES=gdk-x11-2.0
-@@ -4873,17 +4878,16 @@
+@@ -5060,17 +5065,16 @@ fi
  AC_SUBST(GTK_CONFIG)
  AC_SUBST(TK_CFLAGS)
  AC_SUBST(TK_LIBS)
@@ -47,7 +47,7 @@ Index: mozilla/configure.in
  AC_SUBST(MOC)
  
  AC_SUBST(MOZ_DFB)
-@@ -6120,22 +6124,164 @@
+@@ -6295,22 +6299,164 @@ MOZ_ARG_ENABLE_BOOL(url-classifier,
      MOZ_URL_CLASSIFIER=1,
      MOZ_URL_CLASSIFIER= )
  if test -n "$MOZ_URL_CLASSIFIER"; then
@@ -212,14 +212,14 @@ Index: mozilla/configure.in
  MOZ_ARG_ENABLE_BOOL(js-ultrasparc,
  [  --enable-js-ultrasparc  Use UltraSPARC optimizations in JS],
      JS_ULTRASPARC_OPTS=1,
-@@ -7543,27 +7689,46 @@
-    fi
+@@ -7752,16 +7898,30 @@ else
  fi
  
  AC_SUBST(MOZ_TREE_CAIRO)
  AC_SUBST(MOZ_CAIRO_CFLAGS)
  AC_SUBST(MOZ_CAIRO_LIBS)
  
+ dnl qcms
  dnl ========================================================
 +dnl disable lcms compilation
 +dnl ========================================================
@@ -235,37 +235,15 @@ Index: mozilla/configure.in
 +AC_SUBST(MOZ_NO_LCMS)
 +
 +dnl ========================================================
- dnl Check for lcms
- dnl ========================================================
  
- LCMS_CFLAGS=
--if test "$_WIN32_MSVC"; then
--    if test -z "$BUILD_STATIC_LIBS" -a -z "$MOZ_ENABLE_LIBXUL"; then
--        LCMS_CFLAGS=-DLCMS_DLL
--    fi
--    LCMS_LIBS='$(LIBXUL_DIST)/lib/mozlcms.lib'
-+if test "$MOZ_NO_LCMS"; then
-+    LCMS_CFLAGS=
-+    LCMS_LIBS=
- else
--    LCMS_LIBS='-L$(LIBXUL_DIST)/bin -lmozlcms'
-+    if test "$_WIN32_MSVC"; then
-+        if test -z "$BUILD_STATIC_LIBS" -a -z "$MOZ_ENABLE_LIBXUL"; then
-+            LCMS_CFLAGS=-DLCMS_DLL
-+        fi
-+        LCMS_LIBS='$(LIBXUL_DIST)/lib/mozlcms.lib'
-+    else
-+        LCMS_LIBS='-L$(LIBXUL_DIST)/bin -lmozlcms'
-+    fi
- fi
- 
- AC_SUBST(LCMS_CFLAGS)
- AC_SUBST(LCMS_LIBS)
+ QCMS_LIBS='$(DEPTH)/gfx/qcms/$(LIB_PREFIX)mozqcms.$(LIB_SUFFIX)'
+ AC_SUBST(QCMS_LIBS)
  
  dnl ========================================================
  dnl disable xpath services
  dnl ========================================================
-@@ -7800,16 +7965,21 @@
+ MOZ_ARG_DISABLE_BOOL(xpath,
+@@ -8031,16 +8191,21 @@ MOZ_ARG_DISABLE_BOOL(cookies,
  AC_SUBST(NECKO_COOKIES)
  if test "$NECKO_COOKIES"; then
      AC_DEFINE(NECKO_COOKIES)
@@ -287,7 +265,7 @@ Index: mozilla/configure.in
  
  dnl Build the lightweight Mork reader if required
  AC_SUBST(MOZ_MORKREADER)
-@@ -8090,16 +8260,22 @@
+@@ -8321,16 +8486,22 @@ AC_SUBST(LIB_SUFFIX)
  AC_SUBST(OBJ_SUFFIX)
  AC_SUBST(BIN_SUFFIX)
  AC_SUBST(ASM_SUFFIX)
@@ -314,7 +292,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -147,16 +147,28 @@
+@@ -152,16 +152,28 @@ MOZ_SPELLCHECK = @MOZ_SPELLCHECK@
  MOZ_XPFE_COMPONENTS = @MOZ_XPFE_COMPONENTS@
  MOZ_PROFILELOCKING = @MOZ_PROFILELOCKING@
  MOZ_FEEDS = @MOZ_FEEDS@
@@ -411,7 +389,7 @@ Index: mozilla/chrome/src/nsChromeRegistry.cpp
  #include "nsIPrefBranch.h"
  #include "nsIPrefBranch2.h"
  #include "nsIPresShell.h"
-@@ -1505,31 +1509,33 @@
+@@ -1310,31 +1314,33 @@ NS_IMETHODIMP nsChromeRegistry::Observe(
      }
      else if (pref.EqualsLiteral(SELECTED_LOCALE_PREF)) {
        mSelectedLocale = provider;
@@ -444,48 +422,12 @@ Index: mozilla/chrome/src/nsChromeRegistry.cpp
    return rv;
  }
  
- #ifdef MOZ_XUL
-@@ -1593,16 +1599,17 @@
-   CallQueryInterface(node, result);
- }
- 
- static void
- GetRelativePath(nsIURI* base, nsIURI* relative, nsACString& result)
- {
-   nsresult rv;
- 
-+#ifndef MOZ_NO_JARMODULE
-   nsCOMPtr<nsIJARURI> jarrelative (do_QueryInterface(relative));
-   if (jarrelative) {
-     nsCOMPtr<nsIURI> jarbase;
-     jarrelative->GetJARFile(getter_AddRefs(jarbase));
- 
-     nsCAutoString relativeBase;
-     GetRelativePath(base, jarbase, relativeBase);
- 
-@@ -1610,16 +1617,17 @@
-     jarrelative->GetJAREntry(jarEntry);
- 
-     result.Assign(NS_LITERAL_CSTRING("jar:"));
-     result.Append(relativeBase);
-     result.Append(NS_LITERAL_CSTRING("!/"));
-     result.Append(jarEntry);
-     return;
-   }
-+#endif
- 
-   nsCOMPtr<nsIURL> baseURL (do_QueryInterface(base));
-   if (!baseURL) {
-     relative->GetSpec(result);
-     return;
-   }
- 
-   rv = baseURL->GetRelativeSpec(relative, result);
+ nsresult
 Index: mozilla/widget/src/gtk2/Makefile.in
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/Makefile.in
 +++ mozilla/widget/src/gtk2/Makefile.in
-@@ -88,18 +88,16 @@
+@@ -89,18 +89,16 @@ endif
  CPPSRCS		= \
  		nsWindow.cpp \
  		nsAppShell.cpp \
@@ -504,7 +446,7 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  		$(NULL)
  
  ifdef NS_OSSO
-@@ -116,19 +114,35 @@
+@@ -117,19 +115,35 @@ CPPSRCS		+= \
  		nsPrintOptionsGTK.cpp \
  		nsPrintDialogGTK.cpp \
  		nsPrintSettingsGTK.cpp \
@@ -540,14 +482,38 @@ Index: mozilla/widget/src/gtk2/Makefile.in
  
  SHARED_LIBRARY_LIBS = ../xpwidgets/libxpwidgets_s.a
  
-@@ -160,17 +174,17 @@
- DEFINES		+= -DNATIVE_THEME_SUPPORT
+@@ -138,18 +152,23 @@ EXTRA_DSO_LDOPTS += \
+ 		-lgkgfx \
+                 $(MOZ_STARTUP_NOTIFICATION_LIBS) \
+ 		$(XLDFLAGS) \
+ 		$(XLIBS) \
+ 		$(XEXT_LIBS) \
+ 		$(XCOMPOSITE_LIBS) \
+ 		$(MOZ_GTK2_LIBS) \
+ 		-lthebes \
++		$(NULL)
++
++ifndef MOZ_NO_LCMS
++EXTRA_DSO_LDOPTS += \
+ 		$(QCMS_LIBS) \
+ 		$(NULL)
++endif
+ 
+ ifdef MOZ_PLATFORM_HILDON
+ ifdef MOZ_ENABLE_GCONF
+ EXTRA_DSO_LDOPTS += $(MOZ_GCONF_LIBS)
+ endif
  endif
  
- include $(topsrcdir)/config/rules.mk
- 
- CFLAGS          += $(MOZ_GTK2_CFLAGS) $(MOZ_STARTUP_NOTIFICATION_CFLAGS)
+ ifdef MOZ_X11
+@@ -175,17 +194,17 @@ CFLAGS          += $(MOZ_GTK2_CFLAGS) $(
  CXXFLAGS        += $(MOZ_GTK2_CFLAGS) $(MOZ_STARTUP_NOTIFICATION_CFLAGS)
+ 
+ ifdef MOZ_PLATFORM_HILDON
+ ifdef MOZ_ENABLE_GCONF
+ CXXFLAGS += $(MOZ_GCONF_CFLAGS)
+ endif
+ endif
  
 -DEFINES         += -DUSE_XIM
 +#DEFINES         += -DUSE_XIM #Allow to enable USE_XIM only from external define
@@ -590,7 +556,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  #include "nsPrintOptionsGTK.h"
  #include "nsPrintSession.h"
  #include "nsDeviceContextSpecG.h"
-@@ -93,19 +99,23 @@
+@@ -93,19 +99,23 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsWindow)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsChildWindow)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsLookAndFeel)
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsTransferable)
@@ -614,7 +580,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  // from nsWindow.cpp
  extern PRBool gDisableNativeTheme;
  
-@@ -147,16 +157,17 @@
+@@ -147,16 +157,17 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsIdleSer
  #ifdef NS_PRINTING
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsDeviceContextSpecGTK)
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintOptionsGTK, Init)
@@ -632,7 +598,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
    if (aOuter != nsnull) {
      return NS_ERROR_NO_AGGREGATION;
    }
-@@ -180,16 +191,17 @@
+@@ -180,16 +191,17 @@ nsFilePickerConstructor(nsISupports *aOu
    }
  
    if (!picker) {
@@ -650,7 +616,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
  {
      nsresult rv;
  
-@@ -243,42 +255,48 @@
+@@ -243,42 +255,48 @@ static const nsModuleComponentInfo compo
      { "Gtk2 AppShell",
        NS_APPSHELL_CID,
        "@mozilla.org/widget/appshell/gtk;1",
@@ -699,7 +665,7 @@ Index: mozilla/widget/src/gtk2/nsWidgetFactory.cpp
      NS_BIDIKEYBOARD_CID,
      "@mozilla.org/widget/bidikeyboard;1",
      nsBidiKeyboardConstructor },
-@@ -344,18 +362,22 @@
+@@ -344,18 +362,22 @@ static const nsModuleComponentInfo compo
      nsIdleServiceGTKConstructor },
  #endif
  
@@ -736,17 +702,17 @@ Index: mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp
  
  #include "gfxPlatform.h"
 +#ifndef MOZ_NO_LCMS
- #include "lcms.h"
+ #include "qcms.h"
 +#endif
  
  #ifdef DEBUG
  #include "nsSize.h"
  #endif
-  
+ 
  NS_IMPL_ISUPPORTS2(nsXPLookAndFeel, nsILookAndFeel, nsIObserver)
  
  nsLookAndFeelIntPref nsXPLookAndFeel::sIntPrefs[] =
-@@ -610,27 +612,29 @@
+@@ -627,27 +629,29 @@ nsXPLookAndFeel::GetColor(const nsColorI
    if (aID == eColor_TextHighlightForeground) {
      // The foreground color for the matched text in findbar highlighting
      // Used with nsISelectionController::SELECTION_FIND
@@ -754,16 +720,16 @@ Index: mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp
      return NS_OK;
    }
  
-   if (NS_SUCCEEDED(NativeGetColor(aID, aColor))) {
+   if (sUseNativeColors && NS_SUCCEEDED(NativeGetColor(aID, aColor))) {
 +#ifndef MOZ_NO_LCMS
      if ((gfxPlatform::GetCMSMode() == eCMSMode_All) && !IsSpecialColor(aID, aColor)) {
-       cmsHTRANSFORM transform = gfxPlatform::GetCMSInverseRGBTransform();
+       qcms_transform *transform = gfxPlatform::GetCMSInverseRGBTransform();
        if (transform) {
          PRUint8 color[3];
          color[0] = NS_GET_R(aColor);
          color[1] = NS_GET_G(aColor);
          color[2] = NS_GET_B(aColor);
-         cmsDoTransform(transform, color, color, 1);
+         qcms_transform_data(transform, color, color, 1);
          aColor = NS_RGB(color[0], color[1], color[2]);
        }
      }
@@ -780,7 +746,7 @@ Index: mozilla/toolkit/components/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/Makefile.in
 +++ mozilla/toolkit/components/Makefile.in
-@@ -41,33 +41,40 @@
+@@ -41,34 +41,41 @@ topsrcdir = @top_srcdir@
  srcdir    = @srcdir@
  VPATH   = @srcdir@
  
@@ -801,6 +767,7 @@ Index: mozilla/toolkit/components/Makefile.in
  	apppicker \
  	filepicker \
  	console \
+ 	cookie \
  	exthelper \
  	viewconfig \
 -	typeaheadfind \
@@ -822,20 +789,19 @@ Index: mozilla/toolkit/components/Makefile.in
  
  ifdef MOZ_FEEDS
  DIRS += feeds
-@@ -105,30 +112,37 @@
+@@ -100,29 +107,36 @@ endif
+ 
  ifdef MOZ_XUL
  DIRS += satchel
- endif # MOZ_XUL
+ endif
  
  endif # MOZ_THUNDERBIRD
  
- ifndef SUITE_USING_XPFE_DM
  ifdef MOZ_RDF
 +ifndef MOZ_NO_DOWNLOADMGR
  DIRS +=	downloads
  endif
 +endif
- endif # SUITE_USING_XPFE_DM
  
  ifdef MOZ_URL_CLASSIFIER
  DIRS += url-classifier
@@ -865,19 +831,18 @@ Index: mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
 ===================================================================
 --- mozilla.orig/toolkit/components/build/nsToolkitCompsModule.cpp
 +++ mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
-@@ -46,22 +46,26 @@
+@@ -45,21 +45,25 @@
+ #include "nsParentalControlsServiceWin.h"
  #endif
  
  #ifdef ALERTS_SERVICE
  #include "nsAlertsService.h"
  #endif
  
- #ifndef SUITE_USING_XPFE_DM
  #ifdef MOZ_RDF
 +#ifndef MOZ_NO_DOWNLOADMGR
  #include "nsDownloadManager.h"
  #include "nsDownloadProxy.h"
- #endif
  #endif
 +#endif
  
@@ -892,20 +857,19 @@ Index: mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
  #include "nsUrlClassifierHashCompleter.h"
  #include "nsDocShellCID.h"
  #endif
-@@ -80,23 +84,27 @@
+@@ -77,22 +81,26 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsUserInf
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsParentalControlsServiceWin)
  #endif
  
  #ifdef ALERTS_SERVICE
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsAlertsService)
  #endif
  
- #ifndef SUITE_USING_XPFE_DM
  #ifdef MOZ_RDF
 +#ifndef MOZ_NO_DOWNLOADMGR
  NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsDownloadManager,
                                           nsDownloadManager::GetSingleton) 
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsDownloadProxy)
- #endif
  #endif
 +#endif
  
@@ -920,14 +884,14 @@ Index: mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
  
  static NS_IMETHODIMP
  nsUrlClassifierDBServiceConstructor(nsISupports *aOuter, REFNSIID aIID,
-@@ -144,31 +152,35 @@
+@@ -139,30 +147,34 @@ static const nsModuleComponentInfo compo
+ #endif
  #if defined(XP_WIN) && !defined(MOZ_DISABLE_PARENTAL_CONTROLS)
    { "Parental Controls Service",
      NS_PARENTALCONTROLSSERVICE_CID,
      NS_PARENTALCONTROLSSERVICE_CONTRACTID,
      nsParentalControlsServiceWinConstructor },
  #endif
- #ifndef SUITE_USING_XPFE_DM
  #ifdef MOZ_RDF
 +#ifndef MOZ_NO_DOWNLOADMGR
    { "Download Manager",
@@ -938,7 +902,6 @@ Index: mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
      NS_DOWNLOAD_CID,
      NS_TRANSFER_CONTRACTID,
      nsDownloadProxyConstructor },
- #endif
  #endif
 +#endif
 +#ifndef MOZ_NO_FASTFIND
@@ -960,7 +923,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
 ===================================================================
 --- mozilla.orig/toolkit/library/libxul-config.mk
 +++ mozilla/toolkit/library/libxul-config.mk
-@@ -107,30 +107,27 @@
+@@ -110,30 +110,27 @@ endif
  
  # component libraries
  COMPONENT_LIBS += \
@@ -991,7 +954,7 @@ Index: mozilla/toolkit/library/libxul-config.mk
  COMPONENT_LIBS += \
  	xmlextras \
  	$(NULL)
-@@ -354,8 +351,27 @@
+@@ -357,8 +354,27 @@ endif
  
  ifneq (,$(filter layout-debug,$(MOZ_EXTENSIONS)))
  COMPONENT_LIBS += gkdebug
@@ -1023,7 +986,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
 ===================================================================
 --- mozilla.orig/toolkit/library/nsStaticXULComponents.cpp
 +++ mozilla/toolkit/library/nsStaticXULComponents.cpp
-@@ -198,16 +198,34 @@
+@@ -192,16 +192,34 @@
  #endif
  
  #ifdef MOZ_STORAGE
@@ -1058,7 +1021,7 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
  
  #ifdef MOZ_PLACES
  #define PLACES_MODULES \
-@@ -266,17 +284,17 @@
+@@ -265,17 +283,17 @@
      MATHML_MODULES                           \
      MODULE(nsUConvModule)                    \
      MODULE(nsI18nModule)                     \
@@ -1077,8 +1040,8 @@ Index: mozilla/toolkit/library/nsStaticXULComponents.cpp
      MODULE(nsParserModule)                   \
      GFX_MODULES                              \
      WIDGET_MODULES                           \
-@@ -291,22 +309,22 @@
-     OJI_MODULES                              \
+@@ -289,22 +307,22 @@
+     MODULE(Browser_Embedding_Module)         \
      ACCESS_MODULES                           \
      MODULE(appshell)                         \
      MODULE(nsTransactionManagerModule)       \
@@ -1115,7 +1078,7 @@ Index: mozilla/toolkit/library/libxul-rules.mk
  	$(LIBS_DIR) \
  	$(JPEG_LIBS) \
  	$(PNG_LIBS) \
--	$(LCMS_LIBS) \
+-	$(QCMS_LIBS) \
  	$(MOZ_JS_LIBS) \
  	$(NSS_LIBS) \
  	$(MOZ_CAIRO_LIBS) \
@@ -1123,7 +1086,7 @@ Index: mozilla/toolkit/library/libxul-rules.mk
  
 +ifndef MOZ_NO_LCMS
 +EXTRA_DSO_LDOPTS += \
-+	$(LCMS_LIBS) \
++	$(QCMS_LIBS) \
 +	$(NULL)
 +endif
 +
@@ -1159,7 +1122,7 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  #include "nsIExtensionManager.h"
  #include "nsIFastLoadService.h" // for PLATFORM_FASL_SUFFIX
  #include "nsIGenericFactory.h"
-@@ -1095,25 +1097,27 @@
+@@ -1206,25 +1208,27 @@ static void DumpArbitraryHelp()
    {
      nsXREDirProvider dirProvider;
      dirProvider.Initialize(nsnull, gAppData->xreDirectory);
@@ -1187,121 +1150,102 @@ Index: mozilla/toolkit/xre/nsAppRunner.cpp
  // here, or in a native resource file.
  static void
  DumpHelp()
-@@ -3077,35 +3081,39 @@
-           gDoMigration = PR_FALSE;
-           nsCOMPtr<nsIProfileMigrator> pm
-             (do_CreateInstance(NS_PROFILEMIGRATOR_CONTRACTID));
+@@ -3228,44 +3232,48 @@ XRE_main(int argc, char* argv[], const n
            if (pm)
              pm->Migrate(&dirProvider);
          }
          dirProvider.DoStartup();
  
+         PRBool shuttingDown = PR_FALSE;
+         appStartup->GetShuttingDown(&shuttingDown);
+ 
 +#ifndef MOZ_NO_COMMANDLINE
-         nsCOMPtr<nsICommandLineRunner> cmdLine
-           (do_CreateInstance("@mozilla.org/toolkit/command-line;1"));
-         NS_ENSURE_TRUE(cmdLine, 1);
+         nsCOMPtr<nsICommandLineRunner> cmdLine;
 +#endif
+ 
+ #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
+         nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
+         if (toolkit && !desktopStartupID.IsEmpty()) {
+           toolkit->SetDesktopStartupID(desktopStartupID);
+         }
+ #endif
  
          nsCOMPtr<nsIFile> workingDir;
          rv = NS_GetSpecialDirectory(NS_OS_CURRENT_WORKING_DIR, getter_AddRefs(workingDir));
          NS_ENSURE_SUCCESS(rv, 1);
  
+         if (!shuttingDown) {
 +#ifndef MOZ_NO_COMMANDLINE
-         rv = cmdLine->Init(gArgc, gArgv,
-                            workingDir, nsICommandLine::STATE_INITIAL_LAUNCH);
-         NS_ENSURE_SUCCESS(rv, 1);
+           cmdLine = do_CreateInstance("@mozilla.org/toolkit/command-line;1");
+           NS_ENSURE_TRUE(cmdLine, 1);
  
-         /* Special-case services that need early access to the command
-            line. */
-         nsCOMPtr<nsIObserver> chromeObserver
-           (do_GetService("@mozilla.org/chrome/chrome-registry;1"));
-         if (chromeObserver) {
-           chromeObserver->Observe(cmdLine, "command-line-startup", nsnull);
-         }
-+#endif
+           rv = cmdLine->Init(gArgc, gArgv,
+                              workingDir, nsICommandLine::STATE_INITIAL_LAUNCH);
+           NS_ENSURE_SUCCESS(rv, 1);
  
-         NS_TIMELINE_ENTER("appStartup->CreateHiddenWindow");
-         rv = appStartup->CreateHiddenWindow();
-         NS_TIMELINE_LEAVE("appStartup->CreateHiddenWindow");
-         NS_ENSURE_SUCCESS(rv, 1);
- 
- #if defined(HAVE_DESKTOP_STARTUP_ID) && defined(MOZ_WIDGET_GTK2)
-         nsRefPtr<nsGTKToolkit> toolkit = GetGTKToolkit();
-@@ -3120,40 +3128,48 @@
-           NS_ENSURE_TRUE(em, 1);
- 
-           ar = CheckArg("install-global-extension", PR_TRUE);
-           if (ar == ARG_BAD) {
-             PR_fprintf(PR_STDERR, "Error: argument -install-global-extension is invalid when argument -osint is specified\n");
-             return 1;
-           } else if (ar == ARG_FOUND) {
-             // Do the required processing and then shut down.
-+#ifndef MOZ_NO_COMMANDLINE
-             em->HandleCommandLineArgs(cmdLine);
-+#endif
-             return 0;
+           /* Special-case services that need early access to the command
+              line. */
+           nsCOMPtr<nsIObserver> chromeObserver
+             (do_GetService("@mozilla.org/chrome/chrome-registry;1"));
+           if (chromeObserver) {
+             chromeObserver->Observe(cmdLine, "command-line-startup", nsnull);
            }
- 
-           ar = CheckArg("install-global-theme", PR_TRUE);
-           if (ar == ARG_BAD) {
-             PR_fprintf(PR_STDERR, "Error: argument -install-global-theme is invalid when argument -osint is specified\n");
-             return 1;
-           } else if (ar == ARG_FOUND) {
-             // Do the required processing and then shut down.
-+#ifndef MOZ_NO_COMMANDLINE
-             em->HandleCommandLineArgs(cmdLine);
 +#endif
-             return 0;
-           }
  
-           if (upgraded) {
-             rv = em->CheckForMismatches(&needsRestart);
-             if (NS_FAILED(rv)) {
-               needsRestart = PR_FALSE;
-               upgraded = PR_FALSE;
-             }
-           }
+           NS_TIMELINE_ENTER("appStartup->CreateHiddenWindow");
+           rv = appStartup->CreateHiddenWindow();
+           NS_TIMELINE_LEAVE("appStartup->CreateHiddenWindow");
+           NS_ENSURE_SUCCESS(rv, 1);
  
-           if (!upgraded || !needsRestart)
+           MOZ_SPLASHSCREEN_UPDATE(50);
+ 
+@@ -3310,18 +3318,20 @@ XRE_main(int argc, char* argv[], const n
+           PR_SetEnv("NO_EM_RESTART=");
+           PR_SetEnv("XUL_APP_FILE=");
+           PR_SetEnv("XRE_BINARY_PATH=");
+ 
+           if (!shuttingDown) {
+ #ifdef XP_MACOSX
+             // we re-initialize the command-line service and do appleevents munging
+             // after we are sure that we're not restarting
 +#ifndef MOZ_NO_COMMANDLINE
-             em->Start(cmdLine, &needsRestart);
-+#else
-+            em->Start(nsnull, &needsRestart);
+             cmdLine = do_CreateInstance("@mozilla.org/toolkit/command-line;1");
+             NS_ENSURE_TRUE(cmdLine, 1);
 +#endif
-         }
  
-         // We want to restart no more than 2 times. The first restart,
-         // NO_EM_RESTART == "0" , and the second time, "1".
-         char* noEMRestart = PR_GetEnv("NO_EM_RESTART");
-         if (noEMRestart && *noEMRestart && *noEMRestart == '1') {
-           if (upgraded || needsRestart) {
-             NS_WARNING("EM tried to force us to restart twice! Forcefully preventing that.");
-@@ -3191,18 +3207,20 @@
-           // Prepare Cocoa's form of Apple Event handling.
-           SetupMacApplicationDelegate();
+             SetupMacCommandLine(gArgc, gArgv);
+ 
+             rv = cmdLine->Init(gArgc, gArgv,
+                                workingDir, nsICommandLine::STATE_INITIAL_LAUNCH);
+             NS_ENSURE_SUCCESS(rv, 1);
  #endif
-           nsCOMPtr<nsIObserverService> obsService
-             (do_GetService("@mozilla.org/observer-service;1"));
-           if (obsService)
-             obsService->NotifyObservers(nsnull, "final-ui-startup", nsnull);
+ #ifdef MOZ_WIDGET_COCOA
+@@ -3335,18 +3345,20 @@ XRE_main(int argc, char* argv[], const n
+               (do_GetService("@mozilla.org/observer-service;1"));
+             if (obsService)
+               obsService->NotifyObservers(nsnull, "final-ui-startup", nsnull);
  
+             appStartup->GetShuttingDown(&shuttingDown);
+           }
+ 
+           if (!shuttingDown) {
 +#ifndef MOZ_NO_COMMANDLINE
-           rv = cmdLine->Run();
-           NS_ENSURE_SUCCESS_LOG(rv, 1);
+             rv = cmdLine->Run();
+             NS_ENSURE_SUCCESS_LOG(rv, 1);
 +#endif
+ 
+             appStartup->GetShuttingDown(&shuttingDown);
+           }
  
  #ifdef MOZ_ENABLE_XREMOTE
-           // if we have X remote support, start listening for requests on the
-           // proxy window.
            nsCOMPtr<nsIRemoteService> remoteService;
-           remoteService = do_GetService("@mozilla.org/toolkit/remote-service;1");
-           if (remoteService)
-             remoteService->Startup(gAppData->name,
+ #endif /* MOZ_ENABLE_XREMOTE */
+           if (!shuttingDown) {
 Index: mozilla/toolkit/toolkit-tiers.mk
 ===================================================================
 --- mozilla.orig/toolkit/toolkit-tiers.mk
 +++ mozilla/toolkit/toolkit-tiers.mk
-@@ -65,17 +65,19 @@
+@@ -65,17 +65,19 @@ endif
  
  ifdef MOZ_UPDATER
  ifndef MOZ_NATIVE_BZ2
@@ -1311,7 +1255,7 @@ Index: mozilla/toolkit/toolkit-tiers.mk
  endif
  
 +ifndef MOZ_NO_LCMS
- tier_external_dirs	+= modules/lcms
+ tier_external_dirs	+= gfx/qcms
 +endif
  
  #
@@ -1321,7 +1265,7 @@ Index: mozilla/toolkit/toolkit-tiers.mk
  tier_gecko_dirs += \
  		js/src/xpconnect \
  		intl/chardet \
-@@ -84,20 +86,25 @@
+@@ -84,20 +86,25 @@ tier_gecko_dirs += \
  ifdef MOZ_ENABLE_GTK2
  ifdef MOZ_X11
  tier_gecko_dirs     += widget/src/gtkxtbin
@@ -1352,9 +1296,9 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatform.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatform.cpp
-@@ -60,17 +60,19 @@
+@@ -59,32 +59,36 @@
+ #include "gfxUserFontSet.h"
  
- #include "nsIPref.h"
  #include "nsServiceManagerUtils.h"
  #include "nsTArray.h"
  
@@ -1362,7 +1306,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  
  #include "cairo.h"
 +#ifndef MOZ_NO_LCMS
- #include "lcms.h"
+ #include "qcms.h"
 +#endif
  
  #include "plstr.h"
@@ -1372,33 +1316,26 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  
  gfxPlatform *gPlatform = nsnull;
  
-@@ -222,21 +224,23 @@
-     gPlatform->overrideObserver = new SRGBOverrideObserver();
-     nsCOMPtr<nsIPrefBranch2> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
-     if (prefs)
-         prefs->AddObserver(CMForceSRGBPrefName, gPlatform->overrideObserver, PR_TRUE);
- 
-     /* By default, LCMS calls exit() on error, which isn't what we want. If
-        cms is enabled, change the error functionality. */
-     if (GetCMSMode() != eCMSMode_Off) {
+ // These two may point to the same profile
 +#ifndef MOZ_NO_LCMS
- #ifdef DEBUG
-         cmsErrorAction(LCMS_ERROR_SHOW);
- #else
-         cmsErrorAction(LCMS_ERROR_IGNORE);
- #endif
+ static qcms_profile *gCMSOutputProfile = nsnull;
+ static qcms_profile *gCMSsRGBProfile = nsnull;
+ 
+ static qcms_transform *gCMSRGBTransform = nsnull;
+ static qcms_transform *gCMSInverseRGBTransform = nsnull;
+ static qcms_transform *gCMSRGBATransform = nsnull;
 +#endif
-     }
  
-     return NS_OK;
- }
+ static PRBool gCMSInitialized = PR_FALSE;
+ static eCMSMode gCMSMode = eCMSMode_Off;
+ static int gCMSIntent = -2;
  
- void
- gfxPlatform::Shutdown()
- {
-@@ -515,16 +519,17 @@
- unacceptable performance overhead, so we go with perceptual. */
- #define INTENT_DEFAULT INTENT_PERCEPTUAL
+ static const char *CMPrefName = "gfx.color_management.mode";
+ static const char *CMPrefNameOld = "gfx.color_management.enabled";
+ static const char *CMIntentPrefName = "gfx.color_management.rendering_intent";
+@@ -502,16 +506,17 @@ unacceptable performance overhead, so we
+ #define INTENT_MIN 0
+ #define INTENT_MAX 3
  
  PRBool
  gfxPlatform::GetRenderingIntent()
@@ -1414,7 +1351,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
              if (NS_SUCCEEDED(rv)) {
                
                  /* If the pref is within range, use it as an override. */
-@@ -535,20 +540,22 @@
+@@ -522,20 +527,22 @@ gfxPlatform::GetRenderingIntent()
                  else
                      gCMSIntent = -1;
              }
@@ -1430,18 +1367,18 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  
 +#ifndef MOZ_NO_LCMS
  void 
- gfxPlatform::TransformPixel(const gfxRGBA& in, gfxRGBA& out, cmsHTRANSFORM transform)
+ gfxPlatform::TransformPixel(const gfxRGBA& in, gfxRGBA& out, qcms_transform *transform)
  {
  
      if (transform) {
+         /* we want the bytes in RGB order */
  #ifdef IS_LITTLE_ENDIAN
-         PRUint32 packed = in.Packed(gfxRGBA::PACKED_ABGR);
-         cmsDoTransform(transform,
-@@ -699,21 +706,23 @@
+         /* ABGR puts the bytes in |RGBA| order on little endian */
+@@ -685,21 +692,23 @@ gfxPlatform::GetCMSRGBATransform()
  
-         gCMSRGBATransform = cmsCreateTransform(inProfile, TYPE_RGBA_8,
-                                                outProfile, TYPE_RGBA_8,
-                                                INTENT_PERCEPTUAL, cmsFLAGS_FLOATSHAPER);
+         gCMSRGBATransform = qcms_transform_create(inProfile, QCMS_DATA_RGBA_8,
+                                                outProfile, QCMS_DATA_RGBA_8,
+                                                QCMS_INTENT_PERCEPTUAL);
      }
  
      return gCMSRGBATransform;
@@ -1454,20 +1391,20 @@ Index: mozilla/gfx/thebes/src/gfxPlatform.cpp
  
 +#ifndef MOZ_NO_LCMS
      if (gCMSRGBTransform) {
-         cmsDeleteTransform(gCMSRGBTransform);
+         qcms_transform_release(gCMSRGBTransform);
          gCMSRGBTransform = nsnull;
      }
      if (gCMSInverseRGBTransform) {
-         cmsDeleteTransform(gCMSInverseRGBTransform);
+         qcms_transform_release(gCMSInverseRGBTransform);
          gCMSInverseRGBTransform = nsnull;
      }
-@@ -728,16 +737,17 @@
+@@ -714,16 +723,17 @@ static void ShutdownCMS()
          if (gCMSsRGBProfile == gCMSOutputProfile)
              gCMSsRGBProfile = nsnull;
          gCMSOutputProfile = nsnull;
      }
      if (gCMSsRGBProfile) {
-         cmsCloseProfile(gCMSsRGBProfile);
+         qcms_profile_release(gCMSsRGBProfile);
          gCMSsRGBProfile = nsnull;
      }
 +#endif /* MOZ_NO_LCMS */
@@ -1483,27 +1420,7 @@ Index: mozilla/gfx/thebes/src/gfxContext.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxContext.cpp
 +++ mozilla/gfx/thebes/src/gfxContext.cpp
-@@ -41,17 +41,19 @@
- #endif
- #include <math.h>
- 
- #ifndef M_PI
- #define M_PI 3.14159265358979323846
- #endif
- 
- #include "cairo.h"
-+#ifndef MOZ_NO_LCMS
- #include "lcms.h"
-+#endif
- 
- #include "gfxContext.h"
- 
- #include "gfxColor.h"
- #include "gfxMatrix.h"
- #include "gfxASurface.h"
- #include "gfxPattern.h"
- #include "gfxPlatform.h"
-@@ -641,26 +643,28 @@
+@@ -640,26 +640,28 @@ gfxContext::GetClipExtents()
      return gfxRect(xmin, ymin, xmax - xmin, ymax - ymin);
  }
  
@@ -1536,29 +1453,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
 +++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
-@@ -70,19 +70,21 @@
- #endif
- 
- #ifdef MOZ_DFB
- #include "gfxDirectFBSurface.h"
- #endif
- 
- #include <fontconfig/fontconfig.h>
- 
-+#ifndef MOZ_NO_LCMS
- #include "nsMathUtils.h"
- 
- #include "lcms.h"
-+#endif
- 
- #define GDK_PIXMAP_SIZE_MAX 32767
- 
- #ifndef MOZ_PANGO
- #include <ft2build.h>
- #include FT_FREETYPE_H
- #endif
- 
-@@ -524,16 +526,17 @@
+@@ -528,16 +528,17 @@ gfxPlatformGtk::InitDPI()
      sDPI = gdk_screen_get_resolution(gdk_screen_get_default());
  
      if (sDPI <= 0.0) {
@@ -1568,7 +1463,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
  }
  
 +#ifndef MOZ_NO_LCMS
- cmsHPROFILE
+ qcms_profile *
  gfxPlatformGtk::GetPlatformCMSOutputProfile()
  {
  #ifdef MOZ_X11
@@ -1576,7 +1471,7 @@ Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
      const char ICC_PROFILE_ATOM_NAME[] = "_ICC_PROFILE";
  
      Atom edidAtom, iccAtom;
-@@ -655,16 +658,17 @@
+@@ -650,16 +651,17 @@ gfxPlatformGtk::GetPlatformCMSOutputProf
  
              return profile;
          }
@@ -1598,7 +1493,27 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatform.h
 +++ mozilla/gfx/thebes/public/gfxPlatform.h
-@@ -260,16 +260,17 @@
+@@ -43,17 +43,19 @@
+ #include "nsTArray.h"
+ 
+ #include "nsIObserver.h"
+ 
+ #include "gfxTypes.h"
+ #include "gfxASurface.h"
+ #include "gfxColor.h"
+ 
++#ifndef MOZ_NO_LCMS
+ #include "qcms.h"
++#endif
+ #ifdef XP_OS2
+ #undef OS2EMX_PLAIN_CHAR
+ #endif
+ 
+ class gfxImageSurface;
+ class gfxFont;
+ class gfxFontGroup;
+ struct gfxFontStyle;
+@@ -257,16 +259,17 @@ public:
       * valid rendering intent as defined in modules/lcms/include/lcms.h, that
       * value is returned. Otherwise, -1 is returned and the embedded intent
       * should be used.
@@ -1613,18 +1528,18 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
       *
       * Sets 'out' to 'in' if transform is NULL.
       */
-     static void TransformPixel(const gfxRGBA& in, gfxRGBA& out, cmsHTRANSFORM transform);
+     static void TransformPixel(const gfxRGBA& in, gfxRGBA& out, qcms_transform *transform);
  
      /**
-@@ -291,20 +292,23 @@
+@@ -288,20 +291,23 @@ public:
       * Return output -> sRGB device transform.
       */
-     static cmsHTRANSFORM GetCMSInverseRGBTransform();
+     static qcms_transform* GetCMSInverseRGBTransform();
  
      /**
       * Return sRGBA -> output device transform.
       */
-     static cmsHTRANSFORM GetCMSRGBATransform();
+     static qcms_transform* GetCMSRGBATransform();
 +#endif
  
  protected:
@@ -1633,7 +1548,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatform.h
  
  private:
 +#ifndef MOZ_NO_LCMS
-     virtual cmsHPROFILE GetPlatformCMSOutputProfile();
+     virtual qcms_profile* GetPlatformCMSOutputProfile();
 +#endif
  
      nsCOMPtr<nsIObserver> overrideObserver;
@@ -1644,7 +1559,7 @@ Index: mozilla/gfx/thebes/public/gfxPlatformGtk.h
 ===================================================================
 --- mozilla.orig/gfx/thebes/public/gfxPlatformGtk.h
 +++ mozilla/gfx/thebes/public/gfxPlatformGtk.h
-@@ -136,13 +136,15 @@
+@@ -136,13 +136,15 @@ public:
      GdkDrawable *GetGdkDrawable(gfxASurface *target);
  
  protected:
@@ -1655,64 +1570,16 @@ Index: mozilla/gfx/thebes/public/gfxPlatformGtk.h
  
 +#ifndef MOZ_NO_LCMS
  private:
-     virtual cmsHPROFILE GetPlatformCMSOutputProfile();
+     virtual qcms_profile *GetPlatformCMSOutputProfile();
 +#endif
  };
  
  #endif /* GFX_PLATFORM_GTK_H */
-Index: mozilla/dom/src/base/nsLocation.cpp
-===================================================================
---- mozilla.orig/dom/src/base/nsLocation.cpp
-+++ mozilla/dom/src/base/nsLocation.cpp
-@@ -42,17 +42,19 @@
- #include "nsIScriptSecurityManager.h"
- #include "nsIScriptContext.h"
- #include "nsIDocShell.h"
- #include "nsIDocShellLoadInfo.h"
- #include "nsIWebNavigation.h"
- #include "nsCDefaultURIFixup.h"
- #include "nsIURIFixup.h"
- #include "nsIURL.h"
-+#ifndef MOZ_NO_JARMODULE
- #include "nsIJARURI.h"
-+#endif
- #include "nsIIOService.h"
- #include "nsIServiceManager.h"
- #include "nsNetUtil.h"
- #include "plstr.h"
- #include "prprf.h"
- #include "prmem.h"
- #include "nsCOMPtr.h"
- #include "nsEscape.h"
-@@ -321,21 +323,23 @@
- 
-   // It is valid for docshell to return a null URI. Don't try to fixup
-   // if this happens.
-   if (!uri) {
-     return NS_OK;
-   }
- 
-   if (aGetInnermostURI) {
-+#ifndef MOZ_NO_JARMODULE
-     nsCOMPtr<nsIJARURI> jarURI(do_QueryInterface(uri));
-     while (jarURI) {
-       jarURI->GetJARFile(getter_AddRefs(uri));
-       jarURI = do_QueryInterface(uri);
-     }
-+#endif
-   }
- 
-   NS_ASSERTION(uri, "nsJARURI screwed up?");
- 
-   nsCOMPtr<nsIURIFixup> urifixup(do_GetService(NS_URIFIXUP_CONTRACTID, &rv));
-   NS_ENSURE_SUCCESS(rv, rv);
- 
-   return urifixup->CreateExposableURI(uri, aURI);
 Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
 ===================================================================
 --- mozilla.orig/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
 +++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
-@@ -72,34 +72,38 @@
+@@ -72,34 +72,38 @@ static PRLogModuleInfo *gPNGLog = PR_New
  static PRLogModuleInfo *gPNGDecoderAccountingLog = PR_NewLogModule("PNGDecoderAccounting");
  #endif
  
@@ -1736,11 +1603,11 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
      nsMemory::Free(interlacebuf);
 +#ifndef MOZ_NO_LCMS
    if (mInProfile) {
-     cmsCloseProfile(mInProfile);
+     qcms_profile_release(mInProfile);
  
      /* mTransform belongs to us only if mInProfile is non-null */
      if (mTransform)
-       cmsDeleteTransform(mTransform);
+       qcms_transform_release(mTransform);
    }
 +#endif
  }
@@ -1751,7 +1618,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
  {
    mFrame = do_CreateInstance("@mozilla.org/gfx/image/frame;2");
    if (!mFrame)
-@@ -391,16 +395,17 @@
+@@ -391,16 +395,17 @@ PNGDoGammaCorrection(png_structp png_ptr
      }
      png_set_gamma(png_ptr, 2.2, aGamma);
    }
@@ -1762,17 +1629,17 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
  
 +#ifndef MOZ_NO_LCMS
  // Adapted from http://www.littlecms.com/pngchrm.c example code
- static cmsHPROFILE
+ static qcms_profile *
  PNGGetColorProfile(png_structp png_ptr, png_infop info_ptr,
-                    int color_type, PRUint32 *inType, PRUint32 *intent)
+                    int color_type, qcms_data_type *inType, PRUint32 *intent)
  {
-   cmsHPROFILE profile = nsnull;
-   *intent = INTENT_PERCEPTUAL; // Our default
+   qcms_profile *profile = nsnull;
+   *intent = QCMS_INTENT_PERCEPTUAL; // Our default
  
-@@ -496,16 +501,17 @@
-         *inType = TYPE_RGBA_8;
+@@ -489,16 +494,17 @@ PNGGetColorProfile(png_structp png_ptr, 
+         *inType = QCMS_DATA_RGBA_8;
        else
-         *inType = TYPE_RGB_8;
+         *inType = QCMS_DATA_RGB_8;
      }
    }
  
@@ -1787,7 +1654,8 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
    png_uint_32 width, height;
    int bit_depth, color_type, interlace_type, compression_type, filter_type;
    unsigned int channels;
-@@ -552,16 +558,17 @@
+@@ -544,18 +550,19 @@ info_callback(png_structp png_ptr, png_i
+        }
      else
         png_set_expand(png_ptr);
    }
@@ -1795,8 +1663,10 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
    if (bit_depth == 16)
      png_set_strip_16(png_ptr);
  
-   PRUint32 inType, intent, pIntent;
+-  qcms_data_type inType;
+   PRUint32 intent, pIntent;
 +#ifndef MOZ_NO_LCMS
++  qcms_data_type inType;
    if (gfxPlatform::GetCMSMode() != eCMSMode_Off) {
      intent = gfxPlatform::GetRenderingIntent();
      decoder->mInProfile = PNGGetColorProfile(png_ptr, info_ptr,
@@ -1805,22 +1675,22 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
      if (intent == -1)
        intent = pIntent;
    }
-@@ -580,26 +587,29 @@
-       dwFlags |= cmsFLAGS_FLOATSHAPER;
+@@ -568,26 +575,30 @@ info_callback(png_structp png_ptr, png_i
+     else
+       outType = QCMS_DATA_RGB_8;
  
-     decoder->mTransform = cmsCreateTransform(decoder->mInProfile,
+     decoder->mTransform = qcms_transform_create(decoder->mInProfile,
                                               inType,
                                               gfxPlatform::GetCMSOutputProfile(),
                                               outType,
-                                              intent,
-                                              dwFlags);
+                                              (qcms_intent)intent);
 -  } else {
 +  } else
 +#endif /* MOZ_NO_LCMS */
 +  {
      png_set_gray_to_rgb(png_ptr);
      PNGDoGammaCorrection(png_ptr, info_ptr);
--
+ 
 +#ifndef MOZ_NO_LCMS
      if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
        if (color_type & PNG_COLOR_MASK_ALPHA || num_trans)
@@ -1837,7 +1707,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
      png_set_interlace_handling(png_ptr);
    }
  
-@@ -664,24 +674,26 @@
+@@ -652,24 +663,26 @@ info_callback(png_structp png_ptr, png_i
      png_set_progressive_frame_fn(png_ptr, frame_info_callback, NULL);
    
    if (png_get_first_frame_is_hidden(png_ptr, info_ptr)) {
@@ -1864,7 +1734,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
        longjmp(decoder->mPNG->jmpbuf, 5); // NS_ERROR_OUT_OF_MEMORY
      }
    }
-@@ -742,30 +754,32 @@
+@@ -730,30 +743,32 @@ row_callback(png_structp png_ptr, png_by
  
      // we're thebes. we can write stuff directly to the data
      PRUint8 *imageData;
@@ -1876,7 +1746,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
 +#ifndef MOZ_NO_LCMS
      if (decoder->mTransform) {
        if (decoder->mCMSLine) {
-         cmsDoTransform(decoder->mTransform, line, decoder->mCMSLine, iwidth);
+         qcms_transform_data(decoder->mTransform, line, decoder->mCMSLine, iwidth);
          /* copy alpha over */
          PRUint32 channels = decoder->mChannels;
          if (channels == 2 || channels == 4) {
@@ -1885,7 +1755,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
          }
          line = decoder->mCMSLine;
        } else {
-         cmsDoTransform(decoder->mTransform, line, line, iwidth);
+         qcms_transform_data(decoder->mTransform, line, line, iwidth);
         }
       }
 +#endif
@@ -1911,7 +1781,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
  #include "png.h"
  
 +#ifndef MOZ_NO_LCMS
- #include "lcms.h"
+ #include "qcms.h"
 +#endif
  
  #define NS_PNGDECODER_CID \
@@ -1921,7 +1791,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
       0x11b2,                                         \
      {0xbe, 0x07, 0xd1, 0x6e, 0xeb, 0x4c, 0x50, 0xed} \
  }
-@@ -82,18 +84,20 @@
+@@ -82,18 +84,20 @@ public:
    nsCOMPtr<gfxIImageFrame> mFrame;
    nsCOMPtr<imgILoad> mImageLoad;
    nsCOMPtr<imgIDecoderObserver> mObserver; // this is just qi'd from mRequest for speed
@@ -1931,8 +1801,8 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
    PRUint8 *mCMSLine;
    PRUint8 *interlacebuf;
 +#ifndef MOZ_NO_LCMS
-   cmsHPROFILE mInProfile;
-   cmsHTRANSFORM mTransform;
+   qcms_profile *mInProfile;
+   qcms_transform *mTransform;
 +#endif
  
    gfx_format format;
@@ -1946,7 +1816,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
 ===================================================================
 --- mozilla.orig/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
 +++ mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
-@@ -108,31 +108,35 @@
+@@ -108,31 +108,35 @@ nsJPEGDecoder::nsJPEGDecoder()
    mInfo.client_data = (void*)this;
  
    mSegment = nsnull;
@@ -1970,9 +1840,9 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
    PR_FREEIF(mBackBuffer);
 +#ifndef MOZ_NO_LCMS
    if (mTransform)
-     cmsDeleteTransform(mTransform);
+     qcms_transform_release(mTransform);
    if (mInProfile)
-     cmsCloseProfile(mInProfile);
+     qcms_profile_release(mInProfile);
 +#endif
  
    PR_LOG(gJPEGDecoderAccountingLog, PR_LOG_DEBUG,
@@ -1982,7 +1852,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
  
  
  /** imgIDecoder methods **/
-@@ -329,16 +333,17 @@
+@@ -329,16 +333,17 @@ nsresult nsJPEGDecoder::ProcessData(cons
      if (jpeg_read_header(&mInfo, TRUE) == JPEG_SUSPENDED) {
        PR_LOG(gJPEGDecoderAccountingLog, PR_LOG_DEBUG,
               ("} (JPEG_SUSPENDED)"));
@@ -1996,11 +1866,11 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
  
      if ((cmsMode != eCMSMode_Off) &&
          read_icc_profile(&mInfo, &profile, &profileLength) &&
-         (mInProfile = cmsOpenProfileFromMem(profile, profileLength)) != NULL) {
+         (mInProfile = qcms_profile_from_memory(profile, profileLength)) != NULL) {
        free(profile);
  
-       PRUint32 profileSpace = cmsGetColorSpace(mInProfile);
-@@ -422,17 +427,19 @@
+       PRUint32 profileSpace = qcms_profile_get_color_space(mInProfile);
+@@ -418,17 +423,19 @@ nsresult nsJPEGDecoder::ProcessData(cons
          }
        } else {
  #ifdef DEBUG_tor
@@ -2021,7 +1891,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
          break;
        case JCS_CMYK:
        case JCS_YCCK:
-@@ -543,17 +550,21 @@
+@@ -536,17 +543,21 @@ nsresult nsJPEGDecoder::ProcessData(cons
      /* Step 5: Start decompressor */
      if (jpeg_start_decompress(&mInfo) == FALSE) {
        PR_LOG(gJPEGDecoderAccountingLog, PR_LOG_DEBUG,
@@ -2044,7 +1914,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
  
      /* If this is a progressive JPEG ... */
      mState = mInfo.buffered_image ? JPEG_DECOMPRESS_PROGRESSIVE : JPEG_DECOMPRESS_SEQUENTIAL;
-@@ -734,46 +745,51 @@
+@@ -727,46 +738,51 @@ nsJPEGDecoder::OutputScanlines(PRBool* s
        }
  
        /* Request one scanline.  Returns 0 or 1 scanlines. */    
@@ -2061,7 +1931,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
               to the 3byte RGB byte pixels at 'end' of row */
            sampleRow += mInfo.output_width;
          }
-         cmsDoTransform(mTransform, source, sampleRow, mInfo.output_width);
+         qcms_transform_data(mTransform, source, sampleRow, mInfo.output_width);
          /* Move 3byte RGB data to end of row */
          if (mInfo.out_color_space == JCS_CMYK) {
            memmove(sampleRow + mInfo.output_width,
@@ -2083,9 +1953,9 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
 +#ifndef MOZ_NO_LCMS
          if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
            /* No embedded ICC profile - treat as sRGB */
-           cmsHTRANSFORM transform = gfxPlatform::GetCMSRGBTransform();
+           qcms_transform *transform = gfxPlatform::GetCMSRGBTransform();
            if (transform) {
-             cmsDoTransform(transform, sampleRow, sampleRow, mInfo.output_width);
+             qcms_transform_data(transform, sampleRow, sampleRow, mInfo.output_width);
            }
          }
 +#endif
@@ -2111,7 +1981,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.h
  #include "nsIInputStream.h"
  #include "nsIPipe.h"
 +#ifndef MOZ_NO_LCMS
- #include "lcms.h"
+ #include "qcms.h"
 +#endif
  
  extern "C" {
@@ -2121,7 +1991,7 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.h
  #include <setjmp.h>
  
  #define NS_JPEGDECODER_CID \
-@@ -117,15 +119,17 @@
+@@ -117,15 +119,17 @@ public:
    JOCTET *mBackBuffer;
    PRUint32 mBackBufferLen; // Offset of end of active backtrack data
    PRUint32 mBackBufferSize; // size in bytes what mBackBuffer was created with
@@ -2131,8 +2001,8 @@ Index: mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.h
    PRUint32 mProfileLength;
  
 +#ifndef MOZ_NO_LCMS
-   cmsHPROFILE mInProfile;
-   cmsHTRANSFORM mTransform;
+   qcms_profile *mInProfile;
+   qcms_transform *mTransform;
 +#endif
  
    PRPackedBool mReading;
@@ -2143,7 +2013,7 @@ Index: mozilla/modules/libpr0n/decoders/gif/nsGIFDecoder2.cpp
 ===================================================================
 --- mozilla.orig/modules/libpr0n/decoders/gif/nsGIFDecoder2.cpp
 +++ mozilla/modules/libpr0n/decoders/gif/nsGIFDecoder2.cpp
-@@ -81,17 +81,19 @@
+@@ -81,17 +81,19 @@ mailing address.
  #include "nsIInputStream.h"
  #include "nsIComponentManager.h"
  #include "imgIContainerObserver.h"
@@ -2153,7 +2023,7 @@ Index: mozilla/modules/libpr0n/decoders/gif/nsGIFDecoder2.cpp
  #include "gfxColor.h"
  #include "gfxPlatform.h"
 +#ifndef MOZ_NO_LCMS
- #include "lcms.h"
+ #include "qcms.h"
 +#endif
  
  /*
@@ -2163,7 +2033,7 @@ Index: mozilla/modules/libpr0n/decoders/gif/nsGIFDecoder2.cpp
   * as each GIF block (except colormaps) can never be bigger than 256 bytes.
   * Colormaps are directly copied in the resp. global_colormap or the local_colormap of the PAL image frame
   * So a fixed buffer in gif_struct is good enough.
-@@ -675,21 +677,23 @@
+@@ -675,21 +677,23 @@ nsGIFDecoder2::DoLzw(const PRUint8 *q)
  
  /** 
   * Expand the colormap from RGB to Packed ARGB as needed by Cairo.
@@ -2174,9 +2044,9 @@ Index: mozilla/modules/libpr0n/decoders/gif/nsGIFDecoder2.cpp
    // Apply CMS transformation if enabled and available
 +#ifndef MOZ_NO_LCMS
    if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
-     cmsHTRANSFORM transform = gfxPlatform::GetCMSRGBTransform();
+     qcms_transform *transform = gfxPlatform::GetCMSRGBTransform();
      if (transform)
-       cmsDoTransform(transform, aColormap, aColormap, aColors);
+       qcms_transform_data(transform, aColormap, aColormap, aColors);
    }
 +#endif
    // Convert from the GIF's RGB format to the Cairo format.
@@ -2212,14 +2082,14 @@ Index: mozilla/caps/src/nsScriptSecurityManager.cpp
  #include "nsIDocShellTreeItem.h"
  #include "nsIPrompt.h"
  #include "nsIWindowWatcher.h"
-@@ -89,17 +91,19 @@
- #include "nsAutoPtr.h"
+@@ -90,17 +92,19 @@
  #include "nsDOMJSUtils.h"
  #include "nsAboutProtocolUtils.h"
  #include "nsIClassInfo.h"
  #include "nsIURIFixup.h"
  #include "nsCDefaultURIFixup.h"
  #include "nsIChromeRegistry.h"
+ #include "nsPrintfCString.h"
  
 +#ifndef MOZ_NO_JARMODULE
  static NS_DEFINE_CID(kZipReaderCID, NS_ZIPREADER_CID);
@@ -2232,7 +2102,7 @@ Index: mozilla/caps/src/nsScriptSecurityManager.cpp
  JSRuntime       *nsScriptSecurityManager::sRuntime   = 0;
  PRBool nsScriptSecurityManager::sStrictFileOriginPolicy = PR_TRUE;
  
-@@ -2807,29 +2811,31 @@
+@@ -2815,29 +2819,31 @@ nsScriptSecurityManager::SetCanEnableCap
      {
          nsCOMPtr<nsIFile> systemCertFile;
          nsCOMPtr<nsIProperties> directoryService =
@@ -2312,7 +2182,7 @@ Index: mozilla/embedding/browser/webBrowser/nsDocShellTreeOwner.cpp
  //
  // GetEventReceiver
  //
-@@ -132,19 +138,23 @@
+@@ -132,19 +138,23 @@ GetPIDOMEventTarget( nsWebBrowser* inBro
  //*****************************************************************************
  
  nsDocShellTreeOwner::nsDocShellTreeOwner() :
@@ -2339,7 +2209,7 @@ Index: mozilla/embedding/browser/webBrowser/nsDocShellTreeOwner.cpp
    RemoveChromeListeners();
  }
  
-@@ -876,32 +886,35 @@
+@@ -876,32 +886,35 @@ NS_IMETHODIMP
  nsDocShellTreeOwner::AddChromeListeners()
  {
    nsresult rv = NS_OK;
@@ -2375,7 +2245,7 @@ Index: mozilla/embedding/browser/webBrowser/nsDocShellTreeOwner.cpp
                             contextListener(do_QueryInterface(webBrowserChrome));
      if ( contextListener2 || contextListener ) {
        mChromeContextMenuListener =
-@@ -909,47 +922,56 @@
+@@ -909,47 +922,56 @@ nsDocShellTreeOwner::AddChromeListeners(
        if ( mChromeContextMenuListener ) {
          NS_ADDREF(mChromeContextMenuListener);
          rv = mChromeContextMenuListener->AddChromeListeners();
@@ -2432,7 +2302,7 @@ Index: mozilla/embedding/browser/webBrowser/nsDocShellTreeOwner.cpp
  nsDocShellTreeOwner::GetWebBrowserChrome()
  {
    nsIWebBrowserChrome* chrome = nsnull;
-@@ -998,16 +1020,17 @@
+@@ -998,16 +1020,17 @@ nsDocShellTreeOwner::GetOwnerRequestor()
  }
  
  
@@ -2450,7 +2320,7 @@ Index: mozilla/embedding/browser/webBrowser/nsDocShellTreeOwner.cpp
  public:
      DefaultTooltipTextProvider();
  
-@@ -1533,23 +1556,25 @@
+@@ -1531,23 +1554,25 @@ ChromeTooltipListener::sAutoHideCallback
    ChromeTooltipListener* self = static_cast<ChromeTooltipListener*>(aListener);
    if ( self )
      self->HideTooltip();
@@ -2476,7 +2346,7 @@ Index: mozilla/embedding/browser/webBrowser/nsDocShellTreeOwner.cpp
      NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIDOMEventListener, nsIDOMContextMenuListener)
      NS_INTERFACE_MAP_ENTRY(nsIDOMContextMenuListener)
  NS_INTERFACE_MAP_END
-@@ -1849,8 +1874,10 @@
+@@ -1847,8 +1872,10 @@ ChromeContextMenuListener::ContextMenu(n
      nsCOMPtr<nsIContextMenuListener> menuListener(do_QueryInterface(mWebBrowserChrome));
      if ( menuListener )
        menuListener->OnShowContextMenu(flags, aMouseEvent, targetDOMnode);
@@ -2491,7 +2361,7 @@ Index: mozilla/embedding/browser/webBrowser/Makefile.in
 ===================================================================
 --- mozilla.orig/embedding/browser/webBrowser/Makefile.in
 +++ mozilla/embedding/browser/webBrowser/Makefile.in
-@@ -73,50 +73,71 @@
+@@ -73,50 +73,71 @@ REQUIRES	= xpcom \
  		  caps \
  		  xpconnect \
  		  $(NULL)
@@ -2615,7 +2485,7 @@ Index: mozilla/embedding/browser/webBrowser/nsDocShellTreeOwner.h
  /*
   * This is a fake 'hidden' interface that nsDocShellTreeOwner implements.
   * Classes such as nsCommandHandler can QI for this interface to be
-@@ -158,25 +169,32 @@
+@@ -158,25 +169,32 @@ protected:
     nsIEmbeddingSiteWindow* mOwnerWin;
     nsIInterfaceRequestor*  mOwnerRequestor;
  
@@ -2648,7 +2518,7 @@ Index: mozilla/embedding/browser/webBrowser/nsDocShellTreeOwner.h
  // with the DOM with AddChromeListeners() and removing itself with
  // RemoveChromeListeners().
  //
-@@ -255,18 +273,20 @@
+@@ -255,18 +273,20 @@ private:
      // This is a strong reference, because the tooltip content can be destroyed while we're
      // waiting for the tooltip to pup up, and we need to detect that.
      // It's set only when the tooltip timer is created and launched. The timer must
@@ -2669,7 +2539,7 @@ Index: mozilla/embedding/browser/webBrowser/nsDocShellTreeOwner.h
  // with the DOM with AddChromeListeners() and removing itself with
  // RemoveChromeListeners().
  //
-@@ -295,16 +315,17 @@
+@@ -295,16 +315,17 @@ private:
    PRPackedBool mContextMenuListenerInstalled;
  
    nsWebBrowser* mWebBrowser;
@@ -2720,7 +2590,7 @@ Index: mozilla/embedding/browser/build/nsWebBrowserModule.cpp
  {
      nsresult rv;
      nsCOMPtr<nsICategoryManager> catman =
-@@ -87,18 +91,20 @@
+@@ -87,18 +91,20 @@ UnregisterContentPolicy(nsIComponentMana
  }
  
  // Component Table
@@ -2745,18 +2615,17 @@ Index: mozilla/toolkit/components/build/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/build/Makefile.in
 +++ mozilla/toolkit/components/build/Makefile.in
-@@ -120,19 +120,21 @@
+@@ -119,18 +119,20 @@ SHARED_LIBRARY_LIBS += ../parentalcontro
+ LOCAL_INCLUDES += \
  	-I$(srcdir)/../parentalcontrols/src \
  	$(NULL)
  REQUIRES += parentalcontrols
  endif
  endif
  
- ifndef SUITE_USING_XPFE_DM
  ifdef MOZ_RDF
 +ifndef MOZ_NO_DOWNLOADMGR
  SHARED_LIBRARY_LIBS += ../downloads/src/$(LIB_PREFIX)download_s.$(LIB_SUFFIX)
- endif
  endif
 +endif
  
@@ -2767,7 +2636,7 @@ Index: mozilla/toolkit/components/build/Makefile.in
  SHARED_LIBRARY_LIBS += ../alerts/src/mac/$(LIB_PREFIX)alerts_s.$(LIB_SUFFIX)
  SHARED_LIBRARY_LIBS += ../alerts/src/mac/growl/$(LIB_PREFIX)growl_s.$(LIB_SUFFIX)
  endif
-@@ -142,17 +144,19 @@
+@@ -140,17 +142,19 @@ SHARED_LIBRARY_LIBS += ../url-classifier
  EXTRA_DSO_LDOPTS += $(ZLIB_LIBS)
  REQUIRES += url-classifier
  endif
@@ -2791,13 +2660,13 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
 ===================================================================
 --- mozilla.orig/xpfe/components/build/nsModule.cpp
 +++ mozilla/xpfe/components/build/nsModule.cpp
-@@ -45,30 +45,30 @@
+@@ -40,30 +40,30 @@
+ #include "nsNetUtil.h"
+ #include "nsXPIDLString.h"
+ #include "nsDirectoryViewer.h"
+ #ifdef MOZ_RDF
+ #include "rdf.h"
  #include "nsRDFCID.h"
- #endif
- 
- #ifdef SUITE_USING_XPFE_DM
- #include "nsDownloadManager.h"
- #include "nsDownloadProxy.h"
  #endif
  
 -#if !defined(MOZ_MACBROWSER)
@@ -2820,17 +2689,17 @@ Index: mozilla/xpfe/components/build/nsModule.cpp
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsBrowserInstance)
  #endif
  
- #ifdef SUITE_USING_XPFE_DM
- NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsDownloadManager, Init)
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsDownloadProxy)
- #endif
-@@ -119,17 +119,17 @@
- 
- #ifdef SUITE_USING_XPFE_DM
-     { "Download Manager", NS_DOWNLOADMANAGER_CID, NS_DOWNLOADMANAGER_CONTRACTID,
-       nsDownloadManagerConstructor },
-     { "Download", NS_DOWNLOAD_CID, NS_TRANSFER_CONTRACTID,
-       nsDownloadProxyConstructor },
+ static NS_METHOD
+ RegisterProc(nsIComponentManager *aCompMgr,
+              nsIFile *aPath,
+              const char *registryLocation,
+@@ -102,17 +102,17 @@ static const nsModuleComponentInfo compo
+       nsDirectoryViewerFactoryConstructor, RegisterProc, UnregisterProc  },
+ #ifdef MOZ_RDF
+     { "Directory Viewer", NS_HTTPINDEX_SERVICE_CID, NS_HTTPINDEX_SERVICE_CONTRACTID,
+       nsHTTPIndexConstructor },
+     { "Directory Viewer", NS_HTTPINDEX_SERVICE_CID, NS_HTTPINDEX_DATASOURCE_CONTRACTID,
+       nsHTTPIndexConstructor },
  #endif
  
 -#if !defined(MOZ_MACBROWSER)
@@ -2847,7 +2716,7 @@ Index: mozilla/xpfe/components/build/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/components/build/Makefile.in
 +++ mozilla/xpfe/components/build/Makefile.in
-@@ -66,21 +66,23 @@
+@@ -66,21 +66,23 @@ include $(topsrcdir)/config/config.mk
  ifdef MOZ_PERF_METRICS
  SHARED_LIBRARY_LIBS += $(DEPTH)/modules/libutil/src/$(LIB_PREFIX)mozutil_s.$(LIB_SUFFIX)
  endif
@@ -2864,18 +2733,18 @@ Index: mozilla/xpfe/components/build/Makefile.in
  endif
 +endif
  
- # Suite xpfe download manager includes
- ifdef SUITE_USING_XPFE_DM
- REQUIRES	+= \
- 		downloadmanager \
- 		intl \
- 		widget \
- 		mimetype \
+ ifeq ($(OS_ARCH),WINNT)
+ OS_LIBS	+= $(call EXPAND_LIBNAME,ole32 shell32)
+ endif
+ 
+ EXTRA_DSO_LDOPTS += \
+ 	$(MOZ_UNICHARUTIL_LIBS) \
+ 	$(MOZ_COMPONENT_LIBS) \
 Index: mozilla/xpfe/Makefile.in
 ===================================================================
 --- mozilla.orig/xpfe/Makefile.in
 +++ mozilla/xpfe/Makefile.in
-@@ -40,18 +40,20 @@
+@@ -40,18 +40,20 @@ topsrcdir	= @top_srcdir@
  srcdir		= @srcdir@
  VPATH		= @srcdir@
  
@@ -2900,7 +2769,7 @@ Index: mozilla/embedding/browser/build/Makefile.in
 ===================================================================
 --- mozilla.orig/embedding/browser/build/Makefile.in
 +++ mozilla/embedding/browser/build/Makefile.in
-@@ -58,16 +58,17 @@
+@@ -58,16 +58,17 @@ REQUIRES	= xpcom \
  		  widget \
  		  gfx \
  		  content \
@@ -2922,7 +2791,7 @@ Index: mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 ===================================================================
 --- mozilla.orig/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
 +++ mozilla/toolkit/mozapps/extensions/src/nsExtensionManager.js.in
-@@ -5864,19 +5864,20 @@
+@@ -5447,19 +5447,20 @@ ItemDownloadTransaction.prototype = {
                                  state, value);
    },
  
@@ -2950,27 +2819,7 @@ Index: mozilla/gfx/thebes/src/gfxPattern.cpp
 ===================================================================
 --- mozilla.orig/gfx/thebes/src/gfxPattern.cpp
 +++ mozilla/gfx/thebes/src/gfxPattern.cpp
-@@ -36,17 +36,19 @@
-  * ***** END LICENSE BLOCK ***** */
- 
- #include "gfxTypes.h"
- #include "gfxPattern.h"
- #include "gfxASurface.h"
- #include "gfxPlatform.h"
- 
- #include "cairo.h"
-+#ifndef MOZ_NO_LCMS
- #include "lcms.h"
-+#endif
- 
- gfxPattern::gfxPattern(cairo_pattern_t *aPattern)
- {
-     mPattern = cairo_pattern_reference(aPattern);
- }
- 
- gfxPattern::gfxPattern(const gfxRGBA& aColor)
- {
-@@ -82,26 +84,28 @@
+@@ -81,26 +81,28 @@ cairo_pattern_t *
  gfxPattern::CairoPattern()
  {
      return mPattern;
@@ -3003,7 +2852,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/src/EmbedWindow.cpp
 +++ mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
-@@ -122,17 +122,19 @@
+@@ -122,17 +122,19 @@ EmbedWindow::ReleaseChildren(void)
  NS_IMPL_ADDREF(EmbedWindow)
  NS_IMPL_RELEASE(EmbedWindow)
  
@@ -3023,7 +2872,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
  NS_IMETHODIMP
  EmbedWindow::SetStatus(PRUint32 aStatusType, const PRUnichar *aStatus)
  {
-@@ -374,16 +376,17 @@
+@@ -374,16 +376,17 @@ EmbedWindow::SetVisibility(PRBool aVisib
      return NS_OK;
  
    g_signal_emit(G_OBJECT(mOwner->mOwningWidget),
@@ -3041,7 +2890,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
    // draw tooltip style border around the text
    gtk_paint_flat_box(window->style, window->window,
                       GTK_STATE_NORMAL, GTK_SHADOW_OUT,
-@@ -462,16 +465,17 @@
+@@ -462,16 +465,17 @@ EmbedWindow::OnShowTooltip(PRInt32 aXCoo
  NS_IMETHODIMP
  EmbedWindow::OnHideTooltip(void)
  {
@@ -3100,7 +2949,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedWindow.h
    EmbedWindow();
    virtual ~EmbedWindow();
  
-@@ -72,17 +76,19 @@
+@@ -72,17 +76,19 @@ class EmbedWindow : public nsIWebBrowser
    NS_DECL_ISUPPORTS
  
    NS_DECL_NSIWEBBROWSERCHROME
@@ -3124,7 +2973,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -3369,16 +3369,17 @@
+@@ -3412,16 +3412,17 @@ nsWindow::OnDragMotionEvent(GtkWidget *a
      sIsDraggingOutOf = PR_FALSE;
  
      // Reset out drag motion timer
@@ -3156,7 +3005,7 @@ Index: mozilla/gfx/thebes/src/gfxQtPlatform.cpp
  #include "nsTArray.h"
  
 +#ifndef MOZ_NO_LCMS
- #include "lcms.h"
+ #include "qcms.h"
 +#endif
  
  #include <ft2build.h>
@@ -3166,3 +3015,208 @@ Index: mozilla/gfx/thebes/src/gfxQtPlatform.cpp
  gfxFontconfigUtils *gfxQtPlatform::sFontconfigUtils = nsnull;
  static cairo_user_data_key_t cairo_qt_pixmap_key;
  static void do_qt_pixmap_unref (void *data)
+Index: mozilla/gfx/thebes/test/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/thebes/test/Makefile.in
++++ mozilla/gfx/thebes/test/Makefile.in
+@@ -49,27 +49,35 @@ REQUIRES = \
+ 	xpcom \
+ 	string \
+ 	thebes \
+ 	cairo \
+ 	pref \
+ 	necko \
+ 	unicharutil \
+ 	nspr \
+-	qcms \
+ 	$(NULL)
+ 
++ifndef MOZ_NO_LCMS
++REQUIRES += qcms
++endif
++
+ # All platforms
+ CPPSRCS = \
+ 	gfxSurfaceRefCountTest.cpp \
+ 	gfxFontSelectionTest.cpp \
+ 	gfxTextRunPerfTest.cpp \
+ 	gfxWordCacheTest.cpp \
+ 	$(NULL)
+-#	gfxColorManagementTest.cpp \
++
++ifndef MOZ_NO_LCMS
++CPPSRCS += \
++	gfxColorManagementTest.cpp \
++	$(NULL)
++endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),cocoa)
+ CMMSRCS = gfxTestCocoaHelper.mm
+ HELPER_OBJS = gfxTestCocoaHelper.$(OBJ_SUFFIX)
+ EXTRA_DEPS += gfxTestCocoaHelper.$(OBJ_SUFFIX)
+ endif
+ 
+ SIMPLE_PROGRAMS	= $(CPPSRCS:.cpp=$(BIN_SUFFIX))
+Index: mozilla/gfx/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/Makefile.in
++++ mozilla/gfx/Makefile.in
+@@ -43,17 +43,20 @@ VPATH		= @srcdir@
+ include $(DEPTH)/config/autoconf.mk
+ 
+ MODULE		= gfx
+ 
+ ifdef MOZ_TREE_CAIRO
+ DIRS		= cairo
+ endif
+ 
+-DIRS		+= thebes public idl src qcms
++DIRS		+= thebes public idl src
++ifndef MOZ_NO_LCMS
++DIRS		+= qcms
++endif
+ 
+ ifdef ENABLE_TESTS
+ ifndef MOZ_ENABLE_LIBXUL
+ TOOL_DIRS	+= tests
+ endif
+ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/gfx/src/thebes/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/src/thebes/Makefile.in
++++ mozilla/gfx/src/thebes/Makefile.in
+@@ -58,19 +58,22 @@ REQUIRES =  xpcom \
+             thebes \
+             widget \
+             locale \
+             view \
+             pref \
+             unicharutil \
+             imglib2 \
+             $(ZLIB_REQUIRES) \
+-            qcms \
+             $(NULL)
+ 
++ifndef MOZ_NO_LCMS
++REQUIRES += qcms
++endif
++
+ ifeq (,$(filter windows,$(MOZ_WIDGET_TOOLKIT)))
+ REQUIRES += uconv
+ endif
+ 
+ CPPSRCS		= \
+ 		nsThebesDeviceContext.cpp \
+ 		nsThebesImage.cpp \
+ 		nsThebesRegion.cpp \
+@@ -93,19 +96,22 @@ CPPSRCS		+= nsSystemFontsGTK2.cpp
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
+ CPPSRCS		+= nsSystemFontsWin.cpp \
+ 		   $(NULL)
+ 
+ REQUIRES	+= \
+ 		cairo \
+-		qcms \
+ 		$(NULL)
+ 
++ifndef MOZ_NO_LCMS
++REQUIRES += qcms
++endif
++
+ _OS_LIBS	= usp10
+ OS_LIBS		+= $(call EXPAND_LIBNAME,$(_OS_LIBS))
+ 
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),os2)
+ CPPSRCS		+= nsSystemFontsOS2.cpp \
+ 		   $(NULL)
+Index: mozilla/gfx/thebes/src/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/thebes/src/Makefile.in
++++ mozilla/gfx/thebes/src/Makefile.in
+@@ -13,19 +13,22 @@ EXPORT_LIBRARY	= 1
+ 
+ REQUIRES = \
+ 	cairo \
+ 	string \
+ 	pref \
+ 	xpcom \
+ 	unicharutil \
+ 	$(LCMS_REQUIRES) \
+-	qcms \
+ 	$(NULL)
+ 
++ifndef MOZ_NO_LCMS
++REQUIRES += qcms
++endif
++
+ CPPSRCS	= \
+ 	gfxASurface.cpp \
+ 	gfxAlphaRecovery.cpp \
+ 	gfxBlur.cpp \
+ 	gfxContext.cpp \
+ 	gfxImageSurface.cpp \
+ 	gfxFont.cpp \
+ 	gfxFontMissingGlyphs.cpp \
+@@ -43,19 +46,23 @@ CPPSRCS	= \
+ 	$(NULL)
+ 
+ EXTRA_DSO_LDOPTS += \
+ 	$(MOZ_CAIRO_LIBS) \
+ 	$(MOZ_UNICHARUTIL_LIBS) \
+ 	$(XPCOM_LIBS) \
+ 	$(NSPR_LIBS) \
+ 	$(ZLIB_LIBS) \
+-	$(QCMS_LIBS) \
+ 	$(NULL)
+ 
++ifndef MOZ_NO_LCMS
++EXTRA_DSO_LDOPTS += \
++	$(QCMS_LIBS) \
++	$(NULL)
++endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
+ CPPSRCS	+= 	gfxWindowsPlatform.cpp \
+ 		gfxWindowsSurface.cpp \
+ 		gfxWindowsNativeDrawing.cpp \
+ 		nsUnicodeRange.cpp \
+ 		$(NULL)
+ 
+Index: mozilla/modules/libpr0n/build/Makefile.in
+===================================================================
+--- mozilla.orig/modules/libpr0n/build/Makefile.in
++++ mozilla/modules/libpr0n/build/Makefile.in
+@@ -88,21 +88,26 @@ EXTRA_DSO_LIBS	= \
+ 		gkgfx \
+ 		thebes \
+ 		$(NULL)
+ 
+ EXTRA_DSO_LDOPTS = \
+ 		$(LIBS_DIR) \
+ 		$(JPEG_LIBS) \
+ 		$(PNG_LIBS) $(ZLIB_LIBS) \
+-		$(QCMS_LIBS) \
+ 		$(EXTRA_DSO_LIBS) \
+ 		$(MOZ_COMPONENT_LIBS) \
+ 		$(NULL)
+ 
++ifndef MOZ_NO_LCMS
++EXTRA_DSO_LDOPTS = \
++		$(QCMS_LIBS) \
++		$(NULL)
++endif
++
+ # Force a rebuild of nsImageModule when either of MOZ_IMG_{DE,EN}CODERS changes
+ 
+ GARBAGE += _img_list nsImgBuildDefines.h
+ 
+ export::
+ 	@{ \
+ 	$(foreach d,$(filter-out icon,$(MOZ_IMG_DECODERS)), \
+ 		echo "#define IMG_BUILD_DECODER_${d}";) \

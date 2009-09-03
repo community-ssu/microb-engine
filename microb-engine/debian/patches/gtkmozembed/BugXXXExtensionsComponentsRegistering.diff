@@ -2,7 +2,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/src/EmbedPrivate.cpp
 +++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
-@@ -83,16 +83,20 @@
+@@ -84,16 +84,20 @@
  #include "GtkPromptService.h"
  
  #ifdef MOZ_ACCESSIBILITY_ATK
@@ -15,16 +15,15 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
 +#include "nsIExtensionManager.h"
 +#endif
 +
- PRUint32     EmbedPrivate::sWidgetCount = 0;
+ PRUint32                 EmbedPrivate::sWidgetCount = 0;
  
- char        *EmbedPrivate::sPath        = nsnull;
- char        *EmbedPrivate::sCompPath    = nsnull;
- nsVoidArray *EmbedPrivate::sWindowList  = nsnull;
- nsILocalFile *EmbedPrivate::sProfileDir  = nsnull;
- nsISupports  *EmbedPrivate::sProfileLock = nsnull;
- GtkWidget   *EmbedPrivate::sOffscreenWindow = 0;
-@@ -534,16 +538,24 @@
-     rv = XRE_InitEmbedding(greDir, binDir,
+ char                    *EmbedPrivate::sPath        = nsnull;
+ char                    *EmbedPrivate::sCompPath    = nsnull;
+ nsTArray<EmbedPrivate*> *EmbedPrivate::sWindowList  = nsnull;
+ nsILocalFile            *EmbedPrivate::sProfileDir  = nsnull;
+ nsISupports             *EmbedPrivate::sProfileLock = nsnull;
+ GtkWidget               *EmbedPrivate::sOffscreenWindow = 0;
+@@ -537,16 +541,24 @@ EmbedPrivate::PushStartup(void)
                             const_cast<GTKEmbedDirectoryProvider*>(&kDirectoryProvider),
                             nsnull, nsnull);
      if (NS_FAILED(rv))
@@ -32,15 +31,15 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
  
      if (sProfileDir)
        XRE_NotifyProfile();
-+
+ 
 +#ifdef MOZ_RDF
 +    PRBool needsRestart;
 +    nsCOMPtr<nsIExtensionManager>
 +      extensionManager(do_GetService("@mozilla.org/extensions/manager;1", &rv));
 +    if (extensionManager)
-+      extensionManager->Start(nsnull, &needsRestart);
++      extensionManager->Start(&needsRestart);
 +#endif
- 
++
      rv = RegisterAppComponents();
      NS_ASSERTION(NS_SUCCEEDED(rv), "Warning: Failed to register app components.\n");
    }
@@ -48,7 +47,8 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
  
  /* static */
  void
-@@ -968,16 +980,17 @@
+ EmbedPrivate::PopStartup(void)
+@@ -969,16 +981,17 @@ EmbedPrivate::RegisterAppComponents(void
    nsCOMPtr<nsIComponentRegistrar> cr;
    nsresult rv = NS_GetComponentRegistrar(getter_AddRefs(cr));
    NS_ENSURE_SUCCESS(rv, rv);
@@ -70,7 +70,7 @@ Index: mozilla/embedding/browser/gtk/src/Makefile.in
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/src/Makefile.in
 +++ mozilla/embedding/browser/gtk/src/Makefile.in
-@@ -60,16 +60,17 @@
+@@ -60,16 +60,17 @@ REQUIRES	= xpcom \
  		  layout \
  		  uriloader \
  		  webbrwsr \

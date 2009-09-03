@@ -5,7 +5,7 @@ Index: mozilla/docshell/base/nsDocShell.cpp
 ===================================================================
 --- mozilla.orig/docshell/base/nsDocShell.cpp
 +++ mozilla/docshell/base/nsDocShell.cpp
-@@ -5406,17 +5406,22 @@
+@@ -5849,17 +5849,22 @@ nsDocShell::RestoreFromHistory()
      }
  
      nsCOMPtr<nsIMarkupDocumentViewer> oldMUDV(do_QueryInterface(mContentViewer));
@@ -27,5 +27,5 @@ Index: mozilla/docshell/base/nsDocShell.cpp
      // pagehide or unload.
      nsCOMPtr<nsISHEntry> origLSHE = mLSHE;
  
-     // Notify the old content viewer that it's being hidden.
-     FirePageHideNotification(!mSavingOldViewer);
+     // Make sure to blow away our mLoadingURI just in case.  No loads
+     // from inside this pagehide.

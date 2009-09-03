@@ -4,7 +4,7 @@ Index: mozilla/docshell/base/nsAboutRedirector.cpp
 ===================================================================
 --- mozilla.orig/docshell/base/nsAboutRedirector.cpp
 +++ mozilla/docshell/base/nsAboutRedirector.cpp
-@@ -64,17 +64,21 @@
+@@ -64,17 +64,21 @@ struct RedirEntry {
    URI.  Perhaps we should separate the two concepts out...
   */
  static RedirEntry kRedirMap[] = {
@@ -94,7 +94,7 @@ Index: mozilla/toolkit/themes/winstripe/global/about.css
    max-width: 80%;
  }
  
-@@ -46,8 +45,12 @@
+@@ -46,8 +45,12 @@ ul {
  
  ul > li {
    margin-top: .5em;
@@ -130,7 +130,7 @@ Index: mozilla/toolkit/themes/winstripe/global/netError.css
    margin: 0 0 .6em 0;
    border-bottom: 1px solid ThreeDLightShadow;
    font-size: 160%;
-@@ -37,39 +37,39 @@
+@@ -37,39 +37,39 @@ ul > li, ol > li {
  ul {
    list-style: square;
  }

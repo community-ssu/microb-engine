@@ -2,7 +2,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
 ===================================================================
 --- mozilla.orig/embedding/browser/gtk/src/EmbedPrivate.cpp
 +++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
-@@ -488,16 +488,17 @@
+@@ -489,16 +489,17 @@ EmbedPrivate::ApplyChromeMask()
     }
  }
  
@@ -42,7 +42,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
  GtkWidget *EmbedWindow::sTipWindow = nsnull;
  
  EmbedWindow::EmbedWindow(void)
-@@ -71,17 +72,18 @@
+@@ -71,17 +72,18 @@ EmbedWindow::Init(EmbedPrivate *aOwner)
    // create our nsIWebBrowser object and set up some basic defaults.
    mWebBrowser = do_CreateInstance(NS_WEBBROWSER_CONTRACTID);
    if (!mWebBrowser)
@@ -62,7 +62,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
  EmbedWindow::CreateWindow(void)
  {
    nsresult rv;
-@@ -199,24 +201,36 @@
+@@ -199,24 +201,36 @@ EmbedWindow::DestroyBrowserWindow(void)
  NS_IMETHODIMP
  EmbedWindow::SizeBrowserTo(PRInt32 aCX, PRInt32 aCY)
  {
@@ -100,7 +100,7 @@ Index: mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
  {
    *_retval = mIsModal;
    return NS_OK;
-@@ -225,17 +239,16 @@
+@@ -225,17 +239,16 @@ EmbedWindow::IsWindowModal(PRBool *_retv
  NS_IMETHODIMP
  EmbedWindow::ExitModalEventLoop(nsresult aStatus)
  {

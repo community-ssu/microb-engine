@@ -1,0 +1,23 @@
+# bug 108857 - Not reproducible browser crash - nsDocShell::EnsureContentViewer
+Index: mozilla/docshell/base/nsDocShell.cpp
+===================================================================
+--- mozilla.orig/docshell/base/nsDocShell.cpp
++++ mozilla/docshell/base/nsDocShell.cpp
+@@ -5355,16 +5355,17 @@ nsDocShell::EnsureContentViewer()
+                 if (parentContent) {
+                     baseURI = parentContent->GetBaseURI();
+                 }
+             }
+         }
+     }
+ 
+     nsresult rv = CreateAboutBlankContentViewer(principal, baseURI);
++    NS_ENSURE_TRUE(mContentViewer, NS_ERROR_FAILURE);
+ 
+     if (NS_SUCCEEDED(rv)) {
+         nsCOMPtr<nsIDOMDocument> domDoc;
+         mContentViewer->GetDOMDocument(getter_AddRefs(domDoc));
+         nsCOMPtr<nsIDocument> doc(do_QueryInterface(domDoc));
+         NS_ASSERTION(doc,
+                      "Should have doc if CreateAboutBlankContentViewer "
+                      "succeeded!");

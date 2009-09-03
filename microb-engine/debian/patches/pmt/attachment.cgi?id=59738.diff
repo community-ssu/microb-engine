@@ -1,0 +1,35 @@
+# osso states enable
+diff -r e05909c0ee58 toolkit/xre/nsAppData.cpp
+--- a/toolkit/xre/nsAppData.cpp	Wed Aug 05 11:24:03 2009 +0300
++++ b/toolkit/xre/nsAppData.cpp	Wed Aug 05 14:58:23 2009 +0300
+@@ -41,6 +41,8 @@
+ #include "nsAppRunner.h"
+ #include "nsCRTGlue.h"
+ #include "nsAutoPtr.h"
++#include "nsINativeAppSupport.h"
++#include "prenv.h"
+ 
+ void
+ SetAllocatedString(const char *&str, const char *newvalue)
+@@ -137,6 +139,21 @@ XRE_CreateAppData(nsILocalFile* aINIFile
+   }
+ 
+   *aAppData = data.forget();
++
++  if (!PR_GetEnv("USE_MOZ_NATIVE_APP_SUPPORT"))
++    return NS_OK;
++
++  ScopedAppData appData(*aAppData);
++  gAppData = &appData;
++
++  // Try to allocate "native app support."
++  nsCOMPtr<nsINativeAppSupport> nativeApp;
++  rv = NS_CreateNativeAppSupport(getter_AddRefs(nativeApp));
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  PRBool canRun = PR_FALSE;
++  rv = nativeApp->Start(&canRun);
++
+   return NS_OK;
+ }
+ 

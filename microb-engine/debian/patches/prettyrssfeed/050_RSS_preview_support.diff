@@ -2,7 +2,7 @@ Index: mozilla/toolkit/locales/jar.mn
 ===================================================================
 --- mozilla.orig/toolkit/locales/jar.mn
 +++ mozilla/toolkit/locales/jar.mn
-@@ -112,8 +112,11 @@
+@@ -115,8 +115,11 @@
    locale/@AB_CD@/help/help.properties                     (%chrome/mozapps/help/help.properties)
    locale/@AB_CD@/help/help.dtd                            (%chrome/mozapps/help/help.dtd)
    locale/@AB_CD@/help/help-toc.rdf                        (%chrome/mozapps/help/help-toc.rdf)
@@ -102,7 +102,7 @@ Index: mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
  NS_GENERIC_FACTORY_CONSTRUCTOR(nsUserInfo)
  
  #if defined(XP_WIN) && !defined(MOZ_DISABLE_PARENTAL_CONTROLS)
-@@ -123,16 +125,17 @@
+@@ -123,16 +125,17 @@ nsUrlClassifierDBServiceConstructor(nsIS
      NS_RELEASE(inst);
  
      return rv;
@@ -120,7 +120,7 @@ Index: mozilla/toolkit/components/build/nsToolkitCompsModule.cpp
  {
    { "App Startup Service",
      NS_TOOLKIT_APPSTARTUP_CID,
-@@ -198,12 +201,22 @@
+@@ -198,12 +201,22 @@ static const nsModuleComponentInfo compo
      NS_URLCLASSIFIERHASHCOMPLETER_CONTRACTID,
      nsUrlClassifierHashCompleterConstructor },
  #endif
@@ -147,7 +147,7 @@ Index: mozilla/toolkit/components/build/nsToolkitCompsCID.h
 ===================================================================
 --- mozilla.orig/toolkit/components/build/nsToolkitCompsCID.h
 +++ mozilla/toolkit/components/build/nsToolkitCompsCID.h
-@@ -104,16 +104,25 @@
+@@ -111,16 +111,25 @@
    "@mozilla.org/browser/livemark-service;2"
  
  #define NS_MORKHISTORYIMPORTER_CONTRACTID \
@@ -171,8 +171,8 @@ Index: mozilla/toolkit/components/build/nsToolkitCompsCID.h
  #define NS_ALERTSSERVICE_CID \
  { 0xa0ccaaf8, 0x9da, 0x44d8, { 0xb2, 0x50, 0x9a, 0xc3, 0xe9, 0x3c, 0x81, 0x17 } }
  
- // {F6D5EBBD-34F4-487d-9D10-3D34123E3EB9}
- #define NS_AUTOCOMPLETECONTROLLER_CID \
+ // {84E11F80-CA55-11DD-AD8B-0800200C9A66}
+ #define NS_SYSTEMALERTSSERVICE_CID \
 Index: mozilla/toolkit/components/feeds/src/nsAboutFeeds.h
 ===================================================================
 --- /dev/null
@@ -1196,7 +1196,7 @@ Index: mozilla/toolkit/components/feeds/src/nsFeedSniffer.cpp
 ===================================================================
 --- /dev/null
 +++ mozilla/toolkit/components/feeds/src/nsFeedSniffer.cpp
-@@ -0,0 +1,445 @@
+@@ -0,0 +1,447 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -1557,19 +1557,21 @@ Index: mozilla/toolkit/components/feeds/src/nsFeedSniffer.cpp
 +
 +  // Thus begins the actual sniffing.
 +  PRBool isFeed = PR_FALSE;
++  nsCString strData(testData, length);
 +
++  //((const char*)testData, length);
 +  // RSS 0.91/0.92/2.0
-+  isFeed = ContainsTopLevelSubstring(testData, "<rss");
++  isFeed = ContainsTopLevelSubstring(strData.get(), "<rss");
 +
 +  // Atom 1.0
 +  if (!isFeed)
-+    isFeed = ContainsTopLevelSubstring(testData, "<feed");
++    isFeed = ContainsTopLevelSubstring(strData.get(), "<feed");
 +
 +  // RSS 1.0
 +  if (!isFeed) {
-+    isFeed = ContainsTopLevelSubstring(testData, "<rdf:RDF") &&
-+      NULL != strstr(testData, NS_RDF) &&
-+      NULL != strstr(testData, NS_RSS);
++    isFeed = ContainsTopLevelSubstring(strData.get(), "<rdf:RDF") &&
++      NULL != strstr(strData.get(), NS_RDF) &&
++      NULL != strstr(strData.get(), NS_RSS);
 +  }
 +
 +  // If we sniffed a feed, coerce our internal type
@@ -4221,7 +4223,7 @@ Index: mozilla/toolkit/components/feeds/public/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/feeds/public/Makefile.in
 +++ mozilla/toolkit/components/feeds/public/Makefile.in
-@@ -50,11 +50,13 @@
+@@ -50,11 +50,13 @@ XPIDLSRCS = nsIFeedProcessor.idl \
              nsIFeed.idl \
              nsIFeedContainer.idl \
              nsIFeedEntry.idl \
@@ -4563,7 +4565,7 @@ Index: mozilla/toolkit/components/feeds/src/Makefile.in
 ===================================================================
 --- mozilla.orig/toolkit/components/feeds/src/Makefile.in
 +++ mozilla/toolkit/components/feeds/src/Makefile.in
-@@ -52,16 +52,38 @@
+@@ -52,16 +52,38 @@ REQUIRES	= \
  		xpcom \
  		necko \
  		string \

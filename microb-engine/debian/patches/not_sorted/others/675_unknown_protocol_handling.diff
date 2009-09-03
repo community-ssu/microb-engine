@@ -3,9 +3,16 @@
 # This is wrong, nsIExternalProtocolService need to be implemented for maemo or
 # toolkit/system/gnome module enabled + each application enable "/desktop/gnome/url-handlers/[protocol]/command" gconf keys
 # also see https://bugzilla.mozilla.org/show_bug.cgi?id=33282
---- mozilla/docshell/base/nsDocShell.cpp.orig	2007-09-11 14:57:12.000000000 +0300
-+++ mozilla/docshell/base/nsDocShell.cpp	2007-09-11 14:57:21.000000000 +0300
-@@ -3019,8 +3019,12 @@
+Index: mozilla/docshell/base/nsDocShell.cpp
+===================================================================
+--- mozilla.orig/docshell/base/nsDocShell.cpp
++++ mozilla/docshell/base/nsDocShell.cpp
+@@ -3308,18 +3308,22 @@ nsDocShell::DisplayLoadError(nsresult aE
+         // asserts). Satisfy that assertion now since GetDocument will force
+         // creation of one if it hasn't already been created.
+         nsCOMPtr<nsPIDOMWindow> pwin(do_QueryInterface(mScriptGlobal));
+         if (pwin) {
+             nsCOMPtr<nsIDOMDocument> doc;
              pwin->GetDocument(getter_AddRefs(doc));
          }
  
@@ -19,3 +26,8 @@
      }
  
      return NS_OK;
+ }
+ 
+ 
+ NS_IMETHODIMP
+ nsDocShell::LoadErrorPage(nsIURI *aURI, const PRUnichar *aURL,

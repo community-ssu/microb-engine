@@ -4,7 +4,7 @@ Index: mozilla/layout/style/nsROCSSPrimitiveValue.cpp
 ===================================================================
 --- mozilla.orig/layout/style/nsROCSSPrimitiveValue.cpp
 +++ mozilla/layout/style/nsROCSSPrimitiveValue.cpp
-@@ -107,16 +107,44 @@
+@@ -70,16 +70,44 @@ NS_INTERFACE_MAP_BEGIN(nsROCSSPrimitiveV
    NS_INTERFACE_MAP_ENTRY(nsIDOMCSSValue)
    NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMCSSPrimitiveValue)
    NS_INTERFACE_MAP_ENTRY_CONTENT_CLASSINFO(ROCSSPrimitiveValue)
@@ -53,7 +53,7 @@ Index: mozilla/layout/style/nsROCSSPrimitiveValue.h
 ===================================================================
 --- mozilla.orig/layout/style/nsROCSSPrimitiveValue.h
 +++ mozilla/layout/style/nsROCSSPrimitiveValue.h
-@@ -177,16 +177,19 @@
+@@ -177,16 +177,19 @@ public:
        NS_ADDREF(mValue.mRect);
        mType = CSS_RECT;
      }
@@ -73,7 +73,7 @@ Index: mozilla/layout/style/nsROCSSPrimitiveValue.h
        case CSS_STRING:
        case CSS_ATTR:
        case CSS_COUNTER: // FIXME: Counter should use an object
-@@ -202,16 +205,17 @@
+@@ -202,16 +205,17 @@ public:
          NS_RELEASE(mValue.mRect);
          break;
        case CSS_RGBCOLOR:
@@ -85,9 +85,9 @@ Index: mozilla/layout/style/nsROCSSPrimitiveValue.h
 +#endif
  
  private:
-   void GetEscapedURI(nsIURI *aURI, PRUnichar **aReturn);
- 
    PRUint16 mType;
  
    union {
      nscoord         mAppUnits;
+     float           mFloat;
+     nsDOMCSSRGBColor* mColor;

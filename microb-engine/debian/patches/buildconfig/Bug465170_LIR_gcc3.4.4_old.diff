@@ -1,8 +1,15 @@
 #https://bugzilla.mozilla.org/show_bug.cgi?id=465170
 # workarround
---- mozilla-central/js/src/nanojit/LIR.cpp.orig	2008-11-16 16:38:41.000000000 -0500
-+++ mozilla-central/js/src/nanojit/LIR.cpp	2008-11-16 17:12:06.000000000 -0500
-@@ -836,11 +836,6 @@
+Index: mozilla/js/src/nanojit/LIR.cpp
+===================================================================
+--- mozilla.orig/js/src/nanojit/LIR.cpp
++++ mozilla/js/src/nanojit/LIR.cpp
+@@ -892,21 +892,16 @@ namespace nanojit
+ 				v == LIR_xor || v == LIR_or || v == LIR_and ||
+ 				v == LIR_eq) {
+ 				// move const to rhs
+ 				LIns* t = oprnd2;
+ 				oprnd2 = oprnd1;
  				oprnd1 = t;
  			}
  			else if (v >= LIR_lt && v <= LIR_uge) {
@@ -14,3 +21,8 @@
  				// move const to rhs, swap the operator
  				LIns *t = oprnd2;
  				oprnd2 = oprnd1;
+ 				oprnd1 = t;
+ 				v = LOpcode(v^1);
+ 			}
+ 		}
+ 

@@ -4,24 +4,24 @@ Index: mozilla/browser/components/build/nsModule.cpp
 ===================================================================
 --- mozilla.orig/browser/components/build/nsModule.cpp
 +++ mozilla/browser/components/build/nsModule.cpp
-@@ -60,17 +60,16 @@
- #include "nsIEProfileMigrator.h"
- #elif defined(XP_MACOSX)
- #include "nsSafariProfileMigrator.h"
+@@ -67,17 +67,16 @@
  #include "nsOmniWebProfileMigrator.h"
  #include "nsMacIEProfileMigrator.h"
  #include "nsCaminoProfileMigrator.h"
  #include "nsICabProfileMigrator.h"
  #endif
+ 
+ #endif // WINCE
+ 
 -#include "rdf.h"
  #include "nsFeedSniffer.h"
  #include "nsAboutFeeds.h"
  #include "nsIAboutModule.h"
  
- /////////////////////////////////////////////////////////////////////////////
+ #include "nsPrivateBrowsingServiceWrapper.h"
+ #include "nsNetCID.h"
  
- NS_GENERIC_FACTORY_CONSTRUCTOR(nsPlacesImportExportService)
- #ifdef XP_WIN
+ /////////////////////////////////////////////////////////////////////////////
 Index: mozilla/browser/components/migration/src/nsOperaProfileMigrator.cpp
 ===================================================================
 --- mozilla.orig/browser/components/migration/src/nsOperaProfileMigrator.cpp

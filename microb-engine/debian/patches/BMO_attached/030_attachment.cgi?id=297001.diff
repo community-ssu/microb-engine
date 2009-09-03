@@ -2,7 +2,7 @@ Index: mozilla/content/base/src/nsGenericElement.cpp
 ===================================================================
 --- mozilla.orig/content/base/src/nsGenericElement.cpp
 +++ mozilla/content/base/src/nsGenericElement.cpp
-@@ -4067,38 +4067,40 @@
+@@ -4056,38 +4056,40 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(
        cb.NoteXPCOMChild(
          static_cast<nsIDOMNodeList*>(slots->mChildrenList.get()));
      }

@@ -2,7 +2,7 @@ Index: mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp
 +++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp
-@@ -1041,16 +1041,19 @@
+@@ -1045,16 +1045,19 @@ nsNativeThemeGTK::GetMinimumWidgetSize(n
      {
        gint indicator_size, indicator_spacing;
  
@@ -26,7 +26,7 @@ Index: mozilla/widget/src/gtk2/gtk2drawing.c
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/gtk2drawing.c
 +++ mozilla/widget/src/gtk2/gtk2drawing.c
-@@ -985,17 +985,20 @@
+@@ -985,17 +985,20 @@ moz_gtk_toggle_paint(GdkDrawable* drawab
  
      NS_ASSERTION(rect->width == indicator_size,
                   "GetMinimumWidgetSize was ignored");

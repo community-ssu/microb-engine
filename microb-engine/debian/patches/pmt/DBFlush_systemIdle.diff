@@ -1,0 +1,88 @@
+diff -r 628b20367c95 toolkit/components/places/src/nsPlacesDBFlush.js
+--- a/toolkit/components/places/src/nsPlacesDBFlush.js	Wed Aug 05 17:49:49 2009 +0300
++++ b/toolkit/components/places/src/nsPlacesDBFlush.js	Wed Aug 05 18:59:19 2009 +0300
+@@ -48,16 +48,17 @@ const Ci = Components.interfaces;
+ const Cr = Components.results;
+ const Cu = Components.utils;
+ 
+ const kQuitApplication = "quit-application";
+ const kSyncFinished = "places-sync-finished";
+ 
+ const kSyncPrefName = "places.syncDBTableIntervalInSecs";
+ const kDefaultSyncInterval = 120;
++const kDefaultSyncIdleInterval = 86400;
+ const kExpireDaysPrefName = "browser.history_expire_days";
+ const kDefaultExpireDays = 90;
+ 
+ // The number of milliseconds in a day.
+ const kMSPerDay = 86400000;
+ 
+ // The max number of entries we will flush out when we expire.
+ const kMaxExpire = 24;
+@@ -105,16 +106,18 @@ function nsPlacesDBFlush()
+   // Register observers
+   this._bs = Cc["@mozilla.org/browser/nav-bookmarks-service;1"].
+              getService(Ci.nsINavBookmarksService);
+   this._bs.addObserver(this, false);
+ 
+   this._os = Cc["@mozilla.org/observer-service;1"].
+              getService(Ci.nsIObserverService);
+   this._os.addObserver(this, kQuitApplication, false);
++  this._os.addObserver(this, "system-idle", false);
++  this._os.addObserver(this, "system-active", false);
+ 
+   let (pb2 = this._prefs.QueryInterface(Ci.nsIPrefBranch2)) {
+     pb2.addObserver(kSyncPrefName, this, false);
+     pb2.addObserver(kExpireDaysPrefName, this, false);
+   }
+ 
+   // Create our timer to update everything
+   this._timer = this._newTimer();
+@@ -146,16 +149,18 @@ nsPlacesDBFlush.prototype = {
+   //////////////////////////////////////////////////////////////////////////////
+   //// nsIObserver
+ 
+   observe: function DBFlush_observe(aSubject, aTopic, aData)
+   {
+     if (aTopic == kQuitApplication) {
+       this._bs.removeObserver(this);
+       this._os.removeObserver(this, kQuitApplication);
++      this._os.removeObserver(this, "system-idle");
++      this._os.removeObserver(this, "system-active");
+       let (pb2 = this._prefs.QueryInterface(Ci.nsIPrefBranch2)) {
+         pb2.removeObserver(kSyncPrefName, this);
+         pb2.removeObserver(kExpireDaysPrefName, this);
+       }
+       this._timer.cancel();
+       this._timer = null;
+       // Other components could still make changes to history at this point,
+       // for example to clear private data on shutdown, so here we dispatch
+@@ -174,16 +179,28 @@ nsPlacesDBFlush.prototype = {
+           // ensure database coherence from now on.
+           pip.finalizeInternalStatements();
+           this._self._finalizeInternalStatements();
+           this._self._db.close();
+         }
+       }, Ci.nsIThread.DISPATCH_NORMAL);
+ 
+     }
++    else if (aTopic == "system-idle") {
++      this._syncInterval = kDefaultSyncIdleInterval;
++      this._timer.cancel();
++      this._timer = this._newTimer();
++    }
++    else if (aTopic == "system-active") {
++      this._syncInterval = this._prefs.getIntPref(kSyncPrefName);
++      if (this._syncInterval <= 0)
++        this._syncInterval = kDefaultSyncInterval;
++      this._timer.cancel();
++      this._timer = this._newTimer();
++    }
+     else if (aTopic == "nsPref:changed" && aData == kSyncPrefName) {
+       // Get the new pref value, and then update our timer
+       this._syncInterval = this._prefs.getIntPref(kSyncPrefName);
+       if (this._syncInterval <= 0)
+         this._syncInterval = kDefaultSyncInterval;
+ 
+       // We may have canceled the timer already for batch updates, so we want to
+       // exit early.

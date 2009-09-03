@@ -2,9 +2,10 @@
 # it allows to render layout without any xserver involving..
 # Together with MOZ_DISABLE_IMAGE_OPTIMIZE it will not even try to create Optimized image
 # And help to reduce memory usage
-diff -r e226d0b5f3d2 gfx/thebes/src/gfxPlatformGtk.cpp
---- a/gfx/thebes/src/gfxPlatformGtk.cpp	Fri Jan 09 15:31:52 2009 +0200
-+++ b/gfx/thebes/src/gfxPlatformGtk.cpp	Wed Jan 14 18:42:34 2009 +0200
+Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
++++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
 @@ -90,16 +90,17 @@
  
  #include "nsIPrefService.h"

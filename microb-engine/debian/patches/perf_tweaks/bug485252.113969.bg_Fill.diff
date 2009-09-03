@@ -1,0 +1,140 @@
+diff -r 6aef96411663 layout/base/nsDisplayList.cpp
+--- a/layout/base/nsDisplayList.cpp	Wed Jul 08 16:09:14 2009 +0300
++++ b/layout/base/nsDisplayList.cpp	Wed Jul 08 16:10:16 2009 +0300
+@@ -283,7 +283,8 @@ nsDisplayList::GetBounds(nsDisplayListBu
+ 
+ void
+ nsDisplayList::OptimizeVisibility(nsDisplayListBuilder* aBuilder,
+-                                  nsRegion* aVisibleRegion) {
++                                  nsRegion* aVisibleRegion,
++                                  nsRegion* aTranspRegion) {
+   nsAutoTArray<nsDisplayItem*, 512> elements;
+   FlattenTo(&elements);
+ 
+@@ -296,12 +297,17 @@ nsDisplayList::OptimizeVisibility(nsDisp
+       elements.ReplaceElementsAt(i - 1, 1, item);
+       continue;
+     }
+-    
++
+     if (item->OptimizeVisibility(aBuilder, aVisibleRegion)) {
+       AppendToBottom(item);
+     } else {
+       item->~nsDisplayItem();
++      continue;
+     }
++    if (!aTranspRegion) continue;
++
++    if (item->IsOpaque(aBuilder))
++      aTranspRegion->SimpleSubtract(item->GetBounds(aBuilder));
+   }
+ }
+ 
+diff -r 6aef96411663 layout/base/nsDisplayList.h
+--- a/layout/base/nsDisplayList.h	Wed Jul 08 16:09:14 2009 +0300
++++ b/layout/base/nsDisplayList.h	Wed Jul 08 16:10:16 2009 +0300
+@@ -687,7 +687,7 @@ public:
+    * @param aVisibleRegion the area that is visible, relative to the
+    * reference frame; on return, this contains the area visible under the list
+    */
+-  void OptimizeVisibility(nsDisplayListBuilder* aBuilder, nsRegion* aVisibleRegion);
++  void OptimizeVisibility(nsDisplayListBuilder* aBuilder, nsRegion* aVisibleRegion, nsRegion* aTranspRegion = nsnull);
+   /**
+    * Paint the list to the rendering context. We assume that (0,0) in aCtx
+    * corresponds to the origin of the reference frame. For best results,
+diff -r 6aef96411663 layout/base/nsPresShell.cpp
+--- a/layout/base/nsPresShell.cpp	Wed Jul 08 16:09:14 2009 +0300
++++ b/layout/base/nsPresShell.cpp	Wed Jul 08 16:10:16 2009 +0300
+@@ -5059,13 +5059,11 @@ PresShell::ComputeRepaintRegionForCopy(n
+       aDelta, aCopyRect, aRepaintRegion);
+ }
+ 
+-NS_IMETHODIMP
+-PresShell::RenderDocument(const nsRect& aRect, PRUint32 aFlags,
+-                          nscolor aBackgroundColor,
+-                          gfxContext* aThebesContext)
+-{
+-  NS_ENSURE_TRUE(!(aFlags & RENDER_IS_UNTRUSTED), NS_ERROR_NOT_IMPLEMENTED);
+-
++static PRBool
++PrepareContext(const nsRect& aRect, PRUint32 aFlags,
++               nscolor aBackgroundColor, gfxContext* aThebesContext,
++               nsRegion *aTranspRegion)
++{
+   gfxRect r(0, 0,
+             nsPresContext::AppUnitsToFloatCSSPixels(aRect.width),
+             nsPresContext::AppUnitsToFloatCSSPixels(aRect.height));
+@@ -5096,18 +5094,31 @@ PresShell::RenderDocument(const nsRect& 
+   }
+ 
+   // draw background color
+-  if (NS_GET_A(aBackgroundColor) > 0) {
++  if (NS_GET_A(aBackgroundColor) > 0 &&
++     !(aTranspRegion && aTranspRegion->IsEmpty())) {
+     aThebesContext->SetColor(gfxRGBA(aBackgroundColor));
+     aThebesContext->SetOperator(gfxContext::OPERATOR_SOURCE);
+     aThebesContext->Paint();
+   }
+ 
++  aThebesContext->SetOperator(gfxContext::OPERATOR_OVER);
++  return needsGroup;
++}
++
++NS_IMETHODIMP
++PresShell::RenderDocument(const nsRect& aRect, PRUint32 aFlags,
++                          nscolor aBackgroundColor,
++                          gfxContext* aThebesContext)
++{
++  NS_ENSURE_TRUE(!(aFlags & RENDER_IS_UNTRUSTED), NS_ERROR_NOT_IMPLEMENTED);
++
+   // we want the window to be composited as a single image using
+   // whatever operator was set; set OPERATOR_OVER here, which is
+   // either already the case, or overrides the operator in a group.
+   // the original operator will be present when we PopGroup.
+-  aThebesContext->SetOperator(gfxContext::OPERATOR_OVER);
+-
++
++  PRBool needsGroup = PR_TRUE;
++  PRBool backgroundPainted = PR_FALSE;
+   nsIFrame* rootFrame = FrameManager()->GetRootFrame();
+   if (rootFrame) {
+     nsDisplayListBuilder builder(rootFrame, PR_FALSE,
+@@ -5130,6 +5141,13 @@ PresShell::RenderDocument(const nsRect& 
+     builder.LeavePresShell(rootFrame, rect);
+ 
+     if (NS_SUCCEEDED(rv)) {
++      nsRegion region(rect);
++      nsRegion transpRegion(rect);
++      list.OptimizeVisibility(&builder, &region, &transpRegion);
++
++      backgroundPainted = PR_TRUE;
++      needsGroup = PrepareContext(aRect, aFlags, aBackgroundColor, aThebesContext, &transpRegion);
++
+       // Ensure that r.x,r.y gets drawn at (0,0)
+       aThebesContext->Save();
+       aThebesContext->Translate(gfxPoint(-nsPresContext::AppUnitsToFloatCSSPixels(rect.x),
+@@ -5138,13 +5156,11 @@ PresShell::RenderDocument(const nsRect& 
+       nsIDeviceContext* devCtx = mPresContext->DeviceContext();
+       gfxFloat scale = gfxFloat(devCtx->AppUnitsPerDevPixel())/nsPresContext::AppUnitsPerCSSPixel();
+       aThebesContext->Scale(scale, scale);
+-      
++
+       nsCOMPtr<nsIRenderingContext> rc;
+       devCtx->CreateRenderingContextInstance(*getter_AddRefs(rc));
+       rc->Init(devCtx, aThebesContext);
+ 
+-      nsRegion region(rect);
+-      list.OptimizeVisibility(&builder, &region);
+       list.Paint(&builder, rc, rect);
+       // Flush the list so we don't trigger the IsEmpty-on-destruction assertion
+       list.DeleteAll();
+@@ -5153,6 +5169,9 @@ PresShell::RenderDocument(const nsRect& 
+     }
+   }
+ 
++  if (!backgroundPainted)
++    needsGroup = PrepareContext(aRect, aFlags, aBackgroundColor, aThebesContext, nsnull);
++
+   // if we had to use a group, paint it to the destination now
+   if (needsGroup) {
+     aThebesContext->Restore();

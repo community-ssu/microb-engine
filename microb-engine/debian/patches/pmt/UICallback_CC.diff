@@ -1,0 +1,86 @@
+#BMO 508518, NB 131361
+diff -r e05909c0ee58 content/events/src/nsEventStateManager.cpp
+--- a/content/events/src/nsEventStateManager.cpp	Wed Aug 05 11:24:03 2009 +0300
++++ b/content/events/src/nsEventStateManager.cpp	Wed Aug 05 16:31:22 2009 +0300
+@@ -278,8 +279,10 @@ nsUITimerCallback::Notify(nsITimer* aTim
+   if ((gMouseOrKeyboardEventCounter == mPreviousCount) || !aTimer) {
+     gMouseOrKeyboardEventCounter = 0;
+     obs->NotifyObservers(nsnull, "user-interaction-inactive", nsnull);
++    NS_IF_RELEASE(gUserInteractionTimer);
+   } else {
+     obs->NotifyObservers(nsnull, "user-interaction-active", nsnull);
++    nsEventStateManager::UpdateUserActivityTimer();
+   }
+   mPreviousCount = gMouseOrKeyboardEventCounter;
+   return NS_OK;
+@@ -630,19 +633,30 @@ nsEventStateManager::nsEventStateManager
+ {
+   if (sESMInstanceCount == 0) {
+     gUserInteractionTimerCallback = new nsUITimerCallback();
+-    if (gUserInteractionTimerCallback) {
++    if (gUserInteractionTimerCallback)
+       NS_ADDREF(gUserInteractionTimerCallback);
+-      CallCreateInstance("@mozilla.org/timer;1", &gUserInteractionTimer);
+-      if (gUserInteractionTimer) {
+-        gUserInteractionTimer->InitWithCallback(gUserInteractionTimerCallback,
+-                                                NS_USER_INTERACTION_INTERVAL,
+-                                                nsITimer::TYPE_REPEATING_SLACK);
+-      }
+-    }
++    UpdateUserActivityTimer();
+   }
+   ++sESMInstanceCount;
+ }
+ 
++nsresult
++nsEventStateManager::UpdateUserActivityTimer(void)
++{
++  if (!gUserInteractionTimerCallback)
++    return NS_OK;
++
++  if (!gUserInteractionTimer)
++    CallCreateInstance("@mozilla.org/timer;1", &gUserInteractionTimer);
++
++  if (gUserInteractionTimer) {
++    gUserInteractionTimer->InitWithCallback(gUserInteractionTimerCallback,
++                                            NS_USER_INTERACTION_INTERVAL,
++                                            nsITimer::TYPE_ONE_SHOT);
++  }
++  return NS_OK;
++}
++
+ NS_IMETHODIMP
+ nsEventStateManager::Init()
+ {
+@@ -903,6 +917,7 @@ nsEventStateManager::PreHandleEvent(nsPr
+         do_GetService("@mozilla.org/observer-service;1");
+       if (obs) {
+         obs->NotifyObservers(nsnull, "user-interaction-active", nsnull);
++        UpdateUserActivityTimer();
+       }
+     }
+     ++gMouseOrKeyboardEventCounter;
+diff -r e05909c0ee58 content/events/src/nsEventStateManager.h
+--- a/content/events/src/nsEventStateManager.h	Wed Aug 05 11:24:03 2009 +0300
++++ b/content/events/src/nsEventStateManager.h	Wed Aug 05 16:31:22 2009 +0300
+@@ -396,6 +396,9 @@ protected:
+ #endif
+ 
+   static PRInt32 sUserInputEventDepth;
++
++public:
++  static nsresult UpdateUserActivityTimer(void);
+ };
+ 
+ 
+diff -r e05909c0ee58 dom/base/nsJSEnvironment.cpp
+--- a/dom/base/nsJSEnvironment.cpp	Wed Aug 05 11:24:03 2009 +0300
++++ b/dom/base/nsJSEnvironment.cpp	Wed Aug 05 16:31:22 2009 +0300
+@@ -3428,6 +3428,7 @@ nsJSContext::ScriptEvaluated(PRBool aTer
+   if (mNumEvaluations > 20) {
+     mNumEvaluations = 0;
+     MaybeGC(mContext);
++    MaybeCC(PR_TRUE);
+   }
+ 
+   if (aTerminated) {

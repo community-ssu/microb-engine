@@ -3,7 +3,7 @@ Index: mozilla/widget/src/gtk2/nsAppShell.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsAppShell.cpp
 +++ mozilla/widget/src/gtk2/nsAppShell.cpp
-@@ -61,20 +61,37 @@
+@@ -61,20 +61,37 @@ nsAppShell::EventProcessorCallback(GIOCh
                                     gpointer data)
  {
      nsAppShell *self = static_cast<nsAppShell *>(data);
@@ -67,7 +67,7 @@ Index: mozilla/widget/src/gtk2/nsAppShell.h
      virtual void ScheduleNativeEventCallback();
      virtual PRBool ProcessNextNativeEvent(PRBool mayWait);
  
-@@ -58,11 +60,12 @@
+@@ -58,11 +60,12 @@ private:
      virtual ~nsAppShell();
  
      static gboolean EventProcessorCallback(GIOChannel *source,

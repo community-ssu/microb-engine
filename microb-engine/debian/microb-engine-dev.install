@@ -1,4 +1,15 @@
-usr/include/microb-engine/*
+usr/include/microb-engine/*.h
+usr/include/microb-engine/*.cpp
+usr/include/microb-engine/*.msg
+usr/include/microb-engine/*.api
+usr/include/microb-engine/*.tbl
+usr/include/microb-engine/*.inc
+usr/include/microb-engine/cairo*
+usr/include/microb-engine/md*
+usr/include/microb-engine/moz*
+usr/include/microb-engine/obsol*
+usr/include/microb-engine/private*
+usr/include/microb-engine/system_wr*
 usr/lib/pkgconfig/*js*pc
 usr/lib/pkgconfig/*plugin*pc
 usr/lib/pkgconfig/*xpcom*pc

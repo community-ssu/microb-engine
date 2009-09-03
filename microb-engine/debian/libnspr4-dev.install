@@ -1,3 +1,3 @@
-usr/include/microb-engine/nsp*
+usr/include/microb-engine/nspr
 usr/share/aclocal/nspr*m4
 usr/lib/pkgconfig/*nspr*.pc

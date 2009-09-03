@@ -1,8 +1,15 @@
 # https://bugzilla.mozilla.org/show_bug.cgi?id=469667
 #
---- mozilla/widget/src/gtk2/nsAppShell.cpp.orig	2008-12-12 16:46:07.000000000 +0200
-+++ mozilla/widget/src/gtk2/nsAppShell.cpp	2008-12-12 16:47:20.000000000 +0200
-@@ -155,8 +155,17 @@ nsAppShell::ScheduleNativeEventCallback(
+Index: mozilla/widget/src/gtk2/nsAppShell.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsAppShell.cpp
++++ mozilla/widget/src/gtk2/nsAppShell.cpp
+@@ -150,13 +150,22 @@ failed:
+ 
+ void
+ nsAppShell::ScheduleNativeEventCallback()
+ {
+     unsigned char buf[] = { NOTIFY_TOKEN };
      write(mPipeFDs[1], buf, 1);
  }
  

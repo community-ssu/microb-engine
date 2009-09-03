@@ -1,10 +1,10 @@
 # XXX turn this off for minimo builds
 # 
---- mozilla/layout/style/nsCSSScanner.h.orig	2007-06-04 21:34:02.000000000 +0300
-+++ mozilla/layout/style/nsCSSScanner.h	2007-06-04 21:34:07.000000000 +0300
-@@ -40,21 +40,21 @@
- /* tokenization of CSS style sheets */
- 
+Index: mozilla/layout/style/nsCSSScanner.h
+===================================================================
+--- mozilla.orig/layout/style/nsCSSScanner.h
++++ mozilla/layout/style/nsCSSScanner.h
+@@ -42,17 +42,17 @@
  #ifndef nsCSSScanner_h___
  #define nsCSSScanner_h___
  
@@ -23,5 +23,3 @@
  class nsIURI;
  
  // Token types
- enum nsCSSTokenType {
-   // A css identifier (e.g. foo)

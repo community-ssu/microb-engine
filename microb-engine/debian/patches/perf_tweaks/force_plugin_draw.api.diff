@@ -1,0 +1,540 @@
+###microb-engine
+#https://projects.maemo.org/bugzilla/show_bug.cgi?id=119573
+diff -r a260cba282ce dom/base/nsGlobalWindow.cpp
+--- a/dom/base/nsGlobalWindow.cpp	Fri May 29 09:32:26 2009 +0300
++++ b/dom/base/nsGlobalWindow.cpp	Fri May 29 09:33:20 2009 +0300
+@@ -529,16 +529,22 @@ nsDummyJavaPluginOwner::InvalidateRegion
+ 
+ NS_IMETHODIMP
+ nsDummyJavaPluginOwner::ForceRedraw()
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ NS_IMETHODIMP
++nsDummyJavaPluginOwner::InvalidateRectForce(nsPluginRect *invalidRect)
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++NS_IMETHODIMP
+ nsDummyJavaPluginOwner::GetValue(nsPluginInstancePeerVariable variable,
+                                  void *value)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ /**
+  * An indirect observer object that means we don't have to implement nsIObserver
+diff -r a260cba282ce layout/base/nsPresContext.cpp
+--- a/layout/base/nsPresContext.cpp	Fri May 29 09:32:26 2009 +0300
++++ b/layout/base/nsPresContext.cpp	Fri May 29 09:33:20 2009 +0300
+@@ -1993,27 +1993,35 @@ static PRBool MayHavePaintEventListener(
+   chromeEventHandler->GetListenerManager(PR_FALSE, getter_AddRefs(manager));
+   if (manager && manager->MayHavePaintEventListener())
+     return PR_TRUE;
+ 
+   return PR_FALSE;
+ }
+ 
+ void
+-nsPresContext::NotifyInvalidation(const nsRect& aRect, PRBool aIsCrossDoc)
++nsPresContext::NotifyInvalidation(const nsRect& aRect, PRBool aIsCrossDoc, PRBool aImmediate)
+ {
+   // If there is no paint event listener, then we don't need to fire
+   // the asynchronous event. We don't even need to record invalidation.
+   // MayHavePaintEventListener is pretty cheap and we could make it
+   // even cheaper by providing a more efficient
+   // nsPIDOMWindow::GetListenerManager.
+   if (aRect.IsEmpty() ||
+       !MayHavePaintEventListener(mDocument->GetInnerWindow()))
+     return;
+ 
++  if (aImmediate) {
++    nsRegion* r = aIsCrossDoc ? &mCrossDocDirtyRegion : &mSameDocDirtyRegion;
++    r->Or(*r, aRect);
++    r->SimplifyOutward(10);
++    nsPresContext::FireDOMPaintEvent();
++    return;
++  }
++
+   if (!IsDOMPaintEventPending()) {
+     // No event is pending. Dispatch one now.
+     nsCOMPtr<nsIRunnable> ev =
+       new nsRunnableMethod<nsPresContext>(this,
+                                           &nsPresContext::FireDOMPaintEvent);
+     NS_DispatchToCurrentThread(ev);
+   }
+ 
+diff -r a260cba282ce layout/base/nsPresContext.h
+--- a/layout/base/nsPresContext.h	Fri May 29 09:32:26 2009 +0300
++++ b/layout/base/nsPresContext.h	Fri May 29 09:33:20 2009 +0300
+@@ -791,17 +791,17 @@ public:
+   void FlushUserFontSet();
+   void RebuildUserFontSet(); // asynchronously
+ 
+   // Should be called whenever the set of fonts available in the user
+   // font set changes (e.g., because a new font loads, or because the
+   // user font set is changed and fonts become unavailable).
+   void UserFontSetUpdated();
+ 
+-  void NotifyInvalidation(const nsRect& aRect, PRBool aIsCrossDoc);
++  void NotifyInvalidation(const nsRect& aRect, PRBool aIsCrossDoc, PRBool aImmediate = PR_FALSE);
+   void FireDOMPaintEvent();
+   PRBool IsDOMPaintEventPending() {
+     return !mSameDocDirtyRegion.IsEmpty() || !mCrossDocDirtyRegion.IsEmpty();
+   }
+ 
+   void ClearMozAfterPaintEvents() {
+     mSameDocDirtyRegion.SetEmpty();
+     mCrossDocDirtyRegion.SetEmpty();
+diff -r a260cba282ce layout/generic/nsGfxScrollFrame.cpp
+--- a/layout/generic/nsGfxScrollFrame.cpp	Fri May 29 09:32:26 2009 +0300
++++ b/layout/generic/nsGfxScrollFrame.cpp	Fri May 29 09:33:20 2009 +0300
+@@ -240,17 +240,17 @@ nsHTMLScrollFrame::InvalidateInternal(co
+       // Make sure we notify our prescontext about invalidations outside
+       // viewport clipping.
+       // This is important for things that are snapshotting the viewport,
+       // possibly outside the scrolled bounds.
+       // We don't need to propagate this any further up, though. Anyone who
+       // cares about scrolled-out-of-view invalidates had better be listening
+       // to our window directly.
+       PresContext()->NotifyInvalidation(damage,
+-          (aFlags & INVALIDATE_CROSS_DOC) != 0);
++          (aFlags & INVALIDATE_CROSS_DOC) != 0, (aFlags & INVALIDATE_IMMEDIATE) != 0);
+     }
+     return;
+   }
+   
+   nsHTMLContainerFrame::InvalidateInternal(aDamageRect, aX, aY, aForChild, aFlags);
+ }
+ 
+ /**
+diff -r a260cba282ce layout/generic/nsObjectFrame.cpp
+--- a/layout/generic/nsObjectFrame.cpp	Fri May 29 09:32:26 2009 +0300
++++ b/layout/generic/nsObjectFrame.cpp	Fri May 29 09:33:20 2009 +0300
+@@ -279,16 +279,18 @@ public:
+   NS_IMETHOD GetDocument(nsIDocument* *aDocument);
+ 
+   NS_IMETHOD InvalidateRect(nsPluginRect *invalidRect);
+ 
+   NS_IMETHOD InvalidateRegion(nsPluginRegion invalidRegion);
+ 
+   NS_IMETHOD ForceRedraw();
+ 
++  NS_IMETHOD InvalidateRectForce(nsPluginRect *invalidRect);
++
+   NS_IMETHOD GetValue(nsPluginInstancePeerVariable variable, void *value);
+ 
+   //nsIPluginTagInfo interface
+ 
+   NS_IMETHOD GetAttributes(PRUint16& n, const char*const*& names,
+                            const char*const*& values);
+ 
+   NS_IMETHOD GetAttribute(const char* name, const char* *result);
+@@ -501,16 +503,20 @@ private:
+   PRUint16          mNumCachedParams;
+   char              **mCachedAttrParamNames;
+   char              **mCachedAttrParamValues;
+ 
+ #ifdef MOZ_COMPOSITED_PLUGINS
+   nsIntPoint        mLastPoint;
+ #endif
+ 
++  PRPackedBool                mForceInvalidate;
++  PRPackedBool                mNewForceLogic;
++  PRPackedBool                mNewForceLogicVal;
++
+   // pointer to wrapper for nsIDOMContextMenuListener
+   nsRefPtr<nsPluginDOMContextMenuListener> mCXMenuListener;
+ 
+   nsresult DispatchKeyToPlugin(nsIDOMEvent* aKeyEvent);
+   nsresult DispatchMouseToPlugin(nsIDOMEvent* aMouseEvent);
+   nsresult DispatchFocusToPlugin(nsIDOMEvent* aFocusEvent);
+ 
+   nsresult EnsureCachedAttrParamArrays();
+@@ -2232,16 +2238,19 @@ nsPluginInstanceOwner::nsPluginInstanceO
+   mWidgetVisible = PR_TRUE;
+   mPluginPortChanged = PR_FALSE;
+   mNumCachedAttrs = 0;
+   mNumCachedParams = 0;
+   mCachedAttrParamNames = nsnull;
+   mCachedAttrParamValues = nsnull;
+   mDestroyWidget = PR_FALSE;
+   mTimerCanceled = PR_TRUE;
++  mForceInvalidate = nsContentUtils::GetBoolPref("plugins.always_force_invalidate", PR_FALSE);
++  mNewForceLogic = nsContentUtils::GetBoolPref("plugins.new_force_logic", PR_FALSE);
++  mNewForceLogicVal = PR_FALSE;
+ 
+ #ifdef MOZ_COMPOSITED_PLUGINS
+   mLastPoint = nsIntPoint(0,0);
+ #endif
+ 
+   PR_LOG(nsObjectFrameLM, PR_LOG_DEBUG,
+          ("nsPluginInstanceOwner %p created\n", this));
+ }
+@@ -2529,30 +2538,74 @@ NS_IMETHODIMP nsPluginInstanceOwner::Inv
+ 
+   if (mOwner && invalidRect && mWidgetVisible) {
+     nsPresContext* presContext = mOwner->PresContext();
+     nsRect rect(presContext->DevPixelsToAppUnits(invalidRect->left),
+                 presContext->DevPixelsToAppUnits(invalidRect->top),
+                 presContext->DevPixelsToAppUnits(invalidRect->right - invalidRect->left),
+                 presContext->DevPixelsToAppUnits(invalidRect->bottom - invalidRect->top));
+ 
+-    mOwner->Invalidate(rect);
++    if (mForceInvalidate || mNewForceLogicVal) {
++      mOwner->InvalidateWithFlags(rect, nsIFrame::INVALIDATE_IMMEDIATE);
++      mNewForceLogicVal = PR_FALSE;
++    }
++    else
++      mOwner->Invalidate(rect);
++  }
++
++  return rv;
++}
++
++NS_IMETHODIMP nsPluginInstanceOwner::InvalidateRectForce(nsPluginRect *invalidRect)
++{
++  nsresult rv = NS_ERROR_FAILURE;
++
++  if (mOwner && invalidRect && mWidgetVisible) {
++    nsPresContext* presContext = mOwner->PresContext();
++    nsRect rect(presContext->DevPixelsToAppUnits(invalidRect->left),
++                presContext->DevPixelsToAppUnits(invalidRect->top),
++                presContext->DevPixelsToAppUnits(invalidRect->right - invalidRect->left),
++                presContext->DevPixelsToAppUnits(invalidRect->bottom - invalidRect->top));
++
++    mOwner->InvalidateWithFlags(rect, nsIFrame::INVALIDATE_IMMEDIATE);
+   }
+ 
+   return rv;
+ }
+ 
+ NS_IMETHODIMP nsPluginInstanceOwner::InvalidateRegion(nsPluginRegion invalidRegion)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ NS_IMETHODIMP nsPluginInstanceOwner::ForceRedraw()
+ {
+   NS_ENSURE_TRUE(mOwner,NS_ERROR_NULL_POINTER);
++
++  if (mNewForceLogic) {
++    mNewForceLogicVal = PR_TRUE;
++    return NS_OK;
++  }
++  // If windowless local enabled then no reason to send expose event to native widget
++  PRBool simpleImageRender = PR_FALSE;
++  mInstance->GetValue(nsPluginInstanceVariable_WindowlessLocalBool,
++                      (void *)&simpleImageRender);
++  if (simpleImageRender && mOwner && mWidgetVisible) {
++    nsPluginWindow  *window = nsnull;
++    GetWindow(window);
++    NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
++    nsPresContext* presContext = mOwner->PresContext();
++    nsRect rect(presContext->DevPixelsToAppUnits(0),
++                presContext->DevPixelsToAppUnits(0),
++                presContext->DevPixelsToAppUnits(window->width),
++                presContext->DevPixelsToAppUnits(window->height));
++    mOwner->InvalidateWithFlags(rect, nsIFrame::INVALIDATE_IMMEDIATE);
++    return NS_OK;
++  }
++
+   nsIView* view = mOwner->GetView();
+   if (view) {
+     return view->GetViewManager()->Composite();
+   }
+ 
+   return NS_OK;
+ }
+ 
+diff -r a260cba282ce layout/generic/nsViewportFrame.cpp
+--- a/layout/generic/nsViewportFrame.cpp	Fri May 29 09:32:26 2009 +0300
++++ b/layout/generic/nsViewportFrame.cpp	Fri May 29 09:33:20 2009 +0300
+@@ -345,17 +345,17 @@ ViewportFrame::IsContainingBlock() const
+ }
+ 
+ void
+ ViewportFrame::InvalidateInternal(const nsRect& aDamageRect,
+                                   nscoord aX, nscoord aY, nsIFrame* aForChild,
+                                   PRUint32 aFlags)
+ {
+   nsRect r = aDamageRect + nsPoint(aX, aY);
+-  PresContext()->NotifyInvalidation(r, (aFlags & INVALIDATE_CROSS_DOC) != 0);
++  PresContext()->NotifyInvalidation(r, (aFlags & INVALIDATE_CROSS_DOC) != 0, (aFlags & INVALIDATE_IMMEDIATE) != 0);
+ 
+   nsIFrame* parent = nsLayoutUtils::GetCrossDocParentFrame(this);
+   if (parent) {
+     nsPoint pt = GetOffsetTo(parent);
+     parent->InvalidateInternal(r, pt.x, pt.y, this,
+                                aFlags | INVALIDATE_CROSS_DOC);
+     return;
+   }
+diff -r a260cba282ce modules/plugin/base/public/npapi.h
+--- a/modules/plugin/base/public/npapi.h	Fri May 29 09:32:26 2009 +0300
++++ b/modules/plugin/base/public/npapi.h	Fri May 29 09:33:20 2009 +0300
+@@ -699,16 +699,17 @@ NPError     NP_LOADDS NPN_SetValueForURL
+ NPError     NP_LOADDS NPN_GetAuthenticationInfo(NPP instance,
+                                                 const char *protocol,
+                                                 const char *host, int32_t port,
+                                                 const char *scheme,
+                                                 const char *realm,
+                                                 char **username, uint32_t *ulen,
+                                                 char **password,
+                                                 uint32_t *plen);
++void        NP_LOADDS NPN_InvalidateRectForce(NPP instance, NPRect *invalidRect);
+ 
+ #ifdef __cplusplus
+ }  /* end extern "C" */
+ #endif
+ 
+ #endif /* RC_INVOKED */
+ #ifdef __OS2__
+ #pragma pack()
+diff -r a260cba282ce modules/plugin/base/public/npfunctions.h
+--- a/modules/plugin/base/public/npfunctions.h	Fri May 29 09:32:26 2009 +0300
++++ b/modules/plugin/base/public/npfunctions.h	Fri May 29 09:33:20 2009 +0300
+@@ -111,16 +111,17 @@ typedef void         (*NPN_SetExceptionP
+ typedef bool         (*NPN_PushPopupsEnabledStateProcPtr)(NPP npp, NPBool enabled);
+ typedef bool         (*NPN_PopPopupsEnabledStateProcPtr)(NPP npp);
+ typedef bool         (*NPN_EnumerateProcPtr)(NPP npp, NPObject *obj, NPIdentifier **identifier, uint32_t *count);
+ typedef void         (*NPN_PluginThreadAsyncCallProcPtr)(NPP instance, void (*func)(void *), void *userData);
+ typedef bool         (*NPN_ConstructProcPtr)(NPP npp, NPObject* obj, const NPVariant *args, uint32_t argCount, NPVariant *result);
+ typedef NPError      (*NPN_GetValueForURLPtr)(NPP npp, NPNURLVariable variable, const char *url, char **value, uint32_t *len);
+ typedef NPError      (*NPN_SetValueForURLPtr)(NPP npp, NPNURLVariable variable, const char *url, const char *value, uint32_t len);
+ typedef NPError      (*NPN_GetAuthenticationInfoPtr)(NPP npp, const char *protocol, const char *host, int32_t port, const char *scheme, const char *realm, char **username, uint32_t *ulen, char **password, uint32_t *plen);
++typedef void         (*NPN_InvalidateRectForceProcPtr)(NPP instance, NPRect *rect);
+ 
+ typedef struct _NPPluginFuncs {
+   uint16_t size;
+   uint16_t version;
+   NPP_NewProcPtr newp;
+   NPP_DestroyProcPtr destroy;
+   NPP_SetWindowProcPtr setwindow;
+   NPP_NewStreamProcPtr newstream;
+@@ -182,16 +183,17 @@ typedef struct _NPNetscapeFuncs {
+   NPN_PushPopupsEnabledStateProcPtr pushpopupsenabledstate;
+   NPN_PopPopupsEnabledStateProcPtr poppopupsenabledstate;
+   NPN_EnumerateProcPtr enumerate;
+   NPN_PluginThreadAsyncCallProcPtr pluginthreadasynccall;
+   NPN_ConstructProcPtr construct;
+   NPN_GetValueForURLPtr getvalueforurl;
+   NPN_SetValueForURLPtr setvalueforurl;
+   NPN_GetAuthenticationInfoPtr getauthenticationinfo;
++  NPN_InvalidateRectForceProcPtr invalidaterectforce;
+ } NPNetscapeFuncs;
+ 
+ #ifdef XP_MACOSX
+ /*
+  * Mac OS X version(s) of NP_GetMIMEDescription(const char *)
+  * These can be called to retreive MIME information from the plugin dynamically
+  *
+  * Note: For compatibility with Quicktime, BPSupportedMIMEtypes is another way
+diff -r a260cba282ce modules/plugin/base/public/nsIPluginInstanceOwner.idl
+--- a/modules/plugin/base/public/nsIPluginInstanceOwner.idl	Fri May 29 09:32:26 2009 +0300
++++ b/modules/plugin/base/public/nsIPluginInstanceOwner.idl	Fri May 29 09:33:20 2009 +0300
+@@ -123,9 +123,14 @@ interface nsIPluginInstanceOwner : nsISu
+    * Force a redraw
+    */
+   void forceRedraw();
+ 
+   /**
+    * Get the specified variable
+    */
+   void getValue(in nsPluginInstancePeerVariable aVariable, in voidPtr aValue);
++
++  /**
++   * Invalidate the rectangle
++   */
++  void invalidateRectForce(in nsPluginRectPtr aRect);
+ };
+diff -r a260cba282ce modules/plugin/base/public/nsIWindowlessPlugInstPeer.idl
+--- a/modules/plugin/base/public/nsIWindowlessPlugInstPeer.idl	Fri May 29 09:32:26 2009 +0300
++++ b/modules/plugin/base/public/nsIWindowlessPlugInstPeer.idl	Fri May 29 09:33:20 2009 +0300
+@@ -54,9 +54,13 @@ interface nsIWindowlessPluginInstancePee
+    * Corresponds to NPN_InvalidateRegion
+    */
+   void invalidateRegion(in nsPluginRegion aRegion);
+ 
+   /** 
+    * Corresponds to NPN_ForceRedraw
+    */
+   void forceRedraw();
++  /**
++   * Corresponds to NPN_InvalidateRectForce
++   */
++  void invalidateRectForce(in nsPluginRectPtr aRect);
+ };
+diff -r a260cba282ce modules/plugin/base/src/nsNPAPIPlugin.cpp
+--- a/modules/plugin/base/src/nsNPAPIPlugin.cpp	Fri May 29 09:32:26 2009 +0300
++++ b/modules/plugin/base/src/nsNPAPIPlugin.cpp	Fri May 29 09:33:20 2009 +0300
+@@ -167,16 +167,19 @@ PR_BEGIN_EXTERN_C
+   _memalloc (uint32_t size);
+ 
+   // Deprecated entry points for the old Java plugin.
+   static void* NP_CALLBACK /* OJI type: JRIEnv* */
+   _getJavaEnv(void);
+   static void* NP_CALLBACK /* OJI type: jref */
+   _getJavaPeer(NPP npp);
+ 
++  static void NP_CALLBACK
++  _invalidaterectforce(NPP npp, NPRect *invalidRect);
++
+ PR_END_EXTERN_C
+ 
+ // This function sends a notification using the observer service to any object
+ // registered to listen to the "experimental-notify-plugin-call" subject.
+ // Each "experimental-notify-plugin-call" notification carries with it the run
+ // time value in milliseconds that the call took to execute.
+ void NS_NotifyPluginCall(PRIntervalTime startTime) 
+ {
+@@ -249,16 +252,17 @@ nsNPAPIPlugin::CheckClassInitialized(voi
+   CALLBACKS.releasevariantvalue = ((NPN_ReleaseVariantValueProcPtr)_releasevariantvalue);
+   CALLBACKS.setexception = ((NPN_SetExceptionProcPtr)_setexception);
+   CALLBACKS.pushpopupsenabledstate = ((NPN_PushPopupsEnabledStateProcPtr)_pushpopupsenabledstate);
+   CALLBACKS.poppopupsenabledstate = ((NPN_PopPopupsEnabledStateProcPtr)_poppopupsenabledstate);
+   CALLBACKS.pluginthreadasynccall = ((NPN_PluginThreadAsyncCallProcPtr)_pluginthreadasynccall);
+   CALLBACKS.getvalueforurl = ((NPN_GetValueForURLPtr)_getvalueforurl);
+   CALLBACKS.setvalueforurl = ((NPN_SetValueForURLPtr)_setvalueforurl);
+   CALLBACKS.getauthenticationinfo = ((NPN_GetAuthenticationInfoPtr)_getauthenticationinfo);
++  CALLBACKS.invalidaterectforce = ((NPN_InvalidateRectForceProcPtr)_invalidaterectforce);
+ 
+   if (!sPluginThreadAsyncCallLock)
+     sPluginThreadAsyncCallLock = nsAutoLock::NewLock("sPluginThreadAsyncCallLock");
+ 
+   initialized = PR_TRUE;
+ 
+   NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL,("NPN callbacks initialized\n"));
+ }
+@@ -1132,16 +1136,47 @@ _forceredraw(NPP npp)
+   if (NS_SUCCEEDED(inst->GetPeer(getter_AddRefs(peer))) && peer) {
+     nsCOMPtr<nsIWindowlessPluginInstancePeer> wpeer(do_QueryInterface(peer));
+     if (wpeer) {
+       wpeer->ForceRedraw();
+     }
+   }
+ }
+ 
++void NP_CALLBACK
++_invalidaterectforce(NPP npp, NPRect *invalidRect)
++{
++  if (!NS_IsMainThread()) {
++    NPN_PLUGIN_LOG(PLUGIN_LOG_ALWAYS,("NPN_invalidaterectforce called from the wrong thread\n"));
++    return;
++  }
++  NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL,
++                 ("NPN_InvalidateRectForce: npp=%p, top=%d, left=%d, bottom=%d, "
++                  "right=%d\n", (void *)npp, invalidRect->top,
++                  invalidRect->left, invalidRect->bottom, invalidRect->right));
++
++  if (!npp || !npp->ndata) {
++    NS_WARNING("_invalidaterectforce: npp or npp->ndata == 0");
++    return;
++  }
++
++  nsIPluginInstance *inst = (nsIPluginInstance *) npp->ndata;
++
++  PluginDestructionGuard guard(inst);
++
++  nsCOMPtr<nsIPluginInstancePeer> peer;
++  if (NS_SUCCEEDED(inst->GetPeer(getter_AddRefs(peer))) && peer) {
++    nsCOMPtr<nsIWindowlessPluginInstancePeer> wpeer(do_QueryInterface(peer));
++    if (wpeer) {
++      // XXX nsRect & NPRect are structurally equivalent
++      wpeer->InvalidateRectForce((nsPluginRect *)invalidRect);
++    }
++  }
++}
++
+ static nsIDocument *
+ GetDocumentFromNPP(NPP npp)
+ {
+   NS_ENSURE_TRUE(npp, nsnull);
+ 
+   nsNPAPIPluginInstance *inst = (nsNPAPIPluginInstance *)npp->ndata;
+   NS_ENSURE_TRUE(inst, nsnull);
+ 
+diff -r a260cba282ce modules/plugin/base/src/nsPluginInstancePeer.cpp
+--- a/modules/plugin/base/src/nsPluginInstancePeer.cpp	Fri May 29 09:32:26 2009 +0300
++++ b/modules/plugin/base/src/nsPluginInstancePeer.cpp	Fri May 29 09:33:20 2009 +0300
+@@ -883,8 +883,17 @@ nsPluginInstancePeerImpl::InvalidateRegi
+ NS_IMETHODIMP
+ nsPluginInstancePeerImpl::ForceRedraw(void)
+ {
+   if(!mOwner)
+     return NS_ERROR_FAILURE;
+ 
+   return mOwner->ForceRedraw();
+ }
++
++NS_IMETHODIMP
++nsPluginInstancePeerImpl::InvalidateRectForce(nsPluginRect *invalidRect)
++{
++  if(!mOwner)
++    return NS_ERROR_FAILURE;
++
++  return mOwner->InvalidateRectForce(invalidRect);
++}
+diff -r a260cba282ce modules/plugin/default/unix/npunix.c
+--- a/modules/plugin/default/unix/npunix.c	Fri May 29 09:32:26 2009 +0300
++++ b/modules/plugin/default/unix/npunix.c	Fri May 29 09:33:20 2009 +0300
+@@ -211,16 +211,22 @@ NPN_InvalidateRegion(NPP instance, NPReg
+ }
+ 
+ void
+ NPN_ForceRedraw(NPP instance)
+ {
+     (*gNetscapeFuncs.forceredraw)(instance);
+ }
+ 
++void
++NPN_InvalidateRectForce(NPP instance, NPRect *invalidRect)
++{
++    (*gNetscapeFuncs.invalidaterectforce)(instance, invalidRect);
++}
++
+ void NPN_PushPopupsEnabledState(NPP instance, NPBool enabled)
+ {
+     (*gNetscapeFuncs.pushpopupsenabledstate)(instance, enabled);
+ }
+ 
+ void NPN_PopPopupsEnabledState(NPP instance)
+ {
+     (*gNetscapeFuncs.poppopupsenabledstate)(instance);
+@@ -564,16 +570,17 @@ NP_Initialize(NPNetscapeFuncs* nsTable, 
+           gNetscapeFuncs.evaluate = nsTable->evaluate;
+           gNetscapeFuncs.getproperty = nsTable->getproperty;
+           gNetscapeFuncs.setproperty = nsTable->setproperty;
+           gNetscapeFuncs.removeproperty = nsTable->removeproperty;
+           gNetscapeFuncs.hasproperty = nsTable->hasproperty;
+           gNetscapeFuncs.hasmethod = nsTable->hasmethod;
+           gNetscapeFuncs.releasevariantvalue = nsTable->releasevariantvalue;
+           gNetscapeFuncs.setexception = nsTable->setexception;
++          gNetscapeFuncs.invalidaterectforce = nsTable->invalidaterectforce;
+         }
+          else
+         {
+           gNetscapeFuncs.invalidaterect = NULL;
+           gNetscapeFuncs.invalidateregion = NULL;
+           gNetscapeFuncs.forceredraw = NULL;
+           gNetscapeFuncs.getstringidentifier = NULL;
+           gNetscapeFuncs.getstringidentifiers = NULL;
+@@ -588,16 +595,17 @@ NP_Initialize(NPNetscapeFuncs* nsTable, 
+           gNetscapeFuncs.invokeDefault = NULL;
+           gNetscapeFuncs.evaluate = NULL;
+           gNetscapeFuncs.getproperty = NULL;
+           gNetscapeFuncs.setproperty = NULL;
+           gNetscapeFuncs.removeproperty = NULL;
+           gNetscapeFuncs.hasproperty = NULL;
+           gNetscapeFuncs.releasevariantvalue = NULL;
+           gNetscapeFuncs.setexception = NULL;
++          gNetscapeFuncs.invalidaterectforce = NULL;
+         }
+         if (nsTable->size >=
+             ((char *)&nsTable->poppopupsenabledstate - (char *)nsTable))
+         {
+           gNetscapeFuncs.pushpopupsenabledstate = nsTable->pushpopupsenabledstate;
+           gNetscapeFuncs.poppopupsenabledstate  = nsTable->poppopupsenabledstate;
+         }
+          else

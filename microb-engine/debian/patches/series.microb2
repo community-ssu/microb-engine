@@ -5,7 +5,12 @@ buildconfig/011_BuildWithGCC3.4.4.diff
 buildconfig/015_jemalloc_sb.diff
 buildconfig/023_PC_CONFIG_sqlite_neededby_libsoftokn.diff
 buildconfig/Bug465170_LIR_gcc3.4.4_old.diff
-buildconfig/b13132800742_fda500192569.diff
+buildconfig/maemo_location.diff
+buildconfig/missing_include.diff
+buildconfig/nolibxul_pkgconfig.diff
+buildconfig/osso-mem.diff
+buildconfig/hildon_mime_missing.diff
+buildconfig/internal_Api.diff
 
 branding/010_MICROB_paths_and_names.diff
 branding/020_BUG349921_toolkit_branding.diff
@@ -16,42 +21,26 @@ linking/020_jprof_linking_fix.diff
 
 stylus_im_tweaks/010_connect_move_signal_after_default.diff
 
-#gtkmozembed/010_GtkMozEmbed_Shared.diff
 gtkmozembed/BugXXXExtensionsComponentsRegistering.diff
-#gtkmozembed/bug227986.diff
-#gtkmozembed/Bug349382.TestEmbedPrompter.diff
-#gtkmozembed/Bug349382.TestEmbedPrompter.moz.diff
 gtkmozembed/020_nsWindowCreator2_iface.diff
-#gtkmozembed/drop_conflicting_gtkmozembed_header_exporting.diff
 
 microbfootprint/010_MICROB_xslt_xpath_disable_lp0.diff
 microbfootprint/020_MICROB_non_conf_components_disable.diff
 
 
 testgtkembed/010_BUILDFIX_embedding_tests.diff
-#testgtkembed/030_ZoomControlsTestGtkEmbed.diff
-#testgtkembed/040_ftv_testgtkembed.diff
 testgtkembed/050_MICROB_autoset_grehome_display.diff
 
-extensions/010_MICROB_fittoview_extension.diff
-#extensions/050_MICROB_fittoview_extension_new.diff
-#extensions/020_BUG375179_spellcheck_libxul.diff
 extensions/030_spellchecker_select_enabling.diff
-
 
 not_sorted/others/150_BUG347731_MOZILLA_INTERNAL_API.diff
 
 theeming/020_BUG359812_neterror_noxul.diff
 theeming/030_BUG204011_theme_change.diff
-theeming/040_disable_F6_focus.diff
-theeming/060_Theeming_NO_XUL.diff
 theeming/070_RadioCheckButtonsHildons.diff
 theeming/080_CertificateExceptionDialog.diff
 theeming/090_XULButtons.diff
 
-xpinstaller/01_ConfirmNoXul.diff
-xpinstaller/04_ChromeRegistrationWithRDFwithoutXUL.diff
-xpinstaller/05_BUG437018_AllowFullWidgetReparent.diff
 
 prettyrssfeed/030_BUG54742rss_add_support.diff
 prettyrssfeed/040_HelperRSS_DOMEvent.diff
@@ -65,73 +54,40 @@ cross/010_BUG376279_security_cross_compile.diff
 cross/020_nspr_dpkg_cross.diff
 cross/030_host_libidl_dpkg_cross.diff
 cross/070_Cross_freetype_config.diff
+cross/080_stylestruct_compile.diff
 
 lowmem/LowMemoryManageImprovements.diff
 lowmem/PNGLowMemDetection.diff
+lowmem/ThebesImageInitUsableMemCheck.diff
 
 # Workarround for hildon gconf proxy settings
 not_sorted/maemo_hacks/GConfProxySettings.diff
 
-#Canvas
-
-#arm/Bug405992.atomic.nspr.diff
-#arm/Bug385583.nspr.jmp_buf.eabi.diff
 
 perf_tweaks/suspend/010_NativeSuspendImplementation.diff
-#perf_tweaks/hacks/010_layout_state_listener.diff
 perf_tweaks/hacks/020_minimize_paint_delay_hack.diff
-perf_tweaks/hacks/030_content_rocket_parsing.diff
 perf_tweaks/hacks/040_netwerk_buffer_count.diff
 perf_tweaks/HiddingLibxulSymbols.diff
 
-#perf_tweaks/gmail_performance.diff
 perf_tweaks/css_erros_parsing_disable.diff
 
 #Startup perf
-BMO_attached/030_attachment.cgi?id=297001.diff
+#BMO_attached/030_attachment.cgi?id=297001.diff
 BMO_attached/040_attachment.cgi?id=303172.diff
-
-#JS Perf
-
-perf_tweaks/JSBreakExperimental.diff
-
-#perf_tweaks/FontsRenderingHacks.diff
-
-#zooming/010_MBUG_42865_zoom_navigation_fix.diff
-#zooming/020_Bug70843.RestoreZoomState.diff
-#zooming/030_TrueZoomMode.diff
 
 perf_tweaks/enable_16bpp_format.diff
 
-perf_tweaks/bug446376_easy.diff
 
 not_sorted/others/330_MBUG_42865_zoom_navigation_fix.diff
 
 not_sorted/others/400_bigger_ua_string_length_61630.diff
 not_sorted/002_drawingMissingGlyphs.diff
 
-# Old spatial navigation module (until trunk version http://hg.mozilla.org/mozilla-central/file/ec658a5f3699/toolkit/spatial-navigation/SpatialNavigation.js not fixed)
-extensions/040_OldSpatialNavigationModule.diff
-
-# Latest tracemonkey update
-#arm/tt_latest.diff
-
-#localization/bug87973.browser.localization.diff
 localization/bug87973.firefox.hardcoded.diff
-
-
-crashes/SetCursor_crash.diff
 
 BMO_attached/130_456015.certview.diff
 
-zooming/040_s60textframes.diff
-
 logindialog/NotificationBox.diff
-
-# Fonts perf  Bug 385263
-#perf_tweaks/fonts/attachment.cgi?id=336403.diff
-#perf_tweaks/fonts/attachment.cgi?id=338030.diff
-#perf_tweaks/fonts/attachment.cgi?id=339161.diff
 
 BMO_attached/150_attachment.cgi?id=342275.diff
 
@@ -139,39 +95,8 @@ zooming/050_DefaultFontDPIIncreasePref.diff
 
 theeming/100_XUL_shortuctKeysDisable.diff
 
-#***************************NOT TESTED and probably buggy ACID3 patches***********************
-#$ # Seems does not work, test 98 still fail
-#$ acid3/attachment.cgi?id=312294.diff
-#$ # Seems applied: acid3/attachment.cgi?id=323763.diff
-#$ # Problems test 77: acid3/attachment.cgi?id=275753.diff
-#$ acid3/attachment.cgi?id=320264.diff
-#$ acid3/attachment.cgi?id=324804.diff
-#$ #test 11 (seem patch does not help)
-#$ acid3/attachment.cgi?id=251426.diff
-#$ # Problems nsINodeIterator.h missing, test 10: acid3/attachment.cgi?id=320745.diff
-#$ acid3/132824/attachment.cgi?id=316943.diff
-#$ acid3/132824/attachment.cgi?id=319078.diff
-#$ #test 70
-#$ acid3/attachment.cgi?id=327210.diff
-#$ acid3/156716/1.attachment.cgi?id=325868.diff
-#$ acid3/156716/2.attachment.cgi?id=325869.diff
-#$ acid3/156716/3.attachment.cgi?id=325870.diff
-#$ acid3/156716/4.attachment.cgi?id=325871.diff
-#$ acid3/156716/5.attachment.cgi?id=325872.diff
-#$ acid3/156716/6.attachment.cgi?id=325873.diff
-#$ acid3/156716/7.attachment.cgi?id=325875.diff
-#$ acid3/156716/8.attachment.cgi?id=325876.diff
-#$ acid3/156716/9.attachment.cgi?id=325877.diff
-#***************************END OF NOT TESTED and probably buggy ACID3 patches***********************
-
-#BMO_attached/attachment.cgi?id=318998.diff -p0
-
-#BMO_attached/attachment.cgi?id=345387.diff
-
 # Interruptable reflow
 #BMO_attached/attachment.cgi?id=346166.diff
-
-BMO_attached/vlad-parser.diff
 
 # bug 466265
 
@@ -183,24 +108,102 @@ qt/attachment.cgi?id=348163.diff
 # until bug 464890 not fixed
 qt/attachment.cgi?id=348950.diff
 
-#tested mouse pressure
-BMO_attached/090_bug428988_pressure_v3.diff
-
 theeming/110_hildon_cursors.diff
-
-BMO_attached/protocol_handling_hildon.diff
 
 not_sorted/92422.workaround.diff
 
 BMO_attached/bug472821.diff
 
-not_sorted/disable_native_offscreen.diff
-
 crashes/mDrawingarea_crash.diff
 
-perf_tweaks/attachment.cgi?id=40603.diff
+perf_tweaks/local_rendering/new_api_v3.r2.diff
 
-perf_tweaks/attachment.cgi?id=40880.diff
+perf_tweaks/local_rendering/attachment.cgi?id=40880.diff
 
-theeming/120_disable_native_colors.diff
-crashes/attachment.cgi?id=41014.diff
+BMO_attached/attachment.cgi?id=359168.diff
+
+perf_tweaks/bug104859.neon_pixman.diff
+
+theeming/130_respui_cursor_support.diff
+
+
+
+
+not_sorted/attachment.cgi?id=45084.diff
+not_sorted/attachment.cgi?id=45208.diff
+not_sorted/attachment.cgi?id=45209.diff
+
+crashes/attachment.cgi?id=46259.diff
+
+#mozilla tests bugs 111076,113070
+test_mozilla/mochitests-changes.diff 
+
+perf_tweaks/cairo_16bpp_image_surface.diff
+
+BMO_attached/bug491722.diff
+
+theeming/140_forms.css.diff
+
+BMO_attached/watchdog.diff
+
+perf_tweaks/bug485252.113969.bg_Fill.diff
+
+not_sorted/bug111799_patch_v1.diff
+
+localization/exception-en-US.diff
+
+crashes/nb118966.diff
+crashes/GetChannelIsUnsafe_bug117540.diff
+
+perf_tweaks/disable_resize_reflow_onoverflow.diff
+perf_tweaks/force_plugin_draw.api.diff
+perf_tweaks/attachment.cgi?id=53721.diff
+BMO_attached/attachment.cgi?id=53846.diff
+
+#Bug 495184
+#https://bug495184.bugzilla.mozilla.org/attachment.cgi?id=383554
+crashes/attachment.cgi?id=54547.diff
+
+BMO_attached/bug498075.diff
+
+perf_tweaks/JSBreakExperimental.diff
+
+BMO_attached/attachment.cgi?id=56948.diff
+
+not_sorted/disable_native_offscreen.diff
+
+perf_tweaks/local_rendering/disable_native_widget_window.diff
+perf_tweaks/local_rendering/disable_native_widget_window_with_regression.diff
+
+crashes/bug489294_499295.diff
+BMO_attached/bug503784.diff
+perf_tweaks/local_rendering/attachment.cgi?id=57098.diff
+
+BMO_attached/bug505018.jemalloc.diff
+crashes/nb128288.diff
+
+BMO_attached/attachment.cgi?id=59330.diff
+BMO_attached/attachment.cgi?id=59337.diff
+
+memleaks/attachment.cgi?id=360692.diff
+memleaks/attachment.cgi?id=384345.diff
+memleaks/attachment.cgi?id=386746.diff
+memleaks/attachment.cgi?id=386933.diff
+
+BMO_attached/508074-nsBinHexDecoder-ProcessNextState.diff
+
+extensions/gnomevfs_ext_without_gnomevfs.diff
+
+pmt/attachment.cgi?id=59738.diff
+pmt/UICallback_CC.diff
+pmt/DBFlush_systemIdle.diff
+pmt/navHistoryExpireTimer.diff
+pmt/http_prune_timer.diff
+
+extensions/CheckCompatibilitySave.patch
+
+BMO_attached/attachment.cgi?id=61141.diff
+BMO_attached/attachment.cgi?id=61142.diff
+BMO_attached/attachment.cgi?id=61143.diff
+
+theeming/scrollbars_theming.diff

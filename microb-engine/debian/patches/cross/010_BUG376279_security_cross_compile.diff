@@ -3,7 +3,7 @@ Index: mozilla/security/coreconf/arch.mk
 ===================================================================
 --- mozilla.orig/security/coreconf/arch.mk
 +++ mozilla/security/coreconf/arch.mk
-@@ -61,17 +61,19 @@
+@@ -61,17 +61,19 @@ else
  endif
  
  OS_ARCH := $(subst /,_,$(shell uname -s))

@@ -49,7 +49,7 @@ Index: mozilla/layout/base/nsPresContext.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresContext.cpp
 +++ mozilla/layout/base/nsPresContext.cpp
-@@ -935,17 +935,17 @@
+@@ -958,17 +958,17 @@ nsPresContext::SetShell(nsIPresShell* aS
          doc->AddCharSetObserver(this);
          UpdateCharSet(doc->GetDocumentCharacterSet());
        }
@@ -91,7 +91,7 @@ Index: mozilla/layout/base/nsPresContext.h
  #include "nsIWeakReference.h"
  #include "nsITheme.h"
  #include "nsILanguageAtomService.h"
-@@ -764,17 +764,17 @@
+@@ -823,17 +823,17 @@ protected:
    static NS_HIDDEN_(int) PrefChangedCallback(const char*, void*);
  
    NS_HIDDEN_(void) UpdateAfterPreferencesChanged();
@@ -108,8 +108,8 @@ Index: mozilla/layout/base/nsPresContext.h
      FlushUserFontSet();
    }
  
-   // IMPORTANT: The ownership implicit in the following member variables
-   // has been explicitly checked.  If you add any members to this class,
+   // Can't be inline because we can't include nsStyleSet.h.
+   PRBool HasCachedStyleData();
 Index: mozilla/layout/style/nsCSSValue.h
 ===================================================================
 --- mozilla.orig/layout/style/nsCSSValue.h
@@ -157,7 +157,7 @@ Index: mozilla/embedding/components/windowwatcher/public/nsPromptUtils.h
  
  /**
   * Given a username (possibly in DOMAIN\user form) and password, parses the
-@@ -159,14 +162,14 @@
+@@ -159,14 +162,14 @@ NS_GetAuthKey(nsIChannel* aChannel, nsIA
    nsAutoString realm;
    aAuthInfo->GetRealm(realm);
    

@@ -1,8 +1,15 @@
---- mozilla/widget/src/qt/nsWindow.cpp	2008-10-09 12:49:17.000000000 +0200
-+++ mozilla/widget/src/qt/nsWindowChanged.cpp	2008-11-06 16:44:40.000000000 +0100
-@@ -1811,6 +1811,12 @@
- 
+Index: mozilla/widget/src/qt/nsWindow.cpp
+===================================================================
+--- mozilla.orig/widget/src/qt/nsWindow.cpp
++++ mozilla/widget/src/qt/nsWindow.cpp
+@@ -1782,16 +1782,22 @@ nsWindow::NativeCreate(nsIWidget        
      Initialize(mDrawingArea);
+ 
+     // disable focus handling for secondary windows (problems with mouse selection and NS_ACTIVATE)
+     if (aParent != nsnull)
+     {
+         mDrawingArea->setFocusPolicy(Qt::NoFocus);
+     }
  
 +    // disable focus handling for secondary windows (problems with mouse selection and NS_ACTIVATE)
 +    if (aParent != nsnull)
@@ -13,3 +20,8 @@
      LOG(("Create: nsWindow [%p] [%p]\n", (void *)this, (void *)mDrawingArea));
  
      // resize so that everything is set to the right dimensions
+     Resize(mBounds.x, mBounds.y, mBounds.width, mBounds.height, PR_FALSE);
+ 
+     return NS_OK;
+ }
+ 

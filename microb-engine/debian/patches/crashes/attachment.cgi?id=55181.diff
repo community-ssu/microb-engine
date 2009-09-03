@@ -1,0 +1,22 @@
+#fix focusing problem for not realized widget
+diff -r 3b2b9bb05f42 widget/src/gtk2/nsWindow.cpp
+--- a/widget/src/gtk2/nsWindow.cpp	Thu Jun 25 13:16:25 2009 +0300
++++ b/widget/src/gtk2/nsWindow.cpp	Thu Jun 25 14:46:56 2009 +0300
+@@ -1309,8 +1310,16 @@ nsWindow::SetFocus(PRBool aRaise)
+     LOGFOCUS(("  SetFocus [%p]\n", (void *)this));
+ 
+     GtkWidget *owningWidget = GetMozContainerWidget();
+-    if (!owningWidget)
++    if (!owningWidget) {
++        if (gBlockWidgetActivity_full) {
++            if (gFocusWindow == this)
++                return NS_OK;
++            gFocusWindow = this;
++            DispatchActivateEvent();
++            return NS_OK;
++        }
+         return NS_ERROR_FAILURE;
++    }
+ 
+     // Raise the window if someone passed in PR_TRUE and the prefs are
+     // set properly.

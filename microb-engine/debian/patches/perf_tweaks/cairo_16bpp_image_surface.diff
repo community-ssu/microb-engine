@@ -1,0 +1,507 @@
+Index: mozilla/gfx/cairo/cairo/src/cairo-deprecated.h
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo-deprecated.h
++++ mozilla/gfx/cairo/cairo/src/cairo-deprecated.h
+@@ -43,17 +43,17 @@
+  * backend can work fine with 16-bit visuals in the same way it works
+  * with BGR visuals without any BGR formats in
+  * #cairo_format_t).
+  *
+  * Additionally, the support for the RGB16_565 format was never
+  * completely implemented. So while this format value is currently
+  * deprecated, it may eventually acquire complete support in the future.
+  */
+-#define CAIRO_FORMAT_RGB16_565 4
++//#define CAIRO_FORMAT_RGB16_565 4
+ 
+ #define CAIRO_FONT_TYPE_ATSUI CAIRO_FONT_TYPE_QUARTZ
+ 
+ /* Obsolete functions. These definitions exist to coerce the compiler
+  * into providing a little bit of guidance with its error
+  * messages. The idea is to help users port their old code without
+  * having to dig through lots of documentation.
+  *
+Index: mozilla/gfx/cairo/cairo/src/cairo-image-surface.c
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo-image-surface.c
++++ mozilla/gfx/cairo/cairo/src/cairo-image-surface.c
+@@ -44,18 +44,20 @@ _cairo_format_from_pixman_format (pixman
+     case PIXMAN_a8r8g8b8:
+ 	return CAIRO_FORMAT_ARGB32;
+     case PIXMAN_x8r8g8b8:
+ 	return CAIRO_FORMAT_RGB24;
+     case PIXMAN_a8:
+ 	return CAIRO_FORMAT_A8;
+     case PIXMAN_a1:
+ 	return CAIRO_FORMAT_A1;
++    case PIXMAN_r5g6b5:
++	return CAIRO_FORMAT_RGB16_565;
+     case PIXMAN_a8b8g8r8: case PIXMAN_x8b8g8r8: case PIXMAN_r8g8b8:
+-    case PIXMAN_b8g8r8:   case PIXMAN_r5g6b5:   case PIXMAN_b5g6r5:
++    case PIXMAN_b8g8r8:   case PIXMAN_b5g6r5:
+     case PIXMAN_a1r5g5b5: case PIXMAN_x1r5g5b5: case PIXMAN_a1b5g5r5:
+     case PIXMAN_x1b5g5r5: case PIXMAN_a4r4g4b4: case PIXMAN_x4r4g4b4:
+     case PIXMAN_a4b4g4r4: case PIXMAN_x4b4g4r4: case PIXMAN_r3g3b2:
+     case PIXMAN_b2g3r3:   case PIXMAN_a2r2g2b2: case PIXMAN_a2b2g2r2:
+     case PIXMAN_c8:       case PIXMAN_g8:       case PIXMAN_x4a4:
+     case PIXMAN_a4:       case PIXMAN_r1g2b1:   case PIXMAN_b1g2r1:
+     case PIXMAN_a1r1g1b1: case PIXMAN_a1b1g1r1: case PIXMAN_c4:
+     case PIXMAN_g4:       case PIXMAN_g1:
+@@ -301,16 +303,19 @@ _cairo_format_to_pixman_format_code (cai
+ 	ret = PIXMAN_a1;
+ 	break;
+     case CAIRO_FORMAT_A8:
+ 	ret = PIXMAN_a8;
+ 	break;
+     case CAIRO_FORMAT_RGB24:
+ 	ret = PIXMAN_x8r8g8b8;
+ 	break;
++    case CAIRO_FORMAT_RGB16_565:
++	ret = PIXMAN_r5g6b5;
++	break;
+     case CAIRO_FORMAT_ARGB32:
+     default:
+ 	ret = PIXMAN_a8r8g8b8;
+ 	break;
+     }
+     return ret;
+ }
+ 
+@@ -646,16 +651,18 @@ cairo_image_surface_get_stride (cairo_su
+     return image_surface->stride;
+ }
+ slim_hidden_def (cairo_image_surface_get_stride);
+ 
+ cairo_format_t
+ _cairo_format_from_content (cairo_content_t content)
+ {
+     switch (content) {
++    case CAIRO_CONTENT_COLOR16:
++	return CAIRO_FORMAT_RGB16_565;
+     case CAIRO_CONTENT_COLOR:
+ 	return CAIRO_FORMAT_RGB24;
+     case CAIRO_CONTENT_ALPHA:
+ 	return CAIRO_FORMAT_A8;
+     case CAIRO_CONTENT_COLOR_ALPHA:
+ 	return CAIRO_FORMAT_ARGB32;
+     }
+ 
+@@ -666,16 +673,18 @@ _cairo_format_from_content (cairo_conten
+ cairo_content_t
+ _cairo_content_from_format (cairo_format_t format)
+ {
+     switch (format) {
+     case CAIRO_FORMAT_ARGB32:
+ 	return CAIRO_CONTENT_COLOR_ALPHA;
+     case CAIRO_FORMAT_RGB24:
+ 	return CAIRO_CONTENT_COLOR;
++    case CAIRO_FORMAT_RGB16_565:
++	return CAIRO_CONTENT_COLOR16;
+     case CAIRO_FORMAT_A8:
+     case CAIRO_FORMAT_A1:
+ 	return CAIRO_CONTENT_ALPHA;
+     }
+ 
+     ASSERT_NOT_REACHED;
+     return CAIRO_CONTENT_COLOR_ALPHA;
+ }
+@@ -683,16 +692,18 @@ _cairo_content_from_format (cairo_format
+ int
+ _cairo_format_bits_per_pixel (cairo_format_t format)
+ {
+     switch (format) {
+     case CAIRO_FORMAT_ARGB32:
+ 	return 32;
+     case CAIRO_FORMAT_RGB24:
+ 	return 32;
++    case CAIRO_FORMAT_RGB16_565:
++	return 16;
+     case CAIRO_FORMAT_A8:
+ 	return 8;
+     case CAIRO_FORMAT_A1:
+ 	return 1;
+     default:
+ 	ASSERT_NOT_REACHED;
+ 	return 0;
+     }
+Index: mozilla/gfx/cairo/cairo/src/cairo.h
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairo.h
++++ mozilla/gfx/cairo/cairo/src/cairo.h
+@@ -306,17 +306,18 @@ typedef enum _cairo_status {
+  *
+  * Note: The large values here are designed to keep #cairo_content_t
+  * values distinct from #cairo_format_t values so that the
+  * implementation can detect the error if users confuse the two types.
+  **/
+ typedef enum _cairo_content {
+     CAIRO_CONTENT_COLOR		= 0x1000,
+     CAIRO_CONTENT_ALPHA		= 0x2000,
+-    CAIRO_CONTENT_COLOR_ALPHA	= 0x3000
++    CAIRO_CONTENT_COLOR_ALPHA	= 0x3000,
++    CAIRO_CONTENT_COLOR16	= 0x4000
+ } cairo_content_t;
+ 
+ /**
+  * cairo_write_func_t:
+  * @closure: the output closure
+  * @data: the buffer containing the data to write
+  * @length: the amount of data to write
+  *
+@@ -2056,21 +2057,18 @@ cairo_surface_has_show_text_glyphs (cair
+  * image data.
+  *
+  * New entries may be added in future versions.
+  **/
+ typedef enum _cairo_format {
+     CAIRO_FORMAT_ARGB32,
+     CAIRO_FORMAT_RGB24,
+     CAIRO_FORMAT_A8,
+-    CAIRO_FORMAT_A1
+-    /* The value of 4 is reserved by a deprecated enum value.
+-     * The next format added must have an explicit value of 5.
+-    CAIRO_FORMAT_RGB16_565 = 4,
+-    */
++    CAIRO_FORMAT_A1,
++    CAIRO_FORMAT_RGB16_565
+ } cairo_format_t;
+ 
+ cairo_public cairo_surface_t *
+ cairo_image_surface_create (cairo_format_t	format,
+ 			    int			width,
+ 			    int			height);
+ 
+ cairo_public int
+Index: mozilla/gfx/cairo/cairo/src/cairoint.h
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/cairoint.h
++++ mozilla/gfx/cairo/cairo/src/cairoint.h
+@@ -2112,26 +2112,27 @@ _cairo_surface_has_device_transform (cai
+  *
+  * If we do decide to start fully supporting RGB16_565 as an external
+  * format, then %CAIRO_FORMAT_VALID needs to be adjusted to include
+  * it. But that should not happen before all necessary code is fixed
+  * to support it (at least cairo_surface_write_to_png() and a few spots
+  * in cairo-xlib-surface.c--again see -Wswitch-enum).
+  */
+ #define CAIRO_FORMAT_INVALID ((unsigned int) -1)
+-#define CAIRO_FORMAT_VALID(format) ((format) <= CAIRO_FORMAT_A1)
++#define CAIRO_FORMAT_VALID(format) ((format) <= CAIRO_FORMAT_RGB16_565)
+ 
+ /* pixman-required stride alignment in bytes. */
+ #define CAIRO_STRIDE_ALIGNMENT (sizeof (uint32_t))
+ #define CAIRO_STRIDE_FOR_WIDTH_BPP(w,bpp) \
+    ((((bpp)*(w)+7)/8 + CAIRO_STRIDE_ALIGNMENT-1) & -CAIRO_STRIDE_ALIGNMENT)
+ 
+ #define CAIRO_CONTENT_VALID(content) ((content) && 			         \
+ 				      (((content) & ~(CAIRO_CONTENT_COLOR |      \
+ 						      CAIRO_CONTENT_ALPHA |      \
++						      CAIRO_CONTENT_COLOR16 |    \
+ 						      CAIRO_CONTENT_COLOR_ALPHA))\
+ 				       == 0))
+ 
+ cairo_private int
+ _cairo_format_bits_per_pixel (cairo_format_t format) cairo_pure;
+ 
+ cairo_private cairo_format_t
+ _cairo_format_from_content (cairo_content_t content) cairo_pure;
+Index: mozilla/gfx/src/shared/gfxImageFrame.cpp
+===================================================================
+--- mozilla.orig/gfx/src/shared/gfxImageFrame.cpp
++++ mozilla/gfx/src/shared/gfxImageFrame.cpp
+@@ -138,17 +138,17 @@ NS_IMETHODIMP gfxImageFrame::Init(PRInt3
+     break;
+ 
+   default:
+     NS_ERROR("unsupported gfx_format\n");
+     return NS_ERROR_FAILURE;
+   }
+ 
+   if (needImage) {
+-    if (aDepth != 24) {
++    if (aDepth != 24 && aDepth != 16) {
+       NS_ERROR("This Depth is not supported");
+       return NS_ERROR_FAILURE;
+     }
+ 
+     nsresult rv;
+     mImage = do_CreateInstance("@mozilla.org/gfx/image;1", &rv);
+     NS_ASSERTION(mImage, "creation of image failed");
+     if (NS_FAILED(rv)) return rv;
+Index: mozilla/gfx/src/thebes/nsThebesImage.cpp
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsThebesImage.cpp
++++ mozilla/gfx/src/thebes/nsThebesImage.cpp
+@@ -126,16 +126,18 @@ nsThebesImage::Init(PRInt32 aWidth, PRIn
+             mAlphaDepth = 1;
+             break;
+         case nsMaskRequirements_kNeeds8Bit:
+             format = gfxImageSurface::ImageFormatARGB32;
+             mAlphaDepth = 8;
+             break;
+         default:
+             format = gfxImageSurface::ImageFormatRGB24;
++            if (aDepth == 16)
++              format = gfxImageSurface::ImageFormatRGB16;
+             mAlphaDepth = 0;
+             break;
+     }
+ 
+     mFormat = format;
+ 
+     // For Windows, we must create the device surface first (if we're
+     // going to) so that the image surface can wrap it.  Can't be done
+@@ -176,25 +178,25 @@ nsThebesImage::Init(PRInt32 aWidth, PRIn
+     return NS_OK;
+ }
+ 
+ nsThebesImage::~nsThebesImage()
+ {
+ #ifdef XP_WIN
+     if (mIsDDBSurface) {
+         gTotalDDBs--;
+-        gTotalDDBSize -= mWidth*mHeight*4;
++        gTotalDDBSize -= mWidth*mHeight*GetBytesPix();
+     }
+ #endif
+ }
+ 
+ PRInt32
+ nsThebesImage::GetBytesPix()
+ {
+-    return 4;
++    return mFormat == gfxImageSurface::ImageFormatRGB16 ? 2 : 4;
+ }
+ 
+ PRBool
+ nsThebesImage::GetIsRowOrderTopToBottom()
+ {
+     return PR_TRUE;
+ }
+ 
+@@ -285,32 +287,33 @@ nsThebesImage::Optimize(nsIDeviceContext
+         return NS_OK;
+ 
+     if (mOptSurface || mSinglePixel)
+         return NS_OK;
+ 
+     /* Figure out if the entire image is a constant color */
+ 
+     // this should always be true
+-    if (mStride == mWidth * 4) {
++    if (mStride == mWidth * GetBytesPix()) {
+         PRUint32 *imgData = (PRUint32*) mImageSurface->Data();
+         PRUint32 firstPixel = * (PRUint32*) imgData;
+         PRUint32 pixelCount = mWidth * mHeight + 1;
+ 
+         while (--pixelCount && *imgData++ == firstPixel)
+             ;
+ 
+         if (pixelCount == 0) {
+             // all pixels were the same
++            PRBool isCOLOR = mFormat == gfxImageSurface::ImageFormatRGB24 || mFormat == gfxImageSurface::ImageFormatRGB16;
+             if (mFormat == gfxImageSurface::ImageFormatARGB32 ||
+-                mFormat == gfxImageSurface::ImageFormatRGB24)
++                isCOLOR)
+             {
+                 mSinglePixelColor = gfxRGBA
+                     (firstPixel,
+-                     (mFormat == gfxImageSurface::ImageFormatRGB24 ?
++                     (isCOLOR ?
+                       gfxRGBA::PACKED_XRGB :
+                       gfxRGBA::PACKED_ARGB_PREMULTIPLIED));
+ 
+                 mSinglePixel = PR_TRUE;
+ 
+                 // blow away the older surfaces, to release data
+ 
+                 mImageSurface = nsnull;
+@@ -352,17 +355,17 @@ nsThebesImage::Optimize(nsIDeviceContext
+         // heads or tails out of this limit).
+         //
+         // So instead, we clamp the max size to 64MB (this limit shuld
+         // be made dynamic based on.. something.. as soon a we figure
+         // out that something) and also limit each individual image to
+         // be less than 4MB to keep very large images out of DDBs.
+ 
+         // assume (almost -- we don't quadword-align) worst-case size
+-        PRUint32 ddbSize = mWidth * mHeight * 4;
++        PRUint32 ddbSize = mWidth * mHeight * GetBytesPix();
+         if (ddbSize <= kMaxSingleDDBSize &&
+             ddbSize + gTotalDDBSize <= kMaxDDBSize)
+         {
+             nsRefPtr<gfxWindowsSurface> wsurf = mWinSurface->OptimizeToDDB(nsnull, gfxIntSize(mWidth, mHeight), mFormat);
+             if (wsurf) {
+                 gTotalDDBs++;
+                 gTotalDDBSize += ddbSize;
+                 mIsDDBSurface = PR_TRUE;
+@@ -721,17 +724,17 @@ nsThebesImage::Draw(gfxContext*        a
+             // implementation was universally good.
+             pattern->SetExtend(gfxPattern::EXTEND_PAD);
+             pattern->SetFilter(aFilter);
+             break;
+         }
+     }
+ 
+     if ((op == gfxContext::OPERATOR_OVER || pushedGroup) &&
+-        format == gfxASurface::ImageFormatRGB24) {
++        (format == gfxASurface::ImageFormatRGB24 || format == gfxASurface::ImageFormatRGB16)) {
+         aContext->SetOperator(gfxContext::OPERATOR_SOURCE);
+     }
+ 
+ #ifdef __arm__ // Disable bilinear scaling on arm, because pixman is slow
+ 
+     if (currentTarget->GetType() == gfxASurface::SurfaceTypeImage)
+       pattern->SetFilter(gfxPattern::FILTER_NEAREST);
+ #endif
+Index: mozilla/gfx/thebes/public/gfxASurface.h
+===================================================================
+--- mozilla.orig/gfx/thebes/public/gfxASurface.h
++++ mozilla/gfx/thebes/public/gfxASurface.h
+@@ -60,16 +60,17 @@ public:
+      * The format for an image surface. For all formats with alpha data, 0
+      * means transparent, 1 or 255 means fully opaque.
+      */
+     typedef enum {
+         ImageFormatARGB32, ///< ARGB data in native endianness, using premultiplied alpha
+         ImageFormatRGB24,  ///< xRGB data in native endianness
+         ImageFormatA8,     ///< Only an alpha channel
+         ImageFormatA1,     ///< Packed transparency information (one byte refers to 8 pixels)
++        ImageFormatRGB16,  ///< xRGB data in native endianness, using premultiplied alpha
+         ImageFormatUnknown
+     } gfxImageFormat;
+ 
+     typedef enum {
+         SurfaceTypeImage,
+         SurfaceTypePDF,
+         SurfaceTypePS,
+         SurfaceTypeXlib,
+@@ -85,17 +86,18 @@ public:
+         SurfaceTypeQuartzImage,
+         SurfaceTypeQPainter,
+         SurfaceTypeDDraw
+     } gfxSurfaceType;
+ 
+     typedef enum {
+         CONTENT_COLOR       = 0x1000,
+         CONTENT_ALPHA       = 0x2000,
+-        CONTENT_COLOR_ALPHA = 0x3000
++        CONTENT_COLOR_ALPHA = 0x3000,
++        CONTENT_COLOR16     = 0x4000
+     } gfxContentType;
+ 
+     /* Wrap the given cairo surface and return a gfxASurface for it */
+     static already_AddRefed<gfxASurface> Wrap(cairo_surface_t *csurf);
+ 
+     /*** this DOES NOT addref the surface */
+     cairo_surface_t *CairoSurface() {
+         NS_ASSERTION(mSurface != nsnull, "gfxASurface::CairoSurface called with mSurface == nsnull!");
+Index: mozilla/gfx/thebes/src/gfxASurface.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxASurface.cpp
++++ mozilla/gfx/thebes/src/gfxASurface.cpp
+@@ -376,16 +376,18 @@ gfxASurface::EndPage()
+ gfxASurface::gfxContentType
+ gfxASurface::ContentFromFormat(gfxImageFormat format)
+ {
+     switch (format) {
+         case ImageFormatARGB32:
+             return CONTENT_COLOR_ALPHA;
+         case ImageFormatRGB24:
+             return CONTENT_COLOR;
++        case ImageFormatRGB16:
++            return CONTENT_COLOR16;
+         case ImageFormatA8:
+         case ImageFormatA1:
+             return CONTENT_ALPHA;
+ 
+         case ImageFormatUnknown:
+         default:
+             return CONTENT_COLOR;
+     }
+Index: mozilla/gfx/thebes/src/gfxImageSurface.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxImageSurface.cpp
++++ mozilla/gfx/thebes/src/gfxImageSurface.cpp
+@@ -117,16 +117,18 @@ long
+ gfxImageSurface::ComputeStride() const
+ {
+     long stride;
+ 
+     if (mFormat == ImageFormatARGB32)
+         stride = mSize.width * 4;
+     else if (mFormat == ImageFormatRGB24)
+         stride = mSize.width * 4;
++    else if (mFormat == ImageFormatRGB16)
++        stride = mSize.width * 2;
+     else if (mFormat == ImageFormatA8)
+         stride = mSize.width;
+     else if (mFormat == ImageFormatA1) {
+         stride = (mSize.width + 7) / 8;
+     } else {
+         NS_WARNING("Unknown format specified to gfxImageSurface!");
+         stride = mSize.width * 4;
+     }
+Index: mozilla/layout/generic/nsObjectFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsObjectFrame.cpp
++++ mozilla/layout/generic/nsObjectFrame.cpp
+@@ -4508,22 +4508,31 @@ nsPluginInstanceOwner::NativeImageDraw(g
+   if (mWindow->clipRect.left    != newClipRect.left   ||
+       mWindow->clipRect.top     != newClipRect.top    ||
+       mWindow->clipRect.right   != newClipRect.right  ||
+       mWindow->clipRect.bottom  != newClipRect.bottom) {
+     mWindow->clipRect = newClipRect;
+     doupdatewindow = PR_TRUE;
+   }
+ 
++  nsRefPtr<gfxImageSurface> surface = static_cast<gfxImageSurface*>(aContext->OriginalSurface());
++  NS_ENSURE_TRUE(surface, NS_ERROR_OUT_OF_MEMORY);
++
++  PRUint32 surfaceDepth = 24;
++  if (surface->Format() == gfxASurface::ImageFormatRGB16)
++    surfaceDepth = 16;
++  if (surface->Format() == gfxASurface::ImageFormatARGB32)
++    surfaceDepth = 32;
++
+   NPSetWindowCallbackStruct* ws_info =
+     static_cast<NPSetWindowCallbackStruct*>(mWindow->ws_info);
+   ws_info->visual = 0;
+   ws_info->colormap = 0;
+-  if (ws_info->depth != 24) {
+-    ws_info->depth = 24;
++  if (ws_info->depth != surfaceDepth) {
++    ws_info->depth = surfaceDepth;
+     doupdatewindow = PR_TRUE;
+   }
+ 
+   if (doupdatewindow)
+     mInstance->SetWindow(mWindow);
+ 
+   // Until we don't have agreement about how to pass NPImageExpose structure to plugin
+   // it will be packed into XEvent.xgraphicsexpose.drawable member
+@@ -4550,23 +4559,21 @@ nsPluginInstanceOwner::NativeImageDraw(g
+   exposeEvent.height = mDirtyRect.height;
+   exposeEvent.count = 0;
+   // information not set:
+   exposeEvent.serial = 0;
+   exposeEvent.send_event = False;
+   exposeEvent.major_code = 0;
+   exposeEvent.minor_code = 0;
+ 
+-  nsRefPtr<gfxImageSurface> surface = static_cast<gfxImageSurface*>(aContext->OriginalSurface());
+-  NS_ENSURE_TRUE(surface, NS_ERROR_OUT_OF_MEMORY);
+   // Calculate src buffer pointer according to translation
+   // and set it as drawable member
+   gfxMatrix matr = aContext->CurrentMatrix();
+   gfxPoint pt = matr.GetTranslation();
+-  imageExpose.depth = 24;
++  imageExpose.depth = surfaceDepth;
+   imageExpose.x = mDirtyRect.x;
+   imageExpose.y = mDirtyRect.y;
+   imageExpose.width = mDirtyRect.width;
+   imageExpose.height = mDirtyRect.height;
+   // Setup temporary context scaled size
+   imageExpose.stride = surface->Stride();
+   imageExpose.data = (char *)surface->Data();
+   imageExpose.dataSize.width = surface->Width();

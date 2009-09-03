@@ -1,12 +1,14 @@
 # Checking for JPEG image encoder support is required
 #
---- mozilla/modules/libpr0n/decoders/jpeg/Makefile.in.orig	2007-07-24 01:02:19.000000000 +0300
-+++ mozilla/modules/libpr0n/decoders/jpeg/Makefile.in	2007-10-25 17:30:23.000000000 +0300
+Index: mozilla/modules/libpr0n/decoders/jpeg/Makefile.in
+===================================================================
+--- mozilla.orig/modules/libpr0n/decoders/jpeg/Makefile.in
++++ mozilla/modules/libpr0n/decoders/jpeg/Makefile.in
 @@ -54,12 +54,18 @@ REQUIRES	= xpcom \
  		  thebes \
  		  imglib2 \
  		  $(JPEG_REQUIRES) \
- 		  $(LCMS_REQUIRES) \
+ 		  qcms \
  		  $(NULL)
  
  CPPSRCS		= nsJPEGDecoder.cpp
@@ -21,8 +23,10 @@
  
  include $(topsrcdir)/config/rules.mk
  
---- mozilla/modules/libpr0n/decoders/jpeg/iccjpeg.c.orig	2007-07-24 01:02:19.000000000 +0300
-+++ mozilla/modules/libpr0n/decoders/jpeg/iccjpeg.c	2007-10-25 17:28:50.000000000 +0300
+Index: mozilla/modules/libpr0n/decoders/jpeg/iccjpeg.c
+===================================================================
+--- mozilla.orig/modules/libpr0n/decoders/jpeg/iccjpeg.c
++++ mozilla/modules/libpr0n/decoders/jpeg/iccjpeg.c
 @@ -48,16 +48,17 @@
   * SOI and JFIF or Adobe markers, but before all else.)
   */

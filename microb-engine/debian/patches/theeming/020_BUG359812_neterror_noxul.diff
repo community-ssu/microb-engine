@@ -5,7 +5,7 @@ Index: mozilla/docshell/resources/content/netError.xhtml
 ===================================================================
 --- mozilla.orig/docshell/resources/content/netError.xhtml
 +++ mozilla/docshell/resources/content/netError.xhtml
-@@ -269,18 +269,17 @@
+@@ -361,18 +361,17 @@
               error types.  -->
          <div id="securityOverrideDiv">
            <a id="securityOverrideLink" href="javascript:showSecuritySection();" >&securityOverride.linkText;</a>

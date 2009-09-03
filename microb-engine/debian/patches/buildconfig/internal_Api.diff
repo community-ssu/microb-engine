@@ -1,0 +1,45 @@
+diff -r 0a466e974978 layout/base/nsPresContext.h
+--- a/layout/base/nsPresContext.h	Wed Jun 17 18:57:25 2009 +0300
++++ b/layout/base/nsPresContext.h	Wed Jun 17 20:08:42 2009 +0300
+@@ -69,7 +69,9 @@
+ #include "nsTArray.h"
+ #include "nsAutoPtr.h"
+ #include "nsThreadUtils.h"
++#ifdef MOZILLA_INTERNAL_API
+ #include "nsContentUtils.h"
++#endif
+ 
+ class nsImageLoader;
+ #ifdef IBMBIDI
+@@ -1150,18 +1150,20 @@ struct nsAutoLayoutPhase {
+       case eLayoutPhase_FrameC:
+         NS_ASSERTION(mPresContext->mLayoutPhaseCount[eLayoutPhase_Paint] == 0,
+                      "constructing frames in the middle of a paint");
+         NS_ASSERTION(mPresContext->mLayoutPhaseCount[eLayoutPhase_Reflow] == 0,
+                      "constructing frames in the middle of reflow");
+         // Once bug 337957 is fixed this should become an NS_ASSERTION
+         NS_WARN_IF_FALSE(mPresContext->mLayoutPhaseCount[eLayoutPhase_FrameC] == 0,
+                          "recurring into frame construction");
++#ifdef MOZILLA_INTERNAL_API
+         NS_ASSERTION(!nsContentUtils::IsSafeToRunScript(),
+                      "constructing frames and scripts are not blocked");
++#endif
+         break;
+       default:
+         break;
+     }
+     ++(mPresContext->mLayoutPhaseCount[mPhase]);
+     ++mCount;
+   }
+
+diff -r 0a466e974978 widget/src/gtk2/nsWindow.h
+--- a/widget/src/gtk2/nsWindow.h	Wed Jun 17 18:57:25 2009 +0300
++++ b/widget/src/gtk2/nsWindow.h	Wed Jun 17 20:08:42 2009 +0300
+@@ -99,6 +99,7 @@ extern PRLogModuleInfo *gWidgetDrawLog;
+ #define LOG(args)
+ #define LOGFOCUS(args)
+ #define LOGIM(args)
++#define LOGDRAG(args)
+ #define LOGDRAW(args)
+ 
+ #endif /* MOZ_LOGGING */

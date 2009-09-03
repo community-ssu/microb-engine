@@ -1,8 +1,14 @@
 # bug 463933
-diff --git a/gfx/src/thebes/nsSystemFontsGTK2.cpp b/gfx/src/thebes/nsSystemFontsGTK2.cpp
---- a/gfx/src/thebes/nsSystemFontsGTK2.cpp
-+++ b/gfx/src/thebes/nsSystemFontsGTK2.cpp
-@@ -55,11 +55,16 @@
+Index: mozilla/gfx/src/thebes/nsSystemFontsGTK2.cpp
+===================================================================
+--- mozilla.orig/gfx/src/thebes/nsSystemFontsGTK2.cpp
++++ mozilla/gfx/src/thebes/nsSystemFontsGTK2.cpp
+@@ -50,36 +50,45 @@
+ #include <pango/pango.h>
+ #include <pango/pango-fontmap.h>
+ #endif
+ 
+ #include <fontconfig/fontconfig.h>
  #include "nsSystemFontsGTK2.h"
  #include "gfxPlatformGtk.h"
  
@@ -14,12 +20,20 @@ diff --git a/gfx/src/thebes/nsSystemFontsGTK2.cpp b/gfx/src/thebes/nsSystemFonts
  static gboolean
  (* PTR_pango_font_description_get_size_is_absolute)(PangoFontDescription*)
      = nsnull;
-+
-+static PRInt32 sSysFontDpiAdd = 0;
  
++static PRInt32 sSysFontDpiAdd = 0;
++
  static void InitPangoLib()
  {
-@@ -75,6 +80,10 @@
+     static PRBool initialized = PR_FALSE;
+     if (initialized)
+         return;
+     initialized = PR_TRUE;
+ 
+     PRLibrary *pangoLib = nsnull;
+     PTR_pango_font_description_get_size_is_absolute =
+         (gboolean (*)(PangoFontDescription*))
+         PR_FindFunctionSymbolAndLibrary("pango_font_description_get_size_is_absolute",
                                          &pangoLib);
      if (pangoLib)
          PR_UnloadLibrary(pangoLib);
@@ -30,7 +44,17 @@ diff --git a/gfx/src/thebes/nsSystemFontsGTK2.cpp b/gfx/src/thebes/nsSystemFonts
  }
  
  static void
-@@ -219,7 +228,7 @@
+ ShutdownPangoLib()
+ {
+ }
+ 
+ static gboolean
+@@ -216,17 +225,17 @@ nsSystemFontsGTK2::GetSystemFontInfo(Gtk
+     aFontStyle->stretch = NS_FONT_STRETCH_NORMAL;
+ 
+     float size = float(pango_font_description_get_size(desc)) / PANGO_SCALE;
+ 
+     // |size| is now either pixels or pango-points (not Mozilla-points!)
  
      if (!MOZ_pango_font_description_get_size_is_absolute(desc)) {
          // |size| is in pango-points, so convert to pixels.
@@ -39,3 +63,8 @@ diff --git a/gfx/src/thebes/nsSystemFontsGTK2.cpp b/gfx/src/thebes/nsSystemFonts
      }
  
      // |size| is now pixels
+ 
+     aFontStyle->size = size;
+   
+     pango_font_description_free(desc);
+ 

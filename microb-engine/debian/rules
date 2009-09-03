@@ -19,16 +19,22 @@ oprof:=n
 nolibxul:=n
 MOZCONFIG_NAME:=configs/mozconfig
 MOZCONFIG_LEV:=microb2
-syscairo:=n
+syscairo:=y
 svgport:=n
 canvas:=n
 memleaks:=n
 jemalloc:=y
+mochitests:=n
 
 DH_ALWAYS_EXCLUDE=CVS:.svn
 
 btree = build-tree
 tarballs = tarballs
+
+TAR_CREATE_FLAGS = cvzf
+MOZILLA_TEST_DIR = mozilla-tests
+TEST_PACKAGE_DIR = $(CURDIR)/debian/tmp/usr/share/microb-moztests
+
 
 export QUILT_PATCHES=$(CURDIR)/debian/patches
 QUILT_PATCHES:=$(CURDIR)/debian/patches
@@ -113,6 +119,12 @@ else
 syscairo:=$(syscairo)
 endif
 
+ifneq (,$(findstring nosyscairo,$(DEB_BUILD_OPTIONS)))
+syscairo:=n
+else
+syscairo:=$(syscairo)
+endif
+
 ifneq (,$(findstring svgport,$(DEB_BUILD_OPTIONS)))
 svgport:=y
 else
@@ -162,6 +174,12 @@ else
 jemalloc:=$(jemalloc)
 endif
 
+ifneq (,$(findstring withjemalloc,$(DEB_BUILD_OPTIONS)))
+jemalloc:=y
+else
+jemalloc:=$(jemalloc)
+endif
+
 ifneq (,$(findstring cflagsopt,$(DEB_BUILD_OPTIONS)))
 optimize_add = $(CFLAGS)
 endif
@@ -193,6 +211,12 @@ else
 memleaks:=$(memleaks)
 endif
 
+ 
+ifneq (,$(findstring mochitests,$(DEB_BUILD_OPTIONS)))
+mochitests:=y
+else
+mochitests:=$(mochitests)
+endif
 
 ifeq ($(perfmetr),y)
 	configopts += --enable-reflow-perf --enable-perf-metrics
@@ -221,6 +245,8 @@ endif
 
 ifneq ($(jemalloc),y)
 	configopts += --disable-jemalloc
+else
+	configopts += --enable-jemalloc
 endif
 
 ifeq ($(debug),y)
@@ -258,6 +284,12 @@ endif
 
 ifeq ($(memleaks),y)
 	configopts += --enable-debug --enable-trace-malloc
+endif
+
+ifeq ($(mochitests),y)
+	configopts += --enable-tests --enable-mochitest --enable-xremote 
+else
+	configopts += --disable-tests --disable-mochitest --disable-xremote 
 endif
 
 ifeq ($(GCCENV),.cs)
@@ -298,9 +330,9 @@ ifeq ($(syscairo),y)
 bldstr:=$(bldstr)syscairo-
 endif
 
-ifeq ($(svgport),y)
-	configopts += --enable-svg
-bldstr:=$(bldstr)svgport-
+ifeq ($(nojit),y)
+	configopts += --disable-jit
+bldstr:=$(bldstr)nojit-
 endif
 
 ifeq ($(canvas),y)
@@ -313,8 +345,8 @@ endif
 version=$(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2 | cut -d ':' -f 2 | cut -d '-' -f 1)
 packagename=$(shell dpkg-parsechangelog | grep ^Source:.* | cut -d ' ' -f 2)
 PKGVERSION      := $(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2)
-MOZ_VERSION=3.0
-MOZ_MILESTONE=1.9
+MOZ_VERSION=3.6
+MOZ_MILESTONE=1.9.2
 
 major=2
 
@@ -412,7 +444,7 @@ build: unpack-stamp patch-stamp configure-stamp build-stamp
 build-stamp:
 	dh_testdir
 	find $(builddir)/branding -xtype f -name Makefile -exec rm -rf {} \;
-	cd $(builddir) && $(envflags) $(MAKE) -f client.mk build
+	unset GRE_HOME && unset DISPLAY && cd $(builddir) && $(envflags) $(MAKE) -f client.mk build
 	touch build-stamp
 
 clean: unpatch
@@ -510,8 +542,13 @@ ifeq ($(cross_compile),y)
 endif
 ifneq (,$(findstring microb,$(MOZCONFIG_LEV)))
 	mkdir -p ./debian/tmp/usr/lib/microb-engine/icons
+	mkdir -p ./debian/tmp/usr/share
 	mkdir -p ./debian/tmp/etc
+	mkdir -p  $(TEST_PACKAGE_DIR)
+	mkdir -p  $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR)
 	find ./debian/tmp/etc -xtype f -exec chmod a-x {} \;
+	find  $(TEST_PACKAGE_DIR) -xtype f -exec chmod a-x {} \;
+	find  $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR) -xtype f -exec chmod a-x {} \;
 	find ./debian/tmp/usr/share -xtype f -exec chmod a-x {} \;
 	find ./debian/tmp/usr/lib/microb-engine/chrome -xtype f -exec chmod a-x {} \;
 	find ./debian/tmp/usr/lib/microb-engine/res -xtype f -exec chmod a-x {} \;
@@ -521,11 +558,23 @@ ifneq (,$(findstring microb,$(MOZCONFIG_LEV)))
 	chmod a-x ./debian/tmp/usr/lib/microb-engine/README.txt
 	chmod a-x ./debian/tmp/usr/lib/microb-engine/LICENSE
 	find ./debian/tmp/usr/lib
-	cp $(builddir)/browser/locales/en-US/chrome/overrides/*.* $(CURDIR)/debian/tmp/usr/lib/microb-engine/chrome/en-US/locale/en-US/global/
 	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/lib/*jemalloc*.a $(CURDIR)/debian/tmp/usr/lib/microb-engine-devel/sdk/lib/
 	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CURDIR)/debian/tmp/usr/include/microb-engine/
-	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/include/nspr $(CURDIR)/debian/tmp/usr/include/microb-engine/
+	
 	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed $(CURDIR)/debian/tmp/usr/lib/microb-engine; fi
+ifeq ($(mochitests),y)
+	cp -rfL $(builddir)/build/pgo/certs $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR)
+	if test -d $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/_tests; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/_tests/ $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/xpcshell; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/xpcshell $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/nss/certutil; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/nss/certutil $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR) ; fi
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/nss/pk12util; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/nss/pk12util $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/testing/mochitest/ssltunnel/ssltunnel; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/testing/mochitest/ssltunnel/ssltunnel $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -d $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/plugins; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/plugins $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -d $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/chrome; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/chrome $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -d $(TEST_PACKAGE_DIR); then  cd $(TEST_PACKAGE_DIR)  && tar $(TAR_CREATE_FLAGS) $(MOZILLA_TEST_DIR).tar.gz $(MOZILLA_TEST_DIR); fi
+	if test -d $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); then rm -rf $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+endif
 endif
 ifneq (,$(findstring microb,$(MOZCONFIG_LEV)))
 	dh_install --sourcedir=$(CURDIR)/debian/tmp --list-missing
@@ -539,6 +588,8 @@ ifneq (,$(findstring microb,$(MOZCONFIG_LEV)))
 	perl $(CURDIR)/debian/resources/tools/remove.target.license.pl $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/res
 	rm -rf $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/xpidl
 	rm -rf $(CURDIR)/debian/microb-full/usr/lib/microb-xulrunner/xpidl
+	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/zlib.h
+	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/expat*.h
 endif
 
 # Build architecture-independent files here.

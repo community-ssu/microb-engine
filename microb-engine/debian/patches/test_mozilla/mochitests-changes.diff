@@ -1,0 +1,160 @@
+Index: mozilla/build/automation-build.mk
+===================================================================
+--- mozilla.orig/build/automation-build.mk
++++ mozilla/build/automation-build.mk
+@@ -17,17 +17,19 @@ else
+ browser_path = \"$(TARGET_DIST)/$(MOZ_APP_DISPLAYNAME).app/Contents/MacOS/$(PROGRAM)\"
+ endif
+ else
+ browser_path = \"$(TARGET_DIST)/bin/$(PROGRAM)\"
+ endif
+ endif
+ 
+ _PROFILE_DIR = $(TARGET_DEPTH)/_profile/pgo
+-_SYMBOLS_PATH = $(TARGET_DIST)/crashreporter-symbols
++#_SYMBOLS_PATH = $(TARGET_DIST)/crashreporter-symbols
++#enabling crash reporter results in build error,hence hard coding an existing path for _SYMBOLS_PATH
++_SYMBOLS_PATH = /home/user/moz-bin
+ 
+ ABSOLUTE_TOPSRCDIR = $(call core_abspath,$(topsrcdir))
+ _CERTS_SRC_DIR = $(ABSOLUTE_TOPSRCDIR)/build/pgo/certs
+ 
+ AUTOMATION_PPARGS = 	\
+ 			-DBROWSER_PATH=$(browser_path) \
+ 			-DXPC_BIN_PATH=\"$(LIBXUL_DIST)/bin\" \
+ 			-DBIN_SUFFIX=\"$(BIN_SUFFIX)\" \
+Index: mozilla/build/automation.py.in
+===================================================================
+--- mozilla.orig/build/automation.py.in
++++ mozilla/build/automation.py.in
+@@ -564,16 +564,20 @@ def runApp(testURL, env, app, profileDir
+   args.extend(("-no-remote", "-profile", profileDirectory))
+   if testURL is not None:
+     if IS_CAMINO:
+       args.extend(("-url", testURL))
+     else:
+       args.append((testURL))
+   args.extend(extraArgs)
+ 
++  #Fixes for  Maemo Browser
++  args = []
++  args.extend(("--url", testURL))
++
+   startTime = datetime.now()
+ 
+   # Don't redirect stdout and stderr if an interactive debugger is attached
+   if debuggerInfo and debuggerInfo["interactive"]:
+     outputPipe = None
+   else:
+     outputPipe = subprocess.PIPE
+ 
+Index: mozilla/testing/mochitest/runtests.py.in
+===================================================================
+--- mozilla.orig/testing/mochitest/runtests.py.in
++++ mozilla/testing/mochitest/runtests.py.in
+@@ -74,17 +74,19 @@ BROWSER_CHROME_URL = "chrome://browser/c
+ # this seems big, it's mostly for debug machines where cold startup
+ # (particularly after a build) takes forever.
+ SERVER_STARTUP_TIMEOUT = 45
+ 
+ oldcwd = os.getcwd()
+ SCRIPT_DIRECTORY = os.path.abspath(os.path.realpath(os.path.dirname(sys.argv[0])))
+ os.chdir(SCRIPT_DIRECTORY)
+ 
+-PROFILE_DIRECTORY = os.path.abspath("./mochitesttestingprofile")
++#PROFILE_DIRECTORY = os.path.abspath("./mochitesttestingprofile")
++tmpProfileDir = os.path.expanduser("~") + "/.mozilla/" + "mochitesttestingprofile/"
++PROFILE_DIRECTORY = os.path.abspath(tmpProfileDir)
+ 
+ LEAK_REPORT_FILE = PROFILE_DIRECTORY + "/" + "leaks-report.log"
+ 
+ # Map of debugging programs to information about them, like default arguments
+ # and whether or not they are interactive.
+ DEBUGGER_INFO = {
+   # gdb requires that you supply the '--args' flag in order to pass arguments
+   # after the executable name to the executable.
+@@ -465,17 +467,31 @@ Are you executing $objdir/_tests/testing
+       testURL += "?" + "&".join(urlOpts)
+ 
+   browserEnv["XPCOM_MEM_BLOAT_LOG"] = LEAK_REPORT_FILE
+   browserEnv["NSPR_LOG_MODULES"] = "UrlClassifierDbService:5,UrlClassifierStreamUpdater:5"
+ 
+   if options.fatalAssertions:
+     browserEnv["XPCOM_DEBUG_BREAK"] = "stack-and-abort"
+ 
+-  status = automation.runApp(testURL, browserEnv, options.app,
++
++  #restart  browser daemon
++  os.system('/etc/init.d/tablet-browser-daemon.init stop')
++  if(not os.path.exists('/targets/links/scratchbox.config')):
++  	os.system("dsmetool -k '/usr/sbin/browserd -d'")
++  os.system("kill -9 `pidof browser`")
++  os.putenv('MOZ_NO_REMOTE','1')
++  os.putenv('MOZ_COMP_PATH_OVERRIDE','.mozilla')
++  os.putenv('MOZ_PROFILE_OVERRIDE','mochitesttestingprofile')
++  if(not os.path.exists('/targets/links/scratchbox.config')):
++  	os.system("dsme -p /usr/sbin/browserd -d")
++  os.system('MOZ_COMP_PATH_OVERRIDE=.mozilla  MOZ_PROFILE_OVERRIDE=mochitesttestingprofile /etc/init.d/tablet-browser-daemon.init start')
++  time.sleep(1)
++
++  status = automation.runApp(testURL, browserEnv, '/usr/bin/browser',
+                              PROFILE_DIRECTORY, options.browserArgs,
+                              runSSLTunnel = True,
+                              utilityPath = options.utilityPath,
+                              xrePath = options.xrePath,
+                              certPath=options.certPath,
+                              debuggerInfo=debuggerInfo,
+                              symbolsPath=options.symbolsPath)
+ 
+@@ -552,17 +568,18 @@ toolbar#nav-bar {
+ 
+ 
+   # register our chrome dir
+   chrometestDir = os.path.abspath(".") + "/"
+   if automation.IS_WIN32:
+     chrometestDir = "file:///" + chrometestDir.replace("\\", "/")
+ 
+ 
+-  (path, leaf) = os.path.split(options.app)
++  #(path, leaf) = os.path.split(options.app)
++  path = options.xrePath
+   manifest = os.path.join(path, "chrome", "mochikit.manifest")
+   manifestFile = open(manifest, "w")
+   manifestFile.write("content mochikit " + chrometestDir + " contentaccessible=yes\n")
+   if options.browserChrome:
+     overlayLine = "overlay " + BROWSER_CHROME_URL + " " \
+                   "chrome://mochikit/content/browser-test-overlay.xul\n"
+     manifestFile.write(overlayLine)
+   manifestFile.close()
+Index: mozilla/testing/mochitest/server.js
+===================================================================
+--- mozilla.orig/testing/mochitest/server.js
++++ mozilla/testing/mochitest/server.js
+@@ -152,17 +152,26 @@ function runServer()
+   server = createMochitestServer(serverBasePath);
+   server.start(SERVER_PORT);
+ 
+   // touch a file in the profile directory to indicate we're alive
+   var foStream = Cc["@mozilla.org/network/file-output-stream;1"]
+                    .createInstance(Ci.nsIFileOutputStream);
+   var serverAlive = Cc["@mozilla.org/file/local;1"]
+                       .createInstance(Ci.nsILocalFile);
+-  serverAlive.initWithFile(serverBasePath);
++
++  //serverAlive.initWithFile(serverBasePath);
++  //profile directory is now moved to .mozilla folder
++  //Start in the user's home directory
++  var dirService = Cc["@mozilla.org/file/directory_service;1"]
++                             .getService(Ci.nsIProperties);
++
++  homeDir = dirService.get("Home", Ci.nsIFile);
++  serverAlive.initWithFile(homeDir);
++  serverAlive.append(".mozilla");
+   serverAlive.append("mochitesttestingprofile");
+ 
+   // If we're running outside of the test harness, there might
+   // not be a test profile directory present
+   if (serverAlive.exists()) {
+     serverAlive.append("server_alive.txt");
+     foStream.init(serverAlive,
+                   0x02 | 0x08 | 0x20, 0664, 0); // write, create, truncate

@@ -5,7 +5,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -553,16 +553,18 @@
+@@ -559,16 +559,18 @@ MOZ_DEMANGLE_SYMBOLS = @MOZ_DEMANGLE_SYM
  CM_BLDTYPE=dbg
  AWT_11=1
  MOZ_BITS=32
@@ -16,19 +16,19 @@ Index: mozilla/config/autoconf.mk.in
  
 +OLD_CODESOURCERY=@OLD_CODESOURCERY@
 +
- TARGET_DEVICE = @TARGET_DEVICE@
+ # For Solaris build
+ SOLARIS_SUNPRO_CC = @SOLARIS_SUNPRO_CC@
+ SOLARIS_SUNPRO_CXX = @SOLARIS_SUNPRO_CXX@
  
  # For AIX build
  AIX_OBJMODEL = @AIX_OBJMODEL@
  
  # For OS/2 build
- MOZ_OS2_TOOLS = @MOZ_OS2_TOOLS@
- MOZ_OS2_USE_DECLSPEC = @MOZ_OS2_USE_DECLSPEC@
 Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -1832,16 +1832,26 @@
+@@ -2001,16 +2001,26 @@ case "$target" in
          MOZ_OPTIMIZE_FLAGS="-O2"
          MOZ_DEBUG_FLAGS="-g -fno-inline"
      elif test "$GNU_CC" || test "$GNU_CXX"; then
@@ -59,13 +59,13 @@ Index: mozilla/memory/jemalloc/Makefile.in
 ===================================================================
 --- mozilla.orig/memory/jemalloc/Makefile.in
 +++ mozilla/memory/jemalloc/Makefile.in
-@@ -84,16 +84,20 @@
- # Using a pre-built DLL, so just install it.
- libs:: $(WIN32_CUSTOM_CRT_DIR)/mozcrt19.dll
- 	$(INSTALL) $< $(FINAL_TARGET)
- endif
+@@ -93,16 +93,20 @@ $(MOZ_CRT_DLL): \
+ # never updated the sample.def files; could probably fix if someone
+ # were ever bored enough. :-)
+ 	rm -f $(addsuffix .lib, $(addprefix $(CRT_OBJ_DIR)/build/intel/, $(MOZ_CRT_STATIC_LIBS)))
+ 	rm -f $(addsuffix .pdb, $(addprefix $(CRT_OBJ_DIR)/build/intel/, $(MOZ_CRT_STATIC_LIBS)))
  
- else
+ else # Not Windows
  
  MODULE_OPTIMIZE_FLAGS = -O2
 +ifdef OLD_CODESOURCERY

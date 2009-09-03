@@ -1,6 +1,6 @@
 #!/bin/sh
 
-HGURL="http://hg.mozilla.org/index.cgi/mozilla-central/archive/tip.tar.gz"
+HGURL="http://172.21.43.45/hg/mozilla-1.9.2/archive/0000f3d73219.tar.gz"
 MOZCURSIMPDATE=$(date +"%Y%m%d")
 MOZCURSTAMPDATE=$(date +"%s")
 MOZCURDATE=$(date +"mozilla-hg-%Y%m%d")
@@ -37,5 +37,5 @@ rm -f mozilla.tar.gz
 mv temp.tar.gz mozilla.tar.gz
 echo $MOZCURSIMPDATE > curver
 echo $MOZCURSIMPDATE > deborigver
-echo "" > ../microb-engine/trunkupdates/series
-svn rm ../microb-engine/trunkupdates/*.diff
+#echo "" > ../microb-engine/trunkupdates/series
+#svn rm ../microb-engine/trunkupdates/*.diff

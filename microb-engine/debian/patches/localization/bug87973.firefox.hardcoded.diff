@@ -1,6 +1,11 @@
---- mozilla/browser/locales/en-US/chrome/overrides/appstrings.properties.orig	2008-09-02 10:16:18.000000000 -0500
-+++ mozilla/browser/locales/en-US/chrome/overrides/appstrings.properties	2008-09-29 16:55:43.000000000 -0500
-@@ -33,27 +33,27 @@
+Index: mozilla/browser/locales/en-US/chrome/overrides/appstrings.properties
+===================================================================
+--- mozilla.orig/browser/locales/en-US/chrome/overrides/appstrings.properties
++++ mozilla/browser/locales/en-US/chrome/overrides/appstrings.properties
+@@ -30,33 +30,33 @@
+ # decision by deleting the provisions above and replace them with the notice
+ # and other provisions required by the GPL or the LGPL. If you do not delete
+ # the provisions above, a recipient may use your version of this file under
  # the terms of any one of the MPL, the GPL or the LGPL.
  #
  # ***** END LICENSE BLOCK *****
@@ -38,3 +43,6 @@
  externalProtocolTitle=External Protocol Request
  externalProtocolPrompt=An external application must be launched to handle %1$S: links.\n\n\nRequested link:\n\n%2$S\n\nApplication: %3$S\n\n\nIf you were not expecting this request it may be an attempt to exploit a weakness in that other program. Cancel this request unless you are sure it is not malicious.\n
  #LOCALIZATION NOTE (externalProtocolUnknown): The following string is shown if the application name can't be determined
+ externalProtocolUnknown=<Unknown>
+ externalProtocolChkMsg=Remember my choice for all links of this type.
+ externalProtocolLaunchBtn=Launch application

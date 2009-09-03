@@ -3,7 +3,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
 ===================================================================
 --- mozilla.orig/layout/base/nsPresShell.cpp
 +++ mozilla/layout/base/nsPresShell.cpp
-@@ -422,16 +422,23 @@
+@@ -427,16 +427,23 @@ protected:
  // microseconds.  When this bound is exceeded and reflow commands are
  // still queued up, a reflow event is posted.  The idea is for reflow
  // to not hog the processor beyond the time specifed in
@@ -27,7 +27,7 @@ Index: mozilla/layout/base/nsPresShell.cpp
  
  /**A block of memory that the stack will 
   * chop up and hand out
-@@ -1163,21 +1170,16 @@
+@@ -1286,20 +1293,16 @@ protected:
    PRPackedBool      mPaintingSuppressed;  // For all documents we initially lock down painting.
                                            // We will refuse to paint the document until either
                                            // (a) our timer fires or (b) all frames are constructed.
@@ -40,16 +40,15 @@ Index: mozilla/layout/base/nsPresShell.cpp
 -                                  // pref-controlled, but we use this
 -                                  // value if we fail to get the pref
 -                                  // for any reason.
--
+ 
    static void sPaintSuppressionCallback(nsITimer* aTimer, void* aPresShell); // A callback for the timer.
  
-   MOZ_TIMER_DECLARE(mReflowWatch)  // Used for measuring time spent in reflow
-   MOZ_TIMER_DECLARE(mFrameCreationWatch)  // Used for measuring time spent in frame creation 
- 
- #ifdef MOZ_REFLOW_PERF
-   ReflowCountMgr * mReflowCountMgr;
- #endif
-@@ -2493,23 +2495,25 @@
+   // On Win32 after interupting a reflow we need to post the resume reflow
+   // event off a timer to avoid event starvation because posted messages are
+   // processed before other messages when the modal moving/sizing loop is
+   // running, see bug 491700 for details.
+   nsCOMPtr<nsITimer> mReflowContinueTimer;
+@@ -2710,23 +2713,25 @@ PresShell::InitialReflow(nscoord aWidth,
      mPaintSuppressionTimer = do_CreateInstance("@mozilla.org/timer;1");
      if (!mPaintSuppressionTimer)
        // Uh-oh.  We must be out of memory.  No point in keeping painting locked down.

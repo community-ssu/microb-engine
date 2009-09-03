@@ -1,0 +1,56 @@
+Index: mozilla/docshell/base/nsDocShell.cpp
+===================================================================
+--- mozilla/docshell/base/nsDocShell.cpp.orig   2009-05-19 15:10:51.000000000 +0300
++++ mozilla/docshell/base/nsDocShell.cpp        2009-05-27 13:17:55.000000000 +0300
+@@ -6798,20 +6798,23 @@ nsDocShell::InternalLoad(nsIURI * aURI,
+     }
+ 
+     if (!aURI) {
+         return NS_ERROR_NULL_POINTER;
+     }
+ 
+     NS_ENSURE_TRUE(IsValidLoadType(aLoadType), NS_ERROR_INVALID_ARG);
+ 
+     NS_ENSURE_TRUE(!mIsBeingDestroyed, NS_ERROR_NOT_AVAILABLE);
+ 
++    // We don't want to be destroyed
++    nsCOMPtr<nsIDocShell> kungFuDeathGrip(this);
++
+     // wyciwyg urls can only be loaded through history. Any normal load of
+     // wyciwyg through docshell is  illegal. Disallow such loads.
+     if (aLoadType & LOAD_CMD_NORMAL) {
+         PRBool isWyciwyg = PR_FALSE;
+         rv = aURI->SchemeIs("wyciwyg", &isWyciwyg);   
+         if ((isWyciwyg && NS_SUCCEEDED(rv)) || NS_FAILED(rv)) 
+             return NS_ERROR_FAILURE;
+     }
+ 
+     PRBool bIsJavascript = PR_FALSE;
+@@ -7212,26 +7215,20 @@ nsDocShell::InternalLoad(nsIURI * aURI,
+                 NS_ENSURE_TRUE(hEntry, NS_ERROR_FAILURE);
+                 nsCOMPtr<nsISHEntry> shEntry(do_QueryInterface(hEntry));
+                 if (shEntry)
+                     shEntry->SetTitle(mTitle);
+             }
+ 
+             return NS_OK;
+         }
+     }
+     
+-    // mContentViewer->PermitUnload can destroy |this| docShell, which
+-    // causes the next call of CanSavePresentation to crash. 
+-    // Hold onto |this| until we return, to prevent a crash from happening. 
+-    // (bug#331040)
+-    nsCOMPtr<nsIDocShell> kungFuDeathGrip(this);
+-
+     // Check if the page doesn't want to be unloaded. The javascript:
+     // protocol handler deals with this for javascript: URLs.
+     if (!bIsJavascript && mContentViewer) {
+         PRBool okToUnload;
+         rv = mContentViewer->PermitUnload(&okToUnload);
+ 
+         if (NS_SUCCEEDED(rv) && !okToUnload) {
+             // The user chose not to unload the page, interrupt the
+             // load.
+             return NS_OK;
+

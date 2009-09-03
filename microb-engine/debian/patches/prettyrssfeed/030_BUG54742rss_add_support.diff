@@ -1,15 +1,15 @@
 # Add support for some rss types
 # works XMLPrettyPrint hacks
---- mozilla/layout/build/nsLayoutModule.cpp.orig	2007-04-26 02:00:44.000000000 +0300
-+++ mozilla/layout/build/nsLayoutModule.cpp	2007-04-26 16:33:43.799281250 +0300
-@@ -1044,20 +1044,30 @@ static const nsModuleComponentInfo gComp
-     NS_DOC_ENCODER_CONTRACTID_BASE "text/xml",
-     CreateTextEncoder },
- 
-   { "XML document encoder",
-     NS_TEXT_ENCODER_CID,
-     NS_DOC_ENCODER_CONTRACTID_BASE "application/xml",
-     CreateTextEncoder },
+Index: mozilla/layout/build/nsLayoutModule.cpp
+===================================================================
+--- mozilla.orig/layout/build/nsLayoutModule.cpp
++++ mozilla/layout/build/nsLayoutModule.cpp
+@@ -1030,16 +1030,26 @@ static const nsModuleComponentInfo gComp
+   { "Canvas 2D Rendering Context",
+     NS_CANVASRENDERINGCONTEXT2D_CID,
+     "@mozilla.org/content/canvas-rendering-context;1?id=2d",
+     CreateCanvasRenderingContext2D },
+ #endif
  
    { "XML document encoder",
      NS_TEXT_ENCODER_CID,
@@ -23,24 +23,20 @@
 +
 +  { "XML document encoder",
 +    NS_TEXT_ENCODER_CID,
-     NS_DOC_ENCODER_CONTRACTID_BASE "application/xhtml+xml",
+     NS_DOC_ENCODER_CONTRACTID_BASE "text/xml",
      CreateTextEncoder },
  
- #ifdef MOZ_SVG
-   { "SVG document encoder",
+   { "XML document encoder",
      NS_TEXT_ENCODER_CID,
-     NS_DOC_ENCODER_CONTRACTID_BASE "image/svg+xml",
+     NS_DOC_ENCODER_CONTRACTID_BASE "application/xml",
      CreateTextEncoder },
- #endif
  
-@@ -1081,20 +1091,30 @@ static const nsModuleComponentInfo gComp
-     NS_CONTENTSERIALIZER_CONTRACTID_PREFIX "text/xml",
-     CreateXMLContentSerializer },
+@@ -1067,16 +1077,26 @@ static const nsModuleComponentInfo gComp
  
-   { "XML content serializer",
-     NS_XMLCONTENTSERIALIZER_CID,
-     NS_CONTENTSERIALIZER_CONTRACTID_PREFIX "application/xml",
-     CreateXMLContentSerializer },
+   { "HTML copy encoder",
+     NS_HTMLCOPY_TEXT_ENCODER_CID,
+     NS_HTMLCOPY_ENCODER_CONTRACTID,
+     CreateHTMLCopyTextEncoder },
  
    { "XML content serializer",
      NS_XMLCONTENTSERIALIZER_CID,
@@ -54,21 +50,19 @@
 +
 +  { "XML content serializer",
 +    NS_XMLCONTENTSERIALIZER_CID,
-     NS_CONTENTSERIALIZER_CONTRACTID_PREFIX "application/xhtml+xml",
+     NS_CONTENTSERIALIZER_CONTRACTID_PREFIX "text/xml",
      CreateXMLContentSerializer },
  
- #ifdef MOZ_SVG
-   { "SVG content serializer",
+   { "XML content serializer",
      NS_XMLCONTENTSERIALIZER_CID,
-     NS_CONTENTSERIALIZER_CONTRACTID_PREFIX "image/svg+xml",
+     NS_CONTENTSERIALIZER_CONTRACTID_PREFIX "application/xml",
      CreateXMLContentSerializer },
- #endif
  
---- mozilla/layout/build/nsContentDLF.cpp.orig	2007-04-26 01:59:47.000000000 +0300
-+++ mozilla/layout/build/nsContentDLF.cpp	2007-04-26 16:32:36.747090750 +0300
-@@ -97,20 +97,22 @@ static const char* const gHTMLTypes[] = 
- #ifdef MOZ_VIEW_SOURCE
-   "application/x-view-source", //XXX I wish I could just use nsMimeTypes.h here
+Index: mozilla/layout/build/nsContentDLF.cpp
+===================================================================
+--- mozilla.orig/layout/build/nsContentDLF.cpp
++++ mozilla/layout/build/nsContentDLF.cpp
+@@ -103,16 +103,18 @@ static const char* const gHTMLTypes[] = 
  #endif
    "application/xhtml+xml",
    0
@@ -87,5 +81,3 @@
  #ifdef MOZ_SVG
  static const char* const gSVGTypes[] = {
    "image/svg+xml",
-   0
- };

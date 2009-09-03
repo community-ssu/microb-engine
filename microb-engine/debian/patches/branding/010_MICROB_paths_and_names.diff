@@ -6,7 +6,7 @@ Index: mozilla/xulrunner/confvars.sh
 ===================================================================
 --- mozilla.orig/xulrunner/confvars.sh
 +++ mozilla/xulrunner/confvars.sh
-@@ -31,20 +31,24 @@
+@@ -31,21 +31,25 @@
  # use your version of this file under the terms of the MPL, indicate your
  # decision by deleting the provisions above and replace them with the notice
  # and other provisions required by the GPL or the LGPL. If you do not delete
@@ -22,6 +22,7 @@ Index: mozilla/xulrunner/confvars.sh
  MOZ_UPDATER=1
  MOZ_XULRUNNER=1
  MOZ_ENABLE_LIBXUL=1
+ MOZ_STATIC_BUILD_UNSUPPORTED=1
 +if test $MOZ_APP_VERSION; then
 +  MOZ_APP_VERSION=$MOZ_APP_VERSION
 +else
@@ -55,7 +56,7 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -53,24 +53,24 @@
+@@ -52,24 +52,24 @@ MOZ_APP_NAME	= @MOZ_APP_NAME@
  MOZ_APP_DISPLAYNAME = @MOZ_APP_DISPLAYNAME@
  MOZ_APP_VERSION = @MOZ_APP_VERSION@
  
@@ -80,7 +81,7 @@ Index: mozilla/config/autoconf.mk.in
  DIST		= $(DEPTH)/dist
  LIBXUL_SDK      = @LIBXUL_SDK@
  
+ MOZ_FS_LAYOUT = @MOZ_FS_LAYOUT@
+ 
  L10NBASEDIR     = @L10NBASEDIR@
  
- ifdef LIBXUL_SDK
- LIBXUL_DIST = $(LIBXUL_SDK)

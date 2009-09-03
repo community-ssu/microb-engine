@@ -47,7 +47,7 @@
 // SYNTAX HINTS:  dashes are delimiters.  Use underscores instead.
 //  The first character after a period must be alphabetic.
 
-pref("keyword.URL", "http://www.google.com/search?ie=UTF-8&oe=utf-8&q=");
+pref("keyword.URL", "http://www.google.com/search?client=ms-nokia-maemo&q=");
 pref("keyword.enabled", true);
 pref("general.useragent.locale", "chrome://global/locale/intl.properties");
 
@@ -94,7 +94,7 @@ pref("browser.display.force_inline_alttext", false); // true = force ALT text fo
 // 1 = use external leading only when font provides, 
 // 2 = add extra leading both internal leading and external leading are zero
 pref("browser.display.normal_lineheight_calc_control", 2);
-pref("browser.display.show_image_placeholders", false); // true = show image placeholders while image is loaded and when image is broken
+pref("browser.display.show_image_placeholders", true); // true = show image placeholders while image is loaded and when image is broken
 // min font device pixel size at which to turn on high quality
 pref("browser.display.auto_quality_min_font_size", 20);
 pref("browser.anchor_color",                "#0000EE");
@@ -112,8 +112,11 @@ pref("browser.send_pings.require_same_host", false);  // only send pings to the 
 pref("browser.display.use_focus_colors",    false);
 pref("browser.display.focus_background_color", "#117722");
 pref("browser.display.focus_text_color",     "#ffffff");
-pref("browser.display.focus_ring_width",     2);
-pref("browser.display.focus_ring_on_anything", true);
+pref("browser.display.focus_ring_width",     1);
+pref("browser.display.focus_ring_on_anything", false);
+// focus ring border style. 
+// 0 = solid border, 1 = dotted border
+pref("browser.display.focus_ring_style", 1);
 
 pref("browser.helperApps.alwaysAsk.force",  false);
 pref("browser.helperApps.neverAsk.saveToDisk", "");
@@ -129,11 +132,32 @@ pref("browser.chrome.image_icons.max_size", 1024);
 
 pref("browser.triple_click_selects_paragraph", true);
 
+// When loading <video> or <audio>, check for Access-Control-Allow-Origin
+// header, and disallow the connection if not present or permitted.
+pref("media.enforce_same_site_origin", false);
+
+// Media cache size in kilobytes
+pref("media.cache_size", 51200);
+
+pref("media.ogg.enabled", true);
+pref("media.wave.enabled", true);
+
+// Whether to autostart a media element with an |autoplay| attribute
+pref("media.autoplay.enabled", true);
+
+// 0 = Off, 1 = Full, 2 = Tagged Images Only. 
+// See eCMSMode in gfx/thebes/public/gfxPlatform.h
+pref("gfx.color_management.mode", 2);
 pref("gfx.color_management.enabled", false);
 pref("gfx.color_management.display_profile", "");
+pref("gfx.color_management.rendering_intent", 0);
+
+pref("gfx.downloadable_fonts.enabled", true);
 
 pref("accessibility.browsewithcaret", false);
 pref("accessibility.warn_on_browsewithcaret", true);
+
+pref("accessibility.browsewithcaret_shortcut.enabled", true);
 
 // Tab focus model bit field:
 // 1 focuses text controls, 2 focuses other form elements, 4 adds links.
@@ -189,6 +213,11 @@ pref("toolkit.scrollbox.clickToScroll.scrollDelay", 150);
 // view source
 pref("view_source.syntax_highlight", true);
 pref("view_source.wrap_long_lines", false);
+pref("view_source.editor.external", false);
+pref("view_source.editor.path", "");
+// allows to add further arguments to the editor; use the %LINE% placeholder
+// for jumping to a specific line (e.g. "/line:%LINE%" or "--goto %LINE%")
+pref("view_source.editor.args", "");
 
 // dispatch left clicks only to content in browser (still allows clicks to chrome/xul)
 pref("nglayout.events.dispatchLeftClickOnly", true);
@@ -212,6 +241,9 @@ pref("browser.fixup.alternate.enabled", true);
 pref("browser.fixup.alternate.prefix", "www.");
 pref("browser.fixup.alternate.suffix", ".com .org .net");
 pref("browser.fixup.hide_user_pass", true);
+
+// Location Bar AutoComplete
+pref("browser.urlbar.autocomplete.enabled", true);
 
 // Print header customization
 // Use the following codes:
@@ -342,6 +374,8 @@ pref("capability.policy.mailnews.*.data.get", "noAccess");
 pref("capability.policy.mailnews.*.getAttribute", "noAccess");
 pref("capability.policy.mailnews.HTMLDivElement.getAttribute", "sameOrigin");
 pref("capability.policy.mailnews.*.getAttributeNS", "noAccess");
+pref("capability.policy.mailnews.*.getAttributeNode", "noAccess");
+pref("capability.policy.mailnews.*.getAttributeNodeNS", "noAccess");
 pref("capability.policy.mailnews.*.getNamedItem", "noAccess");
 pref("capability.policy.mailnews.*.getNamedItemNS", "noAccess");
 pref("capability.policy.mailnews.*.host.get", "noAccess");
@@ -355,11 +389,14 @@ pref("capability.policy.mailnews.*.protocol.get", "noAccess");
 pref("capability.policy.mailnews.*.src.get", "noAccess");
 pref("capability.policy.mailnews.*.substringData.get", "noAccess");
 pref("capability.policy.mailnews.*.text.get", "noAccess");
+pref("capability.policy.mailnews.*.textContent", "noAccess");
 pref("capability.policy.mailnews.*.title.get", "noAccess");
+pref("capability.policy.mailnews.*.wholeText", "noAccess");
 pref("capability.policy.mailnews.DOMException.toString", "noAccess");
 pref("capability.policy.mailnews.HTMLAnchorElement.toString", "noAccess");
 pref("capability.policy.mailnews.HTMLDocument.domain", "noAccess");
 pref("capability.policy.mailnews.HTMLDocument.URL", "noAccess");
+pref("capability.policy.mailnews.*.documentURI", "noAccess");
 pref("capability.policy.mailnews.Location.toString", "noAccess");
 pref("capability.policy.mailnews.Range.toString", "noAccess");
 pref("capability.policy.mailnews.Window.blur", "noAccess");
@@ -480,6 +517,10 @@ pref("dom.popup_allowed_events", "change click dblclick mouseup reset submit");
 pref("dom.disable_open_click_delay", 1000);
 
 pref("dom.storage.enabled", true);
+pref("dom.storage.default_quota",      5120);
+
+// Parsing perf prefs. For now just mimic what the old code did.
+pref("content.sink.pending_event_mode", 0);
 
 // Disable popups from plugins by default
 //   0 = openAllowed
@@ -493,6 +534,8 @@ pref("javascript.enabled",                  true);
 pref("javascript.allow.mailnews",           false);
 pref("javascript.options.strict",           false);
 pref("javascript.options.relimit",          false);
+pref("javascript.options.jit.content",      true);
+pref("javascript.options.jit.chrome",       false);
 
 // advanced prefs
 pref("security.enable_java",                true);
@@ -615,6 +658,9 @@ pref("network.http.pipelining.firstrequest", true);
 // Max number of requests in the pipeline
 pref("network.http.pipelining.maxrequests" , 4);
 
+// Prompt for 307 redirects
+pref("network.http.prompt-temp-redirect", true);
+
 // </http>
 
 // If false, remote JAR files that are served with a content type other than
@@ -640,6 +686,7 @@ pref("network.IDN_show_punycode", false);
 
 // ccTLDs
 pref("network.IDN.whitelist.ac", true);
+pref("network.IDN.whitelist.ar", true);
 pref("network.IDN.whitelist.at", true);
 pref("network.IDN.whitelist.br", true);
 pref("network.IDN.whitelist.ch", true);
@@ -696,7 +743,7 @@ pref("network.IDN.whitelist.xn--zckzah", true);
 // attempt and so we always display the domain name as punycode. This would 
 // override the settings "network.IDN_show_punycode" and 
 // "network.IDN.whitelist.*".
-pref("network.IDN.blacklist_chars", "\u0020\u00A0\u00BC\u00BD\u01C3\u0337\u0338\u05C3\u05F4\u06D4\u0702\u115F\u1160\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u200B\u2024\u2027\u2028\u2029\u202F\u2039\u203A\u2044\u205F\u2154\u2155\u2156\u2159\u215A\u215B\u215F\u2215\u23AE\u29F6\u29F8\u2AFB\u2AFD\u2FF0\u2FF1\u2FF2\u2FF3\u2FF4\u2FF5\u2FF6\u2FF7\u2FF8\u2FF9\u2FFA\u2FFB\u3000\u3002\u3014\u3015\u3033\u3164\u321D\u321E\u33AE\u33AF\u33C6\u33DF\uFE14\uFE15\uFE3F\uFE5D\uFE5E\uFEFF\uFF0E\uFF0F\uFF61\uFFA0\uFFF9\uFFFA\uFFFB\uFFFC\uFFFD");
+pref("network.IDN.blacklist_chars", "\u0020\u00A0\u00BC\u00BD\u00BE\u01C3\u02D0\u0337\u0338\u0589\u05C3\u05F4\u0609\u060A\u066A\u06D4\u0701\u0702\u0703\u0704\u115F\u1160\u1735\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u200B\u2024\u2027\u2028\u2029\u202F\u2039\u203A\u2041\u2044\u2052\u205F\u2153\u2154\u2155\u2156\u2157\u2158\u2159\u215A\u215B\u215C\u215D\u215E\u215F\u2215\u2236\u23AE\u2571\u29F6\u29F8\u2AFB\u2AFD\u2FF0\u2FF1\u2FF2\u2FF3\u2FF4\u2FF5\u2FF6\u2FF7\u2FF8\u2FF9\u2FFA\u2FFB\u3000\u3002\u3014\u3015\u3033\u3164\u321D\u321E\u33AE\u33AF\u33C6\u33DF\uA789\uFE14\uFE15\uFE3F\uFE5D\uFE5E\uFEFF\uFF0E\uFF0F\uFF61\uFFA0\uFFF9\uFFFA\uFFFB\uFFFC\uFFFD");
 
 // This preference specifies a list of domains for which DNS lookups will be
 // IPv4 only. Works around broken DNS servers which can't handle IPv6 lookups
@@ -753,7 +800,6 @@ pref("network.negotiate-auth.gsslib", "");
 // Specify if the gss lib comes standard with the OS
 pref("network.negotiate-auth.using-native-gsslib", true);
 
-//
 // The following prefs are used to enable automatic use of the operating
 // system's NTLM implementation to silently authenticate the user with their
 // Window's domain logon.  The trusted-uris pref follows the format of the
@@ -821,7 +867,7 @@ pref("intl.charsetmenu.browser.more2",      "chrome://global/locale/intl.propert
 pref("intl.charsetmenu.browser.more3",      "chrome://global/locale/intl.properties");
 pref("intl.charsetmenu.browser.more4",      "chrome://global/locale/intl.properties");
 pref("intl.charsetmenu.browser.more5",      "chrome://global/locale/intl.properties");
-pref("intl.charsetmenu.browser.unicode",    "chrome://global/locale/intl.properties");
+pref("intl.charsetmenu.browser.unicode",    "UTF-8, UTF-16LE, UTF-16BE, UTF-32, UTF-32LE, UTF-32BE");
 pref("intl.charsetmenu.mailedit",           "chrome://global/locale/intl.properties");
 pref("intl.charsetmenu.browser.cache",      "");
 pref("intl.charsetmenu.mailview.cache",     "");
@@ -830,7 +876,7 @@ pref("intl.charsetmenu.browser.cache.size", 5);
 pref("intl.charset.detector",               "chrome://global/locale/intl.properties");
 pref("intl.charset.default",                "chrome://global-platform/locale/intl.properties");
 pref("intl.ellipsis",                       "chrome://global-platform/locale/intl.properties");
-pref("intl.locale.matchOS",                 true);
+pref("intl.locale.matchOS",                 false);
 // fallback charset list for Unicode conversion (converting from Unicode)
 // currently used for mail send only to handle symbol characters (e.g Euro, trademark, smartquotes)
 // for ISO-8859-1
@@ -881,6 +927,9 @@ pref("clipboard.autocopy", false);
 pref("mousewheel.transaction.timeout", 1500);
 // mouse wheel scroll transaction is held even if the mouse cursor is moved.
 pref("mousewheel.transaction.ignoremovedelay", 100);
+
+// Macbook touchpad two finger pixel scrolling
+pref("mousewheel.enable_pixel_scrolling", true);
 
 // 0=lines, 1=pages, 2=history , 3=text size
 pref("mousewheel.withnokey.action",0);
@@ -970,6 +1019,8 @@ pref("bidi.controlstextmode", 1);
 // 2 = hindicontextnumeralBidi
 // 3 = arabicnumeralBidi
 // 4 = hindinumeralBidi
+// 5 = persiancontextnumeralBidi
+// 6 = persiannumeralBidi
 pref("bidi.numeral", 0);
 // ------------------
 //  Support Mode
@@ -995,6 +1046,11 @@ pref("bidi.edit.delete_immediately", false);
 // 2 = visual, but logical during selection
 pref("bidi.edit.caret_movement_style", 2);
 
+// Setting this pref to |true| forces Bidi UI menu items and keyboard shortcuts
+// to be exposed, and enables the directional caret hook. By default, only
+// expose it for bidi-associated system locales.
+pref("bidi.browser.ui", false);
+
 // used for double-click word selection behavior. Win will override.
 pref("layout.word_select.eat_space_to_next_word", false);
 pref("layout.word_select.stop_at_punctuation", true);
@@ -1019,6 +1075,21 @@ pref("layout.frames.force_resizability", false);
 
 // pref to report CSS errors to the error console
 pref("layout.css.report_errors", true);
+
+// Should the :visited selector ever match (otherwise :link matches instead)?
+pref("layout.css.visited_links_enabled", true);
+
+// Override DPI. A value of -1 means use the maxium of 96 and the system DPI.
+// A value of 0 means use the system DPI. A positive value is used as the DPI.
+// This sets the physical size of a device pixel and thus controls the
+// interpretation of physical units such as "pt".
+pref("layout.css.dpi", -1);
+
+// Set the number of device pixels per CSS pixel. A value <= 0 means choose
+// automatically based on the DPI. A positive value is used as-is. This effectively
+// controls the size of a CSS "px". This is only used for pixel-based
+// (screen) output devices.
+pref("layout.css.devPixelsPerPx", -1);
 
 // pref for which side vertical scrollbars should be on
 // 0 = end-side in UI direction
@@ -1054,6 +1125,9 @@ pref("config.use_system_prefs", true);
 // if the system has enabled accessibility
 pref("config.use_system_prefs.accessibility", false);
 
+// enable single finger gesture input (win7+ tablets)
+pref("gestures.enable_single_finger_input", true);
+
 /*
  * What are the entities that you want Mozilla to save using mnemonic
  * names rather than numeric codes? E.g. If set, we'll output &nbsp;
@@ -1077,6 +1151,7 @@ pref("dom.max_chrome_script_run_time", 20);
 pref("dom.max_script_run_time", 15);
 
 pref("svg.enabled", true);
+pref("svg.smil.enabled", false);
 
 pref("font.minimum-size.ar", 0);
 pref("font.minimum-size.x-armn", 0);
@@ -1110,15 +1185,10 @@ pref("font.minimum-size.x-western", 0);
 pref("font.minimum-size.x-unicode", 0);
 pref("font.minimum-size.x-user-def", 0);
 
-//
-//
-//
-//
-//// Handled differently under Mac/Windows
+// Handled differently under Mac/Windows
 pref("network.hosts.smtp_server", "localhost");
 pref("network.hosts.pop_server", "pop");
 pref("network.protocol-handler.warn-external.file", false);
-pref("layout.css.dpi", -1); // max(96dpi, System setting)
 pref("browser.drag_out_of_frame_style", 1);
 pref("editor.singleLine.pasteNewlines", 0);
 
@@ -1173,8 +1243,6 @@ pref("print.print_paper_size", 0);
 // around the content of the page for Print Preview only
 pref("print.print_extra_margin", 0); // twips
 
-pref("print.whileInPrintPreview", false);
-
 pref("font.allow_double_byte_special_chars", true);
 // font names
 
@@ -1198,7 +1266,9 @@ pref("font.name.serif.ko", "serif");
 pref("font.name.sans-serif.ko", "sans-serif");
 pref("font.name.monospace.ko", "monospace");
 
-// th
+pref("font.name.serif.th", "serif");
+pref("font.name.sans-serif.th", "sans-serif");
+pref("font.name.monospace.th", "monospace");
 
 pref("font.name.serif.tr", "serif");
 pref("font.name.sans-serif.tr", "sans-serif");
@@ -1262,7 +1332,8 @@ pref("font.size.fixed.ko", 16);
 
 pref("font.default.th", "serif");
 pref("font.size.variable.th", 16);
-pref("font.size.fixed.th", 12);
+pref("font.size.fixed.th", 13);
+pref("font.minimum-size.th", 13);
 
 pref("font.default.tr", "serif");
 pref("font.size.variable.tr", 16);
@@ -1370,17 +1441,23 @@ pref("print.postscript.paper_size",    "letter");
 pref("print.postscript.orientation",   "portrait");
 pref("print.postscript.print_command", "lpr ${MOZ_PRINTER_NAME:+-P\"$MOZ_PRINTER_NAME\"}");
 
-//
-//
-//
-//
-//
+// On GTK2 platform, we should use topmost window level for the default window
+// level of <panel> element of XUL. GTK2 has only two window types. One is
+// normal top level window, other is popup window. The popup window is always
+// topmost window level, therefore, we are using normal top level window for
+// non-topmost panel, but it is pretty hacky. On some Window Managers, we have
+// 2 problems:
+// 1. The non-topmost panel steals focus from its parent window at showing.
+// 2. The parent of non-topmost panel is not activated when the panel is hidden.
+// So, we have no reasons we should use non-toplevel window for popup.
+pref("ui.panel.default_level_parent", true);
+
 // Login Manager prefs
 pref("signon.rememberSignons",              true);
 pref("signon.expireMasterPassword",         false);
 pref("signon.SignonFileName",               "signons.txt"); // obsolete 
 pref("signon.SignonFileName2",              "signons2.txt"); // obsolete
-pref("signon.SignonFileName3",              "signons3.txt");
+pref("signon.SignonFileName3",              "signons3.txt"); // obsolete
 pref("signon.autofillForms",                true); 
 pref("signon.debug",                        false); // logs to Error Console
 
@@ -1390,29 +1467,12 @@ pref("zoom.minPercent", 30);
 pref("zoom.maxPercent", 300);
 pref("toolkit.zoomManager.zoomValues", ".3,.5,.67,.8,.9,1,1.1,1.2,1.33,1.5,1.7,2,2.4,3");
 
+// Image cache prefs
+// The maximum size, in bytes, of the decoded images we cache
+pref("image.cache.size", 5242880);
+// A weight, from 0-1000, to place on time when comparing to size.
+// Size is given a weight of 1000 - timeweight.
+pref("image.cache.timeweight", 500);
 
-pref("content.max.tokenizing.time", 80000);
-pref("content.notify.backoffcount", -1);
-pref("content.notify.ontimer", false);
-pref("content.switch.threshold", 500000);
-pref("nglayout.initialpaint.delay", 0);
-pref("nglayout.frame.constructor.signals", 5);
-pref("content.perf.interrupts.count", 5);
-
-pref("layout.xml.prettyprint", true);
-pref("browser.sessionhistory.max_entries", 20);
-
-pref("dom.window.useragent.policy", true);
-pref("ua.policy.mail.google.com", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.4.0) Gecko/20070423 Firefox/0.8");
-
-pref("capability.policy.policynames", "mousedown");
-pref("capability.policy.mousedown.sites", "http://mail.google.com http://aa.com");
-pref("capability.policy.mousedown.HTMLDocument.mousedown", "noAccess");
-pref("dom.jsevent.renamer", 1);
-pref("dom.window.jsevents.policy", true);
-pref("jsevent.renamer.mousedown", "click");
-
-pref("extensions.update.enabled", false);
-pref("extensions.checkCompatibility", false);
-pref("general.useragent.extra.gecko", "Gecko/2008052201");
-
+// Enable/Disable the geolocation API for content 
+pref("geo.enabled", true);

@@ -7,11 +7,11 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -3016,21 +3016,21 @@ nsWindow::NativeCreate(nsIWidget        
-                                G_CALLBACK(theme_changed_cb), this);
-     }
+@@ -4048,33 +4048,33 @@ nsWindow::NativeCreate(nsIWidget        
  
      if (mContainer) {
+         g_signal_connect(G_OBJECT(mContainer), "unrealize",
+                          G_CALLBACK(container_unrealize_cb), NULL);
          g_signal_connect_after(G_OBJECT(mContainer), "size_allocate",
                                 G_CALLBACK(size_allocate_cb), NULL);
          g_signal_connect(G_OBJECT(mContainer), "expose_event",
@@ -24,19 +24,6 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
                           G_CALLBACK(leave_notify_event_cb), NULL);
 -        g_signal_connect(G_OBJECT(mContainer), "motion_notify_event",
 +        g_signal_connect_after(G_OBJECT(mContainer), "motion_notify_event",
-                          G_CALLBACK(motion_notify_event_cb), NULL);
-         g_signal_connect(G_OBJECT(mContainer), "button_press_event",
-                          G_CALLBACK(button_press_event_cb), NULL);
-         g_signal_connect(G_OBJECT(mContainer), "button_release_event",
-                          G_CALLBACK(button_release_event_cb), NULL);
-         g_signal_connect(G_OBJECT(mContainer), "focus_in_event",
-                          G_CALLBACK(focus_in_event_cb), NULL);
-         g_signal_connect(G_OBJECT(mContainer), "focus_out_event",
---- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2007-05-09 10:27:11.000000000 +0300
-+++ mozilla/widget/src/gtk2/nsWindow.cpp	2007-05-09 10:35:32.000000000 +0300
-@@ -3027,17 +3027,17 @@
-                          G_CALLBACK(leave_notify_event_cb), NULL);
-         g_signal_connect_after(G_OBJECT(mContainer), "motion_notify_event",
                           G_CALLBACK(motion_notify_event_cb), NULL);
 -        g_signal_connect(G_OBJECT(mContainer), "button_press_event",
 +        g_signal_connect_after(G_OBJECT(mContainer), "button_press_event",
@@ -56,3 +43,8 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
                           G_CALLBACK(key_release_event_cb), NULL);
          g_signal_connect(G_OBJECT(mContainer), "scroll_event",
                           G_CALLBACK(scroll_event_cb), NULL);
+         g_signal_connect(G_OBJECT(mContainer), "visibility_notify_event",
+                          G_CALLBACK(visibility_notify_event_cb), NULL);
+ 
+         gtk_drag_dest_set((GtkWidget *)mContainer,
+                           (GtkDestDefaults)0,

@@ -4,9 +4,9 @@ Index: mozilla/content/base/src/nsContentSink.h
 ===================================================================
 --- mozilla.orig/content/base/src/nsContentSink.h
 +++ mozilla/content/base/src/nsContentSink.h
-@@ -280,16 +280,18 @@
-   // If true, we deferred notifications until sheets load
-   PRUint8 mDeferredFlushTags : 1;
+@@ -350,16 +350,18 @@ protected:
+   // If true, we did get a ReadyToCallDidBuildModel call
+   PRUint8 mDidGetReadyToCallDidBuildModelCall : 1;
    
    // -- Can interrupt parsing members --
    PRUint32 mDelayTimerStart;
@@ -19,15 +19,15 @@ Index: mozilla/content/base/src/nsContentSink.h
    // Switch between intervals when time is exceeded
    PRInt32 mDynamicIntervalSwitchThreshold;
  
+   PRInt32 mMaxTokensDeflectedInLowFreqMode;
+ 
    PRInt32 mBeginLoadTime;
  
-   // Last mouse event or keyboard event time sampled by the content
-   // sink
 Index: mozilla/content/base/src/nsContentSink.cpp
 ===================================================================
 --- mozilla.orig/content/base/src/nsContentSink.cpp
 +++ mozilla/content/base/src/nsContentSink.cpp
-@@ -246,16 +246,24 @@
+@@ -286,16 +286,24 @@ nsContentSink::Init(nsIDocument* aDoc,
    // The current ratio of 3 to 1 was determined to be the lowest
    // mMaxTokenProcessingTime which does not impact page load
    // performance.  See bugzilla bug 76722 for details.
@@ -51,8 +51,8 @@ Index: mozilla/content/base/src/nsContentSink.cpp
    mCanInterruptParser =
      nsContentUtils::GetBoolPref("content.interrupt.parsing", PR_TRUE);
  
-   return NS_OK;
-@@ -1339,16 +1347,22 @@
+   // 200 determined empirically to provide good user response without
+@@ -1618,16 +1626,22 @@ nsContentSink::DidProcessATokenImpl()
        mDynamicLowerValue = PR_FALSE;
        // Reset the hint that to favoring performance for PLEvent dispatch.
        FavorPerformanceHint(PR_TRUE, 0);

@@ -1,8 +1,8 @@
---- mozilla/build/autoconf/freetype2.m4.orig	2007-12-27 08:20:33.000000000 +0200
-+++ mozilla/build/autoconf/freetype2.m4	2007-12-27 08:32:12.000000000 +0200
-@@ -25,21 +25,26 @@ if test x$ft_config_exec_prefix != x ; t
-   if test x${FT2_CONFIG+set} != xset ; then
-     FT2_CONFIG=$ft_config_exec_prefix/bin/freetype-config
+Index: mozilla/build/autoconf/freetype2.m4
+===================================================================
+--- mozilla.orig/build/autoconf/freetype2.m4
++++ mozilla/build/autoconf/freetype2.m4
+@@ -27,17 +27,22 @@ if test x$ft_config_exec_prefix != x ; t
    fi
  fi
  if test x$ft_config_prefix != x ; then
@@ -25,5 +25,3 @@
    no_ft=yes
  else
    FT2_CFLAGS=`$FT2_CONFIG $ft_config_args --cflags`
-   FT2_LIBS=`$FT2_CONFIG $ft_config_args --libs`
-   ft_config_major_version=`$FT2_CONFIG $ft_config_args --version | \

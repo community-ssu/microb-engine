@@ -25,7 +25,7 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp
  #include "nsIDocument.h"
  #include "nsIDOMDocument.h"
  #include "nsIDOMDocumentRange.h"
-@@ -115,22 +119,41 @@
+@@ -113,22 +117,41 @@
  
  // This number is the number of checked words a misspelled word counts for
  // when we're checking the time to see if the alloted time is up for
@@ -67,7 +67,7 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp
  // mozInlineSpellStatus::InitForEditorChange
  //
  //    This is the most complicated case. For changes, we need to compute the
-@@ -1663,16 +1686,264 @@
+@@ -1683,16 +1706,264 @@ mozInlineSpellChecker::HandleNavigationE
    if (shouldPost) {
      rv = ScheduleSpellCheck(status);
      NS_ENSURE_SUCCESS(rv, rv);
@@ -332,7 +332,7 @@ Index: mozilla/extensions/spellcheck/src/mozInlineSpellChecker.cpp
  NS_IMETHODIMP mozInlineSpellChecker::Focus(nsIDOMEvent* aEvent)
  {
    return NS_OK;
-@@ -1708,16 +1979,36 @@
+@@ -1728,16 +1999,36 @@ NS_IMETHODIMP mozInlineSpellChecker::Mou
  
  NS_IMETHODIMP mozInlineSpellChecker::MouseUp(nsIDOMEvent* aMouseEvent)
  {

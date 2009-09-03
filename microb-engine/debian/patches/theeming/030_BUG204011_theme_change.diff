@@ -5,7 +5,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.h
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.h
 +++ mozilla/widget/src/gtk2/nsWindow.h
-@@ -437,16 +437,18 @@
+@@ -420,16 +420,18 @@ public:
      gfxASurface       *GetThebesSurface();
  
      static already_AddRefed<gfxASurface> GetSurfaceForGdkDrawable(GdkDrawable* aDrawable,
@@ -24,7 +24,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.h
      PRPackedBool        mIsDestroyed;
  
      // This is a flag that tracks if we need to resize a widget or
-@@ -591,17 +593,16 @@
+@@ -573,17 +575,16 @@ private:
          *flag |= mask;
      }
  
@@ -46,7 +46,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 ===================================================================
 --- mozilla.orig/widget/src/gtk2/nsWindow.cpp
 +++ mozilla/widget/src/gtk2/nsWindow.cpp
-@@ -270,16 +270,17 @@
+@@ -282,16 +282,17 @@ static PRBool            gRaiseWindows  
  static nsWindow         *gPluginFocusWindow    = NULL;
  
  static nsCOMPtr<nsIRollupListener> gRollupListener;
@@ -64,8 +64,8 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  static PRBool       gKeyEventCommitted = PR_FALSE;
  static PRBool       gKeyEventChanged = PR_FALSE;
  static PRBool       gIMESuppressCommit = PR_FALSE;
-@@ -374,16 +375,17 @@
-     mActivatePending     = PR_FALSE;
+@@ -383,16 +384,17 @@ nsWindow::nsWindow()
+     mRetryKeyboardGrab   = PR_FALSE;
      mTransientParent     = nsnull;
      mWindowType          = eWindowType_child;
      mSizeState           = nsSizeMode_Normal;
@@ -82,7 +82,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
          initialize_prefs();
      }
  
-@@ -657,16 +659,26 @@
+@@ -727,16 +729,26 @@ nsWindow::Destroy(void)
          gBufferPixmapSize.width = 0;
          gBufferPixmapSize.height = 0;
      }
@@ -105,11 +105,11 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
      nsCOMPtr<nsIWidget> rollupWidget = do_QueryReferent(gRollupWindow);
      if (static_cast<nsIWidget *>(this) == rollupWidget.get()) {
          if (gRollupListener)
-             gRollupListener->Rollup(nsnull);
+             gRollupListener->Rollup(nsnull, nsnull);
          gRollupWindow = nsnull;
          gRollupListener = nsnull;
      }
-@@ -3936,16 +3948,18 @@
+@@ -3990,16 +4002,18 @@ nsWindow::NativeCreate(nsIWidget        
                                 "notify::gtk-theme-name",
                                 G_CALLBACK(theme_changed_cb), this);
          g_signal_connect_after(default_settings,
@@ -120,15 +120,15 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
      if (mContainer) {
 +        g_signal_connect(G_OBJECT(mContainer), "style_set",
 +                         G_CALLBACK(theme_changed_cb), this);
+         g_signal_connect(G_OBJECT(mContainer), "unrealize",
+                          G_CALLBACK(container_unrealize_cb), NULL);
          g_signal_connect_after(G_OBJECT(mContainer), "size_allocate",
                                 G_CALLBACK(size_allocate_cb), NULL);
          g_signal_connect(G_OBJECT(mContainer), "expose_event",
                           G_CALLBACK(expose_event_cb), NULL);
          g_signal_connect_after(G_OBJECT(mContainer), "enter_notify_event",
                           G_CALLBACK(enter_notify_event_cb), NULL);
-         g_signal_connect_after(G_OBJECT(mContainer), "leave_notify_event",
-                          G_CALLBACK(leave_notify_event_cb), NULL);
-@@ -5613,22 +5627,35 @@
+@@ -5680,22 +5694,35 @@ window_state_event_cb (GtkWidget *widget
      if (!window)
          return FALSE;
  

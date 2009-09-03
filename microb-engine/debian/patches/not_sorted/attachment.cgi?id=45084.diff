@@ -1,0 +1,49 @@
+#microb-engine
+# bug 99337 Find dialog does not work properly.
+diff -r f1e99a75a525 layout/base/nsLayoutUtils.cpp
+--- a/layout/base/nsLayoutUtils.cpp	Wed Mar 25 23:15:48 2009 +0200
++++ b/layout/base/nsLayoutUtils.cpp	Sun Mar 29 14:53:17 2009 +0300
+@@ -581,6 +581,7 @@ nsLayoutUtils::GetNearestScrollingView(n
+   // that can be scrolled to in aDirection.
+   NS_ASSERTION(aView, "GetNearestScrollingView expects a non-null view");
+   nsIScrollableView* scrollableView = nsnull;
++  PRBool ignoreOverflow = nsContentUtils::GetBoolPref("layout.ignore.overflow", PR_FALSE);
+   for (; aView; aView = aView->GetParent()) {
+     scrollableView = aView->ToScrollableView();
+     if (scrollableView) {
+@@ -598,11 +599,11 @@ nsLayoutUtils::GetNearestScrollingView(n
+       // If scrolling in a specific direction, require visible scrollbars or
+       // something to scroll to in that direction.
+       if (aDirection != eHorizontal &&
+-          ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN &&
++          (ignoreOverflow || ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN) &&
+           (aDirection == eEither || totalHeight > visibleSize.height || margin.LeftRight()))
+         break;
+       if (aDirection != eVertical &&
+-          ss.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN &&
++          (ignoreOverflow || ss.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN) &&
+           (aDirection == eEither || totalWidth > visibleSize.width || margin.TopBottom()))
+         break;
+     }
+diff -r f1e99a75a525 layout/generic/nsSelection.cpp
+--- a/layout/generic/nsSelection.cpp	Wed Mar 25 23:15:48 2009 +0200
++++ b/layout/generic/nsSelection.cpp	Sun Mar 29 14:53:17 2009 +0300
+@@ -6414,7 +6414,8 @@ nsTypedSelection::ScrollRectIntoView(nsI
+     nsLayoutUtils::ScrollbarStylesOfView(aScrollableView);
+ 
+   // See how aRect should be positioned vertically
+-  if (ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN) {
++  PRBool ignoreOverflow = nsContentUtils::GetBoolPref("layout.ignore.overflow", PR_FALSE);
++  if (ignoreOverflow || ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN) {
+     if (NS_PRESSHELL_SCROLL_ANYWHERE == aVPercent) {
+       // The caller doesn't care where aRect is positioned vertically,
+       // so long as it's fully visible
+@@ -6437,7 +6438,7 @@ nsTypedSelection::ScrollRectIntoView(nsI
+   }
+ 
+   // See how the aRect should be positioned horizontally
+-  if (ss.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN) {
++  if (ignoreOverflow || ss.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN) {
+     if (NS_PRESSHELL_SCROLL_ANYWHERE == aHPercent) {
+       // The caller doesn't care where the aRect is positioned horizontally,
+       // so long as it's fully visible

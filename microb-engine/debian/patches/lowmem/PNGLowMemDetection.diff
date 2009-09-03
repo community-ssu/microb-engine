@@ -2,7 +2,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
 ===================================================================
 --- mozilla.orig/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
 +++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
-@@ -225,16 +225,18 @@
+@@ -225,16 +225,18 @@ NS_IMETHODIMP nsPNGDecoder::Init(imgILoa
          112,  72,  89, 115, '\0',   /* pHYs */
          115,  66,  73,  84, '\0',   /* sBIT */
          115,  80,  76,  84, '\0',   /* sPLT */
@@ -21,7 +21,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
    /* Initialize the container's source image header. */
    /* Always decode to 24 bit pixdepth */
  
-@@ -725,16 +727,25 @@
+@@ -736,16 +738,25 @@ row_callback(png_structp png_ptr, png_by
     * old row and the new row.
     */
    nsPNGDecoder *decoder = static_cast<nsPNGDecoder*>(png_get_progressive_ptr(png_ptr));
@@ -51,7 +51,7 @@ Index: mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
 ===================================================================
 --- mozilla.orig/modules/libpr0n/decoders/png/nsPNGDecoder.h
 +++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
-@@ -94,11 +94,12 @@
+@@ -94,11 +94,12 @@ public:
    cmsHTRANSFORM mTransform;
  #endif
  

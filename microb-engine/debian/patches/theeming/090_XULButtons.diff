@@ -1,6 +1,11 @@
---- mozilla/toolkit/themes/gnomestripe/global/button.css.orig	2008-09-02 10:16:18.000000000 -0500
-+++ mozilla/toolkit/themes/gnomestripe/global/button.css	2008-09-26 13:18:59.000000000 -0500
-@@ -45,10 +45,11 @@
+Index: mozilla/toolkit/themes/gnomestripe/global/button.css
+===================================================================
+--- mozilla.orig/toolkit/themes/gnomestripe/global/button.css
++++ mozilla/toolkit/themes/gnomestripe/global/button.css
+@@ -42,16 +42,17 @@
+ 
+ @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+ 
  /* :::::::::: button :::::::::: */
  
  button {
@@ -12,3 +17,6 @@
    -moz-border-top-colors: transparent ThreeDHighlight ThreeDLightShadow;
    -moz-border-right-colors: transparent ThreeDDarkShadow ThreeDShadow;
    -moz-border-bottom-colors: transparent ThreeDDarkShadow ThreeDShadow;
+   -moz-border-left-colors: transparent ThreeDHighlight ThreeDLightShadow;
+   background-color: ThreeDFace;
+   color: ButtonText;

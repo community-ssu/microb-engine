@@ -1,10 +1,10 @@
 # May be it is wrong
 # appears after performance crazy hacking ;)
---- mozilla/netwerk/base/src/nsNetSegmentUtils.h.orig	2003-04-23 06:47:34.000000000 +0300
-+++ mozilla/netwerk/base/src/nsNetSegmentUtils.h	2007-04-16 11:11:13.409332250 +0300
-@@ -38,22 +38,22 @@
- #ifndef nsNetSegmentUtils_h__
- #define nsNetSegmentUtils_h__
+Index: mozilla/netwerk/base/src/nsNetSegmentUtils.h
+===================================================================
+--- mozilla.orig/netwerk/base/src/nsNetSegmentUtils.h
++++ mozilla/netwerk/base/src/nsNetSegmentUtils.h
+@@ -40,18 +40,18 @@
  
  #include "necko-config.h"
  #include "nsIOService.h"
@@ -25,5 +25,3 @@
   */
  static inline nsIMemory *
  net_GetSegmentAlloc(PRUint32 segsize)
- {
-     return (segsize == NET_DEFAULT_SEGMENT_SIZE)

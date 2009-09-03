@@ -1,10 +1,10 @@
 ? xpcom/io/.nsStreamUtils.cpp.swp
 ? xpcom/io/1
-Index: netwerk/base/public/nsIBufferedStreams.idl
+Index: mozilla/netwerk/base/public/nsIBufferedStreams.idl
 ===================================================================
---- mozilla/netwerk/base/public/nsIBufferedStreams.idl.orig
+--- mozilla.orig/netwerk/base/public/nsIBufferedStreams.idl
 +++ mozilla/netwerk/base/public/nsIBufferedStreams.idl
-@@ -12,16 +12,31 @@
+@@ -12,16 +12,31 @@ interface nsIBufferedInputStream : nsIIn
       * @param fillFromStream - add buffering to this stream
       * @param bufferSize     - specifies the maximum buffer size
       */
@@ -36,11 +36,11 @@ Index: netwerk/base/public/nsIBufferedStreams.idl
  interface nsIBufferedOutputStream : nsIOutputStream
  {
      /**
-Index: netwerk/base/public/nsIFileStreams.idl
+Index: mozilla/netwerk/base/public/nsIFileStreams.idl
 ===================================================================
---- mozilla/netwerk/base/public/nsIFileStreams.idl.orig
+--- mozilla.orig/netwerk/base/public/nsIFileStreams.idl
 +++ mozilla/netwerk/base/public/nsIFileStreams.idl
-@@ -79,16 +79,59 @@
+@@ -79,16 +79,59 @@ interface nsIFileInputStream : nsIInputS
       * If this is set, the file will be reopened whenever Seek(0) occurs.  If
       * the file is already open and the seek occurs, it will happen naturally.
       * (The file will only be reopened if it is closed for some reason.)
@@ -100,11 +100,11 @@ Index: netwerk/base/public/nsIFileStreams.idl
      /**
       * @param file          file to write to (must QI to nsILocalFile)
       * @param ioFlags       file open flags listed in prio.h (see
-Index: netwerk/base/public/nsNetUtil.h
+Index: mozilla/netwerk/base/public/nsNetUtil.h
 ===================================================================
---- mozilla/netwerk/base/public/nsNetUtil.h.orig
+--- mozilla.orig/netwerk/base/public/nsNetUtil.h
 +++ mozilla/netwerk/base/public/nsNetUtil.h
-@@ -852,16 +852,36 @@
+@@ -867,16 +867,36 @@ NS_NewLocalFileInputStream(nsIInputStrea
      if (NS_SUCCEEDED(rv)) {
          rv = in->Init(file, ioFlags, perm, behaviorFlags);
          if (NS_SUCCEEDED(rv))
@@ -141,7 +141,7 @@ Index: netwerk/base/public/nsNetUtil.h
                              PRInt32           behaviorFlags = 0)
  {
      nsresult rv;
-@@ -953,16 +973,34 @@
+@@ -968,16 +988,34 @@ NS_NewBufferedInputStream(nsIInputStream
      if (NS_SUCCEEDED(rv)) {
          rv = in->Init(str, bufferSize);
          if (NS_SUCCEEDED(rv))
@@ -176,11 +176,11 @@ Index: netwerk/base/public/nsNetUtil.h
                             PRUint32          bufferSize)
  {
      nsresult rv;
-Index: netwerk/base/src/nsBufferedStreams.cpp
+Index: mozilla/netwerk/base/src/nsBufferedStreams.cpp
 ===================================================================
---- mozilla/netwerk/base/src/nsBufferedStreams.cpp.orig
+--- mozilla.orig/netwerk/base/src/nsBufferedStreams.cpp
 +++ mozilla/netwerk/base/src/nsBufferedStreams.cpp
-@@ -461,16 +461,193 @@
+@@ -461,16 +461,193 @@ nsBufferedInputStream::GetUnbufferedStre
      mBufferStartOffset += mCursor;
      mFillPoint = mCursor = 0;
  
@@ -374,11 +374,11 @@ Index: netwerk/base/src/nsBufferedStreams.cpp
  // This QI uses NS_INTERFACE_MAP_ENTRY_CONDITIONAL to check for
  // non-nullness of mSafeStream.
  NS_INTERFACE_MAP_BEGIN(nsBufferedOutputStream)
-Index: netwerk/base/src/nsBufferedStreams.h
+Index: mozilla/netwerk/base/src/nsBufferedStreams.h
 ===================================================================
---- mozilla/netwerk/base/src/nsBufferedStreams.h.orig
+--- mozilla.orig/netwerk/base/src/nsBufferedStreams.h
 +++ mozilla/netwerk/base/src/nsBufferedStreams.h
-@@ -107,16 +107,47 @@
+@@ -107,16 +107,47 @@ public:
          return (nsIInputStream*)mStream;
      }
  
@@ -426,11 +426,11 @@ Index: netwerk/base/src/nsBufferedStreams.h
                                 public nsIStreamBufferAccess
  {
  public:
-Index: netwerk/base/src/nsFileStreams.cpp
+Index: mozilla/netwerk/base/src/nsFileStreams.cpp
 ===================================================================
---- mozilla/netwerk/base/src/nsFileStreams.cpp.orig
+--- mozilla.orig/netwerk/base/src/nsFileStreams.cpp
 +++ mozilla/netwerk/base/src/nsFileStreams.cpp
-@@ -350,16 +350,319 @@
+@@ -350,16 +350,319 @@ nsFileInputStream::Seek(PRInt32 aWhence,
          } else {
              return NS_BASE_STREAM_CLOSED;
          }
@@ -750,11 +750,11 @@ Index: netwerk/base/src/nsFileStreams.cpp
                               nsIOutputStream,
                               nsIFileOutputStream)
   
-Index: netwerk/base/src/nsFileStreams.h
+Index: mozilla/netwerk/base/src/nsFileStreams.h
 ===================================================================
---- mozilla/netwerk/base/src/nsFileStreams.h.orig
+--- mozilla.orig/netwerk/base/src/nsFileStreams.h
 +++ mozilla/netwerk/base/src/nsFileStreams.h
-@@ -130,16 +130,96 @@
+@@ -130,16 +130,96 @@ protected:
       */
      nsresult Open(nsIFile* file, PRInt32 ioFlags, PRInt32 perm);
      /**
@@ -851,11 +851,11 @@ Index: netwerk/base/src/nsFileStreams.h
  public:
      NS_DECL_ISUPPORTS_INHERITED
      NS_DECL_NSIOUTPUTSTREAM
-Index: netwerk/build/nsNetCID.h
+Index: mozilla/netwerk/build/nsNetCID.h
 ===================================================================
---- mozilla/netwerk/build/nsNetCID.h.orig
+--- mozilla.orig/netwerk/build/nsNetCID.h
 +++ mozilla/netwerk/build/nsNetCID.h
-@@ -376,16 +376,28 @@
+@@ -386,16 +386,28 @@
  #define NS_LOCALFILEINPUTSTREAM_CID                  \
  { /* be9a53ae-c7e9-11d3-8cda-0060b0fc14a3 */         \
      0xbe9a53ae,                                      \
@@ -884,7 +884,7 @@ Index: netwerk/build/nsNetCID.h
  { /* c272fee0-c7e9-11d3-8cda-0060b0fc14a3 */         \
      0xc272fee0,                                      \
      0xc7e9,                                          \
-@@ -400,16 +412,28 @@
+@@ -410,16 +422,28 @@
  #define NS_BUFFEREDINPUTSTREAM_CID                   \
  { /* 9226888e-da08-11d3-8cda-0060b0fc14a3 */         \
      0x9226888e,                                      \
@@ -913,11 +913,11 @@ Index: netwerk/build/nsNetCID.h
  { /* 9868b4ce-da08-11d3-8cda-0060b0fc14a3 */         \
      0x9868b4ce,                                      \
      0xda08,                                          \
-Index: netwerk/build/nsNetModule.cpp
+Index: mozilla/netwerk/build/nsNetModule.cpp
 ===================================================================
---- mozilla/netwerk/build/nsNetModule.cpp.orig
+--- mozilla.orig/netwerk/build/nsNetModule.cpp
 +++ mozilla/netwerk/build/nsNetModule.cpp
-@@ -704,16 +704,22 @@
+@@ -728,16 +728,22 @@ static const nsModuleComponentInfo gNetM
      { NS_LOADGROUP_CLASSNAME,
        NS_LOADGROUP_CID,
        NS_LOADGROUP_CONTRACTID,
@@ -940,7 +940,7 @@ Index: netwerk/build/nsNetModule.cpp
        NS_SAFELOCALFILEOUTPUTSTREAM_CID,
        NS_SAFELOCALFILEOUTPUTSTREAM_CONTRACTID,
        nsSafeFileOutputStreamConstructor
-@@ -750,16 +756,24 @@
+@@ -774,16 +780,24 @@ static const nsModuleComponentInfo gNetM
        NS_STANDARDURL_CID,
        NS_STANDARDURL_CONTRACTID,
        nsStandardURLConstructor },
@@ -965,11 +965,11 @@ Index: netwerk/build/nsNetModule.cpp
        NS_MIMEINPUTSTREAM_CID,
        NS_MIMEINPUTSTREAM_CONTRACTID,
        nsMIMEInputStreamConstructor },
-Index: xpcom/io/nsFastLoadFile.cpp
+Index: mozilla/xpcom/io/nsFastLoadFile.cpp
 ===================================================================
---- mozilla/xpcom/io/nsFastLoadFile.cpp.orig
+--- mozilla.orig/xpcom/io/nsFastLoadFile.cpp
 +++ mozilla/xpcom/io/nsFastLoadFile.cpp
-@@ -277,24 +277,70 @@
+@@ -277,24 +277,70 @@ nsFastLoadFileReader::ReadHeader(nsFastL
      if (NS_FAILED(rv))
          return rv;
  
@@ -1040,8 +1040,7 @@ Index: xpcom/io/nsFastLoadFile.cpp
      *aChecksum = mHeader.mChecksum;
      return NS_OK;
  }
-@@ -832,39 +878,54 @@
-     aFooter->mDependencies = readDeps;
+@@ -833,38 +879,53 @@ nsFastLoadFileReader::ReadFooter(nsFastL
      return NS_OK;
  }
  
@@ -1049,10 +1048,10 @@ Index: xpcom/io/nsFastLoadFile.cpp
  nsFastLoadFileReader::ReadFooterPrefix(nsFastLoadFooterPrefix *aFooterPrefix)
  {
      nsresult rv;
-+
+ 
 +#ifdef  USE_PACKED_STRUCTS
 +    PRUint32 bytesRead;
- 
++
 +    rv = Read(reinterpret_cast<char*>(aFooterPrefix), sizeof *aFooterPrefix, &bytesRead);
 +    if (NS_FAILED(rv))
 +        return rv;
@@ -1095,7 +1094,7 @@ Index: xpcom/io/nsFastLoadFile.cpp
  
      rv = Read16(&aID->m1);
      if (NS_FAILED(rv))
-@@ -876,47 +937,77 @@
+@@ -876,47 +937,77 @@ nsFastLoadFileReader::ReadSlowID(nsID *a
  
      PRUint32 bytesRead;
      rv = Read(reinterpret_cast<char*>(aID->m3), sizeof aID->m3, &bytesRead);
@@ -1173,7 +1172,7 @@ Index: xpcom/io/nsFastLoadFile.cpp
  nsFastLoadFileReader::ReadMuxedDocumentInfo(nsFastLoadMuxedDocumentInfo *aInfo)
  {
      nsresult rv;
-@@ -1270,16 +1361,44 @@
+@@ -1270,16 +1361,44 @@ static const PLDHashTableOps idmap_DHash
      idmap_HashKey,
      idmap_MatchEntry,
      PL_DHashMoveEntryStub,
@@ -1218,7 +1217,7 @@ Index: xpcom/io/nsFastLoadFile.cpp
                     (PL_DHashTableOperate(&mIDMap, &aSlowID, PL_DHASH_ADD));
      if (!entry)
          return NS_ERROR_OUT_OF_MEMORY;
-@@ -1294,16 +1413,17 @@
+@@ -1294,16 +1413,17 @@ nsFastLoadFileWriter::MapID(const nsID& 
  }
  
  nsresult
@@ -1236,7 +1235,7 @@ Index: xpcom/io/nsFastLoadFile.cpp
          return NS_ERROR_FAILURE;
  
      rv = Write32(aHeader->mChecksum);
-@@ -1317,16 +1437,27 @@
+@@ -1317,16 +1437,27 @@ nsFastLoadFileWriter::WriteHeader(nsFast
      rv = Write32(aHeader->mFooterOffset);
      if (NS_FAILED(rv))
          return rv;
@@ -1264,7 +1263,7 @@ Index: xpcom/io/nsFastLoadFile.cpp
  NS_IMETHODIMP
  nsFastLoadFileWriter::GetChecksum(PRUint32 *aChecksum)
  {
-@@ -1648,16 +1779,17 @@
+@@ -1648,16 +1779,17 @@ nsFastLoadFileWriter::WriteFooterPrefix(
          return rv;
  
      return NS_OK;
@@ -1282,7 +1281,7 @@ Index: xpcom/io/nsFastLoadFile.cpp
  
      rv = Write16(aID.m1);
      if (NS_FAILED(rv))
-@@ -1670,28 +1802,42 @@
+@@ -1670,28 +1802,42 @@ nsFastLoadFileWriter::WriteSlowID(const 
      PRUint32 bytesWritten;
      rv = Write(reinterpret_cast<const char*>(aID.m3), sizeof aID.m3,
                 &bytesWritten);
@@ -1325,7 +1324,7 @@ Index: xpcom/io/nsFastLoadFile.cpp
      rv = Write32(aInfo.mCIDOffset);
      if (NS_FAILED(rv))
          return rv;
-@@ -1699,16 +1845,33 @@
+@@ -1699,16 +1845,33 @@ nsFastLoadFileWriter::WriteSharpObjectIn
      rv = Write16(aInfo.mStrongRefCnt);
      if (NS_FAILED(rv))
          return rv;
@@ -1359,7 +1358,7 @@ Index: xpcom/io/nsFastLoadFile.cpp
  {
      nsresult rv;
  
-@@ -2044,17 +2207,19 @@
+@@ -2044,17 +2207,19 @@ nsFastLoadFileWriter::Close()
          // mHeader.mChecksum, for GetChecksum.
          seekable = do_QueryInterface(output);
          rv = seekable->Seek(nsISeekableStream::NS_SEEK_SET,
@@ -1379,11 +1378,11 @@ Index: xpcom/io/nsFastLoadFile.cpp
              return rv;
          if (bytesWritten != sizeof checksum)
              return NS_ERROR_FAILURE;
-Index: xpcom/io/nsFastLoadFile.h
+Index: mozilla/xpcom/io/nsFastLoadFile.h
 ===================================================================
---- mozilla/xpcom/io/nsFastLoadFile.h.orig
+--- mozilla.orig/xpcom/io/nsFastLoadFile.h
 +++ mozilla/xpcom/io/nsFastLoadFile.h
-@@ -183,43 +183,58 @@
+@@ -183,43 +183,58 @@ NS_COM PRUint32
  NS_AccumulateFastLoadChecksum(PRUint32 *aChecksum,
                                const PRUint8* aBuffer,
                                PRUint32 aLength,
@@ -1445,7 +1444,7 @@ Index: xpcom/io/nsFastLoadFile.h
  #define MFL_GET_WEAK_REFCNT(ip)     ((ip)->mWeakRefCnt & MFL_WEAK_REFCNT_MASK)
  
  #define MFL_SET_SINGLETON_FLAG(ip)                                            \
-@@ -380,16 +395,21 @@
+@@ -380,16 +395,21 @@ class nsFastLoadFileReader
  
      nsresult ReadFooter(nsFastLoadFooter *aFooter);
      nsresult ReadFooterPrefix(nsFastLoadFooterPrefix *aFooterPrefix);
@@ -1467,7 +1466,7 @@ Index: xpcom/io/nsFastLoadFile.h
      // Kept in sync with mInputStream to avoid repeated QI
      nsCOMPtr<nsISeekableStream> mSeekableInput;
  
-@@ -472,16 +492,22 @@
+@@ -472,16 +492,22 @@ class nsFastLoadFileWriter
      nsresult WriteHeader(nsFastLoadHeader *aHeader);
      nsresult WriteFooter();
      nsresult WriteFooterPrefix(const nsFastLoadFooterPrefix& aFooterPrefix);
@@ -1490,11 +1489,11 @@ Index: xpcom/io/nsFastLoadFile.h
                                 PRBool aIsStrongRef,
                                 PRUint32 aQITag);
  
-Index: xpcom/base/nscore.h
+Index: mozilla/xpcom/base/nscore.h
 ===================================================================
---- mozilla/xpcom/base/nscore.h.orig
+--- mozilla.orig/xpcom/base/nscore.h
 +++ mozilla/xpcom/base/nscore.h
-@@ -506,9 +506,15 @@
+@@ -506,9 +506,15 @@ typedef PRUint32 nsrefcnt;
  # define NS_INOUTPARAM __attribute__((user("NS_inoutparam")))
  #else
  # define NS_SCRIPTABLE
@@ -1510,11 +1509,11 @@ Index: xpcom/base/nscore.h
 +#endif
 +
  #endif /* nscore_h___ */
-Index: content/xul/document/src/nsXULPrototypeCache.cpp
+Index: mozilla/content/xul/document/src/nsXULPrototypeCache.cpp
 ===================================================================
---- mozilla/content/xul/document/src/nsXULPrototypeCache.cpp.orig
+--- mozilla.orig/content/xul/document/src/nsXULPrototypeCache.cpp
 +++ mozilla/content/xul/document/src/nsXULPrototypeCache.cpp
-@@ -629,22 +629,32 @@
+@@ -629,22 +629,32 @@ NS_IMPL_THREADSAFE_ISUPPORTS1(nsXULFastL
  
  
  NS_IMETHODIMP
@@ -1547,12 +1546,12 @@ Index: content/xul/document/src/nsXULPrototypeCache.cpp
  }
  
  
-Index: js/src/xpconnect/loader/mozJSComponentLoader.cpp
+Index: mozilla/js/src/xpconnect/loader/mozJSComponentLoader.cpp
 ===================================================================
---- mozilla/js/src/xpconnect/loader/mozJSComponentLoader.cpp.orig
+--- mozilla.orig/js/src/xpconnect/loader/mozJSComponentLoader.cpp
 +++ mozilla/js/src/xpconnect/loader/mozJSComponentLoader.cpp
-@@ -86,22 +86,16 @@
- #ifdef MOZ_SHARK
+@@ -86,21 +86,16 @@
+ #if defined(MOZ_SHARK) || defined(MOZ_CALLGRIND) || defined(MOZ_VTUNE)
  #include "jsdbgapi.h"
  #endif
  
@@ -1561,8 +1560,7 @@ Index: js/src/xpconnect/loader/mozJSComponentLoader.cpp
  static const char kObserverServiceContractID[] = "@mozilla.org/observer-service;1";
  
 -/* Some platforms don't have an implementation of PR_MemMap(). */
--/* See bug 318077 for WinCE.                                   */
--#if !defined(XP_BEOS) && !defined(XP_OS2) && !defined(WINCE)
+-#if !defined(XP_BEOS) && !defined(XP_OS2)
 -#define HAVE_PR_MEMMAP
 -#endif
 -
@@ -1574,7 +1572,7 @@ Index: js/src/xpconnect/loader/mozJSComponentLoader.cpp
  #define XPC_DESERIALIZATION_BUFFER_SIZE (12 * 8192)
  
  // Inactivity delay before closing our fastload file stream.
-@@ -315,24 +309,37 @@
+@@ -377,24 +372,37 @@ ReportOnCaller(JSCLContextHelper &helper
  
  NS_IMPL_ISUPPORTS1(nsXPCFastLoadIO, nsIFastLoadFileIO)
  

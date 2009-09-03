@@ -1,7 +1,9 @@
 # Adding Libreg to tiers_necko_dirs
 #
---- mozilla/browser/build.mk.orig	2007-08-03 18:19:32.000000000 +0300
-+++ mozilla/browser/build.mk	2007-10-29 22:27:54.000000000 +0200
+Index: mozilla/browser/build.mk
+===================================================================
+--- mozilla.orig/browser/build.mk
++++ mozilla/browser/build.mk
 @@ -36,16 +36,20 @@
  # ***** END LICENSE BLOCK *****
  

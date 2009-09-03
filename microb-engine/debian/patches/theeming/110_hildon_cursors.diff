@@ -1,6 +1,8 @@
---- mozilla.orig/widget/src/gtk2/nsWindow.cpp	2008-12-12 11:08:58.000000000 +0200
-+++ mozilla/widget/src/gtk2/nsWindow.cpp	2008-12-12 10:28:45.000000000 +0200
-@@ -144,17 +144,24 @@ static PRBool     check_for_rollup(GdkWi
+Index: mozilla/widget/src/gtk2/nsWindow.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp
++++ mozilla/widget/src/gtk2/nsWindow.cpp
+@@ -154,17 +154,24 @@ static PRBool     check_for_rollup(GdkWi
                                     gdouble aMouseX, gdouble aMouseY,
                                     PRBool aIsWheel);
  static PRBool     is_mouse_in_window(GdkWindow* aWindow,
@@ -25,8 +27,8 @@
  static inline PRBool is_context_menu_key(const nsKeyEvent& inKeyEvent);
  static void   key_event_to_context_menu_event(nsMouseEvent &aEvent,
                                                GdkEventKey *aGdkEvent);
-@@ -1420,17 +1427,23 @@ nsWindow::SetCursor(nsCursor aCursor)
-         NS_ENSURE_TRUE(window, NS_OK);
+@@ -1429,17 +1436,23 @@ nsWindow::SetCursor(nsCursor aCursor)
+ 
          return window->SetCursor(aCursor);
      }
  
@@ -49,11 +51,11 @@
                  return NS_OK;
  
              gdk_window_set_cursor(GTK_WIDGET(mContainer)->window, newCursor);
-@@ -5105,16 +5118,92 @@ get_gtk_widget_for_gdk_window(GdkWindow 
+@@ -5119,16 +5132,92 @@ GtkWidget *
+ get_gtk_widget_for_gdk_window(GdkWindow *window)
+ {
      gpointer user_data = NULL;
      gdk_window_get_user_data(window, &user_data);
-     if (!user_data)
-         return NULL;
  
      return GTK_WIDGET(user_data);
  }
@@ -142,8 +144,8 @@
      GdkPixmap *mask;
      GdkColor fg, bg;
      GdkCursor *gdkcursor = nsnull;
-@@ -5263,16 +5352,18 @@ get_gtk_cursor(nsCursor aCursor)
-         gdk_bitmap_unref(cursor);
+@@ -5277,16 +5366,18 @@ get_gtk_cursor(nsCursor aCursor)
+         g_object_unref(cursor);
      }
  
      gCursorCache[aCursor] = gdkcursor;

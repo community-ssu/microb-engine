@@ -1,0 +1,100 @@
+--- a/toolkit/themes/winststripe/global/xulscrollbars.css	2009-08-07 15:49:47.000000000 +0300
++++ b/toolkit/themes/winstripe/global/xulscrollbars.css	2009-08-17 19:58:00.000000000 +0300
+@@ -49,7 +49,11 @@ scrollbar {
+   -moz-appearance: scrollbartrack-horizontal;
+   -moz-binding: url("chrome://global/content/bindings/scrollbar.xml#scrollbar");
+   cursor: default;
+-  background: url("chrome://global/skin/scrollbar/slider.gif") scrollbar;
++  border: none;
++  outline: solid #dadada 1px;
++  outline-offset: -1px;
++  -moz-outline-radius: 2px;
++  background: white;
+ }
+ 
+ scrollbar[orient="vertical"] 
+@@ -61,12 +65,10 @@ scrollbar[orient="vertical"] 
+ 
+ thumb,
+ scrollbarbutton {
+-  border: 2px solid;
+-  -moz-border-top-colors: ThreeDLightShadow ThreeDHighlight;
+-  -moz-border-right-colors: ThreeDDarkShadow ThreeDShadow;
+-  -moz-border-bottom-colors: ThreeDDarkShadow ThreeDShadow;
+-  -moz-border-left-colors: ThreeDLightShadow ThreeDHighlight;
+-  background-color: -moz-Dialog;
++  outline: solid black 1px;
++  outline-offset: -1px;
++  background: #dfdfdf;
++  -moz-outline-radius: 2px;
+ }
+ 
+ /* ::::: thumb (horizontal) ::::: */
+@@ -84,9 +86,9 @@ thumb[orient="horizontal"] {
+ /* ::::: scrollbar button ::::: */
+ 
+ scrollbarbutton {
+-  background: -moz-Dialog no-repeat 50% 50%;
+-  min-width: 16px;
+-  min-height: 16px;
++  background: #dfdfdf no-repeat 50% 50%;
++  min-width: 15px;
++  min-height: 15px;
+ }
+ 
+ scrollbarbutton:hover:active, scrollbarbutton[active="true"] {
+@@ -102,7 +104,7 @@ scrollbarbutton:hover:active, scrollbarb
+ scrollcorner { 
+   /* XXX -moz-appearance: scrollcorner; */
+   -moz-binding: url(chrome://global/content/bindings/scrollbar.xml#scrollbar-base);
+-  width: 16px;
++  width: 15px;
+   cursor: default;
+   background-color: -moz-Dialog;
+ }
+@@ -157,19 +159,20 @@ scrollbar[orient="vertical"] > scrollbar
+     -moz-appearance: scrollbartrack-horizontal;
+     -moz-binding: url("chrome://global/content/bindings/scrollbar.xml#scrollbar");
+     cursor: default;
+-    background: url("chrome://global/skin/scrollbar/slider.gif") scrollbar;
++    background: #ffffff;
+   }
+ 
+   html|div scrollbar[orient="vertical"] 
+   {
+      -moz-appearance: scrollbartrack-vertical;
+-  }
++     background: #ffffff;
++   }
+ 
+   /* ::::: borders for thumb and buttons ::::: */
+ 
+   html|div thumb,
+   html|div scrollbarbutton {
+-    border: 2px solid;
++    border: 1px solid;
+     -moz-border-top-colors: ThreeDLightShadow ThreeDHighlight;
+     -moz-border-right-colors: ThreeDDarkShadow ThreeDShadow;
+     -moz-border-bottom-colors: ThreeDDarkShadow ThreeDShadow;
+@@ -193,8 +196,8 @@ scrollbar[orient="vertical"] > scrollbar
+ 
+   html|div scrollbarbutton {
+     background: -moz-Dialog no-repeat 50% 50%;
+-    min-width: 16px;
+-    min-height: 16px;
++    min-width: 15px;
++    min-height: 15px;
+   }
+ 
+   html|div scrollbarbutton:hover:active, html|div scrollbarbutton[active="true"] {
+
+--- a/toolkit/content/widgets/scrollbar.xml	2009-08-07 15:49:46.000000000 +0300
++++ b/toolkit/content/widgets/scrollbar.xml	2009-08-17 19:29:07.000000000 +0300
+@@ -26,6 +26,7 @@
+       </xul:slider>
+       <xul:scrollbarbutton sbattr="scrollbar-up-bottom" type="decrement" xbl:inherits="curpos,maxpos,disabled,sborient=orient"/>
+       <xul:scrollbarbutton sbattr="scrollbar-down-bottom" type="increment" xbl:inherits="curpos,maxpos,disabled,sborient=orient"/>
++      <xul:spacer style="height:1px; min-height:1px; max-height:1px;"/>
+     </content>
+   </binding>
+ </bindings>

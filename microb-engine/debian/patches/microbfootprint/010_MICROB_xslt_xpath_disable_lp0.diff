@@ -9,7 +9,7 @@ Index: mozilla/configure.in
 ===================================================================
 --- mozilla.orig/configure.in
 +++ mozilla/configure.in
-@@ -4355,16 +4355,18 @@
+@@ -4539,16 +4539,18 @@ MOZ_DBGRINFO_MODULES=
  MOZ_ENABLE_CANVAS=1
  MOZ_FEEDS=1
  MOZ_IMG_DECODERS_DEFAULT="png gif jpeg bmp xbm icon"
@@ -28,13 +28,13 @@ Index: mozilla/configure.in
  MOZ_NO_XPCOM_OBSOLETE=
  MOZ_NO_FAST_LOAD=
  MOZ_OGG=1
-@@ -7558,16 +7560,42 @@
- else
-     LCMS_LIBS='-L$(LIBXUL_DIST)/bin -lmozlcms'
- fi
+@@ -7755,16 +7757,42 @@ AC_SUBST(MOZ_CAIRO_LIBS)
  
- AC_SUBST(LCMS_CFLAGS)
- AC_SUBST(LCMS_LIBS)
+ dnl qcms
+ dnl ========================================================
+ 
+ QCMS_LIBS='$(DEPTH)/gfx/qcms/$(LIB_PREFIX)mozqcms.$(LIB_SUFFIX)'
+ AC_SUBST(QCMS_LIBS)
  
  dnl ========================================================
 +dnl disable xpath services
@@ -75,14 +75,14 @@ Index: mozilla/config/autoconf.mk.in
 ===================================================================
 --- mozilla.orig/config/autoconf.mk.in
 +++ mozilla/config/autoconf.mk.in
-@@ -193,16 +193,18 @@
+@@ -199,16 +199,18 @@ MOZ_TIMELINE=@MOZ_TIMELINE@
+ ENABLE_STRIP	= @ENABLE_STRIP@
  PKG_SKIP_STRIP	= @PKG_SKIP_STRIP@
  
  ClientWallet=1
  CookieManagement=1
  SingleSignon=1
  
- MOZ_OJI		= @MOZ_OJI@
  MOZ_PLUGINS	= @MOZ_PLUGINS@
 +MOZ_XSLT        = @MOZ_XSLT@
 +MOZ_XPATH       = @MOZ_XPATH@
@@ -124,7 +124,7 @@ Index: mozilla/layout/build/Makefile.in
 ===================================================================
 --- mozilla.orig/layout/build/Makefile.in
 +++ mozilla/layout/build/Makefile.in
-@@ -117,35 +117,46 @@
+@@ -117,35 +117,46 @@ SHARED_LIBRARY_LIBS = \
  	../xul/base/src/$(LIB_PREFIX)gkxulbase_s.$(LIB_SUFFIX) \
  	$(DEPTH)/content/base/src/$(LIB_PREFIX)gkconbase_s.$(LIB_SUFFIX) \
  	$(DEPTH)/content/canvas/src/$(LIB_PREFIX)gkconcvs_s.$(LIB_SUFFIX) \
@@ -140,7 +140,7 @@ Index: mozilla/layout/build/Makefile.in
  	$(DEPTH)/content/xbl/src/$(LIB_PREFIX)gkconxbl_s.$(LIB_SUFFIX) \
  	$(DEPTH)/content/xul/document/src/$(LIB_PREFIX)gkconxuldoc_s.$(LIB_SUFFIX) \
  	$(DEPTH)/view/src/$(LIB_PREFIX)gkview_s.$(LIB_SUFFIX) \
- 	$(DEPTH)/dom/src/base/$(LIB_PREFIX)jsdombase_s.$(LIB_SUFFIX) \
+ 	$(DEPTH)/dom/base/$(LIB_PREFIX)jsdombase_s.$(LIB_SUFFIX) \
  	$(DEPTH)/dom/src/events/$(LIB_PREFIX)jsdomevents_s.$(LIB_SUFFIX) \
  	$(DEPTH)/dom/src/json/$(LIB_PREFIX)json_s.$(LIB_SUFFIX) \
  	$(DEPTH)/dom/src/jsurl/$(LIB_PREFIX)jsurl_s.$(LIB_SUFFIX) \
@@ -175,7 +175,7 @@ Index: mozilla/layout/build/Makefile.in
  
  ifdef MOZ_OGG
  SHARED_LIBRARY_LIBS 	+= \
-@@ -283,20 +294,16 @@
+@@ -282,20 +293,16 @@ LOCAL_INCLUDES	+= -I$(srcdir)/../base \
  		   -I$(srcdir)/../tables \
  		   -I$(srcdir)/../style \
  		   -I$(srcdir)/../xul/content/src \
@@ -194,9 +194,9 @@ Index: mozilla/layout/build/Makefile.in
  		   -I$(topsrcdir)/content/events/src \
  		   -I$(topsrcdir)/content/xbl/src \
  		   -I$(topsrcdir)/view/src \
- 		   -I$(topsrcdir)/dom/src/base \
+ 		   -I$(topsrcdir)/dom/base \
  		   -I$(topsrcdir)/dom/src/json \
-@@ -308,16 +315,30 @@
+@@ -307,16 +314,30 @@ LOCAL_INCLUDES	+= -I$(srcdir)/../base \
  		   -I. \
  		   -I$(topsrcdir)/editor/libeditor/base \
  		   -I$(topsrcdir)/editor/libeditor/text \
@@ -220,7 +220,7 @@ Index: mozilla/layout/build/Makefile.in
 +endif
 +
  ifdef MOZ_MATHML
- LOCAL_INCLUDES	+= -I$(srcdir)/../mathml/content/src
+ LOCAL_INCLUDES	+= -I$(srcdir)/../mathml
  endif
  
  ifdef MOZ_SVG
@@ -231,7 +231,7 @@ Index: mozilla/layout/build/nsLayoutStatics.cpp
 ===================================================================
 --- mozilla.orig/layout/build/nsLayoutStatics.cpp
 +++ mozilla/layout/build/nsLayoutStatics.cpp
-@@ -68,17 +68,19 @@
+@@ -67,17 +67,19 @@
  #include "nsRange.h"
  #include "nsRepeatService.h"
  #include "nsFloatManager.h"
@@ -250,8 +250,8 @@ Index: mozilla/layout/build/nsLayoutStatics.cpp
  #include "nsTextFragment.h"
  #include "nsCSSRuleProcessor.h"
  #include "nsXMLHttpRequest.h"
- #include "nsIFocusEventSuppressor.h"
-@@ -219,21 +221,23 @@
+ #include "nsDOMThreadService.h"
+@@ -221,21 +223,23 @@ nsLayoutStatics::Initialize()
    nsTextServicesDocument::RegisterAtoms();
  #endif
  
@@ -275,11 +275,11 @@ Index: mozilla/layout/build/nsLayoutStatics.cpp
    }
  
  #ifndef DEBUG_CC
-@@ -273,17 +277,19 @@
- 
+@@ -284,17 +288,19 @@ nsLayoutStatics::Initialize()
  void
  nsLayoutStatics::Shutdown()
  {
+   nsFocusManager::Shutdown();
  #ifdef MOZ_XUL
    nsXULPopupManager::Shutdown();
  #endif
@@ -299,14 +299,14 @@ Index: mozilla/layout/build/nsLayoutModule.cpp
 ===================================================================
 --- mozilla.orig/layout/build/nsLayoutModule.cpp
 +++ mozilla/layout/build/nsLayoutModule.cpp
-@@ -96,21 +96,26 @@
- #include "nsSyncLoadService.h"
+@@ -97,21 +97,26 @@
  #include "nsBox.h"
  #include "nsIFrameTraversal.h"
  #include "nsLayoutCID.h"
  #include "nsILanguageAtomService.h"
  #include "nsStyleSheetService.h"
  #include "nsXULPopupManager.h"
+ #include "nsFocusManager.h"
  
 +#ifdef MOZ_XSLT
  // Transformiix stuff
@@ -327,7 +327,7 @@ Index: mozilla/layout/build/nsLayoutModule.cpp
  // view stuff
  #include "nsViewsCID.h"
  #include "nsViewManager.h"
-@@ -264,33 +269,39 @@
+@@ -268,33 +273,39 @@ static void Shutdown();
  #ifdef MOZ_XTF
  #include "nsIXTFService.h"
  #include "nsIXMLContentBuilder.h"
@@ -372,7 +372,7 @@ Index: mozilla/layout/build/nsLayoutModule.cpp
  
  //-----------------------------------------------------------------------------
  
-@@ -1298,37 +1309,40 @@
+@@ -1348,37 +1359,40 @@ static const nsModuleComponentInfo gComp
      CreateVideoDocument },
  #endif
  

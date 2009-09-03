@@ -1,8 +1,1061 @@
+microb-engine (20090612-45) unstable; urgency=low
+
+  * Fixes: NB#135454 - Change URL for Google Search to mobile URLs
+
+ --  Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri, 28 Aug 2009 13:38:39 +0300
+
+microb-engine (20090612-44) unstable; urgency=low
+
+  * Fixes: NB#135502 White rectangle over youtube movies
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 27 Aug 2009 15:08:05 +0300
+
+microb-engine (20090612-43) unstable; urgency=low
+
+  * Fixes: NB#131295 Scrollbar browser engine widget need to be themed 
+
+ -- Egor Starkov <egor.starkov@nokia.com>  Wed, 19 Aug 2009 14:51:02 +0300
+
+microb-engine (20090612-42) unstable; urgency=low
+
+  * Fixes: NB#132928 [MT]Test support files required for mochitests execution with CI,should be kept seperate from micob-engine vcs.
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Tue, 18 Aug 2009 17:10:36 +0300
+
+microb-engine (20090612-41) unstable; urgency=low
+
+  * Fixed patch reject problem.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 18 Aug 2009 13:44:45 +0300
+
+microb-engine (20090612-40) unstable; urgency=low
+
+  * Added new API for bug 127991 implementation
+  * Added missing patch for bug 132170
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 18 Aug 2009 13:34:26 +0300
+
+microb-engine (20090612-39) unstable; urgency=low
+
+  * Added new API for bug 132170 implementation
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 18 Aug 2009 11:45:39 +0300
+
+microb-engine (20090612-38) unstable; urgency=low
+
+  * Fixes: NB#125761 Get Extensions / Get Plugins links in Components are not
+    working 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Sun, 16 Aug 2009 19:26:02 +0300
+
+microb-engine (20090612-36) unstable; urgency=low
+
+  * Fixes:NB#132213 [MT] Unenclosed assertion causing compile error in some case
+
+ -- Aiken Tie <ext-tie.aiken@nokia.com>  Wed, 12 Aug 2009 16:44:55 +0300
+
+microb-engine (20090612-35) unstable; urgency=low
+
+  * Fixes:NB#104325 It is imposible to enable components compatibility check 
+
+ -- Egor Starkov <egor.starkov@nokia.com>  Fri, 07 Aug 2009 15:32:05 +0300
+
+microb-engine (20090612-34) unstable; urgency=low
+
+  * Fixes: NB#131361 Suspend internal mozilla timers,
+    Fixed regression reported in bug 131922
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 07 Aug 2009 14:19:52 +0300
+
+microb-engine (20090612-33) unstable; urgency=low
+
+  * Updated changelog
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Thu, 06 Aug 2009 16:35:11 +0300
+
+microb-engine (20090612-32) unstable; urgency=low
+
+  * Revert jit enabled, because of regression in bug 131610
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 06 Aug 2009 14:23:00 +0300
+
+microb-engine (20090612-31) unstable; urgency=low
+
+  * Fixes: NB#131361 Suspend internal mozilla timers
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Aug 2009 20:09:47 +0300
+
+microb-engine (20090612-30) unstable; urgency=low
+
+  * Fixes for bug 131361 Suspend internal mozilla timers, http prune conn timer
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Aug 2009 19:32:53 +0300
+
+microb-engine (20090612-29) unstable; urgency=low
+
+  * Fixes for bug 131361 Suspend internal mozilla timers, navHistory expire
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Aug 2009 19:19:07 +0300
+
+microb-engine (20090612-28) unstable; urgency=low
+
+  * Fixes for bug 131361 Suspend internal mozilla timers, placesDBFlush
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Aug 2009 19:01:15 +0300
+
+microb-engine (20090612-27) unstable; urgency=low
+
+  * Fixes for bug 131361 Suspend internal mozilla timers in idle state. Osso handlers
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Aug 2009 17:58:49 +0300
+
+microb-engine (20090612-26) unstable; urgency=low
+
+  * Fixes for bug 131361 Suspend internal mozilla timers in idle state required
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Aug 2009 17:46:03 +0300
+
+microb-engine (20090612-25) unstable; urgency=low
+
+  * (Reverted in 20090612-32) NB#130735 to enable JIT for JavaScript in Browser Engine 
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Aug 2009 10:38:18 +0300
+
+microb-engine (20090612-24) unstable; urgency=low
+
+  * Fixes: NB#131142 security-prefs.js must be updated
+
+ -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Aug 2009 00:01:52 +0300
+
+microb-engine (20090612-23) unstable; urgency=low
+
+  * Fixes: NB#130570 - Browser crashes when trying to download .hqx file
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Mon,  3 Aug 2009 22:06:28 +0300
+
+microb-engine (20090612-22) unstable; urgency=low
+
+  * Fixes: NB#130709 [MT]Unsynchronized restart of browserd,in mochitest script crashes browser
+
+ -- Chithra Prabha  <chithra.pr.peachi-muthu@nokia.com>  Mon, 03 Aug 2009 10:50:29 +0300
+
+microb-engine (20090612-21) unstable; urgency=low
+
+  * Fixes for bug 130434, BMO bugs 499608,502055,472950,493915
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 03 Aug 2009 09:24:52 +0300
+
+microb-engine (20090612-20) unstable; urgency=low
+
+  * Fixes: NB#128061 Can't place focus in proper input field on the page which has a filled input field with selected text
+    Updated to Olly comment
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 01 Aug 2009 22:53:33 +0300
+
+microb-engine (20090612-19) unstable; urgency=low
+
+  * Fixes: NB#128061 Can't place focus in proper input field on the page which has a filled input field with selected text
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 01 Aug 2009 22:48:55 +0300
+
+microb-engine (20090612-18) unstable; urgency=low
+
+  * Fixes: NB#127717 After pressing arrow buttons piggy is moving forward only by one step.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 01 Aug 2009 17:11:28 +0300
+
+microb-engine (20090612-17) unstable; urgency=low
+
+  * Fixes: NB#128288 - random crash in browser while opening web page 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri, 31 Jul 2009 08:29:01 +0300
+
+microb-engine (20090612-16) unstable; urgency=low
+
+  * Fixes: NB#128901 - browser daemon must linking with jemalloc library 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 30 Jul 2009 16:32:00 +0300
+
+microb-engine (20090612-15) unstable; urgency=low
+
+  * Fixes: NB#128963 [MT]Mochitest exeution failure with latest build
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Tue, 21 Jul 2009 11:30:46 +0300
+
+microb-engine (20090612-14) unstable; urgency=low
+
+  * Fixes: NB#125506 Browser should use system Pixman and Cairo
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 17 Jul 2009 10:04:44 +0300
+
+microb-engine (20090612-13) unstable; urgency=low
+
+  * Exclude expat headers from microb-engine-dev 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 16 Jul 2009 19:29:06 +0300
+
+microb-engine (20090612-12) unstable; urgency=low
+
+  * Fixes: NB#127799 - libnss breaks Tinymail build
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Wed, 15 Jul 2009 10:46:30 +0300
+
+microb-engine (20090612-11) unstable; urgency=low
+
+  * Fixes: NB#127597 coursor does not change in manipulation moge on maps.google.com when noxembed value is set to true
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 13 Jul 2009 11:59:50 +0300
+
+microb-engine (20090612-10) unstable; urgency=low
+
+  * Fixes: NB#127775 Engine crashes in low memory situation
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 13 Jul 2009 09:12:44 +0300
+
+microb-engine (20090612-9) unstable; urgency=low
+
+  * Fixes: NB#127771 Engine support for Windowed plugins, + crash fix + mem leak fix from upstream
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 13 Jul 2009 09:00:44 +0300
+
+microb-engine (20090612-8) unstable; urgency=low
+
+  * Fixes: NB#127271 disabling ipv6 dns resolution for Browser
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 10 Jul 2009 19:08:14 +0300
+
+microb-engine (20090612-7) unstable; urgency=low
+
+  * Fixes for bug 127474, prepare to locate regression part
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 10 Jul 2009 09:09:02 +0300
+
+microb-engine (20090612-6) unstable; urgency=low
+
+  * Fixes: NB#127356 Mtv3 hangs engine and not loading
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 09 Jul 2009 22:12:20 +0300
+
+microb-engine (20090612-5) unstable; urgency=low
+
+  * Merge engine update
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Thu, 09 Jul 2009 15:23:53 +0300
+
+microb-engine (20090612-4.74) unstable; urgency=low
+
+  * Fixes: NB#120684 White rectangles on the flash content
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 09 Jul 2009 14:20:27 +0300
+
+microb-engine (20090612-4.73) unstable; urgency=low
+
+  * Merge changes up to microb-engine 20090329-73
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 08 Jul 2009 18:15:57 +0300
+
+microb-engine (20090612-4.70) unstable; urgency=low
+
+  * Merge changes up to microb-engine 20090329-70
+  * Remove 030_attachment.cgi?id=297001 from BMO#412300
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Mon, 06 Jul 2009 14:30:36 +0300
+
+microb-engine (20090612-4.67) unstable; urgency=low
+
+  * Build fix NB#124409 attachment 55427
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Mon, 06 Jul 2009 12:57:39 +0300
+
+microb-engine (20090612-3.67) unstable; urgency=low
+
+  * Fixes: NB#124481 - Can't change link in URL Toolbar after interacting on flash page 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri,  3 Jul 2009 15:22:20 +0300
+
+microb-engine (20090612-3.66) unstable; urgency=low
+
+  * fixreject
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Sat, 27 Jun 2009 01:53:29 +0300
+
+microb-engine (20090612-2.66) unstable; urgency=low
+
+  * Drop pango update build patch already on trunk
+  * Merge changes up to microb-engine 20090329-66
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Thu, 18 Jun 2009 14:23:12 +0300
+
+microb-engine (20090612-1) unstable; urgency=low
+
+  * Downgrade a bit to 20090612, it seems showing best sunspider result according to:
+    http://tinderbox.mozilla.org/showbuilds.cgi?tree=Mobile&maxdate=1244932469&hours=24&legend=0&norules=1
+    http://tinderbox.mozilla.org/showlog.cgi?log=Mobile/1244862365.1244867549.1827.gz
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 18 Jun 2009 01:56:17 +0300
+
+microb-engine (20090617-3) unstable; urgency=low
+
+  * Added disable-jit option, updated xulrunner sources
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 18 Jun 2009 00:54:06 +0300
+
+microb-engine (20090617-2) unstable; urgency=low
+
+  * Fixed patch rejects and merged with microb-branch
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 17 Jun 2009 21:28:42 +0300
+
+microb-engine (20090617-1) unstable; urgency=low
+
+  * Change upstream tag
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 17 Jun 2009 18:21:06 +0300
+
+microb-engine (20090606-2) unstable; urgency=low
+
+  * Merged changes from microb-engine since 20090329-47 to
+    microb-engine-trunk
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Mon, 15 Jun 2009 01:36:45 +0300
+
+microb-engine (20090606-1) unstable; urgency=low
+
+  * Update to mozilla 20090606
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 07 Jun 2009 10:18:38 +0300
+
+microb-engine (20090605-1) unstable; urgency=low
+
+  * Update to mozilla 20090605
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 07 Jun 2009 10:15:23 +0300
+
+microb-engine (20090603-1) unstable; urgency=low
+
+  * Update to mozilla 20090603
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 07 Jun 2009 09:58:53 +0300
+
+microb-engine (20090530-1) unstable; urgency=low
+
+  * Update to mozilla upstream/20090530 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 07 Jun 2009 09:55:37 +0300
+
+microb-engine (20090423-1) unstable; urgency=low
+
+  * Update to mozilla 20090423 trunk
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 07 Jun 2009 09:38:36 +0300
+
+microb-engine (20090515-1) unstable; urgency=low
+
+  * Updated to 20090515-1
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 07 Jun 2009 08:21:06 +0300
+
+microb-engine (20090329-73) unstable; urgency=low
+
+  * Bump version to fix repositories
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 07 Jul 2009 21:41:54 +0300
+
+microb-engine (20090329-72.1) unstable; urgency=low
+
+  * Try to fix enabling and disabling of jemalloc, to be able manage memory implementation
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 07 Jul 2009 16:46:21 +0300
+
+microb-engine (20090329-71) unstable; urgency=low
+
+  * Fixes for bug 124409 Remove XEmbed widget from responsive browser UI
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 06 Jul 2009 19:02:05 +0300
+
+microb-engine (20090329-70) unstable; urgency=low
+
+  * Fixes: NB#125183 tutorial ("Get Started") is audio only, white screen
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 03 Jul 2009 23:36:19 +0300
+
+microb-engine (20090329-69) unstable; urgency=low
+
+  * Fixes: NB#122564 Make browser more responsive to close event in high load	conditions
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 03 Jul 2009 13:46:25 +0300
+
+microb-engine (20090329-68) unstable; urgency=low
+
+  * Fixes for bug 124409, remove overlapping patches, remove old functionality
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 30 Jun 2009 12:19:02 +0300
+
+microb-engine (20090329-67) unstable; urgency=low
+
+  * Fixes: NB#122455 [MT]Automated test execution scripts for  mochitest test   fails
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Mon, 29 Jun 2009 14:10:11 +0300
+
+microb-engine (20090329-66) unstable; urgency=low
+
+  * Fixes for bug 124409, focus problem and new key event API
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 26 Jun 2009 13:20:53 +0300
+
+microb-engine (20090329-65) unstable; urgency=low
+
+  * Fixes: NB#122455 [MT]Automated test execution scripts for  mochitest test   fails
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Thu, 25 Jun 2009 11:02:20 +0300
+
+microb-engine (20090329-64) unstable; urgency=low
+
+  * Fixes: NB#124333 ftbfs with updated pango
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 24 Jun 2009 18:55:03 +0300
+
+microb-engine (20090329-63) unstable; urgency=low
+
+  * Fixes: NB#124195 Google Search doesn't work
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 24 Jun 2009 13:48:01 +0300
+
+microb-engine (20090329-62) unstable; urgency=low
+
+  * Fixes for bug 124409, safe changes
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 24 Jun 2009 13:42:01 +0300
+
+microb-engine (20090329-61) unstable; urgency=low
+
+  * Fixes: NB#122455 [MT]Automated test execution scripts for  mochitest test   fails
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Tue, 23 Jun 2009 13:40:53 +0300
+
+microb-engine (20090329-60) unstable; urgency=low
+
+  * Fixes: NB#122455 [MT]Automated test execution scripts for  mochitest test   fails
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Mon, 22 Jun 2009 11:25:39 +0300
+
+microb-engine (20090329-59) unstable; urgency=low
+
+  * Fixes: NB#117054 Random crash happened when flash video was played.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 22 Jun 2009 10:48:39 +0300
+
+microb-engine (20090329-58) unstable; urgency=low
+
+  * Added missing fix from bug 121330 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 17 Jun 2009 18:00:42 +0300
+
+microb-engine (20090329-57) unstable; urgency=low
+
+  * Fixes: NB#122455 [MT]Automated test execution scripts for  mochitest test   fails
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Wed, 17 Jun 2009 15:22:47 +0300
+
+microb-engine (20090329-56) unstable; urgency=low
+
+  * Updated changelog
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Tue, 16 Jun 2009 18:34:18 +0300
+
+microb-engine (20090329-55) unstable; urgency=low
+
+  * Fixes: NB#122359 www.mtv3.fi/f1 ad bar is rendered into middle of page in	scroll
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 15 Jun 2009 16:16:26 +0300
+
+microb-engine (20090329-54) unstable; urgency=low
+
+  * Fixes: NB#119974 Need VisibilityNotify signal correctly with state
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 15 Jun 2009 11:41:19 +0300
+
+microb-engine (20090329-53) unstable; urgency=low
+
+  * Fixed building with nolibxul
+
+ -- Oleg Romashin <romaxa@gmail.com>  Sat, 13 Jun 2009 23:06:03 +0300
+
+microb-engine (20090329-52) unstable; urgency=low
+
+  * Fixed NB#122498 gmail crash
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 13 Jun 2009 19:10:44 +0300
+
+microb-engine (20090329-51) unstable; urgency=low
+
+  * Fixed build failure caused by broken patch from bug 122455
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 13 Jun 2009 13:22:01 +0300
+
+microb-engine (20090329-50) unstable; urgency=low
+
+  * Fixes: NB#122455 [MT]Automated test execution scripts for  mochitest test   fails
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Fri, 12 Jun 2009 20:28:59 +0300
+
+microb-engine (20090329-49) unstable; urgency=low
+
+  * Fixes: NB#122455 [MT]Automated test execution scripts for  mochitest test   fails
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Fri, 12 Jun 2009 19:16:14 +0300
+
+microb-engine (20090329-48) unstable; urgency=low
+
+  * Fixes: NB#121330 Ctrl+Right and Ctrl+Left cycle through browser engine input fields 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 11 Jun 2009 19:44:47 +0300
+
+microb-engine (20090329-47.1) unstable; urgency=low
+
+  * Updated changelog
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 07 Jun 2009 08:22:21 +0300
+
+microb-engine (20090329-47) unstable; urgency=low
+
+  * Fixes: NB#119532 Maemo browser incompatible with custom form button
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 06 Jun 2009 07:37:27 +0300
+
+microb-engine (20090329-46) unstable; urgency=low
+
+  * Fixes: NB#119800 [MT]microb-tests package need to support for running the tests with testrunner.
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Fri, 05 Jun 2009 16:37:41 +0300
+
+microb-engine (20090329-45) unstable; urgency=low
+
+  * Fixes: NB#120124 GIF87a test suite causes device reboots and weird browser behaviour (added osso-mem.h visibility)
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri, 05 Jun 2009 11:53:46 +0300
+
+microb-engine (20090329-44) unstable; urgency=low
+
+  * Fixes: NB#120124 GIF87a test suite causes device reboots and weird browser behaviour
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 04 Jun 2009 09:56:55 +0300
+
+microb-engine (20090329-43) unstable; urgency=low
+
+  * Removed not required gtkmozembed dependency
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 04 Jun 2009 01:09:33 +0300
+
+microb-engine (20090329-42) unstable; urgency=low
+
+  * Fixes: NB#119779 watermarks polled in browser too often
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 03 Jun 2009 18:12:31 +0300
+
+microb-engine (20090329-41) unstable; urgency=low
+
+  * Fixes: NB#119800 [MT]microb-tests package need to support for running the tests with testrunner.
+    
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Wed, 03 Jun 2009 17:00:14 +0300
+
+microb-engine (20090329-40) unstable; urgency=low
+
+  * Fixes: NB#119797 [MT]Low Memory problem,while running the mochitest in target device.
+    Added fixes in maemkit files,removed unused patches.
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Wed, 03 Jun 2009 15:14:42 +0300
+
+microb-engine (20090329-39) unstable; urgency=low
+
+  * Fixes: NB#119797 [MT]Low Memory problem,while running the mochitest in target device
+    Added initial version of  maemkit files and fixes for mochitest files.
+
+ -- Chithra Prabha <chithra.pr.peachi-muthu@nokia.com>  Wed, 03 Jun 2009 14:56:50 +0300
+
+microb-engine (20090329-38) unstable; urgency=low
+
+  * Fixes: NB#119573 Add support for ForcePaintEvent
+    Added helper fix for bug 118748 ExpandWindowByFrames called too often
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 02 Jun 2009 10:54:48 +0300
+
+microb-engine (20090329-37) unstable; urgency=low
+
+  * Fixes: NB#117540 - crash [@ nsDocShell::GetChannelIsUnsafe] [top] 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 01 Jun 2009 14:13:07 +0300
+
+microb-engine (20090329-36) unstable; urgency=low
+
+  * Fixes: NB#118966 - crash [@ EmbedPrivate::Hide]
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 28 May 2009 11:19:09 +0300
+
+microb-engine (20090329-35) unstable; urgency=low
+
+  * Fixes: NB#118742 - Cannot add security exception if using en-US locale 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 28 May 2009 09:10:00 +0300
+
+microb-engine (20090329-34) unstable; urgency=low
+
+  * Fixes: NB#111799 - Complete browsing history button is not visible in recent history view 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 26 May 2009 15:25:16 +0300
+
+microb-engine (20090329-33) unstable; urgency=low
+
+  * Fixes: NB#113969 Engine RenderDocument optimizations needed for flash video performance 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 24 May 2009 10:17:06 +0300
+
+microb-engine (20090329-32) unstable; urgency=low
+
+  * Fixes: NB#117308 [MT]Test package not available with mozilla test files,
+    for testing in device 
+
+ -- chithra <chithra.pr.peachi-muthu@nokia.com>  Fri, 22 May 2009 17:17:40 +0300
+
+microb-engine (20090329-31) unstable; urgency=low
+
+  * Fixes: NB#104807 Missing icons in netError pages 
+
+ -- Josh Soref <josh.soref@nokia.com>  Fri, 22 May 2009 13:48:01 +0300
+
+microb-engine (20090329-30) unstable; urgency=low
+
+  * Fixes: NB#118165 Buttons theming problem in chrome windows
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 22 May 2009 08:02:58 +0300
+
+microb-engine (20090329-29) unstable; urgency=low
+
+  * Fixes: NB#112705 browserd process performed unnecessary activity during idle
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 21 May 2009 21:08:00 +0300
+
+microb-engine (20090329-28) unstable; urgency=low
+
+  * Fixes: NB#116346 Web controls are ugly
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 18 May 2009 13:56:39 +0300
+
+microb-engine (20090329-27) unstable; urgency=low
+
+  * Fixes: NB#110339 Google search string is incorrect
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 14 May 2009 15:21:25 +0300
+
+microb-engine (20090329-26) unstable; urgency=low
+
+  * Fixes: NB#114757 Border of flash content is displayed after invoking CSM
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 12 May 2009 21:05:16 +0300
+
+microb-engine (20090329-25) unstable; urgency=low
+
+  * Fixed MB#491722 nsObjectFrame doesn't properly handle NPP_New failing for NP_FULL
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Mon, 11 May 2009 13:18:21 +0300
+
+microb-engine (20090329-24) unstable; urgency=low
+
+  * Fixes: NB#113479 - Browser not giving mode correctly to plugin in NPP_New call 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 11 May 2009 13:00:13 +0300
+
+microb-engine (20090329-23) unstable; urgency=low
+
+  * Added support for 16bpp cairo_image_surface, for bug 114495
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 05 May 2009 18:17:32 +0300
+
+microb-engine (20090329-22) unstable; urgency=low
+
+  * Backed out changeset e83aa53559be
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Mon,  4 May 2009 13:07:52 +0300
+
+microb-engine (20090329-21) unstable; urgency=low
+
+  * Fixed building with enable-tests configure option, not part of official build, no bug
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 28 Apr 2009 14:54:32 +0300
+
+microb-engine (20090329-19) unstable; urgency=low
+
+  * Fixes: NB#113070 [MT]Mochitest execution doesnot start if the logFile
+    parameter is provided as argument
+
+ -- chithra <chithra.pr.peachi-muthu@nokia.com>  Mon, 27 Apr 2009 16:49:55 +0300
+
+microb-engine (20090329-18) unstable; urgency=low
+
+  * Fixes: NB#102654 Nokia's 'Find a store' links does not work properly
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 22 Apr 2009 13:06:48 +0300
+
+microb-engine (20090329-17) unstable; urgency=low
+
+  * Fixes: NB#110777 Random crash on youtube
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 16 Apr 2009 16:35:57 +0300
+
+microb-engine (20090329-16) unstable; urgency=low
+
+  * Fixes: NB#111076 Fixed indentation mismatches errors in runMochiTestsUtils.py.
+
+ -- chithra <chithr.pr.peachi-muthua@nokia.com>  Thu, 16 Apr 2009 10:00:34 +0300
+
+microb-engine (20090329-15) unstable; urgency=low
+
+  * Fixes: NB#111076 Fixed build bustage
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 15 Apr 2009 22:40:21 +0300
+
+microb-engine (20090329-14) unstable; urgency=low
+
+  * Fixes: NB#111076 [MT]mochitest scripts are not executing  the tests with maemo browser 
+
+ -- chithra <chithra.pr.peachi-muthu@nokia.com>  Wed, 15 Apr 2009 18:21:04 +0300
+
+microb-engine (20090329-13) unstable; urgency=low
+
+  * Fixes: NB#110909 Browser is not responding after tapping on mailto link.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 15 Apr 2009 13:17:15 +0300
+
+microb-engine (20090329-12) unstable; urgency=low
+
+  * Fixes: for bug 110222, test.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 15 Apr 2009 08:17:09 +0300
+
+microb-engine (20090329-11) unstable; urgency=low
+
+  * Fixes: NB#108857 Not reproducible browser crash - nsDocShell::EnsureContentViewer
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 14 Apr 2009 20:53:44 +0300
+
+microb-engine (20090329-10.1) unstable; urgency=low
+
+  * Removed broken patch, fixed scroll events in normal mode
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 10 Apr 2009 19:18:40 +0300
+
+microb-engine (20090329-10) unstable; urgency=low
+
+  * Fixes NB#110339 Google search string is incorrect
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu,  9 Apr 2009 07:46:14 +0300
+
+microb-engine (20090329-9) unstable; urgency=low
+
+  * Updated changelog
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Fri, 03 Apr 2009 15:08:28 +0300
+
+microb-engine (20090329-8) unstable; urgency=low
+
+  * Fixed right path for nolibxul libraries (not part of official build)
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 01 Apr 2009 13:40:48 +0300
+
+microb-engine (20090329-7) unstable; urgency=low
+
+  * Fixes: NB#101472 .Added missing patch.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 01 Apr 2009 13:09:08 +0300
+
+microb-engine (20090329-6) unstable; urgency=low
+
+  * Fixes: NB#109121 Error while building the microb-engine,with tests enables
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 01 Apr 2009 11:55:29 +0300
+
+microb-engine (20090329-5) unstable; urgency=low
+
+  * Update changelog
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 01 Apr 2009 11:22:54 +0300
+
+microb-engine (20090329-4) unstable; urgency=low
+
+  * Fixed quilt refresh usage, fixed hunks in microb patchset
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 30 Mar 2009 09:42:14 +0300
+
+microb-engine (20090329-3) unstable; urgency=low
+
+  * Cleanup microb patchset, fixed reorganize script
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 30 Mar 2009 09:08:39 +0300
+
+microb-engine (20090329-2) unstable; urgency=low
+
+  * Fixed Build bustage on patch apply
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 29 Mar 2009 23:32:15 +0300
+
+microb-engine (20090329-1) unstable; urgency=low
+
+  * Updated to mozilla-central trunk ac9deb7fd0c8
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 29 Mar 2009 23:27:39 +0300
+
+microb-engine (20090326-3) unstable; urgency=low
+
+  * Merged fix for NB#105250 Browser crashes when JavaScript function is called
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 29 Mar 2009 23:25:08 +0300
+
+microb-engine (20090326-2) unstable; urgency=low
+
+  * Fixed build bustage with wrong type conversion
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 28 Mar 2009 08:53:11 +0200
+
+microb-engine (20090326-1) unstable; urgency=low
+
+  * Update microb-engine upstream to latest moz central changeset 8bfac66fe41a
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 26 Mar 2009 23:07:55 +0200
+
+microb-engine (20090228-29) unstable; urgency=low
+
+  * Fixes: NB#101472 plugins state is not saved when battery is removed from device
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 31 Mar 2009 15:02:32 +0300
+
+microb-engine (20090228-28) unstable; urgency=low
+
+  * Fixes: NB#100192 extensions.log should go to syslog
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 31 Mar 2009 14:33:56 +0300
+
+microb-engine (20090228-27) unstable; urgency=low
+
+  * Fixes: NB#99337 Find dialog does not work properly.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 30 Mar 2009 16:25:24 +0300
+
+microb-engine (20090228-26) unstable; urgency=low
+
+  * Fixes: NB#105250 Browser crashes when JavaScript function is called
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 29 Mar 2009 23:18:38 +0300
+
+microb-engine (20090228-25) unstable; urgency=low
+
+  * Fixes: NB#108136 nsDisplayListBuilder does not works correctly with ignoreScrollFrame option
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 26 Mar 2009 12:39:20 +0200
+
+microb-engine (20090228-24) unstable; urgency=low
+
+  * Fixed microb-engine branch, removed wrong fix for bug 103441 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 23 Mar 2009 16:19:43 +0200
+
+microb-engine (20090228-23) unstable; urgency=low
+
+  * Updated changelog
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Thu, 19 Mar 2009 16:51:42 +0200
+
+microb-engine (20090228-22) unstable; urgency=low
+
+  * NB#96662 - patch removed from this package and moved to libgtkembedmoz package 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 19 Mar 2009 11:08:41 +0200
+
+microb-engine (20090228-21) unstable; urgency=low
+
+  * Fixes: NB#106290 First flash instance does not drawing on ovi.com
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 19 Mar 2009 10:03:17 +0200
+
+microb-engine (20090228-20) unstable; urgency=low
+
+  * (Backed out for 20090228-22) NB#96662 - <Safety> EmbedContentListener.cpp
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 18 Mar 2009 08:27:41 +0200
+
+microb-engine (20090228-19) unstable; urgency=low
+
+  * Updated changelog
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Tue, 17 Mar 2009 20:02:39 +0200
+
+microb-engine (20090228-18) unstable; urgency=low
+
+  * Fixes: NB#101975 choice list has no frame and no visible background making it difficult to notice on
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 16 Mar 2009 11:18:30 +0200
+
+microb-engine (20090228-17) unstable; urgency=low
+
+  * Changes related to NB#103441 Accidental browser crash while surfing the web - gamespot.com
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Mon, 16 Mar 2009 11:11:23 +0200
+
+microb-engine (20090228-16) unstable; urgency=low
+
+  * Fixes: NB#98604 It is impossible to open CSM on unloaded images
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 15 Mar 2009 10:57:48 +0200
+
+microb-engine (20090228-15) unstable; urgency=low
+
+  * Fixes: NB#101222 SVG - the 'marker' element does not work properly
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 15 Mar 2009 10:51:56 +0200
+
+microb-engine (20090228-14.2) unstable; urgency=low
+
+  * Fixes: NB#99982 Cursor is not visible in hovering mode and manipulation mode
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri, 13 Mar 2009 08:59:35 +0200
+
+microb-engine (20090228-14.1) unstable; urgency=low
+
+  * Fixed missing AC_SUBST for patch from bug 104859. minor
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 11 Mar 2009 13:13:42 +0200
+
+microb-engine (20090228-14) unstable; urgency=low
+
+  * Fixes: NB#105251 unable to build daemon package with latest engine 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue, 10 Mar 2009 17:50:09 +0200
+
+microb-engine (20090228-13) unstable; urgency=low
+
+  * Fixes: NB#104859 ARM NEON Pixman optimizations should be enabled for mozilla pixman 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 10 Mar 2009 14:42:20 +0200
+
+microb-engine (20090228-12) unstable; urgency=low
+
+  * Fixes: NB#104862 Engine .pc file should contain some additional libraries in NOLIBXUL configuration
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 09 Mar 2009 18:22:26 +0200
+
+microb-engine (20090228-11) unstable; urgency=low
+
+  * Fixes: NB#104990 MOZ_COMPOSITED_PLUGINS should be disabled in microb-build's
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 09 Mar 2009 18:08:52 +0200
+
+microb-engine (20090228-10) unstable; urgency=low
+
+  * Fixes: NB#103674 Browser crash after tap on preferences button for plugin
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri,  6 Mar 2009 11:39:49 +0200
+
+microb-engine (20090228-9) unstable; urgency=low
+
+  * Fixed broken patch for bug 100829
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 04 Mar 2009 19:07:43 +0200
+
+microb-engine (20090228-8) unstable; urgency=low
+
+  * Fixes: NB#100829 Radio button does not render properly.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 03 Mar 2009 19:33:02 +0200
+
+microb-engine (20090228-7) unstable; urgency=low
+
+  * Fixes: NB#93507 Error message that the browser has detected redirect loop is not displayed
+
+ -- Egor Starkov <egor.starkov@nokia.com>  Mon, 02 Mar 2009 22:36:27 +0200
+
+microb-engine (20090228-6) unstable; urgency=low
+
+  * Fixes: NB#103948 Failed to build gtkmozembed sources 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Mon,  2 Mar 2009 16:38:51 +0200
+
+microb-engine (20090228-5) unstable; urgency=low
+
+  * Fixed building on diablo environment
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 01 Mar 2009 13:40:06 +0200
+
+microb-engine (20090228-4) unstable; urgency=low
+
+  * Increase tag number
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 01 Mar 2009 12:29:42 +0200
+
+microb-engine (20090228-3) unstable; urgency=low
+
+  * Added missing xcomposite dependency 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 28 Feb 2009 11:58:57 +0200
+
+microb-engine (20090228-2) unstable; urgency=low
+
+  * Added missing xdamage dependency
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 28 Feb 2009 09:47:11 +0200
+
+microb-engine (20090228-1) unstable; urgency=low
+
+  * Updated to latest mozilla-central trunk. f7f62131998d
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 28 Feb 2009 07:53:53 +0200
+
+microb-engine (20090207-13) unstable; urgency=low
+
+  * Fixes: NB#103243 Native colors need to be hardcoded for fremantle environment 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 25 Feb 2009 15:32:42 +0200
+
+microb-engine (20090207-12) unstable; urgency=low
+
+  * Fixes: NB#102984 Block native mozilla widget activity in RESPUI mode (local rendering via RenderDocument API)
+    Fixes: NB#102980 Valgrind: Invalid read in RSS feed service
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 24 Feb 2009 10:03:15 +0200
+
+microb-engine (20090207-11) unstable; urgency=low
+
+  * Added missing change for updated .uu tarball 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 18 Feb 2009 13:18:56 +0200
+
+microb-engine (20090207-10) unstable; urgency=low
+
+  * Updated microb-xulrunner-sdk tarball
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 18 Feb 2009 08:22:23 -0500
+
+microb-engine (20090207-9) unstable; urgency=low
+
+  * Fixes: NB#102043 New plugins API version 3 (no temp surface) 
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 17 Feb 2009 16:04:18 +0200
+
+microb-engine (20090207-8) unstable; urgency=low
+
+  * Fixes: NB#101910 Flashplayer crashes a lot, because engine giving wrong pointer.
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 17 Feb 2009 08:59:14 +0200
+
+microb-engine (20090207-7) unstable; urgency=low
+
+  * Fixes: NB#101136 Microb-engine build fails with MAEMO_LOCATION option
+
+ -- Egor Starkov <egor.starkov@nokia.com>  Thu, 13 Feb 2009 14:15:05 +0200
+
 microb-engine (20090207-6) unstable; urgency=low
 
-  * Fixed bug 101550 Scaled SetWindow required for WindowLessLocal API
+  * Fixes: NB#101550 Scaled SetWindow required for WindowLessLocal API.
 
- -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 12 Feb 2009 09:56:33 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 12 Feb 2009 01:26:05 +0200
 
 microb-engine (20090207-5) unstable; urgency=low
 
@@ -51,13 +1104,13 @@ microb-engine (20090203-6) unstable; urgency=low
 
   * Fixes: NB#99858 URL field and Internet keywords feature change (form Google's "I'm Feeling Lucky" service to Google's Search Results Page)
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed,  4 Feb 2009 11:41:59 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed,  4 Feb 2009 11:41:59 +0200
 
 microb-engine (20090203-5) unstable; urgency=low
 
   * Fixed wrong preference type, should be int 
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 04 Feb 2009 10:30:12 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 04 Feb 2009 10:30:12 -0500
 
 microb-engine (20090203-4) unstable; urgency=low
 
@@ -75,7 +1128,7 @@ microb-engine (20090203-2) unstable; urgency=low
 
   * Updated patch to latest trunk sources
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 04 Feb 2009 04:34:08 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 04 Feb 2009 04:34:08 -0500
 
 microb-engine (20090203-1) unstable; urgency=low
 
@@ -212,7 +1265,7 @@ microb-engine (20081217.57469d8d6668-1) unstable; urgency=low
 
   * Updated to trunk 57469d8d6668
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 17 Dec 2008 21:50:55 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 17 Dec 2008 21:50:55 -0500
 
 microb-engine (20081211.b0ddbbdd62e0-2) unstable; urgency=low
 
@@ -236,7 +1289,7 @@ microb-engine (20081203-2.1) unstable; urgency=low
 
   * Fixed integration building
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Dec 2008 21:53:00 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 11 Dec 2008 21:53:00 -0500
 
 microb-engine (20081203-2) unstable; urgency=low
 
@@ -300,13 +1353,13 @@ microb-engine (20081106-5) unstable; urgency=low
 
   * Enabled mouse pressure patch to better detection of finger motions
 
- -- Oleg Romashin <romaxa@gmail.com>  Sun, 23 Nov 2008 14:35:23 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 23 Nov 2008 14:35:23 -0500
 
 microb-engine (20081106-4) unstable; urgency=low
 
   * Updated to trunk 04cecb0ec24c
 
- -- Oleg Romashin <romaxa@gmail.com>  Sun, 23 Nov 2008 11:21:34 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 23 Nov 2008 11:21:34 -0500
 
 microb-engine (20081106-3) unstable; urgency=low
 
@@ -324,32 +1377,32 @@ microb-engine (20081106-1.7) unstable; urgency=low
 
   * Added support for "change password" notification. 
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 18 Nov 2008 08:28:19 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 18 Nov 2008 08:28:19 +0200
 
 microb-engine (20081106-1.6) unstable; urgency=low
 
   * Fixed search service for fennec browser
 
- -- Oleg Romashin <romaxa@gmail.com>  Sun, 16 Nov 2008 06:09:07 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 16 Nov 2008 06:09:07 -0500
 
 microb-engine (20081106-1.5) unstable; urgency=low
 
   * Fixed bug 465170 
 
- -- Oleg Romashin <romaxa@gmail.com>  Sun, 16 Nov 2008 17:15:21 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 16 Nov 2008 17:15:21 -0500
 
 microb-engine (20081106-1.4) unstable; urgency=low
 
   * Disable wave support
 
- -- Oleg Romashin <romaxa@gmail.com>  Sun, 16 Nov 2008 15:26:47 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 16 Nov 2008 15:26:47 -0500
 
 microb-engine (20081106-1.3) unstable; urgency=low
 
   * Updated to latest trunk 8b3caddca8f5
   * Updated patchset to latest trunk 1acb1c8f878a
 
- -- Oleg Romashin <romaxa@gmail.com>  Sun, 16 Nov 2008 14:51:07 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 16 Nov 2008 14:51:07 -0500
 
 microb-engine (20081106-1.2) unstable; urgency=low
 
@@ -380,13 +1433,13 @@ microb-engine (20081009-43.2) hardy; urgency=low
 
   * Added memleaks deb build option 
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 05 Nov 2008 22:43:48 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Nov 2008 22:43:48 -0500
 
 microb-engine (20081009-43.1) hardy; urgency=low
 
   * Added missing modules for microb-full package 
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 05 Nov 2008 20:45:31 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Nov 2008 20:45:31 -0500
 
 microb-engine (20081009-43) hardy; urgency=low
 
@@ -410,32 +1463,32 @@ microb-engine (20081009-40) hardy; urgency=low
 
   * Added xul downloads implementation required for fennec browser 
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 05 Nov 2008 00:09:05 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 05 Nov 2008 00:09:05 -0500
 
 microb-engine (20081009-39) hardy; urgency=low
 
   * Fixed proper structure of common microb-full package 
   * Disabled interruptable reflow patch because it breaks fennec
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 23:51:44 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 04 Nov 2008 23:51:44 -0500
 
 microb-engine (20081009-38) hardy; urgency=low
 
   * Fixed path for symlynks required for google gears 
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 22:45:00 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 04 Nov 2008 22:45:00 -0500
 
 microb-engine (20081009-37) hardy; urgency=low
 
   * Added missing browser.xul and navigator.xul
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 21:52:50 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 04 Nov 2008 21:52:50 -0500
 
 microb-engine (20081009-36) hardy; urgency=low
 
   * Disabled debug printing from interruptable reflow patch
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 19:11:10 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 04 Nov 2008 19:11:10 -0500
 
 microb-engine (20081009-35) hardy; urgency=low
 
@@ -447,13 +1500,13 @@ microb-engine (20081009-34) hardy; urgency=low
 
   * Added symlinks for building gears.
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 08:43:11 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 04 Nov 2008 08:43:11 -0500
 
 microb-engine (20081009-33) hardy; urgency=low
 
   * Updated interuptable reflow patch proto-patch v2  
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 04 Nov 2008 08:34:56 -0500
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 04 Nov 2008 08:34:56 -0500
 
 microb-engine (20081009-32) hardy; urgency=low
 
@@ -472,7 +1525,7 @@ microb-engine (20081009-31.1) hardy; urgency=low
 
   * Disabled broken patch (gnomevfs bluetooth)... because it breaks normal input stream
 
- -- Oleg Romashin <romaxa@romaxa-sr>  Sun, 02 Nov 2008 01:38:21 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 02 Nov 2008 01:38:21 -0400
 
 microb-engine (20081009-31) hardy; urgency=low
 
@@ -484,26 +1537,26 @@ microb-engine (20081009-30) hardy; urgency=low
 
   * Fixed parrallel dirs problem 
 
- -- Oleg Romashin <romaxaxz@romaxaHP.research.nokia.com>  Fri, 31 Oct 2008 13:47:08 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 31 Oct 2008 13:47:08 +0200
 
 microb-engine (20081009-29) hardy; urgency=low
 
   * Removed obsolete gtkmozembed package
   * Fixed spellcheck installation error
 
- -- Oleg Romashin <romaxaxz@romaxaHP.research.nokia.com>  Fri, 31 Oct 2008 13:23:18 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 31 Oct 2008 13:23:18 +0200
 
 microb-engine (20081009-28) hardy; urgency=low
 
   * Fixed patch apply error
 
- -- Oleg Romashin <romaxaxz@romaxaHP.research.nokia.com>  Fri, 31 Oct 2008 11:21:41 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 31 Oct 2008 11:21:41 +0200
 
 microb-engine (20081009-27) hardy; urgency=low
 
   * Updated to trunk a131999fa900
 
- -- Oleg Romashin <romaxa@romaxa-sr>  Thu, 30 Oct 2008 06:44:44 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 30 Oct 2008 06:44:44 -0400
 
 microb-engine (20081009-26) hardy; urgency=low
 
@@ -595,7 +1648,7 @@ microb-engine (20081009-12) hardy; urgency=low
 
   * Disable wrong title for passwords prompt xul window 
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 16 Oct 2008 23:56:51 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 16 Oct 2008 23:56:51 -0400
 
 microb-engine (20081009-11) hardy; urgency=low
 
@@ -631,7 +1684,7 @@ microb-engine (20081009-6) unstable; urgency=low
 
   * Fixes: NB#89968 Random Crashes,while navigating the web pages using the HW keys 
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 14 Oct 2008 22:57:30 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 14 Oct 2008 22:57:30 -0400
 
 microb-engine (20081009-5) unstable; urgency=low
 
@@ -668,13 +1721,13 @@ microb-engine (20080902-53) unstable; urgency=low
 
   * Fixes: NB#89459 chrome://global/content/conigIntValue.xul resource missing
 
- -- Oleg Romashin <romaxa@gmail.com>  Mon, 06 Oct 2008 18:37:27 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 06 Oct 2008 18:37:27 -0400
 
 microb-engine (20080902-52) unstable; urgency=low
 
   * Disable pressure patch until it not tested properly 
 
- -- Oleg Romashin <romaxa@gmail.com>  Sun, 05 Oct 2008 21:37:49 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 05 Oct 2008 21:37:49 -0400
 
 microb-engine (20080902-51) unstable; urgency=low
 
@@ -712,7 +1765,7 @@ microb-engine (20080902-46) unstable; urgency=low
 
   * Optimized engine responsivnes settings
 
- -- Oleg Romashin <romaxa@gmail.com>  Sat, 27 Sep 2008 10:44:55 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 27 Sep 2008 10:44:55 -0400
 
 microb-engine (20080902-45) unstable; urgency=low
 
@@ -744,25 +1797,25 @@ microb-engine (20080902-41) unstable; urgency=low
 
   * Add patches for fonts perf improvments 
 
- -- Oleg Romashin <romaxa@gmail.com>  Mon, 22 Sep 2008 22:31:38 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 22 Sep 2008 22:31:38 -0400
 
 microb-engine (20080902-40) unstable; urgency=low
 
   * Updated to latest trunk. 
 
- -- Oleg Romashin <romaxa@gmail.com>  Mon, 22 Sep 2008 22:04:07 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 22 Sep 2008 22:04:07 -0400
 
 microb-engine (20080902-39) unstable; urgency=low
 
   * Added new fit to width version with simple implementation
 
- -- Oleg Romashin <romaxa@gmail.com>  Mon, 22 Sep 2008 20:08:57 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 22 Sep 2008 20:08:57 -0400
 
 microb-engine (20080902-38) unstable; urgency=low
 
   * Added default configure options
 
- -- Oleg Romashin <romaxa@gmail.com>  Sat, 20 Sep 2008 21:45:06 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sat, 20 Sep 2008 21:45:06 -0400
 
 microb-engine (20080902-37) unstable; urgency=low
 
@@ -798,7 +1851,7 @@ microb-engine (20080902-32) unstable; urgency=low
 
   * Fixed bugs 455665 and 455527 
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 17 Sep 2008 12:43:25 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 17 Sep 2008 12:43:25 +0300
 
 microb-engine (20080902-31) unstable; urgency=low
 
@@ -818,7 +1871,7 @@ microb-engine (20080902-29) unstable; urgency=low
   * Fixed bug 450930
   * Enable jemalloc
 
- -- Oleg Romashin <romaxa@gmail.com>  Sun, 14 Sep 2008 12:14:13 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 14 Sep 2008 12:14:13 -0400
 
 microb-engine (20080902-28) unstable; urgency=low
 
@@ -842,32 +1895,32 @@ microb-engine (20080902-25) unstable; urgency=low
 
   * Removed experimental patch 
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Sep 2008 20:08:23 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 11 Sep 2008 20:08:23 -0400
 
 microb-engine (20080902-24) unstable; urgency=low
 
   * Disable disk cache by default
   * Disabled wrong Qt default configuration
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Sep 2008 19:47:52 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 11 Sep 2008 19:47:52 +0300
 
 microb-engine (20080902-23) unstable; urgency=low
 
   * Add experimental fix for bug  Bug 450930 -  Only redraw when necessary
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Sep 2008 19:45:10 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 11 Sep 2008 19:45:10 +0300
 
 microb-engine (20080902-22) unstable; urgency=low
 
   * Updated to latest trunk 
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Sep 2008 15:57:51 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 11 Sep 2008 15:57:51 +0300
 
 microb-engine (20080902-21) unstable; urgency=low
 
   * Fixed bug 454756 Arm flashplayer does not like DelayedStop and crashes (Block 416953 )  
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 11 Sep 2008 15:11:15 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 11 Sep 2008 15:11:15 +0300
 
 microb-engine (20080902-20) unstable; urgency=low
 
@@ -935,7 +1988,7 @@ microb-engine (20080902-10) unstable; urgency=low
   * Added pressure support for GtkEvent on maemo
   * Bug 428988
 
- -- Oleg Romashin <romaxa@gmail.com>  Sun, 07 Sep 2008 13:47:22 -0400
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 07 Sep 2008 13:47:22 -0400
 
 microb-engine (20080902-9) unstable; urgency=low
 
@@ -1029,7 +2082,7 @@ microb-engine (20080820-1) unstable; urgency=low
 
   * Updated to trunk 20080820 
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 20 Aug 2008 18:36:13 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 20 Aug 2008 18:36:13 +0300
 
 microb-engine (20080616-70) unstable; urgency=low
 
@@ -1053,19 +2106,19 @@ microb-engine (20080616-67) unstable; urgency=low
 
   * Added certificate viewer files to packaging. 
 
- -- Oleg Romashin <romaxa@gmail.com>  Mon, 11 Aug 2008 16:00:19 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 11 Aug 2008 16:00:19 +0300
 
 microb-engine (20080616-66) unstable; urgency=low
 
   * Modified SSL exception dialogs to support the new microb-eal 
 
- -- Oleg Romashin <romaxa@gmail.com>  Fri,  8 Aug 2008 09:23:36 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri,  8 Aug 2008 09:23:36 +0300
 
 microb-engine (20080616-65) unstable; urgency=low
 
   * Fixed responsive UI while JS running 
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue,  5 Aug 2008 03:13:24 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue,  5 Aug 2008 03:13:24 +0300
 
 microb-engine (20080616-64) unstable; urgency=low
 
@@ -1132,7 +2185,7 @@ microb-engine (20080616-54) unstable; urgency=low
 
   * Fixed building with nolibxul for ARM 
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 22 Jul 2008 16:29:30 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 22 Jul 2008 16:29:30 +0300
 
 microb-engine (20080616-53) unstable; urgency=low
 
@@ -1206,7 +2259,7 @@ microb-engine (20080616-42) unstable; urgency=low
 
   * Fixed bug 445745 
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 17 Jul 2008 16:37:34 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 17 Jul 2008 16:37:34 +0300
 
 microb-engine (20080616-41) unstable; urgency=low
 
@@ -1218,13 +2271,13 @@ microb-engine (20080616-40) unstable; urgency=low
 
   * Fixed moz no lcms bustage build 
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 17 Jul 2008 16:15:36 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 17 Jul 2008 16:15:36 +0300
 
 microb-engine (20080616-39) unstable; urgency=low
 
   * Add liblocation dependency, according to bug 437948
 
- -- Oleg Romashin <romaxa@gmail.com>  Thu, 17 Jul 2008 15:57:15 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 17 Jul 2008 15:57:15 +0300
 
 microb-engine (20080616-38) unstable; urgency=low
 
@@ -1270,13 +2323,13 @@ microb-engine (20080616-32) unstable; urgency=low
   * Updated patchset
     updated fix from bug 432525
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 16 Jul 2008 13:13:13 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 16 Jul 2008 13:13:13 +0300
 
 microb-engine (20080616-31) unstable; urgency=low
 
   * Disable optimization options, because it makes gmail loading slower. (4 seconds) 
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 15 Jul 2008 17:47:41 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 15 Jul 2008 17:47:41 +0300
 
 microb-engine (20080616-30) unstable; urgency=low
 
@@ -1288,13 +2341,13 @@ microb-engine (20080616-29) unstable; urgency=low
 
   * Disable untested patches (seems it cause random crashes in JS) 
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 15 Jul 2008 15:13:40 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 15 Jul 2008 15:13:40 +0300
 
 microb-engine (20080616-28) unstable; urgency=low
 
   * Enable necko disk cache by configure option 
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 15 Jul 2008 13:23:47 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 15 Jul 2008 13:23:47 +0300
 
 microb-engine (20080616-27) unstable; urgency=low
 
@@ -1603,13 +2656,13 @@ microb-engine (20080520-30) unstable; urgency=low
 
   * Fixed Gecko useragent string 
 
- -- Oleg Romashin <romaxa@gmail.com>  Mon, 26 May 2008 16:37:26 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 16:37:26 +0300
 
 microb-engine (20080520-29) unstable; urgency=low
 
   * Fixed radio/check buttons for hildon theeming 
 
- -- Oleg Romashin <romaxa@gmail.com>  Mon, 26 May 2008 16:09:12 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 26 May 2008 16:09:12 +0300
 
 microb-engine (20080520-28) unstable; urgency=low
 
@@ -1738,14 +2791,14 @@ microb-engine (20080520-8) unstable; urgency=low
   * Fixed rpath problem 
   * Fixes: 78311 fixing problems for microb-engine compilation using gcc	4.2
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 20 May 2008 21:01:09 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 21:01:09 +0300
 
 microb-engine (20080520-7) unstable; urgency=low
 
   * Fixed object destruction order error
   * Disabled short-wchar flag
 
- -- Oleg Romashin <romaxa@gmail.com>  Tue, 20 May 2008 19:58:05 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Tue, 20 May 2008 19:58:05 +0300
 
 microb-engine (20080520-6) unstable; urgency=low
 
@@ -1849,7 +2902,7 @@ microb-engine (20071107-1) unstable; urgency=low
 
   * Updated to trunk 20071107
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed,  7 Nov 2007 13:57:18 +0200
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed,  7 Nov 2007 13:57:18 +0200
 
 microb-engine (20071101-1) unstable; urgency=low
 
@@ -1910,7 +2963,7 @@ microb-engine (20071011-1) unstable; urgency=low
   * Reverted back to old version for JS handler event info
   * Make JS Break patch more simple, because window->setenabled is not implemented
 
- -- Oleg Romashin <romaxa@gmail.com>  Wed, 10 Oct 2007 18:12:18 +0300
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Wed, 10 Oct 2007 18:12:18 +0300
 
 microb-engine (1.0.3-24) unstable; urgency=low
 

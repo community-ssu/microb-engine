@@ -1,7 +1,13 @@
-diff --git a/toolkit/content/widgets/text.xml b/toolkit/content/widgets/text.xml
---- a/toolkit/content/widgets/text.xml
-+++ b/toolkit/content/widgets/text.xml
-@@ -27,6 +27,7 @@
+Index: mozilla/toolkit/content/widgets/text.xml
+===================================================================
+--- mozilla.orig/toolkit/content/widgets/text.xml
++++ mozilla/toolkit/content/widgets/text.xml
+@@ -22,16 +22,17 @@
+     </implementation>
+   </binding>
+ 
+   <binding id="text-label" extends="chrome://global/content/bindings/text.xml#text-base">
+     <implementation implements="nsIDOMXULLabelElement">
        <property name="accessKey">
          <getter>
            <![CDATA[
@@ -9,7 +15,17 @@ diff --git a/toolkit/content/widgets/text.xml b/toolkit/content/widgets/text.xml
              var accessKey = this.getAttribute('accesskey');
              return accessKey ? accessKey[0] : null;
            ]]>
-@@ -225,6 +226,7 @@
+         </getter>
+         <setter>
+           <![CDATA[
+             this.setAttribute('accesskey', val);
+             return val;
+@@ -220,16 +221,17 @@
+       </field>
+       <field name="mInsertSeparator">true</field>
+       <field name="mAlwaysAppendAccessKey">false</field>
+ 
+       <property name="accessKey">
          <getter>
            <![CDATA[
              var accessKey = null;
@@ -17,3 +33,8 @@ diff --git a/toolkit/content/widgets/text.xml b/toolkit/content/widgets/text.xml
              var labeledEl = this.labeledControlElement;
              if (labeledEl) {
                accessKey = labeledEl.getAttribute('accesskey');
+             }
+             if (!accessKey) {
+               accessKey = this.getAttribute('accesskey');
+             }
+             return accessKey ? accessKey[0] : null;
