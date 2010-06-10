@@ -1,0 +1,18 @@
+#Fixed bug#88108:libsqlite3.so needed by libsoftokn3.so
+#bug 463928 libsqlite3.so required for libsoftokn3.so, but it is missing from mozilla-nss.pc.in 
+Index: mozilla/xulrunner/installer/mozilla-nss.pc.in
+===================================================================
+--- mozilla.orig/xulrunner/installer/mozilla-nss.pc.in
++++ mozilla/xulrunner/installer/mozilla-nss.pc.in
+@@ -1,10 +1,10 @@
+ prefix=%prefix%
+ sdkdir=%sdkdir%
+ includedir=%includedir%
+ 
+ Name: NSS
+ Description: Mozilla Network Security Services
+ Version: %MOZILLA_VERSION%
+ Requires: %NSPR_NAME% >= %NSPR_VERSION%
+-Libs: -L${sdkdir}/lib -lsmime3 -lssl3 -lnss3 -lnssutil3
++Libs: -L${sdkdir}/lib -lsmime3 -lssl3 -lnss3 -lnssutil3 -lsqlite3
+ Cflags: -I${includedir}

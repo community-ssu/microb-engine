@@ -1,0 +1,232 @@
+diff -r cf496e34ff90 docshell/base/nsDocShell.cpp
+--- a/docshell/base/nsDocShell.cpp	Thu Nov 19 16:49:49 2009 +0100
++++ b/docshell/base/nsDocShell.cpp	Fri Nov 20 19:14:12 2009 +0100
+@@ -3652,7 +3652,9 @@
+         case NS_ERROR_DOCUMENT_NOT_CACHED:
+             // Doc failed to load because we are offline and the cache does not
+             // contain a copy of the document.
++#ifndef MOZ_ENABLE_LIBCONIC
+             error.AssignLiteral("netOffline");
++#endif
+             break;
+         case NS_ERROR_DOCUMENT_IS_PRINTMODE:
+             // Doc navigation attempted while Printing or Print Preview
+@@ -8148,6 +8150,28 @@
+                       PRBool aBypassClassifier,
+                       PRBool aForceAllowCookies)
+ {
++#ifdef MOZ_ENABLE_LIBCONIC
++    //avoid requesting the connection if
++    // - we are online
++    // - we are a subframe
++    // - we check for offline protocolls
++    // - we display a error page
++
++    nsCString scheme;
++    aURI->GetScheme(scheme); 
++
++    if (NS_IsOffline() &&
++        !IsFrame() &&
++        !scheme.EqualsIgnoreCase("resource") &&
++        !scheme.EqualsIgnoreCase("about") &&
++        !scheme.EqualsIgnoreCase("file") &&
++        !scheme.EqualsIgnoreCase("data") &&
++        !scheme.EqualsIgnoreCase("chrome") &&
++        mLoadType != LOAD_ERROR_PAGE)  {
++        NS_RequestConnection();
++    }
++#endif
++
+     nsresult rv;
+     nsCOMPtr<nsIURILoader> uriLoader;
+ 
+diff -r cf496e34ff90 netwerk/base/public/nsINetworkLinkService.idl
+--- a/netwerk/base/public/nsINetworkLinkService.idl	Thu Nov 19 16:49:49 2009 +0100
++++ b/netwerk/base/public/nsINetworkLinkService.idl	Fri Nov 20 19:14:12 2009 +0100
+@@ -46,6 +46,11 @@
+ interface nsINetworkLinkService : nsISupports
+ {
+   /**
++   * Try to establish a internet connection.
++   */
++  void requestConnection();
++
++  /**
+    * This is set to true when the system is believed to have a usable
+    * network connection.
+    *
+diff -r cf496e34ff90 netwerk/base/public/nsNetUtil.h
+--- a/netwerk/base/public/nsNetUtil.h	Thu Nov 19 16:49:49 2009 +0100
++++ b/netwerk/base/public/nsNetUtil.h	Fri Nov 20 19:14:12 2009 +0100
+@@ -98,6 +98,7 @@
+ #include "nsIPropertyBag2.h"
+ #include "nsIIDNService.h"
+ #include "nsIChannelEventSink.h"
++#include "nsINetworkLinkService.h"
+ 
+ // Helper, to simplify getting the I/O service.
+ inline const nsGetServiceByContractIDWithError
+@@ -1658,4 +1659,15 @@
+   return NS_SUCCEEDED(oldURI->Equals(newURI, &res)) && res;
+ }
+ 
++inline nsresult
++NS_RequestConnection()
++{
++  nsCOMPtr<nsINetworkLinkService> networkLinkService = do_GetService(NS_NETWORK_LINK_SERVICE_CONTRACTID);
++
++  if (!networkLinkService)
++    return NS_ERROR_FAILURE;
++
++  return networkLinkService->RequestConnection();
++}
++
+ #endif // !nsNetUtil_h__
+diff -r cf496e34ff90 netwerk/system/mac/nsNetworkLinkService.mm
+--- a/netwerk/system/mac/nsNetworkLinkService.mm	Thu Nov 19 16:49:49 2009 +0100
++++ b/netwerk/system/mac/nsNetworkLinkService.mm	Fri Nov 20 19:14:12 2009 +0100
+@@ -87,6 +87,12 @@
+     return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsNetworkLinkService::RequestConnection()
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
+ nsresult
+ nsNetworkLinkService::Init(void)
+ {
+diff -r cf496e34ff90 netwerk/system/maemo/nsMaemoNetworkLinkService.cpp
+--- a/netwerk/system/maemo/nsMaemoNetworkLinkService.cpp	Thu Nov 19 16:49:49 2009 +0100
++++ b/netwerk/system/maemo/nsMaemoNetworkLinkService.cpp	Fri Nov 20 19:14:12 2009 +0100
+@@ -67,6 +67,12 @@
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsMaemoNetworkLinkService::RequestConnection()
++{
++  return nsMaemoNetworkManager::OpenConnectionSync() ? NS_OK : NS_ERROR_FAILURE;
++}
++
+ nsresult
+ nsMaemoNetworkLinkService::Init(void)
+ {
+diff -r cf496e34ff90 netwerk/system/maemo/nsMaemoNetworkManager.cpp
+--- a/netwerk/system/maemo/nsMaemoNetworkManager.cpp	Thu Nov 19 16:49:49 2009 +0100
++++ b/netwerk/system/maemo/nsMaemoNetworkManager.cpp	Fri Nov 20 19:14:12 2009 +0100
+@@ -91,14 +91,9 @@
+ PRBool
+ nsMaemoNetworkManager::OpenConnectionSync()
+ {
+-  if (NS_IsMainThread() || !gConnection)
++  if (!gConnection)
+     return PR_FALSE;
+ 
+-  // protect gInternalState.  This also allows us
+-  // to block and wait in this method on this thread
+-  // until our callback on the main thread.
+-  MonitorAutoEnter mon(*gMonitor);
+-
+   gConnectionCallbackInvoked = PR_FALSE;
+ 
+   if (!con_ic_connection_connect(gConnection,
+@@ -106,8 +101,24 @@
+     g_error("openConnectionSync: Error while connecting. %p \n",
+             (void*) PR_GetCurrentThread());
+ 
+-  while (!gConnectionCallbackInvoked)
+-    mon.Wait();
++  if (NS_IsMainThread())  {
++    // when called from the mainthread we need to keep
++    // processing the events in order to receive our own
++    // callback
++    while (!gConnectionCallbackInvoked)
++    {
++      PR_Sleep(PR_SecondsToInterval(1));
++      g_main_context_iteration(0,false);
++    }
++  }  else  {
++    // protect gInternalState.  This also allows us
++    // to block and wait in this method on this thread
++    // until our callback on the main thread.
++    MonitorAutoEnter mon(*gMonitor);
++
++    while (!gConnectionCallbackInvoked)
++      mon.Wait();
++  }
+ 
+   if (gInternalState == InternalState_Connected)
+     return PR_TRUE;
+diff -r cf496e34ff90 netwerk/system/win32/nsNotifyAddrListener.cpp
+--- a/netwerk/system/win32/nsNotifyAddrListener.cpp	Thu Nov 19 16:49:49 2009 +0100
++++ b/netwerk/system/win32/nsNotifyAddrListener.cpp	Fri Nov 20 19:14:12 2009 +0100
+@@ -208,6 +208,12 @@
+     return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++nsNetworkLinkService::RequestConnection()
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
+ nsresult
+ nsNotifyAddrListener::Init(void)
+ {
+diff -r cf496e34ff90 netwerk/system/wince/nsNotifyAddrListener.cpp
+--- a/netwerk/system/wince/nsNotifyAddrListener.cpp	Thu Nov 19 16:49:49 2009 +0100
++++ b/netwerk/system/wince/nsNotifyAddrListener.cpp	Fri Nov 20 19:14:12 2009 +0100
+@@ -119,3 +119,9 @@
+ #endif
+   return NS_OK;
+ }
++
++NS_IMETHODIMP
++nsNetworkLinkService::RequestConnection()
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
+\ No newline at end of file
+diff -r cf496e34ff90 toolkit/system/dbus/nsNetworkManagerListener.cpp
+--- a/toolkit/system/dbus/nsNetworkManagerListener.cpp	Thu Nov 19 16:49:49 2009 +0100
++++ b/toolkit/system/dbus/nsNetworkManagerListener.cpp	Fri Nov 20 19:14:12 2009 +0100
+@@ -90,6 +90,12 @@
+ }
+ 
+ nsresult
++nsNetworkManagerListener::RequestConnection()
++{
++  return NS_ERROR_NOT_IMPLEMENTED;
++}
++
++nsresult
+ nsNetworkManagerListener::Init() {
+   mDBUS = nsDBusService::Get();
+   if (!mDBUS)
+diff --git a/netwerk/base/src/nsIOService.cpp b/netwerk/base/src/nsIOService.cpp
+--- a/netwerk/base/src/nsIOService.cpp
++++ b/netwerk/base/src/nsIOService.cpp
+@@ -613,16 +615,20 @@ nsIOService::GetOffline(PRBool *offline)
+ {
+     *offline = mOffline;
+     return NS_OK;
+ }
+
+ NS_IMETHODIMP
+ nsIOService::SetOffline(PRBool offline)
+ {
++    if (!mManageOfflineStatus) {
++        return NS_OK;
++    }
++
+     // When someone wants to go online (!offline) after we got XPCOM shutdown
+     // throw ERROR_NOT_AVAILABLE to prevent return to online state.
+     if (mShutdown && !offline)
+         return NS_ERROR_NOT_AVAILABLE;
+
+     // SetOffline() may re-enter while it's shutting down services.
+     // If that happens, save the most recent value and it will be
+     // processed when the first SetOffline() call is done bringing

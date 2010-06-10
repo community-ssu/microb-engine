@@ -1,0 +1,16 @@
+#workaround for bug 513736
+diff -r e59a662c0dd1 xpcom/reflect/xptinfo/src/xptiInterfaceInfoManager.cpp
+--- a/xpcom/reflect/xptinfo/src/xptiInterfaceInfoManager.cpp	Tue Sep 01 12:06:43 2009 +0300
++++ b/xpcom/reflect/xptinfo/src/xptiInterfaceInfoManager.cpp	Tue Sep 01 17:12:11 2009 +0300
+@@ -635,8 +635,11 @@ IndexOfDirectoryOfFile(nsISupportsArray*
+             NS_ASSERTION(current, "broken search path! bad element");
+             // nsIFile::Equals basically compares path strings so normalize
+             // before the comparison.
++#ifndef MOZ_PLATFORM_HILDON // Workaround for bug 513736
++
+             parent->Normalize();
+             current->Normalize();
++#endif
+             PRBool same;
+             if (NS_SUCCEEDED(parent->Equals(current, &same)) && same)
+                 return (int) i;

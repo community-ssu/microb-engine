@@ -1,0 +1,108 @@
+## new API for repainting and detection of fixed frames
+#https://projects.maemo.org/bugzilla/show_bug.cgi?id=127991
+Index: mozilla/layout/base/nsIPresShell.h
+===================================================================
+--- mozilla.orig/layout/base/nsIPresShell.h
++++ mozilla/layout/base/nsIPresShell.h
+@@ -795,16 +795,18 @@ public:
+     RENDER_IS_UNTRUSTED = 0x01,
+     RENDER_IGNORE_VIEWPORT_SCROLLING = 0x02,
+     RENDER_CARET = 0x04
+   };
+   NS_IMETHOD RenderDocument(const nsRect& aRect, PRUint32 aFlags,
+                             nscolor aBackgroundColor,
+                             gfxContext* aRenderedContext) = 0;
+ 
++  NS_IMETHOD InvalidateFixedFrames(PRBool aOnlyCheck = PR_FALSE) = 0;
++
+   /**
+    * Renders a node aNode to a surface and returns it. The aRegion may be used
+    * to clip the rendering. This region is measured in device pixels from the
+    * edge of the presshell area. The aPoint, aScreenRect and aSurface
+    * arguments function in a similar manner as RenderSelection.
+    */
+   virtual already_AddRefed<gfxASurface> RenderNode(nsIDOMNode* aNode,
+                                                    nsIRegion* aRegion,
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp
++++ mozilla/layout/base/nsPresShell.cpp
+@@ -769,16 +769,18 @@ public:
+   virtual void FireOrClearDelayedEvents(PRBool aFireEvents);
+ 
+   virtual nsIFrame* GetFrameForPoint(nsIFrame* aFrame, nsPoint aPt);
+ 
+   NS_IMETHOD RenderDocument(const nsRect& aRect, PRUint32 aFlags,
+                             nscolor aBackgroundColor,
+                             gfxContext* aThebesContext);
+ 
++  NS_IMETHOD InvalidateFixedFrames(PRBool aOnlyCheck = PR_FALSE);
++
+   virtual already_AddRefed<gfxASurface> RenderNode(nsIDOMNode* aNode,
+                                                    nsIRegion* aRegion,
+                                                    nsIntPoint& aPoint,
+                                                    nsIntRect* aScreenRect);
+ 
+   virtual already_AddRefed<gfxASurface> RenderSelection(nsISelection* aSelection,
+                                                         nsIntPoint& aPoint,
+                                                         nsIntRect* aScreenRect);
+@@ -5502,16 +5504,35 @@ PresShell::RenderDocument(const nsRect& 
+     aThebesContext->Paint();
+   }
+ 
+   aThebesContext->Restore();
+ 
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP
++PresShell::InvalidateFixedFrames(PRBool aOnlyCheck)
++{
++  nsIFrame* rootFrame = FrameManager()->GetRootFrame();
++
++  NS_ENSURE_TRUE(rootFrame, NS_ERROR_FAILURE);
++
++  nsIFrame *child = rootFrame->GetFirstChild(nsGkAtoms::fixedList);
++  NS_ENSURE_TRUE(child, NS_ERROR_FAILURE);
++  if (aOnlyCheck) return NS_OK;
++
++  while (child) {
++    child->InvalidateWithFlags(child->GetOverflowRect(), nsIFrame::INVALIDATE_IMMEDIATE);
++    child = child->GetNextSibling();
++  }
++
++  return NS_OK;
++}
++
+ /*
+  * Clip the display list aList to a range. Returns the clipped
+  * rectangle surrounding the range.
+  */
+ nsRect
+ PresShell::ClipListToRange(nsDisplayListBuilder *aBuilder,
+                            nsDisplayList* aList,
+                            nsIRange* aRange)
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -6750,16 +6750,19 @@ MOZ_ARG_ENABLE_BOOL(trace-malloc,
+ if test "$NS_TRACE_MALLOC"; then
+   # Please, Mr. Linker Man, don't take away our symbol names
+   MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS=
+   USE_ELF_DYNSTR_GC=
+   AC_DEFINE(NS_TRACE_MALLOC)
+ fi
+ AC_SUBST(NS_TRACE_MALLOC)
+ 
++MICROB_API_INVALIDATE_FIXED_FRAMES=1
++AC_DEFINE(MICROB_API_INVALIDATE_FIXED_FRAMES)
++
+ dnl ========================================================
+ dnl = Enable jemalloc
+ dnl ========================================================
+ MOZ_ARG_ENABLE_BOOL(jemalloc,
+ [  --enable-jemalloc       Replace memory allocator with jemalloc],
+     MOZ_MEMORY=1,
+     MOZ_MEMORY=)
+ 

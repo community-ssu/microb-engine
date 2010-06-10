@@ -1,0 +1,518 @@
+#https://projects.maemo.org/bugzilla/show_bug.cgi?id=112705
+#https://bugzilla.mozilla.org/show_bug.cgi?id=477850
+Index: mozilla/js/src/jsapi.cpp
+===================================================================
+--- mozilla.orig/js/src/jsapi.cpp
++++ mozilla/js/src/jsapi.cpp
+@@ -926,45 +926,71 @@ JS_GetRuntimePrivate(JSRuntime *rt)
+ }
+ 
+ JS_PUBLIC_API(void)
+ JS_SetRuntimePrivate(JSRuntime *rt, void *data)
+ {
+     rt->data = data;
+ }
+ 
+-JS_PUBLIC_API(void)
+-JS_BeginRequest(JSContext *cx)
++#ifdef JS_THREADSAFE
++JS_PUBLIC_API(JSRuntimeIdleCallback)
++JS_SetRuntimeIdleCallback(JSRuntime *rt, JSRuntimeIdleCallback cb)
++{
++    JSRuntimeIdleCallback old = rt->idleCallback;
++    rt->idleCallback = cb;
++    return old;
++}
++
++JS_PUBLIC_API(JSRuntimeIdleCallback)
++JS_GetRuntimeIdleCallback(JSRuntime *rt)
++{
++    return rt->idleCallback;
++}
++#endif
++
++static void
++js_BeginRequest(JSContext *cx, bool notifyIdleCallback)
+ {
+ #ifdef JS_THREADSAFE
+     JS_ASSERT(CURRENT_THREAD_IS_ME(cx->thread));
+     if (!cx->requestDepth) {
+         JSRuntime *rt = cx->runtime;
+         JS_LOCK_GC(rt);
+ 
+         /* Wait until the GC is finished. */
+         if (rt->gcThread != cx->thread) {
+             while (rt->gcLevel > 0)
+                 JS_AWAIT_GC_DONE(rt);
+         }
+ 
+         /* Indicate that a request is running. */
+-        rt->requestCount++;
++        bool wakeup = !rt->requestCount++;
+         cx->requestDepth = 1;
+         cx->outstandingRequests++;
+         JS_UNLOCK_GC(rt);
++
++        if (wakeup && notifyIdleCallback && rt->idleCallback)
++            rt->idleCallback(rt, JS_FALSE);
++
+         return;
+     }
+     cx->requestDepth++;
+     cx->outstandingRequests++;
+ #endif
+ }
+ 
+ JS_PUBLIC_API(void)
+-JS_EndRequest(JSContext *cx)
++JS_BeginRequest(JSContext *cx)
++{
++    js_BeginRequest(cx, true);
++}
++
++static void
++js_EndRequest(JSContext *cx, bool notifyIdleCallback)
+ {
+ #ifdef JS_THREADSAFE
+     JSRuntime *rt;
+ 
+     CHECK_REQUEST(cx);
+     JS_ASSERT(CURRENT_THREAD_IS_ME(cx->thread));
+     JS_ASSERT(cx->requestDepth > 0);
+     JS_ASSERT(cx->outstandingRequests > 0);
+@@ -976,69 +1002,95 @@ JS_EndRequest(JSContext *cx)
+         JS_LOCK_GC(rt);
+         cx->requestDepth = 0;
+         cx->outstandingRequests--;
+ 
+         js_ShareWaitingTitles(cx);
+ 
+         /* Give the GC a chance to run if this was the last request running. */
+         JS_ASSERT(rt->requestCount > 0);
+-        rt->requestCount--;
++        bool sleep = !--rt->requestCount;
+         if (rt->requestCount == 0)
+             JS_NOTIFY_REQUEST_DONE(rt);
+ 
+         JS_UNLOCK_GC(rt);
++
++        if (sleep && notifyIdleCallback && rt->idleCallback)
++            rt->idleCallback(rt, JS_TRUE);
++
+         return;
+     }
+ 
+     cx->requestDepth--;
+     cx->outstandingRequests--;
+ #endif
+ }
+ 
+-/* Yield to pending GC operations, regardless of request depth */
+ JS_PUBLIC_API(void)
+-JS_YieldRequest(JSContext *cx)
++JS_EndRequest(JSContext *cx)
+ {
+-#ifdef JS_THREADSAFE
+-    JS_ASSERT(cx->thread);
+-    CHECK_REQUEST(cx);
+-    JS_ResumeRequest(cx, JS_SuspendRequest(cx));
+-#endif
++    js_EndRequest(cx, true);
+ }
+ 
+-JS_PUBLIC_API(jsrefcount)
+-JS_SuspendRequest(JSContext *cx)
++static jsrefcount
++js_SuspendRequest(JSContext *cx, bool notifyIdleCallback)
+ {
+ #ifdef JS_THREADSAFE
+     jsrefcount saveDepth = cx->requestDepth;
+ 
+     while (cx->requestDepth) {
+         cx->outstandingRequests++;  /* compensate for JS_EndRequest */
+-        JS_EndRequest(cx);
++        js_EndRequest(cx, notifyIdleCallback);
+     }
+     return saveDepth;
+ #else
+     return 0;
+ #endif
+ }
+ 
+-JS_PUBLIC_API(void)
+-JS_ResumeRequest(JSContext *cx, jsrefcount saveDepth)
++JS_PUBLIC_API(jsrefcount)
++JS_SuspendRequest(JSContext *cx)
++{
++    return js_SuspendRequest(cx, true);
++}
++
++static void
++js_ResumeRequest(JSContext *cx, jsrefcount saveDepth, bool notifyIdleCallback)
+ {
+ #ifdef JS_THREADSAFE
+     JS_ASSERT(!cx->requestDepth);
+     while (--saveDepth >= 0) {
+-        JS_BeginRequest(cx);
++        js_BeginRequest(cx, notifyIdleCallback);
+         cx->outstandingRequests--;  /* compensate for JS_BeginRequest */
+     }
+ #endif
+ }
+ 
+ JS_PUBLIC_API(void)
++JS_ResumeRequest(JSContext *cx, jsrefcount saveDepth)
++{
++    return js_ResumeRequest(cx, saveDepth, true);
++}
++
++/* Yield to pending GC operations, regardless of request depth */
++JS_PUBLIC_API(void)
++JS_YieldRequest(JSContext *cx)
++{
++#ifdef JS_THREADSAFE
++    JS_ASSERT(cx->thread);
++    CHECK_REQUEST(cx);
++    /*
++     * Do not invoke the idle callback while yielding. We are not idle, we
++     * want to continue, we just yield.
++     */
++    js_ResumeRequest(cx, js_SuspendRequest(cx, false), false);
++#endif
++}
++
++JS_PUBLIC_API(void)
+ JS_Lock(JSRuntime *rt)
+ {
+     JS_LOCK_RUNTIME(rt);
+ }
+ 
+ JS_PUBLIC_API(void)
+ JS_Unlock(JSRuntime *rt)
+ {
+Index: mozilla/js/src/jsapi.h
+===================================================================
+--- mozilla.orig/js/src/jsapi.h
++++ mozilla/js/src/jsapi.h
+@@ -543,16 +543,24 @@ extern JS_PUBLIC_API(void)
+ JS_ShutDown(void);
+ 
+ JS_PUBLIC_API(void *)
+ JS_GetRuntimePrivate(JSRuntime *rt);
+ 
+ JS_PUBLIC_API(void)
+ JS_SetRuntimePrivate(JSRuntime *rt, void *data);
+ 
++#ifdef JS_THREADSAFE
++JS_PUBLIC_API(JSRuntimeIdleCallback)
++JS_SetRuntimeIdleCallback(JSRuntime *rt, JSRuntimeIdleCallback);
++
++JS_PUBLIC_API(JSRuntimeIdleCallback)
++JS_GetRuntimeIdleCallback(JSRuntime *rt);
++#endif
++
+ extern JS_PUBLIC_API(void)
+ JS_BeginRequest(JSContext *cx);
+ 
+ extern JS_PUBLIC_API(void)
+ JS_EndRequest(JSContext *cx);
+ 
+ /* Yield to pending GC operations, regardless of request depth */
+ extern JS_PUBLIC_API(void)
+Index: mozilla/js/src/jscntxt.h
+===================================================================
+--- mozilla.orig/js/src/jscntxt.h
++++ mozilla/js/src/jscntxt.h
+@@ -366,16 +366,21 @@ struct JSRuntime {
+      *
+      * See bug 492355 for more details.
+      *
+      * This comes early in JSRuntime to minimize the immediate format used by
+      * trace-JITted code that reads it.
+      */
+     uint32              protoHazardShape;
+ 
++#ifdef JS_THREADSAFE
++    /* Runtime idle callback. */
++    JSRuntimeIdleCallback idleCallback;
++#endif
++
+     /* Garbage collector state, used by jsgc.c. */
+     JSGCChunkInfo       *gcChunkList;
+     JSGCArenaList       gcArenaList[GC_NUM_FREELISTS];
+     JSGCDoubleArenaList gcDoubleArenaList;
+     JSDHashTable        gcRootsHash;
+     JSDHashTable        *gcLocksHash;
+     jsrefcount          gcKeepAtoms;
+     size_t              gcBytes;
+Index: mozilla/js/src/jspubtd.h
+===================================================================
+--- mozilla.orig/js/src/jspubtd.h
++++ mozilla/js/src/jspubtd.h
+@@ -491,16 +491,21 @@ typedef JSBool
+ (* JSOperationCallback)(JSContext *cx);
+ 
+ /*
+  * Deprecated form of JSOperationCallback.
+  */
+ typedef JSBool
+ (* JSBranchCallback)(JSContext *cx, JSScript *script);
+ 
++#ifdef JS_THREADSAFE
++typedef void
++(* JSRuntimeIdleCallback)(JSRuntime *rt, JSBool idle);
++#endif
++
+ typedef void
+ (* JSErrorReporter)(JSContext *cx, const char *message, JSErrorReport *report);
+ 
+ /*
+  * Possible exception types. These types are part of a JSErrorFormatString
+  * structure. They define which error to throw in case of a runtime error.
+  * JSEXN_NONE marks an unthrowable error.
+  */
+Index: mozilla/js/src/xpconnect/src/xpcjsruntime.cpp
+===================================================================
+--- mozilla.orig/js/src/xpconnect/src/xpcjsruntime.cpp
++++ mozilla/js/src/xpconnect/src/xpcjsruntime.cpp
+@@ -787,40 +787,86 @@ private:
+     AutoLockJSGC(const AutoLockJSGC&);
+     void operator=(const AutoLockJSGC&);
+ };
+ 
+ //static
+ void
+ XPCJSRuntime::WatchdogMain(void *arg)
+ {
++    PRIntervalTime watchdogInterval = PR_SecondsToInterval(1);
++
+     XPCJSRuntime* self = static_cast<XPCJSRuntime*>(arg);
+ 
+     // Lock lasts until we return
+     AutoLockJSGC lock(self->mJSRuntime);
+ 
+     while (self->mWatchdogThread)
+     {
++        PRIntervalTime sleepTime;
++
++        if (self->mRuntimeIdle &&
++            PR_IntervalNow() - self->mRuntimeIdleTime >= watchdogInterval)
++        {
++            self->mWatchdogSuspended = PR_TRUE;
++            sleepTime = PR_INTERVAL_NO_TIMEOUT;
++        }
++        else
++        {
++            self->mWatchdogSuspended = PR_FALSE;
++            sleepTime = watchdogInterval;
++        }
++
+ #ifdef DEBUG
+         PRStatus status =
+ #endif
+-            PR_WaitCondVar(self->mWatchdogWakeup, PR_TicksPerSecond());
++        PR_WaitCondVar(self->mWatchdogWakeup, sleepTime);
+         JS_ASSERT(status == PR_SUCCESS);
+ 
+         JSContext* cx = nsnull;
+         while((cx = js_NextActiveContext(self->mJSRuntime, cx)))
+-        {
+             JS_TriggerOperationCallback(cx);
+-        }
+     }
+ 
+-    /* Wake up the main thread waiting for the watchdog to terminate. */
++    // Wake up the main thread waiting for the watchdog to terminate.
+     PR_NotifyCondVar(self->mWatchdogWakeup);
+ }
+ 
++//static
++void
++XPCJSRuntime::RuntimeIdleCallback(JSRuntime *rt, JSBool idle)
++{
++    XPCJSRuntime* self = nsXPConnect::GetRuntimeInstance();
++
++    // This really shouldn't ever be null but since shutdown ordering can be odd
++    // due to leaks we'll be safe and bail out if it is.
++    if (!(self && self->mJSRuntime))
++        return;
++
++    AutoLockJSGC lock(self->mJSRuntime);
++
++    // Bail out early if mWatchdogThread is null because we must be shutting
++    // down.
++    if (!self->mWatchdogThread)
++        return;
++
++    self->mRuntimeIdle = idle;
++
++    // If we're idle then all we need to do is note the time. Otherwise we'll
++    // wake the watchdog if it is currently suspended.
++    if (idle)
++    {
++        self->mRuntimeIdleTime = PR_IntervalNow();
++    }
++    else if (self->mWatchdogSuspended)
++    {
++        PR_NotifyCondVar(self->mWatchdogWakeup);
++        self->mWatchdogSuspended = PR_FALSE;
++    }
++}
+ 
+ /***************************************************************************/
+ 
+ #ifdef XPC_CHECK_WRAPPERS_AT_SHUTDOWN
+ static JSDHashOperator
+ DEBUG_WrapperChecker(JSDHashTable *table, JSDHashEntryHdr *hdr,
+                      uint32 number, void *arg)
+ {
+@@ -862,27 +908,37 @@ void XPCJSRuntime::SystemIsBeingShutDown
+         mDetachedWrappedNativeProtoMap->
+             Enumerate(DetachedWrappedNativeProtoShutdownMarker, cx);
+ }
+ 
+ XPCJSRuntime::~XPCJSRuntime()
+ {
+     if (mWatchdogWakeup)
+     {
+-        // If the watchdog thread is running, tell it to terminate waking it
+-        // up if necessary and wait until it signals that it finished. As we
+-        // must release the lock before calling PR_DestroyCondVar, we use an
+-        // extra block here.
++        PRBool haveWatchdog = PR_FALSE;
+         {
+             AutoLockJSGC lock(mJSRuntime);
+-            if (mWatchdogThread) {
+-                mWatchdogThread = nsnull;
+-                PR_NotifyCondVar(mWatchdogWakeup);
+-                PR_WaitCondVar(mWatchdogWakeup, PR_INTERVAL_NO_TIMEOUT);
+-            }
++            haveWatchdog = !!mWatchdogThread;
++        }
++
++        if (haveWatchdog)
++        {
++            // Unset the idle callback before we start the watchdog's shutdown
++            // sequence. Even if the watchdog has been forced idle the
++            // PR_NotifyCondVar below will wake it up.
++            JS_SetRuntimeIdleCallback(mJSRuntime, nsnull);
++
++            AutoLockJSGC lock(mJSRuntime);
++
++            // If the watchdog thread is running, tell it to terminate waking it
++            // up if necessary and wait until it signals that it finished. We
++            // must release the lock before calling PR_DestroyCondVar.
++            mWatchdogThread = nsnull;
++            PR_NotifyCondVar(mWatchdogWakeup);
++            PR_WaitCondVar(mWatchdogWakeup, PR_INTERVAL_NO_TIMEOUT);
+         }
+         PR_DestroyCondVar(mWatchdogWakeup);
+         mWatchdogWakeup = nsnull;
+     }
+ 
+ #ifdef XPC_DUMP_AT_SHUTDOWN
+     {
+     // count the total JSContexts in use
+@@ -1053,17 +1109,20 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* 
+    mWrappedJSToReleaseArray(),
+    mNativesToReleaseArray(),
+    mDoingFinalization(JS_FALSE),
+    mVariantRoots(nsnull),
+    mWrappedJSRoots(nsnull),
+    mObjectHolderRoots(nsnull),
+    mUnrootedGlobalCount(0),
+    mWatchdogWakeup(nsnull),
+-   mWatchdogThread(nsnull)
++   mWatchdogThread(nsnull),
++   mRuntimeIdleTime(0),
++   mRuntimeIdle(PR_TRUE),
++   mWatchdogSuspended(PR_TRUE)
+ {
+ #ifdef XPC_CHECK_WRAPPERS_AT_SHUTDOWN
+     DEBUG_WrappedNativeHashtable =
+         JS_NewDHashTable(JS_DHashGetStubOps(), nsnull,
+                          sizeof(JSDHashEntryStub), 128);
+ #endif
+ 
+     DOM_InitInterfaces();
+@@ -1092,22 +1151,36 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* 
+         mJSHolders.ops = nsnull;
+ 
+     // Install a JavaScript 'debugger' keyword handler in debug builds only
+ #ifdef DEBUG
+     if(mJSRuntime && !JS_GetGlobalDebugHooks(mJSRuntime)->debuggerHandler)
+         xpc_InstallJSDebuggerKeywordHandler(mJSRuntime);
+ #endif
+ 
+-    if (mWatchdogWakeup) {
+-        AutoLockJSGC lock(mJSRuntime);
++    PRBool setIdleCallback = PR_FALSE;
+ 
++    if (mWatchdogWakeup)
++    {
++        AutoLockJSGC lock(mJSRuntime);
+         mWatchdogThread = PR_CreateThread(PR_USER_THREAD, WatchdogMain, this,
+                                           PR_PRIORITY_NORMAL, PR_LOCAL_THREAD,
+                                           PR_UNJOINABLE_THREAD, 0);
++        setIdleCallback = !!mWatchdogThread;
++    }
++
++    if (setIdleCallback)
++    {
++#ifdef DEBUG
++        JSRuntimeIdleCallback old =
++#endif
++            JS_SetRuntimeIdleCallback(mJSRuntime, RuntimeIdleCallback);
++
++        // No one else should set this!
++        JS_ASSERT(!old);
+     }
+ }
+ 
+ // static
+ XPCJSRuntime*
+ XPCJSRuntime::newXPCJSRuntime(nsXPConnect* aXPConnect)
+ {
+     NS_PRECONDITION(aXPConnect,"bad param");
+Index: mozilla/js/src/xpconnect/src/xpcprivate.h
+===================================================================
+--- mozilla.orig/js/src/xpconnect/src/xpcprivate.h
++++ mozilla/js/src/xpconnect/src/xpcprivate.h
+@@ -774,16 +774,17 @@ public:
+ private:
+     XPCJSRuntime(); // no implementation
+     XPCJSRuntime(nsXPConnect* aXPConnect);
+ 
+     // The caller must be holding the GC lock
+     void RescheduleWatchdog(XPCContext* ccx);
+ 
+     static void WatchdogMain(void *arg);
++    static void RuntimeIdleCallback(JSRuntime *rt, JSBool idle);
+ 
+     static const char* mStrings[IDX_TOTAL_COUNT];
+     jsid mStrIDs[IDX_TOTAL_COUNT];
+     jsval mStrJSVals[IDX_TOTAL_COUNT];
+ 
+     nsXPConnect* mXPConnect;
+     JSRuntime*  mJSRuntime;
+     JSObject2WrappedJSMap*   mWrappedJSMap;
+@@ -803,16 +804,19 @@ private:
+     JSBool mDoingFinalization;
+     XPCRootSetElem *mVariantRoots;
+     XPCRootSetElem *mWrappedJSRoots;
+     XPCRootSetElem *mObjectHolderRoots;
+     JSDHashTable mJSHolders;
+     uintN mUnrootedGlobalCount;
+     PRCondVar *mWatchdogWakeup;
+     PRThread *mWatchdogThread;
++    PRIntervalTime mRuntimeIdleTime;
++    PRPackedBool mRuntimeIdle;
++    PRPackedBool mWatchdogSuspended;
+ };
+ 
+ /***************************************************************************/
+ /***************************************************************************/
+ // XPCContext is mostly a dumb class to hold JSContext specific data and
+ // maps that let us find wrappers created for the given JSContext.
+ 
+ // no virtuals

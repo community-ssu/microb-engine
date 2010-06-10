@@ -1,0 +1,110 @@
+mk_add_options MOZ_CO_PROJECT=suite,browser,xulrunner
+ac_add_options --enable-application=xulrunner
+
+
+   #* Simple Build
+ac_add_options --disable-javaxpcom
+ac_add_options --disable-js-static-build
+
+
+   #* Toolkit Options for Linux/GTK2
+#ac_add_options --enable-default-toolkit=cairo-gtk2
+
+
+
+ac_add_options --enable-xft
+ac_add_options --disable-freetype2
+ac_add_options --enable-pango
+
+   #* Branding
+ac_add_options --with-branding=branding/microb
+
+   #* Perf Improvements
+ac_add_options --disable-necko-small-buffers
+
+   #* Compiler options
+ac_add_options --disable-pedantic
+ac_add_options --disable-old-abi-compat-wrappers
+
+   #* Using of sistem libraries (Debian Way ;) )
+#ac_add_options --with-system-png #APNG required
+#ac_add_options --with-system-zlib #Some linking problems
+ac_add_options --with-system-jpeg
+ac_add_options --with-system-bz2
+ac_add_options --disable-js-binary
+
+   #* Missing environment
+ac_add_options --disable-crashreporter
+#ac_add_options --disable-dbus
+ac_add_options --disable-ogg
+#ac_add_options --enable-ogg
+#ac_add_options --disable-wave
+ac_add_options --enable-wave
+ac_add_options --enable-gstreamer
+
+   #* Micro Base
+ac_add_options --with-embedding-profile=basic
+#ac_add_options --with-embedding-profile=minimal
+
+   #* Official disables/enables
+ac_add_options --disable-accessibility
+ac_add_options --disable-updater # ???
+ac_add_options --disable-xmlextras # Seems it not used anymore
+ac_add_options --enable-feeds
+ac_add_options --disable-url-classifier
+ac_add_options --disable-safe-browsing
+
+ac_add_options --disable-native-uconv # required 325_BUG_native_uconv_XML.dpatch 330_BUG_native_iconv.fix.dpatch
+ac_add_options --enable-plugins # Flash/Media/Default....
+ac_add_options --enable-rdf # Required for extensions manager
+ac_add_options --disable-plaintext-editor-only # Enable RICH EDIT
+ac_add_options --enable-xpfe-components # Will add only directory+ftp viewer with profile minimal
+#ac_add_options --enable-mathml
+ac_add_options --enable-dbus # Is it usefull?
+
+   #* Not Official disables/enables
+ac_add_options --disable-xinerama # ???
+ac_add_options --enable-embedding-tests
+ac_add_options --disable-filepicker
+ac_add_options --disable-dragservice
+ac_add_options --disable-tooltips
+ac_add_options --disable-contextmenu
+ac_add_options --disable-moz-mork
+
+#Extension manager/Xpi Installer
+ac_add_options --enable-xpinstall
+ac_add_options --enable-jarmodule
+
+   #* Should be enabled in Micro base
+ac_add_options --enable-necko-protocols="about data http file res ftp viewsource"
+ac_add_options --enable-chrome-format=flat
+ac_add_options --enable-extensions="gnomevfs"
+ac_add_options --enable-image-decoders="png gif jpeg bmp icon"
+ac_add_options --enable-image-encoders="png jpeg" #Disabling of this required 010_XULRunner_minimal_linking.diff patch
+
+#gnome component is broken bug 110909
+ac_add_options --disable-gnomevfs
+
+ac_add_options --enable-storage
+ac_add_options --enable-places
+ac_add_options --enable-canvas
+ac_add_options --enable-svg
+ac_add_options --enable-smil
+ac_add_options --enable-necko-disk-cache
+
+ac_add_options --enable-view-source
+
+ac_add_options --enable-pref-extensions
+
+ac_add_options --enable-inspector-apis
+
+ac_add_options --enable-xul
+#ac_add_options --disable-strip
+#ac_add_options --enable-debug
+#ac_add_options --enable-system-sqlite
+
+   #* Toolkit Options for Linux/Qt
+#ac_add_options --enable-default-toolkit=cairo-qt
+#ac_add_options --disable-elf-dynstr-gc
+
+ac_add_options --disable-necko-wifi

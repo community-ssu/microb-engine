@@ -1,0 +1,16 @@
+#https://bugzilla.mozilla.org/show_bug.cgi?id=532620
+diff -r 313ba2885c72 toolkit/mozapps/extensions/content/extensions.js
+--- a/toolkit/mozapps/extensions/content/extensions.js	Thu Dec 03 13:01:48 2009 +0200
++++ b/toolkit/mozapps/extensions/content/extensions.js	Thu Dec 03 13:06:06 2009 +0200
+@@ -2158,9 +2158,11 @@ const gAddonsMsgObserver = {
+     switch (aData) {
+     case "addons-enable-xpinstall":
+       gPref.setBoolPref("xpinstall.enabled", true);
++      gPref.savePrefFile(null);
+       break;
+     case "addons-enable-compatibility":
+       gPref.clearUserPref(gCheckCompatibilityPref);
++      gPref.savePrefFile(null);
+       gCheckCompat = true;
+       break;
+     case "addons-enable-updatesecurity":

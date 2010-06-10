@@ -1,0 +1,41 @@
+
+# HG changeset patch
+# User Bobby Holley <bobbyholley@stanford.edu>
+# Date 1251666371 -7200
+# Node ID 854ab30d101ecc6d54fc71bae7aa25aafb2383d7
+# Parent 52abed9ff3d328d9e64d90376a28e1bbba096077
+Bug 513544 - Crash [@nsImageFrame::DisplayAltFeedback] - r=bzbarsky
+
+--- a/layout/generic/nsImageFrame.cpp	Mon Aug 31 08:44:39 2009 +1200
++++ b/layout/generic/nsImageFrame.cpp	Sun Aug 30 23:06:11 2009 +0200
+@@ -985,9 +985,6 @@ nsImageFrame::DisplayAltFeedback(nsIRend
+   // We should definitely have a gIconLoad here.
+   NS_ABORT_IF_FALSE(gIconLoad, "How did we succeed in Init then?");
+ 
+-  // We always call this function with an image
+-  NS_ABORT_IF_FALSE(aRequest, "Calling DisplayAltFeedback without an image");
+-
+   // Calculate the inner area
+   nsRect  inner = GetInnerArea() + aPt;
+ 
+@@ -1033,15 +1030,16 @@ nsImageFrame::DisplayAltFeedback(nsIRend
+     // If we weren't previously displaying an icon, register ourselves
+     // as an observer for load and animation updates and flag that we're
+     // doing so now.
+-    if (!mDisplayingIcon) {
++    if (aRequest && !mDisplayingIcon) {
+       gIconLoad->AddIconObserver(this);
+       mDisplayingIcon = PR_TRUE;
+     }
+ 
+ 
+     // If the image in question is loaded and decoded, draw it
+-    PRUint32 imageStatus;
+-    aRequest->GetImageStatus(&imageStatus);
++    PRUint32 imageStatus = 0;
++    if (aRequest)
++      aRequest->GetImageStatus(&imageStatus);
+     if (imageStatus & imgIRequest::STATUS_FRAME_COMPLETE) {
+       nsCOMPtr<imgIContainer> imgCon;
+       aRequest->GetImage(getter_AddRefs(imgCon));
+

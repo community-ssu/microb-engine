@@ -1,0 +1,54 @@
+#https://bugzilla.mozilla.org/show_bug.cgi?id=532626
+diff -r fe1bf4b912de toolkit/mozapps/extensions/src/nsExtensionManager.js.in
+--- a/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	Thu Dec 03 13:28:37 2009 +0200
++++ b/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	Thu Dec 03 13:29:09 2009 +0200
+@@ -76,6 +76,7 @@ const PREF_DSS_SKIN_TO_SELECT         = 
+ const PREF_LWTHEME_TO_SELECT          = "extensions.lwThemeToSelect";
+ const PREF_GENERAL_SKINS_SELECTEDSKIN = "general.skins.selectedSkin";
+ const PREF_EM_LOGGING_ENABLED         = "extensions.logging.enabled";
++const PREF_EM_ERROR_LOGGING_ENABLED   = "extensions.error.logging.enabled";
+ const PREF_EM_UPDATE_INTERVAL         = "extensions.update.interval";
+ const PREF_UPDATE_NOTIFYUSER          = "extensions.update.notifyUser";
+ const PREF_MATCH_OS_LOCALE            = "intl.locale.matchOS";
+@@ -194,6 +195,7 @@ var gInstallManifestRoot  = null;
+ var gVersionChecker       = null;
+ var gDirService           = null;
+ var gLoggingEnabled       = null;
++var gErrorLoggingEnabled  = null;
+ var gCheckCompatibility   = true;
+ var gCheckUpdateSecurity  = true;
+ var gLocale               = "en-US";
+@@ -591,6 +593,8 @@ function WARN(string) {
+ function ERROR(string) {
+   if (gLoggingEnabled)
+     dump("*** EM_ERROR *** " + string + "\n");
++  if (!gErrorLoggingEnabled)
++    return;
+   if (gConsole) {
+     var message = Cc["@mozilla.org/scripterror;1"].
+                   createInstance(Ci.nsIScriptError);
+@@ -2356,7 +2360,7 @@ ExtensionManager.prototype = {
+       this._shutdown();
+       break;
+     case "nsPref:changed":
+-      if (data == PREF_EM_LOGGING_ENABLED)
++      if (data == PREF_EM_LOGGING_ENABLED || data == PREF_EM_ERROR_LOGGING_ENABLED)
+         this._loggingToggled();
+       else if (data == gCheckCompatibilityPref ||
+                data == PREF_EM_CHECK_UPDATE_SECURITY)
+@@ -2373,6 +2377,7 @@ ExtensionManager.prototype = {
+    */
+   _loggingToggled: function EM__loggingToggled() {
+     gLoggingEnabled = getPref("getBoolPref", PREF_EM_LOGGING_ENABLED, false);
++    gErrorLoggingEnabled = getPref("getBoolPref", PREF_EM_ERROR_LOGGING_ENABLED, false);
+   },
+ 
+   /**
+@@ -2455,6 +2460,7 @@ ExtensionManager.prototype = {
+     gCheckCompatibilityPref = PREF_EM_CHECK_COMPATIBILITY + "." + version;
+ 
+     gLoggingEnabled = getPref("getBoolPref", PREF_EM_LOGGING_ENABLED, false);
++    gErrorLoggingEnabled = getPref("getBoolPref", PREF_EM_ERROR_LOGGING_ENABLED, false);
+     gCheckCompatibility = getPref("getBoolPref", gCheckCompatibilityPref, true);
+     gCheckUpdateSecurity = getPref("getBoolPref", PREF_EM_CHECK_UPDATE_SECURITY, true);
+ 

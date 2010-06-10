@@ -1,0 +1,70 @@
+# MOZ_COMPOSITED_PLUGINS is broken, need to create mozilla bug about it
+Index: mozilla/modules/plugin/base/public/nsPluginNativeWindow.h
+===================================================================
+--- mozilla.orig/modules/plugin/base/public/nsPluginNativeWindow.h
++++ mozilla/modules/plugin/base/public/nsPluginNativeWindow.h
+@@ -99,17 +99,17 @@ public:
+       aPluginInstance->SetWindow(this);
+     else if (mPluginInstance)
+       mPluginInstance->SetWindow(nsnull);
+ 
+     SetPluginInstance(aPluginInstance);
+     return NS_OK;
+   }
+ #ifdef MOZ_PLATFORM_HILDON
+-#define MOZ_COMPOSITED_PLUGINS
++//#define MOZ_COMPOSITED_PLUGINS
+ #endif
+ #ifdef MOZ_COMPOSITED_PLUGINS
+   /* XXX: we use this to leak the socket widget out from nsPlugNativeWindowGtk2
+      so that Renderer::NativeDraw() in nsObjectFrame.cpp can draw the widget.
+      I don't currently know a better way to do this... */
+   void *mPlugWindow;
+ #endif
+ 
+Index: mozilla/modules/plugin/base/src/nsPluginNativeWindowGtk2.cpp
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/nsPluginNativeWindowGtk2.cpp
++++ mozilla/modules/plugin/base/src/nsPluginNativeWindowGtk2.cpp
+@@ -45,17 +45,17 @@
+ #include "nsDebug.h"
+ #include "nsPluginNativeWindow.h"
+ #include "npapi.h"
+ #include <gtk/gtk.h>
+ #include <gdk/gdkx.h>
+ #include <gdk/gdk.h>
+ 
+ #ifdef MOZ_PLATFORM_HILDON
+-#define MOZ_COMPOSITED_PLUGINS
++//#define MOZ_COMPOSITED_PLUGINS
+ #endif
+ 
+ #ifdef MOZ_COMPOSITED_PLUGINS
+ extern "C" {
+ #include <X11/extensions/Xdamage.h>
+ #include <X11/extensions/Xcomposite.h>
+ }
+ #endif
+Index: mozilla/layout/generic/nsObjectFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsObjectFrame.cpp
++++ mozilla/layout/generic/nsObjectFrame.cpp
+@@ -177,17 +177,17 @@ static NS_DEFINE_CID(kAppShellCID, NS_AP
+ #include <X11/Xlib.h>
+ /* X headers suck */
+ enum { XKeyPress = KeyPress };
+ #ifdef KeyPress
+ #undef KeyPress
+ #endif
+ 
+ #ifdef MOZ_PLATFORM_HILDON
+-#define MOZ_COMPOSITED_PLUGINS 1
++//#define MOZ_COMPOSITED_PLUGINS 1
+ 
+ #include "gfxXlibSurface.h"
+ 
+ #include <X11/Xutil.h>
+ #include <X11/Xatom.h>
+ #include <X11/extensions/XShm.h>
+ #include <sys/ipc.h>
+ #include <sys/shm.h>

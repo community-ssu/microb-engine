@@ -1,0 +1,88 @@
+Index: mozilla/content/canvas/src/WebGLContextGL.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/WebGLContextGL.cpp
++++ mozilla/content/canvas/src/WebGLContextGL.cpp
+@@ -48,19 +48,23 @@
+ 
+ #include "nsContentUtils.h"
+ #include "nsDOMError.h"
+ #include "nsLayoutUtils.h"
+ 
+ #include "CanvasUtils.h"
+ #include "NativeJSContext.h"
+ #include "SimpleBuffer.h"
++#include "nsIPrefService.h"
++#include "nsServiceManagerUtils.h"
+ 
+ using namespace mozilla;
+ 
++static PRBool sUsePrecisionHack = PR_TRUE;
++
+ // XXX why is this broken?
+ #ifndef GL_BLEND_EQUATION
+ #define GL_BLEND_EQUATION 0x8009
+ #endif
+ 
+ static PRBool BaseTypeAndSizeFromUniformType(GLenum uType, GLenum *baseType, GLint *unitSize);
+ 
+ /* Helper macros for when we're just wrapping a gl method, so that
+@@ -2846,16 +2850,30 @@ WebGLContext::ShaderSource(nsIWebGLShade
+     if (!shobj || static_cast<WebGLShader*>(shobj)->Deleted())
+         return ErrorMessage("%s: shader is null or deleted!", __FUNCTION__);
+ 
+     GLuint shader = static_cast<WebGLShader*>(shobj)->GLName();
+     
+     MakeContextCurrent();
+ 
+     NS_LossyConvertUTF16toASCII asciisrc(source);
++#ifdef USE_GLES2
++    if (sUsePrecisionHack) {
++        int startIDX = 0;
++        int endIDX = 0;
++
++        if (kNotFound != (startIDX=asciisrc.Find("#version ", PR_FALSE))) {
++            endIDX = startIDX + 12; // skip "#version XXX"
++            asciisrc.Cut(startIDX, endIDX);
++        }
++
++        if (kNotFound == (startIDX=asciisrc.Find("precision highp float;", PR_FALSE)))
++            asciisrc.Insert("precision highp float;\n", 0);
++    }
++#endif
+     const char *p = asciisrc.get();
+ 
+     gl->fShaderSource(shader, 1, &p, NULL);
+     return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ WebGLContext::VertexAttribPointer(GLuint index, GLint size, GLenum type,
+@@ -2937,16 +2955,28 @@ WebGLContext::ValidateGL()
+ 
+     gl->fGetIntegerv(LOCAL_GL_IMPLEMENTATION_COLOR_READ_TYPE, &val);
+     fprintf(stderr, "GL_IMPLEMENTATION_COLOR_READ_TYPE: 0x%04x\n", val);
+ #endif
+ 
+ #ifndef USE_GLES2
+     // gl_PointSize is always available in ES2 GLSL
+     gl->fEnable(LOCAL_GL_VERTEX_PROGRAM_POINT_SIZE);
++#else
++    nsresult rv;
++    nsCOMPtr<nsIPrefService> prefService = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
++    NS_ENSURE_SUCCESS(rv, PR_TRUE);
++    nsCOMPtr<nsIPrefBranch> prefBranch;
++    rv = prefService->GetBranch("webgl.", getter_AddRefs(prefBranch));
++    if (NS_SUCCEEDED(rv)) {
++        PRBool val = PR_TRUE;
++        rv = prefBranch->GetBoolPref("presicion_hack", &val);
++        if (NS_SUCCEEDED(rv))
++            sUsePrecisionHack = val;
++    }
+ #endif
+ 
+     return PR_TRUE;
+ }
+ 
+ NS_IMETHODIMP
+ WebGLContext::TexSubImage2D()
+ {

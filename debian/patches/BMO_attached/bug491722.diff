@@ -1,0 +1,276 @@
+#From: timeless@mozdev.org
+
+#Bug 491722 nsObjectFrame doesn't properly handle NPP_New failing for NP_FULL
+#Adds handling for this case, using the exthelperappservice 
+Index: mozilla/content/html/document/src/Makefile.in
+===================================================================
+--- mozilla.orig/content/html/document/src/Makefile.in
++++ mozilla/content/html/document/src/Makefile.in
+@@ -56,16 +56,17 @@ REQUIRES	= xpcom \
+ 		  necko \
+ 		  htmlparser \
+ 		  locale \
+ 		  view \
+ 		  js \
+ 		  intl \
+ 		  webshell \
+ 		  docshell \
++		  exthandler \
+ 		  caps \
+ 		  util \
+ 		  uconv \
+ 		  pref \
+ 		  chardet \
+ 		  nkcache \
+ 		  imglib2 \
+ 		  xpconnect \
+Index: mozilla/content/html/document/src/nsPluginDocument.cpp
+===================================================================
+--- mozilla.orig/content/html/document/src/nsPluginDocument.cpp
++++ mozilla/content/html/document/src/nsPluginDocument.cpp
+@@ -41,16 +41,17 @@
+ #include "nsIPresShell.h"
+ #include "nsIObjectFrame.h"
+ #include "nsIPluginInstance.h"
+ #include "nsIDocShellTreeItem.h"
+ #include "nsNodeInfoManager.h"
+ #include "nsContentCreatorFunctions.h"
+ #include "nsContentPolicyUtils.h"
+ #include "nsIPropertyBag2.h"
++#include "nsCExternalHandlerService.h"
+ 
+ class nsPluginDocument : public nsMediaDocument,
+                          public nsIPluginDocument
+ {
+ public:
+   nsPluginDocument();
+   virtual ~nsPluginDocument();
+ 
+@@ -91,37 +92,112 @@ protected:
+   PRBool                                   mWillHandleInstantiation;
+ };
+ 
+ class nsPluginStreamListener : public nsMediaDocumentStreamListener
+ {
+ public:
+   nsPluginStreamListener(nsPluginDocument* doc) :
+     nsMediaDocumentStreamListener(doc),  mPluginDoc(doc) {}
+-  NS_IMETHOD OnStartRequest(nsIRequest* request, nsISupports *ctxt);
++  NS_DECL_NSIREQUESTOBSERVER
++  NS_DECL_NSISTREAMLISTENER
++
+ private:
+   nsresult SetupPlugin();
+ 
+   nsRefPtr<nsPluginDocument> mPluginDoc;
++  nsCOMPtr<nsIStreamListener> mListener;
+ };
+ 
+ 
+ NS_IMETHODIMP
+ nsPluginStreamListener::OnStartRequest(nsIRequest* request, nsISupports *ctxt)
+ {
+   // Have to set up our plugin stuff before we call OnStartRequest, so
+   // that the plugin listener can get that call.
+   nsresult rv = SetupPlugin();
++  if (NS_FAILED(rv)) {
++    {
++      nsCOMPtr<nsIDOMNode> plugin(do_QueryInterface(mPluginDoc->GetPluginContent()));
++      nsCOMPtr<nsIDOMNode> parent;
++      plugin->GetParentNode(getter_AddRefs(parent));
++      NS_ASSERTION(parent, "no body on plugin document, we'll probably crash!");
++      if (parent) {
++        nsCOMPtr<nsIDOMNode> ignored;
++        parent->RemoveChild(plugin, getter_AddRefs(ignored));
++      }
++    }
++
++    // mozilla-central!uriloader/base/nsURILoader.cpp#nsDocumentOpenInfo::DispatchContent
++    // All attempts to dispatch this content have failed.  Just pass it off to
++    // the helper app service.
++
++    nsCOMPtr<nsIExternalHelperAppService> helperAppService =
++      do_GetService(NS_EXTERNALHELPERAPPSERVICE_CONTRACTID, &rv);
++    if (helperAppService) {
++      #define LOG(x) /**/
++      LOG(("  Passing load off to helper app service"));
++      #undef LOG
++      // Set these flags to indicate that the channel has been targeted and that
++      // we are not using the original consumer.
++      nsLoadFlags loadFlags = 0;
++      request->GetLoadFlags(&loadFlags);
++      request->SetLoadFlags(loadFlags |
++                            nsIChannel::LOAD_RETARGETED_DOCUMENT_URI |
++                            nsIChannel::LOAD_TARGETED);
++
++      nsCAutoString contentType;
++      nsCOMPtr<nsIChannel> channel(do_QueryInterface(request));
++      if (channel)
++        channel->GetContentType(contentType);
++      nsCOMPtr<nsIInterfaceRequestor> originalContext(do_QueryInterface(mPluginDoc->GetWindow()));
++      rv = helperAppService->DoContent(contentType,
++                                       request,
++                                       originalContext,
++                                       PR_FALSE,
++                                       getter_AddRefs(mListener));
++      if (NS_SUCCEEDED(rv))
++        return mListener->OnStartRequest(request, ctxt);
++
++      request->SetLoadFlags(loadFlags);
++      mListener = nsnull;
++    }
++  }
+ 
+   NS_ASSERTION(NS_FAILED(rv) || mNextStream,
+                "We should have a listener by now");
+   nsresult rv2 = nsMediaDocumentStreamListener::OnStartRequest(request, ctxt);
+   return NS_SUCCEEDED(rv) ? rv2 : rv;
+ }
+ 
++NS_IMETHODIMP
++nsPluginStreamListener::OnStopRequest(
++  nsIRequest* aRequest,
++  nsISupports *aContext,
++  nsresult aStatusCode)
++{
++  if (mListener)
++    return mListener->OnStopRequest(aRequest, aContext, aStatusCode);
++  return nsMediaDocumentStreamListener::OnStopRequest(aRequest, aContext, aStatusCode);
++}
++
++NS_IMETHODIMP
++nsPluginStreamListener::OnDataAvailable(
++  nsIRequest *aRequest,
++  nsISupports *aContext,
++  nsIInputStream *aInputStream,
++  PRUint32 aOffset,
++  PRUint32 aCount)
++{
++  if (mListener)
++    return mListener->OnDataAvailable(aRequest, aContext, aInputStream, aOffset, aCount);
++
++  return nsMediaDocumentStreamListener::OnDataAvailable(aRequest, aContext, aInputStream, aOffset, aCount);
++}
++
+ nsresult
+ nsPluginStreamListener::SetupPlugin()
+ {
+   NS_ENSURE_TRUE(mDocument, NS_ERROR_FAILURE);
+   mPluginDoc->StartLayout();
+ 
+   nsCOMPtr<nsIContent> embed = mPluginDoc->GetPluginContent();
+ 
+@@ -271,17 +347,17 @@ nsPluginDocument::CreateSyntheticPluginD
+ 
+   // make our generic document
+   nsresult rv = nsMediaDocument::CreateSyntheticDocument();
+   NS_ENSURE_SUCCESS(rv, rv);
+   // then attach our plugin
+ 
+   nsIContent* body = GetBodyContent();
+   if (!body) {
+-    NS_WARNING("no body on plugin document!");
++    NS_ERROR("no body on plugin document!");
+     return NS_ERROR_FAILURE;
+   }
+ 
+   // remove margins from body
+   NS_NAMED_LITERAL_STRING(zero, "0");
+   body->SetAttr(kNameSpaceID_None, nsGkAtoms::marginwidth, zero, PR_FALSE);
+   body->SetAttr(kNameSpaceID_None, nsGkAtoms::marginheight, zero, PR_FALSE);
+ 
+Index: mozilla/modules/plugin/base/src/nsNPAPIPlugin.cpp
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/nsNPAPIPlugin.cpp
++++ mozilla/modules/plugin/base/src/nsNPAPIPlugin.cpp
+@@ -402,17 +402,19 @@ nsNPAPIPlugin::CreatePlugin(const char* 
+   if (!aFilePath) {
+     *aResult = plugin.forget().get();
+     return NS_OK;
+   }
+ 
+   // we must init here because the plugin may call NPN functions
+   // when we call into the NP_Initialize entry point - NPN functions
+   // require that mBrowserManager be set up
+-  plugin->Initialize();
++  nsresult rv = plugin->Initialize();
++  if (NS_FAILED(rv))
++    return rv;
+ 
+   NP_PLUGINUNIXINIT pfnInitialize =
+     (NP_PLUGINUNIXINIT)PR_FindFunctionSymbol(aLibrary, "NP_Initialize");
+ 
+   if (!pfnInitialize)
+     return NS_ERROR_UNEXPECTED;
+ 
+   if (pfnInitialize(&(nsNPAPIPlugin::CALLBACKS),&callbacks) != NS_OK)
+Index: mozilla/modules/plugin/base/src/nsPluginHost.cpp
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/nsPluginHost.cpp
++++ mozilla/modules/plugin/base/src/nsPluginHost.cpp
+@@ -1861,17 +1861,17 @@ nsPluginStreamListenerPeer::SetupPluginC
+ 
+ NS_IMETHODIMP
+ nsPluginStreamListenerPeer::OnStartRequest(nsIRequest *request,
+                                            nsISupports* aContext)
+ {
+   nsresult  rv = NS_OK;
+ 
+   if (mHaveFiredOnStartRequest) {
+-      return NS_OK;
++    return NS_OK;
+   }
+ 
+   mHaveFiredOnStartRequest = PR_TRUE;
+ 
+   nsCOMPtr<nsIChannel> channel = do_QueryInterface(request);
+   NS_ENSURE_TRUE(channel, NS_ERROR_FAILURE);
+ 
+   // deal with 404 (Not Found) HTTP response,
+@@ -2118,19 +2118,19 @@ NS_IMETHODIMP nsPluginStreamListenerPeer
+ 
+     nsCOMPtr<nsIInputStream> stream = aIStream;
+ 
+     // if we are caching the file ourselves to disk, we want to 'tee' off
+     // the data as the plugin read from the stream.  We do this by the magic
+     // of an input stream tee.
+ 
+     if (mFileCacheOutputStream) {
+-        rv = NS_NewInputStreamTee(getter_AddRefs(stream), aIStream, mFileCacheOutputStream);
+-        if (NS_FAILED(rv))
+-            return rv;
++      rv = NS_NewInputStreamTee(getter_AddRefs(stream), aIStream, mFileCacheOutputStream);
++      if (NS_FAILED(rv))
++        return rv;
+     }
+ 
+     rv =  mPStreamListener->OnDataAvailable(mPluginStreamInfo,
+                                             stream,
+                                             aLength);
+ 
+     // if a plugin returns an error, the peer must kill the stream
+     //   else the stream and PluginStreamListener leak
+@@ -4114,18 +4114,21 @@ NS_IMETHODIMP nsPluginHost::GetPlugin(co
+ #ifdef NS_DEBUG
+     if (aMimeType && !pluginTag->mFileName.IsEmpty())
+       printf("For %s found plugin %s\n", aMimeType, pluginTag->mFileName.get());
+ #endif
+ 
+     if (!pluginTag->mLibrary) { // if we haven't done this yet
+       if (pluginTag->mFullPath.IsEmpty())
+         return NS_ERROR_FAILURE;
+-      nsCOMPtr<nsILocalFile> file = do_CreateInstance("@mozilla.org/file/local;1");
+-      file->InitWithPath(NS_ConvertUTF8toUTF16(pluginTag->mFullPath));
++      nsCOMPtr<nsILocalFile> file = do_CreateInstance("@mozilla.org/file/local;1", &rv);
++      rv = file->InitWithPath(NS_ConvertUTF8toUTF16(pluginTag->mFullPath));
++      if (NS_FAILED(rv))
++        return rv;
++
+       nsPluginFile pluginFile(file);
+       PRLibrary* pluginLibrary = NULL;
+ 
+       if (pluginFile.LoadPlugin(pluginLibrary) != NS_OK || pluginLibrary == NULL)
+         return NS_ERROR_FAILURE;
+ 
+       // remove from unused lib list, if it is there
+       if (mUnusedLibraries.Contains(pluginLibrary))

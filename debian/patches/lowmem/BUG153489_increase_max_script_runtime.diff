@@ -1,0 +1,22 @@
+diff -ruN -p -U 8 mozilla.orig/modules/libpref/src/init/all.js mozilla/modules/libpref/src/init/all.js
+--- mozilla.orig/modules/libpref/src/init/all.js	2010-01-21 12:46:53.000000000 +0200
++++ mozilla/modules/libpref/src/init/all.js	2010-01-21 12:49:14.000000000 +0200
+@@ -1200,17 +1200,17 @@ pref("gestures.enable_single_finger_inpu
+  *            other special markup symbols as defined in HTML4.
+  */
+ //pref("editor.encode_entity",                 "html");
+ 
+ pref("editor.resizing.preserve_ratio",       true);
+ pref("editor.positioning.offset",            0);
+ 
+ pref("dom.max_chrome_script_run_time", 20);
+-pref("dom.max_script_run_time", 10);
++pref("dom.max_script_run_time", 15);
+ 
+ pref("svg.enabled", true);
+ pref("svg.smil.enabled", false);
+ 
+ pref("font.minimum-size.ar", 0);
+ pref("font.minimum-size.x-armn", 0);
+ pref("font.minimum-size.x-beng", 0);
+ pref("font.minimum-size.x-baltic", 0);

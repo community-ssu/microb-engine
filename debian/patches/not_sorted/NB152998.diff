@@ -1,0 +1,92 @@
+--- mozilla/content/xbl/src/nsXBLWindowKeyHandler.cpp.orig	2010-02-04 08:52:55.000000000 +0200
++++ mozilla/content/xbl/src/nsXBLWindowKeyHandler.cpp	2010-02-04 09:07:53.000000000 +0200
+@@ -64,20 +64,23 @@
+ #include "nsXBLPrototypeBinding.h"
+ #include "nsIDOMDocument.h"
+ #include "nsIDOMNSDocument.h"
+ #include "nsPIWindowRoot.h"
+ #include "nsPIDOMWindow.h"
+ #include "nsIDocShell.h"
+ #include "nsIPresShell.h"
+ #include "nsIPrivateDOMEvent.h"
+ #include "nsISelectionController.h"
+ #include "nsGUIEvent.h"
++#include "nsCaret.h"
++#include "nsIEditingSession.h"
++#include "nsIEditor.h"
+ 
+ static nsINativeKeyBindings *sNativeEditorBindings = nsnull;
+ 
+ class nsXBLSpecialDocInfo
+ {
+ public:
+   nsCOMPtr<nsIXBLDocumentInfo> mHTMLBindings;
+   nsCOMPtr<nsIXBLDocumentInfo> mUserHTMLBindings;
+ 
+   static const char sHTMLBindingStr[];
+@@ -442,42 +445,57 @@ nsXBLWindowKeyHandler::ShutDown()
+ }
+ 
+ //
+ // IsEditor
+ //
+ // Determine if the document we're working with is Editor or Browser
+ //
+ PRBool
+ nsXBLWindowKeyHandler::IsEditor()
+ {
+-  // XXXndeakin even though this is only used for key events which should be
+-  // going to the focused frame anyway, this doesn't seem like the right way
+-  // to determine if something is an editor.
+   nsIFocusManager* fm = nsFocusManager::GetFocusManager();
+-  if (!fm)
+-    return PR_FALSE;
++  NS_ENSURE_TRUE(fm, PR_FALSE);
+ 
+   nsCOMPtr<nsIDOMWindow> focusedWindow;
+   fm->GetFocusedWindow(getter_AddRefs(focusedWindow));
+   if (!focusedWindow)
+     return PR_FALSE;
+ 
+   nsCOMPtr<nsPIDOMWindow> piwin(do_QueryInterface(focusedWindow));
+   nsIDocShell *docShell = piwin->GetDocShell();
++
+   nsCOMPtr<nsIPresShell> presShell;
+   if (docShell)
+     docShell->GetPresShell(getter_AddRefs(presShell));
+ 
++  PRBool caretVisible = PR_FALSE;
+   if (presShell) {
+-    PRInt16 isEditor;
+-    presShell->GetSelectionFlags(&isEditor);
+-    return isEditor == nsISelectionDisplay::DISPLAY_ALL;
++    nsRefPtr<nsCaret> caret;
++    if (NS_SUCCEEDED(presShell->GetCaret(getter_AddRefs(caret)))) {
++      caret->GetCaretVisible(&caretVisible);
++      // If caret is visible we are in editor
++      if (caretVisible)
++        return PR_TRUE;
++      else {
++        // Caret invisible, check current editor for selection
++        nsCOMPtr<nsIEditingSession> editSession = do_GetInterface(docShell);
++        if (editSession) {
++          nsCOMPtr<nsIEditor> editor;
++          nsresult rv = editSession->GetEditorForWindow(piwin, getter_AddRefs(editor));
++          if (NS_SUCCEEDED(rv) && editor) {
++            PRBool canCopy = PR_FALSE;
++            editor->CanCopy(&canCopy);
++            return canCopy;
++          }
++        }
++      }
++    }
+   }
+ 
+   return PR_FALSE;
+ }
+ 
+ //
+ // WalkHandlersInternal and WalkHandlersAndExecute
+ //
+ // Given a particular DOM event and a pointer to the first handler in the list,
+ // scan through the list to find something to handle the event and then make it

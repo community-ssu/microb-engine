@@ -1,0 +1,45 @@
+# Mozilla blocks modifier key pressed (but not releases).
+# But for example Flash plugin needs to get the modifier key presses
+# to be able to feed them to GtkIMContext
+# https://projects.maemo.org/bugzilla/show_bug.cgi?id=149278
+--- mozilla/widget/src/gtk2/nsWindow.cpp.orig	2009-12-03 14:12:57.000000000 +0200
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2009-12-03 14:11:40.000000000 +0200
+@@ -3058,34 +3058,38 @@ nsWindow::OnKeyPressEvent(GtkWidget *aWi
+ 
+         // send the key down event
+         nsKeyEvent downEvent(PR_TRUE, NS_KEY_DOWN, this);
+         InitKeyEvent(downEvent, aEvent);
+         DispatchEvent(&downEvent, status);
+         if (NS_UNLIKELY(mIsDestroyed))
+             return PR_TRUE;
+         isKeyDownCancelled = (status == nsEventStatus_eConsumeNoDefault);
+     }
+ 
++#ifdef MOZ_PLATFORM_HILDON
++    // In Maemo browser, we need to send modifiers to for example Flash plugin
++#else
+     // Don't pass modifiers as NS_KEY_PRESS events.
+     // TODO: Instead of selectively excluding some keys from NS_KEY_PRESS events,
+     //       we should instead selectively include (as per MSDN spec; no official
+     //       spec covers KeyPress events).
+     if (aEvent->keyval == GDK_Shift_L
+         || aEvent->keyval == GDK_Shift_R
+         || aEvent->keyval == GDK_Control_L
+         || aEvent->keyval == GDK_Control_R
+         || aEvent->keyval == GDK_Alt_L
+         || aEvent->keyval == GDK_Alt_R
+         || aEvent->keyval == GDK_Meta_L
+         || aEvent->keyval == GDK_Meta_R) {
+         return TRUE;
+     }
++#endif
+ 
+ #ifdef MOZ_X11
+     // Look for specialized app-command keys
+     switch (aEvent->keyval) {
+         case XF86XK_Back:
+             return DispatchCommandEvent(nsWidgetAtoms::Back);
+         case XF86XK_Forward:
+             return DispatchCommandEvent(nsWidgetAtoms::Forward);
+         case XF86XK_Refresh:
+             return DispatchCommandEvent(nsWidgetAtoms::Reload);

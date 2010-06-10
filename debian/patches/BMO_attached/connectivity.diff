@@ -1,0 +1,16 @@
+#https://bugzilla.mozilla.org/show_bug.cgi?id=532078
+diff -r 41b5f9084f99 netwerk/system/maemo/nsMaemoNetworkManager.cpp
+--- a/netwerk/system/maemo/nsMaemoNetworkManager.cpp	Tue Dec 01 13:34:45 2009 +0200
++++ b/netwerk/system/maemo/nsMaemoNetworkManager.cpp	Tue Dec 01 14:39:48 2009 +0200
+@@ -125,7 +125,11 @@ nsMaemoNetworkManager::CloseConnection()
+ PRBool
+ nsMaemoNetworkManager::IsConnected()
+ {
++#ifdef __arm__
+   return gInternalState == InternalState_Connected;
++#else
++  return PR_TRUE;
++#endif
+ }
+ 
+ PRBool

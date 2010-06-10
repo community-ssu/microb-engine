@@ -1,0 +1,200 @@
+Source: microb-engine
+Priority: optional
+Maintainer: Oleg Romashin <oleg.romashin@nokia.com>
+Build-Depends: debhelper (>= 4.0.0), libidl-dev, libxt-dev, autoconf2.13, libgtk2.0-dev, automake1.7, libjpeg62-dev, libpng12-dev | libpng-dev, libosso-gnomevfs2-dev | libgnomevfs2-dev, quilt, bc, sharutils, libcairo2-dev, libdbus-glib-1-dev, liblocation-dev | ubuntu-minimal, libhildonmime-dev | ubuntu-minimal, libosso-dev | ubuntu-minimal, libxdamage-dev, libxcomposite-dev, python2.5, libnotify-dev, libasound-dev, libgstreamer-plugins-base0.10-dev, libgl1-mesa-dev | opengles-sgx-img-common-dev | libgl-dev, libconic0-dev
+XS-Cross-Build-Depends: libidl-dev, libxt-dev, libgtk2.0-dev, libjpeg62-dev, libpng12-dev
+XS-Cross-Host-Build-Depends: debhelper, quilt, bc, sharutils, zip, libidl-dev
+Standards-Version: 3.6.2
+Section: libs
+
+Package: libnspr4
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}
+Conflicts: libnspr3
+Replaces: libnspr3
+Description: Netscape Portable Runtime Library
+ This library provides platform independent non-GUI operating system
+  facilities including:
+   * threads,
+   * thread synchronisation,
+   * normal file I/O and network I/O,
+   * interval timing and calendar time,
+   * basic memory management (malloc and free),
+   * shared library linking and loading.
+  .
+  See http://www.mozilla.org/docs/refList/refNSPR/ for more information.
+
+Package: libnss3
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, libnss3-certs (= ${Source-Version}) | softpkcs11, libnspr4 (= ${Source-Version})
+Description: Network Security Service Libraries - runtime
+ This package provides the runtime libraries needed to use the Netscape
+ SSL/TLS layer, including S/MIME and key management.
+
+Package: libnss3-certs
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}
+Conflicts: softpkcs11
+Replaces: softpkcs11
+Description: Network Security Service Libraries - runtime
+ This package provides the runtime libraries needed to use the Netscape
+ SSL/TLS layer, including S/MIME and key management.
+
+Package: microb-engine-common
+Section: libs
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Package of MicroB libraries based on Mozilla
+ MicroB can be used by other external applications.
+ Note that using libgtkmozembed or browser-eal is encouraged
+ instead of using this directly.
+ It is based on Mozilla.
+
+
+Package: microb-engine
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libnss3, libnspr4, microb-engine-common (>= ${Source-Version}), microb-engine-common (<< ${Source-Version}.1~)
+Description: Package of MicroB libraries based on Mozilla
+ MicroB can be used by other external applications.
+ Note that using libgtkmozembed or browser-eal is encouraged
+ instead of using this directly.
+ It is based on Mozilla.
+
+Package: microb-refui
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, microb-engine
+Description: TestGtkEmbed refui for MicroB
+ This package provides a simple GUI for testing the browser engine
+
+Package: microb-full
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, microb-full-common (>= ${Source-Version}), microb-full-common (<< ${Source-Version}.1~)
+Description: Full microb engine 
+ This package provides a simple GUI for testing the browser engine
+
+Package: microb-full-dbg
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, microb-full (= ${Source-Version})
+Description: Full microb engine DBG
+ This package provides a simple GUI for testing the browser engine
+
+Package: microb-full-common
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}
+Description: Full microb engine 
+ This package provides a simple GUI for testing the browser engine
+
+Package: microb-xulrunner
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, microb-engine, microb-refui
+Description: Xulrunner files for MicroB engine
+ This package provides a simple GUI for testing the browser engine
+
+Package: microb-engine-dev
+Section: libdevel
+Architecture: any
+Depends: microb-engine (>= ${Source-Version}), libnspr4-dev (>= ${Source-Version}), libnss3-dev (>= ${Source-Version}), libidl0
+Description: Development package for MicroB
+ This package can be used to build other applications and libraries
+ based on MicroB.
+ It contains headers and static libraries
+
+Package: libnspr4-dbg
+Section: libdevel
+Architecture: any
+Depends: libnspr4 (= ${Source-Version})
+Description: Debug package for libnspr4
+ Debug symbols file for the libnspr4
+
+Package: libnss3-dbg
+Section: libdevel
+Architecture: any
+Depends: libnss3 (= ${Source-Version})
+Description: Debug package for libnss3
+ Debug symbols files for the libnss3 libraries
+
+Package: microb-engine-dbg
+Section: libdevel
+Architecture: any
+Depends: microb-engine (= ${Source-Version})
+Description: Debug package for MicroB libraries
+ Debug symbols files for the microb-engine libraries
+
+Package: microb-refui-dbg
+Section: libdevel
+Architecture: any
+Depends: microb-refui (= ${Source-Version})
+Description: Debug package for MicroB refui
+ Debug symbols file for the microb refui
+
+Package: microb-xulrunner-dbg
+Section: libdevel
+Architecture: any
+Depends: microb-xulrunner (= ${Source-Version})
+Description: Debug Xulrunner files for MicroB engine
+ This package provides a simple GUI for testing the browser engine
+
+Package: microb-spellcheck
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}
+Description: Spellcheck extension for Mozilla
+ This package provides a Mozilla extension for checking spelling
+
+Package: microb-spellcheck-dbg
+Section: libdevel
+Architecture: any
+Depends: microb-spellcheck (= ${Source-Version})
+Description: Debug package for MicroB spellcheck
+ Debug symbols file for the microb spellcheck
+
+Package: libnspr4-dev
+Section: libdevel
+Architecture: any
+Depends: ${misc:Depends}, libnspr4 (= ${Source-Version})
+Description: Development files for the NetScape Portable Runtime library
+ This library provides platform independent non-GUI operating system
+ facilities including:
+  * threads,
+  * thread synchronisation,
+  * normal file I/O and network I/O,
+  * interval timing and calendar time,
+  * basic memory management (malloc and free),
+  * shared library linking.
+ .
+ Install this package if you wish to develop your own programs using the
+ NetScape Portable Runtime library.
+ .
+ Homepage: http://www.mozilla.org/projects/nspr/
+
+Package: libnss3-dev
+Section: libdevel
+Architecture: all
+Depends: ${misc:Depends}, libnss3 (= ${Source-Version}), libnspr4-dev (= ${Source-Version})
+Description: Development files for the Network Security Service libraries
+ This is a set of libraries designed to support cross-platform development
+ of security-enabled client and server applications. It can support SSLv2
+ and  v4, TLS, PKCS #5, #7, #11, #12, S/MIME, X.509 v3 certificates and
+ other security standards.
+ .
+ Install this package if you wish to develop your own programs using the
+ Network Security Service Libraries.
+ .
+ Homepage: http://www.mozilla.org/projects/security/pki/nss/
+
+Package: microb-moztests
+Architecture: any
+Section: misc 
+Depends: microb-engine (= ${Source-Version})
+Description: Tests for MicroB
+ This package provides a mozilla tests for  testing the browser engine
+

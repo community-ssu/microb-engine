@@ -1,0 +1,24 @@
+#https://bugzilla.mozilla.org/show_bug.cgi?id=532612
+diff -r 0d0aa3c97efa widget/src/gtkxtbin/gtk2xtbin.c
+--- a/widget/src/gtkxtbin/gtk2xtbin.c	Tue Oct 20 10:46:24 2009 +0300
++++ b/widget/src/gtkxtbin/gtk2xtbin.c	Tue Oct 20 11:05:33 2009 +0300
+@@ -425,7 +425,8 @@ gtk_xtbin_resize (GtkWidget *widget,
+   }
+   XtSetArg(args[0], XtNheight, height);
+   XtSetArg(args[1], XtNwidth,  width);
+-  XtSetValues(xtbin->xtclient.top_widget, args, 2);
++  if (xtbin->xtclient.top_widget)
++    XtSetValues(xtbin->xtclient.top_widget, args, 2);
+ 
+   /* we need to send a size allocate so the socket knows about the
+      size changes */
+@@ -434,7 +435,8 @@ gtk_xtbin_resize (GtkWidget *widget,
+   allocation.width = xtbin->width;
+   allocation.height = xtbin->height;
+ 
+-  gtk_widget_size_allocate(widget, &allocation);
++  if (widget->window)
++    gtk_widget_size_allocate(widget, &allocation);
+ }
+ 
+ static void

@@ -1,0 +1,117 @@
+Index: mozilla/layout/base/nsPresContext.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresContext.cpp
++++ mozilla/layout/base/nsPresContext.cpp
+@@ -197,17 +197,17 @@ nsPresContext::nsPresContext(nsIDocument
+                           NS_FONT_STRETCH_NORMAL, 0, 0),
+     mDefaultCursiveFont("cursive", NS_FONT_STYLE_NORMAL,
+                         NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL,
+                         NS_FONT_STRETCH_NORMAL, 0, 0),
+     mDefaultFantasyFont("fantasy", NS_FONT_STYLE_NORMAL,
+                         NS_FONT_VARIANT_NORMAL, NS_FONT_WEIGHT_NORMAL,
+                         NS_FONT_STRETCH_NORMAL, 0, 0),
+     mCanPaginatedScroll(PR_FALSE),
+-    mIsRootPaginatedDocument(PR_FALSE), mSupressResizeReflow(PR_FALSE)
++    mIsRootPaginatedDocument(PR_FALSE), mSupressResizeReflow(PR_FALSE), mResizeEventSuspended(PR_FALSE)
+ {
+   // NOTE! nsPresContext::operator new() zeroes out all members, so don't
+   // bother initializing members to 0.
+ 
+   mDoScaledTwips = PR_TRUE;
+ 
+   SetBackgroundImageDraw(PR_TRUE);		// always draw the background
+   SetBackgroundColorDraw(PR_TRUE);
+Index: mozilla/layout/base/nsPresContext.h
+===================================================================
+--- mozilla.orig/layout/base/nsPresContext.h
++++ mozilla/layout/base/nsPresContext.h
+@@ -867,16 +867,19 @@ public:
+    */
+   PRBool CheckForInterrupt(nsIFrame* aFrame);
+   /**
+    * Returns true if CheckForInterrupt has returned true since the last
+    * ReflowStarted call. Cannot itself trigger an interrupt check.
+    */
+   PRBool HasPendingInterrupt() { return mHasPendingInterrupt; }
+ 
++  void SuspendResizeEvent(PRBool aSuspend) { mResizeEventSuspended = aSuspend; };
++  PRBool IsResizeEventSuspended(void) const { return mResizeEventSuspended; };
++
+ protected:
+   friend class nsRunnableMethod<nsPresContext>;
+   NS_HIDDEN_(void) ThemeChangedInternal();
+   NS_HIDDEN_(void) SysColorChangedInternal();
+ 
+   NS_HIDDEN_(void) SetImgAnimations(nsIContent *aParent, PRUint16 aMode);
+ #ifdef MOZ_SMIL
+   NS_HIDDEN_(void) SetSMILAnimations(nsIDocument *aDoc, PRUint16 aNewMode,
+@@ -1029,16 +1032,17 @@ protected:
+ #ifdef IBMBIDI
+   unsigned              mIsVisual : 1;
+ 
+ #endif
+ #ifdef DEBUG
+   PRBool                mInitialized;
+ #endif
+ 
++  unsigned              mResizeEventSuspended : 1;
+ 
+ protected:
+ 
+   virtual ~nsPresContext() NS_HIDDEN;
+ 
+   // these are private, use the list in nsFont.h if you want a public list
+   enum {
+     eDefaultFont_Variable,
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp
++++ mozilla/layout/base/nsPresShell.cpp
+@@ -2876,17 +2876,17 @@ PresShell::ResizeReflow(nscoord aWidth, 
+     batch.EndUpdateViewBatch(NS_VMREFRESH_NO_SYNC);
+   }
+ 
+   if (aHeight == NS_UNCONSTRAINEDSIZE) {
+     mPresContext->SetVisibleArea(
+       nsRect(0, 0, aWidth, rootFrame->GetRect().height));
+   }
+ 
+-  if (!mIsDestroying && !mResizeEvent.IsPending() &&
++  if (!mIsDestroying && !mResizeEvent.IsPending() && !GetPresContext()->IsResizeEventSuspended() &&
+       !mAsyncResizeTimerIsActive) {
+     if (mInResize) {
+       if (!mAsyncResizeEventTimer) {
+         mAsyncResizeEventTimer = do_CreateInstance("@mozilla.org/timer;1");
+       }
+       if (mAsyncResizeEventTimer) {
+         mAsyncResizeTimerIsActive = PR_TRUE;
+         mAsyncResizeEventTimer->InitWithFuncCallback(AsyncResizeEventCallback,
+Index: mozilla/layout/generic/nsGfxScrollFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsGfxScrollFrame.cpp
++++ mozilla/layout/generic/nsGfxScrollFrame.cpp
+@@ -1566,18 +1566,22 @@ nsGfxScrollFrameInner::FireScrollPortEve
+   }
+ 
+   nsScrollPortEvent event(PR_TRUE,
+                           (orient == nsScrollPortEvent::horizontal ?
+                            mHorizontalOverflow : mVerticalOverflow) ?
+                             NS_SCROLLPORT_OVERFLOW : NS_SCROLLPORT_UNDERFLOW,
+                           nsnull);
+   event.orient = orient;
+-  return nsEventDispatcher::Dispatch(mOuter->GetContent(),
+-                                     mOuter->PresContext(), &event);
++  nsPresContext *ctx = mOuter->PresContext();
++  ctx->SuspendResizeEvent(PR_TRUE);
++  nsresult rv = nsEventDispatcher::Dispatch(mOuter->GetContent(),
++                                            mOuter->PresContext(), &event);
++  ctx->SuspendResizeEvent(PR_FALSE);
++  return rv;
+ }
+ 
+ void
+ nsGfxScrollFrameInner::ReloadChildFrames()
+ {
+   mScrolledFrame = nsnull;
+   mHScrollbarBox = nsnull;
+   mVScrollbarBox = nsnull;

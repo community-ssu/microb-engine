@@ -1,0 +1,175 @@
+--- mozilla/netwerk/base/public/nsIUnicharStreamLoader.idl.orig	2010-03-17 14:18:23.000000000 +0200
++++ mozilla/netwerk/base/public/nsIUnicharStreamLoader.idl	2010-03-17 14:19:36.000000000 +0200
+@@ -90,21 +90,21 @@ interface nsIUnicharStreamLoaderObserver
+  *
+  * To use this interface, first call init() with a
+  * nsIUnicharStreamLoaderObserver that will be notified when the data has been
+  * loaded. Then call asyncOpen() on the channel with the nsIUnicharStreamLoader
+  * as the listener. The context argument in the asyncOpen() call will be
+  * passed to the onStreamComplete() callback.
+  */
+ [scriptable, uuid(9037f476-7c08-4729-b690-3e425269802b)]
+ interface nsIUnicharStreamLoader : nsIStreamListener
+ {
+-  const unsigned long DEFAULT_SEGMENT_SIZE = 4096;
++  const unsigned long DEFAULT_SEGMENT_SIZE = 65536;
+ 
+   /**
+    * Initializes the unichar stream loader
+    *
+    * @param aObserver the observer to notify when a charset is needed and when
+    *        the load is complete
+    * @param aSegmentSize the size of the segments to use for the data, in bytes
+    */
+   
+   void init(in nsIUnicharStreamLoaderObserver aObserver,
+--- mozilla/netwerk/base/src/nsNetSegmentUtils.h.orig	2010-03-17 14:20:13.000000000 +0200
++++ mozilla/netwerk/base/src/nsNetSegmentUtils.h	2010-03-17 14:21:04.000000000 +0200
+@@ -38,21 +38,21 @@
+ #ifndef nsNetSegmentUtils_h__
+ #define nsNetSegmentUtils_h__
+ 
+ #include "necko-config.h"
+ #include "nsIOService.h"
+ 
+ #ifdef NECKO_SMALL_BUFFERS
+ #define NET_DEFAULT_SEGMENT_SIZE  2048
+ #define NET_DEFAULT_SEGMENT_COUNT 4
+ #else
+-#define NET_DEFAULT_SEGMENT_SIZE  16384
++#define NET_DEFAULT_SEGMENT_SIZE  65536
+ #define NET_DEFAULT_SEGMENT_COUNT 64
+ #endif
+ 
+ /**
+  * returns preferred allocator for given segment size.  NULL implies
+  * system allocator.  this result can be used when allocating a pipe.
+  */
+ static inline nsIMemory *
+ net_GetSegmentAlloc(PRUint32 segsize)
+ {
+--- mozilla/netwerk/streamconv/converters/nsBinHexDecoder.cpp.orig	2010-03-17 14:23:43.000000000 +0200
++++ mozilla/netwerk/streamconv/converters/nsBinHexDecoder.cpp	2010-03-17 14:24:00.000000000 +0200
+@@ -45,21 +45,21 @@
+ #include "netCore.h"
+ #include "nsXPIDLString.h"
+ #include "prnetdb.h"
+ #include "nsIURI.h"
+ #include "nsIURL.h"
+ 
+ #include "nsIMIMEService.h"
+ #include "nsMimeTypes.h"
+ 
+ 
+-#define DATA_BUFFER_SIZE (4096*2)
++#define DATA_BUFFER_SIZE (65536*2)
+ 
+ #define NS_STREAM_CONVERTER_SEGMENT_SIZE   (4*1024)
+ #define NS_STREAM_CONVERTER_BUFFER_SIZE    (32*1024)
+ 
+ // sadly I couldn't find char defintions for CR LF elsehwere in the code (they are defined as strings in nsCRT.h)
+ #define CR  '\015'
+ #define LF '\012'
+ 
+ nsBinHexDecoder::nsBinHexDecoder() :
+   mState(0), mCRC(0), mFileCRC(0), mOctetin(26),
+--- mozilla/netwerk/protocol/http/src/nsHttp.h.orig	2010-03-17 14:22:38.000000000 +0200
++++ mozilla/netwerk/protocol/http/src/nsHttp.h	2010-03-17 14:23:08.000000000 +0200
+@@ -74,21 +74,21 @@ extern PRLogModuleInfo *gHttpLog;
+ #define LOG4(args) PR_LOG(gHttpLog, 4, args)
+ #define LOG(args) LOG4(args)
+ 
+ #define LOG1_ENABLED() PR_LOG_TEST(gHttpLog, 1)
+ #define LOG2_ENABLED() PR_LOG_TEST(gHttpLog, 2)
+ #define LOG3_ENABLED() PR_LOG_TEST(gHttpLog, 3)
+ #define LOG4_ENABLED() PR_LOG_TEST(gHttpLog, 4)
+ #define LOG_ENABLED() LOG4_ENABLED()
+ 
+ // http default buffer geometry
+-#define NS_HTTP_SEGMENT_SIZE  4096
++#define NS_HTTP_SEGMENT_SIZE  65536
+ #define NS_HTTP_SEGMENT_COUNT 16   // 64k maximum
+ #define NS_HTTP_MAX_ODA_SIZE  (NS_HTTP_SEGMENT_SIZE * 4) // 16k
+ 
+ // http version codes
+ #define NS_HTTP_VERSION_UNKNOWN  0
+ #define NS_HTTP_VERSION_0_9      9
+ #define NS_HTTP_VERSION_1_0     10
+ #define NS_HTTP_VERSION_1_1     11
+ 
+ typedef PRUint8 nsHttpVersion;
+--- mozilla/netwerk/protocol/ftp/src/nsFTPChannel.h.orig	2010-03-17 14:21:59.000000000 +0200
++++ mozilla/netwerk/protocol/ftp/src/nsFTPChannel.h	2010-03-17 14:22:16.000000000 +0200
+@@ -59,21 +59,21 @@
+ #include "nsIFTPChannel.h"
+ #include "nsIUploadChannel.h"
+ #include "nsIProxyInfo.h"
+ #include "nsIProxiedChannel.h"
+ #include "nsIResumableChannel.h"
+ #include "nsHashPropertyBag.h"
+ 
+ #define FTP_COMMAND_CHANNEL_SEG_SIZE 64
+ #define FTP_COMMAND_CHANNEL_SEG_COUNT 8
+ 
+-#define FTP_DATA_CHANNEL_SEG_SIZE  (4*1024)
++#define FTP_DATA_CHANNEL_SEG_SIZE  (4*65536)
+ #define FTP_DATA_CHANNEL_SEG_COUNT 8
+ 
+ class nsFtpChannel : public nsBaseChannel,
+                      public nsIFTPChannel,
+                      public nsIUploadChannel,
+                      public nsIResumableChannel,
+                      public nsIProxiedChannel
+ {
+ public:
+     NS_DECL_ISUPPORTS_INHERITED
+--- mozilla/uriloader/exthandler/nsExternalHelperAppService.h.orig	2010-03-17 14:26:39.000000000 +0200
++++ mozilla/uriloader/exthandler/nsExternalHelperAppService.h	2010-03-17 14:26:59.000000000 +0200
+@@ -235,21 +235,21 @@ protected:
+    * Whether we are in private browsing mode
+    */
+   PRBool mInPrivateBrowsing;
+ };
+ 
+ /**
+  * We need to read the data out of the incoming stream into a buffer which we
+  * can then use to write the data into the output stream representing the
+  * temp file.
+  */
+-#define DATA_BUFFER_SIZE (4096*2) 
++#define DATA_BUFFER_SIZE (65536*2) 
+ 
+ /**
+  * An external app handler is just a small little class that presents itself as
+  * a nsIStreamListener. It saves the incoming data into a temp file. The handler
+  * is bound to an application when it is created. When it receives an
+  * OnStopRequest it launches the application using the temp file it has
+  * stored the data into.  We create a handler every time we have to process
+  * data using a helper app.
+  */
+ class nsExternalAppHandler : public nsIStreamListener,
+--- mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp.orig	2010-03-17 14:25:15.000000000 +0200
++++ mozilla/uriloader/exthandler/nsExternalHelperAppService.cpp	2010-03-17 14:51:54.000000000 +0200
+@@ -122,21 +122,21 @@
+ 
+ #include "nsLocalHandlerApp.h"
+ 
+ #include "nsIRandomGenerator.h"
+ #include "plbase64.h"
+ #include "prmem.h"
+ 
+ #include "nsIPrivateBrowsingService.h"
+ 
+ // Buffer file writes in 32kb chunks
+-#define BUFFERED_OUTPUT_SIZE (1024 * 32)
++#define BUFFERED_OUTPUT_SIZE (1024 * 64)
+ 
+ // Download Folder location constants
+ #define NS_PREF_DOWNLOAD_DIR        "browser.download.dir"
+ #define NS_PREF_DOWNLOAD_FOLDERLIST "browser.download.folderList"
+ enum {
+   NS_FOLDER_VALUE_DESKTOP = 0
+ , NS_FOLDER_VALUE_DOWNLOADS = 1
+ , NS_FOLDER_VALUE_CUSTOM = 2
+ };
+ 

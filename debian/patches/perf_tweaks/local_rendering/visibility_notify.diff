@@ -1,0 +1,224 @@
+# Send to plugins visibility notifications
+diff -r 8804ab2467a5 layout/generic/nsObjectFrame.cpp
+--- a/layout/generic/nsObjectFrame.cpp	Tue Dec 01 16:52:24 2009 +0200
++++ b/layout/generic/nsObjectFrame.cpp	Tue Dec 01 17:49:22 2009 +0200
+@@ -626,7 +626,11 @@ private:
+                                  nsPluginWindow* mWindow,
+                                  const nsIntSize& mPluginSize,
+                                  const nsIntRect& mDirtyRect);
++  void SendVisibility(PRBool aVisible);
++  PRBool mForceTimerUpdate;
+   PRBool mPaintWithMicrobImageDraw;
++public:
++  PRBool UpdateVisibilityMicrob(PRBool aForce = PR_FALSE);
+ #endif
+ };
+ 
+@@ -1049,6 +1053,10 @@ nsObjectFrame::FixupWindow(const nsSize&
+ 
+   NS_ENSURE_TRUE(window, /**/);
+ 
++#ifdef MOZ_PLATFORM_HILDON
++  mInstanceOwner->UpdateVisibilityMicrob(PR_TRUE);
++#endif
++
+ #ifdef XP_MACOSX
+   mInstanceOwner->FixUpPluginWindow(ePluginPaintDisable);
+ #endif
+@@ -1114,6 +1122,10 @@ nsObjectFrame::CallSetWindow()
+   // if needed, see bug 132759.
+   window->CallSetWindow(pi);
+ 
++#ifdef MOZ_PLATFORM_HILDON
++  mInstanceOwner->UpdateVisibilityMicrob(PR_TRUE);
++#endif
++
+   mInstanceOwner->ReleasePluginPort((nsPluginPort *)window->window);
+ }
+ 
+@@ -2537,6 +2549,10 @@ nsPluginInstanceOwner::nsPluginInstanceO
+   mLastPoint = nsIntPoint(0,0);
+ #endif
+ 
++#ifdef MOZ_PLATFORM_HILDON
++  mForceTimerUpdate = PR_FALSE;
++#endif
++
+ #ifdef OJI
+   // record the thread we were created in.
+   mThreadID = NS_PTR_TO_INT32(PR_GetCurrentThread());
+@@ -3787,6 +3803,9 @@ nsPluginInstanceOwner::GetEventloopNesti
+ 
+ nsresult nsPluginInstanceOwner::ScrollPositionWillChange(nsIScrollableView* aScrollable, nscoord aX, nscoord aY)
+ {
++#ifdef XP_UNIX
++    CancelTimer();
++#endif
+ #ifdef XP_MACOSX
+   CancelTimer();
+ 
+@@ -4097,6 +4116,13 @@ nsPluginInstanceOwner::HandleEvent(nsIDO
+   nsAutoString eventType;
+   aEvent->GetType(eventType);
+ 
++  if (mPaintWithMicrobImageDraw) {
++    if (eventType.EqualsLiteral("pluginshide"))
++      SendVisibility(PR_FALSE);
++    else if (eventType.EqualsLiteral("pluginsshow"))
++      UpdateVisibilityMicrob();
++  }
++
+   if (mInstance) {
+     nsCOMPtr<nsIDOMDragEvent> dragEvent = do_QueryInterface(aEvent);
+     if (dragEvent) {
+@@ -4816,6 +4842,18 @@ nsPluginInstanceOwner::Destroy()
+     target->RemoveEventListener(NS_LITERAL_STRING("dragstart"), listener, PR_TRUE);
+     target->RemoveEventListener(NS_LITERAL_STRING("draggesture"), listener, PR_TRUE);
+     target->RemoveEventListener(NS_LITERAL_STRING("dragend"), listener, PR_TRUE);
++
++    nsCOMPtr<nsIDocument> doc = mContent->GetDocument();
++    if (doc) {
++      nsCOMPtr<nsPIDOMWindow> pwindow = doc->GetWindow();
++      if (pwindow) {
++        nsCOMPtr<nsIDOMEventTarget> docTarget = do_QueryInterface(pwindow->GetChromeEventHandler());
++        if (docTarget) {
++          docTarget->RemoveEventListener(NS_LITERAL_STRING("pluginsshow"), listener, PR_TRUE);
++          docTarget->RemoveEventListener(NS_LITERAL_STRING("pluginshide"), listener, PR_TRUE);
++        }
++      }
++    }
+   }
+ 
+   if (mWidget) {
+@@ -5624,6 +5662,12 @@ nsPluginInstanceOwner::Renderer::NativeD
+ 
+ NS_IMETHODIMP nsPluginInstanceOwner::Notify(nsITimer* /* timer */)
+ {
++#ifdef MOZ_PLATFORM_HILDON
++  if (mInstance && mPaintWithMicrobImageDraw) {
++    UpdateVisibilityMicrob(mForceTimerUpdate);
++    mForceTimerUpdate = PR_FALSE;
++  }
++#endif
+ #ifdef XP_MACOSX
+   // validate the plugin clipping information by syncing the plugin window info to
+   // reflect the current widget location. This makes sure that everything is updated
+@@ -5670,6 +5714,19 @@ void nsPluginInstanceOwner::StartTimer(u
+     mPluginTimer->InitWithCallback(this, aDelay, nsITimer::TYPE_REPEATING_SLACK);
+   }
+ #endif
++#ifdef XP_UNIX
++  if (!mTimerCanceled)
++    return;
++
++  // start a periodic timer to provide null events to the plugin instance.
++  if (!mPluginTimer)
++    mPluginTimer = do_CreateInstance("@mozilla.org/timer;1");
++
++  if (mPluginTimer) {
++    mTimerCanceled = PR_FALSE;
++    mPluginTimer->InitWithCallback(this, aDelay, nsITimer::TYPE_ONE_SHOT);
++  }
++#endif
+ }
+ 
+ void nsPluginInstanceOwner::CancelTimer()
+@@ -5746,6 +5803,18 @@ nsresult nsPluginInstanceOwner::Init(nsP
+     target->AddEventListener(NS_LITERAL_STRING("dragstart"), listener, PR_TRUE);
+     target->AddEventListener(NS_LITERAL_STRING("draggesture"), listener, PR_TRUE);
+     target->AddEventListener(NS_LITERAL_STRING("dragend"), listener, PR_TRUE);
++
++    nsCOMPtr<nsIDocument> doc = mContent->GetDocument();
++    if (doc) {
++      nsCOMPtr<nsPIDOMWindow> pwindow = doc->GetWindow();
++      if (pwindow) {
++        nsCOMPtr<nsIDOMEventTarget> docTarget = do_QueryInterface(pwindow->GetChromeEventHandler());
++        if (docTarget) {
++          docTarget->AddEventListener(NS_LITERAL_STRING("pluginsshow"), listener, PR_TRUE);
++          docTarget->AddEventListener(NS_LITERAL_STRING("pluginshide"), listener, PR_TRUE);
++        }
++      }
++    }
+   }
+   
+   // Register scroll position listener
+@@ -5843,6 +5912,9 @@ NS_IMETHODIMP nsPluginInstanceOwner::Cre
+             ws_info->display = GDK_DISPLAY();
+           }
+ #endif
++          // start the idle timer.
++          mForceTimerUpdate = PR_TRUE;
++          StartTimer(NORMAL_PLUGIN_DELAY);
+ #endif
+         } else if (mWidget) {
+           mWidget->Resize(mPluginWindow->width, mPluginWindow->height,
+@@ -5893,6 +5965,69 @@ PRBool nsPluginInstanceOwner::UpdateVisi
+   mWidgetVisible = PR_TRUE;
+   return PR_TRUE;
+ }
++
++PRBool FullIntersects(const nsRect &aRect1, const nsRect &aRect2)
++{
++  return (PRBool) ((aRect1.x <= aRect2.XMost()) && (aRect1.y <= aRect2.YMost()) &&
++                     (aRect2.x <= aRect1.XMost()) && (aRect2.y <= aRect1.YMost()));
++}
++
++PRBool nsPluginInstanceOwner::UpdateVisibilityMicrob(PRBool aForce)
++{
++  if (!mPluginWindow || !mInstance || !mOwner)
++    return PR_FALSE;
++
++  // first, check our view for CSS visibility style
++  PRBool isVisible =
++    mOwner->GetView()->GetVisibility() == nsViewVisibility_kShow;
++
++  PRBool widgetVisible = PR_FALSE;
++
++  nsIViewManager* parentVM = mOwner->GetView()->GetViewManager();
++  nsIScrollableView* scrollable = nsnull;
++  if (parentVM)
++    parentVM->GetRootScrollableView(&scrollable);
++
++  if (scrollable) {
++    nsIFrame* fr = nsLayoutUtils::GetFrameFor(scrollable->View()->GetParent());
++    if (fr) {
++      nsRect overflowRect = fr->GetOverflowRect();
++      nsPresContext* presContext = mOwner->PresContext();
++      nsIntPoint pos = mOwner->GetView()->GetScreenPosition();
++      nsRect plugRect(presContext->DevPixelsToAppUnits(pos.x),
++                      presContext->DevPixelsToAppUnits(pos.y),
++                      presContext->DevPixelsToAppUnits(mPluginWindow->width),
++                      presContext->DevPixelsToAppUnits(mPluginWindow->height));
++
++      widgetVisible = FullIntersects(overflowRect, plugRect);
++    }
++  }
++
++  isVisible = isVisible && widgetVisible;
++
++  if (aForce || mWidgetVisible != isVisible) {
++    SendVisibility(isVisible);
++    return PR_TRUE;
++  }
++
++  return PR_FALSE;
++}
++
++void
++nsPluginInstanceOwner::SendVisibility(PRBool aVisible)
++{
++  if (!mInstance)
++    return;
++
++  PRBool handled = PR_FALSE;
++  nsPluginEvent pluginEvent;
++  XVisibilityEvent& visibilityEvent = pluginEvent.event.xvisibility;
++  visibilityEvent.type = VisibilityNotify;
++  visibilityEvent.display = 0;
++  visibilityEvent.state = aVisible ? VisibilityUnobscured : VisibilityFullyObscured;
++  mInstance->HandleEvent(&pluginEvent, &handled);
++  mWidgetVisible = aVisible;
++}
+ #endif
+ 
+   // Mac specific code to fix up the port location and clipping region

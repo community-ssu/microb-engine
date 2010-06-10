@@ -1,0 +1,122 @@
+#https://bug437018.bugzilla.mozilla.org/attachment.cgi?id=325393
+#https://bugzilla.mozilla.org/show_bug.cgi?id=437018
+Index: mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/EmbedPrivate.cpp
++++ mozilla/embedding/browser/gtk/src/EmbedPrivate.cpp
+@@ -489,16 +489,17 @@ EmbedPrivate::ApplyChromeMask()
+    }
+ }
+ 
+ 
+ void
+ EmbedPrivate::SetChromeMask(PRUint32 aChromeMask)
+ {
+    mChromeMask = aChromeMask;
++   mIsChrome = (mChromeMask & nsIWebBrowserChrome::CHROME_OPENAS_CHROME);
+ 
+    ApplyChromeMask();
+ }
+ 
+ 
+ /* static */
+ void
+ EmbedPrivate::PushStartup(void)
+Index: mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
+===================================================================
+--- mozilla.orig/embedding/browser/gtk/src/EmbedWindow.cpp
++++ mozilla/embedding/browser/gtk/src/EmbedWindow.cpp
+@@ -38,16 +38,17 @@
+  *
+  * ***** END LICENSE BLOCK ***** */
+ 
+ #include "nsCWebBrowser.h"
+ #include "nsIComponentManager.h"
+ #include "nsComponentManagerUtils.h"
+ #include "nsIDocShellTreeItem.h"
+ #include "nsIWidget.h"
++#include "nsThreadUtils.h"
+ 
+ #include "EmbedWindow.h"
+ #include "EmbedPrivate.h"
+ #include "EmbedPrompter.h"
+ 
+ GtkWidget *EmbedWindow::sTipWindow = nsnull;
+ 
+ EmbedWindow::EmbedWindow(void)
+@@ -71,17 +72,18 @@ EmbedWindow::Init(EmbedPrivate *aOwner)
+   // create our nsIWebBrowser object and set up some basic defaults.
+   mWebBrowser = do_CreateInstance(NS_WEBBROWSER_CONTRACTID);
+   if (!mWebBrowser)
+     return NS_ERROR_FAILURE;
+ 
+   mWebBrowser->SetContainerWindow(static_cast<nsIWebBrowserChrome *>(this));
+   
+   nsCOMPtr<nsIDocShellTreeItem> item = do_QueryInterface(mWebBrowser);
+-  item->SetItemType(nsIDocShellTreeItem::typeContentWrapper);
++  item->SetItemType(mOwner->mIsChrome ? nsIDocShellTreeItem::typeChromeWrapper
++                                      : nsIDocShellTreeItem::typeContentWrapper);
+ 
+   return NS_OK;
+ }
+ 
+ nsresult
+ EmbedWindow::CreateWindow(void)
+ {
+   nsresult rv;
+@@ -199,24 +201,36 @@ EmbedWindow::DestroyBrowserWindow(void)
+ NS_IMETHODIMP
+ EmbedWindow::SizeBrowserTo(PRInt32 aCX, PRInt32 aCY)
+ {
+   g_signal_emit(G_OBJECT(mOwner->mOwningWidget),
+                 moz_embed_signals[SIZE_TO], 0, aCX, aCY);
+   return NS_OK;
+ }
+ 
++static gboolean
++ProcessEvents(void *data)
++{
++    return TRUE;
++}
++
+ NS_IMETHODIMP
+ EmbedWindow::ShowAsModal(void)
+ {
+   mIsModal = PR_TRUE;
+   GtkWidget *toplevel;
+   toplevel = gtk_widget_get_toplevel(GTK_WIDGET(mOwner->mOwningWidget));
+   gtk_grab_add(toplevel);
+-  gtk_main();
++  nsIThread *thread = NS_GetCurrentThread();
++  gulong nativeSource = g_timeout_add(100, ProcessEvents, NULL);
++  while (mIsModal) {
++    if (!NS_ProcessNextEvent(thread))
++      break;
++  }
++  g_source_remove(nativeSource);
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ EmbedWindow::IsWindowModal(PRBool *_retval)
+ {
+   *_retval = mIsModal;
+   return NS_OK;
+@@ -225,17 +239,16 @@ EmbedWindow::IsWindowModal(PRBool *_retv
+ NS_IMETHODIMP
+ EmbedWindow::ExitModalEventLoop(nsresult aStatus)
+ {
+   if (mIsModal) {
+     GtkWidget *toplevel;
+     toplevel = gtk_widget_get_toplevel(GTK_WIDGET(mOwner->mOwningWidget));
+     gtk_grab_remove(toplevel);
+     mIsModal = PR_FALSE;
+-    gtk_main_quit();
+   }
+   return NS_OK;
+ }
+ 
+ // nsIWebBrowserChromeFocus
+ 
+ NS_IMETHODIMP
+ EmbedWindow::FocusNextElement()

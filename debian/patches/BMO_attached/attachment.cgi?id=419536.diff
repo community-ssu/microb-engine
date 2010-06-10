@@ -1,0 +1,71 @@
+# https://bugzilla.mozilla.org/show_bug.cgi?id=507811
+# Better version of fix NB#127717
+# Fixes https://projects.maemo.org/bugzilla/show_bug.cgi?id=127717
+diff -r e2a652b99570 layout/generic/nsObjectFrame.cpp
+--- a/layout/generic/nsObjectFrame.cpp	Mon Dec 14 11:37:11 2009 -0500
++++ b/layout/generic/nsObjectFrame.cpp	Wed Dec 30 11:07:33 2009 +0000
+@@ -483,16 +483,18 @@ public:
+     }
+     return "";
+   }
+ 
+   PRBool SendNativeEvents()
+   {
+ #ifdef XP_WIN
+     return MatchPluginName("Shockwave Flash");
++#elif defined(MOZ_X11)
++    return PR_TRUE;
+ #else
+     return PR_FALSE;
+ #endif
+   }
+ 
+   PRBool MatchPluginName(const char *aPluginName)
+   {
+     return strncmp(GetPluginName(), aPluginName, strlen(aPluginName)) == 0;
+@@ -4297,16 +4299,22 @@ nsEventStatus nsPluginInstanceOwner::Pro
+           event.time = anEvent.time;
+           const GdkEventKey* gdkEvent =
+             static_cast<const GdkEventKey*>(anEvent.nativeMsg);
+           event.keycode = gdkEvent->hardware_keycode;
+           event.state = gdkEvent->state;
+           switch (anEvent.message)
+             {
+             case NS_KEY_DOWN:
++              // Handle NS_KEY_DOWN for modifier key presses
++              // For non-modifiers we get NS_KEY_PRESS
++              if (gdkEvent->is_modifier)
++                event.type = XKeyPress;
++              break;
++            case NS_KEY_PRESS:
+               event.type = XKeyPress;
+               break;
+             case NS_KEY_UP:
+               event.type = KeyRelease;
+               break;
+             }
+ #endif
+           // Information that could be obtained from nativeMsg but we may not
+@@ -4681,16 +4689,22 @@ nsEventStatus nsPluginInstanceOwner::Pro
+           event.time = anEvent.time;
+           const GdkEventKey* gdkEvent =
+             static_cast<const GdkEventKey*>(anEvent.nativeMsg);
+           event.keycode = gdkEvent->hardware_keycode;
+           event.state = gdkEvent->state;
+           switch (anEvent.message)
+             {
+             case NS_KEY_DOWN:
++              // Handle NS_KEY_DOWN for modifier key presses
++              // For non-modifiers we get NS_KEY_PRESS
++              if (gdkEvent->is_modifier)
++                event.type = XKeyPress;
++              break;
++            case NS_KEY_PRESS:
+               event.type = XKeyPress;
+               break;
+             case NS_KEY_UP:
+               event.type = KeyRelease;
+               break;
+             }
+ #endif
+           // Information that could be obtained from nativeMsg but we may not

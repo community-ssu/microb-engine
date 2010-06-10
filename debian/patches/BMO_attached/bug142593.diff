@@ -1,0 +1,171 @@
+diff -U 5 -p -b -r mozilla.orig/layout/base/nsPresContext.cpp mozilla/layout/base/nsPresContext.cpp
+--- mozilla.orig/layout/base/nsPresContext.cpp	2009-11-19 12:32:54.000000000 +0200
++++ mozilla/layout/base/nsPresContext.cpp	2009-11-19 14:09:17.000000000 +0200
+@@ -92,10 +92,11 @@
+ #include "nsIAppShell.h"
+ #include "prenv.h"
+ #include "nsIPrivateDOMEvent.h"
+ #include "nsIDOMEventTarget.h"
+ #include "nsObjectFrame.h"
++#include "nsTextFrame.h"
+ 
+ #ifdef MOZ_SMIL
+ #include "nsSMILAnimationController.h"
+ #endif // MOZ_SMIL
+ 
+@@ -1157,10 +1158,14 @@ nsPresContext::SetImageAnimationModeInte
+       SetSMILAnimations(doc, aMode, mImageAnimationMode);
+ #endif // MOZ_SMIL
+     }
+   }
+ 
++  nsIFrame* rootFrame = PresShell()->GetRootFrame();
++  if (rootFrame)
++    SetTextFrameBlinkingMode(rootFrame, aMode);
++
+   mImageAnimationMode = aMode;
+ }
+ 
+ void
+ nsPresContext::SetImageAnimationModeExternal(PRUint16 aMode)
+@@ -2421,5 +2426,35 @@ PluginDidSetGeometryEnumerator(nsPtrHash
+ void
+ nsRootPresContext::DidApplyPluginGeometryUpdates()
+ {
+   mRegisteredPlugins.EnumerateEntries(PluginDidSetGeometryEnumerator, nsnull);
+ }
++
++nsresult 
++nsPresContext::SetTextFrameBlinkingMode(nsIFrame* aFrame, PRUint16 aMode)
++{
++  NS_ENSURE_ARG (aFrame);
++
++  PRInt32 listIndex = 0;
++  nsIAtom* childList = nsnull;
++
++  do {
++    nsIFrame *child = aFrame->GetFirstChild(childList);
++    while (child) {
++      SetTextFrameBlinkingMode(child, aMode);
++      child = child->GetNextSibling();
++    }
++
++    childList = aFrame->GetAdditionalChildListName(listIndex++);
++  } while (childList);
++
++  // Set blinking state for text frame:
++  if (aFrame->GetType() == nsGkAtoms::textFrame) {
++    nsTextFrame* textFrame = static_cast<nsTextFrame*>(aFrame);
++    if (aMode == imgIContainer::kDontAnimMode)
++      textFrame->SetBlinkingState(PR_FALSE);
++    else
++      textFrame->SetBlinkingState(PR_TRUE);
++  }
++
++  return NS_OK;
++}
+diff -U 5 -p -b -r mozilla.orig/layout/base/nsPresContext.h mozilla/layout/base/nsPresContext.h
+--- mozilla.orig/layout/base/nsPresContext.h	2009-11-19 12:32:54.000000000 +0200
++++ mozilla/layout/base/nsPresContext.h	2009-11-19 12:58:25.000000000 +0200
+@@ -884,10 +884,12 @@ public:
+   PRBool HasPendingInterrupt() { return mHasPendingInterrupt; }
+ 
+   void SuspendResizeEvent(PRBool aSuspend) { mResizeEventSuspended = aSuspend; };
+   PRBool IsResizeEventSuspended(void) const { return mResizeEventSuspended; };
+ 
++  nsresult SetTextFrameBlinkingMode(nsIFrame* aFrame, PRUint16 aMode);
++
+ protected:
+   friend class nsRunnableMethod<nsPresContext>;
+   NS_HIDDEN_(void) ThemeChangedInternal();
+   NS_HIDDEN_(void) SysColorChangedInternal();
+ 
+diff -U 5 -p -b -r mozilla.orig/layout/generic/nsTextFrame.h mozilla/layout/generic/nsTextFrame.h
+--- mozilla.orig/layout/generic/nsTextFrame.h	2009-11-19 12:32:53.000000000 +0200
++++ mozilla/layout/generic/nsTextFrame.h	2009-11-19 12:58:25.000000000 +0200
+@@ -372,10 +372,12 @@ public:
+   {
+     return !(GetStateBits() & TEXT_BLINK_ON_OR_PRINTING) ?
+       mContent->GetText() : GetFragmentInternal();
+   }
+ 
++  void SetBlinkingState(PRBool aEnable);
++
+ protected:
+   virtual ~nsTextFrame();
+ 
+   const nsTextFragment* GetFragmentInternal() const;
+ 
+diff -U 5 -p -b -r mozilla.orig/layout/generic/nsTextFrameThebes.cpp mozilla/layout/generic/nsTextFrameThebes.cpp
+--- mozilla.orig/layout/generic/nsTextFrameThebes.cpp	2009-11-19 12:32:54.000000000 +0200
++++ mozilla/layout/generic/nsTextFrameThebes.cpp	2009-11-19 14:08:43.000000000 +0200
+@@ -2731,13 +2731,13 @@ public:
+ 
+   PRBool RemoveFrame(nsIFrame* aFrame);
+ 
+   PRInt32 FrameCount();
+ 
+-  void Start();
++  static void Start();
+ 
+-  void Stop();
++  static void Stop();
+ 
+   NS_DECL_NSITIMERCALLBACK
+ 
+   static nsresult AddBlinkFrame(nsPresContext* aPresContext, nsIFrame* aFrame);
+   static nsresult RemoveBlinkFrame(nsIFrame* aFrame);
+@@ -2789,24 +2789,31 @@ nsBlinkTimer::~nsBlinkTimer()
+ {
+   Stop();
+   sTextBlinker = nsnull;
+ }
+ 
++// static
+ void nsBlinkTimer::Start()
+ {
+   nsresult rv;
+-  mTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
++  nsBlinkTimer* blinkTimer = sTextBlinker;
++  if (!blinkTimer || blinkTimer->mTimer)
++    return;
++
++  blinkTimer->mTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
+   if (NS_OK == rv) {
+-    mTimer->InitWithCallback(this, 250, nsITimer::TYPE_REPEATING_PRECISE);
++    blinkTimer->mTimer->InitWithCallback(blinkTimer, 250, nsITimer::TYPE_REPEATING_PRECISE);
+   }
+ }
+ 
++// static
+ void nsBlinkTimer::Stop()
+ {
+-  if (nsnull != mTimer) {
+-    mTimer->Cancel();
+-    mTimer = nsnull;
++  nsBlinkTimer* blinkTimer = sTextBlinker;
++  if (blinkTimer && blinkTimer->mTimer) {
++    blinkTimer->mTimer->Cancel();
++    blinkTimer->mTimer = nsnull;
+   }
+ }
+ 
+ NS_IMPL_ISUPPORTS1(nsBlinkTimer, nsITimerCallback)
+ 
+@@ -6869,5 +6876,16 @@ const nsTextFragment*
+ nsTextFrame::GetFragmentInternal() const
+ {
+   return PresContext()->IsDynamic() ? mContent->GetText() :
+     nsLayoutUtils::GetTextFragmentForPrinting(this);
+ }
++
++void 
++nsTextFrame::SetBlinkingState(PRBool aEnable)
++{
++  if (0 == (mState & TEXT_BLINK_ON_OR_PRINTING)) {
++    if (aEnable == PR_TRUE) 
++      nsBlinkTimer::Start();
++    else
++      nsBlinkTimer::Stop();
++  }
++}

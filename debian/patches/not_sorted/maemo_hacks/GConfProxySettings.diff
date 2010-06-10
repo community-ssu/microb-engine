@@ -1,0 +1,36 @@
+diff -r 1c95c7e2740f extensions/pref/system-pref/src/nsSystemPref.cpp
+--- a/extensions/pref/system-pref/src/nsSystemPref.cpp	Fri Dec 04 14:45:48 2009 +0200
++++ b/extensions/pref/system-pref/src/nsSystemPref.cpp	Fri Dec 04 15:34:20 2009 +0200
+@@ -287,8 +287,6 @@ nsSystemPref::ReadSystemPref(const char 
+ 
+     SYSPREF_LOG(("about to read aPrefName %s\n", aPrefName));
+ 
+-    prefBranch->UnlockPref(aPrefName);
+-
+     PRInt32 prefType = nsIPrefBranch::PREF_INVALID;
+     nsXPIDLCString strValue;
+     PRInt32 intValue = 0;
+@@ -302,6 +300,15 @@ nsSystemPref::ReadSystemPref(const char 
+         mSysPrefService->GetCharPref(aPrefName, getter_Copies(strValue));
+         SYSPREF_LOG(("system value is %s\n", strValue.get()));
+ 
++        if (!nsCString(aPrefName).Equals("network.proxy.autoconfig_url")) {
++            if (StringBeginsWith(strValue, NS_LITERAL_CSTRING("http://")))
++                strValue.Cut(0, 7);
++            else if (StringBeginsWith(strValue, NS_LITERAL_CSTRING("https://")))
++                strValue.Cut(0, 8);
++            else if (StringBeginsWith(strValue, NS_LITERAL_CSTRING("ftp://")))
++                strValue.Cut(0, 6);
++        }
++
+         prefBranch->SetCharPref(aPrefName, strValue.get());
+         break;
+     case nsIPrefBranch::PREF_INT:
+@@ -320,7 +327,6 @@ nsSystemPref::ReadSystemPref(const char 
+         SYSPREF_LOG(("Fail to system value for it\n"));
+         return NS_ERROR_FAILURE;
+     }
+-    prefBranch->LockPref(aPrefName);
+     return NS_OK;
+ }
+ 

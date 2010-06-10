@@ -1,0 +1,242 @@
+## Added API for painting layout without fixed frames or only fixed frames painting
+#https://projects.maemo.org/bugzilla/show_bug.cgi?id=127991
+Index: mozilla/layout/base/nsDisplayList.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsDisplayList.cpp
++++ mozilla/layout/base/nsDisplayList.cpp
+@@ -67,16 +67,18 @@ nsDisplayListBuilder::nsDisplayListBuild
+       mMovingFrame(nsnull),
+       mSaveVisibleRegionOfMovingContent(nsnull),
+       mIgnoreScrollFrame(nsnull),
+       mCurrentTableItem(nsnull),
+       mBuildCaret(aBuildCaret),
+       mEventDelivery(aIsForEvents),
+       mIsAtRootOfPseudoStackingContext(PR_FALSE),
+       mPaintAllFrames(PR_FALSE),
++      mIsFixedFramesOnly(PR_FALSE),
++      mIsNoFixedFrames(PR_FALSE),
+       mAccurateVisibleRegions(PR_FALSE),
+       mInTransform(PR_FALSE) {
+   PL_InitArenaPool(&mPool, "displayListArena", 1024, sizeof(void*)-1);
+ 
+   nsPresContext* pc = aReferenceFrame->PresContext();
+   nsIPresShell *shell = pc->PresShell();
+   PRBool suppressed;
+   shell->IsPaintingSuppressed(&suppressed);
+Index: mozilla/layout/base/nsDisplayList.h
+===================================================================
+--- mozilla.orig/layout/base/nsDisplayList.h
++++ mozilla/layout/base/nsDisplayList.h
+@@ -305,17 +305,22 @@ public:
+    * that might not be displayed, we mark the placeholders and their ancestors
+    * to ensure that display list construction descends into them
+    * anyway. nsDisplayListBuilder will take care of unmarking them when it is
+    * destroyed.
+    */
+   void MarkFramesForDisplayList(nsIFrame* aDirtyFrame,
+                                 const nsFrameList& aFrames,
+                                 const nsRect& aDirtyRect);
+-  
++
++  PRBool IsFixedFramesOnly(void) { return mIsFixedFramesOnly; }
++  PRBool IsNoFixedFrames(void) { return mIsNoFixedFrames; }
++  void SetFixedFramesOnly(PRBool aIsFixedFramesOnly) { mIsFixedFramesOnly = aIsFixedFramesOnly; }
++  void SetNoFixedFrames(PRBool aIsNoFixedFrames) { mIsNoFixedFrames = aIsNoFixedFrames; }
++
+   /**
+    * Allocate memory in our arena. It will only be freed when this display list
+    * builder is destroyed. This memory holds nsDisplayItems. nsDisplayItem
+    * destructors are called as soon as the item is no longer used.
+    */
+   void* Allocate(size_t aSize);
+   
+   /**
+@@ -387,16 +392,18 @@ private:
+   nsAutoTArray<PresShellState,8> mPresShellStates;
+   nsAutoTArray<nsIFrame*,100>    mFramesMarkedForDisplay;
+   nsDisplayTableItem*            mCurrentTableItem;
+   PRPackedBool                   mBuildCaret;
+   PRPackedBool                   mEventDelivery;
+   PRPackedBool                   mIsBackgroundOnly;
+   PRPackedBool                   mIsAtRootOfPseudoStackingContext;
+   PRPackedBool                   mPaintAllFrames;
++  PRPackedBool                   mIsFixedFramesOnly;
++  PRPackedBool                   mIsNoFixedFrames;
+   PRPackedBool                   mAccurateVisibleRegions;
+   // True when we're building a display list that's directly or indirectly
+   // under an nsDisplayTransform
+   PRPackedBool                   mInTransform;
+ };
+ 
+ class nsDisplayItem;
+ class nsDisplayList;
+Index: mozilla/layout/base/nsIPresShell.h
+===================================================================
+--- mozilla.orig/layout/base/nsIPresShell.h
++++ mozilla/layout/base/nsIPresShell.h
+@@ -765,17 +765,19 @@ public:
+    * @param aBackgroundColor a background color to render onto
+    * @param aRenderedContext the gfxContext to render to. We render so that
+    * one CSS pixel in the source document is rendered to one unit in the current
+    * transform.
+    */
+   enum {
+     RENDER_IS_UNTRUSTED = 0x01,
+     RENDER_IGNORE_VIEWPORT_SCROLLING = 0x02,
+-    RENDER_CARET = 0x04
++    RENDER_CARET = 0x04,
++    RENDER_NO_FIXED_FRAMES = 0x08,
++    RENDER_FIXED_FRAMES_ONLY = 0x10,
+   };
+   NS_IMETHOD RenderDocument(const nsRect& aRect, PRUint32 aFlags,
+                             nscolor aBackgroundColor,
+                             gfxContext* aRenderedContext) = 0;
+ 
+   NS_IMETHOD InvalidateFixedFrames(PRBool aOnlyCheck = PR_FALSE) = 0;
+ 
+   /**
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp
++++ mozilla/layout/base/nsPresShell.cpp
+@@ -5419,16 +5419,18 @@ PresShell::RenderDocument(const nsRect& 
+         do_QueryFrame(rootScrollableFrame->GetScrolledFrame());
+       if (canvasFrame) {
+         canvasArea =
+           canvasFrame->CanvasArea() + builder.ToReferenceFrame(canvasFrame);
+       }
+     }
+ 
+     builder.SetBackgroundOnly(PR_FALSE);
++    builder.SetNoFixedFrames(aFlags & RENDER_NO_FIXED_FRAMES);
++    builder.SetFixedFramesOnly(aFlags & RENDER_FIXED_FRAMES_ONLY);
+     builder.EnterPresShell(rootFrame, rect);
+ 
+     // Add the canvas background color.
+     nsresult rv =
+       rootFrame->PresContext()->PresShell()->AddCanvasBackgroundColorItem(
+         builder, list, rootFrame, &canvasArea);
+ 
+     if (NS_SUCCEEDED(rv)) {
+Index: mozilla/layout/generic/nsViewportFrame.cpp
+===================================================================
+--- mozilla.orig/layout/generic/nsViewportFrame.cpp
++++ mozilla/layout/generic/nsViewportFrame.cpp
+@@ -94,27 +94,38 @@ NS_IMETHODIMP
+ ViewportFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                 const nsRect&           aDirtyRect,
+                                 const nsDisplayListSet& aLists)
+ {
+   // We don't need any special painting or event handling. We just need to
+   // mark our visible out-of-flow frames (i.e., the fixed position frames) so
+   // that display list construction is guaranteed to recurse into their
+   // ancestors.
+-  aBuilder->MarkFramesForDisplayList(this, mFixedContainer.GetChildList(),
+-                                     aDirtyRect);
++  mIsPaintNonFixedFrames = !aBuilder->IsFixedFramesOnly();
++  mIsPaintFixedFrames = !aBuilder->IsNoFixedFrames();
++  if (!mIsPaintNonFixedFrames && !mIsPaintFixedFrames)
++    return NS_OK;
++
++  if (mIsPaintFixedFrames)
++    aBuilder->MarkFramesForDisplayList(this, mFixedContainer.GetChildList(), aDirtyRect);
++
++  nsIFrame* kid = mIsPaintNonFixedFrames ?
++      mFrames.FirstChild() :
++      mFixedContainer.GetChildList().FirstChild();
+ 
+-  nsIFrame* kid = mFrames.FirstChild();
+   if (!kid)
+     return NS_OK;
+ 
+   // make the kid's BorderBackground our own. This ensures that the canvas
+   // frame's background becomes our own background and therefore appears
+   // below negative z-index elements.
+-  return BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
++  nsresult rv = BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
++  mIsPaintNonFixedFrames = PR_TRUE;
++  mIsPaintFixedFrames = PR_TRUE;
++  return NS_OK;
+ }
+ 
+ NS_IMETHODIMP
+ ViewportFrame::AppendFrames(nsIAtom*        aListName,
+                             nsFrameList&    aFrameList)
+ {
+   nsresult rv = NS_OK;
+ 
+@@ -177,19 +188,19 @@ ViewportFrame::GetAdditionalChildListNam
+ 
+   return nsnull;
+ }
+ 
+ nsFrameList
+ ViewportFrame::GetChildList(nsIAtom* aListName) const
+ {
+   if (nsGkAtoms::fixedList == aListName)
+-    return mFixedContainer.GetChildList();
++    return mIsPaintFixedFrames ? mFixedContainer.GetChildList() : nsnull;
+ 
+-  return nsContainerFrame::GetChildList(aListName);
++  return mIsPaintNonFixedFrames ? nsContainerFrame::GetChildList(aListName) : nsnull;
+ }
+ 
+ /* virtual */ nscoord
+ ViewportFrame::GetMinWidth(nsIRenderingContext *aRenderingContext)
+ {
+   nscoord result;
+   DISPLAY_MIN_WIDTH(this, result);
+   if (mFrames.IsEmpty())
+Index: mozilla/layout/generic/nsViewportFrame.h
+===================================================================
+--- mozilla.orig/layout/generic/nsViewportFrame.h
++++ mozilla/layout/generic/nsViewportFrame.h
+@@ -59,16 +59,18 @@ class ViewportFrame : public nsContainer
+ public:
+   NS_DECL_FRAMEARENA_HELPERS
+ 
+   typedef nsContainerFrame Super;
+ 
+   ViewportFrame(nsStyleContext* aContext)
+     : nsContainerFrame(aContext)
+     , mFixedContainer(nsGkAtoms::fixedList)
++    , mIsPaintFixedFrames(PR_TRUE)
++    , mIsPaintNonFixedFrames(PR_TRUE)
+   {}
+   virtual ~ViewportFrame() { } // useful for debugging
+ 
+   virtual void Destroy();
+ 
+   NS_IMETHOD Init(nsIContent*      aContent,
+                   nsIFrame*        aParent,
+                   nsIFrame*        asPrevInFlow);
+@@ -120,12 +122,16 @@ public:
+ 
+ protected:
+   nsPoint AdjustReflowStateForScrollbars(nsHTMLReflowState* aReflowState) const;
+ 
+ protected:
+   // position: fixed content is really content which is absolutely positioned with
+   // respect to the viewport.
+   nsAbsoluteContainingBlock mFixedContainer;
++
++private:
++  PRPackedBool mIsPaintFixedFrames;
++  PRPackedBool mIsPaintNonFixedFrames;
+ };
+ 
+ 
+ #endif // nsViewportFrame_h___
+diff -r 2bbc6b82eb28 configure.in
+--- a/configure.in	Wed Oct 07 20:28:14 2009 +0300
++++ b/configure.in	Wed Oct 07 20:38:57 2009 +0300
+@@ -5945,6 +5945,9 @@ if test -n "$MOZ_SMIL"; then
+   AC_DEFINE(MOZ_SMIL)
+ fi
+ 
++MICROB_API_RENDER_NO_FIXED_FRAMES=1
++AC_DEFINE(MICROB_API_RENDER_NO_FIXED_FRAMES)
++
+ dnl ========================================================
+ dnl Build Freetype in the tree
+ dnl ========================================================

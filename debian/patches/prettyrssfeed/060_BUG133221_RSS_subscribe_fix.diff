@@ -1,0 +1,22 @@
+Index: mozilla/toolkit/components/feeds/src/nsFeedSniffer.cpp
+===================================================================
+--- mozilla.orig/toolkit/components/feeds/src/nsFeedSniffer.cpp
++++ mozilla/toolkit/components/feeds/src/nsFeedSniffer.cpp
+@@ -334,6 +334,17 @@
+     channel->SetResponseHeader(NS_LITERAL_CSTRING("X-Moz-Is-Feed"),
+                                NS_LITERAL_CSTRING("1"), PR_FALSE);
+     sniffedType.AssignLiteral(TYPE_MAYBE_FEED);
++
++    nsCAutoString url;
++    nsresult rv = originalURI->GetSpec(url);
++    NS_ENSURE_SUCCESS(rv, PR_TRUE);
++
++    nsCOMPtr<nsISupports> service = do_GetService("@browser/engine-client-observer;1", &rv);
++    NS_ENSURE_SUCCESS(rv, PR_TRUE);
++    nsCOMPtr<nsIObserver> Observer = do_QueryInterface(service, &rv);
++    NS_ENSURE_SUCCESS(rv, PR_TRUE);
++    rv = Observer->Observe(nsnull, "DOMLink_MAYBE_FEED", NS_ConvertUTF8toUTF16(url).get());
++
+     return NS_OK;
+   }
+ 

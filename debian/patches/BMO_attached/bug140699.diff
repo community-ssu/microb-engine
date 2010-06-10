@@ -1,0 +1,102 @@
+diff -r 26b093b30061 configure.in
+--- a/configure.in	Mon Jan 11 13:40:12 2010 +0200
++++ b/configure.in	Mon Jan 11 13:41:27 2010 +0200
+@@ -6904,16 +6904,19 @@ dnl ====================================
+ MOZ_ARG_ENABLE_BOOL(vtune,
+ [  --enable-vtune          Enable vtune profiling],
+     MOZ_VTUNE=1,
+     MOZ_VTUNE= )
+ if test -n "$MOZ_VTUNE"; then
+     AC_DEFINE(MOZ_VTUNE)
+ fi
+ 
++MICROB_API_SET_ACTIVE_DOCSHELL=1
++AC_DEFINE(MICROB_API_SET_ACTIVE_DOCSHELL)
++
+ dnl ========================================================
+ dnl Zealous JavaScript GC
+ dnl ========================================================
+ MOZ_ARG_ENABLE_BOOL(gczeal,
+ [  --enable-gczeal          Enable zealous JavaScript GCing],
+     JS_GC_ZEAL=1,
+     JS_GC_ZEAL= )
+ if test -n "$JS_GC_ZEAL"; then
+diff -r 26b093b30061 docshell/base/nsDocShell.cpp
+--- a/docshell/base/nsDocShell.cpp	Mon Jan 11 13:40:12 2010 +0200
++++ b/docshell/base/nsDocShell.cpp	Mon Jan 11 13:41:27 2010 +0200
+@@ -4546,16 +4546,25 @@ nsDocShell::SetIsActive(PRBool aIsActive
+ 
+   if (mDisableMetaRefreshInBackground) {
+     if (aIsActive)
+       ResumeRefreshURIs();
+     else
+       SuspendRefreshURIs();
+   }
+ 
++  // Resume refresh URIs for our child shells as well.
++  PRUint32 childCount = mChildList.Count();
++
++  for (PRUint32 i = 0; i < childCount; ++i) {
++      nsCOMPtr<nsIDocShell> shell = do_QueryInterface(ChildAt(i));
++      if (shell)
++          shell->SetIsActive(aIsActive);
++  }
++
+   // Tell the PresShell about it.
+   nsCOMPtr<nsIPresShell> shell;
+   nsDocShell::GetPresShell(getter_AddRefs(shell));
+   if (shell)
+     return shell->SetIsActive(aIsActive);
+ 
+   return NS_OK;
+ }
+@@ -4993,29 +5002,29 @@ nsDocShell::RefreshURI(nsIURI * aURI, PR
+     refreshTimer->mRepeat = aRepeat;
+     refreshTimer->mMetaRefresh = aMetaRefresh;
+ 
+     if (!mRefreshURIList) {
+         NS_ENSURE_SUCCESS(NS_NewISupportsArray(getter_AddRefs(mRefreshURIList)),
+                           NS_ERROR_FAILURE);
+     }
+ 
+-    if (busyFlags & BUSY_FLAGS_BUSY) {
++    if (busyFlags & BUSY_FLAGS_BUSY || (!mIsActive && mDisableMetaRefreshInBackground)) {
+         // We are busy loading another page. Don't create the
+         // timer right now. Instead queue up the request and trigger the
+         // timer in EndPageLoad(). 
+         mRefreshURIList->AppendElement(refreshTimer);
+     }
+     else {
+         // There is no page loading going on right now.  Create the
+         // timer and fire it right away.
+         nsCOMPtr<nsITimer> timer = do_CreateInstance("@mozilla.org/timer;1");
+         NS_ENSURE_TRUE(timer, NS_ERROR_FAILURE);
+ 
+-        mRefreshURIList->AppendElement(timer);      // owning timer ref
++        mRefreshURIList->AppendElement(timer);
+         timer->InitWithCallback(refreshTimer, aDelay, nsITimer::TYPE_ONE_SHOT);
+     }
+     return NS_OK;
+ }
+ 
+ nsresult
+ nsDocShell::ForceRefreshURIFromTimer(nsIURI * aURI,
+                                      PRInt32 aDelay, 
+@@ -5784,16 +5793,17 @@ nsDocShell::EndPageLoad(nsIWebProgress *
+         mLSHE->SetLoadType(nsIDocShellLoadInfo::loadHistory);
+ 
+         // Clear the mLSHE reference to indicate document loading is done one
+         // way or another.
+         SetHistoryEntry(&mLSHE, nsnull);
+     }
+     // if there's a refresh header in the channel, this method
+     // will set it up for us. 
++    if (mIsActive)
+     RefreshURIFromQueue();
+ 
+     // Test whether this is the top frame or a subframe
+     PRBool isTopFrame = PR_TRUE;
+     nsCOMPtr<nsIDocShellTreeItem> targetParentTreeItem;
+     rv = GetSameTypeParent(getter_AddRefs(targetParentTreeItem));
+     if (NS_SUCCEEDED(rv) && targetParentTreeItem) {
+         isTopFrame = PR_FALSE;

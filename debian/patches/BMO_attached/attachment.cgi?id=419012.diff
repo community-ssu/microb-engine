@@ -1,0 +1,22 @@
+diff -r b546f2d42066 editor/libeditor/text/nsTextEditRules.cpp
+--- a/editor/libeditor/text/nsTextEditRules.cpp	Wed Dec 23 15:05:46 2009 +0200
++++ b/editor/libeditor/text/nsTextEditRules.cpp	Wed Dec 23 17:57:52 2009 +0200
+@@ -99,16 +99,18 @@ nsTextEditRules::nsTextEditRules()
+ , mPasswordText()
+ , mPasswordIMEText()
+ , mPasswordIMEIndex(0)
+ , mFlags(0) // initialized to 0 ("no flags set").  Real initial value is given in Init()
+ , mActionNesting(0)
+ , mLockRulesSniffing(PR_FALSE)
+ , mDidExplicitlySetInterline(PR_FALSE)
+ , mTheAction(0)
++, mLastStart(0)
++, mLastLength(0)
+ {
+ }
+ 
+ nsTextEditRules::~nsTextEditRules()
+ {
+    // do NOT delete mEditor here.  We do not hold a ref count to mEditor.  mEditor owns our lifespan.
+ 
+   if (mTimer)

@@ -1,0 +1,17 @@
+diff -r b95f6a2278fb netwerk/build/Makefile.in
+--- a/netwerk/build/Makefile.in	Sun Dec 20 10:58:21 2009 +0200
++++ b/netwerk/build/Makefile.in	Sun Dec 20 11:02:31 2009 +0200
+@@ -162,6 +162,13 @@ EXTRA_DSO_LDOPTS += \
+ 	$(NULL)
+ endif
+ 
++ifdef MOZ_ENABLE_LIBCONIC
++EXTRA_DSO_LDOPTS += \
++		$(LIBCONIC_LIBS) \
++		$(MOZ_DBUS_GLIB_LIBS) \
++		$(NULL)
++endif
++
+ ifeq ($(OS_ARCH),AIX)
+ EXTRA_DSO_LDOPTS += -lodm -lcfg
+ endif

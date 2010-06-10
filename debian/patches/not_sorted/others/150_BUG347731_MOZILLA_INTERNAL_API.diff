@@ -1,0 +1,124 @@
+diff -r 1ba5c2883bfe content/base/src/nsContentList.h
+--- a/content/base/src/nsContentList.h	Thu Dec 03 11:27:53 2009 +0200
++++ b/content/base/src/nsContentList.h	Thu Dec 03 11:28:09 2009 +0200
+@@ -46,7 +46,7 @@
+ 
+ #include "nsISupports.h"
+ #include "nsCOMArray.h"
+-#include "nsString.h"
++#include "nsStringGlue.h"
+ #include "nsIHTMLCollection.h"
+ #include "nsIDOMNodeList.h"
+ #include "nsINodeList.h"
+diff -r 1ba5c2883bfe content/html/content/public/nsIForm.h
+--- a/content/html/content/public/nsIForm.h	Thu Dec 03 11:27:53 2009 +0200
++++ b/content/html/content/public/nsIForm.h	Thu Dec 03 11:28:09 2009 +0200
+@@ -38,7 +38,7 @@
+ #define nsIForm_h___
+ 
+ #include "nsISupports.h"
+-#include "nsAString.h"
++#include "nsStringGlue.h"
+ 
+ class nsIFormControl;
+ class nsISimpleEnumerator;
+diff -r 1ba5c2883bfe embedding/components/windowwatcher/public/nsPromptUtils.h
+--- a/embedding/components/windowwatcher/public/nsPromptUtils.h	Thu Dec 03 11:27:53 2009 +0200
++++ b/embedding/components/windowwatcher/public/nsPromptUtils.h	Thu Dec 03 11:28:09 2009 +0200
+@@ -40,6 +40,9 @@
+ 
+ #include "nsIHttpChannel.h"
+ 
++#ifndef kNotFound
++#define kNotFound -1
++#endif
+ /**
+  * @file
+  * This file defines some helper functions that simplify interaction
+@@ -164,7 +167,7 @@ NS_GetAuthKey(nsIChannel* aChannel, nsIA
+   key.Append(':');
+   key.AppendInt(port);
+   key.AppendLiteral(" (");
+-  AppendUTF16toUTF8(realm, key);
++	key.Append(NS_ConvertUTF16toUTF8(realm));
+   key.Append(')');
+ }
+ 
+diff -r 1ba5c2883bfe layout/base/nsPresContext.cpp
+--- a/layout/base/nsPresContext.cpp	Thu Dec 03 11:27:53 2009 +0200
++++ b/layout/base/nsPresContext.cpp	Thu Dec 03 11:28:09 2009 +0200
+@@ -977,7 +977,7 @@ nsPresContext::SetShell(nsIPresShell* aS
+ }
+ 
+ void
+-nsPresContext::UpdateCharSet(const nsAFlatCString& aCharSet)
++nsPresContext::UpdateCharSet(const nsCString& aCharSet)
+ {
+   if (mLangService) {
+     NS_IF_RELEASE(mLangGroup);
+diff -r 1ba5c2883bfe layout/base/nsPresContext.h
+--- a/layout/base/nsPresContext.h	Thu Dec 03 11:27:53 2009 +0200
++++ b/layout/base/nsPresContext.h	Thu Dec 03 11:28:09 2009 +0200
+@@ -44,7 +44,7 @@
+ #include "nsISupports.h"
+ #include "nsColor.h"
+ #include "nsCoord.h"
+-#include "nsAString.h"
++#include "nsStringGlue.h"
+ #include "nsCOMPtr.h"
+ #include "nsIPresShell.h"
+ #include "nsRect.h"
+@@ -69,7 +69,9 @@
+ #include "nsTArray.h"
+ #include "nsAutoPtr.h"
+ #include "nsThreadUtils.h"
++#ifdef MOZILLA_INTERNAL_API
+ #include "nsContentUtils.h"
++#endif
+ #include "nsIWidget.h"
+ #include "mozilla/TimeStamp.h"
+ 
+@@ -905,7 +907,7 @@ protected:
+   NS_HIDDEN_(void) GetUserPreferences();
+   NS_HIDDEN_(void) GetFontPreferences();
+ 
+-  NS_HIDDEN_(void) UpdateCharSet(const nsAFlatCString& aCharSet);
++  NS_HIDDEN_(void) UpdateCharSet(const nsCString& aCharSet);
+ 
+   void HandleRebuildUserFontSet() {
+     mPostedFlushUserFontSet = PR_FALSE;
+@@ -1169,8 +1171,10 @@ struct nsAutoLayoutPhase {
+                      "constructing frames in the middle of reflow");
+         NS_ASSERTION(mPresContext->mLayoutPhaseCount[eLayoutPhase_FrameC] == 0,
+                      "recurring into frame construction");
++#ifdef MOZILLA_INTERNAL_API
+         NS_ASSERTION(!nsContentUtils::IsSafeToRunScript(),
+                      "constructing frames and scripts are not blocked");
++#endif
+         break;
+       default:
+         break;
+diff -r 1ba5c2883bfe layout/style/nsCSSValue.h
+--- a/layout/style/nsCSSValue.h	Thu Dec 03 11:27:53 2009 +0200
++++ b/layout/style/nsCSSValue.h	Thu Dec 03 11:28:09 2009 +0200
+@@ -41,7 +41,7 @@
+ #define nsCSSValue_h___
+ 
+ #include "nsColor.h"
+-#include "nsString.h"
++#include "nsStringGlue.h"
+ #include "nsCoord.h"
+ #include "nsCSSProperty.h"
+ #include "nsIURI.h"
+diff -r 1ba5c2883bfe modules/plugin/base/public/nsIPluginInstance.idl
+--- a/modules/plugin/base/public/nsIPluginInstance.idl	Thu Dec 03 11:27:53 2009 +0200
++++ b/modules/plugin/base/public/nsIPluginInstance.idl	Thu Dec 03 11:28:09 2009 +0200
+@@ -43,7 +43,7 @@ interface nsIOutputStream;
+ 
+ %{C++
+ #include "nsplugindefs.h"
+-#include "nsString.h"
++#include "nsStringGlue.h"
+ struct JSContext;
+ struct JSObject;
+ 

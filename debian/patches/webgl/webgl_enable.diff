@@ -1,0 +1,25 @@
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -6445,17 +6445,19 @@ PKG_CHECK_MODULES(LIBOSSO,libosso,
+                   NS_OSSO=)
+ 
+ if test $NS_OSSO; then
+     if test -z "$MOZ_ENABLE_DBUS"; then
+         AC_MSG_ERROR([DBus is required when building for OSSO])
+     fi
+     AC_DEFINE(NS_OSSO)
+     MOZ_GFX_OPTIMIZE_MOBILE=1
+-    MOZ_WEBGL_GLX=
++    if test `echo $OS_TEST | grep -ic arm` == 1; then
++        MOZ_WEBGL_GLX=
++    fi
+ fi
+ AC_SUBST(LIBOSSO_CFLAGS)
+ AC_SUBST(LIBOSSO_LIBS)
+ 
+ PKG_CHECK_MODULES(LIBHILDONFM,hildon-fm-2,
+                   NS_HILDONFM=1,
+                   NS_HILDONFM)
+ AC_SUBST(LIBHILDONFM_CFLAGS)

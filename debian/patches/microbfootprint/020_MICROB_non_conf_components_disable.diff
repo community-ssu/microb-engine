@@ -1,0 +1,573 @@
+diff -r 84e6f925ffce config/autoconf.mk.in
+--- a/config/autoconf.mk.in	Fri Dec 04 10:21:47 2009 +0200
++++ b/config/autoconf.mk.in	Fri Dec 04 10:46:56 2009 +0200
+@@ -161,6 +161,10 @@ MOZ_STORAGE = @MOZ_STORAGE@
+ MOZ_SAFE_BROWSING = @MOZ_SAFE_BROWSING@
+ MOZ_FASTSTART = @MOZ_FASTSTART@
+ MOZ_URL_CLASSIFIER = @MOZ_URL_CLASSIFIER@
++MOZ_NO_DRAGSERVICE = @MOZ_NO_DRAGSERVICE@
++MOZ_NO_FILEPICKER = @MOZ_NO_FILEPICKER@
++MOZ_NO_TOOLTIPS = @MOZ_NO_TOOLTIPS@
++MOZ_NO_CONTEXTMENU = @MOZ_NO_CONTEXTMENU@
+ MOZ_ZIPWRITER = @MOZ_ZIPWRITER@
+ MOZ_MORK = @MOZ_MORK@
+ MOZ_MORKREADER = @MOZ_MORKREADER@
+diff -r 84e6f925ffce configure.in
+--- a/configure.in	Fri Dec 04 10:21:47 2009 +0200
++++ b/configure.in	Fri Dec 04 10:46:56 2009 +0200
+@@ -4917,6 +4917,10 @@ cairo-cocoa)
+     ;;
+ esac
+ 
++MOZ_ARG_DISABLE_BOOL(xremote,
++[  --disable-xremote        Disable Xremote support ],
++    MOZ_ENABLE_XREMOTE=,
++    MOZ_ENABLE_XREMOTE=1 )
+ if test "$MOZ_ENABLE_XREMOTE"; then
+     AC_DEFINE(MOZ_ENABLE_XREMOTE)
+ fi
+@@ -6354,6 +6358,54 @@ fi
+ AC_SUBST(MOZ_URL_CLASSIFIER)
+ 
+ dnl ========================================================
++dnl = Disable filepicker component
++dnl ========================================================
++MOZ_ARG_DISABLE_BOOL(filepicker,
++[  --disable-filepicker        Disable filepicker component],
++    MOZ_NO_FILEPICKER=1,
++    MOZ_NO_FILEPICKER= )
++
++if test -n "$MOZ_NO_FILEPICKER"; then
++    AC_DEFINE(MOZ_NO_FILEPICKER)
++fi
++
++dnl ========================================================
++dnl = Disable DragService component
++dnl ========================================================
++MOZ_ARG_DISABLE_BOOL(dragservice,
++[  --disable-dragservice        Disable dragservice component],
++    MOZ_NO_DRAGSERVICE=1,
++    MOZ_NO_DRAGSERVICE= )
++
++if test -n "$MOZ_NO_DRAGSERVICE"; then
++    AC_DEFINE(MOZ_NO_DRAGSERVICE)
++fi
++
++dnl ========================================================
++dnl = Disable Tooltips component
++dnl ========================================================
++MOZ_ARG_DISABLE_BOOL(tooltips,
++[  --disable-tooltips        Disable tooltips component],
++    MOZ_NO_TOOLTIPS=1,
++    MOZ_NO_TOOLTIPS= )
++
++if test -n "$MOZ_NO_TOOLTIPS"; then
++    AC_DEFINE(MOZ_NO_TOOLTIPS)
++fi
++
++dnl ========================================================
++dnl = Disable contextmenu component
++dnl ========================================================
++MOZ_ARG_DISABLE_BOOL(contextmenu,
++[  --disable-contextmenu        Disable contextmenu component],
++    MOZ_NO_CONTEXTMENU=1,
++    MOZ_NO_CONTEXTMENU= )
++
++if test -n "$MOZ_NO_CONTEXTMENU"; then
++    AC_DEFINE(MOZ_NO_CONTEXTMENU)
++fi
++
++dnl ========================================================
+ dnl = Disable zipwriter
+ dnl ========================================================
+ MOZ_ARG_DISABLE_BOOL(zipwriter,
+@@ -8298,6 +8350,10 @@ AC_SUBST(USE_N32)
+ AC_SUBST(CC_VERSION)
+ AC_SUBST(CXX_VERSION)
+ AC_SUBST(MSMANIFEST_TOOL)
++AC_SUBST(MOZ_NO_FILEPICKER)
++AC_SUBST(MOZ_NO_DRAGSERVICE)
++AC_SUBST(MOZ_NO_TOOLTIPS)
++AC_SUBST(MOZ_NO_CONTEXTMENU)
+ 
+ if test "$USING_HCC"; then
+    CC='${topsrcdir}/build/hcc'
+diff -r 84e6f925ffce embedding/browser/gtk/src/EmbedWindow.cpp
+--- a/embedding/browser/gtk/src/EmbedWindow.cpp	Fri Dec 04 10:21:47 2009 +0200
++++ b/embedding/browser/gtk/src/EmbedWindow.cpp	Fri Dec 04 10:46:56 2009 +0200
+@@ -127,7 +127,9 @@ NS_INTERFACE_MAP_BEGIN(EmbedWindow)
+   NS_INTERFACE_MAP_ENTRY(nsIWebBrowserChrome)
+   NS_INTERFACE_MAP_ENTRY(nsIWebBrowserChromeFocus)
+   NS_INTERFACE_MAP_ENTRY(nsIEmbeddingSiteWindow)
++#ifndef MOZ_NO_TOOLTIPS
+   NS_INTERFACE_MAP_ENTRY(nsITooltipListener)
++#endif
+   NS_INTERFACE_MAP_ENTRY(nsIInterfaceRequestor)
+ NS_INTERFACE_MAP_END
+ 
+@@ -379,6 +381,7 @@ EmbedWindow::SetVisibility(PRBool aVisib
+   return NS_OK;
+ }
+ 
++#ifndef MOZ_NO_TOOLTIPS
+ // nsITooltipListener
+ 
+ static gint
+@@ -467,6 +470,7 @@ EmbedWindow::OnHideTooltip(void)
+   sTipWindow = NULL;
+   return NS_OK;
+ }
++#endif /* MOZ_NO_TOOLTIPS */
+ 
+ // nsIInterfaceRequestor
+ 
+diff -r 84e6f925ffce embedding/browser/gtk/src/EmbedWindow.h
+--- a/embedding/browser/gtk/src/EmbedWindow.h	Fri Dec 04 10:21:47 2009 +0200
++++ b/embedding/browser/gtk/src/EmbedWindow.h	Fri Dec 04 10:46:56 2009 +0200
+@@ -41,7 +41,9 @@
+ #include "nsIWebBrowserChrome.h"
+ #include "nsIWebBrowserChromeFocus.h"
+ #include "nsIEmbeddingSiteWindow.h"
++#ifndef MOZ_NO_TOOLTIPS
+ #include "nsITooltipListener.h"
++#endif
+ #include "nsISupports.h"
+ #include "nsIWebBrowser.h"
+ #include "nsIBaseWindow.h"
+@@ -56,7 +58,9 @@ class EmbedPrivate;
+ class EmbedWindow : public nsIWebBrowserChrome,
+ 		    public nsIWebBrowserChromeFocus,
+                     public nsIEmbeddingSiteWindow,
++#ifndef MOZ_NO_TOOLTIPS
+                     public nsITooltipListener,
++#endif
+ 		    public nsIInterfaceRequestor
+ {
+ 
+@@ -77,7 +81,9 @@ class EmbedWindow : public nsIWebBrowser
+ 
+   NS_DECL_NSIEMBEDDINGSITEWINDOW
+ 
++#ifndef MOZ_NO_TOOLTIPS
+   NS_DECL_NSITOOLTIPLISTENER
++#endif
+ 
+   NS_DECL_NSIINTERFACEREQUESTOR
+ 
+diff -r 84e6f925ffce embedding/browser/webBrowser/Makefile.in
+--- a/embedding/browser/webBrowser/Makefile.in	Fri Dec 04 10:21:47 2009 +0200
++++ b/embedding/browser/webBrowser/Makefile.in	Fri Dec 04 10:46:56 2009 +0200
+@@ -78,15 +78,9 @@ ifdef MOZ_PHOENIX
+ REQUIRES	+= toolkitcomps
+ endif
+ 
+-EXPORTS         = \
+-                nsCTooltipTextProvider.h \
+-                $(NULL)
+ 
+ SDK_XPIDLSRCS   = \
+-		nsIContextMenuListener.idl  \
+ 		nsIEmbeddingSiteWindow.idl  \
+-		nsITooltipListener.idl	    \
+-		nsITooltipTextProvider.idl  \
+ 		nsIWebBrowser.idl	    \
+ 		nsIWebBrowserChrome.idl	    \
+ 		nsIWebBrowserChromeFocus.idl \
+@@ -95,11 +89,20 @@ SDK_XPIDLSRCS   = \
+ 		nsIWebBrowserStream.idl	    \
+                 $(NULL)
+ 
++ifndef MOZ_NO_TOOLTIPS
++EXPORTS         = \
++                nsCTooltipTextProvider.h \
++                $(NULL)
++SDK_XPIDLSRCS   += \
++		nsITooltipListener.idl	    \
++		nsITooltipTextProvider.idl  \
++		$(NULL)
++endif
++
+ XPIDLSRCS	= \
+ 		nsCWebBrowser.idl			\
+ 		nsICommandHandler.idl			\
+ 		nsIEmbeddingSiteWindow2.idl \
+-		nsIContextMenuListener2.idl \
+ 		nsIWebBrowserChrome2.idl	    \
+ 		$(NULL)
+ 
+@@ -108,10 +111,21 @@ CPPSRCS		= \
+ 		nsWebBrowser.cpp		\
+ 		nsCommandHandler.cpp		\
+         nsWebBrowserContentPolicy.cpp   \
+-		nsContextMenuInfo.cpp		\
+ 		nsEmbedStream.cpp		\
+ 		$(NULL)
+ 
++ifndef MOZ_NO_CONTEXTMENU
++SDK_XPIDLSRCS   += \
++		nsIContextMenuListener.idl  \
++		$(NULL)
++XPIDLSRCS	+= \
++		nsIContextMenuListener2.idl \
++		$(NULL)
++CPPSRCS		+= \
++		nsContextMenuInfo.cpp		\
++		$(NULL)
++endif
++
+ ifdef NS_PRINTING
+ SDK_XPIDLSRCS += nsIWebBrowserPrint.idl
+ XPIDLSRCS     += nsIPrintingPrompt.idl nsIPrintingPromptService.idl
+diff -r 84e6f925ffce embedding/browser/webBrowser/nsDocShellTreeOwner.cpp
+--- a/embedding/browser/webBrowser/nsDocShellTreeOwner.cpp	Fri Dec 04 10:21:47 2009 +0200
++++ b/embedding/browser/webBrowser/nsDocShellTreeOwner.cpp	Fri Dec 04 10:46:56 2009 +0200
+@@ -59,9 +59,13 @@
+ 
+ // Interfaces needed to be included
+ #include "nsPresContext.h"
++#ifndef MOZ_NO_CONTEXTMENU
+ #include "nsIContextMenuListener.h"
+ #include "nsIContextMenuListener2.h"
++#endif
++#ifndef MOZ_NO_TOOLTIPS
+ #include "nsITooltipListener.h"
++#endif
+ #include "nsIPrivateDOMEvent.h"
+ #include "nsIDOMNode.h"
+ #include "nsIDOMNodeList.h"
+@@ -94,7 +98,9 @@
+ #include "nsIWebBrowserChromeFocus.h"
+ #include "nsIContent.h"
+ #include "imgIContainer.h"
++#ifndef MOZ_NO_CONTEXTMENU
+ #include "nsContextMenuInfo.h"
++#endif
+ #include "nsPresContext.h"
+ #include "nsIViewManager.h"
+ #include "nsIView.h"
+@@ -137,9 +143,13 @@ nsDocShellTreeOwner::nsDocShellTreeOwner
+    mPrimaryContentShell(nsnull),
+    mWebBrowserChrome(nsnull),
+    mOwnerWin(nsnull),
+-   mOwnerRequestor(nsnull),
+-   mChromeTooltipListener(nsnull),
+-   mChromeContextMenuListener(nsnull)
++   mOwnerRequestor(nsnull)
++#ifndef MOZ_NO_TOOLTIPS
++   , mChromeTooltipListener(nsnull)
++#endif
++#ifndef MOZ_NO_CONTEXTMENU
++   , mChromeContextMenuListener(nsnull)
++#endif
+ {
+ }
+ 
+@@ -881,6 +891,7 @@ nsDocShellTreeOwner::AddChromeListeners(
+   if (!webBrowserChrome)
+     return NS_ERROR_FAILURE;
+ 
++#ifndef MOZ_NO_TOOLTIPS
+   // install tooltips
+   if ( !mChromeTooltipListener ) { 
+     nsCOMPtr<nsITooltipListener>
+@@ -896,7 +907,9 @@ nsDocShellTreeOwner::AddChromeListeners(
+         rv = NS_ERROR_OUT_OF_MEMORY;
+     }
+   }
++#endif
+   
++#ifndef MOZ_NO_CONTEXTMENU
+   // install context menus
+   if ( !mChromeContextMenuListener ) {
+     nsCOMPtr<nsIContextMenuListener2>
+@@ -914,7 +927,9 @@ nsDocShellTreeOwner::AddChromeListeners(
+         rv = NS_ERROR_OUT_OF_MEMORY;
+     }
+   }
++#endif
+    
++#ifndef MOZ_NO_DRAGSERVICE
+   // install the external dragDrop handler
+   if ( !mChromeDragHandler ) {
+     mChromeDragHandler = do_CreateInstance("@mozilla.org:/content/content-area-dragdrop;1", &rv);
+@@ -926,6 +941,7 @@ nsDocShellTreeOwner::AddChromeListeners(
+       mChromeDragHandler->HookupTo(target, static_cast<nsIWebNavigation*>(mWebBrowser));
+     }
+   }
++#endif
+ 
+   return rv;
+   
+@@ -935,16 +951,22 @@ nsDocShellTreeOwner::AddChromeListeners(
+ NS_IMETHODIMP
+ nsDocShellTreeOwner::RemoveChromeListeners()
+ {
++#ifndef MOZ_NO_TOOLTIPS
+   if ( mChromeTooltipListener ) {
+     mChromeTooltipListener->RemoveChromeListeners();
+     NS_RELEASE(mChromeTooltipListener);
+   }
++#endif
++#ifndef MOZ_NO_CONTEXTMENU
+   if ( mChromeContextMenuListener ) {
+     mChromeContextMenuListener->RemoveChromeListeners();
+     NS_RELEASE(mChromeContextMenuListener);
+   }
++#endif
++#ifndef MOZ_NO_DRAGSERVICE
+   if ( mChromeDragHandler )
+     mChromeDragHandler->Detach();
++#endif
+ 
+   return NS_OK;
+ }
+@@ -1003,6 +1025,7 @@ nsDocShellTreeOwner::GetOwnerRequestor()
+ #endif
+ 
+ 
++#ifndef MOZ_NO_TOOLTIPS
+ ///////////////////////////////////////////////////////////////////////////////
+ // DefaultTooltipTextProvider
+ 
+@@ -1536,6 +1559,7 @@ ChromeTooltipListener::sAutoHideCallback
+   
+ } // sAutoHideCallback
+ 
++#endif // MOZ_NO_TOOLTIPS
+ 
+ 
+ #ifdef XP_MAC
+@@ -1543,6 +1567,7 @@ ChromeTooltipListener::sAutoHideCallback
+ #endif
+ 
+ 
++#ifndef MOZ_NO_CONTEXTMENU
+ NS_IMPL_ADDREF(ChromeContextMenuListener)
+ NS_IMPL_RELEASE(ChromeContextMenuListener)
+ 
+@@ -1852,3 +1877,5 @@ ChromeContextMenuListener::ContextMenu(n
+   return NS_OK;
+ 
+ } // MouseDown
++
++#endif // MOZ_NO_CONTEXTMENU
+diff -r 84e6f925ffce embedding/browser/webBrowser/nsDocShellTreeOwner.h
+--- a/embedding/browser/webBrowser/nsDocShellTreeOwner.h	Fri Dec 04 10:21:47 2009 +0200
++++ b/embedding/browser/webBrowser/nsDocShellTreeOwner.h	Fri Dec 04 10:46:56 2009 +0200
+@@ -62,16 +62,25 @@
+ #include "nsITimer.h"
+ #include "nsIPrompt.h"
+ #include "nsIAuthPrompt.h"
++#ifndef MOZ_NO_TOOLTIPS
+ #include "nsITooltipListener.h"
+ #include "nsITooltipTextProvider.h"
+ #include "nsCTooltipTextProvider.h"
++#endif
++#ifndef MOZ_NO_CONTEXTMENU
++#include "nsContextMenuInfo.h"
++#endif
++#ifndef MOZ_NO_DRAGSERVICE
+ #include "nsIDragDropHandler.h"
++#endif
+ #include "nsPIDOMEventTarget.h"
+ #include "nsCommandHandler.h"
+ 
+ class nsWebBrowser;
++#ifndef MOZ_NO_TOOLTIPS
+ class ChromeTooltipListener;
+ class ChromeContextMenuListener;
++#endif
+ 
+ // {6D10C180-6888-11d4-952B-0020183BF181}
+ #define NS_ICDOCSHELLTREEOWNER_IID \
+@@ -163,15 +172,22 @@ protected:
+     // the objects that listen for chrome events like context menus and tooltips. 
+     // They are separate objects to avoid circular references between |this|
+     // and the DOM. These are strong, owning refs.
++#ifndef MOZ_NO_TOOLTIPS
+    ChromeTooltipListener*         mChromeTooltipListener;
++#endif
++#ifndef MOZ_NO_CONTEXTMENU
+    ChromeContextMenuListener*     mChromeContextMenuListener;
++#endif
++#ifndef MOZ_NO_DRAGSERVICE
+    nsCOMPtr<nsIDragDropHandler>   mChromeDragHandler;
++#endif
+ 
+    nsCOMPtr<nsIPrompt>     mPrompter;
+    nsCOMPtr<nsIAuthPrompt> mAuthPrompter;
+ };
+ 
+ 
++#ifndef MOZ_NO_TOOLTIPS
+ //
+ // class ChromeTooltipListener
+ //
+@@ -260,8 +276,10 @@ private:
+   nsCOMPtr<nsIDOMNode> mPossibleTooltipNode;
+ 
+ }; // ChromeTooltipListener
++#endif // MOZ_NO_TOOLTIPS
+ 
+ 
++#ifndef MOZ_NO_CONTEXTMENU
+ //
+ // class ChromeContextMenuListener
+ //
+@@ -300,6 +318,7 @@ private:
+ 
+ }; // class ChromeContextMenuListener
+ 
++#endif // MOZ_NO_CONTEXTMENU
+ 
+ 
+ #endif /* nsDocShellTreeOwner_h__ */
+diff -r 84e6f925ffce toolkit/mozapps/extensions/src/nsExtensionManager.js.in
+--- a/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	Fri Dec 04 10:21:47 2009 +0200
++++ b/toolkit/mozapps/extensions/src/nsExtensionManager.js.in	Fri Dec 04 10:46:56 2009 +0200
+@@ -5582,9 +5582,10 @@ ItemDownloadTransaction.prototype = {
+    */
+   onProgress: function ItemDownloadTransaction_onProgress(index, value, maxValue) {
+     this._manager.onProgress(this._downloads[index].addon, value, maxValue);
+-  },
+-
+-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIXPIProgressDialog])
++  }
++#ifdef MOZ_XPINSTALL
++  ,QueryInterface: XPCOMUtils.generateQI([Ci.nsIXPIProgressDialog])
++#endif
+ };
+ 
+ /**
+diff -r 84e6f925ffce widget/src/gtk2/Makefile.in
+--- a/widget/src/gtk2/Makefile.in	Fri Dec 04 10:21:47 2009 +0200
++++ b/widget/src/gtk2/Makefile.in	Fri Dec 04 10:46:56 2009 +0200
+@@ -93,7 +93,6 @@ CPPSRCS		= \
+ 		nsBidiKeyboard.cpp \
+ 		nsLookAndFeel.cpp \
+ 		nsGtkKeyUtils.cpp \
+-		nsFilePicker.cpp \
+ 		nsSound.cpp \
+ 		nsNativeKeyBindings.cpp \
+ 		nsScreenGtk.cpp \
+@@ -118,9 +117,19 @@ endif
+ 
+ ifdef MOZ_X11
+ CPPSRCS += 	nsClipboard.cpp \
++		$(NULL)
++ifndef MOZ_NO_DRAGSERVICE
++CPPSRCS		+= \
+ 		nsDragService.cpp \
+ 		$(NULL)
+ endif
++endif
++
++ifndef MOZ_NO_FILEPICKER
++CPPSRCS		+= \
++		nsFilePicker.cpp \
++		$(NULL)
++endif
+ 
+ # build our subdirs, too
+ ifdef ACCESSIBILITY
+@@ -175,7 +184,7 @@ CXXFLAGS += $(MOZ_GCONF_CFLAGS)
+ endif
+ endif
+ 
+-DEFINES         += -DUSE_XIM
++#DEFINES         += -DUSE_XIM #Allow to enable USE_XIM only from external define
+ DEFINES		+= -DCAIRO_GFX
+ 
+ ifdef MOZ_ENABLE_POSTSCRIPT
+diff -r 84e6f925ffce widget/src/gtk2/nsWidgetFactory.cpp
+--- a/widget/src/gtk2/nsWidgetFactory.cpp	Fri Dec 04 10:21:47 2009 +0200
++++ b/widget/src/gtk2/nsWidgetFactory.cpp	Fri Dec 04 10:46:56 2009 +0200
+@@ -48,9 +48,13 @@
+ #ifdef MOZ_X11
+ #include "nsClipboardHelper.h"
+ #include "nsClipboard.h"
++#ifndef MOZ_NO_DRAGSERVICE
+ #include "nsDragService.h"
+ #endif
++#endif
++#ifndef MOZ_NO_FILEPICKER
+ #include "nsFilePicker.h"
++#endif
+ #include "nsSound.h"
+ #include "nsBidiKeyboard.h"
+ #include "nsNativeKeyBindings.h"
+@@ -97,8 +101,10 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsHTMLFor
+ #ifdef MOZ_X11
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboardHelper)
+ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsClipboard, Init)
++#ifndef MOZ_NO_DRAGSERVICE
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsDragService)
+ #endif
++#endif
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsSound)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsScreenManagerGtk)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsImageToPixbuf)
+@@ -150,6 +156,7 @@ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPr
+ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintDialogServiceGTK, Init)
+ #endif
+ 
++#ifndef MOZ_NO_FILEPICKER
+ static NS_IMETHODIMP
+ nsFilePickerConstructor(nsISupports *aOuter, REFNSIID aIID,
+                         void **aResult)
+@@ -183,6 +190,7 @@ nsFilePickerConstructor(nsISupports *aOu
+ 
+   return picker->QueryInterface(aIID, aResult);
+ }
++#endif
+ 
+ static NS_IMETHODIMP
+ nsNativeKeyBindingsConstructor(nsISupports *aOuter, REFNSIID aIID,
+@@ -246,10 +254,12 @@ static const nsModuleComponentInfo compo
+       NS_LOOKANDFEEL_CID,
+       "@mozilla.org/widget/lookandfeel;1",
+       nsLookAndFeelConstructor },
++#ifndef MOZ_NO_FILEPICKER
+     { "Gtk2 File Picker",
+       NS_FILEPICKER_CID,
+       "@mozilla.org/filepicker;1",
+       nsFilePickerConstructor },
++#endif
+     { "Gtk2 Sound",
+       NS_SOUND_CID,
+       "@mozilla.org/sound;1",
+@@ -272,11 +282,13 @@ static const nsModuleComponentInfo compo
+     NS_CLIPBOARDHELPER_CID,
+     "@mozilla.org/widget/clipboardhelper;1",
+     nsClipboardHelperConstructor },
++#ifndef MOZ_NO_DRAGSERVICE
+   { "Gtk Drag Service",
+     NS_DRAGSERVICE_CID,
+     "@mozilla.org/widget/dragservice;1",
+     nsDragServiceConstructor },
+ #endif
++#endif
+   { "HTML Format Converter",
+     NS_HTMLFORMATCONVERTER_CID,
+     "@mozilla.org/widget/htmlformatconverter;1",
+@@ -347,7 +359,9 @@ static const nsModuleComponentInfo compo
+ static void
+ nsWidgetGtk2ModuleDtor(nsIModule *aSelf)
+ {
++#ifndef MOZ_NO_FILEPICKER
+   nsFilePicker::Shutdown();
++#endif
+   nsSound::Shutdown();
+   nsWindow::ReleaseGlobals();
+   nsAppShellShutdown(aSelf);
+diff -r 84e6f925ffce widget/src/gtk2/nsWindow.cpp
+--- a/widget/src/gtk2/nsWindow.cpp	Fri Dec 04 10:21:47 2009 +0200
++++ b/widget/src/gtk2/nsWindow.cpp	Fri Dec 04 10:46:56 2009 +0200
+@@ -3499,6 +3499,7 @@ nsWindow::OnDragMotionEvent(GtkWidget *a
+     // get our drag context
+     nsCOMPtr<nsIDragService> dragService = do_GetService(kCDragServiceCID);
+     nsCOMPtr<nsIDragSessionGTK> dragSessionGTK = do_QueryInterface(dragService);
++    if (!dragService || !dragSessionGTK) return TRUE;
+ 
+     // first, figure out which internal widget this drag motion actually
+     // happened on

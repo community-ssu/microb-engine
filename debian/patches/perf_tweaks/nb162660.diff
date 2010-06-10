@@ -1,0 +1,36 @@
+--- mozilla/nsprpub/pr/src/misc/prsystem.c.orig	2010-04-15 14:22:18.000000000 +0300
++++ mozilla/nsprpub/pr/src/misc/prsystem.c	2010-04-15 13:46:07.000000000 +0300
+@@ -271,27 +271,29 @@ PR_IMPLEMENT(PRInt32) PR_GetNumberOfProc
+ ** Implementation notes:
+ **   Every platform does it a bit different.
+ **     bytes is the returned value.
+ **   for each platform's "if defined" section
+ **     declare your local variable
+ **     do your thing, assign to bytes.
+ ** 
+ */
+ PR_IMPLEMENT(PRUint64) PR_GetPhysicalMemorySize(void)
+ {
+-    PRUint64 bytes = 0;
++    static PRUint64 bytes = 0;
+ 
+ #if defined(LINUX) || defined(SOLARIS)
+ 
+-    long pageSize = sysconf(_SC_PAGESIZE);
+-    long pageCount = sysconf(_SC_PHYS_PAGES);
+-    bytes = (PRUint64) pageSize * pageCount;
++    if (!bytes) {
++        long pageSize = sysconf(_SC_PAGESIZE);
++        long pageCount = sysconf(_SC_PHYS_PAGES);
++        bytes = (PRUint64) pageSize * pageCount;
++    }
+ 
+ #elif defined(HPUX)
+ 
+     struct pst_static info;
+     int result = pstat_getstatic(&info, sizeof(info), 1, 0);
+     if (result == 1)
+         bytes = (PRUint64) info.physical_memory * info.page_size;
+ 
+ #elif defined(DARWIN)
+ 

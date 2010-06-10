@@ -1,0 +1,20 @@
+diff -r 1ca284f15d27 layout/generic/nsObjectFrame.cpp
+--- a/layout/generic/nsObjectFrame.cpp	Wed Oct 21 23:12:42 2009 +0300
++++ b/layout/generic/nsObjectFrame.cpp	Wed Oct 21 23:52:04 2009 +0300
+@@ -1269,6 +1269,16 @@ nsObjectFrame::IsOpaque() const
+     if (window->type == nsPluginWindowType_Drawable) {
+       // XXX we possibly should call nsPluginInstanceVariable_TransparentBool
+       // here to optimize for windowless but opaque plugins
++      if (mInstanceOwner) {
++         nsresult rv;
++         PRBool transparent = PR_FALSE;
++         nsCOMPtr<nsIPluginInstance> pi;
++         if (NS_SUCCEEDED(rv = mInstanceOwner->GetInstance(*getter_AddRefs(pi)))) {
++           pi->GetValue(nsPluginInstanceVariable_TransparentBool,
++                        (void *)&transparent);
++           return !transparent;
++         }
++      }
+       return PR_FALSE;
+     }
+   }

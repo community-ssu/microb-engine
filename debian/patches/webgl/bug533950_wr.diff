@@ -1,0 +1,14 @@
+diff -r 4ff956c82143 content/canvas/src/WebGLContextGL.cpp
+--- a/content/canvas/src/WebGLContextGL.cpp	Thu Dec 10 16:21:14 2009 +0200
++++ b/content/canvas/src/WebGLContextGL.cpp	Thu Dec 10 16:28:40 2009 +0200
+@@ -2903,7 +2903,9 @@ WebGLContext::ValidateGL()
+     GLint val = 0;
+ 
+     // XXX this exposes some strange latent bug; what's going on?
+-    //MakeContextCurrent();
++#ifdef USE_GLES2
++    MakeContextCurrent();
++#endif
+ 
+     gl->fGetIntegerv(LOCAL_GL_MAX_VERTEX_ATTRIBS, &val);
+     if (val == 0) {

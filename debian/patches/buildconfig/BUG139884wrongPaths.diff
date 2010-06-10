@@ -1,0 +1,74 @@
+diff -ruN -p -U 8 mozilla.orig/xulrunner/installer/Makefile.in mozilla/xulrunner/installer/Makefile.in
+--- mozilla.orig/xulrunner/installer/Makefile.in	2010-02-02 15:57:13.000000000 +0200
++++ mozilla/xulrunner/installer/Makefile.in	2010-02-02 15:59:36.000000000 +0200
+@@ -99,17 +99,17 @@ endif
+ 
+ ifdef MOZ_NATIVE_NSPR
+ NSPR_NAME=nspr
+ NSPR_VERSION=$(shell $(NSPR_CONFIG) --version)
+ else
+ pkg_config_files += mozilla-nspr.pc
+ NSPR_NAME=mozilla-nspr
+ FULL_NSPR_CFLAGS=-I\$${includedir}
+-FULL_NSPR_LIBS=$(subst $(prefix),\$${sdkdir},$(shell $(DEPTH)/nsprpub/config/nspr-config --libs))
++FULL_NSPR_LIBS=$(subst $(prefix)/lib,\$${installdir},$(shell $(DEPTH)/nsprpub/config/nspr-config --libs))
+ NSPR_VERSION=$(shell $(DEPTH)/nsprpub/config/nspr-config --version)
+ endif
+ 
+ $(warning FULL_NSPR_CFLAGS=$(FULL_NSPR_CFLAGS))
+ 
+ ifndef MOZ_NATIVE_NSS
+ pkg_config_files += mozilla-nss.pc
+ endif
+@@ -122,16 +122,17 @@ endif
+ 
+ %.pc: $(srcdir)/%.pc.in $(GLOBAL_DEPS)
+ 	cat $< | sed \
+ 	-e "s|%ojidef%|$(OJIDEF)|" \
+ 	-e "s|%prefix%|$(prefix)|" \
+ 	-e "s|%includedir%|$(includedir)|" \
+ 	-e "s|%idldir%|$(idldir)|" \
+ 	-e "s|%sdkdir%|$(sdkdir)|" \
++	-e "s|%installdir%|$(installdir)|" \
+ 	-e "s|%MOZ_APP_NAME%|$(MOZ_APP_NAME)|" \
+ 	-e "s|%MOZILLA_VERSION%|$(MOZ_APP_VERSION)|" \
+ 	-e "s|%WCHAR_CFLAGS%|$(WCHAR_CFLAGS)|" \
+ 	-e "s|%FULL_NSPR_LIBS%|$(FULL_NSPR_LIBS)|" \
+ 	-e "s|%FULL_NSPR_CFLAGS%|$(FULL_NSPR_CFLAGS)|" \
+ 	-e "s|%NSPR_NAME%|$(NSPR_NAME)|" \
+ 	-e "s|%NO_LIBXUL_LIBS%|$(NO_LIBXUL_LIBS)|" \
+ 	-e "s|%NSPR_VERSION%|$(NSPR_VERSION)|" > $@
+diff -ruN -p -U 8 mozilla.orig/xulrunner/installer/mozilla-nspr.pc.in mozilla/xulrunner/installer/mozilla-nspr.pc.in
+--- mozilla.orig/xulrunner/installer/mozilla-nspr.pc.in	2010-02-02 16:29:18.000000000 +0200
++++ mozilla/xulrunner/installer/mozilla-nspr.pc.in	2010-02-02 15:59:36.000000000 +0200
+@@ -1,11 +1,12 @@
+ prefix=%prefix%
+ sdkdir=%sdkdir%
+ includedir=%includedir%
++installdir=%installdir%
+ 
+ Name: NSPR
+ Description: The Netscape Portable Runtime
+ Version: %NSPR_VERSION%
+ Libs: %FULL_NSPR_LIBS%
+-Cflags: %FULL_NSPR_CFLAGS%
++Cflags: %FULL_NSPR_CFLAGS% -I${includedir}/nspr
+ 
+ 
+diff -ruN -p -U 8 mozilla.orig/xulrunner/installer/mozilla-nss.pc.in mozilla/xulrunner/installer/mozilla-nss.pc.in
+--- mozilla.orig/xulrunner/installer/mozilla-nss.pc.in	2010-02-02 16:29:22.000000000 +0200
++++ mozilla/xulrunner/installer/mozilla-nss.pc.in	2010-02-02 15:59:36.000000000 +0200
+@@ -1,10 +1,11 @@
+ prefix=%prefix%
+ sdkdir=%sdkdir%
+ includedir=%includedir%
++installdir=%installdir%
+ 
+ Name: NSS
+ Description: Mozilla Network Security Services
+ Version: %MOZILLA_VERSION%
+ Requires: %NSPR_NAME% >= %NSPR_VERSION%
+-Libs: -L${sdkdir}/lib -lsmime3 -lssl3 -lnss3 -lnssutil3 -lsqlite3
+-Cflags: -I${includedir}
++Libs: -L${installdir} -lsmime3 -lssl3 -lnss3 -lnssutil3 -lsqlite3
++Cflags: -I${includedir} -I${includedir}/nss

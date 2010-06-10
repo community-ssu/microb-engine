@@ -1,0 +1,13 @@
+#https://bugzilla.mozilla.org/show_bug.cgi?id=532072
+diff -r 41b5f9084f99 config/system-headers
+--- a/config/system-headers	Tue Dec 01 13:34:45 2009 +0200
++++ b/config/system-headers	Tue Dec 01 14:19:07 2009 +0200
+@@ -1074,3 +1074,8 @@ osso-mem.h
+ gpsbt.h
+ location/location-gps-device.h
+ #endif
++#ifdef MOZ_ENABLE_LIBCONIC
++conic/conicconnection.h
++conic/conicconnectionevent.h
++conic/conicstatisticsevent.h
++#endif

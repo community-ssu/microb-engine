@@ -1,0 +1,15 @@
+#https://bugzilla.mozilla.org/show_bug.cgi?id=488046
+# bug 108857 - Not reproducible browser crash - nsDocShell::EnsureContentViewer
+Index: mozilla/docshell/base/nsDocShell.cpp
+===================================================================
+--- mozilla.orig/docshell/base/nsDocShell.cpp
++++ mozilla/docshell/base/nsDocShell.cpp
+@@ -5431,7 +5431,7 @@ nsDocShell::CreateAboutBlankContentViewe
+         viewer->SetDOMDocument(domdoc);
+ 
+         SetCurrentURI(blankDoc->GetDocumentURI(), nsnull, PR_TRUE);
+-        rv = NS_OK;
++        rv = mIsBeingDestroyed ? NS_ERROR_FAILURE : NS_OK;
+       }
+     }
+   }

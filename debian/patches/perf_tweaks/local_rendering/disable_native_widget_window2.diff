@@ -1,0 +1,164 @@
+Index: mozilla/widget/src/gtk2/nsWindow.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp
++++ mozilla/widget/src/gtk2/nsWindow.cpp
+@@ -804,17 +804,18 @@ nsWindow::Destroy(void)
+     if (mShell) {
+         gtk_widget_destroy(mShell);
+         mShell = nsnull;
+         mContainer = nsnull;
+         NS_ABORT_IF_FALSE(!mGdkWindow,
+                           "mGdkWindow should be NULL when mContainer is destroyed");
+     }
+     else if (mContainer) {
+-        gtk_widget_destroy(GTK_WIDGET(mContainer));
++        if (GTK_IS_WIDGET(mContainer))
++            gtk_widget_destroy(GTK_WIDGET(mContainer));
+         mContainer = nsnull;
+         NS_ABORT_IF_FALSE(!mGdkWindow,
+                           "mGdkWindow should be NULL when mContainer is destroyed");
+     }
+     else if (mGdkWindow) {
+         // Destroy child windows to ensure that their mThebesSurfaces are
+         // released and to remove references from GdkWindows back to their
+         // container widget.  (OnContainerUnrealize() does this when the
+@@ -1804,25 +1805,29 @@ nsWindow::Scroll(const nsIntPoint& aDelt
+         windowsToShow[i]->NativeShow(PR_TRUE);
+     }
+ }
+ 
+ void*
+ nsWindow::GetNativeData(PRUint32 aDataType)
+ {
+     switch (aDataType) {
+-    case NS_NATIVE_WINDOW:
+-    case NS_NATIVE_WIDGET: {
++    case NS_NATIVE_WINDOW: {
+         if (!mGdkWindow)
+             return nsnull;
+ 
+         return mGdkWindow;
+         break;
+     }
+-
++    case NS_NATIVE_WIDGET: {
++        if (!mGdkWindow)
++            return mContainer;
++        return mGdkWindow;
++        break;
++    }
+     case NS_NATIVE_PLUGIN_PORT:
+         return SetupPluginPort();
+         break;
+ 
+     case NS_NATIVE_DISPLAY:
+ #ifdef MOZ_X11
+         return GDK_DISPLAY();
+ #else
+@@ -1906,17 +1911,17 @@ nsWindow::SetIcon(const nsAString& aIcon
+     return SetWindowIconList(iconList);
+ }
+ 
+ nsIntPoint
+ nsWindow::WidgetToScreenOffset()
+ {
+     gint x = 0, y = 0;
+ 
+-    if (mContainer) {
++    if (mContainer && GTK_WIDGET(mContainer)->window) {
+         gdk_window_get_root_origin(GTK_WIDGET(mContainer)->window,
+                                    &x, &y);
+         LOG(("WidgetToScreenOffset (container) %d %d\n", x, y));
+     }
+     else if (mGdkWindow) {
+         gdk_window_get_origin(mGdkWindow, &x, &y);
+         LOG(("WidgetToScreenOffset (drawing) %d %d\n", x, y));
+     }
+@@ -3981,17 +3986,18 @@ nsWindow::Create(nsIWidget        *aPare
+                 get_window_for_gdk_window(parentGdkWindow);
+             if (parentnsWindow)
+                 mHasMappedToplevel = parentnsWindow->mHasMappedToplevel;
+         }
+         else if (parentGtkContainer) {
+             GtkWidget *container = moz_container_new();
+             mContainer = MOZ_CONTAINER(container);
+             gtk_container_add(parentGtkContainer, container);
+-            gtk_widget_realize(container);
++            if (GTK_IS_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(parentGtkContainer))))
++                gtk_widget_realize(container);
+ 
+             // Don't let GTK mess with the shapes of our GdkWindows
+             GTK_PRIVATE_SET_FLAG(container, GTK_HAS_SHAPE_MASK);
+ 
+             mGdkWindow = container->window;
+         }
+         else {
+             NS_WARNING("Warning: tried to create a new child widget with no parent!");
+@@ -4008,17 +4014,18 @@ nsWindow::Create(nsIWidget        *aPare
+     // XXX - I think this bug is probably dead, we can just use gtk's
+     // double-buffering everywhere
+ #ifdef MOZ_X11
+     if (mContainer)
+         gtk_widget_set_double_buffered (GTK_WIDGET(mContainer),FALSE);
+ #endif
+ 
+     // label the drawing window with this object so we can find our way home
+-    g_object_set_data(G_OBJECT(mGdkWindow), "nsWindow", this);
++    if (mGdkWindow)
++        g_object_set_data(G_OBJECT(mGdkWindow), "nsWindow", this);
+ 
+     if (mContainer)
+         g_object_set_data(G_OBJECT(mContainer), "nsWindow", this);
+ 
+     if (mShell)
+         g_object_set_data(G_OBJECT(mShell), "nsWindow", this);
+ 
+     // attach listeners for events
+@@ -4351,17 +4358,17 @@ nsWindow::NativeShow (PRBool  aAction)
+             gdk_window_show_unraised(mGdkWindow);
+         }
+     }
+     else {
+         if (mIsTopLevel) {
+             gtk_widget_hide(GTK_WIDGET(mShell));
+             gtk_widget_hide(GTK_WIDGET(mContainer));
+         }
+-        else if (mContainer) {
++        else if (mContainer && GTK_IS_WIDGET(mContainer)) {
+             gtk_widget_hide(GTK_WIDGET(mContainer));
+         }
+         else if (mGdkWindow) {
+             gdk_window_hide(mGdkWindow);
+         }
+     }
+ }
+ 
+@@ -7360,18 +7367,26 @@ nsWindow::GetSurfaceForGdkDrawable(GdkDr
+     return result;
+ }
+ #endif
+ 
+ // return the gfxASurface for rendering to this widget
+ gfxASurface*
+ nsWindow::GetThebesSurface()
+ {
+-    if (!mGdkWindow)
+-        return nsnull;
++    if (!mGdkWindow) {
++        if (!mThebesSurface)
++            mThebesSurface = new gfxImageSurface(gfxIntSize(1,1),
++#ifdef MICROB_API_16BPP_SUPPORT
++                                                 gdk_rgb_get_visual()->depth == 16 ?
++                                                 gfxImageSurface::ImageFormatRGB16 :
++#endif
++                                                 gfxImageSurface::ImageFormatRGB24);
++        return mThebesSurface;
++    }
+ 
+     GdkDrawable* d;
+     gint x_offset, y_offset;
+     gdk_window_get_internal_paint_info(mGdkWindow, &d, &x_offset, &y_offset);
+ 
+ #ifdef MOZ_X11
+     gint width, height;
+     gdk_drawable_get_size(d, &width, &height);

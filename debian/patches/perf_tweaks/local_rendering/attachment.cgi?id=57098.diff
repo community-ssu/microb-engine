@@ -1,0 +1,28 @@
+# fix for SetCursor functionality in non xembed mode
+diff -r 087169e0aeaa widget/src/gtk2/nsWindow.cpp
+--- a/widget/src/gtk2/nsWindow.cpp	Sun Jul 12 08:38:42 2009 +0300
++++ b/widget/src/gtk2/nsWindow.cpp	Sun Jul 12 09:38:10 2009 +0300
+@@ -1489,6 +1489,13 @@ nsWindow::SetCursor(nsCursor aCursor)
+             return NS_ERROR_FAILURE;
+ 
+         return window->SetCursor(aCursor);
++    } else if (mContainer && !mGdkWindow) {
++        GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(mContainer));
++        if (parent) {
++            nsWindow *window = get_window_for_gtk_widget(parent);
++            if (window)
++                return window->SetCursor(aCursor);
++        }
+     }
+ 
+     // Only change cursor if it's actually been changed
+@@ -1509,7 +1516,8 @@ nsWindow::SetCursor(nsCursor aCursor)
+             if (!mContainer)
+                 return NS_OK;
+ 
+-            gdk_window_set_cursor(GTK_WIDGET(mContainer)->window, newCursor);
++            if (GTK_WIDGET(mContainer)->window)
++              gdk_window_set_cursor(GTK_WIDGET(mContainer)->window, newCursor);
+         }
+     }
+ 

@@ -1,0 +1,356 @@
+# API for improving fingerability
+#https://projects.maemo.org/bugzilla/show_bug.cgi?id=132170
+Index: mozilla/layout/base/nsIPresShell.h
+===================================================================
+--- mozilla.orig/layout/base/nsIPresShell.h
++++ mozilla/layout/base/nsIPresShell.h
+@@ -60,16 +60,17 @@
+ #include "nsRect.h"
+ #include "nsColor.h"
+ #include "nsEvent.h"
+ #include "nsCompatibility.h"
+ #include "nsFrameManagerBase.h"
+ #include "mozFlushType.h"
+ #include "nsWeakReference.h"
+ #include <stdio.h> // for FILE definition
++#include "nsTArray.h"
+ 
+ class nsIAtom;
+ class nsIContent;
+ class nsIContentIterator;
+ class nsIDocument;
+ class nsIDocumentObserver;
+ class nsIFrame;
+ class nsPresContext;
+@@ -96,16 +97,17 @@ template<class E> class nsCOMArray;
+ class nsWeakFrame;
+ class nsIScrollableFrame;
+ class gfxASurface;
+ class gfxContext;
+ class nsPIDOMEventTarget;
+ class nsIDOMEvent;
+ class nsDisplayList;
+ class nsDisplayListBuilder;
++class nsISupportsArray;
+ 
+ typedef short SelectionType;
+ typedef PRUint32 nsFrameState;
+ 
+ // eed2ef56-133f-4696-9eee-5fc45d816be8
+ #define NS_IPRESSHELL_IID     \
+ { 0xeed2ef56, 0x133f, 0x4696, \
+   { 0x9e, 0xee, 0x5f, 0xc4, 0x5d, 0x81, 0x6b, 0xe8 } }
+@@ -909,16 +911,21 @@ public:
+   {
+     mObservesMutationsForPrint = aObserve;
+   }
+   PRBool ObservesNativeAnonMutationsForPrint()
+   {
+     return mObservesMutationsForPrint;
+   }
+ 
++  NS_IMETHOD GetNodesForArea(nsRect aRect, nsISupportsArray **aOutNodes,
++                             const nsTArray<nsPoint> *aPoints = nsnull,
++                             PRBool aShouldIgnoreSuppression = PR_FALSE,
++                             PRBool aIgnoreRootScrollFrame = PR_FALSE) = 0;
++
+ protected:
+   // IMPORTANT: The ownership implicit in the following member variables
+   // has been explicitly checked.  If you add any members to this class,
+   // please make the ownership explicit (pinkerton, scc).
+ 
+   // these are the same Document and PresContext owned by the DocViewer.
+   // we must share ownership.
+   nsIDocument*              mDocument;      // [STRONG]
+Index: mozilla/layout/base/nsLayoutUtils.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsLayoutUtils.cpp
++++ mozilla/layout/base/nsLayoutUtils.cpp
+@@ -962,16 +962,75 @@ nsLayoutUtils::GetFrameForPoint(nsIFrame
+ #endif
+   
+   nsDisplayItem::HitTestState hitTestState;
+   nsIFrame* result = list.HitTest(&builder, aPt, &hitTestState);
+   list.DeleteAll();
+   return result;
+ }
+ 
++nsresult
++nsLayoutUtils::GetFramesForArea(nsIFrame* aFrame, nsRect aRect,
++                                nsTArray<nsIFrame*> &aOutFrames,
++                                const nsTArray<nsPoint> *aPoints,
++                                PRBool aShouldIgnoreSuppression,
++                                PRBool aIgnoreRootScrollFrame)
++{
++  nsDisplayListBuilder builder(aFrame, PR_TRUE, PR_FALSE);
++  nsDisplayList list;
++
++  if (aShouldIgnoreSuppression)
++    builder.IgnorePaintSuppression();
++
++  if (aIgnoreRootScrollFrame) {
++    nsIFrame* rootScrollFrame =
++      aFrame->PresContext()->PresShell()->GetRootScrollFrame();
++    if (rootScrollFrame) {
++      builder.SetIgnoreScrollFrame(rootScrollFrame);
++    }
++  }
++
++  builder.EnterPresShell(aFrame, aRect);
++
++  nsresult rv =
++    aFrame->BuildDisplayListForStackingContext(&builder, aRect, &list);
++
++  builder.LeavePresShell(aFrame, aRect);
++  NS_ENSURE_SUCCESS(rv, nsnull);
++
++  if (aPoints) {
++    PRUint32 index;
++    for (index = 0; index < aPoints->Length(); index++) {
++      nsPoint pt = aPoints->ElementAt(index);
++      pt.x = nsPresContext::CSSPixelsToAppUnits(pt.x);
++      pt.y = nsPresContext::CSSPixelsToAppUnits(pt.y);
++      nsDisplayItem::HitTestState hitTestState;
++      nsIFrame* result = list.HitTest(&builder, pt, &hitTestState);
++      if (result && !aOutFrames.Contains(result))
++        aOutFrames.AppendElement(result);
++    }
++  } else {
++    nsDisplayItem::HitTestState hitTestState;
++    // Insert center rect point as first
++    nsPoint pt(aRect.x + aRect.width/2, aRect.y + aRect.height/2);
++    nsIFrame* result = list.HitTest(&builder, pt, &hitTestState);
++    aOutFrames.AppendElement(result);
++    // Append the rest of elements
++    for (nsDisplayItem* i = list.GetBottom(); i != nsnull; i = i->GetAbove()) {
++      nsIFrame* f = i->GetUnderlyingFrame();
++      if (f && !aOutFrames.Contains(f))
++        aOutFrames.AppendElement(f);
++    }
++  }
++
++  list.DeleteAll();
++  return NS_OK;
++}
++
++
+ /**
+  * Remove all leaf display items that are not for descendants of
+  * aBuilder->GetReferenceFrame() from aList, and move all nsDisplayClip
+  * wrappers to their correct locations.
+  * @param aExtraPage the page we constructed aList for
+  * @param aY the Y-coordinate where aPage would be positioned relative
+  * to the main page (aBuilder->GetReferenceFrame()), considering only
+  * the content and ignoring page margins and dead space
+Index: mozilla/layout/base/nsLayoutUtils.h
+===================================================================
+--- mozilla.orig/layout/base/nsLayoutUtils.h
++++ mozilla/layout/base/nsLayoutUtils.h
+@@ -431,16 +431,22 @@ public:
+    * list builder should ignore paint suppression or not
+    * @param aIgnoreRootScrollFrame whether or not the display list builder
+    * should ignore the root scroll frame.
+    */
+   static nsIFrame* GetFrameForPoint(nsIFrame* aFrame, nsPoint aPt,
+                                     PRBool aShouldIgnoreSuppression = PR_FALSE,
+                                     PRBool aIgnoreRootScrollFrame = PR_FALSE);
+ 
++  static nsresult GetFramesForArea(nsIFrame* aFrame, nsRect aRect,
++                                   nsTArray<nsIFrame*> &aOutFrames,
++                                   const nsTArray<nsPoint> *aPoints = nsnull,
++                                   PRBool aShouldIgnoreSuppression = PR_FALSE,
++                                   PRBool aIgnoreRootScrollFrame = PR_FALSE);
++
+   /**
+    * Given a point in the global coordinate space, returns that point expressed
+    * in the coordinate system of aFrame.  This effectively inverts all transforms
+    * between this point and the root frame.
+    *
+    * @param aFrame The frame that acts as the coordinate space container.
+    * @param aPoint The point, in the global space, to get in the frame-local space.
+    * @return aPoint, expressed in aFrame's canonical coordinate space.
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp
++++ mozilla/layout/base/nsPresShell.cpp
+@@ -202,16 +202,17 @@
+ #endif
+ #include "nsPlaceholderFrame.h"
+ #include "nsHTMLFrame.h"
+ 
+ // Content viewer interfaces
+ #include "nsIContentViewer.h"
+ #include "imgIEncoder.h"
+ #include "gfxPlatform.h"
++#include "nsIMutableArray.h"
+ 
+ #include "nsContentCID.h"
+ static NS_DEFINE_CID(kCSSStyleSheetCID, NS_CSS_STYLESHEET_CID);
+ static NS_DEFINE_IID(kRangeCID,     NS_RANGE_CID);
+ 
+ PRBool nsIPresShell::gIsAccessibilityActive = PR_FALSE;
+ 
+ // convert a color value to a string, in the CSS format #RRGGBB
+@@ -919,16 +920,22 @@ public:
+                                                  nsIFrame* aFrame,
+                                                  nsRect* aBounds,
+                                                  nscolor aBackstopColor,
+                                                  PRBool aForceDraw);
+ 
+   virtual nsIScrollableFrame* GetRootScrollFrameAsScrollableExternal() const;
+   virtual void RemoveWeakFrameExternal(nsWeakFrame* aWeakFrame);
+   virtual void AddWeakFrameExternal(nsWeakFrame* aWeakFrame);
++
++  NS_IMETHOD GetNodesForArea(nsRect aRect, nsISupportsArray **aOutNodes,
++                             const nsTArray<nsPoint> *aPoints = nsnull,
++                             PRBool aShouldIgnoreSuppression = PR_FALSE,
++                             PRBool aIgnoreRootScrollFrame = PR_FALSE);
++
+ protected:
+   virtual ~PresShell();
+ 
+   void HandlePostedReflowCallbacks(PRBool aInterruptible);
+   void CancelPostedReflowCallbacks();
+ 
+   void UnsuppressAndInvalidate();
+ 
+@@ -3297,16 +3304,115 @@ PresShell::GetPageSequenceFrame(nsIPageS
+ }
+ 
+ nsIFrame*
+ PresShell::GetFrameForPoint(nsIFrame* aFrame, nsPoint aPt)
+ {
+   return nsLayoutUtils::GetFrameForPoint(aFrame, aPt);
+ }
+ 
++static nsresult
++CheckAncestryAndGetFrame(nsIDocument *thisDocument, nsIDocument* aDocument, nsIContent **aContent)
++{
++  nsIDocument* parentDoc;
++  for (parentDoc = aDocument->GetParentDocument();
++       parentDoc != static_cast<const nsIDocument* const>(thisDocument);
++       parentDoc = parentDoc->GetParentDocument()) {
++    if (!parentDoc)
++      return NS_ERROR_FAILURE;
++
++    aDocument = parentDoc;
++  }
++
++  // In a child document.  Get the appropriate frame.
++  nsPIDOMWindow* currentWindow = aDocument->GetWindow();
++  if (!currentWindow)
++    return NS_ERROR_FAILURE;
++
++  nsIDOMElement* frameElement = currentWindow->GetFrameElementInternal();
++  if (!frameElement)
++    return NS_ERROR_FAILURE;
++
++  // Sanity check result
++  nsCOMPtr<nsIDOMDocument> domDocument;
++  frameElement->GetOwnerDocument(getter_AddRefs(domDocument));
++  nsCOMPtr<nsIDOMDocument> doc = do_QueryInterface(thisDocument);
++  if (domDocument != doc) {
++    NS_ERROR("Child documents should live in windows the parent owns");
++    return NS_ERROR_FAILURE;
++  }
++
++  nsCOMPtr<nsIContent> content = do_QueryInterface(frameElement);
++  NS_ADDREF(*aContent = content);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++PresShell::GetNodesForArea(nsRect aRect, nsISupportsArray **aOutNodes,
++                           const nsTArray<nsPoint> *aPoints,
++                           PRBool aShouldIgnoreSuppression,
++                           PRBool aIgnoreRootScrollFrame)
++{
++  NS_ENSURE_ARG_POINTER(aOutNodes);
++
++  nsIFrame *rootFrame = GetRootFrame();
++
++  // XUL docs, unlike HTML, have no frame tree until everything's done loading
++  if (!rootFrame)
++    return NS_OK; // return null to premature XUL callers as a reminder to wait
++
++  nsTArray<nsIFrame*> frames;
++
++  nsRect rect(nsPresContext::CSSPixelsToAppUnits(aRect.x),
++              nsPresContext::CSSPixelsToAppUnits(aRect.y),
++              nsPresContext::CSSPixelsToAppUnits(aRect.width),
++              nsPresContext::CSSPixelsToAppUnits(aRect.height));
++
++  nsLayoutUtils::GetFramesForArea(rootFrame, rect, frames, aPoints, aShouldIgnoreSuppression, aIgnoreRootScrollFrame);
++  if (!frames.Length())
++    return NS_OK;
++
++  nsCOMPtr<nsISupportsArray> nodes;
++  NS_NewISupportsArray(getter_AddRefs(nodes));
++  if (!nodes) return NS_ERROR_OUT_OF_MEMORY;
++
++  PRUint32 index;
++  for (index = 0; index < frames.Length(); index++) {
++    nsCOMPtr<nsIContent> ptContent = frames.ElementAt(index)->GetContent();
++    if (!ptContent)
++      continue;
++
++    // If the content is in a subdocument, try to get the element from |this| doc
++    nsIDocument *currentDoc = ptContent->GetCurrentDoc();
++    if (currentDoc && (currentDoc != mDocument)) {
++      nsCOMPtr<nsIContent> content;
++      CheckAncestryAndGetFrame(mDocument, currentDoc, getter_AddRefs(content));
++      if (-1 == nodes->IndexOf(content))
++        nodes->AppendElement(content);
++      continue;
++    }
++
++    // If we have an anonymous element (such as an internal div from a textbox),
++    // or a node that isn't an element (such as a text frame node),
++    // replace it with the first non-anonymous parent node of type element.
++    while (ptContent &&
++           (!ptContent->IsNodeOfType(nsINode::eELEMENT) ||
++            ptContent->IsInAnonymousSubtree())) {
++      // XXXldb: Faster to jump to GetBindingParent if non-null?
++      ptContent = ptContent->GetParent();
++    }
++
++    if (-1 == nodes->IndexOf(ptContent))
++      nodes->AppendElement(ptContent);
++  }
++  NS_ADDREF(*aOutNodes = nodes);
++
++  return NS_OK;
++}
++
+ void
+ PresShell::BeginUpdate(nsIDocument *aDocument, nsUpdateType aUpdateType)
+ {
+ #ifdef DEBUG
+   mUpdateCount++;
+ #endif
+   mFrameConstructor->BeginUpdate();
+ 
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -6283,16 +6283,19 @@ MOZ_ARG_ENABLE_BOOL(help-viewer,
+ if test -n "$MOZ_HELP_VIEWER"; then
+      AC_DEFINE(MOZ_HELP_VIEWER)
+ fi
+ AC_SUBST(MOZ_HELP_VIEWER)
+ if test "$MOZ_BUILD_APP" = "browser" -a -n "$MOZ_HELP_VIEWER"; then
+     AC_MSG_ERROR([Cannot build Firefox with --enable-help-viewer.])
+ fi
+ 
++MICROB_API_GET_NODES_FOR_AREA=1
++AC_DEFINE(MICROB_API_GET_NODES_FOR_AREA)
++
+ dnl ========================================================
+ dnl = Enable safe browsing (anti-phishing)
+ dnl ========================================================
+ MOZ_ARG_ENABLE_BOOL(safe-browsing,
+ [  --enable-safe-browsing        Enable safe browsing (anti-phishing) implementation],
+     MOZ_SAFE_BROWSING=1,
+     MOZ_SAFE_BROWSING= )
+ if test -n "$MOZ_SAFE_BROWSING"; then

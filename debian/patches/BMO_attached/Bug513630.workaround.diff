@@ -1,0 +1,27 @@
+diff -r a08f078ee24f embedding/browser/gtk/tests/TestGtkEmbed.cpp
+--- a/embedding/browser/gtk/tests/TestGtkEmbed.cpp	Tue Sep 01 08:16:52 2009 +0300
++++ b/embedding/browser/gtk/tests/TestGtkEmbed.cpp	Tue Sep 01 15:13:56 2009 +0300
+@@ -714,6 +714,7 @@ void
+ menu_close_cb (GtkMenuItem *menuitem, TestGtkBrowser *browser)
+ {
+   gtk_widget_destroy(browser->topLevelWindow);
++  gtk_widget_destroy(browser->mozEmbed);
+ }
+ 
+ void
+@@ -725,6 +726,7 @@ menu_quit_cb (GtkMenuItem *menuitem, Tes
+   while (tmpBrowser) {
+     tmp_list = tmp_list->next;
+     gtk_widget_destroy(tmpBrowser->topLevelWindow);
++    gtk_widget_destroy(tmpBrowser->mozEmbed);
+     tmpBrowser = (TestGtkBrowser *)tmp_list->data;
+   }
+ }
+@@ -734,6 +736,7 @@ delete_cb(GtkWidget *widget, GdkEventAny
+ {
+   g_print("delete_cb\n");
+   gtk_widget_destroy(widget);
++  gtk_widget_destroy(browser->mozEmbed);
+   return TRUE;
+ }
+ 

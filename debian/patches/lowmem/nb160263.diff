@@ -1,0 +1,336 @@
+diff -ruN -p -U10 mozilla/modules/libpr0n/decoders.orig/jpeg/nsJPEGDecoder.cpp mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp
+--- mozilla/modules/libpr0n/decoders.orig/jpeg/nsJPEGDecoder.cpp	2010-03-16 11:05:51.000000000 +0200
++++ mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.cpp	2010-03-16 11:10:32.000000000 +0200
+@@ -48,20 +48,29 @@
+ #include "nspr.h"
+ #include "nsCRT.h"
+ #include "ImageLogging.h"
+ #include "nsIInterfaceRequestorUtils.h"
+ #include "gfxColor.h"
+ 
+ #include "jerror.h"
+ 
+ #include "gfxPlatform.h"
+ 
++#ifdef MAEMO_CHANGES
++#include "nsIServiceManager.h"
++#include "nsIPrefBranch2.h"
++#include "nsIPrefService.h"
++
++#define IMAGE_DIMENSION_DELIMITER_PREF      "image.dimension.delimiter"
++#define IMAGE_DIMENSION_DELIMITER_DEFAULT   8
++#endif
++
+ extern "C" {
+ #include "iccjpeg.h"
+ 
+ /* Colorspace conversion (copied from jpegint.h) */
+ struct jpeg_color_deconverter {
+   JMETHOD(void, start_pass, (j_decompress_ptr cinfo));
+   JMETHOD(void, color_convert, (j_decompress_ptr cinfo,
+ 				JSAMPIMAGE input_buf, JDIMENSION input_row,
+ 				JSAMPARRAY output_buf, int num_rows));
+ };
+@@ -108,21 +117,23 @@ nsJPEGDecoder::nsJPEGDecoder()
+   mInfo.client_data = (void*)this;
+ 
+   mSegment = nsnull;
+   mSegmentLen = 0;
+ 
+   mBackBuffer = nsnull;
+   mBackBufferLen = mBackBufferSize = mBackBufferUnreadLen = 0;
+ 
+   mInProfile = nsnull;
+   mTransform = nsnull;
+-
++#ifdef MAEMO_CHANGES
++  mImagePixLimit = 0;
++#endif
+   PR_LOG(gJPEGDecoderAccountingLog, PR_LOG_DEBUG,
+          ("nsJPEGDecoder::nsJPEGDecoder: Creating JPEG decoder %p",
+           this));
+ }
+ 
+ nsJPEGDecoder::~nsJPEGDecoder()
+ {
+   PR_FREEIF(mBackBuffer);
+   if (mTransform)
+     qcms_transform_release(mTransform);
+@@ -133,20 +144,37 @@ nsJPEGDecoder::~nsJPEGDecoder()
+          ("nsJPEGDecoder::~nsJPEGDecoder: Destroying JPEG decoder %p",
+           this));
+ }
+ 
+ 
+ /** imgIDecoder methods **/
+ 
+ /* void init (in imgILoad aLoad); */
+ NS_IMETHODIMP nsJPEGDecoder::Init(imgILoad *aLoad)
+ {
++#ifdef MAEMO_CHANGES
++  /* Get image pix size delimiter */
++  nsresult rv;
++  nsCOMPtr<nsIPrefBranch2> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
++  PRUint64 memSize = PR_GetPhysicalMemorySize();
++  if (NS_SUCCEEDED(rv) && memSize != 0) {
++    PRInt32 prefVal = -1;
++    rv = prefs->GetIntPref(IMAGE_DIMENSION_DELIMITER_PREF, &prefVal);
++    if (NS_SUCCEEDED(rv)) {
++      if (prefVal == -1)
++        mImagePixLimit = memSize / (PRUint64)IMAGE_DIMENSION_DELIMITER_DEFAULT;
++      else if (prefVal > 0)
++        mImagePixLimit = memSize / (PRUint64)prefVal;
++    }
++  }
++#endif
++
+   mImageLoad = aLoad;
+   mObserver = do_QueryInterface(aLoad);
+ 
+   /* We set up the normal JPEG error routines, then override error_exit. */
+   mInfo.err = jpeg_std_error(&mErr.pub);
+   /*   mInfo.err = jpeg_std_error(&mErr.pub); */
+   mErr.pub.error_exit = my_error_exit;
+   /* Establish the setjmp return context for my_error_exit to use. */
+   if (setjmp(mErr.setjmp_buffer)) {
+     /* If we get here, the JPEG code has signaled an error.
+@@ -462,20 +490,28 @@ nsresult nsJPEGDecoder::ProcessData(cons
+     PRInt32 width, height;
+     mImage->GetWidth(&width);
+     mImage->GetHeight(&height);
+     if (width == 0 && height == 0) {
+       mImage->Init(mInfo.image_width, mInfo.image_height, mObserver);
+     } else if ((width != (PRInt32)mInfo.image_width) || (height != (PRInt32)mInfo.image_height)) {
+       mState = JPEG_ERROR;
+       return NS_ERROR_UNEXPECTED;
+     }
+ 
++#ifdef MAEMO_CHANGES
++    /* limit image dimensions */
++    if (mImagePixLimit > 0 && width * height > mImagePixLimit) {
++      mState = JPEG_ERROR;
++      return NS_ERROR_UNEXPECTED;
++    }
++#endif
++
+     mImage->Init(mInfo.image_width, mInfo.image_height, mObserver);
+ 
+     mObserver->OnStartContainer(nsnull, mImage);
+ 
+     // Use EnsureCleanFrame so we don't create a new frame if we're being
+     // reused for e.g. multipart/x-replace
+     PRUint32 imagelength;
+     if (NS_FAILED(mImage->EnsureCleanFrame(0, 0, 0, mInfo.image_width, mInfo.image_height,
+                                            gfxASurface::ImageFormatRGB24,
+                                            &mImageData, &imagelength))) {
+diff -ruN -p -U10 mozilla/modules/libpr0n/decoders.orig/jpeg/nsJPEGDecoder.h mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.h
+--- mozilla/modules/libpr0n/decoders.orig/jpeg/nsJPEGDecoder.h	2010-03-16 11:05:51.000000000 +0200
++++ mozilla/modules/libpr0n/decoders/jpeg/nsJPEGDecoder.h	2010-03-16 08:43:32.000000000 +0200
+@@ -44,20 +44,24 @@
+ 
+ #include "nsCOMPtr.h"
+ 
+ #include "imgIContainer.h"
+ #include "imgIDecoderObserver.h"
+ #include "imgILoad.h"
+ #include "nsIInputStream.h"
+ #include "nsIPipe.h"
+ #include "qcms.h"
+ 
++#ifdef MOZ_PLATFORM_HILDON
++#define MAEMO_CHANGES
++#endif
++
+ extern "C" {
+ #include "jpeglib.h"
+ }
+ 
+ #include <setjmp.h>
+ 
+ #define NS_JPEGDECODER_CID \
+ { /* 5871a422-1dd2-11b2-ab3f-e2e56be5da9c */         \
+      0x5871a422,                                     \
+      0x1dd2,                                         \
+@@ -118,13 +122,16 @@ public:
+   PRUint32 mBackBufferSize; // size in bytes what mBackBuffer was created with
+   PRUint32 mBackBufferUnreadLen; // amount of data currently in mBackBuffer
+ 
+   JOCTET  *mProfile;
+   PRUint32 mProfileLength;
+ 
+   qcms_profile *mInProfile;
+   qcms_transform *mTransform;
+ 
+   PRPackedBool mReading;
++#ifdef MAEMO_CHANGES
++  PRUint64 mImagePixLimit;
++#endif
+ };
+ 
+ #endif // nsJPEGDecoder_h__
+diff -ruN -p -U10 mozilla/modules/libpr0n/decoders.orig/png/nsPNGDecoder.cpp mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
+--- mozilla/modules/libpr0n/decoders.orig/png/nsPNGDecoder.cpp	2010-03-16 11:05:51.000000000 +0200
++++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.cpp	2010-03-16 11:10:47.000000000 +0200
+@@ -51,40 +51,52 @@
+ #include "nsIInterfaceRequestorUtils.h"
+ 
+ #include "gfxColor.h"
+ #include "nsColor.h"
+ 
+ #include "nspr.h"
+ #include "png.h"
+ 
+ #include "gfxPlatform.h"
+ 
++#ifdef MAEMO_CHANGES
++#include "nsIServiceManager.h"
++#include "nsIPrefBranch2.h"
++#include "nsIPrefService.h"
++
++#define IMAGE_DIMENSION_DELIMITER_PREF      "image.dimension.delimiter"
++#define IMAGE_DIMENSION_DELIMITER_DEFAULT   8
++#endif
++
+ static void PNGAPI info_callback(png_structp png_ptr, png_infop info_ptr);
+ static void PNGAPI row_callback(png_structp png_ptr, png_bytep new_row,
+                            png_uint_32 row_num, int pass);
+ static void PNGAPI frame_info_callback(png_structp png_ptr, png_uint_32 frame_num);
+ static void PNGAPI end_callback(png_structp png_ptr, png_infop info_ptr);
+ static void PNGAPI error_callback(png_structp png_ptr, png_const_charp error_msg);
+ static void PNGAPI warning_callback(png_structp png_ptr, png_const_charp warning_msg);
+ 
+ #ifdef PR_LOGGING
+ static PRLogModuleInfo *gPNGLog = PR_NewLogModule("PNGDecoder");
+ static PRLogModuleInfo *gPNGDecoderAccountingLog = PR_NewLogModule("PNGDecoderAccounting");
+ #endif
+ 
+ NS_IMPL_ISUPPORTS1(nsPNGDecoder, imgIDecoder)
+ 
+ nsPNGDecoder::nsPNGDecoder() :
+   mPNG(nsnull), mInfo(nsnull),
+   mCMSLine(nsnull), interlacebuf(nsnull),
+   mInProfile(nsnull), mTransform(nsnull),
+   mChannels(0), mError(PR_FALSE), mFrameIsHidden(PR_FALSE)
++#ifdef MAEMO_CHANGES
++  , mImagePixLimit(0)
++#endif
+ {
+ }
+ 
+ nsPNGDecoder::~nsPNGDecoder()
+ {
+   if (mCMSLine)
+     nsMemory::Free(mCMSLine);
+   if (interlacebuf)
+     nsMemory::Free(interlacebuf);
+   if (mInProfile) {
+@@ -217,20 +229,37 @@ NS_IMETHODIMP nsPNGDecoder::Init(imgILoa
+         112,  67,  65,  76, '\0',   /* pCAL */
+         115,  67,  65,  76, '\0',   /* sCAL */
+         112,  72,  89, 115, '\0',   /* pHYs */
+         115,  66,  73,  84, '\0',   /* sBIT */
+         115,  80,  76,  84, '\0',   /* sPLT */
+         116,  69,  88, 116, '\0',   /* tEXt */
+         116,  73,  77,  69, '\0',   /* tIME */
+         122,  84,  88, 116, '\0'};  /* zTXt */
+ #endif
+ 
++#ifdef MAEMO_CHANGES
++  /* Get image pix size delimiter */
++  nsresult rv;
++  nsCOMPtr<nsIPrefBranch2> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
++  PRUint64 memSize = PR_GetPhysicalMemorySize();
++  if (NS_SUCCEEDED(rv) && memSize != 0) {
++    PRInt32 prefVal = -1;
++    rv = prefs->GetIntPref(IMAGE_DIMENSION_DELIMITER_PREF, &prefVal);
++    if (NS_SUCCEEDED(rv)) {
++      if (prefVal == -1)
++        mImagePixLimit = memSize / (PRUint64)IMAGE_DIMENSION_DELIMITER_DEFAULT;
++      else if (prefVal > 0)
++        mImagePixLimit = memSize / (PRUint64)prefVal;
++    }
++  }
++#endif
++
+   mImageLoad = aLoad;
+   mObserver = do_QueryInterface(aLoad);  // we're holding 2 strong refs to the request.
+ 
+   /* do png init stuff */
+ 
+   /* Initialize the container's source image header. */
+   /* Always decode to 24 bit pixdepth */
+ 
+   mPNG = png_create_read_struct(PNG_LIBPNG_VER_STRING, 
+                                 NULL, error_callback, warning_callback);
+@@ -509,20 +538,26 @@ info_callback(png_structp png_ptr, png_i
+   /* always decode to 24-bit RGB or 32-bit RGBA  */
+   png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
+                &interlace_type, &compression_type, &filter_type);
+   
+   /* limit image dimensions (bug #251381) */
+ #define MOZ_PNG_MAX_DIMENSION 1000000L
+   if (width > MOZ_PNG_MAX_DIMENSION || height > MOZ_PNG_MAX_DIMENSION)
+     longjmp(decoder->mPNG->jmpbuf, 1);
+ #undef MOZ_PNG_MAX_DIMENSION
+ 
++#ifdef MAEMO_CHANGES
++  /* limit image dimensions */
++  if (decoder->mImagePixLimit > 0 && width * height > decoder->mImagePixLimit)
++    longjmp(decoder->mPNG->jmpbuf, 1);
++#endif
++
+   if (color_type == PNG_COLOR_TYPE_PALETTE)
+     png_set_expand(png_ptr);
+ 
+   if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+     png_set_expand(png_ptr);
+ 
+   if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+     int sample_max = (1 << bit_depth);
+     png_color_16p trans_values;
+     png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, &trans_values);
+diff -ruN -p -U10 mozilla/modules/libpr0n/decoders.orig/png/nsPNGDecoder.h mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h
+--- mozilla/modules/libpr0n/decoders.orig/png/nsPNGDecoder.h	2010-03-16 11:05:51.000000000 +0200
++++ mozilla/modules/libpr0n/decoders/png/nsPNGDecoder.h	2010-03-16 08:41:47.000000000 +0200
+@@ -46,20 +46,24 @@
+ #include "imgIDecoderObserver.h"
+ #include "imgILoad.h"
+ #include "gfxASurface.h"
+ 
+ #include "nsCOMPtr.h"
+ 
+ #include "png.h"
+ 
+ #include "qcms.h"
+ 
++#ifdef MOZ_PLATFORM_HILDON
++#define MAEMO_CHANGES
++#endif
++
+ #define NS_PNGDECODER_CID \
+ { /* 36fa00c2-1dd2-11b2-be07-d16eeb4c50ed */         \
+      0x36fa00c2,                                     \
+      0x1dd2,                                         \
+      0x11b2,                                         \
+     {0xbe, 0x07, 0xd1, 0x6e, 0xeb, 0x4c, 0x50, 0xed} \
+ }
+ 
+ class nsPNGDecoder : public imgIDecoder
+ {
+@@ -89,13 +93,16 @@ public:
+   PRUint8 *interlacebuf;
+   PRUint8 *mImageData;
+   qcms_profile *mInProfile;
+   qcms_transform *mTransform;
+ 
+   gfxASurface::gfxImageFormat format;
+   PRUint8 mChannels;
+   PRPackedBool mError;
+   PRPackedBool mFrameHasNoAlpha;
+   PRPackedBool mFrameIsHidden;
++#ifdef MAEMO_CHANGES
++  PRUint64 mImagePixLimit;
++#endif
+ };
+ 
+ #endif // nsPNGDecoder_h__

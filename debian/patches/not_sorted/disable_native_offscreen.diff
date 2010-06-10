@@ -1,0 +1,67 @@
+# Bug 98037 We need to have option to work without any offscreen XPixmaps by preference
+# it allows to render layout without any xserver involving..
+# Together with MOZ_DISABLE_IMAGE_OPTIMIZE it will not even try to create Optimized image
+# And help to reduce memory usage
+Index: mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxPlatformGtk.cpp
++++ mozilla/gfx/thebes/src/gfxPlatformGtk.cpp
+@@ -92,16 +92,17 @@
+ 
+ #ifndef MOZ_PANGO
+ #include <ft2build.h>
+ #include FT_FREETYPE_H
+ #endif
+ 
+ gfxFontconfigUtils *gfxPlatformGtk::sFontconfigUtils = nsnull;
+ static PRBool gForce24bpp = PR_FALSE;
++static PRBool gDisableNativeOffScreen = PR_FALSE;
+ 
+ #ifndef MOZ_PANGO
+ typedef nsDataHashtable<nsStringHashKey, nsRefPtr<FontFamily> > FontTable;
+ typedef nsDataHashtable<nsCStringHashKey, nsTArray<nsRefPtr<FontEntry> > > PrefFontTable;
+ static FontTable *gPlatformFonts = NULL;
+ static FontTable *gPlatformFontAliases = NULL;
+ static PrefFontTable *gPrefFonts = NULL;
+ static gfxSparseBitSet *gCodepointsWithNoFonts = NULL;
+@@ -137,16 +138,21 @@ gfxPlatformGtk::gfxPlatformGtk()
+     if (!prefs)
+         return;
+ 
+     PRBool val = PR_TRUE;
+     nsresult rv;
+     rv = prefs->GetBoolPref("mozilla.widget.force-24bpp", &val);
+     if (NS_SUCCEEDED(rv))
+         gForce24bpp = val;
++    val = gDisableNativeOffScreen;
++    rv = prefs->GetBoolPref("mozilla.gfx.force.image.offscreen", &val);
++    if (NS_SUCCEEDED(rv))
++        gDisableNativeOffScreen = val;
++
+ }
+ 
+ gfxPlatformGtk::~gfxPlatformGtk()
+ {
+     gfxFontconfigUtils::Shutdown();
+     sFontconfigUtils = nsnull;
+ 
+ #ifdef MOZ_PANGO
+@@ -221,17 +227,17 @@ gfxPlatformGtk::CreateOffscreenSurface(c
+ 
+     if (xrenderFormatID == PictStandardRGB24 && !gForce24bpp) {
+         // Actually we want not strictly RGB24, but the fastest non-alpha
+         // format (XXX to be verified if it is actually safe)
+         xrenderFormat = XRenderFindVisualFormat(display, GDK_VISUAL_XVISUAL(gdk_visual_get_system()));
+     }
+     if (!xrenderFormat) xrenderFormat = XRenderFindStandardFormat(display, xrenderFormatID);
+ 
+-    if (xrenderFormat && sizeOk) {
++    if (xrenderFormat && sizeOk && !gDisableNativeOffScreen) {
+         pixmap = gdk_pixmap_new(nsnull, size.width, size.height,
+                                 xrenderFormat->depth);
+ 
+         if (pixmap) {
+             gdk_drawable_set_colormap(GDK_DRAWABLE(pixmap), nsnull);
+             newSurface = new gfxXlibSurface(display,
+                                             GDK_PIXMAP_XID(GDK_DRAWABLE(pixmap)),
+                                             xrenderFormat,

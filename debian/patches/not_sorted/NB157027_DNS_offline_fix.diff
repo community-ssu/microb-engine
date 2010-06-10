@@ -1,0 +1,160 @@
+diff -r -U 8 -p mozilla.orig/docshell/base/nsDocShell.cpp mozilla/docshell/base/nsDocShell.cpp
+--- mozilla.orig/docshell/base/nsDocShell.cpp	2010-02-24 13:17:40.000000000 +0200
++++ mozilla/docshell/base/nsDocShell.cpp	2010-02-24 13:46:23.000000000 +0200
+@@ -8212,17 +8212,20 @@ nsDocShell::DoURILoad(nsIURI * aURI,
+     if (NS_IsOffline() &&
+         !IsFrame() &&
+         !scheme.EqualsIgnoreCase("resource") &&
+         !scheme.EqualsIgnoreCase("about") &&
+         !scheme.EqualsIgnoreCase("file") &&
+         !scheme.EqualsIgnoreCase("data") &&
+         !scheme.EqualsIgnoreCase("chrome") &&
+         mLoadType != LOAD_ERROR_PAGE)  {
+-        NS_RequestConnection();
++        // Request online mode straight from IO service
++        nsCOMPtr<nsIIOService> ios = do_GetIOService();
++        if (ios)
++            ios->SetOffline(PR_FALSE);
+     }
+ #endif
+ 
+     nsresult rv;
+     nsCOMPtr<nsIURILoader> uriLoader;
+ 
+     uriLoader = do_GetService(NS_URI_LOADER_CONTRACTID, &rv);
+     if (NS_FAILED(rv)) return rv;
+diff -r -U 8 -p mozilla.orig/netwerk/base/src/nsSocketTransport2.cpp mozilla/netwerk/base/src/nsSocketTransport2.cpp
+--- mozilla.orig/netwerk/base/src/nsSocketTransport2.cpp	2010-02-24 13:17:30.000000000 +0200
++++ mozilla/netwerk/base/src/nsSocketTransport2.cpp	2010-02-24 13:04:58.000000000 +0200
+@@ -714,16 +714,17 @@ nsSocketTransport::nsSocketTransport()
+     , mOutputClosed(PR_TRUE)
+     , mResolving(PR_FALSE)
+     , mLock(PR_NewLock())
+     , mFD(nsnull)
+     , mFDref(0)
+     , mFDconnected(PR_FALSE)
+     , mInput(this)
+     , mOutput(this)
++    , mIgnoreCachedNegatives(PR_FALSE)
+ {
+     LOG(("creating nsSocketTransport @%x\n", this));
+ 
+     NS_ADDREF(gSocketTransportService);
+ 
+     mTimeouts[TIMEOUT_CONNECT]    = PR_UINT16_MAX; // no timeout
+     mTimeouts[TIMEOUT_READ_WRITE] = PR_UINT16_MAX; // no timeout
+ }
+@@ -943,17 +944,18 @@ nsSocketTransport::ResolveHost()
+     }
+ 
+     nsCOMPtr<nsIDNSService> dns = do_GetService(kDNSServiceCID, &rv);
+     if (NS_FAILED(rv)) return rv;
+ 
+     mResolving = PR_TRUE;
+ 
+     PRUint32 dnsFlags = 0;
+-    if (mConnectionFlags & nsSocketTransport::BYPASS_CACHE)
++    if ((mConnectionFlags & nsSocketTransport::BYPASS_CACHE) ||
++        mIgnoreCachedNegatives)
+         dnsFlags = nsIDNSService::RESOLVE_BYPASS_CACHE;
+ 
+     rv = dns->AsyncResolve(SocketHost(), dnsFlags, this, nsnull,
+                            getter_AddRefs(mDNSRequest));
+     if (NS_SUCCEEDED(rv)) {
+         LOG(("  advancing to STATE_RESOLVING\n"));
+         mState = STATE_RESOLVING;
+         // only report that we are resolving if we are still resolving...
+@@ -1250,45 +1252,48 @@ nsSocketTransport::RecoverFromError()
+     if (mCondition != NS_ERROR_CONNECTION_REFUSED &&
+         mCondition != NS_ERROR_PROXY_CONNECTION_REFUSED &&
+         mCondition != NS_ERROR_NET_TIMEOUT &&
+         mCondition != NS_ERROR_UNKNOWN_HOST &&
+         mCondition != NS_ERROR_UNKNOWN_PROXY_HOST)
+         return PR_FALSE;
+ 
+     PRBool tryAgain = PR_FALSE;
++    PRBool hasValidAddr = PR_FALSE;
+ 
+     // try next ip address only if past the resolver stage...
+     if (mState == STATE_CONNECTING && mDNSRecord) {
+         nsresult rv = mDNSRecord->GetNextAddr(SocketPort(), &mNetAddr);
+         if (NS_SUCCEEDED(rv)) {
+             LOG(("  trying again with next ip address\n"));
+             tryAgain = PR_TRUE;
++            hasValidAddr = PR_TRUE;
+         }
+     }
+ 
+ #if defined(XP_WIN) || defined(MOZ_ENABLE_LIBCONIC)
+     // If not trying next address, try to make a connection using dialup. 
+     // Retry if that connection is made.
+     if (!tryAgain) {
+         PRBool autodialEnabled;
+         gSocketTransportService->GetAutodialEnabled(&autodialEnabled);
+         if (autodialEnabled) {
+           tryAgain = nsNativeConnectionHelper::OnConnectionFailed(
+                        NS_ConvertUTF8toUTF16(SocketHost()).get());
+-	    }
++          mIgnoreCachedNegatives = PR_TRUE;
++        }
+     }
+ #endif
+ 
+     // prepare to try again.
+     if (tryAgain) {
+         nsresult rv;
+         PRUint32 msg;
+ 
+-        if (mState == STATE_CONNECTING) {
++        if (mState == STATE_CONNECTING && hasValidAddr) {
+             mState = STATE_RESOLVING;
+             msg = MSG_DNS_LOOKUP_COMPLETE;
+         }
+         else {
+             mState = STATE_CLOSED;
+             msg = MSG_ENSURE_CONNECT;
+         }
+ 
+@@ -1479,18 +1484,21 @@ nsSocketTransport::OnSocketEvent(PRUint3
+         LOG(("  unhandled event!\n"));
+     }
+     
+     if (NS_FAILED(mCondition)) {
+         LOG(("  after event [this=%x cond=%x]\n", this, mCondition));
+         if (!mAttached) // need to process this error ourselves...
+             OnSocketDetached(nsnull);
+     }
+-    else if (mPollFlags == PR_POLL_EXCEPT)
+-        mPollFlags = 0; // make idle
++    else {
++        mIgnoreCachedNegatives = PR_FALSE; // we can rely on cache again
++        if (mPollFlags == PR_POLL_EXCEPT)
++            mPollFlags = 0; // make idle
++    }
+ }
+ 
+ //-----------------------------------------------------------------------------
+ // socket handler impl
+ 
+ void
+ nsSocketTransport::OnSocketReady(PRFileDesc *fd, PRInt16 outFlags)
+ {
+diff -r -U 8 -p mozilla.orig/netwerk/base/src/nsSocketTransport2.h mozilla/netwerk/base/src/nsSocketTransport2.h
+--- mozilla.orig/netwerk/base/src/nsSocketTransport2.h	2010-02-24 13:17:30.000000000 +0200
++++ mozilla/netwerk/base/src/nsSocketTransport2.h	2010-02-24 13:06:13.000000000 +0200
+@@ -313,11 +313,15 @@ private:
+         else
+             PostEvent(MSG_OUTPUT_PENDING);
+     }
+ 
+ #ifdef ENABLE_SOCKET_TRACING
+     void TraceInBuf(const char *buf, PRInt32 n);
+     void TraceOutBuf(const char *buf, PRInt32 n);
+ #endif
++    
++    // Set to PR_TRUE if cached negatives might originate from offline state,
++    // and thus host cache should be bypassed
++    PRBool mIgnoreCachedNegatives;
+ };
+ 
+ #endif // !nsSocketTransport_h__

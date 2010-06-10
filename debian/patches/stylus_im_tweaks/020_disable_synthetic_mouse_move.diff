@@ -1,0 +1,39 @@
+--- mozilla/view/src/nsViewManager.cpp.old	2010-01-25 12:58:12.000000000 +0200
++++ mozilla/view/src/nsViewManager.cpp	2010-01-25 12:58:42.000000000 +0200
+@@ -2125,16 +2125,18 @@ public:
+ 
+ private:
+   PRBool mFromScroll;
+ };
+ 
+ NS_IMETHODIMP
+ nsViewManager::SynthesizeMouseMove(PRBool aFromScroll)
+ {
++#ifndef MOZ_PLATFORM_HILDON // Do not synthesize move events on Hildon,
++                            // no point doing that on touchscreen.
+   if (!IsRootVM())
+     return RootViewManager()->SynthesizeMouseMove(aFromScroll);
+ 
+   if (mMouseLocation == nsIntPoint(NSCOORD_NONE, NSCOORD_NONE))
+     return NS_OK;
+ 
+   if (!mSynthMouseMoveEvent.IsPending()) {
+     nsRefPtr<nsViewManagerEvent> ev =
+@@ -2142,16 +2144,17 @@ nsViewManager::SynthesizeMouseMove(PRBoo
+ 
+     if (NS_FAILED(NS_DispatchToCurrentThread(ev))) {
+       NS_WARNING("failed to dispatch nsSynthMouseMoveEvent");
+       return NS_ERROR_UNEXPECTED;
+     }
+ 
+     mSynthMouseMoveEvent = ev;
+   }
++#endif // !MOZ_PLATFORM_HILDON
+ 
+   return NS_OK;
+ }
+ 
+ /**
+  * Find the first floating view with a widget in a postorder traversal of the
+  * view tree that contains the point. Thus more deeply nested floating views
+  * are preferred over their ancestors, and floating views earlier in the

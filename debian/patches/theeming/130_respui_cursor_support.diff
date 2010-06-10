@@ -1,0 +1,23 @@
+Index: mozilla/widget/src/gtk2/nsWindow.cpp
+===================================================================
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp
++++ mozilla/widget/src/gtk2/nsWindow.cpp
+@@ -1485,16 +1485,18 @@ NS_IMETHODIMP
+ nsWindow::SetBackgroundColor(const nscolor &aColor)
+ {
+     return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ NS_IMETHODIMP
+ nsWindow::SetCursor(nsCursor aCursor)
+ {
++    mCursor = aCursor;
++
+     // if we're not the toplevel window pass up the cursor request to
+     // the toplevel window to handle it.
+     if (!mContainer && mGdkWindow) {
+         nsWindow *window = GetContainerWindow();
+         if (!window)
+             return NS_ERROR_FAILURE;
+ 
+         return window->SetCursor(aCursor);

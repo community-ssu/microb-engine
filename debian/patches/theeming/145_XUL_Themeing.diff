@@ -1,0 +1,815 @@
+--- mozilla.orig/layout/base/nsPresContext.cpp.orig	2010-04-08 15:38:08.000000000 +0100
++++ mozilla/layout/base/nsPresContext.cpp	2010-04-08 15:45:17.000000000 +0100
+@@ -88,20 +88,23 @@
+ #include "nsCSSRules.h"
+ #include "nsFontFaceLoader.h"
+ #include "nsIEventListenerManager.h"
+ #include "nsStyleStructInlines.h"
+ #include "nsIAppShell.h"
+ #include "prenv.h"
+ #include "nsIPrivateDOMEvent.h"
+ #include "nsIDOMEventTarget.h"
+ #include "nsObjectFrame.h"
+ #include "nsTextFrame.h"
++#ifdef MOZ_XUL
++#include "nsIXULDocument.h"
++#endif
+ 
+ #ifdef MOZ_SMIL
+ #include "nsSMILAnimationController.h"
+ #endif // MOZ_SMIL
+ 
+ #ifdef IBMBIDI
+ #include "nsBidiPresUtils.h"
+ #endif // IBMBIDI
+ 
+ #include "nsContentUtils.h"
+@@ -225,20 +228,22 @@ nsPresContext::nsPresContext(nsIDocument
+ 
+   mLinkColor = NS_RGB(0x00, 0x00, 0xEE);
+   mActiveLinkColor = NS_RGB(0xEE, 0x00, 0x00);
+   mVisitedLinkColor = NS_RGB(0x55, 0x1A, 0x8B);
+   mUnderlineLinks = PR_TRUE;
+ 
+   mFocusTextColor = mDefaultColor;
+   mFocusBackgroundColor = mBackgroundColor;
+   mFocusRingWidth = 1;
+ 
++  mUseNativeColorsXulOnly = PR_FALSE;
++
+   if (aType == eContext_Galley) {
+     mMedium = nsGkAtoms::screen;
+   } else {
+     mMedium = nsGkAtoms::print;
+     mPaginated = PR_TRUE;
+   }
+ 
+   if (!IsDynamic()) {
+     mImageAnimationMode = imgIContainer::kDontAnimMode;
+     mNeverAnimate = PR_TRUE;
+@@ -614,21 +619,25 @@ nsPresContext::GetDocumentColorPreferenc
+ }
+ 
+ void
+ nsPresContext::GetUserPreferences()
+ {
+   if (!GetPresShell()) {
+     // No presshell means nothing to do here.  We'll do this when we
+     // get a presshell.
+     return;
+   }
+-    
++
++  mUseNativeColorsXulOnly =
++    nsContentUtils::GetBoolPref("ui.use_native_colors_xul_only",
++                                mUseNativeColorsXulOnly);
++
+   mFontScaler =
+     nsContentUtils::GetIntPref("browser.display.base_font_scaler",
+                                mFontScaler);
+ 
+ 
+   mAutoQualityMinFontSizePixelsPref =
+     nsContentUtils::GetIntPref("browser.display.auto_quality_min_font_size");
+ 
+   // * document colors
+   GetDocumentColorPreferences();
+@@ -1176,20 +1185,33 @@ nsPresContext::SetImageAnimationModeExte
+ already_AddRefed<nsIFontMetrics>
+ nsPresContext::GetMetricsFor(const nsFont& aFont, PRBool aUseUserFontSet)
+ {
+   nsIFontMetrics* metrics = nsnull;
+   mDeviceContext->GetMetricsFor(aFont, mLangGroup,
+                                 aUseUserFontSet ? GetUserFontSet() : nsnull,
+                                 metrics);
+   return metrics;
+ }
+ 
++nsILookAndFeel*
++nsPresContext::LookAndFeel()
++{
++#ifdef MOZ_XUL
++  if (!mUseNativeColorsXulOnly)
++    return mLookAndFeel;
++
++  nsCOMPtr<nsIXULDocument> xulDoc(do_QueryInterface(mDocument));
++  mLookAndFeel->LookAndFeelSetMode(xulDoc ? nsILookAndFeel::NATIVE_COLORS : nsILookAndFeel::PREF_COLORS);
++#endif
++  return mLookAndFeel;
++}
++
+ const nsFont*
+ nsPresContext::GetDefaultFont(PRUint8 aFontID) const
+ {
+   const nsFont *font;
+   switch (aFontID) {
+     // Special (our default variable width font and fixed width font)
+     case kPresContext_DefaultVariableFont_ID:
+       font = &mDefaultVariableFont;
+       break;
+     case kPresContext_DefaultFixedFont_ID:
+--- mozilla.orig/layout/base/nsPresContext.h.orig	2010-04-08 15:38:08.000000000 +0100
++++ mozilla/layout/base/nsPresContext.h	2010-04-08 15:46:10.000000000 +0100
+@@ -276,21 +276,21 @@ public:
+   { SetImageAnimationModeInternal(aMode); }
+ #else
+   void SetImageAnimationMode(PRUint16 aMode)
+   { SetImageAnimationModeExternal(aMode); }
+ #endif
+ 
+   /**
+    * Get cached look and feel service.  This is faster than obtaining it
+    * through the service manager.
+    */
+-  nsILookAndFeel* LookAndFeel() { return mLookAndFeel; }
++  nsILookAndFeel* LookAndFeel();
+ 
+   /** 
+    * Get medium of presentation
+    */
+   nsIAtom* Medium() { return mMedium; }
+ 
+   void* AllocateFromShell(size_t aSize)
+   {
+     if (mShell)
+       return mShell->AllocateMisc(aSize);
+@@ -1072,20 +1072,22 @@ protected:
+ #ifdef DEBUG
+ private:
+   friend struct nsAutoLayoutPhase;
+   PRUint32 mLayoutPhaseCount[eLayoutPhase_COUNT];
+ public:
+   PRUint32 LayoutPhaseCount(nsLayoutPhase aPhase) {
+     return mLayoutPhaseCount[aPhase];
+   }
+ #endif
+ 
++private:
++  unsigned              mUseNativeColorsXulOnly : 1;
+ };
+ 
+ class nsRootPresContext : public nsPresContext {
+ public:
+   nsRootPresContext(nsIDocument* aDocument, nsPresContextType aType) NS_HIDDEN;
+   virtual ~nsRootPresContext();
+ 
+   /**
+    * Registers a plugin to receive geometry updates (position and clip
+    * region) so it can update its widget.
+--- mozilla.orig/layout/style/nsCSSKeywordList.h.orig	2010-04-08 15:41:07.000000000 +0100
++++ mozilla/layout/style/nsCSSKeywordList.h	2010-04-08 15:42:51.000000000 +0100
+@@ -91,20 +91,22 @@ CSS_KEY(-moz-compact, _moz_compact)  // 
+ CSS_KEY(-moz-block-height, _moz_block_height)
+ CSS_KEY(-moz-context-menu, _moz_context_menu)
+ CSS_KEY(-moz-copy, _moz_copy)
+ CSS_KEY(-moz-deck, _moz_deck)
+ CSS_KEY(-moz-desktop, _moz_desktop)
+ CSS_KEY(-moz-devanagari, _moz_devanagari)
+ CSS_KEY(-moz-dialog, _moz_dialog)
+ CSS_KEY(-moz-dialogtext, _moz_dialogtext)
+ CSS_KEY(-moz-document, _moz_document)
+ CSS_KEY(-moz-dragtargetzone, _moz_dragtargetzone)
++CSS_KEY(-moz-entry, _moz_entry)
++CSS_KEY(-moz-entrytext, _moz_entrytext)
+ CSS_KEY(-moz-eventreerow, _moz_eventreerow)
+ CSS_KEY(-moz-ethiopic-halehame, _moz_ethiopic_halehame)
+ CSS_KEY(-moz-ethiopic-numeric, _moz_ethiopic_numeric)
+ CSS_KEY(-moz-ethiopic-halehame-am, _moz_ethiopic_halehame_am)
+ CSS_KEY(-moz-ethiopic-halehame-ti-er, _moz_ethiopic_halehame_ti_er)
+ CSS_KEY(-moz-ethiopic-halehame-ti-et, _moz_ethiopic_halehame_ti_et)
+ CSS_KEY(-moz-field, _moz_field)
+ CSS_KEY(-moz-fieldtext, _moz_fieldtext)
+ CSS_KEY(-moz-fit-content, _moz_fit_content)
+ CSS_KEY(-moz-grabbing, _moz_grabbing)
+--- mozilla.orig/layout/style/nsCSSProps.cpp.orig	2010-04-08 15:41:17.000000000 +0100
++++ mozilla/layout/style/nsCSSProps.cpp	2010-04-08 15:42:51.000000000 +0100
+@@ -672,20 +672,22 @@ const PRInt32 nsCSSProps::kColorKTable[]
+   eCSSKeyword__moz_menubartext, nsILookAndFeel::eColor__moz_menubartext,
+   eCSSKeyword__moz_menubarhovertext, nsILookAndFeel::eColor__moz_menubarhovertext,
+   eCSSKeyword__moz_oddtreerow, nsILookAndFeel::eColor__moz_oddtreerow,
+   eCSSKeyword__moz_visitedhyperlinktext, NS_COLOR_MOZ_VISITEDHYPERLINKTEXT,
+   eCSSKeyword_currentcolor, NS_COLOR_CURRENTCOLOR,
+   eCSSKeyword__moz_win_mediatext, nsILookAndFeel::eColor__moz_win_mediatext,
+   eCSSKeyword__moz_win_communicationstext, nsILookAndFeel::eColor__moz_win_communicationstext,
+   eCSSKeyword__moz_nativehyperlinktext, nsILookAndFeel::eColor__moz_nativehyperlinktext,
+   eCSSKeyword__moz_comboboxtext, nsILookAndFeel::eColor__moz_comboboxtext,
+   eCSSKeyword__moz_combobox, nsILookAndFeel::eColor__moz_combobox,
++  eCSSKeyword__moz_entrytext, nsILookAndFeel::eColor__moz_entrytext,
++  eCSSKeyword__moz_entry, nsILookAndFeel::eColor__moz_entry,
+   eCSSKeyword_UNKNOWN,-1
+ };
+ 
+ const PRInt32 nsCSSProps::kContentKTable[] = {
+   eCSSKeyword_open_quote, NS_STYLE_CONTENT_OPEN_QUOTE,
+   eCSSKeyword_close_quote, NS_STYLE_CONTENT_CLOSE_QUOTE,
+   eCSSKeyword_no_open_quote, NS_STYLE_CONTENT_NO_OPEN_QUOTE,
+   eCSSKeyword_no_close_quote, NS_STYLE_CONTENT_NO_CLOSE_QUOTE,
+   eCSSKeyword__moz_alt_content, NS_STYLE_CONTENT_ALT_CONTENT,
+   eCSSKeyword_UNKNOWN,-1
+--- mozilla.orig/toolkit/themes/gnomestripe/global/textbox.css.orig	2010-04-08 15:41:25.000000000 +0100
++++ mozilla/toolkit/themes/gnomestripe/global/textbox.css	2010-04-08 15:42:51.000000000 +0100
+@@ -47,24 +47,24 @@
+ 
+ textbox {
+   -moz-appearance: textfield;
+   cursor: text;
+   margin: 2px 4px;
+   border: 2px solid;
+   -moz-border-top-colors: ThreeDShadow ThreeDDarkShadow;
+   -moz-border-right-colors: ThreeDHighlight ThreeDLightShadow;
+   -moz-border-bottom-colors: ThreeDHighlight ThreeDLightShadow;
+   -moz-border-left-colors: ThreeDShadow ThreeDDarkShadow;
+-  padding: 2px 2px 3px;
++  padding: 6px 2px 6px;
+   -moz-padding-start: 4px;
+-  background-color: -moz-Field;
+-  color: -moz-FieldText;
++  background-color: -moz-entry;
++  color: -moz-entryText;
+ }
+ 
+ textbox[isempty="true"] {
+   color: GrayText;
+ }
+ 
+ html|*.textbox-input, 
+ html|*.textbox-textarea {
+   margin: 0px !important;
+   border: none !important;
+--- mozilla.orig/widget/public/nsILookAndFeel.h.orig	2010-04-08 15:41:34.000000000 +0100
++++ mozilla/widget/public/nsILookAndFeel.h	2010-04-08 15:42:51.000000000 +0100
+@@ -174,20 +174,24 @@ public:
+ 
+     // Hyperlink color extracted from the system, not affected by the browser.anchor_color user pref.
+     // There is no OS-specified safe background color for this text, 
+     // but it is used regularly within Windows and the Gnome DE on Dialog and Window colors.
+     eColor__moz_nativehyperlinktext,
+ 
+     // Combo box widgets
+     eColor__moz_comboboxtext,
+     eColor__moz_combobox,
+ 
++    // Entry text widgets
++    eColor__moz_entrytext,
++    eColor__moz_entry,
++
+     // keep this one last, please
+     eColor_LAST_COLOR
+   } nsColorID;
+ 
+   // When modifying this list, also modify nsXPLookAndFeel::sIntPrefs
+   // in widget/src/xpwidgts/nsXPLookAndFeel.cpp.
+   typedef enum {
+     eMetric_WindowTitleHeight,
+     eMetric_WindowBorderWidth,
+     eMetric_WindowBorderHeight,
+@@ -406,20 +410,26 @@ public:
+ 
+   // This method returns the actual (or nearest estimate) 
+   // of the Navigator size for a given form control for a given font
+   // and font size. This is used in NavQuirks mode to see how closely
+   // we match its size
+   NS_IMETHOD GetNavSize(const nsMetricNavWidgetID aWidgetID,
+                         const nsMetricNavFontID   aFontID, 
+                         const PRInt32             aFontSize, 
+                         nsSize &aSize) = 0;
+ #endif
++  enum {
++    NO_COLORS = 0x00,
++    PREF_COLORS = 0x01,
++    NATIVE_COLORS = 0x02
++  };
++  NS_IMETHOD LookAndFeelSetMode(PRUint32 aMode) = 0;
+ };
+ 
+ NS_DEFINE_STATIC_IID_ACCESSOR(nsILookAndFeel, NS_ILOOKANDFEEL_IID)
+ 
+ 
+ 	// On the Mac, GetColor(eColor_TextSelectForeground, color) returns this
+ 	// constant to specify that the foreground color should not be changed
+ 	// (ie. a colored text keeps its colors  when selected).
+ 	// Of course if other plaforms work like the Mac, they can use it too.
+ #define NS_DONT_CHANGE_COLOR 	NS_RGB(0x01, 0x01, 0x01)
+--- mozilla.orig/widget/src/gtk2/nsLookAndFeel.cpp.orig	2010-04-08 15:41:42.000000000 +0100
++++ mozilla/widget/src/gtk2/nsLookAndFeel.cpp	2010-04-08 15:42:51.000000000 +0100
+@@ -63,20 +63,22 @@ nscolor   nsLookAndFeel::sMenuBackground
+ nscolor   nsLookAndFeel::sButtonBackground = 0;
+ nscolor   nsLookAndFeel::sButtonText = 0;
+ nscolor   nsLookAndFeel::sButtonOuterLightBorder = 0;
+ nscolor   nsLookAndFeel::sButtonInnerDarkBorder = 0;
+ nscolor   nsLookAndFeel::sOddCellBackground = 0;
+ nscolor   nsLookAndFeel::sNativeHyperLinkText = 0;
+ nscolor   nsLookAndFeel::sComboBoxText = 0;
+ nscolor   nsLookAndFeel::sComboBoxBackground = 0;
+ PRUnichar nsLookAndFeel::sInvisibleCharacter = PRUnichar('*');
+ float     nsLookAndFeel::sCaretRatio = 0;
++nscolor   nsLookAndFeel::sEntryText = 0;
++nscolor   nsLookAndFeel::sEntryBackground = 0;
+ 
+ //-------------------------------------------------------------------------
+ //
+ // Query interface implementation
+ //
+ //-------------------------------------------------------------------------
+ nsLookAndFeel::nsLookAndFeel() : nsXPLookAndFeel()
+ {
+     mStyle = nsnull;
+     InitWidget();
+@@ -327,20 +329,26 @@ nsresult nsLookAndFeel::NativeGetColor(c
+         break;
+     case eColor__moz_combobox:
+         aColor = sComboBoxBackground;
+         break;
+     case eColor__moz_menubartext:
+         aColor = sMenuBarText;
+         break;
+     case eColor__moz_menubarhovertext:
+         aColor = sMenuBarHoverText;
+         break;
++    case eColor__moz_entrytext:
++        aColor = sEntryText;
++        break;
++    case eColor__moz_entry:
++        aColor = sEntryBackground;
++        break;
+     default:
+         /* default color is BLACK */
+         aColor = 0;
+         res    = NS_ERROR_FAILURE;
+         break;
+     }
+ 
+     return res;
+ }
+ 
+@@ -737,45 +745,49 @@ nsLookAndFeel::InitLookAndFeel()
+     // button styles
+     GtkWidget *parent = gtk_fixed_new();
+     GtkWidget *button = gtk_button_new();
+     GtkWidget *label = gtk_label_new("M");
+     GtkWidget *combobox = gtk_combo_box_new();
+     GtkWidget *comboboxLabel = gtk_label_new("M");
+     GtkWidget *window = gtk_window_new(GTK_WINDOW_POPUP);
+     GtkWidget *treeView = gtk_tree_view_new();
+     GtkWidget *linkButton = gtk_link_button_new("http://example.com/");
+     GtkWidget *menuBar = gtk_menu_bar_new();
++    GtkWidget *entry = gtk_entry_new();
+ 
+     gtk_container_add(GTK_CONTAINER(button), label);
+     gtk_container_add(GTK_CONTAINER(combobox), comboboxLabel);
+     gtk_container_add(GTK_CONTAINER(parent), button);
+     gtk_container_add(GTK_CONTAINER(parent), treeView);
+     gtk_container_add(GTK_CONTAINER(parent), linkButton);
+     gtk_container_add(GTK_CONTAINER(parent), combobox);
+     gtk_container_add(GTK_CONTAINER(parent), menuBar);
++    gtk_container_add(GTK_CONTAINER(parent), entry);
+     gtk_container_add(GTK_CONTAINER(window), parent);
+ 
+     gtk_widget_set_style(button, NULL);
+     gtk_widget_set_style(label, NULL);
+     gtk_widget_set_style(treeView, NULL);
+     gtk_widget_set_style(linkButton, NULL);
+     gtk_widget_set_style(combobox, NULL);
+     gtk_widget_set_style(comboboxLabel, NULL);
+     gtk_widget_set_style(menuBar, NULL);
++    gtk_widget_set_style(entry, NULL);
+ 
+     gtk_widget_realize(button);
+     gtk_widget_realize(label);
+     gtk_widget_realize(treeView);
+     gtk_widget_realize(linkButton);
+     gtk_widget_realize(combobox);
+     gtk_widget_realize(comboboxLabel);
+     gtk_widget_realize(menuBar);
++    gtk_widget_realize(entry);
+ 
+     style = gtk_widget_get_style(label);
+     if (style) {
+         sButtonText = GDK_COLOR_TO_NS_RGB(style->fg[GTK_STATE_NORMAL]);
+     }
+ 
+     style = gtk_widget_get_style(comboboxLabel);
+     if (style) {
+         sComboBoxText = GDK_COLOR_TO_NS_RGB(style->fg[GTK_STATE_NORMAL]);
+     }
+@@ -783,20 +795,37 @@ nsLookAndFeel::InitLookAndFeel()
+     if (style) {
+         sComboBoxBackground = GDK_COLOR_TO_NS_RGB(style->bg[GTK_STATE_NORMAL]);
+     }
+ 
+     style = gtk_widget_get_style(menuBar);
+     if (style) {
+         sMenuBarText = GDK_COLOR_TO_NS_RGB(style->fg[GTK_STATE_NORMAL]);
+         sMenuBarHoverText = GDK_COLOR_TO_NS_RGB(style->fg[GTK_STATE_SELECTED]);
+     }
+ 
++    style = gtk_widget_get_style(entry);
++    if (style) {
++        sEntryText = GDK_COLOR_TO_NS_RGB(style->text[GTK_STATE_NORMAL]);
++        GdkColor c;
++        if (gtk_style_lookup_color(style, "ReversedTextColor", &c)) {
++            if (sEntryText == GDK_COLOR_TO_NS_RGB(c)) {
++                if (gtk_style_lookup_color(style, "ReversedBackgroundColor", &c))
++                    sEntryBackground = GDK_COLOR_TO_NS_RGB(c);
++                else
++                    sEntryBackground = GDK_COLOR_TO_NS_RGB(style->fg[GTK_STATE_NORMAL]);
++            } else {
++                sEntryBackground = GDK_COLOR_TO_NS_RGB(style->bg[GTK_STATE_NORMAL]);
++            }
++        } else
++            sEntryBackground = GDK_COLOR_TO_NS_RGB(style->bg[GTK_STATE_NORMAL]);
++    }
++
+     // GTK's guide to fancy odd row background colors:
+     // 1) Check if a theme explicitly defines an odd row color
+     // 2) If not, check if it defines an even row color, and darken it
+     //    slightly by a hardcoded value (gtkstyle.c)
+     // 3) If neither are defined, take the base background color and
+     //    darken that by a hardcoded value
+     GdkColor colorValue;
+     GdkColor *colorValuePtr = NULL;
+     gtk_widget_style_get(treeView,
+                          "odd-row-color", &colorValuePtr,
+@@ -830,36 +859,31 @@ nsLookAndFeel::InitLookAndFeel()
+     colorValuePtr = NULL;
+     gtk_widget_style_get(linkButton, "link-color", &colorValuePtr, NULL);
+     if (colorValuePtr) {
+         colorValue = *colorValuePtr; // we can't pass deref pointers to GDK_COLOR_TO_NS_RGB
+         sNativeHyperLinkText = GDK_COLOR_TO_NS_RGB(colorValue);
+         gdk_color_free(colorValuePtr);
+     } else {
+         sNativeHyperLinkText = NS_RGB(0x00,0x00,0xEE);
+     }
+ 
+-    gtk_widget_destroy(window);
+-
+     // invisible character styles
+-    GtkWidget *entry = gtk_entry_new();
+-    g_object_ref_sink(entry);
+     guint value;
+     g_object_get (entry, "invisible-char", &value, NULL);
+     sInvisibleCharacter = PRUnichar(value);
+ 
+     // caret styles
+     gtk_widget_style_get(entry,
+                          "cursor-aspect-ratio", &sCaretRatio,
+                          NULL);
+ 
+-    gtk_widget_destroy(entry);
+-    g_object_unref(entry);
++    gtk_widget_destroy(window);
+ }
+ 
+ // virtual
+ PRUnichar
+ nsLookAndFeel::GetPasswordCharacter()
+ {
+     return sInvisibleCharacter;
+ }
+ 
+ NS_IMETHODIMP
+--- mozilla.orig/widget/src/gtk2/nsLookAndFeel.h.orig	2010-04-08 15:41:52.000000000 +0100
++++ mozilla/widget/src/gtk2/nsLookAndFeel.h	2010-04-08 15:42:51.000000000 +0100
+@@ -71,20 +71,22 @@ protected:
+     static nscolor sButtonBackground;
+     static nscolor sButtonText;
+     static nscolor sButtonOuterLightBorder;
+     static nscolor sButtonInnerDarkBorder;
+     static nscolor sOddCellBackground;
+     static nscolor sNativeHyperLinkText;
+     static nscolor sComboBoxText;
+     static nscolor sComboBoxBackground;
+     static PRUnichar sInvisibleCharacter;
+     static float   sCaretRatio;
++    static nscolor sEntryText;
++    static nscolor sEntryBackground;
+ 
+     static void InitLookAndFeel();
+     void InitWidget() {
+         NS_ASSERTION(!mStyle, "already initialized");
+         // GtkInvisibles come with a refcount that is not floating
+         // (since their initialization code calls g_object_ref_sink) and
+         // their destroy code releases that reference (which means they
+         // have to be explicitly destroyed, since calling unref enough
+         // to cause destruction would lead to *another* unref).
+         // However, this combination means that it's actually still ok
+--- mozilla.orig/widget/src/gtk2/nsNativeThemeGTK.cpp.orig	2010-04-08 15:42:01.000000000 +0100
++++ mozilla/widget/src/gtk2/nsNativeThemeGTK.cpp	2010-04-08 15:42:51.000000000 +0100
+@@ -62,20 +62,22 @@
+ #include "nsIDOMNSHTMLInputElement.h"
+ #include "nsWidgetAtoms.h"
+ 
+ #include <gdk/gdkprivate.h>
+ #include <gtk/gtk.h>
+ 
+ #include "gfxContext.h"
+ #include "gfxPlatformGtk.h"
+ #include "gfxGdkNativeRenderer.h"
+ 
++extern PRBool gDisableNativeThemeHTML;
++
+ NS_IMPL_ISUPPORTS2(nsNativeThemeGTK, nsITheme, nsIObserver)
+ 
+ static int gLastGdkError;
+ 
+ nsNativeThemeGTK::nsNativeThemeGTK()
+ {
+   if (moz_gtk_init() != MOZ_GTK_SUCCESS) {
+     memset(mDisabledWidgetTypes, 0xff, sizeof(mDisabledWidgetTypes));
+     return;
+   }
+@@ -1212,20 +1214,23 @@ nsNativeThemeGTK::ThemeChanged()
+ 
+   memset(mDisabledWidgetTypes, 0, sizeof(mDisabledWidgetTypes));
+   return NS_OK;
+ }
+ 
+ NS_IMETHODIMP_(PRBool)
+ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
+                                       nsIFrame* aFrame,
+                                       PRUint8 aWidgetType)
+ {
++  if (gDisableNativeThemeHTML && aFrame && !aFrame->GetContent()->IsNodeOfType(nsINode::eXUL))
++    return PR_FALSE;
++
+   if (IsWidgetTypeDisabled(mDisabledWidgetTypes, aWidgetType))
+     return PR_FALSE;
+ 
+   switch (aWidgetType) {
+   case NS_THEME_BUTTON:
+   case NS_THEME_BUTTON_FOCUS:
+   case NS_THEME_RADIO:
+   case NS_THEME_CHECKBOX:
+   case NS_THEME_TOOLBOX: // N/A
+   case NS_THEME_TOOLBAR:
+--- mozilla.orig/widget/src/gtk2/nsWindow.cpp.orig	2010-04-08 15:42:09.000000000 +0100
++++ mozilla/widget/src/gtk2/nsWindow.cpp	2010-04-08 15:42:51.000000000 +0100
+@@ -325,20 +325,22 @@ static void IM_set_text_range         (c
+                                        const PangoAttrList *aFeedback,
+                                        PRUint32 *aTextRangeListLengthResult,
+                                        nsTextRangeArray *aTextRangeListResult);
+ 
+ static GtkIMContext *IM_get_input_context(nsWindow *window);
+ 
+ // If after selecting profile window, the startup fail, please refer to
+ // http://bugzilla.gnome.org/show_bug.cgi?id=88940
+ #endif
+ 
++PRBool gDisableNativeThemeHTML = PR_FALSE;
++
+ // needed for imgIContainer cursors
+ // GdkDisplay* was added in 2.2
+ typedef struct _GdkDisplay GdkDisplay;
+ typedef GdkDisplay* (*_gdk_display_get_default_fn)(void);
+ 
+ typedef GdkCursor*  (*_gdk_cursor_new_from_pixbuf_fn)(GdkDisplay *display,
+                                                       GdkPixbuf *pixbuf,
+                                                       gint x,
+                                                       gint y);
+ static _gdk_display_get_default_fn    _gdk_display_get_default;
+@@ -6145,20 +6147,27 @@ initialize_prefs(void)
+         gForce24bpp = val;
+ 
+     rv = prefs->GetBoolPref("mozilla.widget.use-buffer-pixmap", &val);
+     if (NS_SUCCEEDED(rv))
+         gUseBufferPixmap = val;
+ 
+     rv = prefs->GetBoolPref("mozilla.widget.disable-native-theme", &val);
+     if (NS_SUCCEEDED(rv))
+         gDisableNativeTheme = val;
+ 
++    rv = prefs->GetBoolPref("mozilla.widget.disable-native-theme-html", &val);
++    if (NS_SUCCEEDED(rv))
++        gDisableNativeThemeHTML = val;
++
++    if (gDisableNativeTheme && gDisableNativeThemeHTML)
++      gDisableNativeTheme = PR_FALSE;
++
+     return NS_OK;
+ }
+ 
+ void
+ nsWindow::ResetDragMotionTimer(GtkWidget *aWidget,
+                                GdkDragContext *aDragContext,
+                                gint aX, gint aY, guint aTime)
+ {
+ 
+     // We have to be careful about ref ordering here.  if aWidget ==
+--- mozilla.orig/widget/src/xpwidgets/nsXPLookAndFeel.cpp.orig	2010-04-08 15:42:16.000000000 +0100
++++ mozilla/widget/src/xpwidgets/nsXPLookAndFeel.cpp	2010-04-08 15:42:51.000000000 +0100
+@@ -249,28 +249,33 @@ const char nsXPLookAndFeel::sColorPrefs[
+   "ui.-moz-mac-accentlightshadow",
+   "ui.-moz-mac-accentregularshadow",
+   "ui.-moz-mac-accentdarkshadow",
+   "ui.-moz-mac-accentdarkestshadow",
+   "ui.-moz-mac-alternateprimaryhighlight",
+   "ui.-moz-mac-secondaryhighlight",
+   "ui.-moz-win-mediatext",
+   "ui.-moz-win-communicationstext",
+   "ui.-moz-nativehyperlinktext",
+   "ui.-moz-comboboxtext",
+-  "ui.-moz-combobox"
++  "ui.-moz-combobox",
++  "ui.-moz-entrytext",
++  "ui.-moz-entry"
+ };
+ 
+ PRInt32 nsXPLookAndFeel::sCachedColors[nsILookAndFeel::eColor_LAST_COLOR] = {0};
+ PRInt32 nsXPLookAndFeel::sCachedColorBits[COLOR_CACHE_SIZE] = {0};
++PRInt32 nsXPLookAndFeel::sCachedNativeColors[nsILookAndFeel::eColor_LAST_COLOR] = {0};
++PRInt32 nsXPLookAndFeel::sCachedNativeColorBits[COLOR_CACHE_SIZE] = {0};
+ 
+ PRBool nsXPLookAndFeel::sInitialized = PR_FALSE;
+ PRBool nsXPLookAndFeel::sUseNativeColors = PR_TRUE;
++PRUint32 nsXPLookAndFeel::sMode = nsXPLookAndFeel::PREF_COLORS | nsXPLookAndFeel::NATIVE_COLORS;
+ 
+ nsXPLookAndFeel::nsXPLookAndFeel() : nsILookAndFeel()
+ {
+ }
+ 
+ void
+ nsXPLookAndFeel::IntPrefChanged (nsLookAndFeelIntPref *data)
+ {
+   if (data)
+   {
+@@ -589,23 +594,26 @@ nsXPLookAndFeel::GetColor(const nsColorI
+         break;
+ 
+       default:
+         rv = NS_ERROR_NOT_AVAILABLE;
+     }
+     if (NS_SUCCEEDED(rv))
+       return rv;
+   }
+ #endif // DEBUG_SYSTEM_COLOR_USE
+ 
+-  if (IS_COLOR_CACHED(aID)) {
++  if (sMode & nsXPLookAndFeel::PREF_COLORS && IS_COLOR_CACHED(aID)) {
+     aColor = sCachedColors[aID];
+     return NS_OK;
++  } else if (sMode & nsXPLookAndFeel::NATIVE_COLORS && IS_NATIVE_COLOR_CACHED(aID)) {
++    aColor = sCachedNativeColors[aID];
++    return NS_OK;
+   }
+ 
+   // There are no system color settings for these, so set them manually
+   if (aID == eColor_TextSelectBackgroundDisabled) {
+     // This is used to gray out the selection when it's not focused
+     // Used with nsISelectionController::SELECTION_DISABLED
+     aColor = NS_RGB(0xb0, 0xb0, 0xb0);
+     return NS_OK;
+   }
+ 
+@@ -623,34 +631,37 @@ nsXPLookAndFeel::GetColor(const nsColorI
+     return NS_OK;
+   }
+ 
+   if (aID == eColor_TextHighlightForeground) {
+     // The foreground color for the matched text in findbar highlighting
+     // Used with nsISelectionController::SELECTION_FIND
+     aColor = NS_RGB(0xff, 0xff, 0xff);
+     return NS_OK;
+   }
+ 
++  if (!(sMode & nsXPLookAndFeel::NATIVE_COLORS))
++    return NS_ERROR_NOT_AVAILABLE;
++
+   if (sUseNativeColors && NS_SUCCEEDED(NativeGetColor(aID, aColor))) {
+     if ((gfxPlatform::GetCMSMode() == eCMSMode_All) && !IsSpecialColor(aID, aColor)) {
+       qcms_transform *transform = gfxPlatform::GetCMSInverseRGBTransform();
+       if (transform) {
+         PRUint8 color[3];
+         color[0] = NS_GET_R(aColor);
+         color[1] = NS_GET_G(aColor);
+         color[2] = NS_GET_B(aColor);
+         qcms_transform_data(transform, color, color, 1);
+         aColor = NS_RGB(color[0], color[1], color[2]);
+       }
+     }
+ 
+-    CACHE_COLOR(aID, aColor);
++    CACHE_NATIVE_COLOR(aID, aColor);
+     return NS_OK;
+   }
+ 
+   return NS_ERROR_NOT_AVAILABLE;
+ }
+   
+ NS_IMETHODIMP
+ nsXPLookAndFeel::GetMetric(const nsMetricID aID, PRInt32& aMetric)
+ {
+   if (!sInitialized)
+@@ -701,33 +712,41 @@ nsXPLookAndFeel::GetMetric(const nsMetri
+ 
+   return NS_ERROR_NOT_AVAILABLE;
+ }
+ 
+ NS_IMETHODIMP
+ nsXPLookAndFeel::LookAndFeelChanged()
+ {
+   // Wipe out our color cache.
+   PRUint32 i;
+   for (i = 0; i < nsILookAndFeel::eColor_LAST_COLOR; i++)
+-    sCachedColors[i] = 0;
++    sCachedColors[i] = sCachedNativeColors[i] = 0;
+   for (i = 0; i < COLOR_CACHE_SIZE; i++)
+-    sCachedColorBits[i] = 0;
++    sCachedColorBits[i] = sCachedNativeColorBits[i] = 0;
+   return NS_OK;
+ }
+ 
+ 
+ #ifdef DEBUG
+   // This method returns the actual (or nearest estimate) 
+   // of the Navigator size for a given form control for a given font
+   // and font size. This is used in NavQuirks mode to see how closely
+   // we match its size
+ NS_IMETHODIMP
+ nsXPLookAndFeel::GetNavSize(const nsMetricNavWidgetID aWidgetID,
+                             const nsMetricNavFontID   aFontID, 
+                             const PRInt32             aFontSize, 
+                             nsSize &aSize)
+ {
+   aSize.width  = 0;
+   aSize.height = 0;
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ #endif
++
++NS_IMETHODIMP
++nsXPLookAndFeel::LookAndFeelSetMode(PRUint32 aMode)
++{
++  sMode = aMode;
++  return NS_OK;
++}
++
+--- mozilla.orig/widget/src/xpwidgets/nsXPLookAndFeel.h.orig	2010-04-08 15:42:24.000000000 +0100
++++ mozilla/widget/src/xpwidgets/nsXPLookAndFeel.h	2010-04-08 15:42:51.000000000 +0100
+@@ -74,20 +74,26 @@ struct nsLookAndFeelFloatPref
+ #define CACHE_BLOCK(x)     ((x) >> 5)
+ #define CACHE_BIT(x)       (1 << ((x) & 31))
+ 
+ #define COLOR_CACHE_SIZE   (CACHE_BLOCK(nsILookAndFeel::eColor_LAST_COLOR) + 1)
+ #define IS_COLOR_CACHED(x) (CACHE_BIT(x) & nsXPLookAndFeel::sCachedColorBits[CACHE_BLOCK(x)])
+ #define CLEAR_COLOR_CACHE(x) nsXPLookAndFeel::sCachedColors[(x)] =0; \
+               nsXPLookAndFeel::sCachedColorBits[CACHE_BLOCK(x)] &= ~(CACHE_BIT(x));
+ #define CACHE_COLOR(x, y)  nsXPLookAndFeel::sCachedColors[(x)] = y; \
+               nsXPLookAndFeel::sCachedColorBits[CACHE_BLOCK(x)] |= CACHE_BIT(x);
+ 
++#define IS_NATIVE_COLOR_CACHED(x) (CACHE_BIT(x) & nsXPLookAndFeel::sCachedNativeColorBits[CACHE_BLOCK(x)])
++#define CLEAR_NATIVE_COLOR_CACHE(x) nsXPLookAndFeel::sCachedNativeColors[(x)] =0; \
++              nsXPLookAndFeel::sCachedNativeColorBits[CACHE_BLOCK(x)] &= ~(CACHE_BIT(x));
++#define CACHE_NATIVE_COLOR(x, y)  nsXPLookAndFeel::sCachedNativeColors[(x)] = y; \
++              nsXPLookAndFeel::sCachedNativeColorBits[CACHE_BLOCK(x)] |= CACHE_BIT(x);
++
+ class nsXPLookAndFeel: public nsILookAndFeel, public nsIObserver
+ {
+ public:
+   nsXPLookAndFeel();
+   virtual ~nsXPLookAndFeel();
+ 
+   NS_DECL_ISUPPORTS
+ 
+   NS_DECL_NSIOBSERVER
+ 
+@@ -105,35 +111,40 @@ public:
+ 
+   NS_IMETHOD LookAndFeelChanged();
+ 
+ #ifdef NS_DEBUG
+   NS_IMETHOD GetNavSize(const nsMetricNavWidgetID aWidgetID,
+                         const nsMetricNavFontID   aFontID, 
+                         const PRInt32             aFontSize, 
+                         nsSize &aSize);
+ #endif
+ 
++  NS_IMETHOD LookAndFeelSetMode(PRUint32 aMode);
++
+ protected:
+   void IntPrefChanged(nsLookAndFeelIntPref *data);
+   void FloatPrefChanged(nsLookAndFeelFloatPref *data);
+   void ColorPrefChanged(unsigned int index, const char *prefName);
+   void InitFromPref(nsLookAndFeelIntPref* aPref, nsIPrefBranch* aPrefBranch);
+   void InitFromPref(nsLookAndFeelFloatPref* aPref, nsIPrefBranch* aPrefBranch);
+   void InitColorFromPref(PRInt32 aIndex, nsIPrefBranch* aPrefBranch);
+   virtual nsresult NativeGetColor(const nsColorID aID, nscolor& aColor) = 0;
+   PRBool IsSpecialColor(const nsColorID aID, nscolor &aColor);
+ 
+   static PRBool sInitialized;
+   static nsLookAndFeelIntPref sIntPrefs[];
+   static nsLookAndFeelFloatPref sFloatPrefs[];
+   /* this length must not be shorter than the length of the longest string in the array
+    * see nsXPLookAndFeel.cpp
+    */
+   static const char sColorPrefs[][38];
+   static PRInt32 sCachedColors[nsILookAndFeel::eColor_LAST_COLOR];
+   static PRInt32 sCachedColorBits[COLOR_CACHE_SIZE];
++  static PRInt32 sCachedNativeColors[nsILookAndFeel::eColor_LAST_COLOR];
++  static PRInt32 sCachedNativeColorBits[COLOR_CACHE_SIZE];
+   static PRBool sUseNativeColors;
++  static PRUint32 sMode;
+ };
+ 
+ extern nsresult NS_NewXPLookAndFeel(nsILookAndFeel**);
+ 
+ #endif

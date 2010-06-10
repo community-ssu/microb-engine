@@ -1,0 +1,29 @@
+BMO_attached/
+disable_moz_composited.diff - probably composited plugins not a problem anymore (problem with get started)
+
+branding/
+010_MICROB_paths_and_names.diff - better switch to xulrunner name.
+020_BUG349921_toolkit_branding.diff - can we do it without patch? packaging way maybe?
+030_MICROB_about_fixes_lp0.diff - kill it or make mobile version of about: page
+
+buildconfig/
+cairo_temp_revert_back.diff - update system cairo
+
+crashes/
+GetChannelIsUnsafe_bug117540.diff - bug needed or check that it is obsolete
+nb118966.diff - do we still need this patch ? BMO bug needed?
+
+localization/
+bug87973.firefox.hardcoded.diff - branding need to be updated in other way
+exception-en-US.diff - check what is the problem
+
+logindialog/
+NotificationBox.diff - need to fix notification boxes implementation from native code. or make JS wrapper
+
+not_sorted/
+attachment.cgi?id=45084.diff - check if it is not needed anymore after switching to typeaheadfind
+bug111799_patch_v1.diff - need bug
+disable_native_offscreen.diff - rework rendering pipeline to make it public
+
+perf_tweaks/
+enable_16bpp_format.diff - not sure if it is still needed

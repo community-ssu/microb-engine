@@ -1,0 +1,24 @@
+#https://bugzilla.mozilla.org/show_bug.cgi?id=532610
+Index: mozilla/uriloader/exthandler/Makefile.in
+===================================================================
+--- mozilla.orig/uriloader/exthandler/Makefile.in
++++ mozilla/uriloader/exthandler/Makefile.in
+@@ -157,16 +157,18 @@ LOCAL_INCLUDES   += $(TK_CFLAGS) $(MOZ_D
+ EXTRA_DSO_LDOPTS += $(MOZ_DBUS_GLIB_LIBS)
+ endif
+ 
+ ifdef MOZ_PLATFORM_HILDON
+ ifdef MOZ_ENABLE_GNOMEVFS
+ LOCAL_INCLUDES   += $(MOZ_GNOMEVFS_CFLAGS)
+ EXTRA_DSO_LDOPTS += $(MOZ_GNOMEVFS_LIBS)
+ endif
++LOCAL_INCLUDES   += $(LIBHILDONMIME_CFLAGS)
++EXTRA_DSO_LDOPTS += $(LIBHILDONMIME_LIBS)
+ endif
+ 
+ ifeq ($(OS_ARCH),WINNT WINCE)
+ OS_LIBS		+= shell32.lib
+ GARBAGE		+= nsOSHelperAppService.cpp $(srcdir)/nsOSHelperAppService.cpp \
+              nsMIMEInfoWin.cpp $(srcdir)/nsMIMEInfoWin.cpp
+ endif
+ 

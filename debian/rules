@@ -1,0 +1,619 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+tarballname = mozilla
+
+configopts += $(ADD_OPTIONS)
+optimize_add =
+envflags =
+
+static:=n
+logging:=n
+debug:=n
+perfmetr:=n
+jprof:=n
+vfp:=n
+oprof:=n
+nolibxul:=n
+MOZCONFIG_NAME:=configs/mozconfig
+MOZCONFIG_LEV:=microb2
+syscairo:=y
+svgport:=n
+canvas:=n
+memleaks:=n
+jemalloc:=y
+mochitests:=n
+
+DH_ALWAYS_EXCLUDE=CVS:.svn
+
+btree = build-tree
+tarballs = tarballs
+
+TAR_CREATE_FLAGS = cvzf
+MOZILLA_TEST_DIR = mozilla-tests
+TEST_PACKAGE_DIR = $(CURDIR)/debian/tmp/usr/share/microb-moztests
+
+
+export QUILT_PATCHES=$(CURDIR)/debian/patches
+QUILT_PATCHES:=$(CURDIR)/debian/patches
+STAMP_DIR:=$(CURDIR)/stampdir
+STAMPDIR_LOG:=$(CURDIR)/stampdir/log
+STAMPDIR_PATCH:=$(CURDIR)/stampdir/log/patch
+
+CONFIG_DIR:=$(CURDIR)/debian/configs
+APPENDICES_DIR:=$(CONFIG_DIR)/appendices
+
+GCCVER=.gcc$(shell gcc --version | grep gcc | cut -d ' ' -f 3)
+
+ifneq (,$(findstring parallel,$(DEB_BUILD_OPTIONS)))
+    PARALLEL_JOBS := $(shell echo $(DEB_BUILD_OPTIONS) | \
+        sed -e 's/.*parallel=\([0-9]\+\).*/\1/')
+    ifeq ($(DEB_BUILD_OPTIONS),$(PARALLEL_JOBS))
+        PARALLEL_JOBS := $(shell if [ -f /proc/cpuinfo ]; \
+            then echo `cat /proc/cpuinfo | grep 'processor' | wc -l`; \
+            else echo 1; fi)
+        PARALLEL_JOBS := $(shell echo $(PARALLEL_JOBS)*2+1 | bc)
+    endif
+    NJOBS:=-j$(PARALLEL_JOBS)
+endif
+
+ifneq (,$(findstring CodeSourcery,$(shell gcc --version)))
+GCCENV:=.cs
+export CSGCC=1
+	optimize_add += -DCSGCC=1
+else
+export CSGCC=0
+endif
+
+ifneq (,$(findstring sbox,$(shell gcc --version)))
+TABLET:=.tablet
+endif
+
+prefix=/usr
+
+srcdir = $(tarballname)
+builddir = $(btree)/mozilla
+
+bldstr:=
+
+buildobjdir = "$(CURDIR)/$(btree)/obj-@CONFIG_GUESS@"
+
+# Here can be defined autogen.sh, Ex: PRE_CONF_SCRIPT = ./autogen.sh &&
+PRE_CONF_SCRIPT = autoconf &&
+
+DEB_HOST_ARCH          ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_HOST_ARCH_OS       ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+DEB_HOST_GNU_TYPE      ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+
+CFLAGS += -g
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+
+ifneq (,$(findstring static,$(DEB_BUILD_OPTIONS)))
+static:=y
+else
+static:=$(static)
+endif
+
+ifneq (,$(findstring jprof,$(DEB_BUILD_OPTIONS)))
+jprof:=y
+else
+jprof:=$(jprof)
+endif
+
+ifneq (,$(findstring oprof,$(DEB_BUILD_OPTIONS)))
+oprof:=y
+else
+oprof:=$(oprof)
+endif
+
+ifneq (,$(findstring syscairo,$(DEB_BUILD_OPTIONS)))
+syscairo:=y
+else
+syscairo:=$(syscairo)
+endif
+
+ifneq (,$(findstring nosyscairo,$(DEB_BUILD_OPTIONS)))
+syscairo:=n
+else
+syscairo:=$(syscairo)
+endif
+
+ifneq (,$(findstring svgport,$(DEB_BUILD_OPTIONS)))
+svgport:=y
+else
+svgport:=$(svgport)
+endif
+
+ifneq (,$(findstring canvas,$(DEB_BUILD_OPTIONS)))
+canvas:=y
+else
+canvas:=$(canvas)
+endif
+
+ifneq (,$(findstring perfmetr,$(DEB_BUILD_OPTIONS)))
+perfmetr:=y
+else
+perfmetr:=$(perfmetr)
+endif
+
+ifneq (,$(findstring ext,$(MEMBED_LEVEL)))
+MOZCONFIG_LEV:=
+MOZCONFIG_NAME:=$(EXT_MOZCONFIG)
+endif
+
+ifneq (,$(findstring config,$(DEB_BUILD_OPTIONS)))
+	MOZCONFIG_LEV:= $(shell echo $(DEB_BUILD_OPTIONS) | sed -e 's/.*config=\([0-9a-zA-Z]\+\).*/\1/')
+endif
+
+ifneq (,$(findstring cairoqt,$(DEB_BUILD_OPTIONS)))
+	APPENDICES+=cairoqt
+endif
+
+series_file:=series.$(MOZCONFIG_LEV)
+
+ifneq (,$(findstring patches,$(DEB_BUILD_OPTIONS)))
+	series_file:=series.$(shell echo $(DEB_BUILD_OPTIONS) | sed -e 's/.*patches=\([0-9a-zA-Z]\+\).*/\1/')
+endif
+
+ifneq (,$(findstring nolibxul,$(DEB_BUILD_OPTIONS)))
+nolibxul:=y
+else
+nolibxul:=$(nolibxul)
+endif
+
+ifneq (,$(findstring nojemalloc,$(DEB_BUILD_OPTIONS)))
+jemalloc:=n
+else
+jemalloc:=$(jemalloc)
+endif
+
+ifneq (,$(findstring withjemalloc,$(DEB_BUILD_OPTIONS)))
+jemalloc:=y
+else
+jemalloc:=$(jemalloc)
+endif
+
+ifneq (,$(findstring cflagsopt,$(DEB_BUILD_OPTIONS)))
+optimize_add = $(CFLAGS)
+endif
+
+ifneq (,$(findstring vfp,$(DEB_BUILD_OPTIONS)))
+vfp:=n
+else
+vfp:=$(vfp)
+endif
+
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+debug:=y
+bldstr:=dbg-
+else
+debug:=$(debug)
+endif
+
+ifneq (,$(findstring logging,$(DEB_BUILD_OPTIONS)))
+logging:=y
+bldstr:=$(bldstr)log-
+else
+logging:=$(logging)
+endif
+
+ifneq (,$(findstring memleaks,$(DEB_BUILD_OPTIONS)))
+memleaks:=y
+bldstr:=$(bldstr)lk-
+else
+memleaks:=$(memleaks)
+endif
+
+ 
+ifneq (,$(findstring mochitests,$(DEB_BUILD_OPTIONS)))
+mochitests:=y
+else
+mochitests:=$(mochitests)
+endif
+
+ifeq ($(perfmetr),y)
+	configopts += --enable-reflow-perf --enable-perf-metrics
+endif
+
+buildobjdir = "$(CURDIR)/$(btree)/obj-"$(bldstr)build$(MOZCONFIG_LEV)
+
+configopts += --disable-elf-dynstr-gc
+ifneq (,$(findstring $(DEB_HOST_ARCH),arm armel))
+configopts += --without-arm-thumb2
+ifeq ($(vfp),y)
+	optimize_add += -mfpu=vfp -mfloat-abi=softfp
+endif
+configopts += --with-arm-kuser
+	envflags += ac_cv_have_usable_wchar_option_v2="no"
+else
+ifneq ($(TABLET),.tablet)
+endif
+endif
+bldstr:=$(bldstr)$(DEB_HOST_ARCH)-
+
+ifeq ($(TABLET),.tablet)
+bldstr:=$(bldstr)sb-
+endif
+
+	configopts += --disable-install-strip
+
+ifneq ($(jemalloc),y)
+	configopts += --disable-jemalloc
+else
+	configopts += --enable-jemalloc
+endif
+
+ifeq ($(debug),y)
+#Hack for tablet compiler
+ifeq ($(TABLET),.tablet)
+ifeq ($(GCCENV),.cs)
+	optimize_add += -O1
+endif
+endif
+	configopts += --disable-strip --enable-debug --enable-debugger-info-modules
+ifeq ($(nolibxul),n)
+bldstr:=$(bldstr)nolibxul-
+	configopts += --disable-libxul
+else
+ifneq (,$(findstring $(GCCENV),.cs))
+ifneq (,$(findstring $(GCCVER),.gcc3.4.4))
+ifeq ($(nolibxul),n)
+bldstr:=$(bldstr)nolibxul-
+	configopts += --disable-libxul
+endif
+endif
+endif
+endif
+endif
+ifeq ($(nolibxul),y)
+bldstr:=$(bldstr)nolibxul-
+	configopts += --disable-libxul
+endif
+
+ifeq ($(logging),y)
+	configopts += --enable-logging  --enable-logrefcnt
+else
+	configopts += --disable-logging --disable-logrefcnt
+endif
+
+ifeq ($(memleaks),y)
+	configopts += --enable-debug --enable-trace-malloc
+endif
+
+ifeq ($(mochitests),y)
+	configopts += --enable-tests --enable-mochitest --enable-xremote 
+else
+	configopts += --disable-tests --disable-mochitest --disable-xremote 
+endif
+
+ifeq ($(GCCENV),.cs)
+ifneq (,$(findstring $(DEB_HOST_ARCH),i386))
+	optimize_add +=  -finline-functions -fno-unit-at-a-time
+ifeq ($(nolibxul),y)
+	optimize_add +=  -O1
+endif
+endif
+ifeq ($(nolibxul),y)
+	optimize_add +=  -finline-functions -fno-unit-at-a-time
+endif
+endif
+
+ifeq ($(jprof),y)
+	configopts += --disable-debug --enable-debugger-info-modules --disable-strip --enable-jprof
+bldstr:=$(bldstr)jpr-
+endif
+
+ifneq (,$(findstring strip,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O2 -g0
+	configopts += --enable-strip
+bldstr:=$(bldstr)strip-
+endif
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+bldstr:=$(bldstr)noopt-
+endif
+
+ifeq ($(oprof),y)
+	optimize_add +=  -fno-omit-frame-pointer
+bldstr:=$(bldstr)opr-
+endif
+
+ifeq ($(syscairo),y)
+	configopts += --enable-system-cairo
+bldstr:=$(bldstr)syscairo-
+endif
+
+ifeq ($(nojit),y)
+	configopts += --disable-jit
+bldstr:=$(bldstr)nojit-
+endif
+
+ifeq ($(canvas),y)
+	configopts += --enable-canvas
+endif
+
+	configopts += --enable-optimize=\"$(CFLAGS) $(optimize_add) \"
+
+# shared library versions, option 1
+version=$(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2 | cut -d ':' -f 2 | cut -d '-' -f 1,2)
+packagename=$(shell dpkg-parsechangelog | grep ^Source:.* | cut -d ' ' -f 2)
+PKGVERSION      := $(shell dpkg-parsechangelog | grep ^Version:.* | cut -d ' ' -f 2)
+MOZ_VERSION=3.6
+MOZ_MILESTONE=1.9.2
+
+major=2
+
+cross_compile:=n
+CROSS_HOST_PREFIX=
+ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+	HBT_OPT = --build=$(DEB_HOST_GNU_TYPE)
+XPT_LINK:=$(CURDIR)/debian/tmp/usr/lib/microb-engine/xpt_link
+else
+	HBT_OPT = --target=$(DEB_HOST_GNU_TYPE)
+	CROSS_FLAGS =
+cross_compile:=y
+bldstr:=$(bldstr)cross-
+XPT_LINK:=$(CURDIR)/$(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/host/bin/host_xpt_link
+endif
+
+unpack: unpack-stamp
+unpack-stamp:
+	mkdir -p $(btree)
+	mkdir -p $(STAMPDIR_LOG)
+	#Small hack for old X11R6 directory
+	# uudecode source files
+	for str in `find ./debian -name "*.uu"`;do \
+	if [ -s $$str ]; then \
+	  uudecode -o $$(echo $$str | sed 's/\.uu//g') $$str; rm $$str; \
+	fi ;\
+	done
+	if [ -f $(CURDIR)/client.mk ]; then\
+	  rm -f $(builddir) && ln -s $(CURDIR) $(builddir);\
+	else\
+	  if [ -d $(builddir) ]; then \
+	    if [ -d $(builddir)/.hg ]; then \
+	      hg pull -R $(builddir) && hg update -R $(builddir) -C; \
+	    else \
+	      hg archive -r upstream/$(version) -t files $(builddir); \
+	    fi \
+	  else \
+	    hg clone -r upstream/$(version) $(CURDIR) $(builddir) && hg update -C -R $(builddir); \
+#	    hg archive -r upstream/$(version) -t files $(builddir); \
+	  fi;\
+	fi
+	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(MOZCONFIG_LEV)
+	cp -rf  $(CURDIR)/debian/resources/branding $(builddir)/
+	touch unpack-stamp
+
+configure: configure-stamp
+configure-stamp: patch-stamp
+	dh_testdir
+
+	for f in `find debian/ -name "[^c]*.in"`; do \
+		sed -e "s/@PACKAGEVERSION@/${PKGVERSION}/g" -e "s/@PACKAGENAME@/${packagename}/g"  $$f > `echo $$f | sed -e "s/\.in//"`; \
+ 	done
+
+	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(MOZCONFIG_LEV)
+	#if ! test -e /usr/include/X11; then cd /usr/include && ln -s ../X11R6/include/X11; fi
+	cd $(builddir) && $(PRE_CONF_SCRIPT) rm -f ./.mozconfig && cp $(CURDIR)/debian/$(MOZCONFIG_NAME)$(MOZCONFIG_LEV) ./mozconfig
+
+	# integrate appendices into mozconfig:
+	for i in $(APPENDICES) ; do \
+	    cat $(APPENDICES_DIR)/$$i.appendix | \
+	        sed -e "s!=.*!=!" | sed -e "s!--enable-!--disable-!" | \
+                    grep -v "^$$" > $(builddir)/$$i.appendix.disable ; \
+	    grep -vf $(builddir)/$${i}.appendix.disable $(builddir)/mozconfig > \
+	        $(builddir)/mozconfig.$$i.disable_clean ; \
+	    cat $(APPENDICES_DIR)/$$i.appendix | \
+	        sed -e "s!=.*!=!" | sed -e "s!--disable-!--enable-!" | \
+                    grep -v "^$$" > $(builddir)/$$i.appendix.enable ; \
+	    grep -vf $(builddir)/$$i.appendix.enable $(builddir)/mozconfig.$$i.disable_clean > \
+ 	        $(builddir)/mozconfig.$$i.clean ; \
+	    cat $(builddir)/mozconfig.$$i.clean $(APPENDICES_DIR)/$$i.appendix > \
+	        $(builddir)/mozconfig ; \
+	done
+
+	echo "ac_add_options $(configopts) --prefix=$(prefix) $(HBT_OPT)" >> $(builddir)/mozconfig
+	echo "mk_add_options MOZ_OBJDIR=$(buildobjdir)" >> $(builddir)/mozconfig
+	echo "mk_add_options MOZ_MAKE_FLAGS=$(NJOBS)" >> $(builddir)/mozconfig
+ifeq ($(cross_compile),y)
+	echo "CROSS_COMPILE=1" >> $(builddir)/mozconfig
+	echo "LIBIDL_CONFIG=$(prefix)/$(DEB_HOST_GNU_TYPE)/include/cross-scripts/libIDL-config-2" >> $(builddir)/mozconfig
+	echo "HOST_LIBIDL_CONFIG=$(prefix)/bin/libIDL-config-2" >> $(builddir)/mozconfig
+endif
+	#echo "1900000000" >> $(builddir)/config/build_number
+	#echo $(MOZ_MILESTONE) > $(builddir)/config/milestone.txt
+	echo $(MOZ_VERSION) > $(builddir)/browser/config/version.txt
+	#Small hack touch $(builddir)/toolkit/empty-file
+	touch $(builddir)/toolkit/empty-file
+	echo "MOZ_APP_VERSION=$(MOZ_VERSION)" >> $(builddir)/mozconfig
+	echo "MOZILLA_VERSION=$(MOZ_VERSION)" >> $(builddir)/mozconfig
+	cp $(builddir)/mozconfig $(builddir)/mozconfig-$(bldstr)build$(MOZCONFIG_LEV)
+	cd $(builddir) && export $(envflags) && $(envflags) MOZ_APP_VERSION=$(version) MOZILLA_VERSION=$(version) make -f client.mk configure
+	touch configure-stamp
+
+
+build: unpack-stamp patch-stamp configure-stamp build-stamp
+build-stamp:
+	dh_testdir
+	find $(builddir)/branding -xtype f -name Makefile -exec rm -rf {} \;
+	unset GRE_HOME && unset DISPLAY && cd $(builddir) && $(envflags) $(MAKE) -f client.mk build
+	touch build-stamp
+
+clean: unpatch
+	dh_testdir
+	dh_testroot
+
+	rm -f build-stamp configure-stamp unpack-stamp patch-stamp
+	#Removing object_tree
+	-rm -rf $(btree)/obj-*
+	#Removing unpacked sources
+	-rm -rf $(builddir)/patches
+	-rm -rf $(builddir)/.pc
+	rm -f debian/shlibs.local
+	#chmod -f a-x debian/patches/*.diff
+	rm -rf $(CURDIR)/stampdir
+	rm -rf $(CURDIR)/patches
+	rm -f $(CURDIR)/.pc
+	rm -f $(QUILT_PATCHES)/series
+	rm -rf $(CURDIR)/tarballs
+	# uuencode source files
+	for str1 in "*.png" "*.gif" "*.tar.gz"; do \
+	for str in `find ./debian -name "$$str1"`;do \
+	if [ -s $$str ]; then \
+	  uuencode $$str $$str > $$str.uu; rm $$str; \
+	fi; \
+	done; \
+	done
+	chmod a-x debian/resources/tools/*
+	dh_clean
+
+# patch stuff
+stampdir_targets+=patch
+patch: patch-stamp
+patch-stamp: unpack-stamp
+	mkdir -p stampdir/patches
+	echo 2 > stampdir/patches/.version
+	mkdir -p stampdir/log
+	rm -f .pc
+	rm -f patches
+	ln -s debian/patches
+	chmod a+x debian/resources/tools/*
+	ln -s stampdir/patches .pc
+	rm -f patches/series && ln -s $(QUILT_PATCHES)/$(series_file) patches/series
+	if ! [ `which quilt` ]; then \
+		echo "Couldn't find quilt. Please install it or add it to the build-depends for this package."; \
+		exit 1; \
+	fi; \
+	if quilt next; then \
+	  echo -n "Applying patches... "; \
+	    if cd $(builddir) && rm -f .pc && rm -f patches && ln -s $(CURDIR)/stampdir/patches .pc && ln -s $(CURDIR)/debian/patches patches \
+	       && quilt push -a -v >  $(STAMPDIR_PATCH); then \
+	    echo "successful."; \
+	  else \
+	    cd $(CURDIR) && quilt next; \
+	    echo "failed! (check $(STAMP_DIR)/log/patch for details)";cat $(STAMP_DIR)/log/patch; echo ""; \
+	    echo -n "try: perl debian/resources/tools/fixreject.pl "; quilt next; \
+	    echo " and sh debian/resources/tools/refresh_patches.sh "; \
+	    exit 1; \
+	  fi; \
+	else \
+	  echo "No patches to apply"; \
+	fi; \
+	>$@
+
+unpatch:
+	rm -f $(STAMP_DIR)/patch
+	@echo -n "Unapplying patches..."; \
+	if [ -e $(STAMP_DIR)/patches/applied-patches ]; then \
+	  if test -d $(builddir); then \
+	  if cd $(builddir) && quilt pop -a -v > $(STAMPDIR_LOG)/unpatch; then \
+	    echo "successful."; \
+	  else \
+	    echo "failed! (check $(STAMP_DIR)/log/unpatch for details)"; \
+	    exit 1; \
+	  fi; \
+	  fi; \
+	else \
+	  echo "nothing to do."; \
+	fi
+
+
+install: build
+	# Add here commands to install the package into debian/tmp obj-$(bldstr)build$(MOZCONFIG_LEV)
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	# Add here commands to install the package into debian/tmp
+	#Small hack touch $(builddir)/toolkit/empty-file
+	touch $(builddir)/toolkit/empty-file
+	cd $(builddir) && $(envflags) $(MAKE) -f client.mk install DESTDIR=$(CURDIR)/debian/tmp
+	#Show all installed components
+ifeq ($(cross_compile),y)
+	cp -f $(XPT_LINK) $(CURDIR)/debian/tmp/usr/lib/microb-engine/
+endif
+ifneq (,$(findstring microb,$(MOZCONFIG_LEV)))
+	mkdir -p ./debian/tmp/usr/lib/microb-engine/icons
+	mkdir -p ./debian/tmp/usr/share
+	mkdir -p ./debian/tmp/etc
+	mkdir -p  $(TEST_PACKAGE_DIR)
+	mkdir -p  $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR)
+	find ./debian/tmp/etc -xtype f -exec chmod a-x {} \;
+	find  $(TEST_PACKAGE_DIR) -xtype f -exec chmod a-x {} \;
+	find  $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR) -xtype f -exec chmod a-x {} \;
+	find ./debian/tmp/usr/share -xtype f -exec chmod a-x {} \;
+	find ./debian/tmp/usr/lib/microb-engine/chrome -xtype f -exec chmod a-x {} \;
+	find ./debian/tmp/usr/lib/microb-engine/res -xtype f -exec chmod a-x {} \;
+	find ./debian/tmp/usr/lib/microb-engine/components -xtype f -exec chmod a-x {} \;
+	find ./debian/tmp/usr/lib/microb-engine/icons -xtype f -exec chmod a-x {} \;
+	find ./debian/tmp/usr/lib/microb-engine -name "*.txt" -xtype f -exec chmod a-x {} \;
+	chmod a-x ./debian/tmp/usr/lib/microb-engine/README.txt
+	chmod a-x ./debian/tmp/usr/lib/microb-engine/LICENSE
+	find ./debian/tmp/usr/lib
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
+	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/lib/*jemalloc*.a $(CURDIR)/debian/tmp/usr/lib/microb-engine-devel/sdk/lib/
+	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CURDIR)/debian/tmp/usr/include/microb-engine/
+	
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed $(CURDIR)/debian/tmp/usr/lib/microb-engine; fi
+ifeq ($(mochitests),y)
+	cp -rfL $(builddir)/build/pgo/certs $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR)
+	if test -d $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/_tests; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/_tests/ $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/xpcshell; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/xpcshell $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/nss/certutil; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/nss/certutil $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR) ; fi
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/nss/pk12util; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/nss/pk12util $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/testing/mochitest/ssltunnel/ssltunnel; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/testing/mochitest/ssltunnel/ssltunnel $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -d $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/plugins; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/plugins $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -d $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/chrome; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/chrome $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+	if test -d $(TEST_PACKAGE_DIR); then  cd $(TEST_PACKAGE_DIR)  && tar $(TAR_CREATE_FLAGS) $(MOZILLA_TEST_DIR).tar.gz $(MOZILLA_TEST_DIR); fi
+	if test -d $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); then rm -rf $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR); fi
+endif
+endif
+ifneq (,$(findstring microb,$(MOZCONFIG_LEV)))
+	dh_install --sourcedir=$(CURDIR)/debian/tmp --list-missing
+	mv $(CURDIR)/debian/microb-engine-common/usr/lib $(CURDIR)/debian/microb-engine-common/usr/share
+	$(XPT_LINK) only_ship_this.xpt $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/*.xpt
+	rm $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/*.xpt
+	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/nspr
+	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/nss
+	mv only_ship_this.xpt $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/components/tablet.xpt
+	perl $(CURDIR)/debian/resources/tools/remove.target.license.pl $(CURDIR)/debian/microb-engine-common/usr/share/microb-engine/chrome
+	perl $(CURDIR)/debian/resources/tools/remove.target.license.pl $(CURDIR)/debian/microb-engine-common/usr/share/microb-engine/res
+	perl $(CURDIR)/debian/resources/tools/remove.target.license.pl $(CURDIR)/debian/microb-engine-common/usr/share/microb-engine/defaults
+	perl $(CURDIR)/debian/resources/tools/remove.target.license.pl $(CURDIR)/debian/microb-engine-common/usr/share/microb-engine/modules
+	rm -rf $(CURDIR)/debian/microb-engine/usr/lib/microb-engine/xpidl
+	rm -rf $(CURDIR)/debian/microb-full/usr/lib/microb-xulrunner/xpidl
+	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/zlib.h
+	rm -rf $(CURDIR)/debian/microb-engine-dev/usr/include/microb-engine/expat*.h
+endif
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_link
+# names of the packages in control file for which there should be debug packages
+	dh_strip $(shell perl -ne 'next unless /Package:\s*(\S+)-dbg/; print " --dbg-package=$$1"' debian/control)
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs -V
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

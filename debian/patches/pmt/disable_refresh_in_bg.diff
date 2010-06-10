@@ -1,0 +1,198 @@
+#BMO#518805, NB#140699
+Index: mozilla/docshell/base/nsDocShell.cpp
+===================================================================
+--- mozilla.orig/docshell/base/nsDocShell.cpp	2009-11-02 13:34:44.000000000 +0200
++++ mozilla/docshell/base/nsDocShell.cpp	2009-11-02 13:54:37.000000000 +0200
+@@ -682,6 +682,8 @@
+     mAllowAuth(PR_TRUE),
+     mAllowKeywordFixup(PR_FALSE),
+     mIsOffScreenBrowser(PR_FALSE),
++    mIsActive(PR_TRUE),
++    mDisableMetaRefreshInBackground(PR_FALSE),
+     mFiredUnloadEvent(PR_FALSE),
+     mEODForCurrentDocument(PR_FALSE),
+     mURIResultedInDocument(PR_FALSE),
+@@ -4198,6 +4200,9 @@
+     if (NS_SUCCEEDED(rv) && mObserveErrorPages) {
+         prefs->AddObserver("browser.xul.error_pages.enabled", this, PR_FALSE);
+     }
++    rv = mPrefs->GetBoolPref("browser.meta_refresh_in_background.disabled", &tmpbool);
++    if (NS_SUCCEEDED(rv))
++        mDisableMetaRefreshInBackground = tmpbool;
+ 
+     nsCOMPtr<nsIObserverService> serv = do_GetService(NS_OBSERVERSERVICE_CONTRACTID);
+     if (serv) {
+@@ -4550,6 +4555,35 @@
+ }
+ 
+ NS_IMETHODIMP
++nsDocShell::SetIsActive(PRBool aIsActive)
++{
++  // Keep track ourselves.
++  mIsActive = aIsActive;
++
++  if (mDisableMetaRefreshInBackground) {
++    if (aIsActive)
++      ResumeRefreshURIs();
++    else
++      SuspendRefreshURIs();
++  }
++
++  // Tell the PresShell about it.
++  nsCOMPtr<nsIPresShell> shell;
++  nsDocShell::GetPresShell(getter_AddRefs(shell));
++  if (shell)
++    return shell->SetIsActive(aIsActive);
++
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::GetIsActive(PRBool *aIsActive)
++{
++  *aIsActive = mIsActive;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
+ nsDocShell::SetVisibility(PRBool aVisibility)
+ {
+     if (!mContentViewer)
+@@ -10169,6 +10203,10 @@
+         if (NS_SUCCEEDED(rv))
+             mUseErrorPages = tmpbool;
+ 
++        rv = prefs->GetBoolPref("browser.meta_refresh_in_background.disabled", &tmpbool);
++        if (NS_SUCCEEDED(rv))
++            mDisableMetaRefreshInBackground = tmpbool;
++
+     } else {
+         rv = NS_ERROR_UNEXPECTED;
+     }
+Index: mozilla/docshell/base/nsDocShell.h
+===================================================================
+--- mozilla.orig/docshell/base/nsDocShell.h	2009-11-02 13:34:44.000000000 +0200
++++ mozilla/docshell/base/nsDocShell.h	2009-11-02 13:54:37.000000000 +0200
+@@ -742,6 +742,8 @@
+     PRPackedBool               mAllowAuth;
+     PRPackedBool               mAllowKeywordFixup;
+     PRPackedBool               mIsOffScreenBrowser;
++    PRPackedBool               mIsActive;
++    PRPackedBool               mDisableMetaRefreshInBackground;
+ 
+     // This boolean is set to true right before we fire pagehide and generally
+     // unset when we embed a new content viewer.  While it's true no navigation
+Index: mozilla/docshell/base/nsIDocShell.idl
+===================================================================
+--- mozilla.orig/docshell/base/nsIDocShell.idl	2009-11-02 13:33:50.000000000 +0200
++++ mozilla/docshell/base/nsIDocShell.idl	2009-11-02 13:54:37.000000000 +0200
+@@ -69,7 +69,7 @@
+ interface nsIDOMStorage;
+ interface nsIPrincipal;
+ 
+-[scriptable, uuid(8ADFB831-1053-4A19-884D-BCDAD7277B4B)]
++[scriptable, uuid(ca26be5b-53f5-4c51-b007-6957f10a7bc7)]
+ interface nsIDocShell : nsISupports
+ {
+   /**
+@@ -488,4 +488,11 @@
+    * and should be treated accordingly.
+    **/
+   attribute boolean isOffScreenBrowser;    
++
++  /**
++   * Sets whether a docshell is active. An active docshell is one that is
++   * visible, and thus is not a good candidate for certain optimizations
++   * like image frame discarding. Docshells are active unless told otherwise.
++   */
++  attribute boolean isActive;
+ };
+Index: mozilla/layout/base/nsIPresShell.h
+===================================================================
+--- mozilla.orig/layout/base/nsIPresShell.h	2009-11-02 13:34:44.000000000 +0200
++++ mozilla/layout/base/nsIPresShell.h	2009-11-02 14:01:53.000000000 +0200
+@@ -107,10 +107,10 @@
+ typedef short SelectionType;
+ typedef PRUint32 nsFrameState;
+ 
+-// eed2ef56-133f-4696-9eee-5fc45d816be8
++// 81335b48-aa77-42c1-b16f-bfb38f2bb74c
+ #define NS_IPRESSHELL_IID     \
+-{ 0xeed2ef56, 0x133f, 0x4696, \
+-  { 0x9e, 0xee, 0x5f, 0xc4, 0x5d, 0x81, 0x6b, 0xe8 } }
++{ 0x81335b48, 0xaa77, 0x42c1, \
++  { 0xb1, 0x6f, 0xbf, 0xb3, 0x8f, 0x2b, 0xb7, 0x4c } }
+ 
+ // Constants for ScrollContentIntoView() function
+ #define NS_PRESSHELL_SCROLL_TOP      0
+@@ -869,6 +869,8 @@
+                              PRBool aShouldIgnoreSuppression = PR_FALSE,
+                              PRBool aIgnoreRootScrollFrame = PR_FALSE) = 0;
+ 
++  virtual nsresult SetIsActive(PRBool aIsActive) = 0;
++
+ protected:
+   // IMPORTANT: The ownership implicit in the following member variables
+   // has been explicitly checked.  If you add any members to this class,
+Index: mozilla/layout/base/nsPresShell.cpp
+===================================================================
+--- mozilla.orig/layout/base/nsPresShell.cpp	2009-11-02 13:34:44.000000000 +0200
++++ mozilla/layout/base/nsPresShell.cpp	2009-11-02 14:03:14.000000000 +0200
+@@ -921,6 +921,8 @@
+                              PRBool aShouldIgnoreSuppression = PR_FALSE,
+                              PRBool aIgnoreRootScrollFrame = PR_FALSE);
+ 
++  virtual nsresult SetIsActive(PRBool aIsActive);
++
+ protected:
+   virtual ~PresShell();
+ 
+@@ -1302,6 +1304,8 @@
+   // Ensure that every allocation from the PresArena is eventually freed.
+   PRUint32 mPresArenaAllocCount;
+ #endif
++
++  PRBool mIsActive;
+ };
+ 
+ class nsAutoCauseReflowNotifier
+@@ -1621,7 +1625,7 @@
+                             (void **) aInstancePtrResult);
+ }
+ 
+-PresShell::PresShell()
++PresShell::PresShell() : mIsActive(PR_TRUE)
+ {
+   mSelection = nsnull;
+ #ifdef MOZ_REFLOW_PERF
+@@ -1820,6 +1824,16 @@
+     }
+ #endif
+ 
++  // Get our activeness from the docShell.
++  nsCOMPtr<nsISupports> container = mPresContext->GetContainer();
++  nsCOMPtr<nsIDocShell> docshell(do_QueryInterface(container));
++  if (docshell) {
++    PRBool isActive;
++    nsresult rv = docshell->GetIsActive(&isActive);
++    if (NS_SUCCEEDED(rv))
++      SetIsActive(isActive);
++  }
++
+   return NS_OK;
+ }
+ 
+@@ -5894,6 +5908,13 @@
+            bgcolor));
+ }
+ 
++nsresult
++PresShell::SetIsActive(PRBool aIsActive)
++{
++  mIsActive = aIsActive;
++  return NS_OK;
++}
++
+ void PresShell::UpdateCanvasBackground()
+ {
+   // If we have a frame tree and it has style information that
