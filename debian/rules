@@ -195,6 +195,7 @@ debug:=y
 bldstr:=dbg-
 else
 debug:=$(debug)
+CFLAGS += -DG_DISABLE_CAST_CHECKS
 endif
 
 ifneq (,$(findstring logging,$(DEB_BUILD_OPTIONS)))
@@ -227,6 +228,7 @@ buildobjdir = "$(CURDIR)/$(btree)/obj-"$(bldstr)build$(MOZCONFIG_LEV)
 configopts += --disable-elf-dynstr-gc
 ifneq (,$(findstring $(DEB_HOST_ARCH),arm armel))
 configopts += --without-arm-thumb2
+optimize_add += -finline-functions -finline-limit=128 -mtp=cp15
 ifeq ($(vfp),y)
 	optimize_add += -mfpu=vfp -mfloat-abi=softfp
 endif
@@ -399,7 +401,7 @@ configure-stamp: patch-stamp
 
 	for f in `find debian/ -name "[^c]*.in"`; do \
 		sed -e "s/@PACKAGEVERSION@/${PKGVERSION}/g" -e "s/@PACKAGENAME@/${packagename}/g"  $$f > `echo $$f | sed -e "s/\.in//"`; \
- 	done
+	done
 
 	#Unpacking source tree version=$(version) GCCENV=$(GCCENV) ENV=$(TABLET) GCCVER=$(GCCVER) CSGCC=$(CSGCC) Jobs $(NJOBS), DBO=$(DEB_BUILD_OPTIONS), CONF_OPT=$(MOZCONFIG_LEV)
 	#if ! test -e /usr/include/X11; then cd /usr/include && ln -s ../X11R6/include/X11; fi
@@ -416,7 +418,7 @@ configure-stamp: patch-stamp
 	        sed -e "s!=.*!=!" | sed -e "s!--disable-!--enable-!" | \
                     grep -v "^$$" > $(builddir)/$$i.appendix.enable ; \
 	    grep -vf $(builddir)/$$i.appendix.enable $(builddir)/mozconfig.$$i.disable_clean > \
- 	        $(builddir)/mozconfig.$$i.clean ; \
+	        $(builddir)/mozconfig.$$i.clean ; \
 	    cat $(builddir)/mozconfig.$$i.clean $(APPENDICES_DIR)/$$i.appendix > \
 	        $(builddir)/mozconfig ; \
 	done
@@ -562,7 +564,7 @@ ifneq (,$(findstring microb,$(MOZCONFIG_LEV)))
 	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/sdk/lib/libxpcomglue_s.a $(CURDIR)/debian/tmp/usr/lib/microb-engine/
 	cp $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/lib/*jemalloc*.a $(CURDIR)/debian/tmp/usr/lib/microb-engine-devel/sdk/lib/
 	cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/public/nss $(CURDIR)/debian/tmp/usr/include/microb-engine/
-	
+
 	if test -f $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed; then cp -rfL $(btree)/obj-$(bldstr)build$(MOZCONFIG_LEV)/dist/bin/*Test*Embed $(CURDIR)/debian/tmp/usr/lib/microb-engine; fi
 ifeq ($(mochitests),y)
 	cp -rfL $(builddir)/build/pgo/certs $(TEST_PACKAGE_DIR)/$(MOZILLA_TEST_DIR)

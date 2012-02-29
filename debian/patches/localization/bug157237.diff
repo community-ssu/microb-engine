@@ -11,7 +11,7 @@
  #include "plstr.h"
  #include "nsReadableUtils.h"
  
-+#ifdef MOZ_PLATFORM_HILDON
++#if(MOZ_PLATFORM_MAEMO == 5)
 +#define MAEMO_CHANGES
 +#endif
 +

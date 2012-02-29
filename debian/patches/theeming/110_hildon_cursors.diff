@@ -11,7 +11,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
  static nsWindow  *get_window_for_gdk_window(GdkWindow *window);
  static nsWindow  *get_owning_window_for_gdk_window(GdkWindow *window);
  static GtkWidget *get_gtk_widget_for_gdk_window(GdkWindow *window);
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +static GdkCursor *get_hildon_cursor(nsCursor aCursor);
 +static PRBool    get_cursor_visibility(GdkWindow* aWindow);
 +static GdkCursor *create_hildon_cursor(const char* aIconName,
@@ -36,7 +36,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
      if (aCursor != mCursor) {
          GdkCursor *newCursor = NULL;
  
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +        gboolean visible = mGdkWindow ?
 +            get_cursor_visibility(mGdkWindow) : FALSE;
 +        newCursor = get_hildon_cursor(visible ? aCursor : eCursor_none);
@@ -60,7 +60,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
      return GTK_WIDGET(user_data);
  }
  
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +
 +/* static */
 +GdkCursor *
@@ -134,7 +134,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
 +    return NULL;
 +}
 +
-+#else // !MOZ_PLATFORM_HILDON
++#else // MOZ_PLATFORM_MAEMO != 5
 +
  /* static */
  GdkCursor *
@@ -153,7 +153,7 @@ Index: mozilla/widget/src/gtk2/nsWindow.cpp
      return gdkcursor;
  }
  
-+#endif // MOZ_PLATFORM_HILDON
++#endif // MOZ_PLATFORM_MAEMO == 5
 +
  // gtk callbacks
  

@@ -8,7 +8,7 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
  #include <windows.h>
  #endif
  
- #if defined (NS_OSSO)
+ #if defined(MOZ_PLATFORM_MAEMO)
  #include <osso-mem.h>
  #include <fcntl.h>
  #include <unistd.h>
@@ -29,7 +29,7 @@ Index: mozilla/xpcom/base/nsMemoryImpl.cpp
      GlobalMemoryStatusEx(&stat);
      *result = (stat.ullAvailPageFile < kRequiredMemory) &&
          ((float)stat.ullAvailPageFile / stat.ullTotalPageFile) < 0.1;
- #elif defined(NS_OSSO)
+ #elif defined(MOZ_PLATFORM_MAEMO)
 +    static time_t sTimeLastCheck = 0;
 +    static PRBool sLastLowMemValue = PR_FALSE;
 +    time_t newTime = time(0);

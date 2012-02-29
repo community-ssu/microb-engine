@@ -149,9 +149,10 @@ theeming/scrollbars_theming.diff
 
 crashes/854ab30d101e.diff
 
-buildconfig/xpcom_build_dbus_nolibxul.diff
 BMO_attached/Bug513630.workaround.diff
 BMO_attached/132397_5.diff
+
+BMO_attached/bug546074.diff
 
 prettyrssfeed/060_BUG133221_RSS_subscribe_fix.diff
 
@@ -210,4 +211,7 @@ localization/bug157237.diff
 
 lowmem/nb160263.diff
 
+perf_tweaks/nb162142.diff
 perf_tweaks/nb162660.diff
+
+pmt/idleservicetimer.diff

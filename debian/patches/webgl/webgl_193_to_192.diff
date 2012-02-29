@@ -1,7 +1,13 @@
-diff -r 5b1fe1bf3872 browser/app/Makefile.in
---- a/browser/app/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/app/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -109,14 +109,14 @@ STATIC_COMPONENTS_LINKER_PATH = -L$(DEPT
+Index: mozilla/browser/app/Makefile.in
+===================================================================
+--- mozilla.orig/browser/app/Makefile.in
++++ mozilla/browser/app/Makefile.in
+@@ -104,24 +104,24 @@ LOCAL_INCLUDES += -I$(topsrcdir)/toolkit
+ ifdef BUILD_STATIC_LIBS
+ ifdef _MSC_VER
+ STATIC_COMPONENTS_LINKER_PATH = -LIBPATH:$(DEPTH)/staticlib
+ else
+ STATIC_COMPONENTS_LINKER_PATH = -L$(DEPTH)/staticlib
  endif
  LIBS += $(DEPTH)/toolkit/xre/$(LIB_PREFIX)xulapp_s.$(LIB_SUFFIX)
  else
@@ -18,7 +24,17 @@ diff -r 5b1fe1bf3872 browser/app/Makefile.in
  TK_LIBS := $(TK_LIBS)
  endif
  
-@@ -313,7 +313,7 @@ libs:: $(srcdir)/profile/prefs.js
+ ifdef MOZ_ENABLE_LIBXUL
+ APP_XPCOM_LIBS = $(XPCOM_GLUE_LDOPTS)
+ else
+ MOZILLA_INTERNAL_API = 1
+ APP_XPCOM_LIBS = $(XPCOM_LIBS)
+@@ -308,17 +308,17 @@ libs::
+ 	touch $(DIST)/bin/.autoreg
+ 
+ libs:: $(srcdir)/profile/prefs.js
+ 	$(INSTALL) $(IFLAGS1) $^ $(DIST)/bin/defaults/profile
+ 
  libs:: $(srcdir)/blocklist.xml
  	$(INSTALL) $(IFLAGS1) $^ $(DIST)/bin
  
@@ -27,10 +43,21 @@ diff -r 5b1fe1bf3872 browser/app/Makefile.in
  
  APP_NAME = $(MOZ_APP_DISPLAYNAME)
  
-diff -r 5b1fe1bf3872 browser/base/Makefile.in
---- a/browser/base/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/base/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -69,7 +69,7 @@ DEFINES += \
+ ifdef MOZ_DEBUG
+ APP_NAME := $(APP_NAME)Debug
+ endif
+ 
+ AB_CD = $(MOZ_UI_LOCALE)
+Index: mozilla/browser/base/Makefile.in
+===================================================================
+--- mozilla.orig/browser/base/Makefile.in
++++ mozilla/browser/base/Makefile.in
+@@ -64,21 +64,21 @@ PRE_RELEASE_SUFFIX := $(shell $(PYTHON) 
+                         $(shell cat $(srcdir)/../config/version.txt))
+ 
+ DEFINES += \
+ 	-DMOZ_APP_VERSION=$(MOZ_APP_VERSION) \
+ 	-DAPP_LICENSE_BLOCK=$(abs_srcdir)/content/overrides/app-license.html \
  	-DPRE_RELEASE_SUFFIX="$(PRE_RELEASE_SUFFIX)" \
  	$(NULL)
  
@@ -39,7 +66,7 @@ diff -r 5b1fe1bf3872 browser/base/Makefile.in
  DEFINES += -DHAVE_SHELL_SERVICE=1
  endif
  
-@@ -77,7 +77,7 @@ ifdef MOZ_UPDATER
+ ifdef MOZ_UPDATER
  DEFINES += -DMOZ_UPDATER=1
  endif
  
@@ -48,10 +75,17 @@ diff -r 5b1fe1bf3872 browser/base/Makefile.in
  ifneq ($(OS_ARCH),WINCE)
  DEFINES += -DCONTEXT_COPY_IMAGE_CONTENTS=1
  endif
-diff -r 5b1fe1bf3872 browser/base/content/test/Makefile.in
---- a/browser/base/content/test/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/base/content/test/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -145,7 +145,7 @@ _BROWSER_FILES = \
+ endif
+Index: mozilla/browser/base/content/test/Makefile.in
+===================================================================
+--- mozilla.orig/browser/base/content/test/Makefile.in
++++ mozilla/browser/base/content/test/Makefile.in
+@@ -141,17 +141,17 @@ _BROWSER_FILES = \
+                  browser_bug491431.js \
+                  browser_bug304198.js \
+                  browser_drag.js \
+                  browser_relatedTabs.js \
+                  browser_contextSearchTabPosition.js \
                   browser_NetworkPrioritizer.js \
      $(NULL)
  
@@ -60,10 +94,21 @@ diff -r 5b1fe1bf3872 browser/base/content/test/Makefile.in
  _BROWSER_FILES += browser_bug462289.js
  else
  _BROWSER_FILES += browser_customize.js
-diff -r 5b1fe1bf3872 browser/components/build/Makefile.in
---- a/browser/components/build/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/components/build/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -64,7 +64,7 @@ SHARED_LIBRARY_LIBS = \
+ endif
+ 
+ libs:: $(_TEST_FILES)
+ 	$(INSTALL) $(foreach f,$^,"$f") $(DEPTH)/_tests/testing/mochitest/tests/$(relativesrcdir)
+ 
+Index: mozilla/browser/components/build/Makefile.in
+===================================================================
+--- mozilla.orig/browser/components/build/Makefile.in
++++ mozilla/browser/components/build/Makefile.in
+@@ -59,17 +59,17 @@ endif
+ 
+ SHARED_LIBRARY_LIBS = \
+ 	../feeds/src/$(LIB_PREFIX)browser_feeds_s.$(LIB_SUFFIX) \
+ 	../places/src/$(LIB_PREFIX)browserplaces_s.$(LIB_SUFFIX) \
+ 	../privatebrowsing/src/$(LIB_PREFIX)privatebrowsing_s.$(LIB_SUFFIX) \
  	../about/$(LIB_PREFIX)browserabout_s.$(LIB_SUFFIX) \
  	$(NULL)
  
@@ -72,7 +117,17 @@ diff -r 5b1fe1bf3872 browser/components/build/Makefile.in
  SHARED_LIBRARY_LIBS += ../shell/src/$(LIB_PREFIX)shellservice_s.$(LIB_SUFFIX)
  endif
  
-@@ -88,7 +88,7 @@ EXTRA_DSO_LDOPTS += \
+ EXTRA_DSO_LDOPTS += $(call EXPAND_LIBNAME_PATH,unicharutil_external_s,$(LIBXUL_DIST)/lib)
+ 
+ # migration requires mozreg, which doesn't build on WINCE; only include
+ # it on non-CE
+ ifndef WINCE
+@@ -83,17 +83,17 @@ endif
+ # stuff in MOZ_COMPONENT_LIBS.
+ EXTRA_DSO_LDOPTS += \
+ 	$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue_s.$(LIB_SUFFIX) \
+ 	$(MOZ_COMPONENT_LIBS) \
+ 	$(NULL)
  
  # Mac: Need to link with CoreFoundation for Mac Migrators (PList reading code)
  # GTK2: Need to link with glib for GNOME shell service
@@ -81,10 +136,21 @@ diff -r 5b1fe1bf3872 browser/components/build/Makefile.in
  EXTRA_DSO_LDOPTS += \
    $(TK_LIBS) \
    $(NULL)
-diff -r 5b1fe1bf3872 browser/components/migration/src/Makefile.in
---- a/browser/components/migration/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/components/migration/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -92,7 +92,7 @@ CPPSRCS += nsIEProfileMigrator.cpp \
+ endif
+ 
+ ifndef MOZ_ENABLE_LIBXUL
+ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
+ # Doesn't work, couldn't figure out why
+Index: mozilla/browser/components/migration/src/Makefile.in
+===================================================================
+--- mozilla.orig/browser/components/migration/src/Makefile.in
++++ mozilla/browser/components/migration/src/Makefile.in
+@@ -87,17 +87,17 @@ endif
+ 
+ ifeq ($(OS_ARCH)_$(GNU_CXX),WINNT_)
+ DEFINES += -DPSTOREC_DLL=\"$(subst \,\\,$(WINDIR))\\system32\\pstorec.dll\"
+ 
+ CPPSRCS += nsIEProfileMigrator.cpp \
             $(NULL)
  endif
  
@@ -93,10 +159,21 @@ diff -r 5b1fe1bf3872 browser/components/migration/src/Makefile.in
  CPPSRCS += nsSafariProfileMigrator.cpp \
             nsMacIEProfileMigrator.cpp \
             nsOmniWebProfileMigrator.cpp \
-diff -r 5b1fe1bf3872 browser/components/preferences/Makefile.in
---- a/browser/components/preferences/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/components/preferences/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -54,7 +54,7 @@ DEFINES += \
+            nsCaminoProfileMigrator.cpp \
+            nsICabProfileMigrator.cpp \
+            $(NULL)
+ endif            
+ 
+Index: mozilla/browser/components/preferences/Makefile.in
+===================================================================
+--- mozilla.orig/browser/components/preferences/Makefile.in
++++ mozilla/browser/components/preferences/Makefile.in
+@@ -49,15 +49,15 @@ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+ DEFINES += \
+ 	-DMOZ_APP_NAME=$(MOZ_APP_NAME) \
  	-DMOZ_APP_DISPLAYNAME=$(MOZ_APP_DISPLAYNAME) \
  	$(NULL)
  
@@ -105,10 +182,19 @@ diff -r 5b1fe1bf3872 browser/components/preferences/Makefile.in
  DEFINES += -DHAVE_SHELL_SERVICE=1
  endif
  
-diff -r 5b1fe1bf3872 browser/components/safebrowsing/content/test/Makefile.in
---- a/browser/components/safebrowsing/content/test/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/components/safebrowsing/content/test/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -47,7 +47,7 @@ include $(topsrcdir)/config/rules.mk
+ ifdef MOZ_UPDATER
+ DEFINES += -DMOZ_UPDATER=1
+ endif
+Index: mozilla/browser/components/safebrowsing/content/test/Makefile.in
+===================================================================
+--- mozilla.orig/browser/components/safebrowsing/content/test/Makefile.in
++++ mozilla/browser/components/safebrowsing/content/test/Makefile.in
+@@ -42,17 +42,17 @@ srcdir		= @srcdir@
+ VPATH		= @srcdir@
+ relativesrcdir  = browser/components/safebrowsing/content/test
+ 
+ include $(DEPTH)/config/autoconf.mk
+ include $(topsrcdir)/config/rules.mk
  
  # The browser chrome test for bug 415846 doesn't run on Mac because of its
  # bizarre special-and-unique snowflake of a help menu.
@@ -117,10 +203,21 @@ diff -r 5b1fe1bf3872 browser/components/safebrowsing/content/test/Makefile.in
  _NON_MAC_BROWSER_TESTS = browser_bug415846.js
  endif
  
-diff -r 5b1fe1bf3872 browser/components/shell/public/Makefile.in
---- a/browser/components/shell/public/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/components/shell/public/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -51,7 +51,7 @@ ifneq (,$(filter WINCE WINNT,$(OS_ARCH))
+ _BROWSER_FILES = browser_bug400731.js \
+                  $(_NON_MAC_BROWSER_TESTS) \
+     $(NULL)
+ 
+ libs::	$(_BROWSER_FILES)
+Index: mozilla/browser/components/shell/public/Makefile.in
+===================================================================
+--- mozilla.orig/browser/components/shell/public/Makefile.in
++++ mozilla/browser/components/shell/public/Makefile.in
+@@ -46,13 +46,13 @@ MODULE = shellservice
+ XPIDL_MODULE  = shellservice
+ 
+ XPIDLSRCS = nsIShellService.idl
+ 
+ ifneq (,$(filter WINCE WINNT,$(OS_ARCH)))
  XPIDLSRCS += nsIWindowsShellService.idl
  endif
  
@@ -129,10 +226,17 @@ diff -r 5b1fe1bf3872 browser/components/shell/public/Makefile.in
  XPIDLSRCS += nsIMacShellService.idl
  endif
  
-diff -r 5b1fe1bf3872 browser/components/shell/src/Makefile.in
---- a/browser/components/shell/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/components/shell/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -71,7 +71,7 @@ REQUIRES	+= \
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/browser/components/shell/src/Makefile.in
+===================================================================
+--- mozilla.orig/browser/components/shell/src/Makefile.in
++++ mozilla/browser/components/shell/src/Makefile.in
+@@ -66,17 +66,17 @@ REQUIRES	= \
+ 		  $(NULL)
+ 
+ ifneq (,$(filter WINCE WINNT,$(OS_ARCH)))
+ CPPSRCS = nsWindowsShellService.cpp
+ REQUIRES	+= \
  		browsercomps \
  		$(NULL)
  else
@@ -141,10 +245,21 @@ diff -r 5b1fe1bf3872 browser/components/shell/src/Makefile.in
  CPPSRCS = nsMacShellService.cpp
  else
  ifeq ($(MOZ_WIDGET_TOOLKIT), gtk2)
-diff -r 5b1fe1bf3872 browser/installer/Makefile.in
---- a/browser/installer/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/installer/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -107,7 +107,7 @@ MOZ_PKG_MANIFEST = package-manifest
+ CPPSRCS = nsGNOMEShellService.cpp
+ REQUIRES	+= \
+ 		mozgnome \
+ 		thebes \
+ 		$(NULL)
+Index: mozilla/browser/installer/Makefile.in
+===================================================================
+--- mozilla.orig/browser/installer/Makefile.in
++++ mozilla/browser/installer/Makefile.in
+@@ -102,17 +102,17 @@ ifdef MOZ_PKG_MANIFEST_P
+ MOZ_PKG_MANIFEST = package-manifest
+ 
+ $(MOZ_PKG_MANIFEST): $(MOZ_PKG_MANIFEST_P)
+ 	$(PERL) $(topsrcdir)/config/preprocessor.pl $(DEFINES) $(ACDEFINES) $< > $@
+ 
  GARBAGE += $(MOZ_PKG_MANIFEST)
  endif
  
@@ -153,10 +268,21 @@ diff -r 5b1fe1bf3872 browser/installer/Makefile.in
  MOZ_PKG_MAC_DSSTORE=branding/dsstore
  MOZ_PKG_MAC_BACKGROUND=branding/background.png
  MOZ_PKG_MAC_ICON=branding/disk.icns
-diff -r 5b1fe1bf3872 browser/themes/Makefile.in
---- a/browser/themes/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/browser/themes/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -50,7 +50,7 @@ include $(DEPTH)/config/autoconf.mk
+ MOZ_PKG_MAC_EXTRA=--symlink "/Applications:/ "
+ endif
+ 
+ ifndef LIBXUL_SDK
+ INSTALL_SDK = 1
+Index: mozilla/browser/themes/Makefile.in
+===================================================================
+--- mozilla.orig/browser/themes/Makefile.in
++++ mozilla/browser/themes/Makefile.in
+@@ -45,17 +45,17 @@ include $(DEPTH)/config/autoconf.mk
+ #
+ # Theme Selection
+ #
+ # Windows                 Winstripe
+ # GNOME/Linux             Gnomestripe
  # MacOS X                 Pinstripe
  #
  
@@ -165,10 +291,21 @@ diff -r 5b1fe1bf3872 browser/themes/Makefile.in
  DIRS = pinstripe
  else
  DIRS = winstripe
-diff -r 5b1fe1bf3872 chrome/src/Makefile.in
---- a/chrome/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/chrome/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -88,7 +88,7 @@ ifneq (,$(filter gtk2,$(MOZ_WIDGET_TOOLK
+ endif
+ ifneq (,$(filter gtk2 qt,$(MOZ_WIDGET_TOOLKIT)))
+ DIRS = gnomestripe
+ endif
+ 
+Index: mozilla/chrome/src/Makefile.in
+===================================================================
+--- mozilla.orig/chrome/src/Makefile.in
++++ mozilla/chrome/src/Makefile.in
+@@ -83,17 +83,17 @@ EXTRA_DSO_LDOPTS = \
+                 $(MOZ_UNICHARUTIL_LIBS) \
+                 $(MOZ_COMPONENT_LIBS) \
+                 $(NULL)
+ 
+ ifneq (,$(filter gtk2,$(MOZ_WIDGET_TOOLKIT)))
  EXTRA_DSO_LDOPTS += $(MOZ_GTK2_LIBS)
  endif
  
@@ -177,10 +314,23 @@ diff -r 5b1fe1bf3872 chrome/src/Makefile.in
  EXTRA_DSO_LDOPTS += $(TK_LIBS)
  endif
  
-diff -r 5b1fe1bf3872 config/autoconf.mk.in
---- a/config/autoconf.mk.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/config/autoconf.mk.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -179,6 +179,7 @@ NS_PRINTING = @NS_PRINTING@
+ include $(topsrcdir)/config/rules.mk
+ 
+ ifneq (,$(filter gtk2,$(MOZ_WIDGET_TOOLKIT)))
+ CXXFLAGS          += $(MOZ_GTK2_CFLAGS)
+ endif
+Index: mozilla/config/autoconf.mk.in
+===================================================================
+--- mozilla.orig/config/autoconf.mk.in
++++ mozilla/config/autoconf.mk.in
+@@ -171,20 +171,21 @@ MOZ_MORKREADER = @MOZ_MORKREADER@
+ MOZ_NO_XPCOM_OBSOLETE = @MOZ_NO_XPCOM_OBSOLETE@
+ MOZ_NO_FAST_LOAD = @MOZ_NO_FAST_LOAD@
+ MOZ_OGG = @MOZ_OGG@
+ MOZ_SYDNEYAUDIO = @MOZ_SYDNEYAUDIO@
+ MOZ_WAVE = @MOZ_WAVE@
+ MOZ_MEDIA = @MOZ_MEDIA@
+ NS_PRINTING = @NS_PRINTING@
  MOZ_CRASHREPORTER = @MOZ_CRASHREPORTER@
  MOZ_HELP_VIEWER = @MOZ_HELP_VIEWER@
  MOC= @MOC@
@@ -188,7 +338,21 @@ diff -r 5b1fe1bf3872 config/autoconf.mk.in
  
  MOZ_JAVAXPCOM = @MOZ_JAVAXPCOM@
  JAVA_INCLUDE_PATH="@JAVA_INCLUDE_PATH@"
-@@ -246,8 +247,6 @@ MOZ_PERMISSIONS = @MOZ_PERMISSIONS@
+ JAVA="@JAVA@"
+ JAVAC="@JAVAC@"
+ JAR="@JAR@"
+ 
+ TAR=@TAR@
+ 
+ RM = rm -f
+@@ -238,22 +239,20 @@ MOZ_NATIVE_BZ2    = @SYSTEM_BZ2@
+ MOZ_NATIVE_JPEG        = @SYSTEM_JPEG@
+ MOZ_NATIVE_PNG = @SYSTEM_PNG@
+ MOZ_TREE_CAIRO = @MOZ_TREE_CAIRO@
+ 
+ MOZ_UPDATE_XTERM = @MOZ_UPDATE_XTERM@
+ MOZ_MATHML = @MOZ_MATHML@
+ MOZ_PERMISSIONS = @MOZ_PERMISSIONS@
  MOZ_XTF = @MOZ_XTF@
  MOZ_NO_INSPECTOR_APIS = @MOZ_NO_INSPECTOR_APIS@
  MOZ_SVG = @MOZ_SVG@
@@ -197,10 +361,23 @@ diff -r 5b1fe1bf3872 config/autoconf.mk.in
  MOZ_CAIRO_CFLAGS = @MOZ_CAIRO_CFLAGS@
  MOZ_SMIL = @MOZ_SMIL@
  MOZ_XSLT_STANDALONE = @MOZ_XSLT_STANDALONE@
-diff -r 5b1fe1bf3872 config/static-rules.mk
---- a/config/static-rules.mk	Fri Dec 11 07:02:35 2009 +0200
-+++ b/config/static-rules.mk	Fri Dec 11 07:09:00 2009 +0200
-@@ -20,6 +20,6 @@ ifeq ($(OS_ARCH),IRIX)
+ 
+ MOZ_PREF_EXTENSIONS = @MOZ_PREF_EXTENSIONS@
+ 
+ MOZ_CAIRO_LIBS = @MOZ_CAIRO_LIBS@
+ 
+ MOZ_ENABLE_GNOMEUI = @MOZ_ENABLE_GNOMEUI@
+ MOZ_GNOMEUI_CFLAGS = @MOZ_GNOMEUI_CFLAGS@
+Index: mozilla/config/static-rules.mk
+===================================================================
+--- mozilla.orig/config/static-rules.mk
++++ mozilla/config/static-rules.mk
+@@ -15,11 +15,11 @@ nsStaticComponents.cpp: $(topsrcdir)/con
+ 	> $(_TARGET)
+ 
+ GARBAGE += nsStaticComponents.cpp
+ 
+ ifeq ($(OS_ARCH),IRIX)
  LDFLAGS	+= -Wl,-LD_LAYOUT:lgot_buffer=80
  endif
  
@@ -208,10 +385,16 @@ diff -r 5b1fe1bf3872 config/static-rules.mk
 +ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
  LIBS	+= -framework QuickTime -framework IOKit -lcrypto
  endif
-diff -r 5b1fe1bf3872 configure.in
---- a/configure.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/configure.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -4498,8 +4498,6 @@ MOZ_ACTIVEX_SCRIPTING_SUPPORT=
+Index: mozilla/configure.in
+===================================================================
+--- mozilla.orig/configure.in
++++ mozilla/configure.in
+@@ -4494,18 +4494,16 @@ dnl ====================================
+ MOZ_ARG_HEADER(Application)
+ 
+ BUILD_STATIC_LIBS=
+ ENABLE_TESTS=1
+ MOZ_ACTIVEX_SCRIPTING_SUPPORT=
  MOZ_BRANDING_DIRECTORY=
  MOZ_OFFICIAL_BRANDING=
  MOZ_DBGRINFO_MODULES=
@@ -220,7 +403,17 @@ diff -r 5b1fe1bf3872 configure.in
  MOZ_FEEDS=1
  MOZ_IMG_DECODERS_DEFAULT="png gif jpeg bmp icon"
  MOZ_IMG_ENCODERS_DEFAULT="png jpeg"
-@@ -4831,6 +4829,7 @@ photon)
+ MOZ_JAVAXPCOM=
+ MOZ_JSDEBUGGER=1
+ MOZ_JSLOADER=1
+ MOZ_MATHML=1
+ MOZ_MORK=1
+@@ -4827,37 +4825,41 @@ case "$MOZ_WIDGET_TOOLKIT" in
+ photon)
+ 	MOZ_ENABLE_PHOTON=1
+ 	AC_DEFINE(MOZ_WIDGET_PHOTON)
+     ;;
+ 
  cairo-windows)
      MOZ_WIDGET_TOOLKIT=windows
      MOZ_GFX_TOOLKIT=cairo
@@ -228,7 +421,7 @@ diff -r 5b1fe1bf3872 configure.in
      ;;
  
  cairo-gtk2|cairo-gtk2-x11)
-@@ -4838,6 +4837,8 @@ cairo-gtk2|cairo-gtk2-x11)
+     MOZ_WIDGET_TOOLKIT=gtk2
      MOZ_GFX_TOOLKIT=cairo
      MOZ_ENABLE_GTK2=1
      MOZ_ENABLE_XREMOTE=1
@@ -237,7 +430,14 @@ diff -r 5b1fe1bf3872 configure.in
  
      AC_DEFINE(MOZ_X11)
      MOZ_X11=1
-@@ -4852,6 +4853,7 @@ cairo-gtk2-dfb)
+     USE_FC_FREETYPE=1
+ 
+     TK_CFLAGS='$(MOZ_GTK2_CFLAGS)'
+     TK_LIBS='$(MOZ_GTK2_LIBS)'
+     AC_DEFINE(MOZ_WIDGET_GTK2)
+     ;;
+ 
+ cairo-gtk2-dfb)
      MOZ_WIDGET_TOOLKIT=gtk2
      MOZ_GFX_TOOLKIT=cairo
      MOZ_ENABLE_GTK2=1
@@ -245,7 +445,17 @@ diff -r 5b1fe1bf3872 configure.in
  
      AC_DEFINE(MOZ_DFB)
      MOZ_DFB=1
-@@ -4914,6 +4916,7 @@ cairo-cocoa)
+ 
+     TK_CFLAGS='$(MOZ_GTK2_CFLAGS)'
+     TK_LIBS='$(MOZ_GTK2_LIBS)'
+     AC_DEFINE(MOZ_WIDGET_GTK2)
+     if test "$no_x" != "yes"; then
+@@ -4910,16 +4912,17 @@ cairo-cocoa)
+     AC_DEFINE(TARGET_API_MAC_CARBON)
+     TK_LIBS='-framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook'
+     TK_CFLAGS="-DNO_X11"
+     LDFLAGS="$LDFLAGS -framework Cocoa"
+     CFLAGS="$CFLAGS $TK_CFLAGS"
      CXXFLAGS="$CXXFLAGS $TK_CFLAGS"
      LIBXUL_LIBS='$(XPCOM_FROZEN_LDOPTS) $(LIBXUL_DIST)/bin/XUL -lobjc'
      MOZ_FS_LAYOUT=bundle
@@ -253,7 +463,17 @@ diff -r 5b1fe1bf3872 configure.in
      ;;
  esac
  
-@@ -5973,27 +5976,6 @@ if test "$MOZ_MATHML"; then
+ MOZ_ARG_DISABLE_BOOL(xremote,
+ [  --disable-xremote        Disable Xremote support ],
+     MOZ_ENABLE_XREMOTE=,
+     MOZ_ENABLE_XREMOTE=1 )
+ if test "$MOZ_ENABLE_XREMOTE"; then
+@@ -5969,37 +5972,16 @@ MOZ_ARG_DISABLE_BOOL(mathml,
+ [  --disable-mathml        Disable MathML support],
+     MOZ_MATHML=,
+     MOZ_MATHML=1 )
+ if test "$MOZ_MATHML"; then
+   AC_DEFINE(MOZ_MATHML)
  fi
  
  dnl ========================================================
@@ -281,15 +501,17 @@ diff -r 5b1fe1bf3872 configure.in
  dnl SVG
  dnl ========================================================
  MOZ_ARG_DISABLE_BOOL(svg,
-@@ -6468,6 +6450,7 @@ if test $NS_OSSO; then
+ [  --disable-svg            Disable SVG support],
+     MOZ_SVG=,
+     MOZ_SVG=1 )
+ if test -n "$MOZ_SVG"; then
+   AC_DEFINE(MOZ_SVG)
+@@ -7812,17 +7794,17 @@ if test "$MOZ_TREE_CAIRO"; then
+         PDF_SURFACE_FEATURE="#define CAIRO_HAS_PDF_SURFACE 1"
+         FT_FONT_FEATURE="#define CAIRO_HAS_FT_FONT 1"
+         MOZ_ENABLE_CAIRO_FT=1
+         CAIRO_FT_CFLAGS="$FT2_CFLAGS"
      fi
-     AC_DEFINE(NS_OSSO)
-     MOZ_GFX_OPTIMIZE_MOBILE=1
-+    MOZ_WEBGL_GLX=
- fi
- AC_SUBST(LIBOSSO_CFLAGS)
- AC_SUBST(LIBOSSO_LIBS)
-@@ -7781,7 +7764,7 @@ if test "$MOZ_TREE_CAIRO"; then
      if test "$MOZ_WIDGET_TOOLKIT" = "qt"; then
          QPAINTER_SURFACE_FEATURE="#define CAIRO_HAS_QPAINTER_SURFACE 1"
      fi
@@ -298,7 +520,17 @@ diff -r 5b1fe1bf3872 configure.in
          QUARTZ_SURFACE_FEATURE="#define CAIRO_HAS_QUARTZ_SURFACE 1"
          QUARTZ_IMAGE_SURFACE_FEATURE="#define CAIRO_HAS_QUARTZ_IMAGE_SURFACE 1"
          QUARTZ_FONT_FEATURE="#define CAIRO_HAS_QUARTZ_FONT 1"
-@@ -8159,6 +8142,7 @@ AC_SUBST(MOZ_PLACES_BOOKMARKS)
+     fi
+     if test "$MOZ_WIDGET_TOOLKIT" = "windows"; then
+         WIN32_SURFACE_FEATURE="#define CAIRO_HAS_WIN32_SURFACE 1"
+         if test -z "$WINCE"; then
+             WIN32_FONT_FEATURE="#define CAIRO_HAS_WIN32_FONT 1"
+@@ -8188,16 +8170,17 @@ AC_SUBST(MOZ_INSURE_EXCLUDE_DIRS)
+ AC_SUBST(MOZ_QUANTIFY)
+ AC_SUBST(MOZ_INSURIFYING)
+ AC_SUBST(LIBICONV)
+ AC_SUBST(MOZ_PLACES)
+ AC_SUBST(MOZ_PLACES_BOOKMARKS)
  AC_SUBST(MOZ_STORAGE)
  AC_SUBST(MOZ_FEEDS)
  AC_SUBST(NS_PRINTING)
@@ -306,7 +538,17 @@ diff -r 5b1fe1bf3872 configure.in
  
  AC_SUBST(MOZ_JAVAXPCOM)
  AC_SUBST(JAVA_INCLUDE_PATH)
-@@ -8394,6 +8378,14 @@ if test "$MOZ_X11"; then
+ AC_SUBST(JAVA)
+ AC_SUBST(JAVAC)
+ AC_SUBST(JAR)
+ 
+ AC_SUBST(MOZ_PROFILELOCKING)
+@@ -8423,16 +8406,24 @@ if test "$MOZ_X11"; then
+     [ AC_MSG_ERROR([Could not compile basic X program.]) ])
+     CFLAGS="$_SAVE_CFLAGS"
+ 
+     if test ! -z "$MISSING_X"; then
+         AC_MSG_ERROR([ Could not find the following X libraries: $MISSING_X ]);
      fi
  
  fi # MOZ_X11
@@ -321,10 +563,21 @@ diff -r 5b1fe1bf3872 configure.in
  fi # COMPILE_ENVIRONMENT
  
  if test "$USE_FC_FREETYPE"; then
-diff -r 5b1fe1bf3872 content/canvas/public/Makefile.in
---- a/content/canvas/public/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/public/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -43,20 +43,16 @@ VPATH		= @srcdir@
+     if test "$COMPILE_ENVIRONMENT"; then
+     	_SAVE_CPPFLAGS="$CPPFLAGS"
+     	CPPFLAGS="$CPPFLAGS $FT2_CFLAGS $XCFLAGS"
+         AC_CHECK_HEADERS(fontconfig/fcfreetype.h, , 
+             [AC_MSG_ERROR(Can't find header fontconfig/fcfreetype.h.)])
+Index: mozilla/content/canvas/public/Makefile.in
+===================================================================
+--- mozilla.orig/content/canvas/public/Makefile.in
++++ mozilla/content/canvas/public/Makefile.in
+@@ -38,25 +38,21 @@
+ DEPTH		= ../../..
+ topsrcdir	= @top_srcdir@
+ srcdir		= @srcdir@
+ VPATH		= @srcdir@
+ 
  include $(DEPTH)/config/autoconf.mk
  
  MODULE		= content
@@ -347,9 +600,10 @@ diff -r 5b1fe1bf3872 content/canvas/public/Makefile.in
 -endif
 -
  include $(topsrcdir)/config/rules.mk
-diff -r 5b1fe1bf3872 content/canvas/public/WebGLArray.h
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/public/WebGLArray.h	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/public/WebGLArray.h
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/public/WebGLArray.h
 @@ -0,0 +1,50 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -401,10 +655,16 @@ diff -r 5b1fe1bf3872 content/canvas/public/WebGLArray.h
 +nsresult NS_NewWebGLUnsignedIntArray(nsISupports **aNewObject);
 +
 +#endif
-diff -r 5b1fe1bf3872 content/canvas/src/CanvasUtils.cpp
---- a/content/canvas/src/CanvasUtils.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/CanvasUtils.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -35,10 +35,15 @@
+Index: mozilla/content/canvas/src/CanvasUtils.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/CanvasUtils.cpp
++++ mozilla/content/canvas/src/CanvasUtils.cpp
+@@ -30,20 +30,25 @@
+  * use your version of this file under the terms of the MPL, indicate your
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
   *
   * ***** END LICENSE BLOCK ***** */
  
@@ -420,7 +680,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/CanvasUtils.cpp
  #include "nsIDOMDocument.h"
  #include "nsIDocument.h"
  #include "nsIDOMCanvasRenderingContext2D.h"
-@@ -92,3 +97,31 @@ CanvasUtils::DoDrawImageSecurityCheck(ns
+ #include "nsICanvasRenderingContextInternal.h"
+ #include "nsICanvasElement.h"
+ #include "nsIPrincipal.h"
+ #include "nsINode.h"
+ 
+@@ -87,8 +92,36 @@ CanvasUtils::DoDrawImageSecurityCheck(ns
+         if (NS_SUCCEEDED(rv) && subsumes) {
+             // This canvas has access to that image anyway
+             return;
+         }
+     }
  
      aCanvasElement->SetWriteOnly();
  }
@@ -452,10 +722,16 @@ diff -r 5b1fe1bf3872 content/canvas/src/CanvasUtils.cpp
 +
 +    va_end(ap);
 +}
-diff -r 5b1fe1bf3872 content/canvas/src/CanvasUtils.h
---- a/content/canvas/src/CanvasUtils.h	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/CanvasUtils.h	Fri Dec 11 07:09:00 2009 +0200
-@@ -69,6 +69,9 @@ public:
+Index: mozilla/content/canvas/src/CanvasUtils.h
+===================================================================
+--- mozilla.orig/content/canvas/src/CanvasUtils.h
++++ mozilla/content/canvas/src/CanvasUtils.h
+@@ -64,16 +64,19 @@ public:
+ 
+     // Flag aCanvasElement as write-only if drawing an image with aPrincipal
+     // onto it would make it such.
+ 
+     static void DoDrawImageSecurityCheck(nsICanvasElement *aCanvasElement,
                                           nsIPrincipal *aPrincipal,
                                           PRBool forceWriteOnly);
  
@@ -465,39 +741,28 @@ diff -r 5b1fe1bf3872 content/canvas/src/CanvasUtils.h
  private:
      // this can't be instantiated
      CanvasUtils() { }
-diff -r 5b1fe1bf3872 content/canvas/src/Makefile.in
---- a/content/canvas/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -76,31 +76,51 @@ CPPSRCS	= \
+ };
+ 
+ }
+ 
+ #endif /* _CANVASUTILS_H_ */
+Index: mozilla/content/canvas/src/Makefile.in
+===================================================================
+--- mozilla.orig/content/canvas/src/Makefile.in
++++ mozilla/content/canvas/src/Makefile.in
+@@ -70,25 +70,31 @@ REQUIRES	= \
+ 
+ 
+ CPPSRCS	= \
+ 	CanvasUtils.cpp \
+ 	nsCanvasRenderingContext2D.cpp \
+ 	$(NULL)
  
  # Canvas 3D Pieces
++
++ifdef MOZ_WEBGL
  
 -ifdef MOZ_ENABLE_CANVAS3D
-+ifdef MOZ_WEBGL
-+
-+ifeq (1_1,$(MOZ_X11)_$(NS_OSSO))
-+WEBGL_PLATFORM = EGL
-+DEFINES += -DUSE_GLES2
-+endif
-+
-+ifeq (1_,$(MOZ_X11)_$(NS_OSSO))
-+WEBGL_PLATFORM = GLX
-+EXTRA_DSO_LIBS += X11
-+endif
-+
-+
-+ifeq (windows,$(MOZ_WIDGET_TOOLKIT))
-+ifdef WINCE
-+WEBGL_PLATFORM = EGL
-+DEFINES += -DUSE_GLES2
-+else
-+WEBGL_PLATFORM = WGL
-+endif
-+endif
-+
-+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
-+WEBGL_PLATFORM = CGL
-+endif
  
  CPPSRCS += \
 -	nsCanvasRenderingContextGL.cpp \
@@ -514,31 +779,40 @@ diff -r 5b1fe1bf3872 content/canvas/src/Makefile.in
 +	SimpleBuffer.cpp \
  	$(NULL)
  
--ifdef MOZ_X11
--EXTRA_DSO_LIBS += X11
--CPPSRCS += nsGLPbufferGLX.cpp
--DEFINES += -DUSE_GLX
--endif
-+CPPSRCS += nsGLPbuffer$(WEBGL_PLATFORM).cpp
-+DEFINES += -DUSE_$(WEBGL_PLATFORM)
- 
--ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
--CPPSRCS += nsGLPbufferWGL.cpp
--DEFINES += -DUSE_WGL
--endif
-+else
- 
--ifneq (,$(filter $(MOZ_WIDGET_TOOLKIT),mac cocoa))
--CPPSRCS += nsGLPbufferCGL.cpp
--DEFINES += -DUSE_CGL
--endif
-+CPPSRCS += WebGLContextNotSupported.cpp
- 
+ ifdef MOZ_X11
+ ifdef MOZ_PLATFORM_MAEMO
+   WEBGL_PLATFORM = EGL
+   DEFINES += -DUSE_GLES2
+ else
+   WEBGL_PLATFORM = GLX
+@@ -101,16 +107,23 @@ CPPSRCS += nsGLPbufferWGL.cpp
+ DEFINES += -DUSE_WGL
  endif
  
-diff -r 5b1fe1bf3872 content/canvas/src/NativeJSContext.cpp
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/NativeJSContext.cpp	Fri Dec 11 07:09:00 2009 +0200
+ ifneq (,$(filter $(MOZ_WIDGET_TOOLKIT),mac cocoa))
+ CPPSRCS += nsGLPbufferCGL.cpp
+ DEFINES += -DUSE_CGL
+ endif
+ 
++CPPSRCS += nsGLPbuffer$(WEBGL_PLATFORM).cpp
++DEFINES += -DUSE_$(WEBGL_PLATFORM)
++
++else
++
++CPPSRCS += WebGLContextNotSupported.cpp
++
+ endif
+ 
+ # we don't want the shared lib, but we want to force the creation of a static lib.
+ FORCE_STATIC_LIB = 1
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+ CXXFLAGS	+= $(MOZ_CAIRO_CFLAGS) $(TK_CFLAGS)
+Index: mozilla/content/canvas/src/NativeJSContext.cpp
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/NativeJSContext.cpp
 @@ -0,0 +1,37 @@
 +#include "NativeJSContext.h"
 +#include "nsServiceManagerUtils.h"
@@ -577,10 +851,11 @@ diff -r 5b1fe1bf3872 content/canvas/src/NativeJSContext.cpp
 +
 +  ::JS_RemoveRootRT(sJSScriptRuntime, aPtr);
 +}
-diff -r 5b1fe1bf3872 content/canvas/src/NativeJSContext.h
---- a/content/canvas/src/NativeJSContext.h	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/NativeJSContext.h	Fri Dec 11 07:09:00 2009 +0200
-@@ -1,12 +1,23 @@
+Index: mozilla/content/canvas/src/NativeJSContext.h
+===================================================================
+--- mozilla.orig/content/canvas/src/NativeJSContext.h
++++ mozilla/content/canvas/src/NativeJSContext.h
+@@ -1,17 +1,28 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
  #ifndef _NATIVEJSCONTEXT_H_
  #define _NATIVEJSCONTEXT_H_
@@ -605,7 +880,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/NativeJSContext.h
          if (NS_FAILED(error))
              return;
  
-@@ -48,13 +59,8 @@ public:
+         if (!ncc) {
+             error = NS_ERROR_FAILURE;
+             return;
+         }
+ 
+@@ -43,23 +54,18 @@ public:
+         if (!JSVAL_IS_NULL(val) &&
+             JSVAL_IS_OBJECT(val) &&
+             ::JS_IsArrayObject(ctx, JSVAL_TO_OBJECT(val)) &&
+             ::JS_GetArrayLength(ctx, JSVAL_TO_OBJECT(val), sz))
+             return PR_TRUE;
          return PR_FALSE;
      }
  
@@ -621,7 +906,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/NativeJSContext.h
  
      void SetRetVal (PRInt32 val) {
          if (INT_FITS_IN_JSVAL(val))
-@@ -167,6 +173,9 @@ public:
+             SetRetValAsJSVal(INT_TO_JSVAL(val));
+         else
+             SetRetVal((double) val);
+     }
+ 
+@@ -162,16 +168,19 @@ public:
+     void SetRetVal (JSObjectHelper& objh);
+ 
+     nsAXPCNativeCallContext *ncc;
+     nsresult error;
+     JSContext *ctx;
      PRUint32 argc;
      jsval *argv;
  
@@ -631,7 +926,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/NativeJSContext.h
  public:
      // static JS helpers
  
-@@ -251,9 +260,9 @@ public:
+     static inline PRBool JSValToFloatArray (JSContext *ctx, jsval val,
+                                             jsuint cnt, float *array)
+     {
+         JSObject *arrayObj;
+         jsuint arrayLen;
+@@ -246,19 +255,19 @@ public:
+             *out = nsnull;
+             return NS_OK;
+         }
+ 
+         if (!JSVAL_IS_OBJECT(val))
              return NS_ERROR_DOM_SYNTAX_ERR;
  
          nsCOMPtr<nsISupports> isup;
@@ -644,9 +949,15 @@ diff -r 5b1fe1bf3872 content/canvas/src/NativeJSContext.h
          if (NS_FAILED(rv))
              return NS_ERROR_DOM_SYNTAX_ERR;
  
-diff -r 5b1fe1bf3872 content/canvas/src/SimpleBuffer.cpp
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/SimpleBuffer.cpp	Fri Dec 11 07:09:00 2009 +0200
+         nsCOMPtr<T> obj = do_QueryInterface(isup);
+         if (!obj)
+             return NS_ERROR_DOM_SYNTAX_ERR;
+ 
+         NS_ADDREF(*out = obj.get());
+Index: mozilla/content/canvas/src/SimpleBuffer.cpp
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/SimpleBuffer.cpp
 @@ -0,0 +1,144 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -792,9 +1103,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/SimpleBuffer.cpp
 +    return PR_TRUE;
 +}
 +
-diff -r 5b1fe1bf3872 content/canvas/src/SimpleBuffer.h
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/SimpleBuffer.h	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/src/SimpleBuffer.h
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/SimpleBuffer.h
 @@ -0,0 +1,146 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -942,9 +1254,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/SimpleBuffer.h
 +}
 +
 +#endif
-diff -r 5b1fe1bf3872 content/canvas/src/WebGLArrays.cpp
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/WebGLArrays.cpp	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/src/WebGLArrays.cpp
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/WebGLArrays.cpp
 @@ -0,0 +1,2421 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -3367,9 +3680,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLArrays.cpp
 +  NS_INTERFACE_MAP_ENTRY(nsIXPCScriptable)
 +  NS_INTERFACE_MAP_ENTRY_CONTENT_CLASSINFO(WebGLUnsignedIntArray)
 +NS_INTERFACE_MAP_END
-diff -r 5b1fe1bf3872 content/canvas/src/WebGLArrays.h
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/WebGLArrays.h	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/src/WebGLArrays.h
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/WebGLArrays.h
 @@ -0,0 +1,344 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -3715,9 +4029,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLArrays.h
 +
 +
 +#endif /* WEBGLARRAYS_H_ */
-diff -r 5b1fe1bf3872 content/canvas/src/WebGLContext.cpp
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/WebGLContext.cpp	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/src/WebGLContext.cpp
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/WebGLContext.cpp
 @@ -0,0 +1,490 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +#include "WebGLContext.h"
@@ -4209,9 +4524,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContext.cpp
 +{
 +    return NS_ERROR_NOT_IMPLEMENTED;
 +}
-diff -r 5b1fe1bf3872 content/canvas/src/WebGLContext.h
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/WebGLContext.h	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/src/WebGLContext.h
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/WebGLContext.h
 @@ -0,0 +1,507 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -4491,7 +4807,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContext.h
 +    // the textures bound to any sampler uniforms
 +    nsTArray<WebGLObjectRefPtr<WebGLTexture> > mUniformTextures;
 +
-+    // textures bound to 
++    // textures bound to
 +    nsTArray<WebGLObjectRefPtr<WebGLTexture> > mBound2DTextures;
 +    nsTArray<WebGLObjectRefPtr<WebGLTexture> > mBoundCubeMapTextures;
 +
@@ -4540,7 +4856,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContext.h
 +
 +    void ZeroOwners() {
 +        WebGLObjectBaseRefPtr **owners = mRefOwners.Elements();
-+        
++
 +        for (PRUint32 i = 0; i < mRefOwners.Length(); i++) {
 +            owners[i]->Zero();
 +        }
@@ -4720,9 +5036,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContext.h
 +}
 +
 +#endif
-diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/WebGLContextGL.cpp	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/src/WebGLContextGL.cpp
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/WebGLContextGL.cpp
 @@ -0,0 +1,3484 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -5274,8 +5591,8 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +WebGLContext::BufferSubData(GLenum target, GLsizeiptr offset)
 +{
 +    // overloaded:
-+    // void bufferSubData(in GLenum target, in GLsizeiptr offset, in CanvasArray data) 
-+    // void bufferSubData(in GLenum target, in GLsizeiptr offset, in CanvasArrayBuffer data) 
++    // void bufferSubData(in GLenum target, in GLsizeiptr offset, in CanvasArray data)
++    // void bufferSubData(in GLenum target, in GLsizeiptr offset, in CanvasArrayBuffer data)
 +
 +    NativeJSContext js;
 +    if (NS_FAILED(js.error))
@@ -5298,7 +5615,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +        return ErrorMessage("glBufferSubData: no buffer bound!");
 +    }
 +
-+    /* XXX FIXME 
++    /* XXX FIXME
 +    // check type
 +    if (na->NativeType() != boundBuffer->GLType()) {
 +        return ErrorMessage("glBufferSubData: existing buffer has different base type (0x%04x) the sub data (0x%04x)!", boundBuffer->GLType(), na->NativeType());
@@ -5564,10 +5881,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +            to 0 (the absence of any renderbuffer object). Additionally, special care
 +            must be taken when deleting a renderbuffer object if the image of the renderbuffer
 +            is attached to a framebuffer object. In this case, if the deleted renderbuffer object is
-+            attached to the currently bound framebuffer object, it is 
++            attached to the currently bound framebuffer object, it is
 +            automatically detached.  However, attachments to any other framebuffer objects are the
 +            responsibility of the application.
-+    */  
++    */
 +
 +    GLuint name = obj->GLName();
 +    gl->fDeleteRenderbuffers(1, &name);
@@ -6117,7 +6434,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +        case LOCAL_GL_SAMPLE_COVERAGE_INVERT:
 +        case LOCAL_GL_COLOR_WRITEMASK:
 +        case LOCAL_GL_DEPTH_WRITEMASK:
-+        ////case LOCAL_GL_SHADER_COMPILER: // pretty much must be true 
++        ////case LOCAL_GL_SHADER_COMPILER: // pretty much must be true
 +        {
 +            realGLboolean bv = 0;
 +            gl->fGetBooleanv(pname, &bv);
@@ -6137,7 +6454,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +            js.SetRetVal(fv, 2);
 +        }
 +            break;
-+        
++
 +        case LOCAL_GL_COLOR_CLEAR_VALUE: // 4 floats
 +        case LOCAL_GL_BLEND_COLOR: // 4 floats
 +        {
@@ -7425,7 +7742,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +        return ErrorMessage("%s: shader is null or deleted!", __FUNCTION__);
 +
 +    GLuint shader = static_cast<WebGLShader*>(shobj)->GLName();
-+    
++
 +    MakeContextCurrent();
 +
 +    gl->fCompileShader(shader);
@@ -7441,7 +7758,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +        return ErrorMessage("%s: shader is null or deleted!", __FUNCTION__);
 +
 +    GLuint shader = static_cast<WebGLShader*>(shobj)->GLName();
-+    
++
 +    NativeJSContext js;
 +    if (NS_FAILED(js.error))
 +        return js.error;
@@ -7475,7 +7792,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +        return ErrorMessage("%s: shader is null or deleted!", __FUNCTION__);
 +
 +    GLuint shader = static_cast<WebGLShader*>(shobj)->GLName();
-+    
++
 +    NativeJSContext js;
 +    if (NS_FAILED(js.error))
 +        return js.error;
@@ -7508,7 +7825,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +    if (!shobj || static_cast<WebGLShader*>(shobj)->Deleted())
 +        return ErrorMessage("%s: shader is null or deleted!", __FUNCTION__);
 +
-+    GLuint shader = static_cast<WebGLShader*>(shobj)->GLName();    
++    GLuint shader = static_cast<WebGLShader*>(shobj)->GLName();
 +
 +    MakeContextCurrent();
 +
@@ -7541,7 +7858,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +        return ErrorMessage("%s: shader is null or deleted!", __FUNCTION__);
 +
 +    GLuint shader = static_cast<WebGLShader*>(shobj)->GLName();
-+    
++
 +    MakeContextCurrent();
 +
 +    GLint slen = -1;
@@ -7573,7 +7890,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +        return ErrorMessage("%s: shader is null or deleted!", __FUNCTION__);
 +
 +    GLuint shader = static_cast<WebGLShader*>(shobj)->GLName();
-+    
++
 +    MakeContextCurrent();
 +
 +    NS_LossyConvertUTF16toASCII asciisrc(source);
@@ -7597,7 +7914,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +    if (size < 1 || size > 4)
 +        return ErrorMessage("glVertexAttribPointer: invalid element size");
 +
-+    /* XXX make work with bufferSubData & heterogeneous types 
++    /* XXX make work with bufferSubData & heterogeneous types
 +    if (type != mBoundArrayBuffer->GLType())
 +        return ErrorMessage("glVertexAttribPointer: type must match bound VBO type: %d != %d", type, mBoundArrayBuffer->GLType());
 +    */
@@ -7677,13 +7994,13 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +    // void texSubImage2D(in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset,
 +    //                    in GLsizei width, in GLsizei height,
 +    //                    in GLenum format, in GLenum type, in CanvasArray pixels)
-+    // void texSubImage2D(in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset, 
++    // void texSubImage2D(in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset,
 +    //                    in ImageData pixels,
 +    //                    [Optional] GLboolean flipY, [Optional] in asPremultipliedAlpha)
-+    // void texSubImage2D(in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset, 
++    // void texSubImage2D(in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset,
 +    //                    in HTMLImageElement image,
 +    //                    [Optional] GLboolean flipY, [Optional] in asPremultipliedAlpha)
-+    // void texSubImage2D(in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset, 
++    // void texSubImage2D(in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset,
 +    //                    in HTMLCanvasElement image,
 +    //                    [Optional] GLboolean flipY, [Optional] in asPremultipliedAlpha)
 +    // void texSubImage2D(in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset,
@@ -8030,7 +8347,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +        return js.error;
 +
 +    if (js.argc != 4) return NS_ERROR_INVALID_ARG;
-+    
++
 +    if (!mGLPbuffer ||
 +        !mGLPbuffer->ThebesSurface())
 +        return NS_ERROR_FAILURE;
@@ -8208,9 +8525,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextGL.cpp
 +
 +    return PR_TRUE;
 +}
-diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextNotSupported.cpp
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/WebGLContextNotSupported.cpp	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/src/WebGLContextNotSupported.cpp
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/WebGLContextNotSupported.cpp
 @@ -0,0 +1,52 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -8264,9 +8582,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextNotSupported.cpp
 +DUMMY(NS_NewWebGLIntArray, nsISupports)
 +DUMMY(NS_NewWebGLUnsignedIntArray, nsISupports)
 +DUMMY(NS_NewWebGLArrayBuffer, nsISupports)
-diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextUtils.cpp
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/WebGLContextUtils.cpp	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/src/WebGLContextUtils.cpp
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/WebGLContextUtils.cpp
 @@ -0,0 +1,234 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -8502,9 +8821,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextUtils.cpp
 +
 +  return NS_ERROR_FAILURE;
 +}
-diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextValidate.cpp
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/WebGLContextValidate.cpp	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/content/canvas/src/WebGLContextValidate.cpp
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/WebGLContextValidate.cpp
 @@ -0,0 +1,102 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -8608,10 +8928,11 @@ diff -r 5b1fe1bf3872 content/canvas/src/WebGLContextValidate.cpp
 +
 +    return PR_TRUE;
 +}
-diff -r 5b1fe1bf3872 content/canvas/src/glwrap.cpp
---- a/content/canvas/src/glwrap.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/glwrap.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -1,3 +1,41 @@
+Index: mozilla/content/canvas/src/glwrap.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/glwrap.cpp
++++ mozilla/content/canvas/src/glwrap.cpp
+@@ -1,26 +1,60 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 + *
@@ -8653,7 +8974,14 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.cpp
  #ifdef C3D_STANDALONE_BUILD
  #include "c3d-standalone.h"
  #endif
-@@ -12,10 +50,6 @@
+ 
+ #include <string.h>
+ #include <stdio.h>
+ 
+ #include "prlink.h"
+ 
+ #include "glwrap.h"
+ 
  #define MAX_SYMBOL_LENGTH 128
  #define MAX_SYMBOL_NAMES 5
  
@@ -8664,7 +8992,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.cpp
  bool
  LibrarySymbolLoader::OpenLibrary(const char *library)
  {
-@@ -166,7 +200,11 @@ GLES20Wrap::InitWithPrefix(const char *p
+     PRLibSpec lspec;
+     lspec.type = PR_LibSpec_Pathname;
+     lspec.value.pathname = library;
+ 
+     mLibrary = PR_LoadLibraryWithFlags(lspec, PR_LD_LAZY | PR_LD_LOCAL);
+@@ -161,60 +195,67 @@ GLES20Wrap::InitWithPrefix(const char *p
+         { (PRFuncPtr*) &fBlendEquation, { "BlendEquation", NULL } },
+         { (PRFuncPtr*) &fBlendEquationSeparate, { "BlendEquationSeparate", "BlendEquationSeparateEXT", NULL } },
+         { (PRFuncPtr*) &fBlendFunc, { "BlendFunc", NULL } },
+         { (PRFuncPtr*) &fBlendFuncSeparate, { "BlendFuncSeparate", "BlendFuncSeparateEXT", NULL } },
+         { (PRFuncPtr*) &fBufferData, { "BufferData", NULL } },
          { (PRFuncPtr*) &fBufferSubData, { "BufferSubData", NULL } },
          { (PRFuncPtr*) &fClear, { "Clear", NULL } },
          { (PRFuncPtr*) &fClearColor, { "ClearColor", NULL } },
@@ -8676,7 +9014,12 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.cpp
          { (PRFuncPtr*) &fClearStencil, { "ClearStencil", NULL } },
          { (PRFuncPtr*) &fColorMask, { "ColorMask", NULL } },
          { (PRFuncPtr*) &fCreateProgram, { "CreateProgram", "CreateProgramARB", NULL } },
-@@ -179,7 +217,11 @@ GLES20Wrap::InitWithPrefix(const char *p
+         { (PRFuncPtr*) &fCreateShader, { "CreateShader", "CreateShaderARB", NULL } },
+         { (PRFuncPtr*) &fCullFace, { "CullFace", NULL } },
+         { (PRFuncPtr*) &fDeleteBuffers, { "DeleteBuffers", "DeleteBuffersARB", NULL } },
+         { (PRFuncPtr*) &fDeleteTextures, { "DeleteTextures", "DeleteTexturesARB", NULL } },
+         { (PRFuncPtr*) &fDeleteProgram, { "DeleteProgram", "DeleteProgramARB", NULL } },
+         { (PRFuncPtr*) &fDeleteShader, { "DeleteShader", "DeleteShaderARB", NULL } },
          { (PRFuncPtr*) &fDetachShader, { "DetachShader", "DetachShaderARB", NULL } },
          { (PRFuncPtr*) &fDepthFunc, { "DepthFunc", NULL } },
          { (PRFuncPtr*) &fDepthMask, { "DepthMask", NULL } },
@@ -8688,7 +9031,14 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.cpp
          { (PRFuncPtr*) &fDisable, { "Disable", NULL } },
          { (PRFuncPtr*) &fDisableVertexAttribArray, { "DisableVertexAttribArray", "DisableVertexAttribArrayARB", NULL } },
          { (PRFuncPtr*) &fDrawArrays, { "DrawArrays", NULL } },
-@@ -194,7 +236,6 @@ GLES20Wrap::InitWithPrefix(const char *p
+         { (PRFuncPtr*) &fDrawElements, { "DrawElements", NULL } },
+         { (PRFuncPtr*) &fEnable, { "Enable", NULL } },
+         { (PRFuncPtr*) &fEnableVertexAttribArray, { "EnableVertexAttribArray", "EnableVertexAttribArrayARB", NULL } },
+         { (PRFuncPtr*) &fFinish, { "Finish", NULL } },
+         { (PRFuncPtr*) &fFlush, { "Flush", NULL } },
+         { (PRFuncPtr*) &fFrontFace, { "FrontFace", NULL } },
+         { (PRFuncPtr*) &fGetActiveAttrib, { "GetActiveAttrib", "GetActiveAttribARB", NULL } },
+         { (PRFuncPtr*) &fGetActiveUniform, { "GetActiveUniform", "GetActiveUniformARB", NULL } },
          { (PRFuncPtr*) &fGetAttachedShaders, { "GetAttachedShaders", "GetAttachedShadersARB", NULL } },
          { (PRFuncPtr*) &fGetAttribLocation, { "GetAttribLocation", "GetAttribLocationARB", NULL } },
          { (PRFuncPtr*) &fGetIntegerv, { "GetIntegerv", NULL } },
@@ -8696,7 +9046,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.cpp
          { (PRFuncPtr*) &fGetFloatv, { "GetFloatv", NULL } },
          { (PRFuncPtr*) &fGetBooleanv, { "GetBooleanv", NULL } },
          { (PRFuncPtr*) &fGetBufferParameteriv, { "GetBufferParameteriv", "GetBufferParameterivARB", NULL } },
-@@ -205,11 +246,11 @@ GLES20Wrap::InitWithPrefix(const char *p
+         { (PRFuncPtr*) &fGenBuffers, { "GenBuffers", "GenBuffersARB", NULL } },
+         { (PRFuncPtr*) &fGenTextures, { "GenTextures", NULL } },
+         { (PRFuncPtr*) &fGetError, { "GetError", NULL } },
+         { (PRFuncPtr*) &fGetProgramiv, { "GetProgramiv", "GetProgramivARB", NULL } },
          { (PRFuncPtr*) &fGetProgramInfoLog, { "GetProgramInfoLog", "GetProgramInfoLogARB", NULL } },
          { (PRFuncPtr*) &fTexParameteri, { "TexParameteri", NULL } },
          { (PRFuncPtr*) &fTexParameterf, { "TexParameterf", NULL } },
@@ -8709,7 +9062,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.cpp
          { (PRFuncPtr*) &fGetVertexAttribfv, { "GetVertexAttribfv", "GetVertexAttribfvARB", NULL } },
          { (PRFuncPtr*) &fGetVertexAttribiv, { "GetVertexAttribiv", "GetVertexAttribivARB", NULL } },
          { (PRFuncPtr*) &fHint, { "Hint", NULL } },
-@@ -287,6 +328,10 @@ GLES20Wrap::InitWithPrefix(const char *p
+         { (PRFuncPtr*) &fIsBuffer, { "IsBuffer", "IsBufferARB", NULL } },
+         { (PRFuncPtr*) &fIsEnabled, { "IsEnabled", NULL } },
+         { (PRFuncPtr*) &fIsProgram, { "IsProgram", "IsProgramARB", NULL } },
+         { (PRFuncPtr*) &fIsShader, { "IsShader", "IsShaderARB", NULL } },
+         { (PRFuncPtr*) &fIsTexture, { "IsTexture", "IsTextureARB", NULL } },
+@@ -282,16 +323,20 @@ GLES20Wrap::InitWithPrefix(const char *p
+         { (PRFuncPtr*) &fGenerateMipmap, { "GenerateMipmap", "GenerateMipmapEXT", NULL } },
+         { (PRFuncPtr*) &fGenFramebuffers, { "GenFramebuffers", "GenFramebuffersEXT", NULL } },
+         { (PRFuncPtr*) &fGenRenderbuffers, { "GenRenderbuffers", "GenRenderbuffersEXT", NULL } },
+         { (PRFuncPtr*) &fGetFramebufferAttachmentParameteriv, { "GetFramebufferAttachmentParameteriv", "GetFramebufferAttachmentParameterivEXT", NULL } },
+         { (PRFuncPtr*) &fGetRenderbufferParameteriv, { "GetRenderbufferParameteriv", "GetRenderbufferParameterivEXT", NULL } },
          { (PRFuncPtr*) &fIsFramebuffer, { "IsFramebuffer", "IsFramebufferEXT", NULL } },
          { (PRFuncPtr*) &fIsRenderbuffer, { "IsRenderbuffer", "IsRenderbufferEXT", NULL } },
          { (PRFuncPtr*) &fRenderbufferStorage, { "RenderbufferStorage", "RenderbufferStorageEXT", NULL } },
@@ -8720,10 +9083,16 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.cpp
  
          { NULL, { NULL } },
  
-diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
---- a/content/canvas/src/glwrap.h	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/glwrap.h	Fri Dec 11 07:09:00 2009 +0200
-@@ -1,3 +1,40 @@
+     };
+ 
+     ok = LoadSymbols(&symbols[0], trygl, prefix);
+ 
+     return ok;
+Index: mozilla/content/canvas/src/glwrap.h
+===================================================================
+--- mozilla.orig/content/canvas/src/glwrap.h
++++ mozilla/content/canvas/src/glwrap.h
+@@ -1,8 +1,45 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 + *
@@ -8764,7 +9133,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
  
  #ifndef GLWRAP_H_
  #define GLWRAP_H_
-@@ -19,6 +56,8 @@
+ 
+ #ifdef WIN32
+ #include <windows.h>
+ #endif
+ 
+@@ -14,16 +51,18 @@
+ #ifdef XP_WIN
+ #define GLAPIENTRY __stdcall
+ #else
+ #define GLAPIENTRY
+ #endif
  #define GLAPI
  #endif
  
@@ -8773,7 +9152,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
  class LibrarySymbolLoader
  {
  public:
-@@ -70,7 +109,7 @@ protected:
+     bool OpenLibrary(const char *library);
+ 
+     typedef PRFuncPtr (GLAPIENTRY * PlatformLookupFunction) (const char *);
+     void SetLookupFunc(PlatformLookupFunction plf) {
+         mLookupFunc = plf;
+@@ -65,17 +104,17 @@ public:
+ protected:
+ 
+     //
+     // the wrapped functions
+     //
  public:
      typedef PrivateOSMesaContext (GLAPIENTRY * PFNOSMESACREATECONTEXTEXT) (GLenum, GLint, GLint, GLint, PrivateOSMesaContext);
      typedef void (GLAPIENTRY * PFNOSMESADESTROYCONTEXT) (PrivateOSMesaContext);
@@ -8782,7 +9171,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
      typedef PrivateOSMesaContext (GLAPIENTRY * PFNOSMESAGETCURRENTCONTEXT) (void);
      typedef void (GLAPIENTRY * PFNOSMESAPIXELSTORE) (GLint, GLint);
      typedef PRFuncPtr (GLAPIENTRY * PFNOSMESAGETPROCADDRESS) (const char*);
-@@ -140,11 +179,16 @@ public:
+ 
+     PFNOSMESACREATECONTEXTEXT fCreateContextExt;
+     PFNOSMESADESTROYCONTEXT fDestroyContext;
+     PFNOSMESAMAKECURRENT fMakeCurrent;
+     PFNOSMESAGETCURRENTCONTEXT fGetCurrentContext;
+@@ -135,21 +174,26 @@ public:
+     typedef void (GLAPIENTRY * PFNGLBUFFERDATAPROC) (GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
+     PFNGLBUFFERDATAPROC fBufferData;
+     typedef void (GLAPIENTRY * PFNGLBUFFERSUBDATAPROC) (GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
+     PFNGLBUFFERSUBDATAPROC fBufferSubData;
+     typedef void (GLAPIENTRY * PFNGLCLEARPROC) (GLbitfield);
      PFNGLCLEARPROC fClear;
      typedef void (GLAPIENTRY * PFNGLCLEARCOLORPROC) (GLclampf, GLclampf, GLclampf, GLclampf);
      PFNGLCLEARCOLORPROC fClearColor;
@@ -8800,7 +9199,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
      PFNGLCOLORMASKPROC fColorMask;
      typedef GLuint (GLAPIENTRY * PFNGLCREATEPROGRAMPROC) (void);
      PFNGLCREATEPROGRAMPROC fCreateProgram;
-@@ -164,10 +208,15 @@ public:
+     typedef GLuint (GLAPIENTRY * PFNGLCREATESHADERPROC) (GLenum type);
+     PFNGLCREATESHADERPROC fCreateShader;
+     typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (GLenum mode);
+     PFNGLCULLFACEPROC fCullFace;
+     typedef void (GLAPIENTRY * PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint* buffers);
+@@ -159,20 +203,25 @@ public:
+     typedef void (GLAPIENTRY * PFNGLDELETEPROGRAMPROC) (GLuint program);
+     PFNGLDELETEPROGRAMPROC fDeleteProgram;
+     typedef void (GLAPIENTRY * PFNGLDELETESHADERPROC) (GLuint shader);
+     PFNGLDELETESHADERPROC fDeleteShader;
+     typedef void (GLAPIENTRY * PFNGLDETACHSHADERPROC) (GLuint program, GLuint shader);
      PFNGLDETACHSHADERPROC fDetachShader;
      typedef void (GLAPIENTRY * PFNGLDEPTHFUNCPROC) (GLenum);
      PFNGLDEPTHFUNCPROC fDepthFunc;
@@ -8817,7 +9226,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
      typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (GLenum);
      PFNGLDISABLEPROC fDisable;
      typedef void (GLAPIENTRY * PFNGLDISABLEVERTEXATTRIBARRAYPROC) (GLuint);
-@@ -196,11 +245,9 @@ public:
+     PFNGLDISABLEVERTEXATTRIBARRAYPROC fDisableVertexAttribArray;
+     typedef void (GLAPIENTRY * PFNGLDRAWARRAYSPROC) (GLenum mode, GLint first, GLsizei count);
+     PFNGLDRAWARRAYSPROC fDrawArrays;
+     typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
+     PFNGLDRAWELEMENTSPROC fDrawElements;
+@@ -191,21 +240,19 @@ public:
+     typedef void (GLAPIENTRY * PFNGLGETACTIVEUNIFORMPROC) (GLuint program, GLuint index, GLsizei maxLength, GLsizei* length, GLint* size, GLenum* type, GLchar* name);
+     PFNGLGETACTIVEUNIFORMPROC fGetActiveUniform;
+     typedef void (GLAPIENTRY * PFNGLGETATTACHEDSHADERSPROC) (GLuint program, GLsizei maxCount, GLsizei* count, GLuint* shaders);
+     PFNGLGETATTACHEDSHADERSPROC fGetAttachedShaders;
+     typedef GLint (GLAPIENTRY * PFNGLGETATTRIBLOCATIONPROC) (GLuint program, const GLchar* name);
      PFNGLGETATTRIBLOCATIONPROC fGetAttribLocation;
      typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (GLenum pname, GLint *params);
      PFNGLGETINTEGERVPROC fGetIntegerv;
@@ -8830,7 +9249,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
      PFNGLGETBOOLEANBPROC fGetBooleanv;
      typedef void (GLAPIENTRY * PFNGLGETBUFFERPARAMETERIVPROC) (GLenum target, GLenum pname, GLint* params);
      PFNGLGETBUFFERPARAMETERIVPROC fGetBufferParameteriv;
-@@ -220,43 +267,49 @@ public:
+     typedef void (GLAPIENTRY * PFNGLGENBUFFERSPROC) (GLsizei n, GLuint* buffers);
+     PFNGLGENBUFFERSPROC fGenBuffers;
+     typedef void (GLAPIENTRY * PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
+     PFNGLGENTEXTURESPROC fGenTextures;
+     typedef void (GLAPIENTRY * PFNGLGENERATEMIPMAPPROC) (GLenum target);
+@@ -215,53 +262,59 @@ public:
+     typedef void (GLAPIENTRY * PFNGLGETPROGRAMIVPROC) (GLuint program, GLenum pname, GLint* param);
+     PFNGLGETPROGRAMIVPROC fGetProgramiv;
+     typedef void (GLAPIENTRY * PFNGLGETPROGRAMINFOLOGPROC) (GLuint program, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
+     PFNGLGETPROGRAMINFOLOGPROC fGetProgramInfoLog;
+     typedef void (GLAPIENTRY * PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
      PFNGLTEXPARAMETERIPROC fTexParameteri;
      typedef void (GLAPIENTRY * PFNGLTEXPARAMETERFPROC) (GLenum target, GLenum pname, GLfloat param);
      PFNGLTEXPARAMETERFPROC fTexParameterf;
@@ -8890,7 +9319,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
      PFNGLSAMPLECOVERAGEPROC fSampleCoverage;
      typedef void (GLAPIENTRY * PFNGLSCISSORPROC) (GLint x, GLint y, GLsizei width, GLsizei height);
      PFNGLSCISSORPROC fScissor;
-@@ -308,17 +361,17 @@ public:
+     typedef void (GLAPIENTRY * PFNGLSTENCILFUNCPROC) (GLenum func, GLint ref, GLuint mask);
+     PFNGLSTENCILFUNCPROC fStencilFunc;
+     typedef void (GLAPIENTRY * PFNGLSTENCILFUNCSEPARATEPROC) (GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
+     PFNGLSTENCILFUNCSEPARATEPROC fStencilFuncSeparate;
+     typedef void (GLAPIENTRY * PFNGLSTENCILMASKPROC) (GLuint mask);
+@@ -303,27 +356,27 @@ public:
+     typedef void (GLAPIENTRY * PFNGLUNIFORM4FPROC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+     PFNGLUNIFORM4FPROC fUniform4f;
+     typedef void (GLAPIENTRY * PFNGLUNIFORM4FVPROC) (GLint location, GLsizei count, const GLfloat* value);
+     PFNGLUNIFORM4FVPROC fUniform4fv;
+     typedef void (GLAPIENTRY * PFNGLUNIFORM4IPROC) (GLint location, GLint v0, GLint v1, GLint v2, GLint v3);
      PFNGLUNIFORM4IPROC fUniform4i;
      typedef void (GLAPIENTRY * PFNGLUNIFORM4IVPROC) (GLint location, GLsizei count, const GLint* value);
      PFNGLUNIFORM4IVPROC fUniform4iv;
@@ -8912,7 +9351,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
      PFNGLVERTEXATTRIBPOINTERPROC fVertexAttribPointer;
      typedef void (GLAPIENTRY * PFNGLVERTEXATTRIB1FPROC) (GLuint index, GLfloat x);
      PFNGLVERTEXATTRIB1FPROC fVertexAttrib1f;
-@@ -375,9 +428,9 @@ public:
+     typedef void (GLAPIENTRY * PFNGLVERTEXATTRIB2FPROC) (GLuint index, GLfloat x, GLfloat y);
+     PFNGLVERTEXATTRIB2FPROC fVertexAttrib2f;
+     typedef void (GLAPIENTRY * PFNGLVERTEXATTRIB3FPROC) (GLuint index, GLfloat x, GLfloat y, GLfloat z);
+     PFNGLVERTEXATTRIB3FPROC fVertexAttrib3f;
+     typedef void (GLAPIENTRY * PFNGLVERTEXATTRIB4FPROC) (GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+@@ -370,19 +423,19 @@ public:
+     typedef void (GLAPIENTRY * PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIV) (GLenum target, GLenum attachment, GLenum pname, GLint* value);
+     PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIV fGetFramebufferAttachmentParameteriv;
+     typedef void (GLAPIENTRY * PFNGLGETRENDERBUFFERPARAMETERIV) (GLenum target, GLenum pname, GLint* value);
+     PFNGLGETRENDERBUFFERPARAMETERIV fGetRenderbufferParameteriv;
+     typedef void (GLAPIENTRY * PFNGLGENFRAMEBUFFERS) (GLsizei n, GLuint* ids);
      PFNGLGENFRAMEBUFFERS fGenFramebuffers;
      typedef void (GLAPIENTRY * PFNGLGENRENDERBUFFERS) (GLsizei n, GLuint* ids);
      PFNGLGENRENDERBUFFERS fGenRenderbuffers;
@@ -8924,10 +9373,16 @@ diff -r 5b1fe1bf3872 content/canvas/src/glwrap.h
      PFNGLISRENDERBUFFER fIsRenderbuffer;
      typedef void (GLAPIENTRY * PFNGLRENDERBUFFERSTORAGE) (GLenum target, GLenum internalFormat, GLsizei width, GLsizei height);
      PFNGLRENDERBUFFERSTORAGE fRenderbufferStorage;
-diff -r 5b1fe1bf3872 content/canvas/src/localgl.h
---- a/content/canvas/src/localgl.h	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/localgl.h	Fri Dec 11 07:09:00 2009 +0200
-@@ -1,10 +1,47 @@
+ 
+ };
+ 
+ 
+ #endif
+Index: mozilla/content/canvas/src/localgl.h
+===================================================================
+--- mozilla.orig/content/canvas/src/localgl.h
++++ mozilla/content/canvas/src/localgl.h
+@@ -1,2995 +1,3037 @@
 +/* ***** BEGIN LICENSE BLOCK *****
 + * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 + *
@@ -8976,7 +9431,12 @@ diff -r 5b1fe1bf3872 content/canvas/src/localgl.h
  typedef unsigned long GLenum;
  typedef unsigned long GLbitfield;
  typedef unsigned long GLuint;
-@@ -17,7 +54,7 @@ typedef unsigned int GLuint;
+ typedef long GLint;
+ typedef long GLsizei;
+ #else
+ typedef unsigned int GLenum;
+ typedef unsigned int GLbitfield;
+ typedef unsigned int GLuint;
  typedef int GLint;
  typedef int GLsizei;
  #endif
@@ -8985,7 +9445,11 @@ diff -r 5b1fe1bf3872 content/canvas/src/localgl.h
  typedef signed char GLbyte;
  typedef short GLshort;
  typedef unsigned char GLubyte;
-@@ -29,8 +66,8 @@ typedef double GLclampd;
+ typedef unsigned short GLushort;
+ typedef float GLfloat;
+ typedef float GLclampf;
+ typedef double GLdouble;
+ typedef double GLclampd;
  typedef void GLvoid;
  
  typedef char GLchar;
@@ -8996,7 +9460,11 @@ diff -r 5b1fe1bf3872 content/canvas/src/localgl.h
  
  #ifndef GLAPIENTRY
  # ifdef WIN32
-@@ -42,2949 +79,2954 @@ typedef ptrdiff_t GLintptr;
+ #  define GLAPIENTRY APIENTRY
+ #  define GLAPI
+ # else
+ #  define GLAPIENTRY
+ #  define GLAPI
  # endif
  #endif
  
@@ -14894,7 +15362,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/localgl.h
  
  #define WGL_NUMBER_PIXEL_FORMATS_ARB 0x2000
  #define WGL_DRAW_TO_WINDOW_ARB 0x2001
-@@ -3048,4 +3090,73 @@ typedef ptrdiff_t GLintptr;
+ #define WGL_DRAW_TO_BITMAP_ARB 0x2002
+ #define WGL_ACCELERATION_ARB 0x2003
+ #define WGL_NEED_PALETTE_ARB 0x2004
+ #define WGL_NEED_SYSTEM_PALETTE_ARB 0x2005
+ #define WGL_SWAP_LAYER_BUFFERS_ARB 0x2006
+@@ -3043,9 +3085,78 @@ typedef ptrdiff_t GLintptr;
+ #define WGL_PBUFFER_LARGEST_ARB 0x2033
+ #define WGL_PBUFFER_WIDTH_ARB 0x2034
+ #define WGL_PBUFFER_HEIGHT_ARB 0x2035
+ #define WGL_PBUFFER_LOST_ARB 0x2036
+ 
  #define WGL_SAMPLE_BUFFERS_ARB 0x2041
  #define WGL_SAMPLES_ARB 0x2042
  
@@ -14968,9 +15446,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/localgl.h
 +#define EGL_TRUE                        1
 +
  #endif
-diff -r 5b1fe1bf3872 content/canvas/src/nsCanvasRenderingContextGL.cpp
---- a/content/canvas/src/nsCanvasRenderingContextGL.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+Index: mozilla/content/canvas/src/nsCanvasRenderingContextGL.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/nsCanvasRenderingContextGL.cpp
++++ /dev/null
 @@ -1,1069 +0,0 @@
 -/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 -/* ***** BEGIN LICENSE BLOCK *****
@@ -16041,9 +16520,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsCanvasRenderingContextGL.cpp
 -}
 -#endif
 -
-diff -r 5b1fe1bf3872 content/canvas/src/nsCanvasRenderingContextGL.h
---- a/content/canvas/src/nsCanvasRenderingContextGL.h	Fri Dec 11 07:02:35 2009 +0200
-+++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+Index: mozilla/content/canvas/src/nsCanvasRenderingContextGL.h
+===================================================================
+--- mozilla.orig/content/canvas/src/nsCanvasRenderingContextGL.h
++++ /dev/null
 @@ -1,423 +0,0 @@
 -/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 -/* ***** BEGIN LICENSE BLOCK *****
@@ -16468,9 +16948,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsCanvasRenderingContextGL.h
 -}
 -
 -#endif /* _NSCANVASRENDERINGCONTEXTGL_H_ */
-diff -r 5b1fe1bf3872 content/canvas/src/nsCanvasRenderingContextGLWeb20.cpp
---- a/content/canvas/src/nsCanvasRenderingContextGLWeb20.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+Index: mozilla/content/canvas/src/nsCanvasRenderingContextGLWeb20.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/nsCanvasRenderingContextGLWeb20.cpp
++++ /dev/null
 @@ -1,2829 +0,0 @@
 -/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 -/* ***** BEGIN LICENSE BLOCK *****
@@ -19301,10 +19782,16 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsCanvasRenderingContextGLWeb20.cpp
 -    return NS_OK;
 -#endif
 -}
-diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.cpp
---- a/content/canvas/src/nsGLPbuffer.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/nsGLPbuffer.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -38,10 +38,13 @@
+Index: mozilla/content/canvas/src/nsGLPbuffer.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/nsGLPbuffer.cpp
++++ mozilla/content/canvas/src/nsGLPbuffer.cpp
+@@ -33,48 +33,42 @@
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
+  * ***** END LICENSE BLOCK ***** */
  
  #include <stdarg.h>
  
@@ -19319,7 +19806,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.cpp
  #if 0
  #include <xmmintrin.h>
  #endif
-@@ -49,27 +52,18 @@
+ 
  void *nsGLPbuffer::sCurrentContextToken = nsnull;
  
  void
@@ -19354,10 +19841,21 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.cpp
  
      va_end(ap);
  }
-diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
---- a/content/canvas/src/nsGLPbuffer.h	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/nsGLPbuffer.h	Fri Dec 11 07:09:00 2009 +0200
-@@ -48,29 +48,51 @@
+ 
+ static void
+ premultiply_slow(unsigned char *src, unsigned int len)
+ {
+     int a,t;
+Index: mozilla/content/canvas/src/nsGLPbuffer.h
+===================================================================
+--- mozilla.orig/content/canvas/src/nsGLPbuffer.h
++++ mozilla/content/canvas/src/nsGLPbuffer.h
+@@ -43,39 +43,61 @@
+ #include "c3d-standalone.h"
+ #endif
+ 
+ #include "nsStringGlue.h"
+ 
  #include "gfxASurface.h"
  #include "gfxImageSurface.h"
  
@@ -19413,7 +19911,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
      virtual PRBool Resize(PRInt32 width, PRInt32 height) = 0;
      virtual void Destroy() = 0;
  
-@@ -90,12 +112,11 @@ protected:
+     virtual void MakeContextCurrent() = 0;
+     virtual void SwapBuffers() = 0;
+ 
+     virtual gfxASurface* ThebesSurface() = 0;
+ 
+@@ -85,54 +107,53 @@ public:
+     GLES20Wrap *GL() { return &mGLWrap; }
+ 
+ protected:
+     PRInt32 mWidth, mHeight;
+ 
      GLES20Wrap mGLWrap;
  
      static void *sCurrentContextToken;
@@ -19428,7 +19936,9 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
  };
  
  class nsGLPbufferOSMESA :
-@@ -105,7 +126,7 @@ public:
+     public nsGLPbuffer
+ {
+ public:
      nsGLPbufferOSMESA();
      virtual ~nsGLPbufferOSMESA();
  
@@ -19437,7 +19947,13 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
      virtual PRBool Resize(PRInt32 width, PRInt32 height);
      virtual void Destroy();
  
-@@ -119,7 +140,7 @@ protected:
+     virtual void MakeContextCurrent();
+     virtual void SwapBuffers();
+ 
+     virtual gfxASurface* ThebesSurface();
+ 
+ protected:
+     nsRefPtr<gfxImageSurface> mThebesSurface;
      PrivateOSMesaContext mMesaContext;
  };
  
@@ -19446,7 +19962,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
  class nsGLPbufferCGL :
      public nsGLPbuffer
  {
-@@ -127,7 +148,7 @@ public:
+ public:
      nsGLPbufferCGL();
      virtual ~nsGLPbufferCGL();
  
@@ -19455,7 +19971,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
      virtual PRBool Resize(PRInt32 width, PRInt32 height);
      virtual void Destroy();
  
-@@ -154,7 +175,7 @@ protected:
+     virtual void MakeContextCurrent();
+     virtual void SwapBuffers();
+ 
+     virtual gfxASurface* ThebesSurface();
+ 
+@@ -149,25 +170,25 @@ protected:
+     nsRefPtr<gfxImageSurface> mThebesSurface;
+     nsRefPtr<gfxQuartzImageSurface> mQuartzSurface;
+ 
+     typedef void (GLAPIENTRY * PFNGLFLUSHPROC) (void);
+     PFNGLFLUSHPROC fFlush;
  };
  #endif
  
@@ -19464,7 +19990,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
  class nsGLPbufferGLX :
      public nsGLPbuffer
  {
-@@ -162,7 +183,7 @@ public:
+ public:
      nsGLPbufferGLX();
      virtual ~nsGLPbufferGLX();
  
@@ -19473,7 +19999,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
      virtual PRBool Resize(PRInt32 width, PRInt32 height);
      virtual void Destroy();
  
-@@ -181,7 +202,41 @@ protected:
+     virtual void MakeContextCurrent();
+     virtual void SwapBuffers();
+ 
+     virtual gfxASurface* ThebesSurface();
+ 
+@@ -176,25 +197,59 @@ protected:
+ 
+     Display     *mDisplay;
+     GLXFBConfig mFBConfig;
+     GLXPbuffer mPbuffer;
+     GLXContext mPbufferContext;
  };
  #endif
  
@@ -19516,7 +20052,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
  class nsGLPbufferWGL :
      public nsGLPbuffer
  {
-@@ -189,7 +244,7 @@ public:
+ public:
      nsGLPbufferWGL();
      virtual ~nsGLPbufferWGL();
  
@@ -19525,35 +20061,48 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbuffer.h
      virtual PRBool Resize(PRInt32 width, PRInt32 height);
      virtual void Destroy();
  
-diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferCGL.cpp
---- a/content/canvas/src/nsGLPbufferCGL.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/nsGLPbufferCGL.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -36,16 +36,17 @@
+     virtual void MakeContextCurrent();
+     virtual void SwapBuffers();
+ 
+     virtual gfxASurface* ThebesSurface();
+ 
+Index: mozilla/content/canvas/src/nsGLPbufferCGL.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/nsGLPbufferCGL.cpp
++++ mozilla/content/canvas/src/nsGLPbufferCGL.cpp
+@@ -31,38 +31,39 @@
+  * use your version of this file under the terms of the MPL, indicate your
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
   *
   * ***** END LICENSE BLOCK ***** */
  
-+#include "nsIPrefService.h"
+-#include <OpenGL/OpenGL.h>
+-
+-#include "nsICanvasRenderingContextGL.h"
+-
+ #include "nsIPrefService.h"
 +#include "nsServiceManagerUtils.h"
-+
-+#include "nsGLPbuffer.h"
+ 
+ #include "nsGLPbuffer.h"
+-#include "nsCanvasRenderingContextGL.h"
 +#include "WebGLContext.h"
 +
- #include <OpenGL/OpenGL.h>
++#include <OpenGL/OpenGL.h>
  
--#include "nsICanvasRenderingContextGL.h"
-+#include "gfxContext.h"
+ #include "gfxContext.h"
  
--#include "nsIPrefService.h"
--
--#include "nsGLPbuffer.h"
--#include "nsCanvasRenderingContextGL.h"
--
--#include "gfxContext.h"
 +using namespace mozilla;
- 
++
  static PRUint32 gActiveBuffers = 0;
  
-@@ -57,7 +58,7 @@ nsGLPbufferCGL::nsGLPbufferCGL()
+ nsGLPbufferCGL::nsGLPbufferCGL()
+     : mContext(nsnull), mPbuffer(nsnull), fFlush(nsnull)
+ {
+     gActiveBuffers++;
+     fprintf (stderr, "nsGLPbuffer: gActiveBuffers: %d\n", gActiveBuffers);
  }
  
  PRBool
@@ -19562,7 +20111,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferCGL.cpp
  {
      mPriv = priv;
      nsresult rv;
-@@ -108,12 +109,12 @@ nsGLPbufferCGL::Init(nsCanvasRenderingCo
+ 
+     nsCOMPtr<nsIPrefService> prefService = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
+     NS_ENSURE_SUCCESS(rv, PR_FALSE);
+ 
+     nsCOMPtr<nsIPrefBranch> prefBranch;
+@@ -103,22 +104,22 @@ nsGLPbufferCGL::Init(nsCanvasRenderingCo
+         return PR_FALSE;
+     }
+ 
+     // we need a context for glewInit
+     Resize(2, 2);
      MakeContextCurrent();
  
      if (!mGLWrap.OpenLibrary("/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib")) {
@@ -19577,7 +20136,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferCGL.cpp
          return PR_FALSE;
      }
  
-@@ -144,7 +145,7 @@ nsGLPbufferCGL::Resize(PRInt32 width, PR
+     fFlush = (PFNGLFLUSHPROC) mGLWrap.LookupSymbol("glFlush", true);
+ 
+     return PR_TRUE;
+ }
+ 
+@@ -139,17 +140,17 @@ nsGLPbufferCGL::Resize(PRInt32 width, PR
+     CGLError err;
+ 
+     err = CGLCreateContext(mPixelFormat, NULL, &mContext);
+     if (err) {
+         fprintf (stderr, "CGLCreateContext failed: %d\n", err);
          return PR_FALSE;
      }
  
@@ -19586,7 +20155,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferCGL.cpp
      if (err) {
          fprintf (stderr, "CGLCreatePBuffer failed: %d\n", err);
          return PR_FALSE;
-@@ -225,7 +226,7 @@ gfxASurface*
+     }
+ 
+     GLint screen;
+     err = CGLGetVirtualScreen(mContext, &screen);
+     if (err) {
+@@ -220,30 +221,30 @@ nsGLPbufferCGL::SwapBuffers()
+ 
+     mImageNeedsUpdate = PR_TRUE;
+ }
+ 
+ gfxASurface*
  nsGLPbufferCGL::ThebesSurface()
  {
      if (!mThebesSurface) {
@@ -19595,7 +20174,12 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferCGL.cpp
          if (mThebesSurface->CairoStatus() != 0) {
              fprintf (stderr, "image surface failed\n");
              return nsnull;
-@@ -238,7 +239,7 @@ nsGLPbufferCGL::ThebesSurface()
+         }
+ 
+         mQuartzSurface = new gfxQuartzImageSurface(mThebesSurface);
+ 
+         mImageNeedsUpdate = PR_TRUE;
+     }
  
      if (mImageNeedsUpdate) {
          MakeContextCurrent();
@@ -19604,9 +20188,15 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferCGL.cpp
  
          mQuartzSurface->Flush();
  
-diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferEGL.cpp
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/canvas/src/nsGLPbufferEGL.cpp	Fri Dec 11 07:09:00 2009 +0200
+         mImageNeedsUpdate = PR_FALSE;
+     }
+ 
+     return mQuartzSurface;
+ }
+Index: mozilla/content/canvas/src/nsGLPbufferEGL.cpp
+===================================================================
+--- /dev/null
++++ mozilla/content/canvas/src/nsGLPbufferEGL.cpp
 @@ -0,0 +1,487 @@
 +/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -19773,7 +20363,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferEGL.cpp
 +{
 +    mPriv = priv;
 +
-+#ifdef NS_OSSO
++#if (MOZ_PLATFORM_MAEMO == 5)
 +    // Maemo has missing DSO dependencies on their OpenGL libraries;
 +    // so ensure that the prerequisite libs are loaded in the process
 +    // before loading GL.  An alternate approach is to use LD_PRELOAD.
@@ -19809,7 +20399,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferEGL.cpp
 +
 +    gEGLWrap.fBindAPI (EGL_OPENGL_ES_API);
 +
-+#if defined(MOZ_X11) && defined(NS_OSSO)
++#if defined(MOZ_X11) && defined(MOZ_PLATFORM_MAEMO)
 +    EGLint attribs[] = {
 +        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 +        EGL_SURFACE_TYPE, EGL_PIXMAP_BIT,
@@ -19821,7 +20411,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferEGL.cpp
 +        EGL_NONE
 +    };
 +
-+    
++
 +    EGLint ncfg = 0;
 +    EGLConfig cfg;
 +
@@ -20087,7 +20677,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferEGL.cpp
 +gfxASurface*
 +nsGLPbufferEGL::ThebesSurface()
 +{
-+#if defined(MOZ_X11) && defined(NS_OSSO)
++#if defined(MOZ_X11) && defined(MOZ_PLATFORM_MAEMO)
 +    if (getenv("IMAGE"))
 +        return mThebesSurface;
 +    return mXlibSurface;
@@ -20095,10 +20685,16 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferEGL.cpp
 +    return mThebesSurface;
 +#endif
 +}
-diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferGLX.cpp
---- a/content/canvas/src/nsGLPbufferGLX.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/nsGLPbufferGLX.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -37,15 +37,20 @@
+Index: mozilla/content/canvas/src/nsGLPbufferGLX.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/nsGLPbufferGLX.cpp
++++ mozilla/content/canvas/src/nsGLPbufferGLX.cpp
+@@ -32,25 +32,30 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
   * ***** END LICENSE BLOCK ***** */
  
  // this must be first, else windows.h breaks us
@@ -20121,7 +20717,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferGLX.cpp
  #if defined(MOZ_WIDGET_GTK2) && defined(MOZ_X11)
  #include <gdk/gdkx.h>
  #endif
-@@ -127,18 +132,18 @@ nsGLPbufferGLX::nsGLPbufferGLX()
+ 
+ static PRUint32 gActiveBuffers = 0;
+ 
+ class GLXWrap
+     : public LibrarySymbolLoader
+@@ -122,51 +127,51 @@ static GLXWrap gGLXWrap;
+ nsGLPbufferGLX::nsGLPbufferGLX()
+     : mDisplay(nsnull), mFBConfig(0), mPbuffer(0), mPbufferContext(0)
+ {
+     gActiveBuffers++;
+     fprintf (stderr, "nsGLPbufferGLX: gActiveBuffers: %d\n", gActiveBuffers);
  }
  
  PRBool
@@ -20143,7 +20749,9 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferGLX.cpp
          return PR_FALSE;
      }
  
-@@ -148,20 +153,20 @@ nsGLPbufferGLX::Init(nsCanvasRenderingCo
+ #if defined(MOZ_WIDGET_GTK2) && defined(MOZ_X11)
+     mDisplay = gdk_x11_get_default_xdisplay();
+ #else
      mDisplay = XOpenDisplay(NULL);
  #endif
      if (!mDisplay) {
@@ -20167,7 +20775,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferGLX.cpp
          return PR_FALSE;
      }
  
-@@ -197,7 +202,7 @@ nsGLPbufferGLX::Init(nsCanvasRenderingCo
+     mPriv = priv;
+ 
+     nsCOMPtr<nsIPrefService> prefService = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
+     NS_ENSURE_SUCCESS(rv, PR_FALSE);
+ 
+@@ -192,17 +197,17 @@ nsGLPbufferGLX::Init(nsCanvasRenderingCo
+     if (prefAntialiasing <= 0)
+       attrib[16] = 0;
+     int num;
+     GLXFBConfig *configs = gGLXWrap.fChooseFBConfig(mDisplay, DefaultScreen(mDisplay),
+                                                     attrib, &num);
  
      fprintf(stderr, "CANVAS3D FBCONFIG: %d %p\n", num, (void*) configs);
      if (!configs) {
@@ -20176,7 +20794,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferGLX.cpp
          return PR_FALSE;
      }
  
-@@ -219,14 +224,14 @@ nsGLPbufferGLX::Init(nsCanvasRenderingCo
+     // choose first matching config;
+     mFBConfig = *configs;
+ 
+     XFree(configs);
+ 
+@@ -214,24 +219,24 @@ nsGLPbufferGLX::Init(nsCanvasRenderingCo
+     Resize(2, 2);
+     MakeContextCurrent();
+ 
+     PRInt64 t2 = PR_Now();
+ 
      fprintf (stderr, "nsGLPbufferGLX::Init!\n");
  
      if (!mGLWrap.OpenLibrary("libGL.so.1")) {
@@ -20193,7 +20821,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferGLX.cpp
          return PR_FALSE;
      }
  
-@@ -250,7 +255,7 @@ nsGLPbufferGLX::Resize(PRInt32 width, PR
+     PRInt64 t3 = PR_Now();
+ 
+     fprintf (stderr, "nsGLPbufferGLX:: Initialization took t2-t1: %f t3-t2: %f\n",
+              ((double)(t2-t1))/1000.0, ((double)(t3-t2))/1000.0);
+     fflush (stderr);
+@@ -245,17 +250,17 @@ nsGLPbufferGLX::Resize(PRInt32 width, PR
+     if (mWidth == width &&
+         mHeight == height)
+     {
+         return PR_TRUE;
+     }
  
      Destroy();
  
@@ -20202,7 +20840,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferGLX.cpp
      if (mThebesSurface->CairoStatus() != 0) {
          fprintf (stderr, "image surface failed\n");
          return PR_FALSE;
-@@ -323,7 +328,7 @@ void
+     }
+ 
+     // clear the surface
+     memset (mThebesSurface->Data(),
+             0,
+@@ -318,17 +323,17 @@ nsGLPbufferGLX::MakeContextCurrent()
+     if (gGLXWrap.fGetCurrentContext() != mPbufferContext)
+         gGLXWrap.fMakeContextCurrent(mDisplay, mPbuffer, mPbuffer, mPbufferContext);
+ }
+ 
+ void
  nsGLPbufferGLX::SwapBuffers()
  {
      MakeContextCurrent();
@@ -20211,10 +20859,21 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferGLX.cpp
      unsigned int len = mWidth*mHeight*4;
      unsigned char *src = mThebesSurface->Data();
      // Premultiply the image
-diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
---- a/content/canvas/src/nsGLPbufferOSMesa.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/nsGLPbufferOSMesa.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -37,18 +37,18 @@
+     // XXX don't do this if we're known opaque
+     Premultiply(src, len);
+ }
+ 
+ gfxASurface*
+Index: mozilla/content/canvas/src/nsGLPbufferOSMesa.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/nsGLPbufferOSMesa.cpp
++++ mozilla/content/canvas/src/nsGLPbufferOSMesa.cpp
+@@ -32,28 +32,28 @@
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
+  *
   * ***** END LICENSE BLOCK ***** */
  
  // this must be first, else windows.h breaks us
@@ -20237,7 +20896,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
  
  #if 0
  #include <GL/osmesa.h>
-@@ -71,7 +71,7 @@ nsGLPbufferOSMESA::nsGLPbufferOSMESA()
+ #else
+ #define OSMESA_RGBA		GL_RGBA
+ #define OSMESA_BGRA		0x1
+ #define OSMESA_ARGB		0x2
+ #define OSMESA_Y_UP		0x11
+@@ -66,31 +66,33 @@ static PRUint32 gActiveBuffers = 0;
+ nsGLPbufferOSMESA::nsGLPbufferOSMESA()
+     : mMesaContext(nsnull)
+ {
+     gActiveBuffers++;
+     fprintf (stderr, "nsGLPbufferOSMESA: gActiveBuffers: %d\n", gActiveBuffers);
  }
  
  PRBool
@@ -20246,7 +20915,8 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
  {
      mPriv = priv;
      nsresult rv;
-@@ -80,12 +80,14 @@ nsGLPbufferOSMESA::Init(nsCanvasRenderin
+ 
+     nsCOMPtr<nsIPrefService> prefService = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
      NS_ENSURE_SUCCESS(rv, PR_FALSE);
  
      nsCOMPtr<nsIPrefBranch> prefBranch;
@@ -20262,7 +20932,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
      if (NS_FAILED(rv)) {
          osmesalib.Truncate();
  
-@@ -113,7 +115,7 @@ nsGLPbufferOSMESA::Init(nsCanvasRenderin
+         // try our default; build it from the profile dir
+         nsCOMPtr<nsIFile> libfile;
+         rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(libfile));
+         if (NS_FAILED(rv)) {
+             fprintf (stderr, "NS_GetSpecialDirectory failed?\n");
+@@ -108,62 +110,65 @@ nsGLPbufferOSMESA::Init(nsCanvasRenderin
+ #elif defined(XP_MACOSX)
+         rv |= libfile->Append(NS_LITERAL_STRING("Darwin"));
+         rv |= libfile->Append(NS_LITERAL_STRING("libOSMesa.7.dylib"));
+ #elif defined(XP_UNIX)
+         rv |= libfile->Append(NS_LITERAL_STRING("Linux"));
          rv |= libfile->Append(NS_LITERAL_STRING("libOSMesa.so.7"));
  #else
  #warning No default osmesa library path available
@@ -20271,7 +20951,9 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
          rv = NS_ERROR_FAILURE;
  #endif
  
-@@ -123,20 +125,23 @@ nsGLPbufferOSMESA::Init(nsCanvasRenderin
+         if (NS_FAILED(rv))
+             return PR_FALSE;
+ 
          PRBool exists = PR_FALSE;
          rv = libfile->Exists(&exists);
          if (NS_FAILED(rv) || !exists) {
@@ -20300,7 +20982,14 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
          return PR_FALSE;
      }
  
-@@ -151,14 +156,14 @@ nsGLPbufferOSMESA::Init(nsCanvasRenderin
+     if (!gMesaWrap.Init())
+         return PR_FALSE;
+ 
+     PRInt32 prefAntialiasing;
+     rv = prefBranch->GetIntPref("antialiasing", &prefAntialiasing);
+     if (NS_FAILED(rv))
+         prefAntialiasing = 0;
+ 
      Resize (2, 2);
  
      if (!mGLWrap.OpenLibrary(osmesalib.get())) {
@@ -20317,7 +21006,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
          return PR_FALSE;
      }
  
-@@ -176,8 +181,8 @@ nsGLPbufferOSMESA::Resize(PRInt32 width,
+     return PR_TRUE;
+ }
+ 
+ PRBool
+ nsGLPbufferOSMESA::Resize(PRInt32 width, PRInt32 height)
+@@ -171,32 +176,32 @@ nsGLPbufferOSMESA::Resize(PRInt32 width,
+     if (mWidth == width &&
+         mHeight == height)
+     {
+         return PR_TRUE;
+     }
  
      Destroy();
  
@@ -20328,7 +21027,13 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
      if (mThebesSurface->CairoStatus() != 0) {
          fprintf (stderr, "image surface failed\n");
          return PR_FALSE;
-@@ -191,7 +196,7 @@ nsGLPbufferOSMESA::Resize(PRInt32 width,
+     }
+ 
+     mMesaContext = gMesaWrap.fCreateContextExt (OSMESA_BGRA, 16, 0, 0, NULL);
+     if (!mMesaContext) {
+         fprintf (stderr, "OSMesaCreateContextExt failed!\n");
+         return PR_FALSE;
+     }
  
      fprintf (stderr, "Surface: %p\n", mThebesSurface->Data());
  
@@ -20337,7 +21042,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
      {
          fprintf (stderr, "OSMesaMakeCurrent failed!\n");
          return PR_FALSE;
-@@ -233,7 +238,7 @@ nsGLPbufferOSMESA::MakeContextCurrent()
+     }
+ 
+     gMesaWrap.fPixelStore (OSMESA_Y_UP, 1);
+ 
+     mWidth = width;
+@@ -228,17 +233,17 @@ nsGLPbufferOSMESA::~nsGLPbufferOSMESA()
+ }
+ 
+ void
+ nsGLPbufferOSMESA::MakeContextCurrent()
+ {
      if (gMesaWrap.fGetCurrentContext() == mMesaContext)
          return;
  
@@ -20346,20 +21061,30 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferOSMesa.cpp
  }
  
  void
-diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
---- a/content/canvas/src/nsGLPbufferWGL.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/canvas/src/nsGLPbufferWGL.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -36,15 +36,16 @@
+ nsGLPbufferOSMESA::SwapBuffers()
+ {
+     // Nothing; we're already rendering to an image
+ }
+ 
+Index: mozilla/content/canvas/src/nsGLPbufferWGL.cpp
+===================================================================
+--- mozilla.orig/content/canvas/src/nsGLPbufferWGL.cpp
++++ mozilla/content/canvas/src/nsGLPbufferWGL.cpp
+@@ -31,51 +31,80 @@
+  * use your version of this file under the terms of the MPL, indicate your
+  * decision by deleting the provisions above and replace them with the notice
+  * and other provisions required by the GPL or the LGPL. If you do not delete
+  * the provisions above, a recipient may use your version of this file under
+  * the terms of any one of the MPL, the GPL or the LGPL.
   *
   * ***** END LICENSE BLOCK ***** */
  
 -// this must be first, else windows.h breaks us
 -#include "nsICanvasRenderingContextGL.h"
-+#include "nsIPrefService.h"
+-
+ #include "nsIPrefService.h"
 +#include "nsServiceManagerUtils.h"
  
--#include "nsIPrefService.h"
--
 +#include "WebGLContext.h"
  #include "nsGLPbuffer.h"
 -#include "nsCanvasRenderingContextGL.h"
@@ -20371,7 +21096,9 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
  
  static PRUint32 gActiveBuffers = 0;
  
-@@ -54,9 +55,20 @@ class WGLWrap
+ class WGLWrap
+     : public LibrarySymbolLoader
+ {
  public:
      WGLWrap() : fCreatePbuffer(0) { }
  
@@ -20392,7 +21119,14 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
      typedef HANDLE (WINAPI * PFNWGLCREATEPBUFFERPROC) (HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int* piAttribList);
      PFNWGLCREATEPBUFFERPROC fCreatePbuffer;
      typedef BOOL (WINAPI * PFNWGLDESTROYPBUFFERPROC) (HANDLE hPbuffer);
-@@ -71,6 +83,23 @@ public:
+     PFNWGLDESTROYPBUFFERPROC fDestroyPbuffer;
+     typedef HDC (WINAPI * PFNWGLGETPBUFFERDCPROC) (HANDLE hPbuffer);
+     PFNWGLGETPBUFFERDCPROC fGetPbufferDC;
+ 
+     typedef BOOL (WINAPI * PFNWGLCHOOSEPIXELFORMATPROC) (HDC hdc, const int* piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
+     PFNWGLCHOOSEPIXELFORMATPROC fChoosePixelFormat;
+     typedef BOOL (WINAPI * PFNWGLGETPIXELFORMATATTRIBIVPROC) (HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, int* piAttributes, int *piValues);
+     PFNWGLGETPIXELFORMATATTRIBIVPROC fGetPixelFormatAttribiv;
  };
  
  bool
@@ -20416,7 +21150,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
  WGLWrap::Init()
  {
      if (fCreatePbuffer)
-@@ -99,7 +128,7 @@ nsGLPbufferWGL::nsGLPbufferWGL()
+         return true;
+ 
+     SymLoadStruct symbols[] = {
+         { (PRFuncPtr*) &fCreatePbuffer, { "wglCreatePbufferARB", "wglCreatePbufferEXT", NULL } },
+         { (PRFuncPtr*) &fDestroyPbuffer, { "wglDestroyPbufferARB", "wglDestroyPbufferEXT", NULL } },
+@@ -94,98 +123,101 @@ nsGLPbufferWGL::nsGLPbufferWGL()
+     : mGlewWindow(nsnull), mGlewDC(nsnull), mGlewWglContext(nsnull),
+       mPbuffer(nsnull), mPbufferDC(nsnull), mPbufferContext(nsnull)
+ {
+     gActiveBuffers++;
+     fprintf (stderr, "nsGLPbufferWGL: gActiveBuffers: %d\n", gActiveBuffers);
  }
  
  PRBool
@@ -20425,7 +21169,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
  {
      // XXX lookup SYSTEM32 path!
      char *opengl32 = "C:\\WINDOWS\\SYSTEM32\\OPENGL32.DLL";
-@@ -107,37 +136,40 @@ nsGLPbufferWGL::Init(nsCanvasRenderingCo
+ 
      if (!gWGLWrap.OpenLibrary(opengl32))
          return PR_FALSE;
  
@@ -20460,7 +21204,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
      // create window
 -    mGlewWindow = CreateWindow("GLEW", "GLEW", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
 -                               CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
-+    mGlewWindow = CreateWindowW(L"GLEW", L"GLEW", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
++    mGlewWindow = CreateWindowW(L"GLEW", L"GLEW", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 +                                CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
      if (!mGlewWindow) {
 -        LogMessage(NS_LITERAL_CSTRING("Canvas 3D: CreateWindow failed"));
@@ -20476,7 +21220,12 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
          return PR_FALSE;
      }
  
-@@ -150,19 +182,19 @@ nsGLPbufferWGL::Init(nsCanvasRenderingCo
+     // find default pixel format
+     ZeroMemory(&pfd, sizeof(PIXELFORMATDESCRIPTOR));
+     pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+     pfd.nVersion = 1;
+     pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+     int pixelformat = ChoosePixelFormat(mGlewDC, &pfd);
  
      // set the pixel format for the dc
      if (!SetPixelFormat(mGlewDC, pixelformat, &pfd)) {
@@ -20501,7 +21250,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
          return PR_FALSE;
      }
  
-@@ -173,14 +205,14 @@ nsGLPbufferWGL::Init(nsCanvasRenderingCo
+     // grab all the wgl extension pieces that we couldn't grab before
+     // we had a context
+     if (!gWGLWrap.Init())
+         return PR_FALSE;
  
      // XXX look up system32 dir
      if (!mGLWrap.OpenLibrary(opengl32)) {
@@ -20519,7 +21271,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
          return PR_FALSE;
      }
  
-@@ -212,7 +244,7 @@ nsGLPbufferWGL::Resize(PRInt32 width, PR
+     return PR_TRUE;
+ }
+ 
+ PRBool
+ nsGLPbufferWGL::Resize(PRInt32 width, PRInt32 height)
+@@ -207,38 +239,38 @@ nsGLPbufferWGL::Resize(PRInt32 width, PR
+     rv = prefService->GetBranch("extensions.canvas3d.", getter_AddRefs(prefBranch));
+     NS_ENSURE_SUCCESS(rv, PR_FALSE);
+ 
+     PRInt32 prefAntialiasing;
+     rv = prefBranch->GetIntPref("antialiasing", &prefAntialiasing);
      if (NS_FAILED(rv))
          prefAntialiasing = 0;
  
@@ -20528,7 +21290,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
      if (mThebesSurface->CairoStatus() != 0) {
          fprintf (stderr, "image surface failed\n");
          return PR_FALSE;
-@@ -223,17 +255,17 @@ nsGLPbufferWGL::Resize(PRInt32 width, PR
+     }
+ 
+     // clear the surface
+     memset (mThebesSurface->Data(),
              0,
              height * mThebesSurface->Stride());
  
@@ -20551,7 +21316,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
  
          WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
  
-@@ -255,7 +287,7 @@ nsGLPbufferWGL::Resize(PRInt32 width, PR
+         WGL_COLOR_BITS_ARB, 32,
+         WGL_RED_BITS_ARB, 8,
+         WGL_GREEN_BITS_ARB, 8,
+         WGL_BLUE_BITS_ARB, 8,
+         WGL_ALPHA_BITS_ARB, 8,
+@@ -250,17 +282,17 @@ nsGLPbufferWGL::Resize(PRInt32 width, PR
+ 
+     float fattribs[] = { 0.0f };
+ 
+     // ATI's OpenGL impl seems to have a problem with calling
+     // wglChoosePixelFormatARB with NULL/0 to obtain the number of
      // matching formats; so just allocate room for a lot.
  #define MAX_NUM_FORMATS 256
      UINT numFormats = MAX_NUM_FORMATS;
@@ -20560,7 +21335,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
  
      //fprintf (stderr, "EXT: %p ARB: %p rest: %s\n", wglewGetContext()->__wglewChoosePixelFormatEXT, wglewGetContext()->__wglewChoosePixelFormatARB, wglGetExtensionsStringARB(mGlewDC));
  
-@@ -282,7 +314,7 @@ TRY_FIND_AGAIN:
+ TRY_FIND_AGAIN:
+     if (ignoreAA) {
+         attribs[18] = 0;
+     } else if (prefAntialiasing > 0) {
+         attribs[18] = WGL_SAMPLE_BUFFERS_ARB;
+@@ -277,17 +309,17 @@ TRY_FIND_AGAIN:
+                                      &numFormats) ||
+         numFormats == 0)
+     {
+         if (!ignoreAA) {
+             ignoreAA = PR_TRUE;
              goto TRY_FIND_AGAIN;
          }
  
@@ -20569,7 +21354,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
          ReleaseDC(NULL, mGlewDC);
          return PR_FALSE;
      }
-@@ -334,7 +366,7 @@ TRY_FIND_AGAIN:
+ 
+     int chosenFormat = -1;
+     int question,answer;
+ 
+     for (int priority = 6; priority > 0; priority--) {
+@@ -329,32 +361,32 @@ TRY_FIND_AGAIN:
+ #undef CHECK_ATTRIB
+         }
+ 
+         if (chosenFormat != -1)
+             break;
      }
  
      if (chosenFormat == -1) {
@@ -20578,7 +21373,9 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
          return PR_FALSE;
      }
      
-@@ -344,12 +376,12 @@ TRY_FIND_AGAIN:
+     // ok, we now have a pixel format
+     fprintf (stderr, "***** Chose pixel format: %d\n", chosenFormat);
+     
      int pbattribs = 0;
      mPbuffer = gWGLWrap.fCreatePbuffer(mGlewDC, chosenFormat, width, height, &pbattribs);
      if (!mPbuffer) {
@@ -20593,7 +21390,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
  
      mWindowsSurface = new gfxWindowsSurface(gfxIntSize(width, height), gfxASurface::ImageFormatARGB32);
      if (mWindowsSurface && mWindowsSurface->CairoStatus() == 0)
-@@ -369,7 +401,7 @@ nsGLPbufferWGL::Destroy()
+         mThebesSurface = mWindowsSurface->GetImageSurface();
+ 
+     mWidth = width;
+     mHeight = height;
+ 
+@@ -364,28 +396,28 @@ TRY_FIND_AGAIN:
+ 
+ void
+ nsGLPbufferWGL::Destroy()
+ {
+     sCurrentContextToken = nsnull;
      mThebesSurface = nsnull;
  
      if (mPbuffer) {
@@ -20602,7 +21409,10 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
          gWGLWrap.fDestroyPbuffer(mPbuffer);
          mPbuffer = nsnull;
      }
-@@ -380,7 +412,7 @@ nsGLPbufferWGL::~nsGLPbufferWGL()
+ }
+ 
+ nsGLPbufferWGL::~nsGLPbufferWGL()
+ {
      Destroy();
  
      if (mGlewWglContext) {
@@ -20611,7 +21421,17 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
          mGlewWglContext = nsnull;
      }
  
-@@ -400,7 +432,7 @@ nsGLPbufferWGL::MakeContextCurrent()
+     if (mGlewWindow) {
+         DestroyWindow(mGlewWindow);
+         mGlewWindow = nsnull;
+     }
+ 
+@@ -395,25 +427,25 @@ nsGLPbufferWGL::~nsGLPbufferWGL()
+ }
+ 
+ void
+ nsGLPbufferWGL::MakeContextCurrent()
+ {
      if (sCurrentContextToken == mPbufferContext)
          return;
  
@@ -20620,7 +21440,7 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
      sCurrentContextToken = mPbufferContext;
  }
  
-@@ -408,7 +440,7 @@ void
+ void
  nsGLPbufferWGL::SwapBuffers()
  {
      MakeContextCurrent();
@@ -20629,10 +21449,21 @@ diff -r 5b1fe1bf3872 content/canvas/src/nsGLPbufferWGL.cpp
  
      // premultiply the image
      int len = mWidth*mHeight*4;
-diff -r 5b1fe1bf3872 content/xbl/builtin/Makefile.in
---- a/content/xbl/builtin/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/content/xbl/builtin/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -45,7 +45,7 @@ include $(DEPTH)/config/autoconf.mk
+     unsigned char *src = mThebesSurface->Data();
+     Premultiply(src, len);
+ }
+ 
+ gfxASurface*
+Index: mozilla/content/xbl/builtin/Makefile.in
+===================================================================
+--- mozilla.orig/content/xbl/builtin/Makefile.in
++++ mozilla/content/xbl/builtin/Makefile.in
+@@ -40,17 +40,17 @@ topsrcdir	= @top_srcdir@
+ srcdir		= @srcdir@
+ VPATH		= @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
  ifneq (,$(filter OS2 WINNT WINCE,$(OS_ARCH)))
  DIRS	= win
  else
@@ -20641,10 +21472,21 @@ diff -r 5b1fe1bf3872 content/xbl/builtin/Makefile.in
  DIRS	= mac
  else
  ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
-diff -r 5b1fe1bf3872 docshell/build/Makefile.in
---- a/docshell/build/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/docshell/build/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -122,7 +122,7 @@ LOCAL_INCLUDES	= \
+ DIRS	= gtk2
+ else
+ DIRS	= unix
+ endif
+ endif
+Index: mozilla/docshell/build/Makefile.in
+===================================================================
+--- mozilla.orig/docshell/build/Makefile.in
++++ mozilla/docshell/build/Makefile.in
+@@ -117,17 +117,17 @@ LOCAL_INCLUDES	= \
+ 		-I$(srcdir) \
+ 		-I$(srcdir)/../base \
+ 		-I$(srcdir)/../shistory/src \
+ 		-I$(topsrcdir)/uriloader/base \
+ 		-I$(topsrcdir)/uriloader/prefetch \
  		-I$(topsrcdir)/uriloader/exthandler \
  		$(NULL)
  
@@ -20653,10 +21495,21 @@ diff -r 5b1fe1bf3872 docshell/build/Makefile.in
  LOCAL_INCLUDES += -I$(topsrcdir)/uriloader/exthandler/mac
  EXTRA_DSO_LDOPTS += \
          $(TK_LIBS) \
-diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
---- a/dom/base/nsDOMClassInfo.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/dom/base/nsDOMClassInfo.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -439,12 +439,9 @@
+         $(NULL)
+ endif
+ 
+ ifeq ($(OS_ARCH),WINNT)
+ OS_LIBS		+= $(call EXPAND_LIBNAME, shell32 ole32)
+Index: mozilla/dom/base/nsDOMClassInfo.cpp
+===================================================================
+--- mozilla.orig/dom/base/nsDOMClassInfo.cpp
++++ mozilla/dom/base/nsDOMClassInfo.cpp
+@@ -434,22 +434,19 @@
+ #include "nsIDOMSVGTSpanElement.h"
+ #include "nsIDOMSVGURIReference.h"
+ #include "nsIDOMSVGUseElement.h"
+ #include "nsIDOMSVGUnitTypes.h"
+ #include "nsIDOMSVGZoomAndPan.h"
  #include "nsIDOMSVGZoomEvent.h"
  #endif // MOZ_SVG
  
@@ -20671,7 +21524,17 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
  
  #include "nsIImageDocument.h"
  
-@@ -1160,7 +1157,6 @@ static nsDOMClassInfoData sClassInfoData
+ // Storage includes
+ #include "nsDOMStorage.h"
+ 
+ // Drag and drop
+ #include "nsIDOMDataTransfer.h"
+@@ -1155,26 +1152,24 @@ static nsDOMClassInfoData sClassInfoData
+   NS_DEFINE_CLASSINFO_DATA(SVGUnitTypes, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(SVGZoomEvent, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+ #endif // MOZ_SVG
  
    NS_DEFINE_CLASSINFO_DATA(HTMLCanvasElement, nsHTMLElementSH,
                             ELEMENT_SCRIPTABLE_FLAGS)
@@ -20679,7 +21542,8 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
    NS_DEFINE_CLASSINFO_DATA(CanvasRenderingContext2D, nsDOMGenericSH,
                             DOM_DEFAULT_SCRIPTABLE_FLAGS)
    NS_DEFINE_CLASSINFO_DATA(CanvasGradient, nsDOMGenericSH,
-@@ -1169,7 +1165,6 @@ static nsDOMClassInfoData sClassInfoData
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(CanvasPattern, nsDOMGenericSH,
                             DOM_DEFAULT_SCRIPTABLE_FLAGS)
    NS_DEFINE_CLASSINFO_DATA(TextMetrics, nsDOMGenericSH,
                             DOM_DEFAULT_SCRIPTABLE_FLAGS)
@@ -20687,16 +21551,25 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
  
    NS_DEFINE_CLASSINFO_DATA(SmartCardEvent, nsDOMGenericSH,
                             DOM_DEFAULT_SCRIPTABLE_FLAGS)
-@@ -1339,10 +1334,43 @@ static nsDOMClassInfoData sClassInfoData
+   NS_DEFINE_CLASSINFO_DATA(PageTransitionEvent, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+   NS_DEFINE_CLASSINFO_DATA(WindowUtils, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+ 
+@@ -1334,20 +1329,53 @@ static nsDOMClassInfoData sClassInfoData
+   NS_DEFINE_CLASSINFO_DATA(Worker, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+ 
+   NS_DEFINE_CLASSINFO_DATA(PaintRequest, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
    NS_DEFINE_CLASSINFO_DATA(PaintRequestList, nsPaintRequestListSH,
                             ARRAY_SCRIPTABLE_FLAGS)
  
 -#ifdef MOZ_ENABLE_CANVAS3D
 -  NS_DEFINE_CLASSINFO_DATA(CanvasRenderingContextGLWeb20, nsDOMGenericSH,
--                           DOM_DEFAULT_SCRIPTABLE_FLAGS)
--#endif
 +  NS_DEFINE_CLASSINFO_DATA(CanvasRenderingContextWebGL, nsDOMGenericSH,
-+                           DOM_DEFAULT_SCRIPTABLE_FLAGS)
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+-#endif
 +  NS_DEFINE_CLASSINFO_DATA(WebGLBuffer, nsDOMGenericSH,
 +                           DOM_DEFAULT_SCRIPTABLE_FLAGS)
 +  NS_DEFINE_CLASSINFO_DATA(WebGLTexture, nsDOMGenericSH,
@@ -20735,7 +21608,17 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
  
    NS_DEFINE_CLASSINFO_DATA(ScrollAreaEvent, nsDOMGenericSH,
                             DOM_DEFAULT_SCRIPTABLE_FLAGS)
-@@ -1383,6 +1411,16 @@ struct nsConstructorFuncMapData
+   NS_DEFINE_CLASSINFO_DATA(EventListenerInfo, nsDOMGenericSH,
+                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
+ };
+ 
+ // Objects that shuld be constructable through |new Name();|
+@@ -1378,16 +1406,26 @@ struct nsConstructorFuncMapData
+ };
+ 
+ #define NS_DEFINE_CONSTRUCTOR_FUNC_DATA(_class, _func)                        \
+   { eDOMClassInfo_##_class##_id, _func },
+ 
  static const nsConstructorFuncMapData kConstructorFuncMap[] =
  {
    NS_DEFINE_CONSTRUCTOR_FUNC_DATA(Worker, nsDOMWorker::NewWorker)
@@ -20752,7 +21635,17 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
  };
  
  nsIXPConnect *nsDOMClassInfo::sXPConnect = nsnull;
-@@ -3431,7 +3469,6 @@ nsDOMClassInfo::Init()
+ nsIScriptSecurityManager *nsDOMClassInfo::sSecMan = nsnull;
+ PRBool nsDOMClassInfo::sIsInitialized = PR_FALSE;
+ PRBool nsDOMClassInfo::sDisableDocumentAllSupport = PR_FALSE;
+ PRBool nsDOMClassInfo::sDisableGlobalScopePollutionSupport = PR_FALSE;
+ 
+@@ -3426,33 +3464,31 @@ nsDOMClassInfo::Init()
+   DOM_CLASSINFO_MAP_END
+ #endif // MOZ_SVG
+ 
+   DOM_CLASSINFO_MAP_BEGIN(HTMLCanvasElement, nsIDOMHTMLCanvasElement)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMHTMLCanvasElement)
      DOM_CLASSINFO_GENERIC_HTML_MAP_ENTRIES
    DOM_CLASSINFO_MAP_END
  
@@ -20760,7 +21653,15 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
    DOM_CLASSINFO_MAP_BEGIN(CanvasRenderingContext2D, nsIDOMCanvasRenderingContext2D)
      DOM_CLASSINFO_MAP_ENTRY(nsIDOMCanvasRenderingContext2D)
    DOM_CLASSINFO_MAP_END
-@@ -3447,7 +3484,6 @@ nsDOMClassInfo::Init()
+ 
+   DOM_CLASSINFO_MAP_BEGIN(CanvasGradient, nsIDOMCanvasGradient)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMCanvasGradient)
+   DOM_CLASSINFO_MAP_END
+ 
+   DOM_CLASSINFO_MAP_BEGIN(CanvasPattern, nsIDOMCanvasPattern)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMCanvasPattern)
+   DOM_CLASSINFO_MAP_END
+ 
    DOM_CLASSINFO_MAP_BEGIN(TextMetrics, nsIDOMTextMetrics)
      DOM_CLASSINFO_MAP_ENTRY(nsIDOMTextMetrics)
    DOM_CLASSINFO_MAP_END
@@ -20768,7 +21669,17 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
  
    DOM_CLASSINFO_MAP_BEGIN(XSLTProcessor, nsIXSLTProcessor)
      DOM_CLASSINFO_MAP_ENTRY(nsIXSLTProcessor)
-@@ -3700,12 +3736,65 @@ nsDOMClassInfo::Init()
+     DOM_CLASSINFO_MAP_ENTRY(nsIXSLTProcessorObsolete) // XXX DEPRECATED
+     DOM_CLASSINFO_MAP_ENTRY(nsIXSLTProcessorPrivate)
+   DOM_CLASSINFO_MAP_END
+ 
+   DOM_CLASSINFO_MAP_BEGIN(XPathEvaluator, nsIDOMXPathEvaluator)
+@@ -3695,22 +3731,75 @@ nsDOMClassInfo::Init()
+   DOM_CLASSINFO_MAP_BEGIN(PaintRequest, nsIDOMPaintRequest)
+     DOM_CLASSINFO_MAP_ENTRY(nsIDOMPaintRequest)
+    DOM_CLASSINFO_MAP_END
+  
+   DOM_CLASSINFO_MAP_BEGIN(PaintRequestList, nsIDOMPaintRequestList)
      DOM_CLASSINFO_MAP_ENTRY(nsIDOMPaintRequestList)
    DOM_CLASSINFO_MAP_END
  
@@ -20776,8 +21687,6 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
 -  DOM_CLASSINFO_MAP_BEGIN(CanvasRenderingContextGLWeb20, nsICanvasRenderingContextGLWeb20)
 -    DOM_CLASSINFO_MAP_ENTRY(nsICanvasRenderingContextGLWeb20)
 -    DOM_CLASSINFO_MAP_ENTRY(nsICanvasRenderingContextGL)
--  DOM_CLASSINFO_MAP_END
--#endif
 +  DOM_CLASSINFO_MAP_BEGIN(CanvasRenderingContextWebGL, nsICanvasRenderingContextWebGL)
 +    DOM_CLASSINFO_MAP_ENTRY(nsICanvasRenderingContextWebGL)
 +  DOM_CLASSINFO_MAP_END
@@ -20836,14 +21745,26 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfo.cpp
 +
 +  DOM_CLASSINFO_MAP_BEGIN(WebGLUnsignedIntArray, nsIWebGLUnsignedIntArray)
 +    DOM_CLASSINFO_MAP_ENTRY(nsIWebGLUnsignedIntArray)
-+  DOM_CLASSINFO_MAP_END
+   DOM_CLASSINFO_MAP_END
+-#endif
  
    DOM_CLASSINFO_MAP_BEGIN(ScrollAreaEvent, nsIDOMScrollAreaEvent)
      DOM_CLASSINFO_MAP_ENTRY(nsIDOMScrollAreaEvent)
-diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfoID.h
---- a/dom/base/nsDOMClassInfoID.h	Fri Dec 11 07:02:35 2009 +0200
-+++ b/dom/base/nsDOMClassInfoID.h	Fri Dec 11 07:09:00 2009 +0200
-@@ -354,12 +354,10 @@ enum nsDOMClassInfoID {
+     DOM_CLASSINFO_UI_EVENT_MAP_ENTRIES
+   DOM_CLASSINFO_MAP_END
+ 
+   DOM_CLASSINFO_MAP_BEGIN(EventListenerInfo, nsIEventListenerInfo)
+     DOM_CLASSINFO_MAP_ENTRY(nsIEventListenerInfo)
+Index: mozilla/dom/base/nsDOMClassInfoID.h
+===================================================================
+--- mozilla.orig/dom/base/nsDOMClassInfoID.h
++++ mozilla/dom/base/nsDOMClassInfoID.h
+@@ -349,22 +349,20 @@ enum nsDOMClassInfoID {
+   eDOMClassInfo_SVGTransform_id,
+   eDOMClassInfo_SVGTransformList_id,
+   eDOMClassInfo_SVGUnitTypes_id,
+   eDOMClassInfo_SVGZoomEvent_id,
+ #endif // MOZ_SVG
  
    // Canvas
    eDOMClassInfo_HTMLCanvasElement_id,
@@ -20856,7 +21777,17 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfoID.h
  
    // SmartCard Events
    eDOMClassInfo_SmartCardEvent_id,
-@@ -468,9 +466,24 @@ enum nsDOMClassInfoID {
+   
+   // PageTransition Events
+   eDOMClassInfo_PageTransitionEvent_id,
+ 
+   // WindowUtils
+@@ -463,19 +461,34 @@ enum nsDOMClassInfoID {
+   eDOMClassInfo_MathMLElement_id,
+ #endif
+ 
+   eDOMClassInfo_Worker_id,
+ 
    eDOMClassInfo_PaintRequest_id,
    eDOMClassInfo_PaintRequestList_id,
  
@@ -20884,10 +21815,21 @@ diff -r 5b1fe1bf3872 dom/base/nsDOMClassInfoID.h
  
    eDOMClassInfo_ScrollAreaEvent_id,
  
-diff -r 5b1fe1bf3872 dom/interfaces/canvas/Makefile.in
---- a/dom/interfaces/canvas/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/dom/interfaces/canvas/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -46,14 +46,9 @@ MODULE		= dom
+   eDOMClassInfo_EventListenerInfo_id,
+ 
+   // This one better be the last one in this list
+   eDOMClassInfoIDCount
+ };
+Index: mozilla/dom/interfaces/canvas/Makefile.in
+===================================================================
+--- mozilla.orig/dom/interfaces/canvas/Makefile.in
++++ mozilla/dom/interfaces/canvas/Makefile.in
+@@ -41,19 +41,14 @@ srcdir		= @srcdir@
+ VPATH		= @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
+ MODULE		= dom
  XPIDL_MODULE	= dom_canvas
  GRE_MODULE	= 1
  
@@ -20905,9 +21847,10 @@ diff -r 5b1fe1bf3872 dom/interfaces/canvas/Makefile.in
 -endif
  
  include $(topsrcdir)/config/rules.mk
-diff -r 5b1fe1bf3872 dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl	Fri Dec 11 07:09:00 2009 +0200
+Index: mozilla/dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl
+===================================================================
+--- /dev/null
++++ mozilla/dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl
 @@ -0,0 +1,942 @@
 +/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* ***** BEGIN LICENSE BLOCK *****
@@ -21627,9 +22570,9 @@ diff -r 5b1fe1bf3872 dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl
 +  //void glCompressedTexImage2D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data);
 +  //void glCompressedTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
 +
-+  void copyTexImage2D (in GLenum target, in GLint level, in GLenum internalformat, 
++  void copyTexImage2D (in GLenum target, in GLint level, in GLenum internalformat,
 +                         in GLint x, in GLint y, in GLsizei width, in GLsizei height, in GLint border);
-+  void copyTexSubImage2D (in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset, 
++  void copyTexSubImage2D (in GLenum target, in GLint level, in GLint xoffset, in GLint yoffset,
 +                            in GLint x, in GLint y, in GLsizei width, in GLsizei height);
 +
 +  nsIWebGLBuffer createBuffer();
@@ -21663,9 +22606,9 @@ diff -r 5b1fe1bf3872 dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl
 +  void enableVertexAttribArray (in GLuint index);
 +  void finish ();
 +  void flush ();
-+  void framebufferRenderbuffer (in GLenum target, in GLenum attachment, in GLenum renderbuffertarget, 
++  void framebufferRenderbuffer (in GLenum target, in GLenum attachment, in GLenum renderbuffertarget,
 +                                  in nsIWebGLRenderbuffer renderbuffer);
-+  void framebufferTexture2D (in GLenum target, in GLenum attachment, in GLenum textarget, 
++  void framebufferTexture2D (in GLenum target, in GLenum attachment, in GLenum textarget,
 +                               in nsIWebGLTexture texture, in GLint level);
 +  void frontFace (in GLenum mode);
 +
@@ -21729,7 +22672,7 @@ diff -r 5b1fe1bf3872 dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl
 +  void getTexParameter (in GLenum target, in GLenum pname);
 +
 +  // FIXME: This is problematic. We don't implicitly know how big the returned data buffer
-+  // needs to be like in the other glGet* calls. The only way to find out is to iterate 
++  // needs to be like in the other glGet* calls. The only way to find out is to iterate
 +  // through all the active uniforms with glGetActiveUniform() looking for the corresponding
 +  // 'location'. This will give us the type and size of the data. Since this is a get call
 +  // maybe that's ok?
@@ -21778,7 +22721,7 @@ diff -r 5b1fe1bf3872 dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl
 +  void stencilOp (in GLenum fail, in GLenum zfail, in GLenum zpass);
 +  void stencilOpSeparate (in GLenum face, in GLenum fail, in GLenum zfail, in GLenum zpass);
 +
-+  // Modified: glTexImage2D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, 
++  // Modified: glTexImage2D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height,
 +  // GLint border, GLenum format, GLenum type, const void* pixels);
 +  //void glTexImage2D (in GLenum target, in GLint level, in GLenum internalformat, in GLsizei width, in GLsizei height, in GLint border, in GLenum format, in GLenum type, nsIWebGLArray pixels);
 +  //void glTexImage2D (in GLenum target, in GLint level, in HTMLImageElement image);
@@ -21842,7 +22785,7 @@ diff -r 5b1fe1bf3872 dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl
 +  void vertexAttrib4fv (in GLuint indx, in nsIWebGLArray values);
 +
 +  // TBD
-+  //void glVertexAttribPointer (in GLuint indx, GLint size, GLenum type, GLboolean normalized, 
++  //void glVertexAttribPointer (in GLuint indx, GLint size, GLenum type, GLboolean normalized,
 +  // GLsizei stride, const void* ptr);
 +
 +  // size is number of elements; type must match the bound vbo type; offset is in elements
@@ -21851,10 +22794,16 @@ diff -r 5b1fe1bf3872 dom/interfaces/canvas/nsICanvasRenderingContextWebGL.idl
 +  void viewport (in GLint x, in GLint y, in GLsizei width, in GLsizei height);
 +
 +};
-diff -r 5b1fe1bf3872 embedding/browser/build/Makefile.in
---- a/embedding/browser/build/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/embedding/browser/build/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -85,7 +85,7 @@ EXTRA_DSO_LDOPTS= \
+Index: mozilla/embedding/browser/build/Makefile.in
+===================================================================
+--- mozilla.orig/embedding/browser/build/Makefile.in
++++ mozilla/embedding/browser/build/Makefile.in
+@@ -80,17 +80,17 @@ SHARED_LIBRARY_LIBS= \
+ 
+ EXTRA_DSO_LDOPTS= \
+ 		$(LIBS_DIR) \
+ 		$(EXTRA_DSO_LIBS) \
+ 		$(MOZ_UNICHARUTIL_LIBS) \
  		$(MOZ_COMPONENT_LIBS) \
  		$(NULL)
  
@@ -21863,10 +22812,21 @@ diff -r 5b1fe1bf3872 embedding/browser/build/Makefile.in
  EXTRA_DSO_LDOPTS += $(TK_LIBS)
  endif
  
-diff -r 5b1fe1bf3872 embedding/components/build/Makefile.in
---- a/embedding/components/build/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/embedding/components/build/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -121,7 +121,7 @@ OS_LIBS	+= $(call EXPAND_LIBNAME,winspoo
+ include $(topsrcdir)/config/rules.mk
+ 
+ INCLUDES	+= \
+ 		-I$(srcdir)			\
+ 		-I$(srcdir)/../webBrowser		\
+Index: mozilla/embedding/components/build/Makefile.in
+===================================================================
+--- mozilla.orig/embedding/components/build/Makefile.in
++++ mozilla/embedding/components/build/Makefile.in
+@@ -116,29 +116,29 @@ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
+ LOCAL_INCLUDES += -I$(srcdir)/../printingui/src/win 
+ ifneq ($(OS_ARCH), WINCE)
+ OS_LIBS	+= $(call EXPAND_LIBNAME,winspool comdlg32)
  endif
  endif
  
@@ -21875,7 +22835,13 @@ diff -r 5b1fe1bf3872 embedding/components/build/Makefile.in
  LOCAL_INCLUDES += -I$(srcdir)/../printingui/src/mac
  endif
  
-@@ -135,7 +135,7 @@ EXTRA_DSO_LDOPTS = \
+ EXTRA_DSO_LIBS = gkgfx
+ 
+ EXTRA_DSO_LDOPTS = \
+ 	$(LIBS_DIR) \
+ 	$(EXTRA_DSO_LIBS) \
+ 	$(MOZ_UNICHARUTIL_LIBS) \
+ 	$(MOZ_COMPONENT_LIBS) \
  	$(MOZ_JS_LIBS) \
  	$(NULL)
  
@@ -21884,10 +22850,19 @@ diff -r 5b1fe1bf3872 embedding/components/build/Makefile.in
  EXTRA_DSO_LDOPTS += \
          $(TK_LIBS) \
          $(NULL)
-diff -r 5b1fe1bf3872 embedding/components/printingui/src/Makefile.in
---- a/embedding/components/printingui/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/embedding/components/printingui/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -54,7 +54,7 @@ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
+ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/embedding/components/printingui/src/Makefile.in
+===================================================================
+--- mozilla.orig/embedding/components/printingui/src/Makefile.in
++++ mozilla/embedding/components/printingui/src/Makefile.in
+@@ -49,17 +49,17 @@ endif
+ ifeq ($(MOZ_WIDGET_TOOLKIT),os2)
+ PLATFORM_DIR = os2
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
  PLATFORM_DIR = win
  endif
  
@@ -21896,10 +22871,21 @@ diff -r 5b1fe1bf3872 embedding/components/printingui/src/Makefile.in
  PLATFORM_DIR = mac
  endif
  
-diff -r 5b1fe1bf3872 embedding/config/Makefile.in
---- a/embedding/config/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/embedding/config/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -43,7 +43,7 @@ VPATH           = @srcdir@
+ DIRS = $(PLATFORM_DIR)
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+ libs::
+Index: mozilla/embedding/config/Makefile.in
+===================================================================
+--- mozilla.orig/embedding/config/Makefile.in
++++ mozilla/embedding/config/Makefile.in
+@@ -38,17 +38,17 @@
+ DEPTH           = ../..
+ topsrcdir       = @top_srcdir@
+ srcdir          = @srcdir@
+ VPATH           = @srcdir@
+ 
  include $(DEPTH)/config/autoconf.mk
  include $(topsrcdir)/config/rules.mk
  
@@ -21908,10 +22894,21 @@ diff -r 5b1fe1bf3872 embedding/config/Makefile.in
    BASEBROWSER = basebrowser-mac-macho
    CLIENTMANIFEST = client-mac-macho
    _PLATFORM = unix
-diff -r 5b1fe1bf3872 extensions/java/xpcom/glue/Makefile.in
---- a/extensions/java/xpcom/glue/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/extensions/java/xpcom/glue/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -84,7 +84,7 @@ EXTRA_DSO_LDOPTS = \
+ else
+ ifeq (windows,$(MOZ_WIDGET_TOOLKIT))
+   BASEBROWSER = basebrowser-win
+   BASEBROWSER_SUPP = basebrowser-win-supp
+   CLIENTMANIFEST = client-win
+Index: mozilla/extensions/java/xpcom/glue/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/java/xpcom/glue/Makefile.in
++++ mozilla/extensions/java/xpcom/glue/Makefile.in
+@@ -79,14 +79,14 @@ endif
+ 
+ LOCAL_INCLUDES += -I$(topsrcdir)/xpcom/build
+ 
+ EXTRA_DSO_LDOPTS = \
+ 	$(XPCOM_STANDALONE_GLUE_LDOPTS) \
  	$(NULL)
  
  # Need to link with CoreFoundation on Mac
@@ -21920,10 +22917,18 @@ diff -r 5b1fe1bf3872 extensions/java/xpcom/glue/Makefile.in
  EXTRA_DSO_LDOPTS += $(TK_LIBS)
  endif
  
-diff -r 5b1fe1bf3872 extensions/pref/autoconfig/src/Makefile.in
---- a/extensions/pref/autoconfig/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/extensions/pref/autoconfig/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -91,7 +91,7 @@ AUTOCFG_JS_EXPORTS = \
+ include $(topsrcdir)/config/rules.mk
+ 
+Index: mozilla/extensions/pref/autoconfig/src/Makefile.in
+===================================================================
+--- mozilla.orig/extensions/pref/autoconfig/src/Makefile.in
++++ mozilla/extensions/pref/autoconfig/src/Makefile.in
+@@ -86,17 +86,17 @@ EXTRA_DSO_LDOPTS = \
+                    $(MOZ_JS_LIBS) \
+                    $(MOZ_COMPONENT_LIBS) \
+                    $(NULL)
+ 
+ AUTOCFG_JS_EXPORTS = \
  		$(srcdir)/prefcalls.js \
  		$(NULL)
  
@@ -21932,10 +22937,21 @@ diff -r 5b1fe1bf3872 extensions/pref/autoconfig/src/Makefile.in
  AUTOCFG_JS_EXPORTS += $(srcdir)/mac/platform.js
  else
  ifeq ($(MOZ_WIDGET_TOOLKIT), windows)
-diff -r 5b1fe1bf3872 gfx/cairo/cairo/src/Makefile.in
---- a/gfx/cairo/cairo/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/gfx/cairo/cairo/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -186,7 +186,7 @@ CSRCS   += $(PSPDF_BASE_CSRCS) $(PDF_CSR
+ AUTOCFG_JS_EXPORTS += $(srcdir)/win/platform.js
+ else
+ ifeq ($(MOZ_WIDGET_TOOLKIT), os2)
+ AUTOCFG_JS_EXPORTS += $(srcdir)/os2/platform.js
+ else
+Index: mozilla/gfx/cairo/cairo/src/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/cairo/cairo/src/Makefile.in
++++ mozilla/gfx/cairo/cairo/src/Makefile.in
+@@ -181,17 +181,17 @@ ifdef MOZ_OS2_HIGH_MEMORY
+ DEFINES += -DOS2_HIGH_MEMORY
+ endif
+ CSRCS   += cairo-os2-surface.c
+ EXPORTS_cairo += cairo-os2.h cairo-os2-private.h
+ CSRCS   += $(PSPDF_BASE_CSRCS) $(PDF_CSRCS)
  EXPORTS_cairo += $(PDF_EXPORTS)
  endif
  
@@ -21944,10 +22960,21 @@ diff -r 5b1fe1bf3872 gfx/cairo/cairo/src/Makefile.in
  CSRCS   += cairo-quartz-surface.c cairo-quartz-image-surface.c cairo-quartz-font.c
  EXPORTS_cairo += cairo-quartz.h cairo-quartz-image.h
  endif
-diff -r 5b1fe1bf3872 gfx/thebes/public/Makefile.in
---- a/gfx/thebes/public/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/gfx/thebes/public/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -99,7 +99,7 @@ EXPORTS +=  gfxFT2FontBase.h
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),beos)
+ CPPSRCS += cairo-beos-surface.cpp
+ EXPORTS_cairo += cairo-beos.h
+ endif
+Index: mozilla/gfx/thebes/public/Makefile.in
+===================================================================
+--- mozilla.orig/gfx/thebes/public/Makefile.in
++++ mozilla/gfx/thebes/public/Makefile.in
+@@ -94,17 +94,17 @@ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),beos)
+ EXPORTS	+=	gfxBeOSSurface.h gfxBeOSPlatform.h
+ EXPORTS +=	gfxPangoFonts.h
+ EXPORTS +=  gfxFT2FontBase.h
  EXPORTS +=	gfxPDFSurface.h
  endif
  
@@ -21956,10 +22983,21 @@ diff -r 5b1fe1bf3872 gfx/thebes/public/Makefile.in
  EXPORTS +=	gfxPlatformMac.h \
  		gfxQuartzSurface.h \
  		gfxQuartzImageSurface.h \
-diff -r 5b1fe1bf3872 gfx/thebes/public/gfxXlibSurface.h
---- a/gfx/thebes/public/gfxXlibSurface.h	Fri Dec 11 07:02:35 2009 +0200
-+++ b/gfx/thebes/public/gfxXlibSurface.h	Fri Dec 11 07:09:00 2009 +0200
-@@ -54,10 +54,12 @@ public:
+ 		gfxQuartzPDFSurface.h \
+ 		gfxAtsuiFonts.h \
+ 		gfxQuartzNativeDrawing.h \
+ 		$(NULL)
+ 
+Index: mozilla/gfx/thebes/public/gfxXlibSurface.h
+===================================================================
+--- mozilla.orig/gfx/thebes/public/gfxXlibSurface.h
++++ mozilla/gfx/thebes/public/gfxXlibSurface.h
+@@ -49,20 +49,22 @@ public:
+     // create a surface for the specified dpy/drawable/visual.
+     // Will use XGetGeometry to query the window/pixmap size.
+     gfxXlibSurface(Display *dpy, Drawable drawable, Visual *visual);
+ 
+     // create a surface for the specified dpy/drawable/visual,
      // with explicitly provided width/height.
      gfxXlibSurface(Display *dpy, Drawable drawable, Visual *visual, const gfxIntSize& size);
  
@@ -21976,10 +23014,21 @@ diff -r 5b1fe1bf3872 gfx/thebes/public/gfxXlibSurface.h
  
      gfxXlibSurface(Display* dpy, Drawable drawable, XRenderPictFormat *format,
                     const gfxIntSize& size);
-diff -r 5b1fe1bf3872 gfx/thebes/src/gfxXlibSurface.cpp
---- a/gfx/thebes/src/gfxXlibSurface.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/gfx/thebes/src/gfxXlibSurface.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -71,7 +71,7 @@ gfxXlibSurface::gfxXlibSurface(Display *
+ 
+     gfxXlibSurface(Display* dpy, XRenderPictFormat *format,
+                    const gfxIntSize& size);
+ 
+     gfxXlibSurface(cairo_surface_t *csurf);
+Index: mozilla/gfx/thebes/src/gfxXlibSurface.cpp
+===================================================================
+--- mozilla.orig/gfx/thebes/src/gfxXlibSurface.cpp
++++ mozilla/gfx/thebes/src/gfxXlibSurface.cpp
+@@ -66,27 +66,27 @@ gfxXlibSurface::gfxXlibSurface(Display *
+ {
+     if (!CheckSurfaceSize(size, XLIB_IMAGE_SIDE_SIZE_LIMIT))
+         return;
+ 
+     cairo_surface_t *surf = cairo_xlib_surface_create(dpy, drawable, visual, mSize.width, mSize.height);
      Init(surf);
  }
  
@@ -21988,7 +23037,9 @@ diff -r 5b1fe1bf3872 gfx/thebes/src/gfxXlibSurface.cpp
      : mPixmapTaken(PR_FALSE), mDisplay(dpy), mSize(size)
  
  {
-@@ -81,7 +81,7 @@ gfxXlibSurface::gfxXlibSurface(Display *
+     if (!CheckSurfaceSize(size, XLIB_IMAGE_SIDE_SIZE_LIMIT))
+         return;
+ 
      mDrawable = (Drawable)XCreatePixmap(dpy,
                                          RootWindow(dpy, DefaultScreen(dpy)),
                                          mSize.width, mSize.height,
@@ -21997,10 +23048,21 @@ diff -r 5b1fe1bf3872 gfx/thebes/src/gfxXlibSurface.cpp
  
      cairo_surface_t *surf = cairo_xlib_surface_create(dpy, mDrawable, visual, mSize.width, mSize.height);
  
-diff -r 5b1fe1bf3872 intl/build/Makefile.in
---- a/intl/build/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/intl/build/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -63,7 +63,7 @@ CPPSRCS		= \
+     Init(surf);
+     TakePixmap();
+ }
+ 
+ gfxXlibSurface::gfxXlibSurface(Display *dpy, Drawable drawable, XRenderPictFormat *format,
+Index: mozilla/intl/build/Makefile.in
+===================================================================
+--- mozilla.orig/intl/build/Makefile.in
++++ mozilla/intl/build/Makefile.in
+@@ -58,17 +58,17 @@ REQUIRES	= xpcom \
+ 		  locale \
+ 		  $(NULL)
+ 
+ CPPSRCS		= \
+ 			nsI18nModule.cpp \
  			$(NULL)
  
  # see also intl/locale/src/Makefile.in
@@ -22009,7 +23071,17 @@ diff -r 5b1fe1bf3872 intl/build/Makefile.in
  LOCALE_DIR		= $(MOZ_WIDGET_TOOLKIT)
  else
  ifeq ($(MOZ_WIDGET_TOOLKIT), cocoa)
-@@ -94,7 +94,7 @@ EXTRA_DSO_LDOPTS = \
+ LOCALE_DIR		= mac
+ else
+ LOCALE_DIR		= unix
+ endif
+ endif
+@@ -89,17 +89,17 @@ SHARED_LIBRARY_LIBS = \
+ 			../locale/src/$(LOCALE_DIR)/$(LIB_PREFIX)platlocale_s.$(LIB_SUFFIX) \
+ 			$(NULL)
+ 
+ EXTRA_DSO_LDOPTS = \
+ 	$(MOZ_UNICHARUTIL_LIBS) \
  	$(MOZ_COMPONENT_LIBS) \
  	$(NULL)
  
@@ -22018,10 +23090,21 @@ diff -r 5b1fe1bf3872 intl/build/Makefile.in
  EXTRA_DSO_LDOPTS += \
          $(TK_LIBS) \
          $(NULL)
-diff -r 5b1fe1bf3872 intl/locale/Makefile.in
---- a/intl/locale/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/intl/locale/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -49,7 +49,7 @@ DIRS		= public idl src
+ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+Index: mozilla/intl/locale/Makefile.in
+===================================================================
+--- mozilla.orig/intl/locale/Makefile.in
++++ mozilla/intl/locale/Makefile.in
+@@ -44,15 +44,15 @@ VPATH		= @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
+ MODULE		= locale
+ DIRS		= public idl src
  
  ifdef ENABLE_TESTS
  DIRS		+= tests
@@ -22030,10 +23113,19 @@ diff -r 5b1fe1bf3872 intl/locale/Makefile.in
  DIRS		+= tests_multilocale
  endif
  endif
-diff -r 5b1fe1bf3872 intl/locale/src/Makefile.in
---- a/intl/locale/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/intl/locale/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -53,7 +53,7 @@ REQUIRES	= xpcom \
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+Index: mozilla/intl/locale/src/Makefile.in
+===================================================================
+--- mozilla.orig/intl/locale/src/Makefile.in
++++ mozilla/intl/locale/src/Makefile.in
+@@ -48,17 +48,17 @@ LIBXUL_LIBRARY  = 1
+ 
+ REQUIRES	= xpcom \
+ 		  string \
+ 		  uconv \
+ 		  unicharutil \
  		  intl \
  		  $(NULL)
  
@@ -22042,10 +23134,21 @@ diff -r 5b1fe1bf3872 intl/locale/src/Makefile.in
  DIRS		= $(MOZ_WIDGET_TOOLKIT)
  else
  ifeq ($(MOZ_WIDGET_TOOLKIT), cocoa)
-diff -r 5b1fe1bf3872 intl/uconv/src/Makefile.in
---- a/intl/uconv/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/intl/uconv/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -103,7 +103,7 @@ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
+ DIRS		= mac
+ else
+ DIRS		= unix
+ endif
+ endif
+Index: mozilla/intl/uconv/src/Makefile.in
+===================================================================
+--- mozilla.orig/intl/uconv/src/Makefile.in
++++ mozilla/intl/uconv/src/Makefile.in
+@@ -98,17 +98,17 @@ EXPORT_RESOURCE	= \
+ ifeq ($(MOZ_WIDGET_TOOLKIT),os2)
+ CPPSRCS			+= nsOS2Charset.cpp
+ EXPORT_RESOURCE		+= os2charset.properties
+ else
+ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
  CPPSRCS			+= nsWinCharset.cpp
  EXPORT_RESOURCE		+= wincharset.properties
  else
@@ -22054,7 +23157,17 @@ diff -r 5b1fe1bf3872 intl/uconv/src/Makefile.in
  CPPSRCS			+= nsMacCharset.cpp
  EXPORT_RESOURCE		+= maccharset.properties
  else
-@@ -130,7 +130,7 @@ EXTRA_DSO_LDOPTS = \
+ ifeq ($(OS_ARCH),BeOS)
+ CPPSRCS			+= nsBeOSCharset.cpp
+ else
+ CPPSRCS			+= nsUNIXCharset.cpp
+ EXPORT_RESOURCE		+= unixcharset.properties
+@@ -125,17 +125,17 @@ EXTRA_DSO_LDOPTS = \
+ 		../util/$(LIB_PREFIX)ucvutil_s.$(LIB_SUFFIX) \
+ 		$(MOZ_UNICHARUTIL_LIBS) \
+ 		$(MOZ_NECKO_UTIL_LIBS) \
+ 		$(MOZ_COMPONENT_LIBS) \
+ 		$(NULL)
  
  LOCAL_INCLUDES	= -I$(srcdir)/../util
  
@@ -22063,10 +23176,21 @@ diff -r 5b1fe1bf3872 intl/uconv/src/Makefile.in
  EXTRA_DSO_LDOPTS += $(TK_LIBS)
  endif
  
-diff -r 5b1fe1bf3872 js/src/xpconnect/shell/Makefile.in
---- a/js/src/xpconnect/shell/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/js/src/xpconnect/shell/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -55,7 +55,7 @@ REQUIRES	= xpconnect \
+ LOCAL_INCLUDES	= -I$(srcdir)/../util \
+ 		  -I$(srcdir)/../ucvlatin \
+ 		  -I$(srcdir)/../ucvibm \
+ 		  -I$(srcdir)/../ucvja \
+ 		  -I$(srcdir)/../ucvtw2 \
+Index: mozilla/js/src/xpconnect/shell/Makefile.in
+===================================================================
+--- mozilla.orig/js/src/xpconnect/shell/Makefile.in
++++ mozilla/js/src/xpconnect/shell/Makefile.in
+@@ -50,17 +50,17 @@ REQUIRES	= xpconnect \
+ 		  xpcom \
+ 		  js \
+ 		  caps \
+ 		  xulapp \
+ 		  $(NULL)
  
  CPPSRCS		= xpcshell.cpp
  
@@ -22075,10 +23199,21 @@ diff -r 5b1fe1bf3872 js/src/xpconnect/shell/Makefile.in
  CMMSRCS += xpcshellMacUtils.mm
  endif
  
-diff -r 5b1fe1bf3872 layout/build/Makefile.in
---- a/layout/build/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/layout/build/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -136,7 +136,7 @@ SHARED_LIBRARY_LIBS = \
+ LIBS		= \
+ 		$(DIST)/lib/$(LIB_PREFIX)xpcomglue_s.$(LIB_SUFFIX) \
+ 		$(LIBXUL_LIBS) \
+ 		$(MOZ_JS_LIBS) \
+ 		$(NSPR_LIBS) \
+Index: mozilla/layout/build/Makefile.in
+===================================================================
+--- mozilla.orig/layout/build/Makefile.in
++++ mozilla/layout/build/Makefile.in
+@@ -131,17 +131,17 @@ SHARED_LIBRARY_LIBS = \
+ 	$(DEPTH)/content/xul/document/src/$(LIB_PREFIX)gkconxuldoc_s.$(LIB_SUFFIX) \
+ 	$(DEPTH)/view/src/$(LIB_PREFIX)gkview_s.$(LIB_SUFFIX) \
+ 	$(DEPTH)/dom/base/$(LIB_PREFIX)jsdombase_s.$(LIB_SUFFIX) \
+ 	$(DEPTH)/dom/src/events/$(LIB_PREFIX)jsdomevents_s.$(LIB_SUFFIX) \
+ 	$(DEPTH)/dom/src/json/$(LIB_PREFIX)json_s.$(LIB_SUFFIX) \
  	$(DEPTH)/dom/src/jsurl/$(LIB_PREFIX)jsurl_s.$(LIB_SUFFIX) \
  	$(DEPTH)/dom/src/storage/$(LIB_PREFIX)jsdomstorage_s.$(LIB_SUFFIX) \
  	$(DEPTH)/dom/src/offline/$(LIB_PREFIX)jsdomoffline_s.$(LIB_SUFFIX) \
@@ -22087,7 +23222,17 @@ diff -r 5b1fe1bf3872 layout/build/Makefile.in
  	$(DEPTH)/dom/src/threads/$(LIB_PREFIX)domthreads_s.$(LIB_SUFFIX) \
  	$(DEPTH)/editor/libeditor/text/$(LIB_PREFIX)texteditor_s.$(LIB_SUFFIX) \
  	$(DEPTH)/editor/libeditor/base/$(LIB_PREFIX)editorbase_s.$(LIB_SUFFIX) \
-@@ -270,12 +270,9 @@ EXTRA_DSO_LDOPTS += $(MOZ_QT_LIBS) \
+ 	$(DEPTH)/parser/html/$(LIB_PREFIX)html5p_s.$(LIB_SUFFIX) \
+ 	$(NULL)
+ 
+ ifdef MOZ_MEDIA
+ SHARED_LIBRARY_LIBS 	+= \
+@@ -265,22 +265,19 @@ EXTRA_DSO_LDOPTS += $(MOZ_GTK2_LIBS) \
+ 		    $(NULL)
+ endif
+ 
+ ifdef MOZ_ENABLE_QT
+ EXTRA_DSO_LDOPTS += $(MOZ_QT_LIBS) \
  		    $(NULL)
  endif
  
@@ -22102,10 +23247,21 @@ diff -r 5b1fe1bf3872 layout/build/Makefile.in
  endif
  
  # Add explicit X11 dependency when building against X11 toolkits
-diff -r 5b1fe1bf3872 layout/build/nsLayoutCID.h
---- a/layout/build/nsLayoutCID.h	Fri Dec 11 07:02:35 2009 +0200
-+++ b/layout/build/nsLayoutCID.h	Fri Dec 11 07:09:00 2009 +0200
-@@ -214,9 +214,9 @@
+ ifneq (,$(filter gtk2,$(MOZ_WIDGET_TOOLKIT)))
+ EXTRA_DSO_LDOPTS += $(XLDFLAGS) $(XLIBS)
+ endif
+ 
+ ifdef MOZ_SYDNEYAUDIO
+Index: mozilla/layout/build/nsLayoutCID.h
+===================================================================
+--- mozilla.orig/layout/build/nsLayoutCID.h
++++ mozilla/layout/build/nsLayoutCID.h
+@@ -209,19 +209,19 @@
+ // {f96f5ec9-755b-447e-b1f3-717d1a84bb41}
+ #define NS_PLUGINDOCUMENT_CID \
+ { 0xf96f5ec9, 0x755b, 0x447e, { 0xb1, 0xf3, 0x71, 0x7d, 0x1a, 0x84, 0xbb, 0x41 } }
+ 
+ // {a35d1cd4-c505-4d2d-a0f9-aef00b7ce5a5}
  #define NS_CANVASRENDERINGCONTEXT2D_CID \
  { 0xa35d1cd4, 0xc505, 0x4d2d, { 0xa0, 0xf9, 0xae, 0xf0, 0x0b, 0x7c, 0xe5, 0xa5 } }
  
@@ -22118,10 +23274,21 @@ diff -r 5b1fe1bf3872 layout/build/nsLayoutCID.h
  
  // {8b449142-1eab-4bfa-9830-fab6ebb09774}
  #define NS_DOMSTORAGE_CID \
-diff -r 5b1fe1bf3872 layout/build/nsLayoutModule.cpp
---- a/layout/build/nsLayoutModule.cpp	Fri Dec 11 07:02:35 2009 +0200
-+++ b/layout/build/nsLayoutModule.cpp	Fri Dec 11 07:09:00 2009 +0200
-@@ -208,12 +208,8 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsHTMLEdi
+ { 0x8b449142, 0x1eab, 0x4bfa, { 0x98, 0x30, 0xfa, 0xb6, 0xeb, 0xb0, 0x97, 0x74 } }
+ 
+ // {27AECC62-7777-428e-B34C-5973A47B8298}
+ #define NS_DOMSTORAGE2_CID \
+ { 0x27aecc62, 0x7777, 0x428e, { 0xb3, 0x4c, 0x59, 0x73, 0xa4, 0x7b, 0x82, 0x98 } }
+Index: mozilla/layout/build/nsLayoutModule.cpp
+===================================================================
+--- mozilla.orig/layout/build/nsLayoutModule.cpp
++++ mozilla/layout/build/nsLayoutModule.cpp
+@@ -203,22 +203,18 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsTextSer
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsHTMLEditorLog)
+ #else
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsHTMLEditor)
+ #endif
+ #endif
  
  #include "nsHTMLCanvasFrame.h"
  
@@ -22135,7 +23302,17 @@ diff -r 5b1fe1bf3872 layout/build/nsLayoutModule.cpp
  
  class nsIDocumentLoaderFactory;
  
-@@ -406,12 +402,8 @@ nsresult NS_NewContainerBoxObject(nsIBox
+ #define PRODUCT_NAME "Gecko"
+ 
+ #define NS_HTMLIMGELEMENT_CONTRACTID \
+   "@mozilla.org/content/element/html;1?name=img"
+ 
+@@ -401,22 +397,18 @@ nsresult NS_NewBoxObject(nsIBoxObject** 
+ nsresult NS_NewListBoxObject(nsIBoxObject** aResult);
+ nsresult NS_NewScrollBoxObject(nsIBoxObject** aResult);
+ nsresult NS_NewMenuBoxObject(nsIBoxObject** aResult);
+ nsresult NS_NewPopupBoxObject(nsIBoxObject** aResult);
+ nsresult NS_NewContainerBoxObject(nsIBoxObject** aResult);
  nsresult NS_NewTreeBoxObject(nsIBoxObject** aResult);
  #endif
  
@@ -22149,7 +23326,17 @@ diff -r 5b1fe1bf3872 layout/build/nsLayoutModule.cpp
  
  nsresult NS_CreateFrameTraversal(nsIFrameTraversal** aResult);
  
-@@ -546,12 +538,8 @@ MAKE_CTOR(CreateVideoDocument,          
+ nsresult NS_NewSelection(nsFrameSelection** aResult);
+ nsresult NS_NewDomSelection(nsISelection** aResult);
+ nsresult NS_NewDocumentViewer(nsIDocumentViewer** aResult);
+ nsresult NS_NewRange(nsIDOMRange** aResult);
+ nsresult NS_NewRangeUtils(nsIRangeUtils** aResult);
+@@ -541,22 +533,18 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsDataDoc
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsNoDataProtocolContentPolicy)
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsSyncLoadService)
+ MAKE_CTOR(CreatePluginDocument,           nsIDocument,                 NS_NewPluginDocument)
+ #ifdef MOZ_MEDIA
+ MAKE_CTOR(CreateVideoDocument,            nsIDocument,                 NS_NewVideoDocument)
  #endif
  MAKE_CTOR(CreateFocusManager,             nsIFocusManager,      NS_NewFocusManager)
  
@@ -22163,7 +23350,17 @@ diff -r 5b1fe1bf3872 layout/build/nsLayoutModule.cpp
  
  NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsStyleSheetService, Init)
  
-@@ -1086,18 +1074,19 @@ static const nsModuleComponentInfo gComp
+ NS_GENERIC_FACTORY_CONSTRUCTOR(nsJSURI)
+ 
+ // views are not refcounted, so this is the same as
+ // NS_GENERIC_FACTORY_CONSTRUCTOR without the NS_ADDREF/NS_RELEASE
+ #define NS_GENERIC_FACTORY_CONSTRUCTOR_NOREFS(_InstanceClass)                 \
+@@ -1081,28 +1069,29 @@ static const nsModuleComponentInfo gComp
+   { "HTML audio element",
+     NS_HTMLAUDIOELEMENT_CID,
+     NS_HTMLAUDIOELEMENT_CONTRACTID,
+     CreateHTMLAudioElement,
+     RegisterHTMLAudioElement,
      UnregisterHTMLAudioElement },
  #endif
  
@@ -22191,10 +23388,21 @@ diff -r 5b1fe1bf3872 layout/build/nsLayoutModule.cpp
  
    { "XML document encoder",
      NS_TEXT_ENCODER_CID,
-diff -r 5b1fe1bf3872 modules/libpr0n/decoders/Makefile.in
---- a/modules/libpr0n/decoders/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/modules/libpr0n/decoders/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -58,7 +58,7 @@ endif
+     NS_DOC_ENCODER_CONTRACTID_BASE "application/atom+xml",
+     CreateTextEncoder },
+ 
+   { "XML document encoder",
+     NS_TEXT_ENCODER_CID,
+Index: mozilla/modules/libpr0n/decoders/Makefile.in
+===================================================================
+--- mozilla.orig/modules/libpr0n/decoders/Makefile.in
++++ mozilla/modules/libpr0n/decoders/Makefile.in
+@@ -53,17 +53,17 @@ ifeq (,$(filter-out WINNT WINCE, $(OS_AR
+ DIRS = icon/win icon
+ endif
+ ifeq ($(OS_ARCH),OS2)
+ DIRS = icon/os2 icon
+ endif
  ifeq ($(OS_ARCH),BeOS)
  DIRS = icon/beos icon
  endif
@@ -22203,10 +23411,21 @@ diff -r 5b1fe1bf3872 modules/libpr0n/decoders/Makefile.in
  DIRS = icon/mac icon
  endif
  endif # icon
-diff -r 5b1fe1bf3872 modules/libpref/src/init/all.js
---- a/modules/libpref/src/init/all.js	Fri Dec 11 07:02:35 2009 +0200
-+++ b/modules/libpref/src/init/all.js	Fri Dec 11 07:09:00 2009 +0200
-@@ -2796,6 +2796,11 @@ pref("image.cache.timeweight", 500);
+ 
+ DIRS += $(filter-out icon,$(MOZ_IMG_DECODERS))
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+Index: mozilla/modules/libpref/src/init/all.js
+===================================================================
+--- mozilla.orig/modules/libpref/src/init/all.js
++++ mozilla/modules/libpref/src/init/all.js
+@@ -2802,16 +2802,21 @@ pref("toolkit.zoomManager.zoomValues", "
+ pref("image.cache.size", 5242880);
+ // A weight, from 0-1000, to place on time when comparing to size.
+ // Size is given a weight of 1000 - timeweight.
+ pref("image.cache.timeweight", 500);
+ 
  // The default Accept header sent for images loaded over HTTP(S)
  pref("image.http.accept", "image/png,image/*;q=0.8,*/*;q=0.5");
  
@@ -22218,10 +23437,21 @@ diff -r 5b1fe1bf3872 modules/libpref/src/init/all.js
  #ifdef XP_WIN
  #ifndef WINCE
  // The default TCP send window on Windows is too small, and autotuning only occurs on receive
-diff -r 5b1fe1bf3872 modules/plugin/base/src/Makefile.in
---- a/modules/plugin/base/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/modules/plugin/base/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -109,7 +109,7 @@ ifeq ($(MOZ_WIDGET_TOOLKIT),os2)
+ pref("network.tcp.sendbuffer", 131072);
+ #endif
+ #endif
+ 
+ #ifdef WINCE
+Index: mozilla/modules/plugin/base/src/Makefile.in
+===================================================================
+--- mozilla.orig/modules/plugin/base/src/Makefile.in
++++ mozilla/modules/plugin/base/src/Makefile.in
+@@ -104,17 +104,17 @@ ifneq (,$(filter WINNT WINCE,$(OS_ARCH))
+ 	CPPSRCS += nsPluginsDirWin.cpp
+ 	CPPSRCS += nsPluginNativeWindowWin.cpp
+ 	CPPSRCS += nsPluginDirServiceProvider.cpp
+ else
+ ifeq ($(MOZ_WIDGET_TOOLKIT),os2)
  	CPPSRCS += nsPluginsDirOS2.cpp
  	CPPSRCS += nsPluginNativeWindowOS2.cpp
  else
@@ -22230,7 +23460,17 @@ diff -r 5b1fe1bf3872 modules/plugin/base/src/Makefile.in
  	CPPSRCS += nsPluginsDirDarwin.cpp
  	CPPSRCS += nsPluginNativeWindow.cpp
  else
-@@ -138,7 +138,7 @@ EXTRA_DSO_LDOPTS = \
+ ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+ 	CPPSRCS += nsPluginsDirUnix.cpp
+ 	CPPSRCS += nsPluginNativeWindowGtk2.cpp
+ else
+ 	CPPSRCS += nsPluginsDirUnix.cpp
+@@ -133,17 +133,17 @@ EXTRA_DSO_LDOPTS = \
+ 		$(LIBS_DIR) \
+ 		$(EXTRA_DSO_LIBS) \
+ 		$(MOZ_NECKO_UTIL_LIBS) \
+ 		$(MOZ_UNICHARUTIL_LIBS) \
+ 		$(MOZ_COMPONENT_LIBS) \
  		$(MOZ_JS_LIBS) \
  		$(NULL)
  
@@ -22239,10 +23479,21 @@ diff -r 5b1fe1bf3872 modules/plugin/base/src/Makefile.in
  EXTRA_DSO_LDOPTS += $(TK_LIBS)
  endif
  
-diff -r 5b1fe1bf3872 netwerk/base/src/Makefile.in
---- a/netwerk/base/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/netwerk/base/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -113,7 +113,7 @@ else
+ ifndef WINCE
+ ENABLE_CXX_EXCEPTIONS = 1
+ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/netwerk/base/src/Makefile.in
+===================================================================
+--- mozilla.orig/netwerk/base/src/Makefile.in
++++ mozilla/netwerk/base/src/Makefile.in
+@@ -108,17 +108,17 @@ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
+ 	CPPSRCS += nsURLHelperWin.cpp
+ 	CPPSRCS += nsNativeConnectionHelper.cpp
+ ifneq ($(OS_ARCH), WINCE)
+ 	CPPSRCS += nsAutodialWin.cpp
+ else
  	CPPSRCS += nsAutodialWinCE.cpp
  endif
  else
@@ -22251,10 +23502,21 @@ diff -r 5b1fe1bf3872 netwerk/base/src/Makefile.in
  	CPPSRCS += nsURLHelperOSX.cpp
  else
  	CPPSRCS += nsURLHelperUnix.cpp
-diff -r 5b1fe1bf3872 netwerk/build/Makefile.in
---- a/netwerk/build/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/netwerk/build/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -155,7 +155,7 @@ EXTRA_DSO_LDOPTS = \
+ endif
+ endif
+ endif
+ 
+ EXTRA_COMPONENTS = \
+Index: mozilla/netwerk/build/Makefile.in
+===================================================================
+--- mozilla.orig/netwerk/build/Makefile.in
++++ mozilla/netwerk/build/Makefile.in
+@@ -150,17 +150,17 @@ endif
+ EXTRA_DSO_LDOPTS = \
+ 		$(LIBS_DIR) \
+ 		$(EXTRA_DSO_LIBS) \
+ 		$(MOZ_UNICHARUTIL_LIBS) \
+ 		$(MOZ_COMPONENT_LIBS) \
  		$(ZLIB_LIBS) \
  		$(NULL)
  
@@ -22263,10 +23525,21 @@ diff -r 5b1fe1bf3872 netwerk/build/Makefile.in
  EXTRA_DSO_LDOPTS += \
  		-framework SystemConfiguration \
  		$(TK_LIBS) \
-diff -r 5b1fe1bf3872 netwerk/streamconv/converters/Makefile.in
---- a/netwerk/streamconv/converters/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/netwerk/streamconv/converters/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -85,7 +85,7 @@ CPPSRCS += \
+ 	$(NULL)
+ endif
+ 
+ ifdef MOZ_ENABLE_LIBCONIC
+ EXTRA_DSO_LDOPTS += \
+Index: mozilla/netwerk/streamconv/converters/Makefile.in
+===================================================================
+--- mozilla.orig/netwerk/streamconv/converters/Makefile.in
++++ mozilla/netwerk/streamconv/converters/Makefile.in
+@@ -80,17 +80,17 @@ endif
+ # only include Gopher directory listing support if the Gopher
+ # protocol is being built.
+ ifneq (,$(filter gopher,$(NECKO_PROTOCOLS)))
+ CPPSRCS += \
+ 		nsGopherDirListingConv.cpp \
          $(NULL)
  endif
  
@@ -22275,10 +23548,21 @@ diff -r 5b1fe1bf3872 netwerk/streamconv/converters/Makefile.in
  CPPSRCS += \
  		nsBinHexDecoder.cpp \
  		$(NULL)
-diff -r 5b1fe1bf3872 toolkit/components/build/Makefile.in
---- a/toolkit/components/build/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/components/build/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -156,7 +156,7 @@ EXTRA_DSO_LDOPTS += \
+ endif
+ 
+ # we don't want the shared lib, but we want to force the creation of a
+ # static lib.
+ FORCE_STATIC_LIB = 1
+Index: mozilla/toolkit/components/build/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/build/Makefile.in
++++ mozilla/toolkit/components/build/Makefile.in
+@@ -151,17 +151,17 @@ EXTRA_DSO_LIBS = gkgfx
+ EXTRA_DSO_LDOPTS += \
+ 	$(LIBS_DIR) \
+ 	$(EXTRA_DSO_LIBS) \
+ 	$(MOZ_UNICHARUTIL_LIBS) \
+ 	$(MOZ_COMPONENT_LIBS) \
  	$(MOZ_JS_LIBS) \
  	$(NULL)
  
@@ -22287,10 +23571,21 @@ diff -r 5b1fe1bf3872 toolkit/components/build/Makefile.in
  EXTRA_DSO_LDOPTS += $(TK_LIBS)
  endif
  
-diff -r 5b1fe1bf3872 toolkit/components/commandlines/src/Makefile.in
---- a/toolkit/components/commandlines/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/components/commandlines/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -70,7 +70,7 @@ EXTRA_DSO_LDOPTS += \
+ ifeq ($(OS_ARCH),WINNT)
+ OS_LIBS	+= $(call EXPAND_LIBNAME,shell32 ole32)
+ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/toolkit/components/commandlines/src/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/commandlines/src/Makefile.in
++++ mozilla/toolkit/components/commandlines/src/Makefile.in
+@@ -65,13 +65,13 @@ CPPSRCS = \
+ 	nsCommandLine.cpp \
+ 	$(NULL)
+ 
+ EXTRA_DSO_LDOPTS += \
+ 	$(MOZ_UNICHARUTIL_LIBS) \
  	$(MOZ_COMPONENT_LIBS) \
  	$(NULL)
  
@@ -22299,10 +23594,17 @@ diff -r 5b1fe1bf3872 toolkit/components/commandlines/src/Makefile.in
  EXTRA_DSO_LDOPTS += $(TK_LIBS)
  endif
  
-diff -r 5b1fe1bf3872 toolkit/components/filepicker/Makefile.in
---- a/toolkit/components/filepicker/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/components/filepicker/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -44,7 +44,7 @@ VPATH     = @srcdir@
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/toolkit/components/filepicker/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/filepicker/Makefile.in
++++ mozilla/toolkit/components/filepicker/Makefile.in
+@@ -39,15 +39,15 @@
+ DEPTH     = ../../..
+ topsrcdir = @top_srcdir@
+ srcdir    = @srcdir@
+ VPATH     = @srcdir@
+ 
  include $(DEPTH)/config/autoconf.mk
  
  ifdef MOZ_XUL
@@ -22311,10 +23613,19 @@ diff -r 5b1fe1bf3872 toolkit/components/filepicker/Makefile.in
  DIRS = public src
  endif
  endif
-diff -r 5b1fe1bf3872 toolkit/components/startup/src/Makefile.in
---- a/toolkit/components/startup/src/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/components/startup/src/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -73,7 +73,7 @@ else
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+Index: mozilla/toolkit/components/startup/src/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/components/startup/src/Makefile.in
++++ mozilla/toolkit/components/startup/src/Makefile.in
+@@ -68,17 +68,17 @@ CPPSRCS = \
+ 	$(NULL)
+ 
+ ifeq (os2,$(MOZ_WIDGET_TOOLKIT))
+ CPPSRCS += nsUserInfoOS2.cpp
+ else
  ifeq (,$(filter-out WINCE WINNT,$(OS_ARCH)))
  CPPSRCS += nsUserInfoWin.cpp
  else
@@ -22323,10 +23634,21 @@ diff -r 5b1fe1bf3872 toolkit/components/startup/src/Makefile.in
  CMMSRCS += nsUserInfoMac.mm
  else
  CPPSRCS += nsUserInfoUnix.cpp
-diff -r 5b1fe1bf3872 toolkit/content/tests/chrome/Makefile.in
---- a/toolkit/content/tests/chrome/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/content/tests/chrome/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -96,7 +96,7 @@ _TEST_FILES = 	findbar_window.xul \
+ endif
+ endif
+ endif
+ 
+ EXTRA_COMPONENTS = nsTryToClose.js
+Index: mozilla/toolkit/content/tests/chrome/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/content/tests/chrome/Makefile.in
++++ mozilla/toolkit/content/tests/chrome/Makefile.in
+@@ -91,17 +91,17 @@ _TEST_FILES = 	findbar_window.xul \
+ 		test_showcaret.xul \
+ 		test_righttoleft.xul \
+ 		test_screenPersistence.xul \
+ 		window_screenPosSize.xul \
+ 		$(NULL)
  
  # test_panel_focus.xul won't work if the Full Keyboard Access preference is set to
  # textboxes and lists only, so skip this test on Mac
@@ -22335,10 +23657,21 @@ diff -r 5b1fe1bf3872 toolkit/content/tests/chrome/Makefile.in
  _TEST_FILES += test_panel_focus.xul \
                 window_panel_focus.xul \
                 test_dialogfocus.xul \
-diff -r 5b1fe1bf3872 toolkit/content/tests/widgets/Makefile.in
---- a/toolkit/content/tests/widgets/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/content/tests/widgets/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -131,7 +131,7 @@ _TEST_FILES = 	test_bug360220.xul \
+                dialog_dialogfocus.xul
+ else
+ _TEST_FILES += test_autocomplete.xul
+ endif
+ 
+Index: mozilla/toolkit/content/tests/widgets/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/content/tests/widgets/Makefile.in
++++ mozilla/toolkit/content/tests/widgets/Makefile.in
+@@ -126,15 +126,15 @@ _TEST_FILES = 	test_bug360220.xul \
+ 		videocontrols_direction-2e.html \
+ 		videocontrols_direction_test.js \
+ 		use_large_cache.js \
+ 		audio.wav \
+ 		video.ogg \
  		videomask.css \
  		$(NULL)
  
@@ -22347,10 +23680,19 @@ diff -r 5b1fe1bf3872 toolkit/content/tests/widgets/Makefile.in
  _TEST_FILES += test_menubar.xul \
                 window_menubar.xul
  endif
-diff -r 5b1fe1bf3872 toolkit/library/libxul-config.mk
---- a/toolkit/library/libxul-config.mk	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/library/libxul-config.mk	Fri Dec 11 07:09:00 2009 +0200
-@@ -252,7 +252,7 @@ COMPONENT_LIBS += \
+ 
+ libs:: $(_TEST_FILES)
+ 	$(INSTALL) $(foreach f,$^,"$f") $(DEPTH)/_tests/testing/mochitest/tests/$(relativesrcdir)
+Index: mozilla/toolkit/library/libxul-config.mk
+===================================================================
+--- mozilla.orig/toolkit/library/libxul-config.mk
++++ mozilla/toolkit/library/libxul-config.mk
+@@ -247,17 +247,17 @@ COMPONENT_LIBS += \
+ ifdef MOZ_XPFE_COMPONENTS
+ COMPONENT_LIBS += \
+ 	windowds \
+ 	intlapp \
+ 	$(NULL)
  endif
  endif
  
@@ -22359,7 +23701,17 @@ diff -r 5b1fe1bf3872 toolkit/library/libxul-config.mk
  ifdef MOZ_XUL
  ifdef MOZ_XPFE_COMPONENTS
  COMPONENT_LIBS += fileview
-@@ -331,7 +331,7 @@ endif
+ DEFINES += -DMOZ_FILEVIEW
+ endif
+ endif
+ endif
+ 
+@@ -326,17 +326,17 @@ ifeq (windows,$(MOZ_WIDGET_TOOLKIT))
+ COMPONENT_LIBS += gkwidget
+ endif
+ ifeq (beos,$(MOZ_WIDGET_TOOLKIT))
+ COMPONENT_LIBS += widget_beos
+ endif
  ifeq (os2,$(MOZ_WIDGET_TOOLKIT))
  COMPONENT_LIBS += wdgtos2
  endif
@@ -22368,7 +23720,17 @@ diff -r 5b1fe1bf3872 toolkit/library/libxul-config.mk
  COMPONENT_LIBS += widget_mac
  endif
  ifeq (qt,$(MOZ_WIDGET_TOOLKIT))
-@@ -373,9 +373,6 @@ ifdef GC_LEAK_DETECTOR
+ COMPONENT_LIBS += widget_qt
+ endif
+ 
+ ifdef MOZ_ENABLE_PHOTON
+ COMPONENT_LIBS += widget_photon
+@@ -368,14 +368,11 @@ endif
+ ifneq (,$(filter layout-debug,$(MOZ_EXTENSIONS)))
+ COMPONENT_LIBS += gkdebug
+ endif
+ 
+ ifdef GC_LEAK_DETECTOR
  EXTRA_DSO_LIBS += boehm
  endif
  
@@ -22378,10 +23740,16 @@ diff -r 5b1fe1bf3872 toolkit/library/libxul-config.mk
  endif
 -endif
 -
-diff -r 5b1fe1bf3872 toolkit/library/libxul-rules.mk
---- a/toolkit/library/libxul-rules.mk	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/library/libxul-rules.mk	Fri Dec 11 07:09:00 2009 +0200
-@@ -79,7 +79,7 @@ ifneq ($(OS_ARCH),WINCE)
+Index: mozilla/toolkit/library/libxul-rules.mk
+===================================================================
+--- mozilla.orig/toolkit/library/libxul-rules.mk
++++ mozilla/toolkit/library/libxul-rules.mk
+@@ -74,17 +74,17 @@ DEFINES += \
+ 	-D_IMPL_NS_WIDGET \
+ 	$(NULL)
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
+ ifneq ($(OS_ARCH),WINCE)
  OS_LIBS += $(call EXPAND_LIBNAME,usp10 oleaut32)
  endif
  endif
@@ -22390,10 +23758,21 @@ diff -r 5b1fe1bf3872 toolkit/library/libxul-rules.mk
  EXTRA_DSO_LDOPTS += -lcups
  endif
  
-diff -r 5b1fe1bf3872 toolkit/locales/Makefile.in
---- a/toolkit/locales/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/locales/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -85,7 +85,7 @@ endif
+ # Hack for Maemo: exporting only limited set of symbols for Linux
+ EXTRA_DSO_LDOPTS += -Wl,--version-script=$(srcdir)/libxul-export.map
+ 
+ export:: dlldeps.cpp
+ 
+Index: mozilla/toolkit/locales/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/locales/Makefile.in
++++ mozilla/toolkit/locales/Makefile.in
+@@ -80,14 +80,14 @@ endif
+ 
+ ifdef MOZ_UPDATER
+ libs:: update.locale
+ 	cat $< | sed -e "s/%AB_CD%/$(AB_CD)/" > $(FINAL_TARGET)/update.locale
+ endif
  
  ifdef MOZ_CRASHREPORTER
  libs:: crashreporter.ini
@@ -22402,10 +23781,18 @@ diff -r 5b1fe1bf3872 toolkit/locales/Makefile.in
  	$(SYSINSTALL) $(IFLAGS1) $^ $(FINAL_TARGET)/crashreporter.app/Contents/MacOS
  else
  	$(SYSINSTALL) $(IFLAGS1) $^ $(FINAL_TARGET)
-diff -r 5b1fe1bf3872 toolkit/locales/l10n.mk
---- a/toolkit/locales/l10n.mk	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/locales/l10n.mk	Fri Dec 11 07:09:00 2009 +0200
-@@ -98,7 +98,7 @@ PACKAGER_NO_LIBS = 1
+ endif
+ endif
+Index: mozilla/toolkit/locales/l10n.mk
+===================================================================
+--- mozilla.orig/toolkit/locales/l10n.mk
++++ mozilla/toolkit/locales/l10n.mk
+@@ -93,27 +93,27 @@ DEFINES += \
+ clobber-%:
+ 	$(RM) -rf $(DIST)/xpi-stage/locale-$*
+ 
+ 
+ PACKAGER_NO_LIBS = 1
  include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
  
  
@@ -22414,7 +23801,9 @@ diff -r 5b1fe1bf3872 toolkit/locales/l10n.mk
  STAGEDIST = $(_ABS_DIST)/l10n-stage/$(MOZ_PKG_APPNAME)/$(_APPNAME)/Contents/MacOS
  else
  STAGEDIST = $(_ABS_DIST)/l10n-stage/$(MOZ_PKG_DIR)
-@@ -108,7 +108,7 @@ endif
+ endif
+ 
+ $(STAGEDIST): AB_CD:=en-US
  $(STAGEDIST): UNPACKAGE=$(ZIP_IN)
  $(STAGEDIST): $(ZIP_IN)
  # only mac needs to remove the parent of STAGEDIST...
@@ -22423,7 +23812,17 @@ diff -r 5b1fe1bf3872 toolkit/locales/l10n.mk
  	$(RM) -r -v $(DIST)/l10n-stage
  else
  # ... and windows doesn't like removing STAGEDIST itself, remove all children
-@@ -133,7 +133,7 @@ repackage-zip:
+ 	find $(STAGEDIST) -maxdepth 1 -print0 | xargs -0 $(RM) -r
+ endif
+ 	$(NSINSTALL) -D $(DIST)/l10n-stage
+ 	cd $(DIST)/l10n-stage && \
+ 	  $(UNMAKE_PACKAGE)
+@@ -128,17 +128,17 @@ repackage-zip: UNPACKAGE="$(ZIP_IN)"
+ repackage-zip:
+ # call a hook for apps to put their uninstall helper.exe into the package
+ 	$(UNINSTALLER_PACKAGE_HOOK)
+ # copy xpi-stage over, but not install.rdf and chrome.manifest,
+ # those are just for language packs
  	cd $(DIST)/xpi-stage/locale-$(AB_CD) && \
  	  tar --exclude=install.rdf --exclude=chrome.manifest $(TAR_CREATE_FLAGS) - * | ( cd $(STAGEDIST) && tar -xf - )
  ifneq (en,$(AB))
@@ -22432,7 +23831,17 @@ diff -r 5b1fe1bf3872 toolkit/locales/l10n.mk
  	mv $(_ABS_DIST)/l10n-stage/$(MOZ_PKG_APPNAME)/$(_APPNAME)/Contents/Resources/en.lproj $(_ABS_DIST)/l10n-stage/$(MOZ_PKG_APPNAME)/$(_APPNAME)/Contents/Resources/$(AB).lproj
  endif
  endif
-@@ -152,7 +152,7 @@ ifdef MOZ_MAKE_COMPLETE_MAR
+ 	$(NSINSTALL) -D $(DIST)/l10n-stage/$(PKG_PATH)
+ 	cd $(DIST)/l10n-stage; \
+ 	  $(MAKE_PACKAGE)
+ ifeq (WINCE,$(OS_ARCH))
+ 	cd $(DIST)/l10n-stage; \
+@@ -147,17 +147,17 @@ endif
+ ifdef MOZ_MAKE_COMPLETE_MAR
+ 	$(MAKE) -C $(DEPTH)/tools/update-packaging full-update AB_CD=$(AB_CD) \
+ 	  MOZ_PKG_PRETTYNAMES=$(MOZ_PKG_PRETTYNAMES) \
+ 	  PACKAGE_BASE_DIR="$(_ABS_DIST)/l10n-stage" \
+ 	  DIST="$(_ABS_DIST)"
  endif
  # packaging done, undo l10n stuff
  ifneq (en,$(AB))
@@ -22441,10 +23850,21 @@ diff -r 5b1fe1bf3872 toolkit/locales/l10n.mk
  	mv $(_ABS_DIST)/l10n-stage/$(MOZ_PKG_APPNAME)/$(_APPNAME)/Contents/Resources/$(AB).lproj $(_ABS_DIST)/l10n-stage/$(MOZ_PKG_APPNAME)/$(_APPNAME)/Contents/Resources/en.lproj
  endif
  endif
-diff -r 5b1fe1bf3872 toolkit/mozapps/installer/packager.mk
---- a/toolkit/mozapps/installer/packager.mk	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/mozapps/installer/packager.mk	Fri Dec 11 07:09:00 2009 +0200
-@@ -43,7 +43,7 @@ include $(MOZILLA_DIR)/toolkit/mozapps/i
+ 	$(MAKE) clobber-zip AB_CD=$(AB_CD)
+ 	$(NSINSTALL) -D $(DIST)/$(PKG_PATH)
+ 	mv -f "$(DIST)/l10n-stage/$(PACKAGE)" "$(DIST)/$(PACKAGE)"
+ ifeq (WINCE,$(OS_ARCH))
+ 	mv -f "$(DIST)/l10n-stage/$(PKG_BASENAME).cab" "$(DIST)/$(PKG_PATH)$(PKG_BASENAME).cab"
+Index: mozilla/toolkit/mozapps/installer/packager.mk
+===================================================================
+--- mozilla.orig/toolkit/mozapps/installer/packager.mk
++++ mozilla/toolkit/mozapps/installer/packager.mk
+@@ -38,17 +38,17 @@
+ #
+ # ***** END LICENSE BLOCK *****
+ 
+ include $(MOZILLA_DIR)/toolkit/mozapps/installer/package-name.mk
+ 
  # This is how we create the binary packages we release to the public.
  
  ifndef MOZ_PKG_FORMAT
@@ -22453,10 +23873,21 @@ diff -r 5b1fe1bf3872 toolkit/mozapps/installer/packager.mk
  MOZ_PKG_FORMAT  = DMG
  else
  ifeq (,$(filter-out OS2 WINNT WINCE BeOS, $(OS_ARCH)))
-diff -r 5b1fe1bf3872 toolkit/mozapps/update/src/updater/Makefile.in
---- a/toolkit/mozapps/update/src/updater/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/mozapps/update/src/updater/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -112,7 +112,7 @@ OS_CXXFLAGS += $(TK_CFLAGS)
+ MOZ_PKG_FORMAT  = ZIP
+ else
+ ifeq (,$(filter-out SunOS, $(OS_ARCH)))
+    MOZ_PKG_FORMAT  = BZ2
+ else
+Index: mozilla/toolkit/mozapps/update/src/updater/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/mozapps/update/src/updater/Makefile.in
++++ mozilla/toolkit/mozapps/update/src/updater/Makefile.in
+@@ -107,17 +107,17 @@ ifneq ($(MOZ_ENABLE_GTK2),)
+ HAVE_PROGRESSUI = 1
+ CPPSRCS += \
+ 	progressui_gtk.cpp \
+ 	$(NULL)
+ OS_CXXFLAGS += $(TK_CFLAGS)
  OS_LIBS += $(TK_LIBS)
  endif
  
@@ -22465,7 +23896,17 @@ diff -r 5b1fe1bf3872 toolkit/mozapps/update/src/updater/Makefile.in
  HAVE_PROGRESSUI = 1
  CMMSRCS += progressui_osx.mm launchchild_osx.mm
  OS_LIBS += -framework Cocoa
-@@ -148,7 +148,7 @@ libs:: updater.png
+ endif
+ 
+ ifndef HAVE_PROGRESSUI
+ CPPSRCS += progressui_null.cpp
+ endif
+@@ -143,17 +143,17 @@ endif
+ endif
+ 
+ ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+ libs:: updater.png
+ 	$(NSINSTALL) -D $(DIST)/bin/icons
  	$(INSTALL) $(IFLAGS1) $^ $(DIST)/bin/icons
  endif
  
@@ -22474,10 +23915,21 @@ diff -r 5b1fe1bf3872 toolkit/mozapps/update/src/updater/Makefile.in
  libs::
  	$(NSINSTALL) -D $(DIST)/bin/updater.app
  	rsync -a -C --exclude "*.in" $(srcdir)/macbuild/Contents $(DIST)/bin/updater.app 
-diff -r 5b1fe1bf3872 toolkit/profile/Makefile.in
---- a/toolkit/profile/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/profile/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -45,7 +45,7 @@ include $(DEPTH)/config/autoconf.mk
+ 	sed -e "s/%APP_NAME%/$(MOZ_APP_DISPLAYNAME)/" $(srcdir)/macbuild/Contents/Resources/English.lproj/InfoPlist.strings.in | \
+ 	  iconv -f UTF-8 -t UTF-16 > $(DIST)/bin/updater.app/Contents/Resources/English.lproj/InfoPlist.strings
+ 	$(NSINSTALL) -D $(DIST)/bin/updater.app/Contents/MacOS
+ 	$(NSINSTALL) $(DIST)/bin/updater $(DIST)/bin/updater.app/Contents/MacOS
+ 	rm -f $(DIST)/bin/updater
+Index: mozilla/toolkit/profile/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/profile/Makefile.in
++++ mozilla/toolkit/profile/Makefile.in
+@@ -40,15 +40,15 @@ topsrcdir	= @top_srcdir@
+ srcdir		= @srcdir@
+ VPATH		= @srcdir@
+ 
+ include $(DEPTH)/config/autoconf.mk
+ 
  DIRS = public src
  
  # Use Qute for non-Mac non-Phoenix apps
@@ -22486,10 +23938,19 @@ diff -r 5b1fe1bf3872 toolkit/profile/Makefile.in
  ifndef MOZ_PHOENIX
  DIRS += skin
  endif
-diff -r 5b1fe1bf3872 toolkit/themes/Makefile.in
---- a/toolkit/themes/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/toolkit/themes/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -52,7 +52,7 @@ include $(DEPTH)/config/autoconf.mk
+ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/toolkit/themes/Makefile.in
+===================================================================
+--- mozilla.orig/toolkit/themes/Makefile.in
++++ mozilla/toolkit/themes/Makefile.in
+@@ -47,17 +47,17 @@ include $(DEPTH)/config/autoconf.mk
+ # MacOS X                 Pinstripe (toolkit/themes/pinstripe)
+ # Windows (9x, 2000, XP)  Winstripe (toolkit/themes/winstripe)
+ # GNOME/Linux             Winstripe (toolkit/themes/winstripe) + 
+ #                         GNOMEStripe overrides (toolkit/themes/gnomestripe)
+ # OS/2                    Winstripe (toolkit/themes/winstripe) + 
  #                         PMStripe overrides (toolkit/themes/pmstripe)
  # faststripe              Winstripe + faststripe (no native theme components)
  
@@ -22498,10 +23959,21 @@ diff -r 5b1fe1bf3872 toolkit/themes/Makefile.in
  DIRS	= pinstripe
  else
  
-diff -r 5b1fe1bf3872 tools/trace-malloc/Makefile.in
---- a/tools/trace-malloc/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/tools/trace-malloc/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -81,7 +81,7 @@ endif
+ DIRS	= winstripe
+ 
+ ifneq (,$(filter gtk2 qt,$(MOZ_WIDGET_TOOLKIT)))
+ DIRS    += gnomestripe
+ endif
+Index: mozilla/tools/trace-malloc/Makefile.in
+===================================================================
+--- mozilla.orig/tools/trace-malloc/Makefile.in
++++ mozilla/tools/trace-malloc/Makefile.in
+@@ -76,32 +76,32 @@ PROGRAM		= spacetrace$(BIN_SUFFIX)
+ 
+ ifeq ($(OS_ARCH),WINNT)
+ LOCAL_INCLUDES	+= -I$(topsrcdir)/config/os2
+ endif
+ 
  include $(topsrcdir)/config/config.mk
  
  ifdef MOZ_ENABLE_LIBXUL
@@ -22510,7 +23982,14 @@ diff -r 5b1fe1bf3872 tools/trace-malloc/Makefile.in
  EXTRA_DSO_LIBS	= xul
  endif
  endif
-@@ -96,7 +96,7 @@ LIBS		+= \
+ 
+ LIBS		+= \
+ 		$(LIBS_DIR) \
+ 		tmreader.$(OBJ_SUFFIX) \
+ 		adreader.$(OBJ_SUFFIX) \
+ 		$(EXTRA_DSO_LIBS) \
+ 		$(XPCOM_GLUE_LDOPTS) \
+ 		$(NSPR_LIBS) \
  		$(NULL)
  
  ifdef MOZ_ENABLE_LIBXUL
@@ -22519,10 +23998,21 @@ diff -r 5b1fe1bf3872 tools/trace-malloc/Makefile.in
  LIBS += $(DIST)/bin/XUL
  endif
  endif
-diff -r 5b1fe1bf3872 tools/update-packaging/Makefile.in
---- a/tools/update-packaging/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/tools/update-packaging/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -53,7 +53,7 @@ PACKAGE_BASE_DIR	= $(DIST)
+ 
+ ifdef HAVE_BOUTELL_GD
+ ifeq ($(OS_ARCH),WINNT)
+ LOCAL_INCLUDES	+= \
+ 		-I"$(HAVE_BOUTELL_GD)" \
+Index: mozilla/tools/update-packaging/Makefile.in
+===================================================================
+--- mozilla.orig/tools/update-packaging/Makefile.in
++++ mozilla/tools/update-packaging/Makefile.in
+@@ -48,17 +48,17 @@ include $(topsrcdir)/toolkit/mozapps/ins
+ 
+ # input location for the build, usually $(DIST)
+ # set this to $(DIST)/l10n-stage per override for L10n builds
+ PACKAGE_BASE_DIR	= $(DIST)
+ 
  # Default output location for update archive
  STAGE_DIR	= $(DIST)/$(PKG_UPDATE_PATH)
  
@@ -22531,10 +24021,21 @@ diff -r 5b1fe1bf3872 tools/update-packaging/Makefile.in
  ifdef UNIVERSAL_BINARY
  ifneq (,$(filter %/l10n-stage,$(PACKAGE_BASE_DIR)))
  PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/$(MOZ_PKG_APPNAME)/$(MOZ_APP_DISPLAYNAME).app
-diff -r 5b1fe1bf3872 xpcom/base/Makefile.in
---- a/xpcom/base/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/xpcom/base/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -75,7 +75,7 @@ CPPSRCS += nsLeakDetector.cpp
+ else
+ PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/universal/$(MOZ_PKG_APPNAME)/$(MOZ_APP_DISPLAYNAME).app
+ endif
+ else
+ PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/$(MOZ_PKG_APPNAME)/$(MOZ_APP_DISPLAYNAME).app
+Index: mozilla/xpcom/base/Makefile.in
+===================================================================
+--- mozilla.orig/xpcom/base/Makefile.in
++++ mozilla/xpcom/base/Makefile.in
+@@ -70,17 +70,17 @@ CPPSRCS		= \
+ 		$(NULL)
+ 
+ ifdef GC_LEAK_DETECTOR
+ CSRCS += nsGarbageCollector.c
+ CPPSRCS += nsLeakDetector.cpp
  REQUIRES	+= boehm
  endif
  
@@ -22543,7 +24044,17 @@ diff -r 5b1fe1bf3872 xpcom/base/Makefile.in
  CPPSRCS		+= nsMacUtilsImpl.cpp
  endif
  
-@@ -136,7 +136,7 @@ ifdef GC_LEAK_DETECTOR
+ EXPORTS		= \
+ 		nsAgg.h \
+ 		nsAutoRef.h \
+ 		nsCom.h \
+ 		nsDebugImpl.h \
+@@ -131,17 +131,17 @@ XPIDLSRCS	= \
+ 		nsIMutable.idl \
+ 		nsIMemoryReporter.idl \
+ 		$(NULL)
+ 
+ ifdef GC_LEAK_DETECTOR
  XPIDLSRCS       += nsILeakDetector.idl
  endif
  
@@ -22552,10 +24063,21 @@ diff -r 5b1fe1bf3872 xpcom/base/Makefile.in
  XPIDLSRCS	+= nsIMacUtils.idl
  endif
  
-diff -r 5b1fe1bf3872 xpcom/sample/Makefile.in
---- a/xpcom/sample/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/xpcom/sample/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -95,7 +95,7 @@ EXTRA_DSO_LDOPTS = \
+ # we don't want the shared lib, but we want to force the creation of a static lib.
+ FORCE_STATIC_LIB = 1
+ 
+ # Force use of PIC
+ FORCE_USE_PIC	= 1
+Index: mozilla/xpcom/sample/Makefile.in
+===================================================================
+--- mozilla.orig/xpcom/sample/Makefile.in
++++ mozilla/xpcom/sample/Makefile.in
+@@ -90,17 +90,17 @@ EXTRA_COMPONENTS = nsSample.js
+ # frozen XPCOM shared library.
+ EXTRA_DSO_LDOPTS = \
+ 		$(DIST)/lib/$(LIB_PREFIX)xpcomglue_s.$(LIB_SUFFIX) \
+ 		$(XPCOM_FROZEN_LDOPTS) \
+ 		$(NSPR_LIBS) \
  		$(NULL)
  
  # Need to link with CoreFoundation on Mac
@@ -22564,10 +24086,21 @@ diff -r 5b1fe1bf3872 xpcom/sample/Makefile.in
  EXTRA_DSO_LDOPTS += \
  		$(TK_LIBS) \
  		$(NULL)
-diff -r 5b1fe1bf3872 xpcom/sample/program/Makefile.in
---- a/xpcom/sample/program/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/xpcom/sample/program/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -61,7 +61,7 @@ LIBS            = \
+ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+ libs:: $(TARGETS)
+Index: mozilla/xpcom/sample/program/Makefile.in
+===================================================================
+--- mozilla.orig/xpcom/sample/program/Makefile.in
++++ mozilla/xpcom/sample/program/Makefile.in
+@@ -56,17 +56,17 @@ SIMPLE_PROGRAMS = nsTestSample$(BIN_SUFF
+ # this Makefile. We link against the "standalone glue" which does not require
+ # that the application be linked against the XPCOM dynamic library or the NSPR
+ # dynamic libraries.
+ LIBS            = \
+ 		$(XPCOM_STANDALONE_GLUE_LDOPTS) \
  		$(NULL)
  
  # Need to link with CoreFoundation on Mac
@@ -22576,10 +24109,21 @@ diff -r 5b1fe1bf3872 xpcom/sample/program/Makefile.in
  LIBS            += \
  		$(TK_LIBS) \
  		$(NULL)
-diff -r 5b1fe1bf3872 xpcom/tools/registry/Makefile.in
---- a/xpcom/tools/registry/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/xpcom/tools/registry/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -58,7 +58,7 @@ LIBS            = \
+ endif
+ 
+ # Whatever code is going to be linked with the *standalone* glue must be
+ # built with the XPCOM_GLUE define set.
+ DEFINES += -DXPCOM_GLUE
+Index: mozilla/xpcom/tools/registry/Makefile.in
+===================================================================
+--- mozilla.orig/xpcom/tools/registry/Makefile.in
++++ mozilla/xpcom/tools/registry/Makefile.in
+@@ -53,17 +53,17 @@ LOCAL_INCLUDES	= \
+ 
+ SIMPLE_PROGRAMS	= $(CPPSRCS:.cpp=$(BIN_SUFFIX))
+ 
+ LIBS            = \
+ 		$(XPCOM_STANDALONE_GLUE_LDOPTS) \
  		$(NULL)
  
  # Need to link with CoreFoundation on Mac
@@ -22588,10 +24132,21 @@ diff -r 5b1fe1bf3872 xpcom/tools/registry/Makefile.in
  LIBS            += \
  		$(TK_LIBS) \
  		$(NULL)
-diff -r 5b1fe1bf3872 xulrunner/app/Makefile.in
---- a/xulrunner/app/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/xulrunner/app/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -103,7 +103,7 @@ LOCAL_INCLUDES += \
+ endif
+ 
+ SDK_BINARY     =                    \
+ 		$(SIMPLE_PROGRAMS)  \
+ 		$(NULL)
+Index: mozilla/xulrunner/app/Makefile.in
+===================================================================
+--- mozilla.orig/xulrunner/app/Makefile.in
++++ mozilla/xulrunner/app/Makefile.in
+@@ -98,17 +98,17 @@ endif
+ endif
+ endif
+ 
+ LOCAL_INCLUDES += \
+         -I$(topsrcdir)/toolkit/xre \
          -I$(topsrcdir)/toolkit/profile/src \
          $(NULL)
  
@@ -22600,7 +24155,17 @@ diff -r 5b1fe1bf3872 xulrunner/app/Makefile.in
  TK_LIBS := -framework Cocoa $(TK_LIBS)
  endif
  
-@@ -275,7 +275,7 @@ endif
+ ifndef MOZ_ENABLE_LIBXUL
+ ifeq (bundle,$(MOZ_FS_LAYOUT))
+ LIBS += $(DIST)/bin/XUL
+ else
+ EXTRA_DSO_LIBS += xul
+@@ -270,17 +270,17 @@ ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
+ endif
+ ifeq ($(OS_ARCH),OS2)
+ 	cp $(srcdir)/xulrunner-os2.ico   $(DIST)/branding/xulrunner.ico
+ endif
+ 
  libs::
  	touch $(DIST)/bin/.autoreg
  
@@ -22609,10 +24174,21 @@ diff -r 5b1fe1bf3872 xulrunner/app/Makefile.in
  
  FRAMEWORK_NAME = XUL
  FRAMEWORK_VERSION = $(MOZILLA_VERSION)
-diff -r 5b1fe1bf3872 xulrunner/installer/Makefile.in
---- a/xulrunner/installer/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/xulrunner/installer/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -53,7 +53,7 @@ NO_PKG_FILES = \
+ 
+ libs:: $(PROGRAM)
+ 	mkdir -p $(DIST)/$(FRAMEWORK_NAME).framework/Versions/$(FRAMEWORK_VERSION)/Resources
+ 	$(NSINSTALL) $(srcdir)/macbuild/InfoPlist.strings $(DIST)/$(FRAMEWORK_NAME).framework/Versions/$(FRAMEWORK_VERSION)/Resources
+ 	sed -e "s/APP_VERSION/$(APP_VERSION)/" $(srcdir)/macbuild/Info.plist.in > $(DIST)/$(FRAMEWORK_NAME).framework/Versions/$(FRAMEWORK_VERSION)/Info.plist
+Index: mozilla/xulrunner/installer/Makefile.in
+===================================================================
+--- mozilla.orig/xulrunner/installer/Makefile.in
++++ mozilla/xulrunner/installer/Makefile.in
+@@ -48,17 +48,17 @@ NO_PKG_FILES = \
+ 	xulrunner-config \
+ 	regchrome* \
+ 	regxpcom* \
+ 	$(NULL)
+ 
  # If we're on mac, we want to make the .pkg first, in the mac/
  # directory. Then packager.mk can put it into a DMG
  
@@ -22621,10 +24197,21 @@ diff -r 5b1fe1bf3872 xulrunner/installer/Makefile.in
  DIRS += mac
  _APPNAME = $(PKG_BASENAME).pkg
  PKG_SKIP_STRIP = 1
-diff -r 5b1fe1bf3872 xulrunner/stub/Makefile.in
---- a/xulrunner/stub/Makefile.in	Fri Dec 11 07:02:35 2009 +0200
-+++ b/xulrunner/stub/Makefile.in	Fri Dec 11 07:09:00 2009 +0200
-@@ -67,7 +67,7 @@ LIBS = \
+ MOZ_PKG_SPECIAL = pkg
+ PKG_DMG_SOURCE = $(STAGEPATH)xulrunner-pkg
+ endif
+ 
+ include $(topsrcdir)/config/rules.mk
+Index: mozilla/xulrunner/stub/Makefile.in
+===================================================================
+--- mozilla.orig/xulrunner/stub/Makefile.in
++++ mozilla/xulrunner/stub/Makefile.in
+@@ -62,17 +62,17 @@ LOCAL_INCLUDES = -I$(topsrcdir)/xpcom/bu
+ 
+ DEFINES  += -DXPCOM_GLUE
+ 
+ LIBS = \
+   $(XPCOM_STANDALONE_GLUE_LDOPTS) \
    $(NULL)
  
  # Need to link with CoreFoundation on Mac
@@ -22633,3 +24220,8 @@ diff -r 5b1fe1bf3872 xulrunner/stub/Makefile.in
  LIBS            += \
  		$(TK_LIBS) \
  		$(NULL)
+ endif
+ 
+ ifneq (,$(filter WINNT WINCE,$(OS_ARCH)))
+ RCINCLUDE = xulrunner-stub.rc
+ ifndef GNU_CC

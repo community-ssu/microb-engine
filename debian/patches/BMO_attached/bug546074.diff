@@ -1,0 +1,11 @@
+--- a/uriloader/exthandler/unix/nsOSHelperAppService.cpp.orig	2010-02-14 10:09:49.000000000 +0200
++++ b/uriloader/exthandler/unix/nsOSHelperAppService.cpp	2010-02-14 10:09:57.000000000 +0200
+@@ -1211,7 +1211,7 @@ nsresult nsOSHelperAppService::OSProtoco
+ #ifdef MOZ_WIDGET_GTK2
+   // Check the GConf registry for a protocol handler
+   *aHandlerExists = nsGNOMERegistry::HandlerExists(aProtocolScheme);
+-#ifdef MOZ_PLATFORM_MAEMO
++#if (MOZ_PLATFORM_MAEMO == 5) && defined (MOZ_ENABLE_GNOMEVFS)
+   *aHandlerExists = nsMIMEInfoUnix::HandlerExists(aProtocolScheme);
+ #endif
+ #endif

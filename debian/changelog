@@ -1,99 +1,218 @@
-microb-engine (20091230-1.9.2-6.16) unstable; urgency=low
+microb-engine (20100401-1.9.2-5.2) unstable; urgency=low
 
-  * (From 20100401-1.9.2-3) Fixes: NB#162660 - too high access rate to
-    /proc/meminfo
+  * Updated changelog
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 02 Jun 2010 19:47:27 +0300
+
+microb-engine (20100401-1.9.2-5.1) unstable; urgency=low
+
+  * Merge from microb-engine up to 20100401-1.9.2-5. Excluded on
+    relbranch: NB#158248, NB#156374
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 26 May 2010 19:19:45 +0300
+
+microb-engine (20100401-1.9.2-5) unstable; urgency=low
+
+  * Fixed NB#162142 - Browser render throughput using WLAN is under target
+
+ -- Andrey Petrov <andrey.petrov@nokia.com>  Fri,  7 May 2010 08:54:13 +0300
+
+microb-engine (20100401-1.9.2-4) unstable; urgency=low
+
+  * Fixed NB#164676 - Don't (re)start nsIdleService timers if there are no
+    listeners
+
+ -- Andrey Petrov <andrey.petrov@nokia.com>  Mon, 19 Apr 2010 13:49:32 +0100
+
+microb-engine (20100401-1.9.2-3) unstable; urgency=low
+
+  * Fixed NB#162660 - too high access rate to /proc/meminfo
 
  -- Andrey Petrov <andrey.petrov@nokia.com>  Thu, 15 Apr 2010 14:47:07 +0300
 
-microb-engine (20091230-1.9.2-6.14) unstable; urgency=low
+microb-engine (20100401-1.9.2-2) unstable; urgency=low
 
-  * (From 20100115-1.9.2-26) Fixes: NB#163345 - CPU load at 100% and mem.
-    usage steadily increasing after youtube html5 pages
+  * Fixes for NB#162142 - Browser render throughput using WLAN is under target
+
+ -- Andrey Petrov <andrey.petrov@nokia.com>  Wed, 14 Apr 2010 08:50:04 +0300
+
+microb-engine (20100401-1.9.2-1) unstable; urgency=low
+
+  * Fixes: NB#162980 - Sync up engine to last mozilla 1.9.2 branch
+
+ -- Andrey Petrov <andrey.petrov@nokia.com>  Mon, 12 Apr 2010 16:02:12 +0300
+
+microb-engine (20100115-1.9.2-27) unstable; urgency=low
+
+  * Fixes: NB#162688 - browser components recompilation with G_DISABLE_CAST_CHECKS
+
+ -- Andrey Petrov <andrey.petrov@nokia.com>  Mon, 12 Apr 2010 15:23:29 +0300
+
+microb-engine (20100115-1.9.2-26) unstable; urgency=low
+
+  * Fixed NB#163345 - CPU load at 100% and mem. usage steadily increasing
+    after html5 pages
 
  -- Andrey Petrov <andrey.petrov@nokia.com>  Fri,  9 Apr 2010 08:13:55 +0100
 
-microb-engine (20091230-1.9.2-6.13) unstable; urgency=low
+microb-engine (20100115-1.9.2-25) unstable; urgency=low
 
-  * Revert part of NB#141153. Fixes: NB#161179 Download dialog doesn't
+  * Revert part of NB#141153. Fixed NB#161179 Download dialog doesn't
     update percentage
 
  -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Thu, 18 Mar 2010 18:20:48 +0200
 
-microb-engine (20091230-1.9.2-6.12) unstable; urgency=low
+microb-engine (20100115-1.9.2-24) unstable; urgency=low
 
-  * (From 20100115-1.9.2-24) Fixes: NB#141153 - Device performance is slow
-    while downloading large file
+  * Fixed NB#141153 - Device performance is slow while downloading large file
 
  -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 17 Mar 2010 16:34:28 +0200
 
-microb-engine (20091230-1.9.2-6.11) unstable; urgency=low
+microb-engine (20100115-1.9.2-23) unstable; urgency=low
 
-  * (From 20100115-1.9.2-22) Fixes: NB#160263 - unusable after browsing to
-    www.tjareborg.fi ue to enormous background image
+  * Revert NB#151997 due to undesirable appearance in content (NB#155691,
+    NB#155701)
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Tue, 16 Mar 2010 15:33:56 +0200
+
+microb-engine (20100115-1.9.2-22) unstable; urgency=low
+
+  * Fixed NB#160263 - Device gets unusable after browsing to
+    www.tjareborg.fi due to enormous background image
 
  -- Andrey Petrov <andrey.petrov@nokia.com>  Tue, 16 Mar 2010 12:09:00 +0200
 
-microb-engine (20091230-1.9.2-6.10) unstable; urgency=low
+microb-engine (20100115-1.9.2-21) unstable; urgency=low
 
-  * (From 20100115-1.9.2-21) Fixes: NB#157237 -
-    weba_nc_remember_credentials Unlocalised
+  * Fixed NB#157237 - §weba_nc_remember_credentials§ Unlocalised
 
  -- Andrey Petrov <andrey.petrov@nokia.com>  Mon, 08 Mar 2010 14:53:41 +0200
 
-microb-engine (20091230-1.9.2-6.9) unstable; urgency=low
+microb-engine (20100115-1.9.2-20) unstable; urgency=low
 
-  * (From 20100115-1.9.2-20) Fixes: NB#158834 - Browser is always stuck
-    when loading page with html5 audo elements
+  * Fixed NB#158834 - Browser is always stuck when loading page with html5
+    audio elements
 
  -- Andrey Petrov <andrey.petrov@nokia.com>  Thu, 04 Mar 2010 12:35:04 +0200
 
-microb-engine (20091230-1.9.2-6.8) unstable; urgency=low
+microb-engine (20100115-1.9.2-18) unstable; urgency=low
 
-  * (From 20091230-1.9.2-7 20091230-1.9.2-9) Fixes: NB#141153 Browser -
-    Device performance is slow while downloading large file
+  * Fixed NB#157027: first page load on new connection initiated by
+    browser usually fails
 
- -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 14 Jan 2010 14:58:53 +0200
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Wed, 24 Feb 2010 14:49:07 +0200
 
-microb-engine (20091230-1.9.2-6.7) unstable; urgency=low
+microb-engine (20100115-1.9.2-17) unstable; urgency=low
 
-  * (From 20100115-1.9.2-17 20100115-1.9.2-18) Fixes: NB#157027 - first
-    page load on new connection initiated by browser usually fails
+  * Fixes for NB#157027: first page load on new connection initiated by browser usually fails
 
  -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 18 Feb 2010 14:03:42 +0200
 
-microb-engine (20091230-1.9.2-6.5) unstable; urgency=low
+microb-engine (20100115-1.9.2-16) unstable; urgency=low
 
-  * (From 20100115-1.9.2-16) Fixes: NB#142104 Browserd causing a lot of
-    wakeups on nettiauto.com
-  * (From 20100115-1.9.2-15) Fixes: NB#154896 - Disabled JIT
-  
+  * Fixed NB#142104 Browserd causing a lot of wakeups on nettiauto.com
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue, 16 Feb 2010 14:24:19 +0200
+
+microb-engine (20100115-1.9.2-15) unstable; urgency=low
+
+  * Fixed NB#154896 - Disabled JIT 
+ 
  -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue, 16 Feb 2010 13:37:34 +0200
 
-microb-engine (20091230-1.9.2-6.3) unstable; urgency=low
+microb-engine (20100115-1.9.2-13) unstable; urgency=low
 
-  * (From 20100115-1.9.2-13) Fixes: NB#154766 - |Call| link is inactive
+  * Fixed NB#154766 -  |Call| link is inactive
 
  -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Wed, 10 Feb 2010 13:00:44 +0200
+
+microb-engine (20100115-1.9.2-12) unstable; urgency=low
+
+  * Resurrect 040_netwerk_buffer_count.diff. Fixed NB#154971 large pages
+    download slowdown
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Tue, 09 Feb 2010 17:38:47 +0200
+
+microb-engine (20100115-1.9.2-11) unstable; urgency=low
+
+  * Fixed NB#152998 - Rich text edit - Unable to move cursor using H/W
+    keyboard right & left arrow key in gmail mail compose
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Thu, 04 Feb 2010 12:12:01 +0200
+
+microb-engine (20100115-1.9.2-10) unstable; urgency=low
+
+  * Fixed NB#139884 - pkg-config files for nss and nspr are broken
+ 
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Wed,  3 Feb 2010 17:03:08 +0200
+
+microb-engine (20100115-1.9.2-8) unstable; urgency=low
+
+  * Fixed NB#153489 - Tune javascripts timeout in the new engine
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Tue, 26 Jan 2010 16:48:35 +0200
+
+microb-engine (20100115-1.9.2-7) unstable; urgency=low
+
+  * Fixed NB#154246 crash at nsGStreamerLink::Suspend leaving mozilla
+    mobile page
+
+ -- Egor Starkov <egor.starkov@nokia.com>  Mon, 25 Jan 2010 19:10:01 +0200
+
+microb-engine (20100115-1.9.2-6) unstable; urgency=low
+
+  * Fixed NB#148727 After panning on DOM mouse-over elements in
+    manipulation/hovering mode cursor is staying on them
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Mon, 25 Jan 2010 14:47:52 +0200
+
+microb-engine (20100115-1.9.2-5) unstable; urgency=low
+
+  * Fixed NB#152131 - MMS streaming is not working 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri, 22 Jan 2010 12:25:57 +0200
+
+microb-engine (20100115-1.9.2-4) unstable; urgency=low
+
+  * Fixed NB#151558 - re-enable wave support in 1.9.2 configuration
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri, 22 Jan 2010 12:03:14 +0200
+
+microb-engine (20100115-1.9.2-3) unstable; urgency=low
+
+  * Fixed NB#150992 - Password entry to browser more visible 
+
+ -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri, 22 Jan 2010 09:16:21 +0000
+
+microb-engine (20100115-1.9.2-2) unstable; urgency=low
+
+  * Updated changelog
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 20 Jan 2010 15:49:34 +0200
+
+microb-engine (20100115-1.9.2-1) unstable; urgency=low
+
+  * Fixes: NB#153368  Engine update, final frozen update 08a91a7b080a
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 15 Jan 2010 15:44:58 +0200
+
+microb-engine (20091230-1.9.2-9) unstable; urgency=low
+
+  * Fixed NB#141153 Browser - Device performance is slow while downloading large file, patch reject fix
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Fri, 15 Jan 2010 09:55:42 +0200
+
+microb-engine (20091230-1.9.2-7) unstable; urgency=low
+
+  * Fixes for bug 141153 Browser - Device performance is slow while downloading large file
+
+ -- Oleg Romashin <oleg.romashin@nokia.com>  Thu, 14 Jan 2010 14:58:53 +0200
 
 microb-engine (20091230-1.9.2-6.2) unstable; urgency=low
 
   * Revert NB#114903, apparently ineffective
 
  -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 10 Feb 2010 19:09:53 +0200
-
-microb-engine (20091230-1.9.2-6.1) unstable; urgency=low
-
-  * (From 20100115-1.9.2-11) Fixes: NB#152998 - Rich text edit - Unable to
-    move cursor using H/W keyboard right & left arrow key in gmail mail
-    compose
-  * (From 20100115-1.9.2-10) Fixes: NB#139884 - pkg-config files for nss
-    and nspr are broken
-  * (From 20100115-1.9.2-6) Fixes: NB#148727 After panning on DOM
-    mouse-over elements in manipulation/hovering mode cursor is staying on
-    them
-  * Merge from microb-engine up to 20091230-1.9.2-6
-
- -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Tue, 09 Feb 2010 19:02:59 +0200
 
 microb-engine (20091230-1.9.2-6) unstable; urgency=low
 
@@ -106,13 +225,6 @@ microb-engine (20091230-1.9.2-5) unstable; urgency=low
   * Fixes: NB#152732 MICROB_API_SET_ACTIVE_DOCSHELL not defined in microb-engine
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 11 Jan 2010 14:20:56 +0200
-
-microb-engine (20091230-1.9.2-4.5) unstable; urgency=low
-
-  * (From 20100115-1.9.2-12) Resurrect 040_netwerk_buffer_count.diff lost
-    in NB#149195. Fixes: NB#154971 large pages download slowed down
-
- -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Tue, 09 Feb 2010 17:38:47 +0200
 
 microb-engine (20091230-1.9.2-4) unstable; urgency=low
 
@@ -153,7 +265,7 @@ microb-engine (20091218-1.9.2-6) unstable; urgency=low
 
 microb-engine (20091218-1.9.2-5) unstable; urgency=low
 
-  * Fixed NB#151095 Engine freeze on https://guest.nokia.com:950 
+  * Fixes: NB#151095 Engine freezes typing gmail password
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Sun, 27 Dec 2009 22:34:50 +0200
 
@@ -193,30 +305,6 @@ microb-engine (20091202-1.9.2-5) unstable; urgency=low
   * Fixes: NB#149558 Some fennec preferences would be useful in mcirob configuration
 
  -- Oleg Romashin <oleg.romashin@nokia.com>  Mon, 14 Dec 2009 11:41:09 +0200
-
-microb-engine (20091202-1.9.2-4.4) unstable; urgency=low
-
-  * (From 20100115-1.9.2-8) Fixes: NB#153489 - Tune javascripts timeout
-  * (From 20100115-1.9.2-7) Fixes: NB#154246 crash at
-    nsGStreamerLink::Suspend leaving mozilla mobile page
-  * (From 20100115-1.9.2-5) Fixes: NB#152131 - MMS streaming is not working 
-
- -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Fri, 29 Jan 2010 20:44:13 +0200
-
-microb-engine (20091202-1.9.2-4.3) unstable; urgency=low
-
-  * (From 20100115-1.9.2-4) Fixes: NB#151558 - re-enable wave support in
-    1.9.2 configuration
-  * (From 20100115-1.9.2-3) Fixes: NB#150992 - Password entry to browser
-    more visible
-
- -- Sudarsana Nagineni <sudarsana.nagineni@nokia.com>  Fri, 22 Jan 2010 09:16:21 +0000
-
-microb-engine (20091202-1.9.2-4.2) unstable; urgency=low
-
-  * Updated changelog
-
- -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 20 Jan 2010 15:50:49 +0200
 
 microb-engine (20091202-1.9.2-4.1) unstable; urgency=low
 

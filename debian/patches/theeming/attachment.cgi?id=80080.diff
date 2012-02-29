@@ -1,0 +1,208 @@
+diff -r 0ee43665df48 gfx/thebes/src/Makefile.in
+--- a/gfx/thebes/src/Makefile.in	Mon Jan 11 16:35:26 2010 +0200
++++ b/gfx/thebes/src/Makefile.in	Mon Jan 11 16:40:48 2010 +0200
+@@ -171,16 +171,20 @@ CPPSRCS += gfxCoreTextFonts.cpp
+ endif
+ 
+ CMMSRCS = gfxMacPlatformFontList.mm
+ 
+ # Always link with OpenGL/AGL
+ EXTRA_DSO_LDOPTS += -framework OpenGL -framework AGL -framework QuickTime
+ endif
+ 
++ifeq ($(MOZ_PLATFORM_MAEMO),5)
++EXTRA_DSO_LDOPTS += $(XEXT_LIBS)
++endif
++
+ CSRCS += woff.c
+ 
+ EXTRA_DSO_LDOPTS += $(TK_LIBS)
+ 
+ DEFINES += -DIMPL_THEBES -DWOFF_MOZILLA_CLIENT
+ 
+ include $(topsrcdir)/config/rules.mk
+ 
+diff -r 0ee43665df48 gfx/thebes/src/cairo-xlib-utils.c
+--- a/gfx/thebes/src/cairo-xlib-utils.c	Mon Jan 11 16:35:26 2010 +0200
++++ b/gfx/thebes/src/cairo-xlib-utils.c	Mon Jan 11 16:40:48 2010 +0200
+@@ -46,16 +46,18 @@
+ #include <stdint.h>
+ #elif HAVE_INTTYPES_H
+ #include <inttypes.h>
+ #elif HAVE_SYS_INT_TYPES_H
+ #include <sys/int_types.h>
+ #endif
+ 
+ #include <gdk/gdkx.h>
++#include <X11/extensions/XShm.h>
++#include <sys/ipc.h>
+ 
+ #if 0
+ #include <stdio.h>
+ #define CAIRO_GDK_DRAWING_NOTE(m) fprintf(stderr, m)
+ #else
+ #define CAIRO_GDK_DRAWING_NOTE(m) do {} while (0)
+ #endif
+ 
+@@ -402,19 +404,21 @@ _copy_xlib_surface_to_image (cairo_surfa
+     cairo_t *cr;
+     
+     *data_out = data = (unsigned char*)malloc (width*height*4);
+     if (!data)
+         return NULL;
+   
+     result = cairo_image_surface_create_for_data (data, format, width, height, width*4);
+     cr = cairo_create (result);
+-    cairo_set_source_surface (cr, temp_xlib_surface, 0, 0);
+-    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+-    cairo_paint (cr);
++    if (!_draw_xlib_surface_to_cairo (cr, temp_xlib_surface, width, height)) {
++        cairo_set_source_surface (cr, temp_xlib_surface, 0, 0);
++        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
++        cairo_paint (cr);
++    }
+     cairo_destroy (cr);
+     return result;
+ }
+ 
+ #define SET_ALPHA(v, a) (((v) & ~(0xFF << 24)) | ((a) << 24))
+ #define GREEN_OF(v) (((v) >> 8) & 0xFF)
+ 
+ /**
+@@ -493,16 +497,113 @@ _compute_alpha_values (uint32_t *black_d
+                     analysis->g = ((first >> 8) & 0xFF)/d_first_alpha;
+                     analysis->b = ((first >> 16) & 0xFF)/d_first_alpha;
+                 }
+             }
+         }
+     }
+ }
+ 
++int _draw_xlib_surface_to_cairo (cairo_t *cr, cairo_surface_t *temp_xlib_surface,
++                                 unsigned int width, unsigned int height)
++{
++    Display *disp = cairo_xlib_surface_get_display(temp_xlib_surface);
++    Drawable draw = cairo_xlib_surface_get_drawable(temp_xlib_surface);
++    int depth = cairo_xlib_surface_get_depth(temp_xlib_surface);
++    Screen *screen = cairo_xlib_surface_get_screen(temp_xlib_surface);
++    Visual *visual = cairo_xlib_surface_get_visual(temp_xlib_surface);
++
++    cairo_surface_t* target_surface = cairo_get_target(cr);
++    if (!target_surface)
++      return 0;
++    if (cairo_surface_get_type(target_surface) == CAIRO_SURFACE_TYPE_XLIB
++        && depth == 16) // Cairo can't paint from 16bpp image surface to XLib surface
++      return 0;
++
++    XShmSegmentInfo sharedSegmentInfo;
++    XImage *mSharedXImage = NULL;
++    memset(&sharedSegmentInfo, 0, sizeof(XShmSegmentInfo));
++
++    mSharedXImage = XShmCreateImage(disp, visual,
++                                    depth,
++                                    ZPixmap,
++                                    0,
++                                    &sharedSegmentInfo,
++                                    width, height);
++
++
++    if (!mSharedXImage)
++      return 0;
++
++    sharedSegmentInfo.shmid = shmget(IPC_PRIVATE,
++                                     mSharedXImage->bytes_per_line * mSharedXImage->height,
++                                     IPC_CREAT | 0777);
++    if (sharedSegmentInfo.shmid == -1) {
++      XDestroyImage(mSharedXImage);
++      mSharedXImage = NULL;
++      return 0;
++    }
++
++    mSharedXImage->data = (char*)shmat(sharedSegmentInfo.shmid, 0, 0);
++    if (mSharedXImage->data == (char*) -1) {
++      shmctl(sharedSegmentInfo.shmid, IPC_RMID, 0);
++      XDestroyImage(mSharedXImage);
++      mSharedXImage = NULL;
++      return 0;
++    }
++
++    sharedSegmentInfo.shmaddr = mSharedXImage->data;
++    sharedSegmentInfo.readOnly = False;
++
++    Status s = XShmAttach(disp, &sharedSegmentInfo);
++    XSync(disp, False);
++    shmctl(sharedSegmentInfo.shmid, IPC_RMID, 0);
++    if (!s) {
++        // attach failed, call shmdt and null shmaddr before calling
++        if (sharedSegmentInfo.shmaddr) {
++            XShmDetach(disp, &sharedSegmentInfo);
++            shmdt(sharedSegmentInfo.shmaddr);
++            sharedSegmentInfo.shmaddr = NULL;
++        }
++
++        if (mSharedXImage) {
++            XDestroyImage(mSharedXImage);
++            mSharedXImage = NULL;
++        }
++        return 0;
++    }
++    s = XShmGetImage(disp, draw, mSharedXImage, 0, 0, AllPlanes);
++    if (!s)
++        return 0;
++
++    cairo_format_t format = CAIRO_FORMAT_RGB24;
++    CAIRO_FORMAT_RGB16_565;
++#ifdef MICROB_API_16BPP_SUPPORT
++    if (depth == 16)
++        format = CAIRO_FORMAT_RGB16_565;
++#endif
++    if (depth == 32)
++        format = CAIRO_FORMAT_ARGB32;
++    cairo_surface_t *result =
++        cairo_image_surface_create_for_data((unsigned char *)mSharedXImage->data,
++                                            format,
++                                            mSharedXImage->width,
++                                            mSharedXImage->height,
++                                            mSharedXImage->bytes_per_line);
++    cairo_set_source_surface (cr, result, 0.0, 0.0);
++    cairo_paint (cr);
++    cairo_surface_destroy(result);
++    XShmDetach(disp, &sharedSegmentInfo);
++    shmdt(sharedSegmentInfo.shmaddr);
++    sharedSegmentInfo.shmaddr = NULL;
++    XDestroyImage(mSharedXImage);
++    mSharedXImage = NULL;
++    return 1;
++}
++
+ void 
+ cairo_draw_with_gdk (cairo_t *cr,
+                      cairo_gdk_drawing_callback callback,
+                      void * closure,
+                      unsigned int width, unsigned int height,
+                      cairo_gdk_drawing_opacity_t is_opaque,
+                      cairo_gdk_drawing_support_t capabilities,
+                      cairo_gdk_drawing_result_t *result)
+@@ -539,18 +640,20 @@ cairo_draw_with_gdk (cairo_t *cr,
+     dpy = cairo_xlib_surface_get_display (temp_xlib_surface);
+   
+     if (!_draw_onto_temp_xlib_surface (temp_xlib_surface, callback, closure, 0.0)) {
+         cairo_surface_destroy (temp_xlib_surface);
+         return;
+     }
+   
+     if (is_opaque == CAIRO_GDK_DRAWING_OPAQUE) {
+-        cairo_set_source_surface (cr, temp_xlib_surface, 0.0, 0.0);
+-        cairo_paint (cr);
++        if (!_draw_xlib_surface_to_cairo (cr, temp_xlib_surface, width, height)) {
++            cairo_set_source_surface (cr, temp_xlib_surface, 0.0, 0.0);
++            cairo_paint (cr);
++        }
+         if (result) {
+             result->surface = temp_xlib_surface;
+             /* fill in the result with what we know, which is really just what our
+                assumption was */
+             result->uniform_alpha = True;
+             result->alpha = 1.0;
+         } else {
+             cairo_surface_destroy (temp_xlib_surface);

@@ -17,7 +17,7 @@ diff -r b2de786e8c3d memory/jemalloc/Makefile.in
  DIST_INSTALL = 1
  FORCE_STATIC_LIB= 1
  endif
-+ifdef MOZ_PLATFORM_HILDON
++ifeq ($(MOZ_PLATFORM_MAEMO),5)
 +FORCE_SHARED_LIB= 1
 +endif
  

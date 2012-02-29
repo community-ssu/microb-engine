@@ -18,7 +18,7 @@ diff -r 8804ab2467a5 layout/generic/nsObjectFrame.cpp
  
    NS_ENSURE_TRUE(window, /**/);
  
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +  mInstanceOwner->UpdateVisibilityMicrob(PR_TRUE);
 +#endif
 +
@@ -29,7 +29,7 @@ diff -r 8804ab2467a5 layout/generic/nsObjectFrame.cpp
    // if needed, see bug 132759.
    window->CallSetWindow(pi);
  
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +  mInstanceOwner->UpdateVisibilityMicrob(PR_TRUE);
 +#endif
 +
@@ -40,7 +40,7 @@ diff -r 8804ab2467a5 layout/generic/nsObjectFrame.cpp
    mLastPoint = nsIntPoint(0,0);
  #endif
  
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +  mForceTimerUpdate = PR_FALSE;
 +#endif
 +
@@ -94,7 +94,7 @@ diff -r 8804ab2467a5 layout/generic/nsObjectFrame.cpp
  
  NS_IMETHODIMP nsPluginInstanceOwner::Notify(nsITimer* /* timer */)
  {
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +  if (mInstance && mPaintWithMicrobImageDraw) {
 +    UpdateVisibilityMicrob(mForceTimerUpdate);
 +    mForceTimerUpdate = PR_FALSE;

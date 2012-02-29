@@ -15,7 +15,7 @@
          isKeyDownCancelled = (status == nsEventStatus_eConsumeNoDefault);
      }
  
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +    // In Maemo browser, we need to send modifiers to for example Flash plugin
 +#else
      // Don't pass modifiers as NS_KEY_PRESS events.

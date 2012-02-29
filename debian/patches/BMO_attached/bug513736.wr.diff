@@ -6,7 +6,7 @@ diff -r e59a662c0dd1 xpcom/reflect/xptinfo/src/xptiInterfaceInfoManager.cpp
              NS_ASSERTION(current, "broken search path! bad element");
              // nsIFile::Equals basically compares path strings so normalize
              // before the comparison.
-+#ifndef MOZ_PLATFORM_HILDON // Workaround for bug 513736
++#if (MOZ_PLATFORM_MAEMO != 5) // Workaround for bug 513736
 +
              parent->Normalize();
              current->Normalize();

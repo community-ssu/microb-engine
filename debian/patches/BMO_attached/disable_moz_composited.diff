@@ -11,7 +11,7 @@ Index: mozilla/modules/plugin/base/public/nsPluginNativeWindow.h
      SetPluginInstance(aPluginInstance);
      return NS_OK;
    }
- #ifdef MOZ_PLATFORM_HILDON
+ #if (MOZ_PLATFORM_MAEMO == 5)
 -#define MOZ_COMPOSITED_PLUGINS
 +//#define MOZ_COMPOSITED_PLUGINS
  #endif
@@ -34,7 +34,7 @@ Index: mozilla/modules/plugin/base/src/nsPluginNativeWindowGtk2.cpp
  #include <gdk/gdkx.h>
  #include <gdk/gdk.h>
  
- #ifdef MOZ_PLATFORM_HILDON
+ #if (MOZ_PLATFORM_MAEMO == 5)
 -#define MOZ_COMPOSITED_PLUGINS
 +//#define MOZ_COMPOSITED_PLUGINS
  #endif
@@ -57,7 +57,7 @@ Index: mozilla/layout/generic/nsObjectFrame.cpp
  #undef KeyPress
  #endif
  
- #ifdef MOZ_PLATFORM_HILDON
+ #if (MOZ_PLATFORM_MAEMO == 5)
 -#define MOZ_COMPOSITED_PLUGINS 1
 +//#define MOZ_COMPOSITED_PLUGINS 1
  

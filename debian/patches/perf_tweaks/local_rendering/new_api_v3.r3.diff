@@ -35,7 +35,7 @@ diff -r ae288ef4f960 layout/generic/nsObjectFrame.cpp
    gfxContextAutoSaveRestore autoSR(aContext);
    aContext->Translate(pluginRect.pos);
  
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +  if (simpleImageRender && mPaintWithMicrobImageDraw) {
 +    NativeImageDrawMicrob(aContext, window, pluginSize, pluginDirtyRect);
 +    return;
@@ -49,7 +49,7 @@ diff -r ae288ef4f960 layout/generic/nsObjectFrame.cpp
  }
  #endif
  
-+#ifdef MOZ_PLATFORM_HILDON
++#if (MOZ_PLATFORM_MAEMO == 5)
 +
 +// NativeImageDraw, MicroB browser version
 +nsresult

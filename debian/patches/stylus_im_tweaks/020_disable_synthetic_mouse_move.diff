@@ -9,7 +9,7 @@
  NS_IMETHODIMP
  nsViewManager::SynthesizeMouseMove(PRBool aFromScroll)
  {
-+#ifndef MOZ_PLATFORM_HILDON // Do not synthesize move events on Hildon,
++#if (MOZ_PLATFORM_MAEMO != 5) // Do not synthesize move events on Hildon,
 +                            // no point doing that on touchscreen.
    if (!IsRootVM())
      return RootViewManager()->SynthesizeMouseMove(aFromScroll);
@@ -28,7 +28,7 @@
  
      mSynthMouseMoveEvent = ev;
    }
-+#endif // !MOZ_PLATFORM_HILDON
++#endif // MOZ_PLATFORM_MAEMO != 5
  
    return NS_OK;
  }

@@ -1,0 +1,106 @@
+--- mozilla/netwerk/cookie/src/nsCookieService.cpp.orig	2010-04-14 08:34:23.000000000 +0300
++++ mozilla/netwerk/cookie/src/nsCookieService.cpp	2010-04-14 08:34:45.000000000 +0300
+@@ -553,20 +553,21 @@ nsCookieService::TryInitDB(PRBool aDelet
+ 
+         rv = CreateTable();
+         NS_ENSURE_SUCCESS(rv, rv);
+       }
+       break;
+     }
+   }
+ 
+   // make operations on the table asynchronous, for performance
+   mDBState->dbConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING("PRAGMA synchronous = OFF"));
++  mDBState->dbConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING("PRAGMA journal_mode = MEMORY"));
+ 
+   // open in exclusive mode for performance
+   mDBState->dbConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING("PRAGMA locking_mode = EXCLUSIVE"));
+ 
+   // cache frequently used statements (for insertion, deletion, and updating)
+   rv = mDBState->dbConn->CreateStatement(NS_LITERAL_CSTRING(
+     "INSERT INTO moz_cookies "
+     "(id, name, value, host, path, expiry, lastAccessed, isSecure, isHttpOnly) "
+     "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)"),
+     getter_AddRefs(mDBState->stmtInsert));
+--- mozilla/modules/libpref/src/init/all.js.orig	2010-04-14 08:26:36.000000000 +0300
++++ mozilla/modules/libpref/src/init/all.js	2010-04-14 08:27:21.000000000 +0300
+@@ -2825,10 +2825,14 @@ pref("gfx.color_management.mode", 0);
+ #endif
+ 
+ // Enable/Disable the geolocation API for content
+ pref("geo.enabled", true);
+ 
+ // Enable/Disable the orientation API for content
+ pref("accelerometer.enabled", true);
+ 
+ // Enable/Disable HTML5 parser
+ pref("html5.enable", false);
++
++// database perf tweaks, nb162142
++pref("toolkit.storage.synchronous", 0);
++pref("history_cache_percentage", 1);
+--- mozilla/toolkit/components/places/src/nsNavHistory.cpp.orig	2010-04-14 08:32:49.000000000 +0300
++++ mozilla/toolkit/components/places/src/nsNavHistory.cpp	2010-04-14 08:34:09.000000000 +0300
+@@ -185,23 +185,23 @@ using namespace mozilla::places;
+ #define MAX_LAZY_TIMER_DEFERMENTS 2
+ 
+ #endif // LAZY_ADD
+ 
+ // Limit the number of items in the history for performance reasons
+ #define EXPIRATION_CAP_SITES 40000
+ 
+ // character-set annotation
+ #define CHARSET_ANNO NS_LITERAL_CSTRING("URIProperties/characterSet")
+ 
+-// We use the TRUNCATE journal mode to reduce the number of fsyncs.  Without
++// We use the MEMORY journal mode to reduce the number of fsyncs.  Without
+ // this setting we had a Ts hit on Linux.  See bug 460315 for details.
+-#define DEFAULT_JOURNAL_MODE "TRUNCATE"
++#define DEFAULT_JOURNAL_MODE "MEMORY"
+ 
+ // These macros are used when splitting history by date.
+ // These are the day containers and catch-all final container.
+ #define ADDITIONAL_DATE_CONT_NUM 3
+ // We use a guess of the number of months considering all of them 30 days
+ // long, but we split only the last 6 months.
+ #define DATE_CONT_NUM(_expireDays) \
+   (ADDITIONAL_DATE_CONT_NUM + PR_MIN(6, (_expireDays/30)))
+ 
+ // fraction of free pages in the database to force a vacuum between
+--- mozilla/storage/src/mozStorageConnection.cpp.orig	2010-04-14 08:28:28.000000000 +0300
++++ mozilla/storage/src/mozStorageConnection.cpp	2010-04-14 08:32:31.000000000 +0300
+@@ -382,28 +382,34 @@ Connection::initialize(nsIFile *aDatabas
+ 
+     return convertResultCode(srv);
+   }
+ 
+   // Set the synchronous PRAGMA, according to the pref
+   nsCOMPtr<nsIPrefBranch> pref(do_GetService(NS_PREFSERVICE_CONTRACTID));
+   PRInt32 synchronous = 1; // Default to NORMAL if pref not set
+   if (pref)
+     (void)pref->GetIntPref(PREF_TS_SYNCHRONOUS, &synchronous);
+ 
++  // Set the default cache size to 128 (sqlite uses 2000 pages which is too much)
++  (void)ExecuteSimpleSQL(NS_LITERAL_CSTRING(
++      "PRAGMA cache_size = 128;"));
++
+   switch (synchronous) {
+     case 2:
+       (void)ExecuteSimpleSQL(NS_LITERAL_CSTRING(
+           "PRAGMA synchronous = FULL;"));
+       break;
+     case 0:
+       (void)ExecuteSimpleSQL(NS_LITERAL_CSTRING(
+           "PRAGMA synchronous = OFF;"));
++      (void)ExecuteSimpleSQL(NS_LITERAL_CSTRING(
++          "PRAGMA journal_mode = MEMORY;"));
+       break;
+     case 1:
+     default:
+       (void)ExecuteSimpleSQL(NS_LITERAL_CSTRING(
+           "PRAGMA synchronous = NORMAL;"));
+       break;
+   }
+ 
+   return NS_OK;
+ }

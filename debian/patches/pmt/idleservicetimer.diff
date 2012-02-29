@@ -1,0 +1,32 @@
+# Don't start nsIdleService timer if there are no listeners
+# https://projects.maemo.org/bugzilla/show_bug.cgi?id=164676
+# https://bugzilla.mozilla.org/show_bug.cgi?id=559784
+--- mozilla/widget/src/xpwidgets/nsIdleService.cpp.orig	2010-04-16 12:40:37.000000000 +0100
++++ mozilla/widget/src/xpwidgets/nsIdleService.cpp	2010-04-15 09:44:29.000000000 +0100
+@@ -220,22 +220,24 @@ nsIdleService::CheckAwayState()
+ 
+     // Restart the timer with the dynamically optimized poll time
+     StartTimer(nextPoll);
+ }
+ 
+ void
+ nsIdleService::StartTimer(PRUint32 aDelay)
+ {
+     if (mTimer) {
+         StopTimer();
+-        mTimer->InitWithFuncCallback(IdleTimerCallback, this, aDelay,
+-                                     nsITimer::TYPE_ONE_SHOT);
++        if (mArrayListeners.Length()) {
++            mTimer->InitWithFuncCallback(IdleTimerCallback, this, aDelay,
++                                         nsITimer::TYPE_ONE_SHOT);
++        }
+     }
+ }
+ 
+ void
+ nsIdleService::StopTimer()
+ {
+     if (mTimer) {
+         mTimer->Cancel();
+     }
+ }

@@ -108,3 +108,5 @@ ac_add_options --enable-xul
 #ac_add_options --disable-elf-dynstr-gc
 
 ac_add_options --disable-necko-wifi
+
+ac_add_options --with-maemo-version=5
