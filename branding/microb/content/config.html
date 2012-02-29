@@ -1,0 +1,171 @@
+<html>
+<head>
+<title>about:config - html</title>
+<script>
+netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+var data="";
+function accum(more)
+{
+ data+=more+"\n";
+}
+function flushAccum()
+{
+ document.write(data);
+ data="";
+}
+function formatPref(ps, name, type)
+{
+ if (arguments.length == 2) {
+  try {
+   type = ps.getPrefType(name);
+  } catch (e) {
+   for each (type in [ps.PREF_STRING, ps.PREF_INT, ps.PREF_BOOL]) {
+    try {
+     formatPref(ps, name, type);
+    } catch (e) {
+    }
+   }
+   return;
+  }
+ }
+ switch (type)
+ {
+ case ps.PREF_STRING:
+  accum("<tr><td>"+name+"<\/td><td>string<\/td><td>"+ps.getCharPref(name)+"<\/td><\/tr>");
+  break;
+ case ps.PREF_INT:
+  accum("<tr><td>"+name+"<\/td><td>int<\/td><td>"+ps.getIntPref(name)+"<\/td><\/tr>");
+  break;
+ case ps.PREF_BOOL:
+  accum("<tr><td>"+name+"<\/td><td>bool<\/td><td>"+ps.getBoolPref(name)+"<\/td><\/tr>");
+  break;
+ default:
+ }
+}
+function formatPrefArray(ps, ary)
+{
+ ary.sort();
+ for (var i=0; i<ary.length; i++)
+  formatPref(ps, ary[i]);
+}
+function formatSetPref()
+{
+ accum("<form>"+
+       "<table><tr><th>Name<th>Value<tr><td>");
+ accumInput('prefname'); accumTd();
+ accumInput('prefvalue'); accumTd();
+ accum("<\/table>"+
+       "<input type=submit value='Set Preference'><\/form>");
+ flushAccum();
+}
+var queryMap = {};
+function fillQueryMap()
+{
+ var location_href = location.href;
+ var query = location_href.replace(/^[^\?]*/,"").split(/[?&]/g);
+ var bit,bits;
+ for (var i = 0; i < query.length; ++i)
+ {
+  bit = query[i];
+  bits = bit.split(/=/);
+  queryMap[bits[0]] = unescape((bits[1]||'').replace(/\+/g," "));
+ }
+}
+fillQueryMap();
+function accumInput(name)
+{
+ var str='<input name="'+name+'" id="'+name+'"';
+ if (name in queryMap && queryMap[name])
+  str+=' value="'+queryMap[name]+'"';
+ str+='>';
+ accum(str);
+}
+function accumTd()
+{
+ accum("<td>");
+}
+function formatSearchPref()
+{
+ accum("<form>"+
+       "<table><tr><th>Name<tr><td>");
+ accumInput('sprefname'); accumTd();
+ accum("<\/table>"+
+       "<input type=submit value='Search Preferences'><\/form>");
+ flushAccum();
+}
+function formatPrefs(limit)
+{
+ fillQueryMap();
+ var name = queryMap.prefname;
+ var value = queryMap.prefvalue;
+ if (name)
+  setPref(name, value);
+ accum("<table><thead><tr><th>Name<\/th><th>Type<\/th><th>Value<\/th><\/thead><tbody>");
+ var ps=Components.classes["@mozilla.org\/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
+ var list_len={};
+ var list=ps.getChildList("",list_len);
+ if (queryMap.sprefname) {
+  var query = RegExp(queryMap.sprefname, "i");
+  for (var i = list.length; i-- > 0; ) {
+   if (!query.test(list[i]))
+    list.splice(i,1);
+  }
+ }
+ if (typeof limit != "undefined")
+  list.length = limit;
+ formatPrefArray(ps, list);
+ accum("<\/tbody><\/table>");
+ flushAccum();
+}
+var pmap = {};
+var fmap = {};
+(function (){
+ var ps = Components.interfaces.nsIPrefBranch;
+ pmap[ps.PREF_STRING] = "setCharPref";
+ fmap[ps.PREF_STRING] = function (value) { return value.replace(/^\s*"(.*)"\s*$/,"$1"); };
+ pmap[ps.PREF_INT] = "setIntPref";
+ fmap[ps.PREF_INT] = function (value) { return value - 0; };
+ pmap[ps.PREF_BOOL] = "setBoolPref";
+ fmap[ps.PREF_BOOL] = function (value) { return /1|true|yes/i.test(value); };
+})();
+var boolRe = /^\s*(?:true|false)\s*$/i;
+var intRe = /^\s*\d+\s*$/;
+var strRe = /^\s*".*"\s*$/;
+function getPrefType(value, ps)
+{
+ if (boolRe.test(value))
+  return ps.PREF_BOOL;
+ if (intRe.test(value))
+  return ps.PREF_INT;
+ if (strRe.test(value))
+  return ps.PREF_STRING;
+ return ps.PREF_STRING;
+}
+function setPref(name, value)
+{
+ var ps=Components.classes["@mozilla.org\/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
+ try {
+  var type = ps.getPrefType(name);
+ } catch (e) {
+  type = ps.PREF_INVALID;
+ }
+ if (type == ps.PREF_INVALID)
+  type = getPrefType(value, ps);
+ if (!(type in pmap))
+ {
+  document.write("<title>Error<\/title><h3>oops i don't know how to handle "+type+"<\/h3><a href='"+location+"'>back<\/a>");
+ } else {
+  ps[pmap[type]](name, fmap[type](value));
+ }
+}
+formatSetPref();
+formatSearchPref();
+formatPrefs();
+</script>
+</head>
+<body>
+<noscript>
+sorry, you really need js enabled
+</noscript>
+</body>
+</html>

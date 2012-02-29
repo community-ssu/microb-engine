@@ -212,7 +212,7 @@ const FEATURES_EXTENSION_UPDATES      = "chrome,centerscreen,extra-chrome,dialog
  */
 var gIDTest = /^(\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}|[a-z0-9-\._]*\@[a-z0-9-\._]+)$/i;
 
-var gBranchVersion = /^([^\.]+\.[^a-z\.]+[a-z]?).*/gi;
+var gBranchVersion = /^([^\.]+\.[0-9]+[a-z]*).*/gi;
 
 // shared code for suppressing bad cert dialogs
 XPCOMUtils.defineLazyGetter(this, "gCertUtils", function() {
@@ -1573,6 +1573,8 @@ WinRegInstallLocation.prototype = {
 
   getItemFile: function RegInstallLocation_getItemFile(id, filePath) {
     var itemLocation = this.getItemLocation(id);
+    if (!itemLocation)
+      return null;
     var parts = filePath.split("/");
     for (var i = 0; i < parts.length; ++i)
       itemLocation.append(parts[i]);
@@ -2616,6 +2618,9 @@ ExtensionManager.prototype = {
       ERROR("Error flushing caches: " + e);
     }
 
+    // Reset the first run flag.
+    gFirstRun = false;
+
     return needsRestart;
   },
 
@@ -3289,6 +3294,7 @@ ExtensionManager.prototype = {
 
     var ds = this.datasource;
     var inactiveItemIDs = [];
+    var appEnabledItemIDs = [];
     var ctr = getContainer(ds, ds._itemRoot);
     var elements = ctr.GetElements();
     while (elements.hasMoreElements()) {
@@ -3299,6 +3305,8 @@ ExtensionManager.prototype = {
       if (appDisabled == "true" || appDisabled == OP_NEEDS_DISABLE ||
           userDisabled == "true" || userDisabled == OP_NEEDS_DISABLE)
         inactiveItemIDs.push(id);
+      if (appDisabled != "true" && appDisabled != OP_NEEDS_DISABLE)
+        appEnabledItemIDs.push(id);
     }
 
     if (isDirty)
@@ -3369,9 +3377,12 @@ ExtensionManager.prototype = {
         if (ds.getItemProperty(id, "appDisabled"))
           properties.appDisabled = null;
       }
-      else if (!ds.getItemProperty(id, "appDisabled")) {
-        properties.appDisabled = EM_L("true");
-        disabledAddons.push(id);
+      else {
+        if (!ds.getItemProperty(id, "appDisabled"))
+          properties.appDisabled = EM_L("true");
+        // If this item used to be app enabled then the upgrade has made it incompatible
+        if (appEnabledItemIDs.indexOf(id) >= 0)
+          disabledAddons.push(id);
       }
 
       ds.setItemProperties(id, properties);
@@ -3411,7 +3422,7 @@ ExtensionManager.prototype = {
 
     // Determine if we should check for compatibility updates when upgrading if
     // we have add-ons that aren't managed by the application.
-    if (!allAppManaged && !gFirstRun && disabledAddons.length > 0) {
+    if (!allAppManaged && !gFirstRun) {
       // Should we show a UI or just pass the list via a pref?
       if (getPref("getBoolPref", PREF_EM_SHOW_MISMATCH_UI, true)) {
         this._showMismatchWindow(inactiveItemIDs);
@@ -4440,7 +4451,7 @@ ExtensionManager.prototype = {
       safeInstallOperation(id, installLocation, file);
 
     var metadataFile = installLocation.getItemFile(id, FILE_INSTALL_MANIFEST);
-    if (metadataFile.exists()) {
+    if (metadataFile && metadataFile.exists()) {
       var metadataDS = getInstallManifest(metadataFile);
       if (metadataDS) {
         // Add metadata for the item to the extensions datasource
@@ -4481,7 +4492,7 @@ ExtensionManager.prototype = {
       var installRDF = extractRDFFileToTempDir(stagedFile, FILE_INSTALL_MANIFEST, true);
     else
       installRDF = installLocation.getItemFile(id, FILE_INSTALL_MANIFEST);
-    if (installRDF.exists()) {
+    if (installRDF && installRDF.exists()) {
       var installManifest = getInstallManifest(installRDF);
       if (installManifest) {
         var type = getAddonTypeFromInstallManifest(installManifest);
@@ -4527,7 +4538,7 @@ ExtensionManager.prototype = {
         // If there is no manifest then either the rollback failed, or there was
         // no manifest in the first place. Either way this item is now invalid
         // and we shouldn't try to re-install it.
-        if (manifest.exists()) {
+        if (manifest && manifest.exists()) {
           // Removal of the files failed, reset the uninstalled flag and rewrite
           // the install manifests so this item's components are registered.
           // Clear the op flag from the Startup Cache
@@ -7784,7 +7795,7 @@ ExtensionsDataSource.prototype = {
     if (!installLocation)
       return null;
     var file = installLocation.getItemFile(id, fileName)
-    if (file.exists())
+    if (file && file.exists())
       return gRDF.GetResource(getURLSpecFromFile(file));
 
     return null;

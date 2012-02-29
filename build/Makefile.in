@@ -74,7 +74,7 @@ _LEAKTEST_DIR = $(DEPTH)/_leaktest
 
 _LEAKTEST_FILES =    \
 		automation.py \
-		$(CURDIR)/automationutils.py \
+		automationutils.py \
 		leaktest.py \
 		bloatcycle.html \
 		$(topsrcdir)/build/pgo/server-locations.txt \
@@ -121,7 +121,7 @@ check::
           echo "TEST-UNEXPECTED-FAIL | build/ | unify failed to produce a universal binary!"; \
           false; \
         else \
-          echo "TEST-PASS | build/ | unify produced a universal binary"; \
+          echo "TEST-PASS | build/ | unify produced a universal binary!"; \
         fi
 # try unifying two identical Java class files
 	rm -f unifytesta.class unifytestb.class unifytestc.class
@@ -140,7 +140,7 @@ check::
           echo "TEST-UNEXPECTED-FAIL | build/ | unify failed to unify a Java class file!"; \
           false; \
         else \
-          echo "TEST-PASS | build/ | unify unified a Java class file"; \
+          echo "TEST-PASS | build/ | unify unified a Java class file!"; \
         fi
 # try unifying some files that differ only in line ordering
 	rm -rf unify-sort-test
@@ -151,14 +151,14 @@ check::
 	@if ! $(srcdir)/macosx/universal/unify --unify-with-sort "\.foo$$" \
           ./unify-sort-test/a ./unify-sort-test/b \
           ./unify-sort-test/c; then \
-          echo "TEST-UNEXPECTED-FAIL | build/ | unify failed to unify files wit differing line ordering!"; \
+          echo "TEST-UNEXPECTED-FAIL | build/ | unify failed to unify files with differing line ordering!"; \
           false; \
         fi
 	@if ! diff -q ./unify-sort-test/expected-result ./unify-sort-test/c/file.foo; then \
-          echo "TEST-UNEXPECTED-FAIL | build/ | unify failed to unify files wit differing line ordering!"; \
+          echo "TEST-UNEXPECTED-FAIL | build/ | unify failed to unify files with differing line ordering!"; \
           false; \
         else \
-          echo "TEST-PASS | build/ | unify unified files with differing line orering!"; \
+          echo "TEST-PASS | build/ | unify unified files with differing line ordering!"; \
         fi
 endif
 

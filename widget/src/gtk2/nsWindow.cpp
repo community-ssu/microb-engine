@@ -38,7 +38,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#ifdef MOZ_PLATFORM_HILDON
+#ifdef MOZ_PLATFORM_MAEMO
 #define MAEMO_CHANGES
 #endif
 
@@ -63,7 +63,13 @@
 #include <gtk/gtk.h>
 #ifdef MOZ_X11
 #include <gdk/gdkx.h>
+
+#ifdef AIX
+#include <X11/keysym.h>
+#else
 #include <X11/XF86keysym.h>
+#endif
+
 #include "gtk2xtbin.h"
 #endif /* MOZ_X11 */
 #include <gdk/gdkkeysyms.h>
@@ -301,7 +307,7 @@ static GdkEventKey *gKeyEvent = NULL;
 static PRBool       gKeyEventCommitted = PR_FALSE;
 static PRBool       gKeyEventChanged = PR_FALSE;
 static PRBool       gIMESuppressCommit = PR_FALSE;
-#ifdef MOZ_PLATFORM_HILDON
+#ifdef MOZ_PLATFORM_MAEMO
 static PRBool       gIMEVirtualKeyboardOpened = PR_FALSE;
 #endif
 
@@ -976,7 +982,7 @@ nsWindow::ConstrainPosition(PRBool aAllowSlop, PRInt32 *aX, PRInt32 *aY)
 NS_IMETHODIMP
 nsWindow::Show(PRBool aState)
 {
-#ifndef MOZ_PLATFORM_HILDON
+#ifndef MOZ_PLATFORM_MAEMO
     // XXX Bug 534981: work around to fix a large initial paint delay in Fennec
     if (aState == mIsShown) {
         return NS_OK;
@@ -3101,6 +3107,7 @@ nsWindow::OnKeyPressEvent(GtkWidget *aWidget, GdkEventKey *aEvent)
     }
 
 #ifdef MOZ_X11
+#if ! defined AIX // no XFree86 on AIX 5L
     // Look for specialized app-command keys
     switch (aEvent->keyval) {
         case XF86XK_Back:
@@ -3118,6 +3125,7 @@ nsWindow::OnKeyPressEvent(GtkWidget *aWidget, GdkEventKey *aEvent)
         case XF86XK_HomePage:
             return DispatchCommandEvent(nsWidgetAtoms::Home);
     }
+#endif /* ! AIX */
 #endif /* MOZ_X11 */
 
     nsKeyEvent event(PR_TRUE, NS_KEY_PRESS, this);
@@ -3331,7 +3339,7 @@ nsWindow::OnVisibilityNotifyEvent(GtkWidget *aWidget,
 
         mIsFullyObscured = PR_FALSE;
 
-#ifdef MOZ_PLATFORM_HILDON
+#ifdef MOZ_PLATFORM_MAEMO
 #ifdef USE_XIM
         // In Hildon/Maemo, a browser window will get into 'patially visible' state wheneven an
         // autocomplete feature is dropped down (from urlbar or from an entry form completion),
@@ -3341,7 +3349,7 @@ nsWindow::OnVisibilityNotifyEvent(GtkWidget *aWidget,
         // to this it until the pointer is ungrabbed.
         if(!gIMEVirtualKeyboardOpened)
 #endif // USE_XIM
-#endif // MOZ_PLATFORM_HILDON
+#endif // MOZ_PLATFORM_MAEMO
         // if we have to retry the grab, retry it.
         EnsureGrabs();
         break;
@@ -6676,7 +6684,7 @@ nsWindow::IMEGetContext()
 static PRBool
 IsIMEEnabledState(PRUint32 aState)
 {
-#ifdef MOZ_PLATFORM_HILDON
+#ifdef MOZ_PLATFORM_MAEMO
     return aState == nsIWidget::IME_STATUS_ENABLED ||
            aState == nsIWidget::IME_STATUS_PLUGIN  ||
            aState == nsIWidget::IME_STATUS_PASSWORD;
@@ -6884,7 +6892,7 @@ nsWindow::SetIMEEnabled(PRUint32 aState)
         // Even when aState is not PR_TRUE, we need to set IME focus.
         // Because some IMs are updating the status bar of them in this time.
         focusedWin->IMESetFocus();
-#ifdef MOZ_PLATFORM_HILDON
+#ifdef MOZ_PLATFORM_MAEMO
         if (mIMEData->mEnabled) {
             // It is not desired that the hildon's autocomplete mechanism displays
             // user previous entered passwds, so lets make completions invisible
@@ -7260,7 +7268,7 @@ IM_get_input_context(nsWindow *aWindow)
         data->mEnabled == nsIWidget::IME_STATUS_PLUGIN)
         return data->mContext;
     if (data->mEnabled == nsIWidget::IME_STATUS_PASSWORD)
-#ifdef MOZ_PLATFORM_HILDON
+#ifdef MOZ_PLATFORM_MAEMO
         return data->mContext;
 #else
         return data->mSimpleContext;

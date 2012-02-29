@@ -1302,7 +1302,7 @@ nsContentUtils::ReparentContentWrappersInScope(nsIScriptGlobalObject *aOldScope,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  return sXPConnect->ReparentScopeAwareWrappers(cx, oldScopeObj, newScopeObj);
+  return sXPConnect->MoveWrappers(cx, oldScopeObj, newScopeObj);
 }
 
 nsIDocShell *
@@ -4170,6 +4170,14 @@ nsContentUtils::CheckSecurityBeforeLoad(nsIURI* aURIToLoad,
   }
 
   return aLoadingPrincipal->CheckMayLoad(aURIToLoad, PR_TRUE);
+}
+
+PRBool
+nsContentUtils::IsSystemPrincipal(nsIPrincipal* aPrincipal)
+{
+  PRBool isSystem;
+  nsresult rv = sSecurityManager->IsSystemPrincipal(aPrincipal, &isSystem);
+  return NS_SUCCEEDED(rv) && isSystem;
 }
 
 /* static */

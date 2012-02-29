@@ -5,6 +5,12 @@ def test(mod, path, entity = None):
                  "browser", "extensions/reporter", "extensions/spellcheck",
                  "other-licenses/branding/firefox"):
     return False
+
+  # Ignore Lorentz strings, at least temporarily
+  if mod == "toolkit" and path == "chrome/mozapps/plugins/plugins.dtd":
+    if entity.startswith('reloadPlugin.'): return False
+    if entity.startswith('report.'): return False
+
   if mod != "browser" and mod != "extensions/spellcheck":
     # we only have exceptions for browser and extensions/spellcheck
     return True
@@ -19,6 +25,12 @@ def test(mod, path, entity = None):
     return True
   if path == "defines.inc":
     return entity != "MOZ_LANGPACK_CONTRIBUTORS"
+
+  # Ignore Lorentz strings, at least temporarily
+  if mod == 'browser' and path == 'chrome/browser/browser.properties':
+    if entity.startswith('crashedpluginsMessage.'): return False
+  if mod == 'browser' and path == 'chrome/browser/preferences/advanced.dtd':
+    if entity.startswith('submitCrashes'): return False
 
   if path != "chrome/browser-region/region.properties":
     # only region.properties exceptions remain, compare all others

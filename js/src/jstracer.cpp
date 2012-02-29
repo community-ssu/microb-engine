@@ -3138,6 +3138,11 @@ struct ArgClosureTraits
     // See also UpvarArgTraits.
     static inline uint32 adj_slot(JSStackFrame* fp, uint32 slot) { return 2 + slot; }
 
+    // Generate the adj_slot computation in LIR.
+    static inline LIns* adj_slot_lir(LirWriter* lir, LIns* fp_ins, unsigned slot) {
+        return lir->insImm(2 + slot);
+    }
+
     // See also UpvarArgTraits.
     static inline jsval* slots(JSStackFrame* fp) { return fp->argv; }
 private:
@@ -3154,6 +3159,12 @@ struct VarClosureTraits
 {
     // See also UpvarVarTraits.
     static inline uint32 adj_slot(JSStackFrame* fp, uint32 slot) { return 3 + fp->argc + slot; }
+
+    // See also UpvarVarTraits.
+    static inline LIns* adj_slot_lir(LirWriter* lir, LIns* fp_ins, unsigned slot) {
+        LIns *argc_ins = lir->insLoad(LIR_ld, fp_ins, offsetof(JSStackFrame, argc));
+        return lir->ins2(LIR_add, lir->insImm(3 + slot), argc_ins);
+    }
 
     // See also UpvarVarTraits.
     static inline jsval* slots(JSStackFrame* fp) { return fp->slots; }
@@ -3420,6 +3431,27 @@ public:
             mStackOffset += sizeof(double);
         }
         return true;
+    }
+};
+
+// Like ImportUnboxedStackSlotVisitor, except that this does not import 
+// slots past nfixed. It imports only the slots that belong totally to
+// the given frame.
+class ImportUnboxedFrameSlotVisitor : public ImportUnboxedStackSlotVisitor
+{
+public:
+    ImportUnboxedFrameSlotVisitor(TraceRecorder &recorder,
+                                  LIns *base,
+                                  ptrdiff_t stackOffset,
+                                  JSTraceType *typemap) :
+        ImportUnboxedStackSlotVisitor(recorder, base, stackOffset, typemap)
+    {}
+
+    JS_REQUIRES_STACK JS_ALWAYS_INLINE bool
+    visitStackSlots(jsval *vp, size_t count, JSStackFrame* fp) {
+        if (vp == &fp->slots[fp->script->nfixed])
+            return false;
+        return ImportUnboxedStackSlotVisitor::visitStackSlots(vp, count, fp);
     }
 };
 
@@ -4112,15 +4144,17 @@ ProhibitFlush(JSContext* cx)
     return false;
 }
 
-static JS_REQUIRES_STACK void
+static void
 ResetJITImpl(JSContext* cx)
 {
     if (!TRACING_ENABLED(cx))
         return;
     JSTraceMonitor* tm = &JS_TRACE_MONITOR(cx);
     debug_only_print0(LC_TMTracer, "Flushing cache.\n");
-    if (tm->recorder)
+    if (tm->recorder) {
+        JS_ASSERT_NOT_ON_TRACE(cx);
         js_AbortRecording(cx, "flush cache");
+    }
     if (ProhibitFlush(cx)) {
         debug_only_print0(LC_TMTracer, "Deferring JIT flush due to deep bail.\n");
         tm->needFlush = JS_TRUE;
@@ -4130,7 +4164,7 @@ ResetJITImpl(JSContext* cx)
 }
 
 #ifdef MOZ_TRACEVIS
-static JS_INLINE JS_REQUIRES_STACK void
+static JS_INLINE void
 ResetJIT(JSContext* cx, TraceVisFlushReason r)
 {
     js_LogTraceVisEvent(cx, S_RESET, r);
@@ -4139,6 +4173,12 @@ ResetJIT(JSContext* cx, TraceVisFlushReason r)
 #else
 #define ResetJIT(cx, r) ResetJITImpl(cx)
 #endif
+
+void
+js_FlushJITCache(JSContext *cx)
+{
+    ResetJIT(cx, FR_OOM);
+}
 
 JS_REQUIRES_STACK void
 js_ResetJIT(JSContext* cx)
@@ -4880,11 +4920,26 @@ TraceRecorder::emitTreeCall(VMFragment* inner, VMSideExit* exit)
         lir->insStorei(lirbuf->rp, lirbuf->state, offsetof(InterpState, rp));
     }
 
+    // Create snapshot now so that the following block has an updated type map.
+    VMSideExit* nested = snapshot(NESTED_EXIT);
+
+    // If the outer-trace entry frame is not the same as the inner-trace entry frame,
+    // then we must reimport the outer trace entry frame in case the inner trace set
+    // upvars defined in that frame.
+    if (callDepth > 0) {
+        ptrdiff_t offset = -treeInfo->nativeStackBase;
+        JSStackFrame *fp = cx->fp;
+        for (unsigned i = 0; i < callDepth; ++i)
+            fp = fp->down;
+        ImportUnboxedFrameSlotVisitor frameVisitor(*this, lirbuf->sp, offset, 
+                                                   nested->stackTypeMap());
+        VisitFrameSlots(frameVisitor, 0, fp, NULL);
+    }
+
     /*
      * Guard that we come out of the inner tree along the same side exit we came out when
      * we called the inner tree at recording time.
      */
-    VMSideExit* nested = snapshot(NESTED_EXIT);
     guard(true, lir->ins2(LIR_peq, ret, INS_CONSTPTR(exit)), nested);
     debug_only_printf(LC_TMTreeVis, "TREEVIS TREECALL INNER=%p EXIT=%p GUARD=%p\n", (void*)inner,
                       (void*)nested, (void*)exit);
@@ -10783,6 +10838,52 @@ TraceRecorder::setCallProp(JSObject *callobj, LIns *callobj_ins, JSScopeProperty
     else
         ABORT_TRACE("can't trace special CallClass setter");
 
+    // Even though the frame is out of range, later we might be called as an
+    // inner trace such that the target variable is defined in the outer trace
+    // entry frame. In that case, we must store to the native stack area for
+    // that frame.
+
+    LIns *fp_ins = lir->insLoad(LIR_ldp, cx_ins, offsetof(JSContext, fp));
+    LIns *fpcallobj_ins = lir->insLoad(LIR_ldp, fp_ins, offsetof(JSStackFrame, callobj));
+    LIns *br1 = lir->insBranch(LIR_jf, lir->ins2(LIR_peq, fpcallobj_ins, callobj_ins), NULL);
+
+    // Case 1: storing to native stack area.
+
+    // Compute native stack slot and address offset we are storing to.
+    unsigned slot = uint16(sprop->shortid);
+    LIns *slot_ins;
+    if (sprop->setter == SetCallArg)
+        slot_ins = ArgClosureTraits::adj_slot_lir(lir, fp_ins, slot);
+    else
+        slot_ins = VarClosureTraits::adj_slot_lir(lir, fp_ins, slot);
+    LIns *offset_ins = lir->ins2(LIR_mul, slot_ins, INS_CONST(sizeof(double)));
+
+    // Guard that we are not changing the type of the slot we are storing to.
+    LIns *callstackBase_ins = lir->insLoad(LIR_ldp, lirbuf->state, 
+                                           offsetof(InterpState, callstackBase));
+    LIns *frameInfo_ins = lir->insLoad(LIR_ldp, callstackBase_ins, 0);
+    LIns *typemap_ins = lir->ins2(LIR_addp, frameInfo_ins, INS_CONSTWORD(sizeof(FrameInfo)));
+    LIns *type_ins = lir->insLoad(LIR_ldcb, 
+                                  lir->ins2(LIR_addp, typemap_ins, lir->ins_u2p(slot_ins)), 0);
+    JSTraceType type = getCoercedType(v);
+    if (type == TT_INT32 && !isPromoteInt(v_ins))
+        type = TT_DOUBLE;
+    guard(true,
+          addName(lir->ins2(LIR_eq, type_ins, lir->insImm(type)),
+                  "guard(type-stable set upvar)"),
+          BRANCH_EXIT);
+
+    // Store to the native stack slot.
+    LIns *stackBase_ins = lir->insLoad(LIR_ldp, lirbuf->state, 
+                                       offsetof(InterpState, stackBase));
+    LIns *storeValue_ins = isPromoteInt(v_ins) ? demote(lir, v_ins) : v_ins;
+    lir->insStorei(storeValue_ins, 
+                   lir->ins2(LIR_addp, stackBase_ins, lir->ins_u2p(offset_ins)), 0);
+    LIns *br2 = lir->insBranch(LIR_j, NULL, NULL);
+
+    // Case 2: calling builtin.
+    LIns *label1 = lir->ins0(LIR_label);
+    br1->setTarget(label1);
     LIns* args[] = {
         box_jsval(v, v_ins),
         INS_CONST(SPROP_USERID(sprop)),
@@ -10791,6 +10892,10 @@ TraceRecorder::setCallProp(JSObject *callobj, LIns *callobj_ins, JSScopeProperty
     };
     LIns* call_ins = lir->insCall(ci, args);
     guard(false, addName(lir->ins_eq0(call_ins), "guard(set upvar)"), STATUS_EXIT);
+
+    LIns *label2 = lir->ins0(LIR_label);
+    br2->setTarget(label2);
+    
     return JSRS_CONTINUE;
 }
 
@@ -12577,9 +12682,14 @@ TraceRecorder::traverseScopeChain(JSObject *obj, LIns *obj_ins, JSObject *target
             JSClass* cls = STOBJ_GET_CLASS(searchObj);
             if (cls == &js_BlockClass) {
                 foundBlockObj = true;
-            } else if (cls == &js_CallClass &&
-                       JSFUN_HEAVYWEIGHT_TEST(js_GetCallObjectFunction(searchObj)->flags)) {
-                foundCallObj = true;
+            } else if (cls == &js_CallClass) {
+                // If the function that owns this call object is not heavyweight, then
+                // we can't be sure it will always be there, which means the scope chain
+                // does not have a definite length, so abort.
+                if (JSFUN_HEAVYWEIGHT_TEST(js_GetCallObjectFunction(searchObj)->flags))
+                    foundCallObj = true;
+                else
+                    ABORT_TRACE("found call object for non-heavyweight function on scope chain");
             }
         }
 
@@ -13048,6 +13158,17 @@ TraceRecorder::record_JSOP_ARGSUB()
     ABORT_TRACE("can't trace JSOP_ARGSUB hard case");
 }
 
+JS_REQUIRES_STACK LIns*
+TraceRecorder::guardArgsLengthNotAssigned(LIns* argsobj_ins)
+{
+    // The following implements js_IsOverriddenArgsLength on trace.
+    // The '2' bit is set if length was overridden.
+    LIns *len_ins = stobj_get_fslot(argsobj_ins, JSSLOT_ARGS_LENGTH);
+    LIns *ovr_ins = lir->ins2(LIR_piand, len_ins, INS_CONSTWORD(2));
+    guard(true, lir->ins_peq0(ovr_ins), snapshot(BRANCH_EXIT));
+    return len_ins;
+}
+
 JS_REQUIRES_STACK JSRecordingStatus
 TraceRecorder::record_JSOP_ARGCNT()
 {
@@ -13065,13 +13186,7 @@ TraceRecorder::record_JSOP_ARGCNT()
     LIns *a_ins = get(&cx->fp->argsobj);
     if (callDepth == 0) {
         LIns *br = lir->insBranch(LIR_jt, lir->ins_peq0(a_ins), NULL);
-
-        // The following implements js_IsOverriddenArgsLength on trace.
-        // The '2' bit is set if length was overridden.
-        LIns *len_ins = stobj_get_fslot(a_ins, JSSLOT_ARGS_LENGTH);
-        LIns *ovr_ins = lir->ins2(LIR_piand, len_ins, INS_CONSTWORD(2));
-
-        guard(true, lir->ins_peq0(ovr_ins), snapshot(BRANCH_EXIT));
+        guardArgsLengthNotAssigned(a_ins);
         LIns *label = lir->ins0(LIR_label);
         br->setTarget(label);
     }
@@ -13911,7 +14026,15 @@ TraceRecorder::record_JSOP_LENGTH()
         if (!afp)
             ABORT_TRACE("can't reach arguments object's frame");
 
-        LIns* v_ins = lir->ins1(LIR_i2f, INS_CONST(afp->argc));
+        // We must both check at record time and guard at run time that
+        // arguments.length has not been reassigned, redefined or deleted.
+        if (js_IsOverriddenArgsLength(obj))
+            ABORT_TRACE("can't trace JSOP_ARGCNT if arguments.length has been modified");
+        LIns* slot_ins = guardArgsLengthNotAssigned(obj_ins);
+
+        // slot_ins is the value from the slot; right-shift by 2 bits to get
+        // the length (see GetArgsLength in jsfun.cpp).
+        LIns* v_ins = lir->ins1(LIR_i2f, lir->ins2i(LIR_rsh, slot_ins, 2));
         set(&l, v_ins);
         return JSRS_CONTINUE;
     }

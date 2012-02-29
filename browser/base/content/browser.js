@@ -438,6 +438,8 @@ const gPopupBlockerObserver = {
 
     if (gPrivateBrowsingUI.privateBrowsingEnabled)
       blockedPopupAllowSite.setAttribute("disabled", "true");
+    else
+      blockedPopupAllowSite.removeAttribute("disabled");
 
     var item = aEvent.target.lastChild;
     while (item && item.getAttribute("observes") != "blockedPopupsSeparator") {
@@ -2741,6 +2743,7 @@ var browserDragAndDrop = {
     if (types.contains("application/x-moz-file") ||
         types.contains("text/x-moz-url") ||
         types.contains("text/uri-list") ||
+        types.contains("text/x-moz-text-internal") ||
         types.contains("text/plain")) {
       aEvent.preventDefault();
 
@@ -4511,7 +4514,7 @@ nsBrowserAccess.prototype =
         newWindow = content;
         if (aURI) {
           let referrer = aOpener ? makeURI(aOpener.location.href) : null;
-          gBrowser.loadURIWithFlag(aURI.spec, loadflags, referrer, null, null);
+          gBrowser.loadURIWithFlags(aURI.spec, loadflags, referrer, null, null);
         }
         if (!gPrefService.getBoolPref("browser.tabs.loadDivertedInBackground"))
           content.focus();

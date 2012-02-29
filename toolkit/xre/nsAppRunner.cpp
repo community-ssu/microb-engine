@@ -296,9 +296,7 @@ extern "C" {
 }
 #endif
 
-#if defined(XP_UNIX) || defined(XP_BEOS)
-  extern void InstallUnixSignalHandlers(const char *ProgramName);
-#endif
+extern void InstallSignalHandlers(const char *ProgramName);
 
 int    gArgc;
 char **gArgv;
@@ -2668,9 +2666,7 @@ XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
 #endif
 #endif
 
-#if defined(XP_UNIX) || defined(XP_BEOS)
-  InstallUnixSignalHandlers(argv[0]);
-#endif
+  InstallSignalHandlers(argv[0]);
 
 #ifdef MOZ_ACCESSIBILITY_ATK
   // Reset GTK_MODULES, strip atk-bridge if exists
@@ -2757,6 +2753,7 @@ XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   // check to see if we need to do a splash screen
   PRBool wantsSplash = PR_TRUE;
   PRBool isNoSplash = (CheckArg("nosplash", PR_FALSE, NULL, PR_FALSE) == ARG_FOUND);
+  isNoSplash |= (PR_GetEnv("NO_SPLASH") != 0);
   PRBool isNoRemote = (CheckArg("no-remote", PR_FALSE, NULL, PR_FALSE) == ARG_FOUND);
 
 #ifdef WINCE
