@@ -87,8 +87,8 @@ DEB_HOST_ARCH          ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_ARCH_OS       ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 DEB_HOST_GNU_TYPE      ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 
-CFLAGS += -g -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ffast-math -ftree-vectorize -flto
-LDFLAGS += -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ffast-math -ftree-vectorize -flto
+CFLAGS += -g -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ftree-vectorize -flto -fpermissive
+LDFLAGS += -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ftree-vectorize -flto
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -O0
