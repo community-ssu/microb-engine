@@ -216,3 +216,4 @@ perf_tweaks/nb162660.diff
 
 pmt/idleservicetimer.diff
 CVE/CVE_2010_1205_libpng.diff
+BMO_attached/bug588724.diff

@@ -1,0 +1,74 @@
+Index: microb-engine/netwerk/system/maemo/nsMaemoNetworkLinkService.cpp
+===================================================================
+--- microb-engine.orig/netwerk/system/maemo/nsMaemoNetworkLinkService.cpp	2012-07-26 15:32:08.662674977 -0400
++++ microb-engine/netwerk/system/maemo/nsMaemoNetworkLinkService.cpp	2012-07-26 15:34:27.246557699 -0400
+@@ -61,7 +61,7 @@
+                                    const char *aTopic,
+                                    const PRUnichar *aData)
+ {
+-  if (!strcmp(aTopic, "xpcom-shutdown"))
++  if (!strcmp(aTopic, "quit-application"))
+     Shutdown();
+ 
+   return NS_OK;
+@@ -82,7 +82,7 @@
+     do_GetService("@mozilla.org/observer-service;1", &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+-  rv = observerService->AddObserver(this, "xpcom-shutdown", PR_FALSE);
++  rv = observerService->AddObserver(this, "quit-application", PR_FALSE);
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   if (!nsMaemoNetworkManager::Startup())
+Index: microb-engine/netwerk/system/maemo/nsMaemoNetworkManager.cpp
+===================================================================
+--- microb-engine.orig/netwerk/system/maemo/nsMaemoNetworkManager.cpp	2012-07-26 15:32:18.694636180 -0400
++++ microb-engine/netwerk/system/maemo/nsMaemoNetworkManager.cpp	2012-07-26 15:41:05.298095693 -0400
+@@ -48,7 +48,8 @@
+ {
+   InternalState_Invalid = -1,
+   InternalState_Disconnected,
+-  InternalState_Connected
++  InternalState_Connected,
++  InternalState_Shutdown
+ };
+ 
+ static InternalState gInternalState = InternalState_Invalid;
+@@ -105,7 +106,7 @@
+     // when called from the mainthread we need to keep
+     // processing the events in order to receive our own
+     // callback
+-    while (!gConnectionCallbackInvoked)
++    while (!gConnectionCallbackInvoked && gInternalState != InternalState_Shutdown)
+     {
+       PR_Sleep(PR_SecondsToInterval(1));
+       g_main_context_iteration(0,false);
+@@ -116,7 +117,7 @@
+     // until our callback on the main thread.
+     MonitorAutoEnter mon(*gMonitor);
+ 
+-    while (!gConnectionCallbackInvoked)
++    while (!gConnectionCallbackInvoked && gInternalState != InternalState_Shutdown)
+       mon.Wait();
+   }
+ 
+@@ -158,7 +159,9 @@
+   gMonitor = new Monitor("MaemoAutodialer");
+   if (!gMonitor)
+     return PR_FALSE;
+-
++  
++  gInternalState = InternalState_Invalid;
++  
+   DBusError error;
+   dbus_error_init(&error);
+ 
+@@ -196,7 +199,7 @@
+   if (gMonitor) {
+     // notify anyone waiting
+     MonitorAutoEnter mon(*gMonitor);
+-    gInternalState = InternalState_Invalid;    
++    gInternalState = InternalState_Shutdown;   
+     mon.Notify();
+   }
+   
