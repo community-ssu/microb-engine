@@ -10,7 +10,7 @@ Section: libs
 Package: libnspr4
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, kernel-feature-errata-430973-workaround [armel]
 Conflicts: libnspr3
 Replaces: libnspr3
 Description: Netscape Portable Runtime Library
@@ -28,7 +28,7 @@ Description: Netscape Portable Runtime Library
 Package: libnss3
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}, libnss3-certs (= ${Source-Version}) | softpkcs11, libnspr4 (= ${Source-Version})
+Depends: ${shlibs:Depends}, libnss3-certs (= ${Source-Version}) | softpkcs11, libnspr4 (= ${Source-Version}), kernel-feature-errata-430973-workaround [armel]
 Description: Network Security Service Libraries - runtime
  This package provides the runtime libraries needed to use the Netscape
  SSL/TLS layer, including S/MIME and key management.
@@ -36,7 +36,7 @@ Description: Network Security Service Libraries - runtime
 Package: libnss3-certs
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, kernel-feature-errata-430973-workaround [armel]
 Conflicts: softpkcs11
 Replaces: softpkcs11
 Description: Network Security Service Libraries - runtime
@@ -46,7 +46,7 @@ Description: Network Security Service Libraries - runtime
 Package: microb-engine-common
 Section: libs
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, kernel-feature-errata-430973-workaround [armel]
 Description: Package of MicroB libraries based on Mozilla
  MicroB can be used by other external applications.
  Note that using libgtkmozembed or browser-eal is encouraged
@@ -57,7 +57,7 @@ Description: Package of MicroB libraries based on Mozilla
 Package: microb-engine
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libnss3, libnspr4, microb-engine-common (>= ${Source-Version}), microb-engine-common (<< ${Source-Version}.1~)
+Depends: ${shlibs:Depends}, ${misc:Depends}, libnss3, libnspr4, microb-engine-common (>= ${Source-Version}), microb-engine-common (<< ${Source-Version}.1~), kernel-feature-errata-430973-workaround [armel]
 Description: Package of MicroB libraries based on Mozilla
  MicroB can be used by other external applications.
  Note that using libgtkmozembed or browser-eal is encouraged
@@ -67,14 +67,14 @@ Description: Package of MicroB libraries based on Mozilla
 Package: microb-refui
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}, microb-engine
+Depends: ${shlibs:Depends}, microb-engine, kernel-feature-errata-430973-workaround [armel]
 Description: TestGtkEmbed refui for MicroB
  This package provides a simple GUI for testing the browser engine
 
 Package: microb-full
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}, microb-full-common (>= ${Source-Version}), microb-full-common (<< ${Source-Version}.1~)
+Depends: ${shlibs:Depends}, microb-full-common (>= ${Source-Version}), microb-full-common (<< ${Source-Version}.1~), kernel-feature-errata-430973-workaround [armel]
 Description: Full microb engine 
  This package provides a simple GUI for testing the browser engine
 
@@ -88,14 +88,14 @@ Description: Full microb engine DBG
 Package: microb-full-common
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, kernel-feature-errata-430973-workaround [armel]
 Description: Full microb engine 
  This package provides a simple GUI for testing the browser engine
 
 Package: microb-xulrunner
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}, microb-engine, microb-refui
+Depends: ${shlibs:Depends}, microb-engine, microb-refui, kernel-feature-errata-430973-workaround [armel]
 Description: Xulrunner files for MicroB engine
  This package provides a simple GUI for testing the browser engine
 
@@ -146,7 +146,7 @@ Description: Debug Xulrunner files for MicroB engine
 Package: microb-spellcheck
 Architecture: any
 Section: libs
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, kernel-feature-errata-430973-workaround [armel]
 Description: Spellcheck extension for Mozilla
  This package provides a Mozilla extension for checking spelling
 
@@ -194,7 +194,7 @@ Description: Development files for the Network Security Service libraries
 Package: microb-moztests
 Architecture: any
 Section: misc 
-Depends: microb-engine (= ${Source-Version})
+Depends: microb-engine (= ${Source-Version}), kernel-feature-errata-430973-workaround [armel]
 Description: Tests for MicroB
  This package provides a mozilla tests for  testing the browser engine
 
