@@ -1,0 +1,14 @@
+Index: microb-engine/modules/libpr0n/decoders/png/nsPNGDecoder.cpp
+===================================================================
+--- microb-engine.orig/modules/libpr0n/decoders/png/nsPNGDecoder.cpp	2012-07-26 14:02:15.939464676 -0400
++++ microb-engine/modules/libpr0n/decoders/png/nsPNGDecoder.cpp	2012-07-26 14:04:03.979627893 -0400
+@@ -794,6 +794,9 @@
+   if (decoder->mFrameIsHidden)
+     return;
+ 
++  if (row_num >= decoder->mFrameRect.height)
++    return;
++
+   if (new_row) {
+     PRInt32 width = decoder->mFrameRect.width;
+     PRUint32 iwidth = decoder->mFrameRect.width;
