@@ -14,7 +14,7 @@ logging:=n
 debug:=n
 perfmetr:=n
 jprof:=n
-vfp:=n
+vfp:=y
 oprof:=n
 nolibxul:=n
 MOZCONFIG_NAME:=configs/mozconfig
@@ -87,7 +87,8 @@ DEB_HOST_ARCH          ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_ARCH_OS       ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 DEB_HOST_GNU_TYPE      ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 
-CFLAGS += -g
+CFLAGS += -g -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ffast-math -ftree-vectorize -flto
+LDFLAGS += -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ffast-math -ftree-vectorize -flto
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -O0
@@ -227,7 +228,7 @@ buildobjdir = "$(CURDIR)/$(btree)/obj-"$(bldstr)build$(MOZCONFIG_LEV)
 
 configopts += --disable-elf-dynstr-gc
 ifneq (,$(findstring $(DEB_HOST_ARCH),arm armel))
-configopts += --without-arm-thumb2
+configopts += --with-arm-thumb2
 optimize_add += -finline-functions -finline-limit=128 -mtp=cp15
 ifeq ($(vfp),y)
 	optimize_add += -mfpu=vfp -mfloat-abi=softfp
