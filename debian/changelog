@@ -1,3 +1,16 @@
+microb-engine (20100401-1.9.2-5.2+0m5+0cssu0-thumb0) unstable; urgency=low
+
+  * use gcc 4.7.2 to fix HTTPS TLS error
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Thu, 26 Jul 2012 20:08:31 +0300
+
+microb-engine (20100401-1.9.2-5.2+0m5-thumb0) unstable; urgency=low
+
+  * Thumb-compile
+  * Backport thumb patches from upstream
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Sun, 09 Jul 2012 00:34:11 +0300
+
 microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu0) unstable; urgency=low
 
   * Fixed #12564 - Daemon does not shut down properly when no connection and
