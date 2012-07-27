@@ -87,8 +87,8 @@ DEB_HOST_ARCH          ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_ARCH_OS       ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 DEB_HOST_GNU_TYPE      ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 
-CFLAGS += -g -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ftree-vectorize -flto -fpermissive
-LDFLAGS += -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ftree-vectorize -flto
+CFLAGS += -g -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ftree-vectorize -Wno-psabi -fpermissive
+LDFLAGS += -mthumb -mfpu=neon -mcpu=cortex-a8 -fgraphite -ftree-vectorize
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -O0
@@ -518,7 +518,7 @@ unpatch:
 	@echo -n "Unapplying patches..."; \
 	if [ -e $(STAMP_DIR)/patches/applied-patches ]; then \
 	  if test -d $(builddir); then \
-	  if cd $(builddir) && quilt pop -a -v > $(STAMPDIR_LOG)/unpatch; then \
+	  if cd $(builddir) && quilt pop -a -v -f> $(STAMPDIR_LOG)/unpatch; then \
 	    echo "successful."; \
 	  else \
 	    echo "failed! (check $(STAMP_DIR)/log/unpatch for details)"; \
