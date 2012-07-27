@@ -97,6 +97,7 @@ CSRCS = \
 	secport.c \
 	templates.c \
 	utf8.c \
+	secload.c \
 	$(NULL)
 
 MODULE = nss
