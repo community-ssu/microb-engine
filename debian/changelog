@@ -1,3 +1,11 @@
+microb-engine (20100401-1.9.2-5.2+0m5+0cssu0) unstable; urgency=low
+
+  * Fixed #12564 - Daemon does not shut down properly when no connection and
+    browser closed when connection dialog opens
+  * Fixed #12555 - CVE-2010-1205
+
+ -- Christian Ratzenhofer <christian_ratzenhofer@yahoo.de>  Fri, 24 Aug 2012 19:26:42 +0200
+
 microb-engine (20100401-1.9.2-5.2+0m5) unstable; urgency=low
 
   * This entry has been added by BIFH queue processor
