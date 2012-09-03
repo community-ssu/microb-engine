@@ -273,7 +273,7 @@ extern int NSS_SecureMemcmp(const void *a, const void *b, size_t n);
  * If the new shared library is not found in the same location as the reference
  * library, it will then be loaded from the normal system library path.
  */
-extern PRLibrary *
+PRLibrary *
 PORT_LoadLibraryFromOrigin(const char* existingShLibName,
                  PRFuncPtr staticShLibFunc,
                  const char *newShLibName);
