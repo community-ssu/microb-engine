@@ -1,3 +1,10 @@
+microb-engine (20100401-1.9.2-5.2+0m5) unstable; urgency=low
+
+  * This entry has been added by BIFH queue processor
+    version has been changed to 20100401-1.9.2-5.2+0m5
+
+ -- Tuukka Tolvanen <tuukka.tolvanen@nokia.com>  Wed, 02 Jun 2010 20:28:17 +0300
+
 microb-engine (20100401-1.9.2-5.2) unstable; urgency=low
 
   * Updated changelog
