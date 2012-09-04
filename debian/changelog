@@ -1,4 +1,4 @@
-microb-engine (20100401-1.9.2-5.2+0m5+0cssu0) unstable; urgency=low
+microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu0) unstable; urgency=low
 
   * Fixed #12564 - Daemon does not shut down properly when no connection and
     browser closed when connection dialog opens
