@@ -27,8 +27,8 @@ ac_add_options --disable-pedantic
 ac_add_options --disable-old-abi-compat-wrappers
 
    #* Using of sistem libraries (Debian Way ;) )
-#ac_add_options --with-system-png #APNG required
-#ac_add_options --with-system-zlib #Some linking problems
+ac_add_options --with-system-png #APNG required
+ac_add_options --with-system-zlib
 ac_add_options --with-system-jpeg
 ac_add_options --with-system-bz2
 ac_add_options --disable-js-binary
