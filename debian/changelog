@@ -1,3 +1,9 @@
+microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu1+thumb0) unstable; urgency=low
+
+  * Thumb2 compile
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Mon, 14 Jan 2013 18:42:27 +0200
+
 microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu1) unstable; urgency=low
 
   * Use system zlib and libpng
