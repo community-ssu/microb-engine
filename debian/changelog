@@ -1,3 +1,9 @@
+microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu1) unstable; urgency=low
+
+  * Use system zlib and libpng
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Sun, 13 Jan 2013 20:36:11 +0200
+
 microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu0-thumb0) unstable; urgency=low
 
   * Rebase on top of maemo.org sources
