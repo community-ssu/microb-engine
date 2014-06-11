@@ -96,16 +96,15 @@ nsSystemInfo::Init()
     char *  line = nsnull;
     size_t  len = 0;
     ssize_t read;
-    FILE *fp = fopen ("/proc/component_version", "r");
+    FILE *fp = fopen ("/proc/cpuinfo", "r");
     if (fp) {
       while ((read = getline(&line, &len, fp)) != -1) {
         if (line) {
           if (strstr(line, "RX-51")) {
             SetPropertyAsACString(NS_ConvertASCIItoUTF16("device"), NS_LITERAL_CSTRING("Nokia N900"));
             break;
-          } else if (strstr(line, "RX-44") ||
-                     strstr(line, "RX-48") ||
-                     strstr(line, "RX-32") ) {
+          } else if (strstr(line, "N800") ||
+                     strstr(line, "N810") ) {
             SetPropertyAsACString(NS_ConvertASCIItoUTF16("device"), NS_LITERAL_CSTRING("Nokia N8xx"));
             break;
           }
