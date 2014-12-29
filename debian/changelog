@@ -1,3 +1,9 @@
+microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu2+thumb0) unstable; urgency=low
+
+  * Thumb2 compile
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Mon, 29 Dec 2014 13:03:13 +0200
+
 microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu2) unstable; urgency=low
 
   * For reading device name use file /proc/cpuinfo instead /proc/component_version
