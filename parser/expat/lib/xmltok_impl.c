@@ -499,6 +499,9 @@ PREFIX(scanRef)(const ENCODING *enc, const char *ptr, const char *end,
   CHECK_NMSTRT_CASES(enc, ptr, end, nextTokPtr)
   case BT_NUM:
     return PREFIX(scanCharRef)(enc, ptr + MINBPC(enc), end, nextTokPtr);
+  case BT_S:
+    *nextTokPtr = ptr;
+    return XML_TOK_DATA_CHARS;
   default:
     *nextTokPtr = ptr;
     return XML_TOK_INVALID;
