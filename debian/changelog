@@ -1,3 +1,10 @@
+microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu3) unstable; urgency=low
+
+  * Add a workaround for an issue where Google Search can sometimes 
+    return an unescaped & symbol
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sat, 14 Oct 2017 21:40:53 -0400
+
 microb-engine (1:20100401-1.9.2-5.2+0m5+0cssu2) unstable; urgency=low
 
   * For reading device name use file /proc/cpuinfo instead /proc/component_version
